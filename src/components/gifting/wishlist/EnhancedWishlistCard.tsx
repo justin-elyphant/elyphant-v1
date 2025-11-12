@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -197,9 +198,13 @@ const EnhancedWishlistCard = ({
           {/* Image - Larger for Babylist feel */}
           <div className="aspect-square bg-muted overflow-hidden cursor-pointer min-h-[240px]" onClick={() => !isSelectionMode && setShowDetails(true)}>
             <img 
-              src={item.image_url || "/placeholder.svg"} 
+              src={normalizeImageUrl(item.image_url, { bucket: 'product-images', fallback: '/placeholder.svg' })} 
               alt={item.name || item.title || "Product"}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              onError={(e) => {
+                console.warn('Failed to load wishlist item image:', item.image_url);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
             />
             {isSelected && (
               <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">

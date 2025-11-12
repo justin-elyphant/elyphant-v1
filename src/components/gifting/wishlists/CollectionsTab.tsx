@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
 import { toast } from "sonner";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 const CollectionsTab = () => {
   const { wishlists, loading, removeFromWishlist } = useUnifiedWishlistSystem();
@@ -170,9 +171,13 @@ const CollectionsTab = () => {
                   <div className="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
                     {item.image_url ? (
                       <img 
-                        src={item.image_url} 
+                        src={normalizeImageUrl(item.image_url, { bucket: 'product-images', fallback: '/placeholder.svg' })} 
                         alt={item.name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.warn('Failed to load collection item image:', item.image_url);
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfileImage } from "@/hooks/settings/profile/useProfileImage";
 import { CameraCapture } from "@/components/ui/camera-capture";
 import { toast } from "sonner";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 interface ProfileImageUploadProps {
   currentImage: string | null;
@@ -200,7 +201,14 @@ const ProfileImageUpload = ({
       <div className="relative group">
         <Avatar className="h-24 w-24 border-2 border-gray-200">
           {preview ? (
-            <AvatarImage src={preview} alt={name} />
+            <AvatarImage 
+              src={normalizeImageUrl(preview, { bucket: 'avatars' })} 
+              alt={name}
+              onError={(e) => {
+                console.warn('Failed to load profile image:', preview);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
           ) : (
             <AvatarFallback className="bg-primary/10 text-primary text-2xl">
               {(() => {

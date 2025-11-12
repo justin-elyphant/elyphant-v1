@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import { 
   Heart, 
   ShoppingBag, 
@@ -172,9 +173,13 @@ const MobileWishlistCard: React.FC<MobileWishlistCardProps> = ({
                   )}
                 >
                   <img
-                    src={imageUrl}
+                    src={normalizeImageUrl(imageUrl, { bucket: 'product-images', fallback: '/placeholder.svg' })}
                     alt={`Preview ${index + 1}`}
                     className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    onError={(e) => {
+                      console.warn('Failed to load wishlist preview image:', imageUrl);
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
                   />
                   {/* Show +N more for remaining items */}
                   {index === 3 && wishlist.items.length > 4 && (

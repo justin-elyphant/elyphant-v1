@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import { Heart, ShoppingBag, MoreHorizontal, Eye, Share2, Trash2 } from "lucide-react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
@@ -120,9 +121,13 @@ const WishlistMasonryCard: React.FC<{
           <div className="relative w-full h-full">
             {previewImages.length === 1 ? (
               <img
-                src={previewImages[0].url}
+                src={normalizeImageUrl(previewImages[0].url, { bucket: 'product-images', fallback: '/placeholder.svg' })}
                 alt={previewImages[0].name}
                 className="bleed-image w-full h-full object-cover"
+                onError={(e) => {
+                  console.warn('Failed to load wishlist image:', previewImages[0].url);
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
               />
             ) : (
               <div className="grid grid-cols-2 gap-1 h-full">
@@ -135,9 +140,13 @@ const WishlistMasonryCard: React.FC<{
                   {previewImages.slice(1, 3).map((img, idx) => (
                     <img
                       key={idx}
-                      src={img.url}
+                      src={normalizeImageUrl(img.url, { bucket: 'product-images', fallback: '/placeholder.svg' })}
                       alt={img.name}
                       className="bleed-image w-full h-full object-cover flex-1"
+                      onError={(e) => {
+                        console.warn('Failed to load wishlist grid image:', img.url);
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
                     />
                   ))}
                   {wishlist.items.length > 3 && (

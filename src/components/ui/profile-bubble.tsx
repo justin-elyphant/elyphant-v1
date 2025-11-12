@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CameraCapture } from "@/components/ui/camera-capture";
 import { cn } from "@/lib/utils";
+import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 interface ProfileBubbleProps {
   imageUrl?: string | null;
@@ -91,7 +92,14 @@ const ProfileBubble: React.FC<ProfileBubbleProps> = ({
     <div className="relative group">
       <div className="relative">
         <Avatar className={cn(sizeClasses[size], className)}>
-          <AvatarImage src={imageUrl || undefined} alt={userName} />
+          <AvatarImage 
+            src={normalizeImageUrl(imageUrl, { bucket: 'avatars' })} 
+            alt={userName}
+            onError={(e) => {
+              console.warn('Failed to load avatar:', imageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
+          />
           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-semibold text-lg">
             {initials || <User className={iconSizes[size]} />}
           </AvatarFallback>

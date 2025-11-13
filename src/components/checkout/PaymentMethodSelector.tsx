@@ -142,7 +142,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   /*
    * 🔗 CRITICAL: Existing payment method processing
    * 
-   * Simplified to just confirm payment - attachment is handled by create-payment-intent edge function
+   * Attaches payment method to customer before confirming payment
    */
   const handleUseExistingCard = async () => {
     if (!selectedSavedMethod) return;
@@ -158,8 +158,23 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         throw new Error('Payment system is not available. Please refresh the page and try again.');
       }
       
-      // Payment method is already attached by create-payment-intent edge function
-      // Just confirm the payment
+      // STEP 1: Ensure payment method is attached to customer
+      console.log('🔗 Attaching payment method to customer...');
+      const { data: attachData, error: attachError } = await supabase.functions.invoke('attach-payment-method', {
+        body: {
+          paymentMethodId: selectedSavedMethod.stripe_payment_method_id,
+          paymentIntentId: clientSecret.split('_secret_')[0]
+        }
+      });
+      
+      if (attachError) {
+        console.error('❌ Failed to attach payment method:', attachError);
+        throw new Error('Unable to use this payment method. Please try a different one.');
+      }
+      
+      console.log('✅ Payment method attached:', attachData);
+      
+      // STEP 2: Confirm payment
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: selectedSavedMethod.stripe_payment_method_id
       });

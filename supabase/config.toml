@@ -99,6 +99,9 @@ verify_jwt = false
 [functions.validate-invite]
 verify_jwt = false
 
+[functions.attach-payment-method]
+verify_jwt = false
+
 # Cron to process email queue every minute
 [[crons.process_email_queue]]
 function_name = "process-email-queue"

@@ -490,9 +490,7 @@ const UnifiedCheckoutForm: React.FC = () => {
             cart_session_id: sessionId,
             scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
             isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
-            deliveryDate: giftOptions.scheduledDeliveryDate,
-            useExistingPaymentMethod: selectedPaymentMethodId ? true : false,
-            paymentMethodId: selectedPaymentMethodId || undefined
+            deliveryDate: giftOptions.scheduledDeliveryDate
           }
         }
       });
@@ -723,9 +721,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                   onRefreshKeyChange={setRefreshKey}
                   onMethodSelected={(methodId) => {
                     setSelectedPaymentMethodId(methodId);
-                    // Force recreate payment intent with this method attached
-                    setClientSecret('');
-                    setPaymentIntentId('');
+                    // Payment method selection tracked - attachment happens at confirmation
                   }}
                   shippingAddress={{
                     name: checkoutData.shippingInfo.name,

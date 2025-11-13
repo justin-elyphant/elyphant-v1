@@ -411,59 +411,59 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             }
             
             console.log(`✅ Created ${itemsData.length} order items`);
-              
-              // 🎁 Track wishlist item purchases
-              console.log('🎁 Checking for wishlist items to track...');
-              for (const item of items) {
-                if (item.wishlist_id && item.wishlist_item_id) {
-                  try {
-                    const { error: purchaseError } = await supabase
-                      .from('wishlist_item_purchases')
-                      .insert({
-                        wishlist_id: item.wishlist_id,
-                        item_id: item.wishlist_item_id,
-                        product_id: String(item.product_id),
-                        purchaser_user_id: paymentIntent.metadata.user_id || null,
-                        purchaser_name: cartData.billingInfo?.name || cartData.shippingInfo?.name || null,
-                        is_anonymous: false,
-                        order_id: order.id,
-                        quantity_purchased: Number(item.quantity ?? 1),
-                        price_paid: Number(item.price ?? 0)
-                      });
+            
+            // 🎁 Track wishlist item purchases
+            console.log('🎁 Checking for wishlist items to track...');
+            for (const item of items) {
+              if (item.wishlist_id && item.wishlist_item_id) {
+                try {
+                  const { error: purchaseError } = await supabase
+                    .from('wishlist_item_purchases')
+                    .insert({
+                      wishlist_id: item.wishlist_id,
+                      item_id: item.wishlist_item_id,
+                      product_id: String(item.product_id),
+                      purchaser_user_id: paymentIntent.metadata.user_id || null,
+                      purchaser_name: cartData.billingInfo?.name || cartData.shippingInfo?.name || null,
+                      is_anonymous: false,
+                      order_id: order.id,
+                      quantity_purchased: Number(item.quantity ?? 1),
+                      price_paid: Number(item.price ?? 0)
+                    });
+                  
+                  if (purchaseError) {
+                    console.error('⚠️ Failed to track wishlist purchase:', purchaseError);
+                  } else {
+                    console.log(`✅ Tracked wishlist item purchase: ${item.wishlist_item_id}`);
                     
-                    if (purchaseError) {
-                      console.error('⚠️ Failed to track wishlist purchase:', purchaseError);
-                    } else {
-                      console.log(`✅ Tracked wishlist item purchase: ${item.wishlist_item_id}`);
-                      
-                      // 📧 Trigger wishlist purchase notification emails
-                      try {
-                        await supabase.functions.invoke('ecommerce-email-orchestrator', {
-                          body: {
-                            eventType: 'wishlist_item_purchased',
-                            customData: {
-                              wishlistId: item.wishlist_id,
-                              itemId: item.wishlist_item_id,
-                              itemName: item.title || item.name,
-                              itemImage: item.image,
-                              itemPrice: item.price,
-                              purchaserName: cartData.billingInfo?.name || cartData.shippingInfo?.name,
-                              purchaserUserId: paymentIntent.metadata.user_id
-                            }
+                    // 📧 Trigger wishlist purchase notification emails
+                    try {
+                      await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                        body: {
+                          eventType: 'wishlist_item_purchased',
+                          customData: {
+                            wishlistId: item.wishlist_id,
+                            itemId: item.wishlist_item_id,
+                            itemName: item.title || item.name,
+                            itemImage: item.image,
+                            itemPrice: item.price,
+                            purchaserName: cartData.billingInfo?.name || cartData.shippingInfo?.name,
+                            purchaserUserId: paymentIntent.metadata.user_id
                           }
-                        });
-                        console.log('✅ Wishlist purchase email triggered');
-                      } catch (emailError) {
-                        console.error('⚠️ Failed to trigger wishlist email:', emailError);
-                      }
+                        }
+                      });
+                      console.log('✅ Wishlist purchase email triggered');
+                    } catch (emailError) {
+                      console.error('⚠️ Failed to trigger wishlist email:', emailError);
                     }
-                  } catch (trackError) {
-                    console.error('⚠️ Error tracking wishlist purchase:', trackError);
                   }
+                } catch (trackError) {
+                  console.error('⚠️ Error tracking wishlist purchase:', trackError);
                 }
               }
             }
           }
+        }
           
           // Mark cart session as completed
           await supabase

@@ -2,20 +2,25 @@
 /**
  * Payment Method Selector Component
  * 
+ * ✅ UNIFIED ARCHITECTURE: Uses UnifiedPaymentMethodManager for consistency
+ * 
  * Provides comprehensive payment method selection with support for
  * both saved and new payment methods, including mobile-optimized UX.
+ * 
+ * Unified with /settings and auto-gifting payment management.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripeClientManager } from '@/services/payment/StripeClientManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
-import SavedPaymentMethodsSection from './SavedPaymentMethodsSection';
+import UnifiedPaymentMethodManager from '@/components/payments/UnifiedPaymentMethodManager';
 import UnifiedPaymentForm from '@/components/payments/UnifiedPaymentForm';
 
 // CRITICAL: Payment method interface
@@ -223,16 +228,19 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   return (
     <div className="space-y-6 payment-form-mobile dynamic-content-safe pb-safe-bottom">
-      {/* CRITICAL: Saved payment methods section */}
-      <SavedPaymentMethodsSection
-        onSelectPaymentMethod={handleSelectPaymentMethod}
-        onAddNewMethod={handleAddNewMethod}
-        selectedMethodId={selectedSavedMethod?.id}
-        refreshKey={refreshKey}
-      />
+      {/* ✅ UNIFIED: Payment methods managed by UnifiedPaymentMethodManager */}
+      <Elements stripe={stripeClientManager.getStripePromise()}>
+        <UnifiedPaymentMethodManager
+          mode="selection"
+          onSelectMethod={handleSelectPaymentMethod}
+          selectedMethodId={selectedSavedMethod?.id}
+          showAddNew={true}
+          allowSelection={true}
+        />
+      </Elements>
 
       {/* CRITICAL: Selected payment method processing */}
-      {selectedSavedMethod && (
+      {selectedSavedMethod && !showNewCardForm && (
         <div ref={payCardRef} className="scroll-safe-bottom">
           <Card className="mb-4">
             <CardContent className="p-4">
@@ -260,23 +268,20 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </div>
       )}
 
-
       {/* CRITICAL: New payment method form */}
       {showNewCardForm && (
         <div className="space-y-4 pb-4">
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox 
                 id="save-card"
                 checked={saveNewCard}
-                onChange={(e) => setSaveNewCard(e.target.checked)}
-                className="rounded border-gray-300"
+                onCheckedChange={(checked) => setSaveNewCard(checked as boolean)}
               />
-              <label htmlFor="save-card" className="text-sm">
+              <Label htmlFor="save-card" className="text-sm cursor-pointer">
                 Save this card for future purchases
-              </label>
+              </Label>
             </div>
             <div className="pb-4">
               <Elements stripe={stripeClientManager.getStripePromise()}>
@@ -286,10 +291,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   onSuccess={(paymentIntentId, saveCard) => {
                     // Handle saving payment method if requested
                     if (saveNewCard && saveCard) {
-                      // This will be handled in the parent component
+                      // Refresh key will trigger UnifiedPaymentMethodManager to reload
                       onRefreshKeyChange(refreshKey + 1);
                     }
-                    onPaymentSuccess(paymentIntentId, paymentIntentId); // Use paymentIntentId as second param for compatibility
+                    onPaymentSuccess(paymentIntentId, paymentIntentId);
                   }}
                   onError={onPaymentError}
                   isProcessing={isProcessingPayment}

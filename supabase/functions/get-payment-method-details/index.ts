@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const { paymentMethodId } = await req.json();
     
-    console.log('💳 [get-payment-method-details] Retrieving payment method:', paymentMethodId);
+    console.log('💳 [get-payment-method-details] Received ID:', paymentMethodId);
     
     if (!paymentMethodId) {
       throw new Error('Payment method ID is required');
@@ -25,8 +25,33 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    // Retrieve the payment method details from Stripe
-    const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+    let paymentMethod;
+    
+    // Handle both PaymentIntent IDs (pi_) and PaymentMethod IDs (pm_)
+    if (paymentMethodId.startsWith('pi_')) {
+      console.log('🔄 [get-payment-method-details] Received PaymentIntent ID, retrieving PaymentMethod...');
+      
+      // First, get the PaymentIntent to extract the PaymentMethod ID
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentMethodId);
+      
+      if (!paymentIntent.payment_method) {
+        throw new Error('PaymentIntent does not have an attached payment method');
+      }
+      
+      const pmId = typeof paymentIntent.payment_method === 'string' 
+        ? paymentIntent.payment_method 
+        : paymentIntent.payment_method.id;
+      
+      console.log('🔍 [get-payment-method-details] Found PaymentMethod ID:', pmId);
+      paymentMethod = await stripe.paymentMethods.retrieve(pmId);
+      
+    } else if (paymentMethodId.startsWith('pm_')) {
+      console.log('✅ [get-payment-method-details] Received PaymentMethod ID directly');
+      paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+      
+    } else {
+      throw new Error(`Invalid ID format. Expected pm_ or pi_ prefix, received: ${paymentMethodId}`);
+    }
     
     console.log('✅ [get-payment-method-details] Payment method retrieved successfully');
 
@@ -38,12 +63,13 @@ serve(async (req) => {
       status: 200
     });
 
-  } catch (error: any) {
-    console.error('❌ [get-payment-method-details] Error:', error.message);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('❌ [get-payment-method-details] Error:', errorMessage);
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: errorMessage
     }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

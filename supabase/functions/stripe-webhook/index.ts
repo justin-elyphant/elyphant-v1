@@ -66,7 +66,7 @@ serve(async (req) => {
       return new Response('Webhook signature verification failed', { status: 400 });
     }
 
-    const stripe = (await import('https://esm.sh/stripe@14.21.0')).default(
+    const stripe = new Stripe(
       Deno.env.get('STRIPE_SECRET_KEY') || '',
       { apiVersion: '2023-10-16' }
     );

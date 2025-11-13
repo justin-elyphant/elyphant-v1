@@ -39,6 +39,9 @@ verify_jwt = false
 [functions.force-process-order]
 verify_jwt = false
 
+[functions.process-zma-order]
+verify_jwt = false
+
 [functions.recover-order]
 verify_jwt = false
 

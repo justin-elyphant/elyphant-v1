@@ -504,7 +504,8 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
         } else {
           console.log(`📦 Single-recipient order, processing directly`);
           
-          await supabase.functions.invoke('process-zma-order', {
+          // Invoke with error checking
+          const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
             body: { 
               orderId: order.id,
               triggerSource: 'stripe-webhook',
@@ -514,10 +515,33 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
               autoGiftContext: order.auto_gift_context
             }
           });
-          console.log(`🚀 Direct ZMA processor invoked for order ${order.id}`);
+
+          // Check invocation error
+          if (zmaError) {
+            console.error('❌ Failed to invoke process-zma-order:', zmaError);
+            throw new Error(`process-zma-order invocation failed: ${zmaError.message}`);
+          }
+
+          // Verify order was sent to Zinc
+          const { data: verifiedOrder, error: verifyError } = await supabase
+            .from('orders')
+            .select('zinc_order_id, status, zinc_status')
+            .eq('id', order.id)
+            .single();
+
+          if (verifyError || !verifiedOrder?.zinc_order_id) {
+            console.error('⚠️ Order invocation succeeded but zinc_order_id not set:', { 
+              orderId: order.id, 
+              verifiedOrder,
+              zmaResult 
+            });
+            throw new Error('Order processing completed but Zinc order was not created');
+          }
+
+          console.log(`✅ Order ${order.id} sent to Zinc: ${verifiedOrder.zinc_order_id}`);
         }
         
-        // Log success
+        // Log success (only after verification passes)
         await supabase.from('webhook_delivery_log').insert({
           event_type: 'payment_intent.succeeded',
           event_id: paymentIntent.id,

@@ -77,7 +77,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 }) => {
   const { user } = useAuth();
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
-  const [saveNewCard, setSaveNewCard] = useState(false);
   const payCardRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
 
@@ -262,22 +261,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Separator />
         <div className="space-y-4">
           <h3 className="text-sm font-medium">Or use a new card</h3>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="save-card"
-              checked={saveNewCard}
-              onCheckedChange={(checked) => {
-                setSaveNewCard(checked as boolean);
-                // Clear saved method selection when using new card
-                if (checked) {
-                  setSelectedSavedMethod(null);
-                }
-              }}
-            />
-            <Label htmlFor="save-card" className="text-sm cursor-pointer">
-              Save this card for future purchases
-            </Label>
-          </div>
           <div className="pb-4">
             <Elements stripe={stripeClientManager.getStripePromise()}>
               <UnifiedPaymentForm
@@ -285,7 +268,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 amount={totalAmount}
                 onSuccess={(paymentIntentId, saveCard) => {
                   // Handle saving payment method if requested
-                  if (saveNewCard && saveCard) {
+                  if (saveCard) {
                     // Refresh key will trigger UnifiedPaymentMethodManager to reload
                     onRefreshKeyChange(refreshKey + 1);
                   }
@@ -294,7 +277,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 onError={onPaymentError}
                 isProcessing={isProcessingPayment}
                 onProcessingChange={onProcessingChange}
-                allowSaveCard={saveNewCard}
+                allowSaveCard={true}
                 mode="payment"
               />
             </Elements>

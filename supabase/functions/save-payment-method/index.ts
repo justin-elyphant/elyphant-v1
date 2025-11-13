@@ -52,6 +52,31 @@ serve(async (req) => {
       throw new Error('Invalid payment method - not a card')
     }
 
+    // Find or create Stripe customer
+    const customers = await stripe.customers.list({ 
+      email: user.email,
+      limit: 1 
+    });
+
+    let customerId: string;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      console.log('🔍 Found existing customer:', customerId);
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { user_id: user.id }
+      });
+      customerId = customer.id;
+      console.log('✨ Created new customer:', customerId);
+    }
+
+    // Attach payment method to customer
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+    console.log('🔗 Payment method attached to customer:', customerId);
+
     // If making this the default, first set all existing payment methods to non-default
     if (makeDefault) {
       await supabase

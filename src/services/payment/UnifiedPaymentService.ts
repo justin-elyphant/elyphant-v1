@@ -760,11 +760,19 @@ class UnifiedPaymentService {
         throw new Error('User must be authenticated');
       }
 
-      // CRITICAL: Use Supabase Edge Function, NOT direct Stripe API
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      // CRITICAL: Use v2 Supabase Edge Function with metadata
+      const { data, error } = await supabase.functions.invoke('create-payment-intent-v2', {
         body: {
           amount: Math.round(amount * 100), // Convert to cents
           currency: 'usd',
+          cartItems: this.cartItems.map(item => ({
+            product_id: item.product.product_id || item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image_url: item.product.image || item.product.images?.[0],
+            recipientAssignment: item.recipientAssignment
+          })),
           metadata: {
             user_id: user.id,
             order_type: 'marketplace_purchase',

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import Stripe from 'https://esm.sh/stripe@14.21.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,6 +42,14 @@ function normalizeDate(input: unknown): string | null {
   return null;
 }
 
+// Safe error message extractor
+function errMsg(e: unknown): string {
+  if (e && typeof e === 'object' && 'message' in (e as any) && typeof (e as any).message === 'string') {
+    return (e as any).message as string;
+  }
+  try { return JSON.stringify(e); } catch { return String(e); }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -69,8 +78,9 @@ serve(async (req) => {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
       console.log(`✅ Webhook verified: ${event.type}`);
     } catch (err) {
-      console.error('❌ Webhook signature verification failed:', err.message);
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+      const msg = errMsg(err);
+      console.error('❌ Webhook signature verification failed:', msg);
+      return new Response(`Webhook Error: ${msg}`, { status: 400 });
     }
 
     // Create Supabase client
@@ -103,8 +113,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('❌ Webhook processing error:', error);
+    const msg = errMsg(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: msg }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -566,7 +577,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           // Check invocation error
           if (zmaError) {
             console.error('❌ Failed to invoke process-zma-order:', zmaError);
-            throw new Error(`process-zma-order invocation failed: ${zmaError.message}`);
+            throw new Error(`process-zma-order invocation failed: ${errMsg(zmaError)}`);
           }
           
           console.log('✅ process-zma-order invoked successfully, result:', zmaResult);
@@ -613,7 +624,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           event_id: paymentIntent.id,
           delivery_status: 'processing_failed',
           status_code: 500,
-          error_message: processError.message,
+          error_message: errMsg(processError),
           payment_intent_id: paymentIntent.id,
           order_id: order.id,
           processing_duration_ms: Date.now() - startTime
@@ -629,7 +640,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
       event_id: paymentIntent.id,
       delivery_status: 'error',
       status_code: 500,
-      error_message: error.message,
+      error_message: errMsg(error),
       payment_intent_id: paymentIntent.id,
       processing_duration_ms: Date.now() - startTime
     });

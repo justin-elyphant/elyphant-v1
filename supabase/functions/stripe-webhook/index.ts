@@ -68,7 +68,7 @@ serve(async (req) => {
     try {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
       console.log(`✅ Webhook verified: ${event.type}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Webhook signature verification failed:', err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
@@ -101,7 +101,7 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Webhook processing error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),

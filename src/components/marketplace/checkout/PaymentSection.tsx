@@ -75,25 +75,27 @@ const PaymentSection = ({
         throw new Error('User not authenticated');
       }
 
-      // Get cart session ID (required for webhook to find cart data)
-      let cartSessionId = localStorage.getItem('cart_session_id');
-      if (!cartSessionId) {
-        console.warn('⚠️ No cart_session_id found - generating new one');
-        cartSessionId = crypto.randomUUID();
-        localStorage.setItem('cart_session_id', cartSessionId);
-      }
+      // Use v2 endpoint with metadata-based approach (no cart_sessions)
+      console.log('📦 Creating payment intent v2 with inline cart data');
 
-      // Cart data is already saved by UnifiedCheckoutForm before this point
-      console.log('📦 Using existing cart session data:', cartSessionId);
-
-      const { data, error } = await invokeWithAuthRetry('create-payment-intent', {
+      const { data, error } = await invokeWithAuthRetry('create-payment-intent-v2', {
         body: {
           amount: Math.round(totalAmount * 100), // Convert to cents
           currency: 'usd',
+          cartItems: cartItems.map(item => ({
+            product_id: item.product.product_id || item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image_url: item.product.image || item.product.images?.[0],
+            recipientAssignment: item.recipientAssignment
+          })),
+          shippingInfo: shippingInfo,
+          giftOptions: giftOptions,
           metadata: {
             order_type: 'marketplace',
-            cart_session_id: cartSessionId, // CRITICAL: Webhook needs this to fetch cart data
-            user_id: currentUser.id // CRITICAL: Webhook needs this to create order
+            user_id: currentUser.id,
+            pricing_breakdown: pricingBreakdown
           }
         }
       });
@@ -105,10 +107,9 @@ const PaymentSection = ({
       setClientSecret(data.client_secret);
       setPendingPaymentIntentId(data.payment_intent_id);
       
-      console.log('🔵 Payment intent created for card form:', {
+      console.log('🔵 Payment intent v2 created:', {
         payment_intent_id: data.payment_intent_id,
         amount: totalAmount,
-        cart_session_id: cartSessionId,
         user_id: currentUser.id,
         timestamp: new Date().toISOString()
       });

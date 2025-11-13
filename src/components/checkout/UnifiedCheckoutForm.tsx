@@ -46,7 +46,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
 import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
-import { useCartSessionTracking } from '@/hooks/useCartSessionTracking';
 import { extractBillingInfoFromPaymentMethod } from '@/services/billingService';
 
 import { Badge } from '@/components/ui/badge';
@@ -135,9 +134,6 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + (shippingCost ?? 0) + giftingFee + taxAmount;
-
-  // Track cart session for abandoned cart detection
-  const { markCartCompleted } = useCartSessionTracking(cartItems, totalAmount, shippingCost ?? 0, true);
 
   // 🔍 Address completeness validation helper
   const isCompleteAddress = (addr: any): boolean => {
@@ -368,126 +364,30 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       console.log('🔍 DEBUG - zmaCompatibleShippingInfo built:', JSON.stringify(zmaCompatibleShippingInfo, null, 2));
 
-      // Get or create cart session
-      const sessionId = localStorage.getItem('cart_session_id') || crypto.randomUUID();
-      localStorage.setItem('cart_session_id', sessionId);
-      
-      // Create address map for quick lookup
-      const addressMap = new Map(
-        enrichedDeliveryGroups.map(g => [g.id, g.shippingAddress])
-      );
+      // V2: All cart data will be in payment intent metadata (no cart_sessions)
+      console.log('✅ Skipping cart_sessions table - using metadata-based approach');
 
-      // Enrich each cart item's recipient assignment with complete address
-      const enrichedCartItems = cartItems.map(item => {
-        if (item.recipientAssignment) {
-          const enrichedAddress = addressMap.get(item.recipientAssignment.deliveryGroupId);
-          return {
-            ...item,
-            recipientAssignment: {
-              ...item.recipientAssignment,
-              shippingAddress: enrichedAddress || item.recipientAssignment.shippingAddress
-            }
-          };
-        }
-        return item;
-      });
-      
-      console.log('💾 Saving cart session with enriched addresses...');
-      console.log('📦 Enriched cart items:', enrichedCartItems.map(item => ({
-        product: item.product.title,
-        recipient: item.recipientAssignment?.connectionName,
-        has_address_line1: !!item.recipientAssignment?.shippingAddress?.address_line1,
-        has_address_line2: !!item.recipientAssignment?.shippingAddress?.address_line2,
-        has_zip_code: !!item.recipientAssignment?.shippingAddress?.zip_code
-      })));
 
-      // Save cart data to cart_sessions table with ENRICHED addresses
-      const { error: sessionError } = await supabase
-        .from('cart_sessions')
-        .upsert([{
-          session_id: sessionId,
-          user_id: user.id,
-          cart_data: {
-            cartItems: enrichedCartItems.map(item => ({
-              product_id: item.product.product_id,
-              title: item.product.title,
-              price: item.product.price,
-              quantity: item.quantity,
-              image: item.product.image,
-              recipientAssignment: item.recipientAssignment ? {
-                connectionId: item.recipientAssignment.connectionId,
-                connectionName: item.recipientAssignment.connectionName,
-                deliveryGroupId: item.recipientAssignment.deliveryGroupId,
-                giftMessage: item.recipientAssignment.giftMessage,
-                scheduledDeliveryDate: item.recipientAssignment.scheduledDeliveryDate,
-                shippingAddress: item.recipientAssignment.shippingAddress, // Now enriched!
-                address_verified: item.recipientAssignment.address_verified,
-                address_verification_method: item.recipientAssignment.address_verification_method,
-                address_verified_at: item.recipientAssignment.address_verified_at,
-                address_last_updated: item.recipientAssignment.address_last_updated
-              } : undefined
-            })),
-            subtotal,
-            shippingCost, // Not null - validated above
-            giftingFee,
-            giftingFeeName,
-            giftingFeeDescription,
-            taxAmount,
-            totalAmount,
-            shippingInfo: zmaCompatibleShippingInfo,
-            giftOptions: {
-              isGift: giftOptions.isGift,
-              recipientName: giftOptions.recipientName,
-              giftMessage: giftOptions.giftMessage,
-              giftWrapping: giftOptions.giftWrapping,
-              isSurpriseGift: giftOptions.isSurpriseGift,
-              scheduleDelivery: giftOptions.scheduleDelivery,
-              sendGiftMessage: giftOptions.sendGiftMessage,
-              scheduledDeliveryDate: giftOptions.scheduledDeliveryDate
-            },
-            deliveryGroups: enrichedDeliveryGroups.map(group => ({
-              id: group.id,
-              connectionId: group.connectionId,
-              connectionName: group.connectionName,
-              items: group.items,
-              giftMessage: group.giftMessage,
-              scheduledDeliveryDate: group.scheduledDeliveryDate,
-              shippingAddress: group.shippingAddress, // Now enriched with both legacy and DB keys!
-              address_verified: group.address_verified,
-              address_verification_method: group.address_verification_method,
-              address_verified_at: group.address_verified_at,
-              address_last_updated: group.address_last_updated
-            })),
-            has_multiple_recipients: enrichedDeliveryGroups.length > 1
-          } as any,
-          total_amount: totalAmount,
-          checkout_initiated_at: new Date().toISOString(),
-          last_updated: new Date().toISOString()
-        }], {
-          onConflict: 'session_id'
-        });
-
-      if (sessionError) {
-        console.error('❌ Failed to save cart session:', sessionError);
-        const errorMsg = 'Failed to save cart data. Please try again.';
-        setInitError(errorMsg);
-        toast.error(errorMsg);
-        setIsProcessing(false);
-        return;
-      }
-
-      console.log('✅ Cart session saved:', sessionId);
-
-      // Create payment intent with session ID (short!)
-      const { data, error } = await invokeWithAuthRetry('create-payment-intent', {
+      // Create payment intent with v2 endpoint (metadata-based)
+      const { data, error } = await invokeWithAuthRetry('create-payment-intent-v2', {
         body: {
           amount: Math.round(totalAmount * 100),
           currency: 'usd',
+          cartItems: cartItems.map(item => ({
+            product_id: item.product.product_id || item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image_url: item.product.image || item.product.images?.[0],
+            recipientAssignment: item.recipientAssignment
+          })),
+          shippingInfo: checkoutData.shippingInfo,
+          giftOptions: giftOptions,
+          deliveryGroups: deliveryGroups,
           metadata: {
             user_id: user.id,
             order_type: 'marketplace_purchase',
             item_count: cartItems.length,
-            cart_session_id: sessionId,
             scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
             isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
             deliveryDate: giftOptions.scheduledDeliveryDate
@@ -536,10 +436,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       setIsProcessing(true);
       console.log('🎉 Payment successful! Stripe webhook will create order...');
       
-      // Get cart session ID to track order creation
-      const cartSessionId = localStorage.getItem('cart_session_id');
-      
-      // 💳 EXTRACT BILLING INFO from Stripe PaymentMethod
+      // 💳 EXTRACT BILLING INFO from Stripe PaymentMethod (stored in metadata)
       let billingInfo = null;
       if (paymentMethodId) {
         try {
@@ -555,24 +452,7 @@ const UnifiedCheckoutForm: React.FC = () => {
             billingInfo = extractBillingInfoFromPaymentMethod(paymentMethodData.data);
             console.log('✅ Billing info extracted:', billingInfo);
             
-            // Save billing info to cart session for webhook to use
-            const { data: existingSession } = await supabase
-              .from('cart_sessions')
-              .select('cart_data')
-              .eq('session_id', cartSessionId)
-              .single();
-            
-            const updatedCartData = {
-              ...(existingSession?.cart_data as any || {}),
-              billingInfo
-            };
-            
-            await supabase
-              .from('cart_sessions')
-              .update({ cart_data: updatedCartData })
-              .eq('session_id', cartSessionId);
-            
-            console.log('✅ Billing info saved to cart session');
+            console.log('✅ Billing info extracted:', billingInfo);
           }
         } catch (billingError) {
           console.error('⚠️ Failed to extract billing info:', billingError);
@@ -593,15 +473,14 @@ const UnifiedCheckoutForm: React.FC = () => {
       toast.success('Payment successful! Your order is being processed...');
       
       // Clear cart and navigate to order confirmation
-      // Note: Webhook creates order asynchronously, pass session ID to track creation
-      console.log('🧹 Clearing cart and navigating to confirmation...', { sessionId: cartSessionId });
+      // Webhook creates order asynchronously using payment_intent_id
+      console.log('🧹 Clearing cart and navigating to confirmation...');
       clearCart();
       console.log('🛒 Cart cleared successfully');
       
-      // Navigate to order confirmation page with session ID (or payment intent ID as fallback)
-      const trackingId = cartSessionId || paymentIntentId;
+      // Navigate to order confirmation page with payment intent ID
       console.log('🧭 Navigating to order confirmation page');
-      navigate(`/order-confirmation/${trackingId}`);
+      navigate(`/order-confirmation/${paymentIntentId}`);
       
     } catch (error: any) {
       console.error('💥 Post-payment error:', error);

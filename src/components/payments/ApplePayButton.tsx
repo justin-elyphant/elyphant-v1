@@ -82,18 +82,23 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       try {
         console.log('🍎 Apple Pay payment method created:', event.paymentMethod.id);
         
-        // Create payment intent on backend using Supabase edge function
-        const { data, error: functionError } = await supabase.functions.invoke('create-payment-intent', {
+        // Create payment intent using v2 endpoint with metadata
+        const { data, error: functionError } = await supabase.functions.invoke('create-payment-intent-v2', {
           body: {
             amount: Math.round(totalAmount * 100),
             currency: 'usd',
+            cartItems: items.map(item => ({
+              product_id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              image_url: item.image
+            })),
             metadata: {
               user_id: user?.id,
               order_type: 'marketplace_purchase',
               item_count: items.length,
-              scheduledDeliveryDate: '',
-              isScheduledDelivery: false,
-              deliveryDate: ''
+              payment_method: 'apple_pay'
             }
           }
         });

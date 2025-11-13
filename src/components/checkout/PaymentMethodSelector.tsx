@@ -77,11 +77,9 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 }) => {
   const { user } = useAuth();
   const [selectedSavedMethod, setSelectedSavedMethod] = useState<PaymentMethod | null>(null);
-  const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [saveNewCard, setSaveNewCard] = useState(false);
   const payCardRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
-
 
   /*
    * 🔗 CRITICAL: Payment method selection handler
@@ -90,7 +88,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
    */
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
-    setShowNewCardForm(!method);
     
     // Notify parent component of selection change
     if (onMethodSelected) {
@@ -134,14 +131,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         } catch {}
       }, 0);
     }
-  };
-
-  /*
-   * 🔗 CRITICAL: New payment method handler
-   */
-  const handleAddNewMethod = () => {
-    setSelectedSavedMethod(null);
-    setShowNewCardForm(true);
   };
 
   /*
@@ -228,19 +217,19 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   return (
     <div className="space-y-6 payment-form-mobile dynamic-content-safe pb-safe-bottom">
-      {/* ✅ UNIFIED: Payment methods managed by UnifiedPaymentMethodManager */}
+      {/* ✅ UNIFIED: Saved payment methods for selection */}
       <Elements stripe={stripeClientManager.getStripePromise()}>
         <UnifiedPaymentMethodManager
           mode="selection"
           onSelectMethod={handleSelectPaymentMethod}
           selectedMethodId={selectedSavedMethod?.id}
-          showAddNew={true}
+          showAddNew={false}
           allowSelection={true}
         />
       </Elements>
 
       {/* CRITICAL: Selected payment method processing */}
-      {selectedSavedMethod && !showNewCardForm && (
+      {selectedSavedMethod && (
         <div ref={payCardRef} className="scroll-safe-bottom">
           <Card className="mb-4">
             <CardContent className="p-4">
@@ -268,45 +257,50 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         </div>
       )}
 
-      {/* CRITICAL: New payment method form */}
-      {showNewCardForm && (
-        <div className="space-y-4 pb-4">
-          <Separator />
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="save-card"
-                checked={saveNewCard}
-                onCheckedChange={(checked) => setSaveNewCard(checked as boolean)}
+      {/* CRITICAL: New payment method form - Always visible as alternative */}
+      <div className="space-y-4 pb-4">
+        <Separator />
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium">Or use a new card</h3>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="save-card"
+              checked={saveNewCard}
+              onCheckedChange={(checked) => {
+                setSaveNewCard(checked as boolean);
+                // Clear saved method selection when using new card
+                if (checked) {
+                  setSelectedSavedMethod(null);
+                }
+              }}
+            />
+            <Label htmlFor="save-card" className="text-sm cursor-pointer">
+              Save this card for future purchases
+            </Label>
+          </div>
+          <div className="pb-4">
+            <Elements stripe={stripeClientManager.getStripePromise()}>
+              <UnifiedPaymentForm
+                clientSecret={clientSecret}
+                amount={totalAmount}
+                onSuccess={(paymentIntentId, saveCard) => {
+                  // Handle saving payment method if requested
+                  if (saveNewCard && saveCard) {
+                    // Refresh key will trigger UnifiedPaymentMethodManager to reload
+                    onRefreshKeyChange(refreshKey + 1);
+                  }
+                  onPaymentSuccess(paymentIntentId, paymentIntentId);
+                }}
+                onError={onPaymentError}
+                isProcessing={isProcessingPayment}
+                onProcessingChange={onProcessingChange}
+                allowSaveCard={saveNewCard}
+                mode="payment"
               />
-              <Label htmlFor="save-card" className="text-sm cursor-pointer">
-                Save this card for future purchases
-              </Label>
-            </div>
-            <div className="pb-4">
-              <Elements stripe={stripeClientManager.getStripePromise()}>
-                <UnifiedPaymentForm
-                  clientSecret={clientSecret}
-                  amount={totalAmount}
-                  onSuccess={(paymentIntentId, saveCard) => {
-                    // Handle saving payment method if requested
-                    if (saveNewCard && saveCard) {
-                      // Refresh key will trigger UnifiedPaymentMethodManager to reload
-                      onRefreshKeyChange(refreshKey + 1);
-                    }
-                    onPaymentSuccess(paymentIntentId, paymentIntentId);
-                  }}
-                  onError={onPaymentError}
-                  isProcessing={isProcessingPayment}
-                  onProcessingChange={onProcessingChange}
-                  allowSaveCard={saveNewCard}
-                  mode="payment"
-                />
-              </Elements>
-            </div>
+            </Elements>
           </div>
         </div>
-      )}
+      </div>
       <div className="xl:hidden bottom-action-spacer" aria-hidden="true" />
     </div>
   );

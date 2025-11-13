@@ -350,6 +350,11 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
               const ra = item?.recipientAssignment || {};
               const qty = Number(item?.quantity ?? 1);
               const unitPrice = Number(item?.price ?? 0);
+              
+              // FIX: Convert "self" connectionId to NULL for database compatibility
+              const recipientConnectionId = ra?.connectionId === 'self' 
+                ? null 
+                : ra?.connectionId || null;
 
               return {
                 order_id: order.id,
@@ -360,7 +365,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
                 quantity: qty,
                 unit_price: unitPrice,
                 total_price: unitPrice * qty,
-                recipient_connection_id: ra?.connectionId ?? null,
+                recipient_connection_id: recipientConnectionId,
                 delivery_group_id: ra?.deliveryGroupId ?? null,
                 recipient_gift_message: ra?.giftMessage ?? null,
                 scheduled_delivery_date: normalizeDate(ra?.scheduledDeliveryDate),
@@ -368,21 +373,44 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
                 selected_variations: item?.selected_variations ?? null
               };
             });
+            
+            // Validate recipient_connection_ids are valid UUIDs or null
+            const invalidRecipients = orderItems.filter(item => 
+              item.recipient_connection_id && 
+              !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.recipient_connection_id)
+            );
+            
+            if (invalidRecipients.length > 0) {
+              console.error('❌ Invalid recipient_connection_ids detected:', invalidRecipients);
+              throw new Error(`Invalid recipient_connection_ids: ${invalidRecipients.map(i => i.recipient_connection_id).join(', ')}`);
+            }
 
             console.log(`📦 Inserting ${orderItems.length} order items. First item:`, {
               product_name: orderItems[0]?.product_name,
               quantity: orderItems[0]?.quantity,
-              unit_price: orderItems[0]?.unit_price
+              unit_price: orderItems[0]?.unit_price,
+              recipient_connection_id: orderItems[0]?.recipient_connection_id
             });
 
-            const { error: itemsError } = await supabase
+            const { data: itemsData, error: itemsError } = await supabase
               .from('order_items')
-              .insert(orderItems);
+              .insert(orderItems)
+              .select();
 
             if (itemsError) {
               console.error('❌ Failed to create order items:', itemsError);
-            } else {
-              console.log('✅ Created', orderItems.length, 'order items');
+              // Update order status to reflect the failure
+              await supabase
+                .from('orders')
+                .update({ 
+                  status: 'failed',
+                  error_message: `Failed to create order items: ${itemsError.message}`
+                })
+                .eq('id', order.id);
+              throw new Error(`Failed to create order items: ${itemsError.message}`);
+            }
+            
+            console.log(`✅ Created ${itemsData.length} order items`);
               
               // 🎁 Track wishlist item purchases
               console.log('🎁 Checking for wishlist items to track...');

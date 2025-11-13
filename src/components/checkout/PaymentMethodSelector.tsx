@@ -39,6 +39,7 @@ interface PaymentMethodSelectorProps {
   onProcessingChange: (processing: boolean) => void;
   refreshKey: number;
   onRefreshKeyChange: (key: number) => void;
+  onMethodSelected?: (paymentMethodId: string | null) => void;
   shippingAddress?: {
     name: string;
     address: string;
@@ -66,6 +67,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onProcessingChange,
   refreshKey,
   onRefreshKeyChange,
+  onMethodSelected,
   shippingAddress
 }) => {
   const { user } = useAuth();
@@ -84,6 +86,12 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const handleSelectPaymentMethod = (method: PaymentMethod | null) => {
     setSelectedSavedMethod(method);
     setShowNewCardForm(!method);
+    
+    // Notify parent component of selection change
+    if (onMethodSelected) {
+      onMethodSelected(method?.stripe_payment_method_id || null);
+    }
+    
     // Ensure the pay button/card is visible above the bottom nav on mobile/tablet
     if (method) {
       setTimeout(() => {
@@ -134,8 +142,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   /*
    * 🔗 CRITICAL: Existing payment method processing
    * 
-   * Enhanced to handle payment method attachment errors gracefully
-   * and provide better user experience with fallback options.
+   * Simplified to just confirm payment - attachment is handled by create-payment-intent edge function
    */
   const handleUseExistingCard = async () => {
     if (!selectedSavedMethod) return;
@@ -143,16 +150,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     try {
       onProcessingChange(true);
       
-      console.log('💳 Using saved payment method with existing payment intent:', selectedSavedMethod.stripe_payment_method_id);
+      console.log('💳 Using saved payment method:', selectedSavedMethod.stripe_payment_method_id);
       
-      // CRITICAL FIX: Use the existing clientSecret from parent, don't create a new payment intent
       const stripe = await stripeClientManager.getStripeInstance();
       
       if (!stripe) {
         throw new Error('Payment system is not available. Please refresh the page and try again.');
       }
       
-      // Confirm the existing payment intent with the saved payment method
+      // Payment method is already attached by create-payment-intent edge function
+      // Just confirm the payment
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: selectedSavedMethod.stripe_payment_method_id
       });
@@ -167,8 +174,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           throw new Error('This card has expired. Please use a different payment method.');
         } else if (error.code === 'insufficient_funds') {
           throw new Error('Insufficient funds. Please try a different payment method.');
-        } else if (error.message?.includes('cannot be attached') || error.message?.includes('PaymentMethod')) {
-          throw new Error('This payment method cannot be used. Please select a different card or add a new one.');
         }
         
         throw new Error(error.message || 'Payment failed');
@@ -179,7 +184,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         onPaymentSuccess(paymentIntent.id, selectedSavedMethod.stripe_payment_method_id);
       } else if (paymentIntent?.status === 'requires_action') {
         console.log('🔐 Payment requires additional authentication');
-        // Handle 3D Secure or other required actions
         throw new Error('Additional authentication required. Please try again.');
       } else {
         console.log('❓ Unexpected payment status:', paymentIntent?.status);
@@ -188,17 +192,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     } catch (error: any) {
       console.error('💥 Payment processing error:', error);
       
-      // Provide user-friendly error messages
-      let userMessage = error.message;
+      let userMessage = error.message || 'Payment processing failed. Please try again.';
       
-      if (error.message?.includes('PaymentMethod cannot be attached')) {
-        userMessage = 'This saved payment method cannot be used. Please select a different card or add a new one.';
-        // Optionally trigger refresh of saved payment methods
-        onRefreshKeyChange(refreshKey + 1);
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
         userMessage = 'Network error. Please check your connection and try again.';
-      } else if (!error.message || error.message.includes('undefined')) {
-        userMessage = 'Payment processing failed. Please try again or contact support.';
       }
       
       onPaymentError(userMessage);

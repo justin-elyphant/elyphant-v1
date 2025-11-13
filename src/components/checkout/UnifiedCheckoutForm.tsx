@@ -108,6 +108,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -489,7 +490,9 @@ const UnifiedCheckoutForm: React.FC = () => {
             cart_session_id: sessionId,
             scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
             isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
-            deliveryDate: giftOptions.scheduledDeliveryDate
+            deliveryDate: giftOptions.scheduledDeliveryDate,
+            useExistingPaymentMethod: selectedPaymentMethodId ? true : false,
+            paymentMethodId: selectedPaymentMethodId || undefined
           }
         }
       });
@@ -718,6 +721,12 @@ const UnifiedCheckoutForm: React.FC = () => {
                   onProcessingChange={setIsProcessingPayment}
                   refreshKey={refreshKey}
                   onRefreshKeyChange={setRefreshKey}
+                  onMethodSelected={(methodId) => {
+                    setSelectedPaymentMethodId(methodId);
+                    // Force recreate payment intent with this method attached
+                    setClientSecret('');
+                    setPaymentIntentId('');
+                  }}
                   shippingAddress={{
                     name: checkoutData.shippingInfo.name,
                     address: checkoutData.shippingInfo.address,

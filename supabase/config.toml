@@ -1,5 +1,37 @@
 project_id = "dmkxtkvlispxeqfzlczr"
 
+# ============================================
+# MODERNIZED V2 FUNCTIONS (New - Active)
+# ============================================
+
+[functions.create-payment-intent-v2]
+verify_jwt = true
+
+[functions.stripe-webhook-v2]
+verify_jwt = false
+
+[functions.process-order-v2]
+verify_jwt = false
+
+[functions.scheduled-order-processor]
+verify_jwt = false
+
+[functions.auto-gift-orchestrator]
+verify_jwt = false
+
+[functions.order-monitor-v2]
+verify_jwt = false
+
+[functions.webhook-signature-validator]
+verify_jwt = false
+
+[functions.admin-order-tools]
+verify_jwt = true
+
+# ============================================
+# LEGACY FUNCTIONS (Keep for rollback)
+# ============================================
+
 [functions.stripe-webhook]
 verify_jwt = false
 
@@ -147,3 +179,22 @@ schedule = "*/15 * * * *"
 [[crons.process_scheduled_orders]]
 function_name = "process-scheduled-orders"
 schedule = "0 6,14 * * *"
+
+# ============================================
+# V2 CRON JOBS (Modernized System)
+# ============================================
+
+# Scheduled order processor v2 - runs daily at 2 AM
+[[crons.scheduled_order_processor_v2]]
+function_name = "scheduled-order-processor"
+schedule = "0 2 * * *"
+
+# Auto-gift orchestrator v2 - runs daily at 3 AM
+[[crons.auto_gift_orchestrator_v2]]
+function_name = "auto-gift-orchestrator"
+schedule = "0 3 * * *"
+
+# Order monitor v2 - runs every 15 minutes
+[[crons.order_monitor_v2]]
+function_name = "order-monitor-v2"
+schedule = "*/15 * * * *"

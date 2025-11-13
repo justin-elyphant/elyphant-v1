@@ -463,6 +463,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
               }
             }
           }
+        }
           
           // Mark cart session as completed
           await supabase

@@ -115,6 +115,13 @@ serve(async (req) => {
 
 async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
   console.log(`💳 Payment succeeded: ${paymentIntent.id}`);
+  console.log(`📊 Payment metadata:`, {
+    cart_session_id: paymentIntent.metadata?.cart_session_id,
+    user_id: paymentIntent.metadata?.user_id,
+    order_type: paymentIntent.metadata?.order_type,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency
+  });
   const startTime = Date.now();
   
   try {
@@ -226,6 +233,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
     // NEW FLOW: Create order from cart_sessions table
     if (!order && !updateError && paymentIntent.metadata?.cart_session_id) {
       console.log('📦 Fetching cart data from cart_sessions...');
+      console.log('🔍 Cart session ID from metadata:', paymentIntent.metadata.cart_session_id);
       
       const { data: cartSession, error: sessionError } = await supabase
         .from('cart_sessions')
@@ -385,11 +393,15 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
               throw new Error(`Invalid recipient_connection_ids: ${invalidRecipients.map(i => i.recipient_connection_id).join(', ')}`);
             }
 
-            console.log(`📦 Inserting ${orderItems.length} order items. First item:`, {
-              product_name: orderItems[0]?.product_name,
-              quantity: orderItems[0]?.quantity,
-              unit_price: orderItems[0]?.unit_price,
-              recipient_connection_id: orderItems[0]?.recipient_connection_id
+            console.log(`📦 Inserting ${orderItems.length} order items:`);
+            orderItems.forEach((item, index) => {
+              console.log(`   Item ${index + 1}:`, {
+                product_name: item.product_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                recipient_connection_id: item.recipient_connection_id,
+                delivery_group_id: item.delivery_group_id
+              });
             });
 
             const { data: itemsData, error: itemsError } = await supabase
@@ -399,6 +411,7 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
 
             if (itemsError) {
               console.error('❌ Failed to create order items:', itemsError);
+              console.error('❌ Failed items data:', JSON.stringify(orderItems, null, 2));
               // Update order status to reflect the failure
               await supabase
                 .from('orders')
@@ -530,7 +543,13 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
           });
           console.log(`✅ Split order processor invoked for order ${order.id}`);
         } else {
-          console.log(`📦 Single-recipient order, processing directly`);
+          console.log(`📦 Single-recipient order, processing directly with order ID: ${order.id}`);
+          console.log(`🔧 Zinc processing payload:`, {
+            orderId: order.id,
+            triggerSource: 'stripe-webhook',
+            isScheduled: order.scheduled_delivery_date ? true : false,
+            scheduledDeliveryDate: order.scheduled_delivery_date
+          });
           
           // Invoke with error checking
           const { data: zmaResult, error: zmaError } = await supabase.functions.invoke('process-zma-order', {
@@ -549,6 +568,8 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             console.error('❌ Failed to invoke process-zma-order:', zmaError);
             throw new Error(`process-zma-order invocation failed: ${zmaError.message}`);
           }
+          
+          console.log('✅ process-zma-order invoked successfully, result:', zmaResult);
 
           // Verify order was sent to Zinc
           const { data: verifiedOrder, error: verifyError } = await supabase
@@ -566,7 +587,11 @@ async function handlePaymentSucceeded(paymentIntent: any, supabase: any) {
             throw new Error('Order processing completed but Zinc order was not created');
           }
 
-          console.log(`✅ Order ${order.id} sent to Zinc: ${verifiedOrder.zinc_order_id}`);
+          console.log(`✅ Order ${order.id} sent to Zinc successfully:`, {
+            zinc_order_id: verifiedOrder.zinc_order_id,
+            status: verifiedOrder.status,
+            zinc_status: verifiedOrder.zinc_status
+          });
         }
         
         // Log success (only after verification passes)

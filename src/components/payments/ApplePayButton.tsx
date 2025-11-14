@@ -82,11 +82,10 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       try {
         console.log('🍎 Apple Pay payment method created:', event.paymentMethod.id);
         
-        // Create payment intent using v2 endpoint with metadata
-        const { data, error: functionError } = await supabase.functions.invoke('create-payment-intent-v2', {
+        // Create checkout session for Apple Pay (payment mode, no redirect)
+        // Note: Apple Pay uses PaymentRequest API, so we need payment intent flow
+        const { data, error: functionError } = await supabase.functions.invoke('create-checkout-session', {
           body: {
-            amount: Math.round(totalAmount * 100),
-            currency: 'usd',
             cartItems: items.map(item => ({
               product_id: item.id,
               name: item.name,
@@ -97,8 +96,8 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
             metadata: {
               user_id: user?.id,
               order_type: 'marketplace_purchase',
-              item_count: items.length,
-              payment_method: 'apple_pay'
+              payment_method: 'apple_pay',
+              payment_intent_only: true // Request payment intent instead of redirect
             }
           }
         });

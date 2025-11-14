@@ -24,7 +24,7 @@ serve(async (req) => {
       .from('orders')
       .select('*')
       .eq('status', 'processing')
-      .not('zinc_request_id', 'is', null)
+      .not('zinc_order_id', 'is', null)
       .order('created_at', { ascending: true });
 
     if (fetchError) {
@@ -45,7 +45,7 @@ serve(async (req) => {
 
         // Check Zinc API for order status
         const zincResponse = await fetch(
-          `https://api.zinc.io/v1/orders/${order.zinc_request_id}`,
+          `https://api.zinc.io/v1/orders/${order.zinc_order_id}`,
           {
             headers: {
               'Authorization': `Basic ${btoa(Deno.env.get('ZINC_API_KEY') + ':')}`,
@@ -54,7 +54,7 @@ serve(async (req) => {
         );
 
         if (!zincResponse.ok) {
-          console.warn(`⚠️ Failed to fetch Zinc status for ${order.zinc_request_id}`);
+          console.warn(`⚠️ Failed to fetch Zinc status for ${order.zinc_order_id}`);
           continue;
         }
 

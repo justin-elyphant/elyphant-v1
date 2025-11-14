@@ -41,13 +41,13 @@ serve(async (req) => {
     }
 
     // Validate order not already processing
-    if (order.zinc_request_id) {
-      console.log('⚠️ Order already submitted to Zinc:', order.zinc_request_id);
+    if (order.zinc_order_id) {
+      console.log('⚠️ Order already submitted to Zinc:', order.zinc_order_id);
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'Order already processing',
-          zinc_request_id: order.zinc_request_id 
+          zinc_order_id: order.zinc_order_id 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -135,7 +135,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('orders')
       .update({
-        zinc_request_id: zincData.request_id,
+        zinc_order_id: zincData.request_id,
         status: 'processing',
         zinc_status: 'pending',
         last_zinc_update: new Date().toISOString(),
@@ -153,7 +153,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        zinc_request_id: zincData.request_id,
+        zinc_order_id: zincData.request_id,
         order_id: orderId,
       }),
       { 

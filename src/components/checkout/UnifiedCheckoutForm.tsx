@@ -407,10 +407,15 @@ const UnifiedCheckoutForm: React.FC = () => {
           toast.error('Automatic redirect failed. Please use the button below to open checkout.');
         }, 5000);
         
-        // Attempt automatic redirect
+        // Attempt automatic redirect (iframe-aware)
         setTimeout(() => {
           try {
-            window.location.href = data.url;
+            // If in iframe (Preview), open in new tab; otherwise normal redirect
+            if (window.self !== window.top) {
+              window.open(data.url, '_blank', 'noopener,noreferrer');
+            } else {
+              window.location.href = data.url;
+            }
             // If redirect succeeds, user leaves page and timeout never fires
           } catch (redirectError) {
             console.error('❌ Redirect blocked:', redirectError);

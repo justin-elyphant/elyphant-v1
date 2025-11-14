@@ -567,8 +567,9 @@ const UnifiedCheckoutForm: React.FC = () => {
                 <CreditCard className="h-5 w-5" />
                 Payment
               </CardTitle>
-              <p className="text-sm text-muted-foreground pt-2">
-                You'll be redirected to Stripe's secure payment page to complete your purchase. Your payment information is protected by bank-level encryption.
+              <p className="text-sm text-muted-foreground pt-2 flex items-center gap-2">
+                <Shield className="h-4 w-4 flex-shrink-0" />
+                <span>You'll be redirected to Stripe's secure payment page to complete your purchase. Your payment information is protected by bank-level encryption.</span>
               </p>
             </CardHeader>
             <CardContent>

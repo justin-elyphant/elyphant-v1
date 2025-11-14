@@ -25,10 +25,21 @@ import { PaymentRequestButtonElement, useStripe } from '@stripe/react-stripe-js'
 import { useAuth } from '@/contexts/auth';
 import { CheckoutItem } from '@/types/checkout';
 import { supabase } from '@/integrations/supabase/client';
+import { DeliveryGroup } from '@/types/recipient';
+import { GiftOptions } from '@/types/gift-options';
 
 interface ApplePayButtonProps {
   items: CheckoutItem[];
   totalAmount: number;
+  pricingBreakdown: {
+    subtotal: number;
+    shippingCost: number;
+    giftingFee: number;
+    taxAmount: number;
+  };
+  deliveryGroups?: DeliveryGroup[];
+  shippingInfo?: any;
+  giftOptions?: GiftOptions;
   onPaymentSuccess: (paymentIntentId: string) => void;
   onPaymentError: (error: string) => void;
   disabled?: boolean;
@@ -37,6 +48,10 @@ interface ApplePayButtonProps {
 const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   items,
   totalAmount,
+  pricingBreakdown,
+  deliveryGroups,
+  shippingInfo,
+  giftOptions,
   onPaymentSuccess,
   onPaymentError,
   disabled = false
@@ -93,6 +108,10 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
               quantity: item.quantity,
               image_url: item.image
             })),
+            pricingBreakdown: pricingBreakdown,
+            deliveryGroups: deliveryGroups,
+            shippingInfo: shippingInfo,
+            giftOptions: giftOptions,
             metadata: {
               user_id: user?.id,
               order_type: 'marketplace_purchase',

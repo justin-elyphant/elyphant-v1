@@ -11,7 +11,43 @@ The Unified Payment System consolidates ALL payment functionality while maintain
 
 **CRITICAL ACHIEVEMENT:** 100% payment consolidation with ZERO security compromises.
 
-## 🏗️ UNIFIED ARCHITECTURE OVERVIEW
+## 🔄 PAYMENT FLOW MIGRATION STATUS (Updated 2025-01-24)
+
+### Phase 1: Checkout Sessions Migration ✅ 95% Complete
+
+**Migrated to Stripe Checkout Sessions:**
+- ✅ Main checkout flow (/checkout)
+- ✅ Apple Pay
+- ✅ Express checkout buttons
+- ✅ Auto-gifting orchestrator (feature flag controlled)
+- ✅ Group gift contributions (migration complete, testing pending)
+- ✅ Scheduled order processor
+
+**Legacy Payment Intent Flow (Deprecated):**
+- ⚠️ `create-payment-intent-v2` - Feature flag redirects to checkout sessions
+- ⚠️ `UnifiedPaymentService.createPaymentIntent()` - Logs deprecation warnings
+
+**Feature Flags Active:**
+- `USE_CHECKOUT_SESSIONS`: ✅ Enabled (default)
+- `USE_LEGACY_PAYMENT_INTENTS`: ❌ Disabled (emergency only)
+- `ENABLE_GROUP_GIFT_CHECKOUT_SESSIONS`: ⏸️ Testing (enable after validation)
+- `ENABLE_AUTO_GIFT_CHECKOUT_SESSIONS`: ⏸️ Testing (enable after validation)
+- `ENABLE_PAYMENT_FLOW_LOGGING`: ✅ Enabled in dev mode
+
+### Why Checkout Sessions?
+1. **PCI Compliance:** Stripe hosts payment UI (no card data touches our servers)
+2. **No Cart Race Conditions:** All order data in session metadata
+3. **Built-in Retry Logic:** Stripe handles failed payments
+4. **Better Mobile UX:** Optimized checkout on all devices
+5. **Multiple Payment Methods:** Cards, Apple Pay, Google Pay, BNPL
+6. **Scheduled Payments:** `capture_method: manual` holds funds
+7. **Group Gift Escrow:** Hold contributions until project funded
+
+### Migration Roadmap
+- [x] Phase 1: Core checkout flows (95% complete)
+- [ ] Phase 2: Testing & validation (5% remaining)
+- [ ] Phase 3: Production rollout (0% complete)
+- [ ] Phase 4: Legacy cleanup (0% complete)
 
 ```
 ┌─────────────────────────────┐

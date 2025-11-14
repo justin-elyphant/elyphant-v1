@@ -50,13 +50,32 @@ serve(async (req) => {
       paymentMethod,
       pricingBreakdown,
       shippingInfo,
-      metadata
+      metadata,
+      // NEW: Group gift parameters
+      isGroupGift = false,
+      groupGiftProjectId,
+      contributionAmount
     } = await req.json();
     
     // Check if this is a payment intent only request (for Apple Pay)
     const isPaymentIntentOnly = metadata?.payment_intent_only === true;
 
-    if (!cartItems || cartItems.length === 0) {
+    // Group gift validation
+    if (isGroupGift) {
+      if (!groupGiftProjectId) {
+        throw new Error("Group gift project ID is required");
+      }
+      if (!contributionAmount || contributionAmount < 5) {
+        throw new Error("Minimum contribution is $5");
+      }
+      
+      logStep("Group gift contribution request", { 
+        projectId: groupGiftProjectId, 
+        amount: contributionAmount 
+      });
+    }
+
+    if (!isGroupGift && (!cartItems || cartItems.length === 0)) {
       throw new Error("Cart is empty");
     }
 
@@ -94,7 +113,17 @@ serve(async (req) => {
     const amountInCents = Math.round(totalAmount * 100);
 
     // Build line items for Stripe (no metadata limits here!)
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = cartItems.map((item: any) => ({
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = isGroupGift ? [{
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'Group Gift Contribution',
+          description: `Contribution to group gift project`,
+        },
+        unit_amount: Math.round(contributionAmount * 100),
+      },
+      quantity: 1,
+    }] : cartItems.map((item: any) => ({
       price_data: {
         currency: 'usd',
         product_data: {
@@ -165,10 +194,13 @@ serve(async (req) => {
     const metadata: Record<string, string> = {
       user_id: user.id,
       user_email: user.email,
-      item_count: String(cartItems.length),
+      item_count: String(isGroupGift ? 1 : cartItems.length),
       scheduled_delivery_date: scheduledDeliveryDate || '',
       is_auto_gift: String(!!isAutoGift),
       auto_gift_rule_id: autoGiftRuleId || '',
+      is_group_gift: String(!!isGroupGift),
+      group_gift_project_id: groupGiftProjectId || '',
+      contribution_amount: String(contributionAmount || 0),
       created_at: new Date().toISOString(),
       // Store pricing breakdown for order creation
       subtotal: String(pricingBreakdown.subtotal),
@@ -247,6 +279,20 @@ serve(async (req) => {
       customer_email: user.email,
       billing_address_collection: 'required',
     };
+
+    // For group gifts, hold funds in escrow until project completes
+    if (isGroupGift) {
+      sessionParams.payment_intent_data = {
+        capture_method: 'manual', // Escrow - capture when project funded
+        metadata: {
+          ...metadata,
+          payment_type: 'group_gift_contribution'
+        }
+      };
+      sessionParams.success_url = `${origin}/group-gift/${groupGiftProjectId}?contribution=success&session_id={CHECKOUT_SESSION_ID}`;
+      sessionParams.cancel_url = `${origin}/group-gift/${groupGiftProjectId}?contribution=cancelled`;
+      logStep("Configured for group gift contribution (escrow)");
+    }
 
     // For scheduled deliveries, hold the payment
     if (isScheduled) {

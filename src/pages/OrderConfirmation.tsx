@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 
@@ -37,12 +38,16 @@ const OrderConfirmation = () => {
   const [showProgressiveError, setShowProgressiveError] = useState(false);
   const [showAutoGiftUpsell, setShowAutoGiftUpsell] = useState(false);
   const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(true);
 
   useEffect(() => {
     if (!orderId && !sessionId) {
       navigate('/orders');
       return;
     }
+
+    // Hide welcome message after 3 seconds
+    const welcomeTimer = setTimeout(() => setShowWelcomeBack(false), 3000);
 
     fetchOrderDetails();
     
@@ -64,6 +69,7 @@ const OrderConfirmation = () => {
       clearInterval(interval);
       clearTimeout(progressiveTimeout);
       clearTimeout(stopPollingTimeout);
+      clearTimeout(welcomeTimer);
     };
   }, [orderId, sessionId]);
 
@@ -301,6 +307,17 @@ const OrderConfirmation = () => {
   return (
     <SidebarLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Welcome Back & Success Message */}
+        {showWelcomeBack && (
+          <Alert className="mb-6 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <AlertTitle className="text-green-900 dark:text-green-100">Welcome back! Payment Successful ✓</AlertTitle>
+            <AlertDescription className="text-green-800 dark:text-green-200">
+              Your order is being processed. This usually takes 3-5 seconds.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Success Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">

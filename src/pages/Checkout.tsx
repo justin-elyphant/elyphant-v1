@@ -1,17 +1,22 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, AlertCircle } from 'lucide-react';
+import { ShoppingBag, AlertCircle, Info, Shield } from 'lucide-react';
 import UnifiedCheckoutForm from '@/components/checkout/UnifiedCheckoutForm';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
   const { profile } = useProfile();
+  
+  // Check if user cancelled payment
+  const cancelled = searchParams.get('cancelled') === 'true';
 
   // Note: Cart session tracking is handled by UnifiedCheckoutForm to avoid race conditions
   // Cart abandonment tracking occurs in Cart page via useCartSessionTracking hook
@@ -154,6 +159,35 @@ const Checkout = () => {
 
   return (
     <SidebarLayout>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Secure Checkout Trust Banner */}
+        <Alert className="mb-6 border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-900 dark:text-blue-100">Secure Checkout</AlertTitle>
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            You'll be redirected to Stripe's secure payment page to complete your purchase. 
+            Your payment information is protected by bank-level encryption.
+          </AlertDescription>
+        </Alert>
+
+        {/* Cancelled Payment Banner */}
+        {cancelled && (
+          <Alert variant="warning" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Payment Cancelled</AlertTitle>
+            <AlertDescription>
+              Your cart is still saved. Ready to complete your purchase?
+              <Button 
+                variant="link" 
+                className="ml-2 p-0 h-auto"
+                onClick={() => setSearchParams({})}
+              >
+                Dismiss
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
       <UnifiedCheckoutForm />
     </SidebarLayout>
   );

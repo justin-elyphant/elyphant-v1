@@ -276,7 +276,7 @@ serve(async (req) => {
     // Get domain for redirect URLs
     const origin = req.headers.get('origin') || 'http://localhost:8080';
     const successUrl = `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin}/checkout`;
+    const cancelUrl = `${origin}/checkout?cancelled=true`;
 
     // Create Checkout Session params
     const sessionParams: Stripe.Checkout.SessionCreateParams = {

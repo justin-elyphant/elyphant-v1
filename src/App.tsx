@@ -224,6 +224,7 @@ function AppContent() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/oauth-complete" element={<OAuthComplete />} />
           <Route path="/orders/:orderId" element={<OrderDetail />} />

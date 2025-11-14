@@ -7,6 +7,9 @@ project_id = "dmkxtkvlispxeqfzlczr"
 [functions.create-payment-intent-v2]
 verify_jwt = true
 
+[functions.create-checkout-session]
+verify_jwt = true
+
 [functions.stripe-webhook-v2]
 verify_jwt = false
 

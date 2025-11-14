@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ interface Order {
 
 const OrderConfirmation = () => {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [childOrders, setChildOrders] = useState<Order[]>([]);
@@ -37,7 +39,7 @@ const OrderConfirmation = () => {
   const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
 
   useEffect(() => {
-    if (!orderId) {
+    if (!orderId && !sessionId) {
       navigate('/orders');
       return;
     }
@@ -63,7 +65,7 @@ const OrderConfirmation = () => {
       clearTimeout(progressiveTimeout);
       clearTimeout(stopPollingTimeout);
     };
-  }, [orderId]);
+  }, [orderId, sessionId]);
 
   const checkForAutoGiftUpsell = async (orderData: Order) => {
     try {
@@ -136,12 +138,33 @@ const OrderConfirmation = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      // Try to find order by ID first (UUID)
-      const result = await (supabase as any).from('orders').select('*, order_items(*)').eq('id', orderId).maybeSingle();
-      let orderData = result.data;
+      let orderData = null;
 
-      if (!orderData) {
-        // V2: Try to find by payment_intent_id (Stripe Payment Intent ID)
+      // NEW: Check for checkout_session_id (Stripe Checkout Sessions)
+      if (sessionId) {
+        const sessionResult = await (supabase as any)
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('checkout_session_id', sessionId)
+          .maybeSingle();
+        
+        if (sessionResult.data) {
+          orderData = sessionResult.data;
+        }
+      }
+      
+      // Try to find order by ID (UUID)
+      if (!orderData && orderId) {
+        const result = await (supabase as any)
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('id', orderId)
+          .maybeSingle();
+        orderData = result.data;
+      }
+
+      // Fallback: Try to find by payment_intent_id (Stripe Payment Intent ID)
+      if (!orderData && orderId) {
         const paymentIntentResult = await (supabase as any)
           .from('orders')
           .select('*, order_items(*)')
@@ -158,7 +181,11 @@ const OrderConfirmation = () => {
       if (orderData) {
         setOrder(orderData);
         if (orderData.is_split_order && !orderData.parent_order_id) {
-          const childResult = await (supabase as any).from('orders').select('*, order_items(*)').eq('parent_order_id', orderData.id).order('split_order_index');
+          const childResult = await (supabase as any)
+            .from('orders')
+            .select('*, order_items(*)')
+            .eq('parent_order_id', orderData.id)
+            .order('split_order_index');
           if (childResult.data) setChildOrders(childResult.data);
         }
         

@@ -286,7 +286,6 @@ serve(async (req) => {
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata,
-      customer_email: user.email,
       billing_address_collection: 'required',
     };
 

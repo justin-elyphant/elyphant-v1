@@ -18,6 +18,7 @@ serve(async (req) => {
       currency = 'usd', 
       cartItems, 
       shippingAddress,
+      shippingInfo, // accept legacy/frontend alias
       deliveryGroups,
       scheduledDeliveryDate,
       isAutoGift = false,
@@ -33,6 +34,14 @@ serve(async (req) => {
       isAutoGift,
       timestamp: new Date().toISOString()
     });
+
+    // Normalize inputs
+    const normalizedShippingAddress = shippingAddress || shippingInfo;
+    const incomingAmount = Number(amount);
+    const amountInCents = incomingAmount > 999 
+      ? Math.round(incomingAmount) // already in cents
+      : Math.round(incomingAmount * 100); // convert dollars to cents
+    console.log('💵 Normalized amount (cents):', amountInCents);
 
     // Initialize Supabase
     const authHeader = req.headers.get('Authorization');
@@ -78,8 +87,8 @@ serve(async (req) => {
     const metadata = {
       user_id: user?.id || 'guest',
       user_email: user?.email || 'guest',
-      cart_items: JSON.stringify(cartItems),
-      shipping_address: JSON.stringify(shippingAddress),
+      cart_items: JSON.stringify(cartItems || []),
+      shipping_address: normalizedShippingAddress ? JSON.stringify(normalizedShippingAddress) : '',
       delivery_groups: deliveryGroups ? JSON.stringify(deliveryGroups) : '',
       scheduled_delivery_date: scheduledDeliveryDate || '',
       is_auto_gift: isAutoGift.toString(),

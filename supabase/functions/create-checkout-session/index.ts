@@ -49,8 +49,12 @@ serve(async (req) => {
       autoGiftRuleId,
       paymentMethod,
       pricingBreakdown,
-      shippingInfo
+      shippingInfo,
+      metadata
     } = await req.json();
+    
+    // Check if this is a payment intent only request (for Apple Pay)
+    const isPaymentIntentOnly = metadata?.payment_intent_only === true;
 
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart is empty");
@@ -191,6 +195,42 @@ serve(async (req) => {
 
     logStep("Metadata prepared", { metadataKeys: Object.keys(metadata).length });
 
+    // APPLE PAY MODE: Create Payment Intent directly (no redirect)
+    if (isPaymentIntentOnly) {
+      logStep("Creating Payment Intent for Apple Pay (no redirect)");
+      
+      const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
+        amount: amountInCents,
+        currency: 'usd',
+        customer: customerId,
+        metadata: {
+          ...metadata,
+          cart_items: JSON.stringify(cartItems).substring(0, 500)
+        },
+        description: `Order for ${cartItems.length} item(s)`
+      };
+
+      if (isScheduled) {
+        paymentIntentParams.capture_method = 'manual';
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+
+      logStep("Payment Intent created for Apple Pay", { 
+        paymentIntentId: paymentIntent.id,
+        amount: amountInCents 
+      });
+
+      return new Response(
+        JSON.stringify({
+          client_secret: paymentIntent.client_secret,
+          payment_intent_id: paymentIntent.id
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // STANDARD MODE: Create Checkout Session (redirect to Stripe)
     // Get domain for redirect URLs
     const origin = req.headers.get('origin') || 'http://localhost:8080';
     const successUrl = `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
@@ -236,7 +276,7 @@ serve(async (req) => {
 
     logStep("Checkout session created", { 
       sessionId: session.id, 
-      url: session.url 
+      url: session.url
     });
 
     return new Response(

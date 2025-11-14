@@ -16,9 +16,8 @@
  * 🔗 CRITICAL DEPENDENCIES (DO NOT BREAK):
  * - useCheckoutState: Manages complex form state and validation
  * - UnifiedShippingForm: Handles shipping address and method selection
- * - PaymentMethodSelector: Manages Stripe payment processing
  * - RecipientAssignmentSection: Handles gift recipient assignments
- * - Supabase edge functions: create-payment-intent-v2, stripe-webhook-v2
+ * - Supabase edge functions: create-checkout-session, stripe-webhook-v2
  * 
  * 🚫 NEVER REPLACE WITH:
  * - Simple form components
@@ -46,7 +45,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
 import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
-import { extractBillingInfoFromPaymentMethod } from '@/services/billingService';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -56,10 +54,8 @@ import { toast } from 'sonner';
 
 // CRITICAL: These imports are essential for the checkout system
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
-import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import CheckoutShippingReview from './CheckoutShippingReview';
-import { supabase } from '@/integrations/supabase/client';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 
 /*
@@ -99,8 +95,6 @@ const UnifiedCheckoutForm: React.FC = () => {
   const { calculatePriceBreakdown } = usePricingSettings();
 
   // Payment processing state
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
@@ -239,24 +233,13 @@ const UnifiedCheckoutForm: React.FC = () => {
     fetchShippingCost();
   }, [checkoutData.shippingInfo.zipCode, cartItems.length]);
 
-  // 🔒 PAYMENT INTENT STALENESS FIX: Clear payment intent when cart changes
-  // This prevents users from paying with outdated payment intents from previous cart states
-  useEffect(() => {
-    const cartSignature = cartItems.map(i => `${i.product.product_id}:${i.quantity}`).join(',');
-    if (clientSecret && cartSignature) {
-      console.log('🔄 Cart changed - clearing stale payment intent');
-      setClientSecret('');
-      setPaymentIntentId('');
-    }
-  }, [cartItems.map(i => `${i.product.product_id}:${i.quantity}`).join(',')]);
-
   /*
-   * 🔗 CRITICAL: Payment Intent Creation
+   * 🔗 CRITICAL: Checkout Session Creation
    * 
-   * HYBRID FIX: Don't create order on page load - only create payment intent
-   * with cart snapshot in metadata. Order will be created after payment succeeds.
+   * V2 MODERNIZATION: Create Checkout Session that redirects to Stripe hosted page.
+   * Order will be created by webhook after payment succeeds.
    */
-  const createPaymentIntent = async () => {
+  const createCheckoutSession = async () => {
     if (!user) {
       toast.error('Please log in to continue');
       return;
@@ -442,89 +425,6 @@ const UnifiedCheckoutForm: React.FC = () => {
    * - Redundant markCartCompleted() calls (webhook already does this)
    * - Manual ZMA processing triggers (webhook auto-triggers)
    */
-  const handlePaymentSuccess = async (paymentIntentId: string, paymentMethodId?: string) => {
-    try {
-      setIsProcessing(true);
-      console.log('🎉 Payment successful! Stripe webhook will create order...');
-      
-      // 💳 EXTRACT BILLING INFO from Stripe PaymentMethod (stored in metadata)
-      let billingInfo = null;
-      if (paymentMethodId) {
-        try {
-          console.log('💳 Extracting billing info from payment method:', paymentMethodId);
-          const { data: paymentMethodData, error: pmError } = await supabase.functions.invoke(
-            'get-payment-method-details',
-            { body: { paymentMethodId } }
-          );
-          
-          if (pmError) {
-            console.error('⚠️ Failed to retrieve payment method:', pmError);
-          } else if (paymentMethodData?.data) {
-            billingInfo = extractBillingInfoFromPaymentMethod(paymentMethodData.data);
-            console.log('✅ Billing info extracted:', billingInfo);
-            
-            console.log('✅ Billing info extracted:', billingInfo);
-          }
-        } catch (billingError) {
-          console.error('⚠️ Failed to extract billing info:', billingError);
-          // Continue with null billing info (fallback to shipping address)
-        }
-      }
-      
-      // Save address to profile if needed
-      try {
-        await saveCurrentAddressToProfile('Checkout Address', false);
-        console.log('📍 Address saved to profile');
-      } catch (addressError) {
-        console.warn('⚠️ Failed to save address to profile:', addressError);
-        // Don't fail checkout for address saving issues
-      }
-
-      // Show success message
-      toast.success('Payment successful! Your order is being processed...');
-      
-      // Clear cart and navigate to order confirmation
-      // Webhook creates order asynchronously using payment_intent_id
-      console.log('🧹 Clearing cart and navigating to confirmation...');
-      clearCart();
-      console.log('🛒 Cart cleared successfully');
-      
-      // Navigate to order confirmation page with payment intent ID
-      console.log('🧭 Navigating to order confirmation page');
-      navigate(`/order-confirmation/${paymentIntentId}`);
-      
-    } catch (error: any) {
-      console.error('💥 Post-payment error:', error);
-      
-      // Payment succeeded but something went wrong after
-      toast.error('Payment successful but there was an issue. Please check your orders page.');
-      
-      // Try to clear cart and navigate to orders (fallback on error)
-      try {
-        clearCart();
-        navigate('/orders'); // Fallback to orders page on error
-      } catch (navError) {
-        console.error('Failed to navigate:', navError);
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error);
-    toast.error(`Payment failed: ${error}`);
-  };
-
-  // Initialize payment intent only after addresses AND shipping cost are loaded
-  useEffect(() => {
-    if (user && cartItems.length > 0 && !clientSecret && addressesLoaded && shippingCostLoaded && shippingCost !== null) {
-      console.log('🎯 All data loaded - creating payment intent now');
-      createPaymentIntent();
-    } else if (user && cartItems.length > 0 && !clientSecret && addressesLoaded && !shippingCostLoaded) {
-      console.log('⏳ Waiting for shipping cost to load before creating payment intent');
-    }
-  }, [user, cartItems.length, clientSecret, addressesLoaded, shippingCostLoaded, shippingCost]);
 
   // Redirect if no items in cart
   if (cartItems.length === 0) {
@@ -583,7 +483,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                     <Button 
                       onClick={() => {
                         setInitError(null);
-                        createPaymentIntent();
+                        createCheckoutSession();
                       }}
                       className="w-full"
                     >
@@ -598,34 +498,29 @@ const UnifiedCheckoutForm: React.FC = () => {
                     </Button>
                   </div>
                 </div>
-              ) : clientSecret ? (
-                /* CRITICAL: Payment method selector component */
-                <PaymentMethodSelector
-                  clientSecret={clientSecret}
-                  totalAmount={totalAmount}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                  isProcessingPayment={isProcessingPayment}
-                  onProcessingChange={setIsProcessingPayment}
-                  refreshKey={refreshKey}
-                  onRefreshKeyChange={setRefreshKey}
-                  onMethodSelected={(methodId) => {
-                    setSelectedPaymentMethodId(methodId);
-                    // Payment method selection tracked - attachment happens at confirmation
-                  }}
-                  shippingAddress={{
-                    name: checkoutData.shippingInfo.name,
-                    address: checkoutData.shippingInfo.address,
-                    city: checkoutData.shippingInfo.city,
-                    state: checkoutData.shippingInfo.state,
-                    zipCode: checkoutData.shippingInfo.zipCode,
-                    country: checkoutData.shippingInfo.country
-                  }}
-                />
               ) : (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Initializing payment...</p>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Click the button below to proceed to secure checkout.
+                  </p>
+                  <Button
+                    onClick={createCheckoutSession}
+                    disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Proceed to Checkout
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </CardContent>

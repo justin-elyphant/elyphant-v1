@@ -213,26 +213,9 @@ const ContributionForm = ({ project, onSuccess, onCancel }: ContributionFormProp
         </p>
       </div>
 
-      {/* Payment Method */}
-      <div>
-        <Label className="text-sm font-medium mb-2 block">Payment Method</Label>
-        <div className="border rounded-lg p-3">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-              },
-            }}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          🔒 Your payment is held securely until the funding goal is reached
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <p className="text-xs text-blue-800 dark:text-blue-200">
+          🔒 Your payment is held securely until the funding goal is reached. You'll be redirected to Stripe's secure checkout.
         </p>
       </div>
 
@@ -249,7 +232,7 @@ const ContributionForm = ({ project, onSuccess, onCancel }: ContributionFormProp
         <Button 
           onClick={handleContribute}
           className="flex-1"
-          disabled={!stripe || !contributionAmount || contributionAmount < 5 || isProcessing}
+          disabled={!contributionAmount || contributionAmount < 5 || isProcessing}
         >
           {isProcessing ? "Processing..." : `Contribute $${contributionAmount.toFixed(2)}`}
         </Button>
@@ -288,13 +271,11 @@ const GroupGiftContributionModal = ({
           </DialogTitle>
         </DialogHeader>
         
-        <Elements stripe={stripeClientManager.getStripePromise()}>
-          <ContributionForm
-            project={project}
-            onSuccess={handleSuccess}
-            onCancel={() => onOpenChange(false)}
-          />
-        </Elements>
+        <ContributionForm
+          project={project}
+          onSuccess={handleSuccess}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );

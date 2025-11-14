@@ -136,16 +136,22 @@ const OrderConfirmation = () => {
 
   const fetchOrderDetails = async () => {
     try {
+      // Try to find order by ID first (UUID)
       const result = await (supabase as any).from('orders').select('*, order_items(*)').eq('id', orderId).maybeSingle();
       let orderData = result.data;
 
       if (!orderData) {
-        // Try to resolve session_id to cart_sessions.id
-        const sessionLookup = await (supabase as any).from('cart_sessions').select('id').eq('session_id', orderId).maybeSingle();
+        // V2: Try to find by payment_intent_id (Stripe Payment Intent ID)
+        const paymentIntentResult = await (supabase as any)
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('payment_intent_id', orderId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
         
-        if (sessionLookup.data?.id) {
-          const sessionResult = await (supabase as any).from('orders').select('*, order_items(*)').eq('cart_session_id', sessionLookup.data.id).order('created_at', { ascending: false }).limit(1);
-          if (sessionResult.data?.[0]) orderData = sessionResult.data[0];
+        if (paymentIntentResult.data) {
+          orderData = paymentIntentResult.data;
         }
       }
 

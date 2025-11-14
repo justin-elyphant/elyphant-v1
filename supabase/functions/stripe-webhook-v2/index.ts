@@ -208,10 +208,24 @@ async function handleCheckoutSessionCompleted(
     // Get line items from session
     const lineItems = await getSessionLineItems(session, stripe);
     
-    // Parse structured data from metadata
-    const deliveryGroups = metadata.delivery_groups ? JSON.parse(metadata.delivery_groups) : null;
-    const giftOptions = metadata.gift_options ? JSON.parse(metadata.gift_options) : null;
-    const shippingInfo = metadata.shipping_info ? JSON.parse(metadata.shipping_info) : null;
+    // Parse structured data from metadata (with safe fallbacks)
+    const deliveryGroups = metadata.delivery_groups ? tryParseJSON(metadata.delivery_groups, null) : null;
+    const giftOptions = {
+      message: metadata.gift_message || '',
+      isAnonymous: metadata.gift_is_anonymous === 'true'
+    };
+    
+    // Reconstruct shipping address from individual metadata fields
+    const shippingInfo = metadata.ship_name ? {
+      name: metadata.ship_name || '',
+      address_line1: metadata.ship_address_line1 || '',
+      address_line2: metadata.ship_address_line2 || '',
+      city: metadata.ship_city || '',
+      state: metadata.ship_state || '',
+      postal_code: metadata.ship_postal_code || '',
+      country: metadata.ship_country || 'US',
+      phone: metadata.ship_phone || ''
+    } : null;
     const scheduledDate = metadata.scheduled_delivery_date || null;
     const isAutoGift = metadata.is_auto_gift === 'true';
     const autoGiftRuleId = metadata.auto_gift_rule_id || null;
@@ -416,5 +430,15 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, supabase
   if (paymentIntent.metadata.is_auto_gift === 'true') {
     console.log('🎁 Auto-gift payment failed, notifying user...');
     // TODO: Send notification via email/in-app
+  }
+}
+
+// Helper function to safely parse JSON metadata (Phase 1 fix)
+function tryParseJSON(jsonString: string, fallback: any) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.warn('⚠️ Failed to parse metadata JSON, using fallback:', error);
+    return fallback;
   }
 }

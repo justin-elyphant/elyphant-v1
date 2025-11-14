@@ -219,20 +219,29 @@ serve(async (req) => {
       });
     }
 
-    // Store delivery groups and gift options as JSON (truncate if needed)
-    if (deliveryGroups) {
+    // Store delivery groups as JSON (only if needed for complex routing)
+    if (deliveryGroups && deliveryGroups.length > 0) {
       const deliveryGroupsStr = JSON.stringify(deliveryGroups);
       metadata.delivery_groups = deliveryGroupsStr.substring(0, 500);
+      metadata.recipient_count = String(deliveryGroups.length);
     }
 
+    // Store gift options as individual fields (no JSON truncation)
     if (giftOptions) {
-      const giftOptionsStr = JSON.stringify(giftOptions);
-      metadata.gift_options = giftOptionsStr.substring(0, 500);
+      metadata.gift_message = String(giftOptions.message || '').substring(0, 500);
+      metadata.gift_is_anonymous = String(!!giftOptions.isAnonymous);
     }
 
+    // Store shipping address as individual metadata fields (no JSON)
     if (shippingInfo) {
-      const shippingInfoStr = JSON.stringify(shippingInfo);
-      metadata.shipping_info = shippingInfoStr.substring(0, 500);
+      metadata.ship_name = String(shippingInfo.name || '').substring(0, 500);
+      metadata.ship_address_line1 = String(shippingInfo.address_line1 || '').substring(0, 500);
+      metadata.ship_address_line2 = String(shippingInfo.address_line2 || '').substring(0, 500);
+      metadata.ship_city = String(shippingInfo.city || '').substring(0, 500);
+      metadata.ship_state = String(shippingInfo.state || '').substring(0, 500);
+      metadata.ship_postal_code = String(shippingInfo.postal_code || '').substring(0, 500);
+      metadata.ship_country = String(shippingInfo.country || 'US').substring(0, 500);
+      metadata.ship_phone = String(shippingInfo.phone || '').substring(0, 500);
     }
 
     logStep("Metadata prepared", { metadataKeys: Object.keys(metadata).length });

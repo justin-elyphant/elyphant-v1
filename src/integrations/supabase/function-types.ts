@@ -13,5 +13,8 @@ export enum SUPABASE_FUNCTIONS {
   ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator",
   CLEAR_USER_CART_SESSIONS = "clear-user-cart-sessions",
   COLLECT_RECIPIENT_ADDRESS = "collect-recipient-address",
-  DELETE_USER_ACCOUNT = "delete-user-account"
+  DELETE_USER_ACCOUNT = "delete-user-account",
+  CREATE_CHECKOUT_SESSION = "create-checkout-session",
+  AUTO_GIFT_ORCHESTRATOR = "auto-gift-orchestrator",
+  PROCESS_AUTO_GIFTS = "process-auto-gifts"
 }

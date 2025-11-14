@@ -83,26 +83,51 @@ serve(async (req) => {
       }
     }
 
-    // Build comprehensive metadata - THIS IS THE SOURCE OF TRUTH
-    const metadata = {
+    // Build metadata - Stripe has 500 char limit per field
+    // Store minimal cart data here, full details in description or separate storage
+    const minimalCartItems = (cartItems || []).map(item => ({
+      id: item.product_id,
+      qty: item.quantity,
+      price: item.price
+    }));
+    
+    const metadata: Record<string, string> = {
       user_id: user?.id || 'guest',
       user_email: user?.email || 'guest',
-      cart_items: JSON.stringify(cartItems || []),
-      shipping_address: normalizedShippingAddress ? JSON.stringify(normalizedShippingAddress) : '',
-      delivery_groups: deliveryGroups ? JSON.stringify(deliveryGroups) : '',
+      cart_items_count: String((cartItems || []).length),
+      cart_items_minimal: JSON.stringify(minimalCartItems).substring(0, 500),
       scheduled_delivery_date: scheduledDeliveryDate || '',
       is_auto_gift: isAutoGift.toString(),
       auto_gift_rule_id: autoGiftRuleId || '',
-      gift_options: giftOptions ? JSON.stringify(giftOptions) : '',
       created_at: new Date().toISOString(),
     };
+    
+    // Add shipping info if present (truncate if needed)
+    if (normalizedShippingAddress) {
+      const shippingStr = JSON.stringify(normalizedShippingAddress);
+      metadata.shipping_address = shippingStr.substring(0, 500);
+    }
+    
+    // Add gift options if present (truncate if needed)
+    if (giftOptions) {
+      const giftStr = JSON.stringify(giftOptions);
+      metadata.gift_options = giftStr.substring(0, 500);
+    }
+
+    console.log('📦 Metadata size check:', {
+      cart_items_minimal: metadata.cart_items_minimal?.length,
+      shipping_address: metadata.shipping_address?.length,
+      gift_options: metadata.gift_options?.length
+    });
 
     // Create payment intent
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: amountInCents,
       currency,
       metadata,
       customer: customer_id || undefined,
+      // Store full cart details in description (up to 1000 chars)
+      description: `Order for ${user?.email || 'guest'} - ${(cartItems || []).length} items`,
     };
 
     // For scheduled delivery, use manual capture to hold funds
@@ -122,6 +147,32 @@ serve(async (req) => {
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
     console.log('✅ Payment intent created:', paymentIntent.id);
+    
+    // Store full cart details in database for webhook retrieval
+    // This avoids Stripe metadata limits
+    try {
+      const { error: dbError } = await supabase
+        .from('payment_intent_data')
+        .insert({
+          payment_intent_id: paymentIntent.id,
+          user_id: user?.id || null,
+          cart_items: cartItems || [],
+          shipping_address: normalizedShippingAddress || null,
+          delivery_groups: deliveryGroups || null,
+          gift_options: giftOptions || null,
+          created_at: new Date().toISOString(),
+        });
+      
+      if (dbError) {
+        console.error('⚠️ Failed to store payment intent data:', dbError);
+        // Non-critical - webhook can still work with metadata
+      } else {
+        console.log('💾 Stored full cart data in database for webhook retrieval');
+      }
+    } catch (dbError) {
+      console.error('⚠️ Database storage error:', dbError);
+      // Continue anyway - not critical for payment flow
+    }
 
     return new Response(
       JSON.stringify({ 

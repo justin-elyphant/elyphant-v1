@@ -1,6 +1,105 @@
-# 🎯 NORTH STAR: Stripe Checkout Migration Reference
+# 🎯 E-Commerce Modernization: North Star Reference
 
-**Purpose**: Quick-reference guide to ensure ALL fixes and features align with the modernization plan.
+**Last Updated:** 2025-01-14  
+**Purpose:** Single source of truth for payment system architecture decisions
+
+---
+
+## 📊 Current Implementation Status
+
+**Progress:** ████████░░ **80% Complete** (Phases 1, 3, 4 done)  
+**🚧 Blocking Issue:** Phase 2 Database Simplification NOT started
+
+### ✅ Phase 1: Core Functions - COMPLETE
+- All 8 core edge functions deployed and working
+- `create-checkout-session`, `stripe-webhook-v2`, `process-order-v2`
+- `scheduled-order-processor`, `auto-gift-orchestrator`, `order-monitor-v2`
+- `webhook-signature-validator`, `admin-order-tools`
+
+### 🚧 Phase 2: Database Simplification - NOT STARTED
+- **Critical Gap:** `orders` table still has **50+ columns** (target: 22)
+- **Legacy Tables:** 11 tables still present (should be deleted)
+  - `cart_sessions`, `user_carts`, `payment_intents_cache`
+  - `payment_verification_audit`, `order_recovery_logs`
+  - `order_status_monitoring`, `scheduled_order_alerts`
+  - Plus 4 more legacy payment tables
+- **Impact:** Until complete, modifications to orders table are risky
+
+### ✅ Phase 3: Auto-Gifting - COMPLETE
+- Auto-gift orchestrator working with Checkout Sessions
+- Approval flow, scheduled payment capture functional
+
+### ✅ Phase 4: Scheduled Delivery - COMPLETE
+- Manual scheduled delivery from checkout working
+- Payment hold/capture on delivery date functional
+
+### 📅 Phase 5: Migration Cleanup - NOT STARTED
+- `_v2` suffixes still on function names
+- 85 legacy functions still present (need deletion)
+- Feature flags not implemented
+- Legacy table cleanup pending
+
+---
+
+## 🎯 Immediate Priorities
+
+### Priority 1: Manual Testing (Est: 30-45 min)
+**Run all 7 test scenarios from** `src/tests/payment-flows/MANUAL_TESTING.md`
+- Standard checkout flow
+- Failed payment recovery
+- Group gift contribution
+- Scheduled delivery
+- Auto-gift approval
+- Payment method validation
+- Webhook idempotency
+
+**Why Critical:** Ensures all 8 core functions work before Phase 2 changes
+
+### Priority 2: Phase 2 Database Simplification (Est: 2-3 days)
+**Step 1:** Migrate `orders` table from 50+ columns to 22 core columns  
+**Step 2:** Delete 11 legacy tables  
+**Step 3:** Update all queries to use new schema  
+**Step 4:** Test all payment flows again
+
+**Why Blocking:** Cannot safely delete legacy functions until database is clean
+
+### Priority 3: Remove `_v2` Suffixes (Est: 4 hours)
+**After Phase 2 complete:**
+- Rename all `*-v2` functions to final names
+- Update all function references in code
+- Deploy and verify
+
+### Priority 4: Delete Legacy Functions (Est: 1 day)
+**Delete 85 legacy functions:**
+- All old payment intent handlers
+- All cart session managers
+- All duplicate order detectors
+- All manual schedulers
+
+---
+
+## 📋 Current Function Inventory
+
+### ✅ Core Functions (8) - Keep These
+1. `create-checkout-session` - Entry point for ALL payments
+2. `stripe-webhook-v2` - Single source of truth (checkout.session.completed)
+3. `process-order-v2` - Zinc API submission
+4. `scheduled-order-processor` - Daily cron for scheduled deliveries
+5. `auto-gift-orchestrator` - Daily cron for auto-gifts
+6. `order-monitor-v2` - Order status tracking
+7. `webhook-signature-validator` - Security validation
+8. `admin-order-tools` - Manual admin operations
+
+### ⚠️ Legacy Functions (~85) - Delete After Phase 2
+- `create-payment-intent` and all variants
+- `verify-payment-intent`, `verify-checkout-session`
+- `process-zma-order` (1,196 lines!)
+- `process-scheduled-orders`, `capture-scheduled-payment`
+- All cart session managers
+- All duplicate order detectors
+- All payment verification/recovery functions
+- All split/simple processors
+- *(Full list: search supabase/functions/ for functions NOT in core 8)*
 
 ---
 
@@ -78,33 +177,46 @@
 
 ---
 
-## 🔧 Bug Fix Decision Tree
+## 🚨 Bug Fix Decision Tree
 
-**Before implementing ANY fix, ask these 4 questions:**
+**Before fixing ANY payment-related bug, ask these questions in order:**
 
-### 1. Does this align with Checkout Sessions architecture?
-- ✅ Using session metadata for order data?
-- ✅ Webhook creates orders?
+### Question 1: Is Phase 2 Database Cleanup Complete?
+- **NO** → Do NOT modify `orders` table structure
+- **NO** → Do NOT add new columns to `orders`
+- **NO** → Use metadata/jsonb fields for new data
+- **YES** → Proceed to Question 2
+
+### Question 2: Does this use Checkout Sessions?
+- ✅ Using `create-checkout-session` for payment entry?
+- ✅ Webhook (`stripe-webhook-v2`) creates orders?
 - ❌ Creating new Payment Intent flows?
-- ❌ Relying on cart_sessions?
+- ❌ Relying on `cart_sessions` table?
 
-### 2. Am I using metadata instead of database lookups?
-- ✅ All order context in `session.metadata`?
-- ✅ Extracting from webhook payload?
-- ❌ Querying cart_sessions during webhook?
+### Question 3: Am I Using the Right Function?
+- ✅ Using one of the 8 core functions?
+- ✅ Enhancing existing core function, not creating new one?
+- ❌ Creating new payment verification function?
+- ❌ Creating new cart session manager?
+
+### Question 4: Is data in session metadata?
+- ✅ All order context stored in `session.metadata`?
+- ✅ Webhook extracts from payload (no DB lookups)?
+- ❌ Querying `cart_sessions` during webhook?
 - ❌ Storing partial data in multiple tables?
 
-### 3. Am I adding to the 8 core functions or creating legacy patterns?
-- ✅ Enhancing existing core function?
-- ✅ Simplifying/removing code?
-- ❌ Creating new payment verification functions?
-- ❌ Adding duplicate order detection?
+### Question 5: Is the webhook idempotent?
+- ✅ Using `checkout_session_id` as unique identifier?
+- ✅ Checking for existing order before creation?
+- ❌ Creating duplicate orders possible?
+- ❌ Race conditions between webhook calls?
 
-### 4. Does this simplify or complicate the system?
-- ✅ Reducing edge cases?
-- ✅ Removing database tables/columns?
-- ❌ Adding new status tracking tables?
-- ❌ Creating race condition opportunities?
+### Question 6: Will this work for all payment types?
+- ✅ Standard checkout works?
+- ✅ Scheduled delivery works?
+- ✅ Auto-gift works?
+- ✅ Group gift works?
+- ❌ Only works for one payment type?
 
 **If ANY answer is ❌, STOP and reconsider the approach.**
 

@@ -324,6 +324,19 @@ async function handleCheckoutSessionCompleted(
 
     console.log('✅ Order created from checkout session:', order.id);
 
+    // Send order confirmation email
+    console.log('📧 Sending order confirmation email...');
+    const { error: emailError } = await supabase.functions.invoke('send-order-receipt', {
+      body: { orderId: order.id }
+    });
+
+    if (emailError) {
+      console.error('❌ Failed to send confirmation email:', emailError);
+      // Don't throw - order is saved, email can be retried
+    } else {
+      console.log('✅ Order confirmation email sent');
+    }
+
     // If NOT scheduled, process immediately
     if (orderStatus === 'payment_confirmed') {
       console.log('🚀 Triggering immediate order processing...');

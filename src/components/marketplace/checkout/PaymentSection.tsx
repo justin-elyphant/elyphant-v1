@@ -60,13 +60,14 @@ const PaymentSection = ({
   const [pendingPaymentIntentId, setPendingPaymentIntentId] = useState<string>('');
   const [actualPaymentMethod, setActualPaymentMethod] = useState<string>('');
 
-  useEffect(() => {
-    if ((paymentMethod === 'card' || paymentMethod === 'express') && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
-      createPaymentIntent();
-    }
-  }, [paymentMethod, totalAmount]);
+  // REMOVED: Payment Intent creation - now using Checkout Sessions
+  // useEffect(() => {
+  //   if ((paymentMethod === 'card' || paymentMethod === 'express') && totalAmount > 0 && !clientSecret && !isCreatingPaymentIntent) {
+  //     createPaymentIntent();
+  //   }
+  // }, [paymentMethod, totalAmount]);
 
-  const createPaymentIntent = async () => {
+  const handleCheckoutSession = async () => {
     setIsCreatingPaymentIntent(true);
     try {
       // Get current user

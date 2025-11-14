@@ -50,7 +50,7 @@ serve(async (req) => {
       paymentMethod,
       pricingBreakdown,
       shippingInfo,
-      metadata,
+      metadata: clientMetadata,
       // NEW: Group gift parameters
       isGroupGift = false,
       groupGiftProjectId,
@@ -58,7 +58,7 @@ serve(async (req) => {
     } = await req.json();
     
     // Check if this is a payment intent only request (for Apple Pay)
-    const isPaymentIntentOnly = metadata?.payment_intent_only === true;
+    const isPaymentIntentOnly = clientMetadata?.payment_intent_only === true;
 
     // Group gift validation
     if (isGroupGift) {
@@ -208,6 +208,16 @@ serve(async (req) => {
       gifting_fee: String(pricingBreakdown.giftingFee),
       tax_amount: String(pricingBreakdown.taxAmount),
     };
+
+    // Merge in any client-provided metadata (without overwriting core fields)
+    if (clientMetadata) {
+      Object.keys(clientMetadata).forEach(key => {
+        // Only add if not already defined (preserve our core metadata)
+        if (metadata[key] === undefined) {
+          metadata[key] = String(clientMetadata[key]);
+        }
+      });
+    }
 
     // Store delivery groups and gift options as JSON (truncate if needed)
     if (deliveryGroups) {

@@ -16,20 +16,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, Users, Target, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  createGroupGiftContribution,
-  confirmGroupGiftContribution,
   getSuggestedContributions,
   canUserContribute,
   type GroupGiftProject
 } from "@/services/groupGiftPaymentService";
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements
-} from "@stripe/react-stripe-js";
-import { stripeClientManager } from "@/services/payment/StripeClientManager";
 
 interface ContributionFormProps {
   project: GroupGiftProject;
@@ -40,8 +32,6 @@ interface ContributionFormProps {
 const ContributionForm = ({ project, onSuccess, onCancel }: ContributionFormProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const stripe = useStripe();
-  const elements = useElements();
 
   const [contributionAmount, setContributionAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -70,7 +60,8 @@ const ContributionForm = ({ project, onSuccess, onCancel }: ContributionFormProp
   }, [user, project.id]);
 
   const handleContribute = async () => {
-    if (!stripe || !elements || !user) return;
+    if (!user) return;
+    
     if (contributionAmount < 5) {
       toast("Minimum contribution is $5");
       return;
@@ -83,38 +74,37 @@ const ContributionForm = ({ project, onSuccess, onCancel }: ContributionFormProp
     setIsProcessing(true);
 
     try {
-      // Create payment intent
-      const { clientSecret, paymentIntentId } = await createGroupGiftContribution(
-        project.id,
-        contributionAmount
-      );
-
-      // Get card element
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) throw new Error("Card element not found");
-
-      // Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            email: user.email,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Unknown'
+      // NEW: Create checkout session for group gift
+      console.log('🎁 Creating group gift contribution checkout session');
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          isGroupGift: true,
+          groupGiftProjectId: project.id,
+          contributionAmount: contributionAmount,
+          pricingBreakdown: {
+            subtotal: contributionAmount,
+            shippingCost: 0,
+            giftingFee: 0,
+            taxAmount: 0,
+          },
+          metadata: {
+            user_id: user.id,
+            payment_method: 'card',
           }
         }
       });
 
-      if (error) {
-        throw new Error(error.message);
+      if (error) throw error;
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        console.log('✅ Redirecting to Stripe checkout for group gift');
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
       }
-
-      if (paymentIntent?.status === 'requires_capture') {
-        // Confirm the contribution in our system
-        await confirmGroupGiftContribution(paymentIntentId);
-      }
-
-      toast(`Your $${contributionAmount.toFixed(2)} contribution has been added to the group gift.`);
-
+      
       onSuccess();
     } catch (error) {
       console.error('Contribution error:', error);

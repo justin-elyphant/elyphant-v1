@@ -5999,6 +5999,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      increment_group_gift_amount: {
+        Args: { amount: number; project_id: string }
+        Returns: undefined
+      }
       increment_processing_attempts: {
         Args: { order_uuid: string }
         Returns: undefined

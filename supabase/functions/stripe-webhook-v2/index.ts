@@ -215,6 +215,50 @@ async function handleCheckoutSessionCompleted(
     const scheduledDate = metadata.scheduled_delivery_date || null;
     const isAutoGift = metadata.is_auto_gift === 'true';
     const autoGiftRuleId = metadata.auto_gift_rule_id || null;
+    const isGroupGift = metadata.is_group_gift === 'true';
+    const groupGiftProjectId = metadata.group_gift_project_id || null;
+
+    // Handle group gift contributions
+    if (isGroupGift && groupGiftProjectId) {
+      console.log('🎁 Processing group gift contribution');
+      
+      const contributionAmount = parseFloat(metadata.contribution_amount || '0');
+      
+      // Create/update contribution record
+      const { error: contributionError } = await supabase
+        .from('group_gift_contributions')
+        .upsert({
+          group_gift_project_id: groupGiftProjectId,
+          contributor_id: metadata.user_id,
+          committed_amount: contributionAmount,
+          stripe_payment_intent_id: session.payment_intent as string,
+          stripe_checkout_session_id: session.id,
+          contribution_status: 'paid',
+          contributed_at: new Date().toISOString(),
+        });
+        
+      if (contributionError) {
+        console.error('❌ Failed to create contribution:', contributionError);
+        throw contributionError;
+      }
+      
+      // Update project current_amount atomically
+      const { error: projectError } = await supabase.rpc(
+        'increment_group_gift_amount',
+        { 
+          project_id: groupGiftProjectId,
+          amount: contributionAmount 
+        }
+      );
+      
+      if (projectError) {
+        console.error('❌ Failed to update project amount:', projectError);
+        throw projectError;
+      }
+      
+      console.log('✅ Group gift contribution recorded');
+      return { received: true };
+    }
 
     // Determine order status
     let orderStatus = 'payment_confirmed';

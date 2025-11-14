@@ -751,16 +751,42 @@ class UnifiedPaymentService {
   /**
    * Create Stripe payment intent for customer payment
    * CRITICAL: This handles CUSTOMER payment only, not business fulfillment
+   * 
+   * ⚠️ DEPRECATED: This method uses the legacy payment intent flow.
+   * New code should use createCheckoutSession() for Stripe hosted checkout.
+   * This method is kept only for emergency fallback.
    */
   async createPaymentIntent(amount: number, metadata: any = {}): Promise<StripePaymentIntent> {
     try {
+      // Import feature flags
+      const { featureFlagService } = await import('@/services/featureFlags');
+      
+      // 🚨 DEPRECATION WARNING
+      if (featureFlagService.isEnabled('ENABLE_PAYMENT_FLOW_LOGGING')) {
+        console.warn(
+          '⚠️ DEPRECATED: createPaymentIntent() called. This method uses legacy payment intent flow.',
+          'Caller should migrate to createCheckoutSession() for Stripe hosted checkout.',
+          'Stack trace:', new Error().stack
+        );
+      }
+
+      // Feature flag: Block if legacy flow is disabled
+      if (featureFlagService.isEnabled('USE_CHECKOUT_SESSIONS') && 
+          !featureFlagService.isEnabled('USE_LEGACY_PAYMENT_INTENTS')) {
+        throw new Error(
+          'Legacy createPaymentIntent() is disabled. ' +
+          'Please migrate caller to use createCheckoutSession() and handle redirect flow.'
+        );
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('User must be authenticated');
       }
 
-      // CRITICAL: Use v2 Supabase Edge Function with metadata
+      // LEGACY: Use v2 Supabase Edge Function with metadata
+      console.warn('⚠️ Using legacy payment intent flow (emergency fallback only)');
       const { data, error } = await supabase.functions.invoke('create-payment-intent-v2', {
         body: {
           amount: Math.round(amount * 100), // Convert to cents

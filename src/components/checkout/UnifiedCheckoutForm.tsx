@@ -97,6 +97,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
@@ -394,12 +395,30 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       if (data?.url) {
         console.log('✅ Checkout session created, redirecting to Stripe...');
+        setCheckoutUrl(data.url); // Store for manual fallback
         setIsRedirecting(true);
         toast.success('Redirecting to secure checkout...');
         
-        // Delay redirect slightly to show loading overlay
+        // Safety timeout - if redirect doesn't happen in 5 seconds
+        const redirectTimeout = setTimeout(() => {
+          console.warn('⚠️ Redirect timeout - manual intervention required');
+          setIsProcessing(false);
+          setIsRedirecting(false);
+          toast.error('Automatic redirect failed. Please use the button below to open checkout.');
+        }, 5000);
+        
+        // Attempt automatic redirect
         setTimeout(() => {
-          window.location.href = data.url;
+          try {
+            window.location.href = data.url;
+            // If redirect succeeds, user leaves page and timeout never fires
+          } catch (redirectError) {
+            console.error('❌ Redirect blocked:', redirectError);
+            clearTimeout(redirectTimeout);
+            setIsProcessing(false);
+            setIsRedirecting(false);
+            toast.error('Redirect was blocked. Click the button below to proceed.');
+          }
         }, 800);
       } else {
         throw new Error('No checkout URL received');
@@ -479,6 +498,26 @@ const UnifiedCheckoutForm: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Redirecting to Stripe for payment processing...
               </p>
+              
+              {/* Manual fallback section */}
+              {checkoutUrl && (
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Redirect not working?
+                  </p>
+                  <Button
+                    onClick={() => {
+                      window.open(checkoutUrl, '_blank');
+                      toast.info('Opening checkout in new tab...');
+                    }}
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                  >
+                    Open Checkout Manually
+                  </Button>
+                </div>
+              )}
               
               {/* Stripe Trust Badge */}
               <div className="pt-4 border-t border-border/50">

@@ -60,6 +60,51 @@ serve(async (req) => {
       throw new Error(`No order items found for order: ${orderId}`);
     }
 
+    // Validate shipping info completeness
+    console.log('🔍 Validating shipping information...');
+    const shippingInfo = order.shipping_info;
+
+    if (!shippingInfo) {
+      throw new Error('No shipping information provided');
+    }
+
+    const requiredFields = {
+      name: shippingInfo.name,
+      address: shippingInfo.address_line1 || shippingInfo.address,
+      city: shippingInfo.city,
+      state: shippingInfo.state,
+      zip_code: shippingInfo.zip_code || shippingInfo.zipCode,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value || (typeof value === 'string' && value.trim() === ''))
+      .map(([key, _]) => key);
+
+    if (missingFields.length > 0) {
+      console.error('❌ Incomplete shipping address:', missingFields);
+      
+      // Update order to failed status with clear error
+      await supabase
+        .from('orders')
+        .update({
+          status: 'failed',
+          zma_error: JSON.stringify({
+            error_code: 'incomplete_shipping_address',
+            missing_fields: missingFields,
+            message: `Cannot submit to Zinc: missing ${missingFields.join(', ')}`,
+            timestamp: new Date().toISOString(),
+          }),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      throw new Error(
+        `Incomplete shipping address. Missing required fields: ${missingFields.join(', ')}`
+      );
+    }
+
+    console.log('✅ Shipping information validated');
+
     // Build Zinc API request
     const zincRequest = buildZincRequest(order, orderItems);
     

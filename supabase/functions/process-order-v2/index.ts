@@ -172,13 +172,26 @@ serve(async (req) => {
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
         );
         
+        // Check if error was already set (e.g., by shipping validation)
+        const { data: currentOrder } = await supabase
+          .from('orders')
+          .select('zma_error')
+          .eq('id', orderId)
+          .single();
+
+        // Only update error if not already set (preserves structured errors)
+        const updateData: any = {
+          status: 'failed',
+          updated_at: new Date().toISOString(),
+        };
+
+        if (!currentOrder?.zma_error) {
+          updateData.zma_error = error.message;
+        }
+
         await supabase
           .from('orders')
-          .update({
-            status: 'failed',
-            zma_error: error.message,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', orderId);
       } catch (updateError) {
         console.error('❌ Failed to update order to failed status:', updateError);

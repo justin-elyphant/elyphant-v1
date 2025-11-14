@@ -29,172 +29,103 @@ verify_jwt = false
 verify_jwt = true
 
 # ============================================
-# LEGACY FUNCTIONS (Keep for rollback)
+# ESSENTIAL UTILITY FUNCTIONS
 # ============================================
 
-[functions.stripe-webhook]
+[functions.get-products]
 verify_jwt = false
 
-[functions.ecommerce-email-orchestrator]
-verify_jwt = false
-
-[functions.process-scheduled-orders]
-verify_jwt = false
-
-[functions.retry-failed-order]
-verify_jwt = false
-
-[functions.manual-scheduler]
-verify_jwt = false
-
-[functions.admin-scheduled-orders]
-verify_jwt = false
-
-[functions.authenticate-reset-token]
-verify_jwt = false
-
-[functions.nicole-unified-agent]
-verify_jwt = false
-
-[functions.sync-zinc-orders]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = false
-
-[functions.check-zma-funding-status]
-verify_jwt = false
-
-[functions.send-zma-funding-alert]
-verify_jwt = false
-
-[functions.force-process-order]
-verify_jwt = false
-
-[functions.process-zma-order]
-verify_jwt = false
-
-[functions.recover-order]
-verify_jwt = false
-
-[functions.setup-email-templates]
+[functions.get-product-detail]
 verify_jwt = false
 
 [functions.get-shipping-quote]
 verify_jwt = false
 
-[functions.admin-reconcile-payment]
+[functions.save-payment-method]
+verify_jwt = true
+
+[functions.get-payment-method-details]
+verify_jwt = true
+
+[functions.nicole-unified-agent]
 verify_jwt = false
 
-[functions.unified-order-monitor]
+[functions.process-email-queue]
+verify_jwt = false
+
+[functions.setup-email-templates]
 verify_jwt = false
 
 [functions.detect-abandoned-carts]
 verify_jwt = false
 
-[functions.order-cleanup]
-verify_jwt = false
+[functions.clear-user-cart-sessions]
+verify_jwt = true
 
-[functions.get-payment-method-details]
-verify_jwt = false
-
-[functions.backfill-order-tracking]
-verify_jwt = false
-
-[functions.migrate-interests-consolidation]
+[functions.cleanup-auth-rate-limits]
 verify_jwt = false
 
 [functions.session-validator]
 verify_jwt = false
 
-[functions.cleanup-auth-rate-limits]
-verify_jwt = false
-
-[functions.generate-gift-preview-token]
+[functions.authenticate-reset-token]
 verify_jwt = false
 
 [functions.send-invitation-reminders]
 verify_jwt = false
 
-[functions.validate-payment-methods]
-verify_jwt = false
-
-[functions.retry-auto-gift-payment]
-verify_jwt = false
-
-[functions.process-fulfillment-queue]
+[functions.validate-invite]
 verify_jwt = false
 
 [functions.collect-recipient-address]
 verify_jwt = false
 
-[functions.validate-invite]
+[functions.generate-gift-preview-token]
 verify_jwt = false
 
-# Cron to process email queue every minute
+[functions.validate-payment-methods]
+verify_jwt = false
+
+# ============================================
+# CRON JOBS - V2 MODERNIZED SYSTEM
+# ============================================
+
+# V2: Scheduled order processor - captures held payments, processes deliveries (daily 2 AM)
+[[crons.scheduled_order_processor]]
+function_name = "scheduled-order-processor"
+schedule = "0 2 * * *"
+
+# V2: Auto-gift orchestrator - manages auto-gifting workflows (daily 3 AM)
+[[crons.auto_gift_orchestrator]]
+function_name = "auto-gift-orchestrator"
+schedule = "0 3 * * *"
+
+# V2: Order monitor - checks Zinc status, detects stuck orders (every 15 min)
+[[crons.order_monitor]]
+function_name = "order-monitor-v2"
+schedule = "*/15 * * * *"
+
+# Email queue processor (every minute)
 [[crons.process_email_queue]]
 function_name = "process-email-queue"
 schedule = "* * * * *"
 
-# Cron to cleanup expired sessions daily at 2 AM
-[[crons.cleanup_expired_sessions]]
-function_name = "cleanup-expired-sessions"
-schedule = "0 2 * * *"
-
-# Cron to cleanup auth rate limits daily at 3 AM
-[[crons.cleanup_auth_rate_limits]]
-function_name = "cleanup-auth-rate-limits"
-schedule = "0 3 * * *"
-
-# Cron to detect abandoned carts every 15 minutes
+# Abandoned cart detection (every 15 minutes)
 [[crons.detect_abandoned_carts]]
 function_name = "detect-abandoned-carts"
 schedule = "*/15 * * * *"
 
-# Cron to send invitation reminders daily at 10 AM
+# Auth rate limits cleanup (daily 3 AM)
+[[crons.cleanup_auth_rate_limits]]
+function_name = "cleanup-auth-rate-limits"
+schedule = "0 3 * * *"
+
+# Invitation reminders (daily 10 AM)
 [[crons.send_invitation_reminders]]
 function_name = "send-invitation-reminders"
 schedule = "0 10 * * *"
-# Cron to validate payment methods daily at 8 AM UTC (before auto-gift processing)
+
+# Payment method validation - before auto-gift processing (daily 8 AM)
 [[crons.validate_payment_methods]]
 function_name = "validate-payment-methods"
 schedule = "0 8 * * *"
-
-# Cron to check for upcoming auto-gift events and create executions daily at 9 AM UTC
-[[crons.daily_auto_gift_check]]
-function_name = "daily-auto-gift-check"
-schedule = "0 9 * * *"
-
-# Cron to retry failed auto-gift payments 3x daily
-[[crons.retry_auto_gift_payments]]
-function_name = "retry-auto-gift-payment"
-schedule = "0 10,16,22 * * *"
-
-# Cron to process fulfillment queue every 15 minutes
-[[crons.process_fulfillment_queue]]
-function_name = "process-fulfillment-queue"
-schedule = "*/15 * * * *"
-
-# Cron to process scheduled orders (held for delivery timing) twice daily
-[[crons.process_scheduled_orders]]
-function_name = "process-scheduled-orders"
-schedule = "0 6,14 * * *"
-
-# ============================================
-# V2 CRON JOBS (Modernized System)
-# ============================================
-
-# Scheduled order processor v2 - runs daily at 2 AM
-[[crons.scheduled_order_processor_v2]]
-function_name = "scheduled-order-processor"
-schedule = "0 2 * * *"
-
-# Auto-gift orchestrator v2 - runs daily at 3 AM
-[[crons.auto_gift_orchestrator_v2]]
-function_name = "auto-gift-orchestrator"
-schedule = "0 3 * * *"
-
-# Order monitor v2 - runs every 15 minutes
-[[crons.order_monitor_v2]]
-function_name = "order-monitor-v2"
-schedule = "*/15 * * * *"

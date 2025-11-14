@@ -95,13 +95,11 @@ const UnifiedCheckoutForm: React.FC = () => {
   const { calculatePriceBreakdown } = usePricingSettings();
 
   // Payment processing state
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
-  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);

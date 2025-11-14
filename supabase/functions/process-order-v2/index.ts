@@ -11,8 +11,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let orderId: string | null = null;
+
   try {
-    const { orderId } = await req.json();
+    const body = await req.json();
+    orderId = body.orderId;
     
     console.log('📦 Processing order v2:', orderId);
 
@@ -162,9 +165,8 @@ serve(async (req) => {
     console.error('❌ Error processing order:', error);
     
     // Update order status to failed
-    if (req.body) {
+    if (orderId) {
       try {
-        const { orderId } = await req.json();
         const supabase = createClient(
           Deno.env.get('SUPABASE_URL') || '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -174,7 +176,7 @@ serve(async (req) => {
           .from('orders')
           .update({
             status: 'failed',
-            notes: error.message,
+            zma_error: error.message,
             updated_at: new Date().toISOString(),
           })
           .eq('id', orderId);

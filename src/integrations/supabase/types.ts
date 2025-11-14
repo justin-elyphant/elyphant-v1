@@ -3224,7 +3224,7 @@ export type Database = {
           cancellation_reason: string | null
           cancelled_at: string | null
           cart_data: Json | null
-          cart_session_id: string | null
+          checkout_session_id: string | null
           confirmation_email_sent: boolean | null
           created_at: string
           currency: string
@@ -3259,6 +3259,7 @@ export type Database = {
           order_number: string
           parent_order_id: string | null
           payment_confirmation_sent: boolean | null
+          payment_intent_id: string | null
           payment_status: string | null
           processing_attempts: number | null
           retry_count: number | null
@@ -3294,7 +3295,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cart_data?: Json | null
-          cart_session_id?: string | null
+          checkout_session_id?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -3329,6 +3330,7 @@ export type Database = {
           order_number: string
           parent_order_id?: string | null
           payment_confirmation_sent?: boolean | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           processing_attempts?: number | null
           retry_count?: number | null
@@ -3364,7 +3366,7 @@ export type Database = {
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cart_data?: Json | null
-          cart_session_id?: string | null
+          checkout_session_id?: string | null
           confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
@@ -3399,6 +3401,7 @@ export type Database = {
           order_number?: string
           parent_order_id?: string | null
           payment_confirmation_sent?: boolean | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           processing_attempts?: number | null
           retry_count?: number | null
@@ -3430,13 +3433,6 @@ export type Database = {
           zma_order_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "orders_cart_session_id_fkey"
-            columns: ["cart_session_id"]
-            isOneToOne: false
-            referencedRelation: "cart_sessions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "orders_group_gift_project_id_fkey"
             columns: ["group_gift_project_id"]

@@ -18,7 +18,7 @@
  * - UnifiedShippingForm: Handles shipping address and method selection
  * - PaymentMethodSelector: Manages Stripe payment processing
  * - RecipientAssignmentSection: Handles gift recipient assignments
- * - Supabase edge functions: create-payment-intent, verify-payment-intent
+ * - Supabase edge functions: create-payment-intent-v2, stripe-webhook-v2
  * 
  * 🚫 NEVER REPLACE WITH:
  * - Simple form components

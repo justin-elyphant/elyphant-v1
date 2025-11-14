@@ -165,9 +165,11 @@ function buildZincRequest(order: any) {
       max_price: 1000, // $10 max shipping
     },
     webhooks: {
-      order_placed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
-      order_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
-      tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+      request_succeeded: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
+      request_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
+      tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
+      tracking_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
+      status_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
     },
     client_notes: {
       order_id: order.id,

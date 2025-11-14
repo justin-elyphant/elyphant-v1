@@ -15,6 +15,8 @@ interface ZincWebhookPayload {
     carrier: string;
     delivery_status: string;
     tracking_url: string;
+    retailer_tracking_url?: string;
+    delivery_proof_image?: string;
     product_id: string;
     merchant_order_id: string;
     obtained_at: string;
@@ -137,12 +139,12 @@ serve(async (req) => {
         
         if (payload.merchant_order_ids && payload.merchant_order_ids.length > 0) {
           updateData.zinc_order_id = payload.merchant_order_ids[0].merchant_order_id;
-          console.log('📦 Merchant order ID:', updateData.zinc_order_id);
+          console.log('🔖 Merchant order ID:', payload.merchant_order_ids[0].merchant_order_id);
         }
         
         if (payload.price_components) {
-          updateData.final_amount = payload.price_components.total / 100; // Convert cents to dollars
-          console.log('💰 Final amount:', updateData.final_amount);
+          updateData.total_amount = payload.price_components.total / 100;
+          console.log('💰 Total amount:', updateData.total_amount);
         }
         break;
 
@@ -150,12 +152,12 @@ serve(async (req) => {
         console.error('❌ Zinc order request failed:', payload.message);
         updateData.status = 'failed';
         updateData.zinc_status = 'failed';
-        updateData.notes = `Zinc error: ${payload.message || 'Unknown error'}`;
-        updateData.error_details = {
+        updateData.zma_error = JSON.stringify({
           code: payload.code,
           message: payload.message,
-          data: payload.data
-        };
+          data: payload.data,
+          timestamp: new Date().toISOString()
+        });
         break;
 
       case 'tracking_obtained':
@@ -163,11 +165,18 @@ serve(async (req) => {
         if (payload.tracking && payload.tracking.length > 0) {
           const trackingInfo = payload.tracking[0];
           updateData.tracking_number = trackingInfo.tracking_number;
-          updateData.carrier = trackingInfo.carrier;
-          updateData.tracking_url = trackingInfo.tracking_url;
           updateData.status = 'shipped';
           updateData.zinc_status = 'shipped';
-          updateData.shipped_at = trackingInfo.obtained_at;
+          
+          // Store full tracking details in merchant_tracking_data
+          updateData.merchant_tracking_data = {
+            tracking_number: trackingInfo.tracking_number,
+            retailer_tracking_number: trackingInfo.retailer_tracking_number,
+            carrier: trackingInfo.carrier,
+            tracking_url: trackingInfo.tracking_url,
+            retailer_tracking_url: trackingInfo.retailer_tracking_url,
+            obtained_at: trackingInfo.obtained_at
+          };
           
           console.log('🚚 Tracking:', trackingInfo.tracking_number);
         }
@@ -182,23 +191,40 @@ serve(async (req) => {
           if (trackingInfo.delivery_status === 'Delivered') {
             updateData.status = 'delivered';
             updateData.zinc_status = 'delivered';
-            updateData.delivered_at = new Date().toISOString();
+            
+            // Update merchant tracking data with delivery proof
+            updateData.merchant_tracking_data = {
+              ...(order.merchant_tracking_data || {}),
+              delivery_status: 'Delivered',
+              delivery_proof_image: trackingInfo.delivery_proof_image,
+              delivered_at: new Date().toISOString()
+            };
+            
             console.log('✅ Order delivered');
           } else {
             updateData.zinc_status = trackingInfo.delivery_status;
+            console.log('📦 Delivery status:', trackingInfo.delivery_status);
           }
         }
         break;
 
       case 'status_updated':
-        console.log('📊 Status updated');
-        // Generic status update - extract what we can from payload
+        console.log('🔄 Status updated');
         if (payload.tracking && payload.tracking.length > 0) {
           const trackingInfo = payload.tracking[0];
           if (trackingInfo.delivery_status === 'Delivered') {
             updateData.status = 'delivered';
             updateData.zinc_status = 'delivered';
-            updateData.delivered_at = new Date().toISOString();
+            
+            // Update merchant tracking data with delivery proof
+            updateData.merchant_tracking_data = {
+              ...(order.merchant_tracking_data || {}),
+              delivery_status: 'Delivered',
+              delivery_proof_image: trackingInfo.delivery_proof_image,
+              delivered_at: new Date().toISOString()
+            };
+            
+            console.log('✅ Order delivered');
           }
         }
         break;
@@ -215,16 +241,8 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('❌ Failed to update order:', updateError);
+      console.error('Webhook details:', { order_id: supabaseOrderId, webhook_type: webhookType, request_id: payload.request_id });
       
-      // Log failed webhook for later retry
-      await supabase.from('zinc_webhook_errors').insert({
-        order_id: supabaseOrderId,
-        webhook_type: webhookType,
-        payload: payload,
-        error: updateError.message,
-        created_at: new Date().toISOString()
-      });
-
       // Still return 200 to Zinc so they don't retry immediately
       return new Response(
         JSON.stringify({ received: true, error: updateError.message }),

@@ -48,7 +48,7 @@ serve(async (req) => {
     // Handle checkout session events (NEW - Phase 1)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      await handleCheckoutSessionCompleted(session, supabase);
+      await handleCheckoutSessionCompleted(session, supabase, stripe);
     } else if (event.type === 'checkout.session.expired') {
       const session = event.data.object as Stripe.Checkout.Session;
       await handleCheckoutSessionExpired(session, supabase);
@@ -86,15 +86,27 @@ async function handlePaymentSucceeded(
   supabase: any,
   stripe: Stripe
 ) {
-  console.log('✅ Payment succeeded:', paymentIntent.id);
+  console.log('⚠️ LEGACY: Payment intent event received:', paymentIntent.id);
+  console.log('🔄 Attempting to find associated checkout session...');
 
-  // Extract ALL data from metadata (source of truth)
-  const metadata = paymentIntent.metadata;
-  
-  if (!metadata.cart_items) {
-    console.error('❌ No cart items in payment intent metadata');
+  // Try to find the checkout session for this payment intent
+  const sessions = await stripe.checkout.sessions.list({
+    payment_intent: paymentIntent.id,
+    limit: 1
+  });
+
+  if (sessions.data.length > 0) {
+    console.log('✅ Found checkout session, processing as session event...');
+    await handleCheckoutSessionCompleted(sessions.data[0], supabase, stripe);
     return;
   }
+
+  // If no session found, this is truly a legacy payment intent
+  console.error('❌ No checkout session found for payment intent');
+  console.log('⚠️ This payment intent was created outside checkout flow - skipping order creation');
+  
+  // Extract metadata for logging
+  const metadata = paymentIntent.metadata;
 
   const cartItems = JSON.parse(metadata.cart_items);
   const shippingAddress = JSON.parse(metadata.shipping_address || '{}');
@@ -172,7 +184,8 @@ async function handlePaymentSucceeded(
 
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
-  supabase: any
+  supabase: any,
+  stripe: Stripe
 ) {
   console.log('✅ Checkout session completed:', session.id);
 
@@ -193,7 +206,7 @@ async function handleCheckoutSessionCompleted(
     const metadata = session.metadata || {};
     
     // Get line items from session
-    const lineItems = await getSessionLineItems(session);
+    const lineItems = await getSessionLineItems(session, stripe);
     
     // Parse structured data from metadata
     const deliveryGroups = metadata.delivery_groups ? JSON.parse(metadata.delivery_groups) : null;
@@ -310,15 +323,37 @@ async function handleCheckoutSessionExpired(
   return { received: true };
 }
 
-async function getSessionLineItems(session: Stripe.Checkout.Session): Promise<any[]> {
-  // Extract line items from session (simplified)
-  // In production, you might need to expand line_items via Stripe API
-  const items: any[] = [];
-  
-  // For now, reconstruct from metadata
-  // In full implementation, use: stripe.checkout.sessions.listLineItems(session.id)
-  
-  return items;
+async function getSessionLineItems(session: Stripe.Checkout.Session, stripe: Stripe): Promise<any[]> {
+  try {
+    console.log('📦 Fetching line items from Stripe session:', session.id);
+    
+    // Fetch line items from Stripe (up to 100 items per session)
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+      limit: 100,
+      expand: ['data.price.product']
+    });
+
+    console.log(`✅ Found ${lineItems.data.length} line items`);
+
+    // Transform to our order format
+    return lineItems.data.map((item: any) => {
+      const product = item.price?.product;
+      const metadata = product?.metadata || {};
+      
+      return {
+        product_id: metadata.product_id || product?.id,
+        name: item.description || product?.name,
+        price: (item.amount_total || 0) / 100, // Convert cents to dollars
+        quantity: item.quantity || 1,
+        image_url: product?.images?.[0] || null,
+        recipient_id: metadata.recipient_id || null,
+        recipient_name: metadata.recipient_name || null
+      };
+    });
+  } catch (error) {
+    console.error('❌ Failed to fetch session line items:', error);
+    return [];
+  }
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, supabase: any) {

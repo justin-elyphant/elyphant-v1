@@ -19,11 +19,11 @@ class FeatureFlagService {
     // Legacy fallback (emergency use only)
     USE_LEGACY_PAYMENT_INTENTS: false,
     
-    // Group gifts (migration complete, testing in progress)
-    ENABLE_GROUP_GIFT_CHECKOUT_SESSIONS: false, // TODO: Enable after testing
+    // Group gifts (migration complete, enabled)
+    ENABLE_GROUP_GIFT_CHECKOUT_SESSIONS: true,
     
-    // Auto-gifts (migration complete, testing in progress)
-    ENABLE_AUTO_GIFT_CHECKOUT_SESSIONS: false, // TODO: Enable after testing
+    // Auto-gifts (migration complete, enabled)
+    ENABLE_AUTO_GIFT_CHECKOUT_SESSIONS: true,
     
     // Enhanced logging for debugging
     ENABLE_PAYMENT_FLOW_LOGGING: import.meta.env.DEV

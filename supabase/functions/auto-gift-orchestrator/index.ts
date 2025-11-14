@@ -116,12 +116,13 @@ serve(async (req) => {
             .eq('id', rule.connection_id)
             .single();
 
-          // Create payment intent with saved payment method
-          const { data: paymentIntentData, error: paymentError } = await supabase.functions.invoke(
-            'create-payment-intent-v2',
+          console.log('💳 Creating checkout session for auto-gift with saved payment method...');
+          
+          // Create checkout session for auto-gift (will auto-confirm with saved payment method)
+          const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+            'create-checkout-session',
             {
               body: {
-                amount: gift.products.price,
                 cartItems: [{
                   product_id: gift.product_id,
                   product_name: gift.products.name,
@@ -129,21 +130,70 @@ serve(async (req) => {
                   price: gift.products.price,
                   image_url: gift.products.image,
                 }],
-                shippingAddress: connection?.shipping_address,
+                deliveryGroups: [{
+                  recipient: {
+                    name: rule.connections?.name || 'Recipient',
+                    email: rule.connections?.email,
+                    address: connection?.shipping_address,
+                  },
+                  items: [{
+                    product_id: gift.product_id,
+                    quantity: 1,
+                  }],
+                }],
                 scheduledDeliveryDate: rule.next_trigger_date,
                 isAutoGift: true,
                 autoGiftRuleId: rule.id,
                 giftOptions: {
                   message: rule.gift_message || `Happy ${rule.occasion_type}!`,
-                  wrap: true,
+                  isGift: true,
+                  giftWrap: true,
                 },
-                paymentMethodId: paymentMethod.stripe_payment_method_id,
+                paymentMethod: paymentMethod.stripe_payment_method_id,
+                confirm: true, // Auto-confirm with saved payment method (no redirect needed)
+                pricingBreakdown: {
+                  subtotal: gift.products.price,
+                  shippingCost: 0,
+                  giftingFee: 0,
+                  taxAmount: 0,
+                  total: gift.products.price,
+                },
+                metadata: {
+                  user_id: rule.user_id,
+                  is_auto_gift: 'true',
+                  auto_gift_rule_id: rule.id,
+                  occasion: rule.occasion_type,
+                  recipient_name: rule.connections?.name,
+                },
               },
             }
           );
 
-          if (paymentError) {
-            throw paymentError;
+          if (checkoutError) {
+            console.error('❌ Checkout session creation failed:', checkoutError);
+            throw checkoutError;
+          }
+
+          console.log('✅ Checkout session created:', checkoutData?.sessionId);
+
+          // Store the checkout session ID for tracking
+          if (checkoutData?.sessionId) {
+            await supabase
+              .from('auto_gift_event_logs')
+              .insert({
+                user_id: rule.user_id,
+                rule_id: rule.id,
+                event_type: 'checkout_session_created',
+                event_data: {
+                  checkout_session_id: checkoutData.sessionId,
+                  amount: gift.products.price,
+                  recipient: rule.connections?.name,
+                },
+                metadata: {
+                  flow_type: 'checkout_sessions',
+                  auto_confirmed: true,
+                },
+              });
           }
 
           // Update rule

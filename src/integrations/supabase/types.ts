@@ -3220,6 +3220,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          auto_gift_rule_id: string | null
           billing_info: Json | null
           cancellation_reason: string | null
           cancelled_at: string | null
@@ -3248,11 +3249,13 @@ export type Database = {
           has_multiple_recipients: boolean | null
           hold_for_scheduled_delivery: boolean | null
           id: string
+          is_auto_gift: boolean | null
           is_gift: boolean | null
           is_split_order: boolean | null
           is_surprise_gift: boolean | null
           last_processing_attempt: string | null
           last_zinc_update: string | null
+          line_items: Json | null
           merchant_tracking_data: Json | null
           next_retry_at: string | null
           order_method: string | null
@@ -3265,6 +3268,7 @@ export type Database = {
           retry_count: number | null
           retry_reason: string | null
           scheduled_delivery_date: string | null
+          shipping_address: Json | null
           shipping_cost: number
           shipping_info: Json
           split_order_index: number | null
@@ -3291,6 +3295,7 @@ export type Database = {
           zma_order_id: string | null
         }
         Insert: {
+          auto_gift_rule_id?: string | null
           billing_info?: Json | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3319,11 +3324,13 @@ export type Database = {
           has_multiple_recipients?: boolean | null
           hold_for_scheduled_delivery?: boolean | null
           id?: string
+          is_auto_gift?: boolean | null
           is_gift?: boolean | null
           is_split_order?: boolean | null
           is_surprise_gift?: boolean | null
           last_processing_attempt?: string | null
           last_zinc_update?: string | null
+          line_items?: Json | null
           merchant_tracking_data?: Json | null
           next_retry_at?: string | null
           order_method?: string | null
@@ -3336,6 +3343,7 @@ export type Database = {
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
+          shipping_address?: Json | null
           shipping_cost?: number
           shipping_info: Json
           split_order_index?: number | null
@@ -3362,6 +3370,7 @@ export type Database = {
           zma_order_id?: string | null
         }
         Update: {
+          auto_gift_rule_id?: string | null
           billing_info?: Json | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
@@ -3390,11 +3399,13 @@ export type Database = {
           has_multiple_recipients?: boolean | null
           hold_for_scheduled_delivery?: boolean | null
           id?: string
+          is_auto_gift?: boolean | null
           is_gift?: boolean | null
           is_split_order?: boolean | null
           is_surprise_gift?: boolean | null
           last_processing_attempt?: string | null
           last_zinc_update?: string | null
+          line_items?: Json | null
           merchant_tracking_data?: Json | null
           next_retry_at?: string | null
           order_method?: string | null
@@ -3407,6 +3418,7 @@ export type Database = {
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
+          shipping_address?: Json | null
           shipping_cost?: number
           shipping_info?: Json
           split_order_index?: number | null

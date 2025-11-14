@@ -27,15 +27,40 @@ const PurchaseSuccess = () => {
     const fetchPurchaseDetails = async () => {
       try {
         // Poll Orders table directly - single source of truth
+        // North Star: checkout_session_id is the source of truth
         if (sessionId) {
-          const { data: order, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('stripe_session_id', sessionId)
-            .maybeSingle();
+          // Poll for order creation (webhook processes async)
+          let attempts = 0;
+          let order = null;
           
-          if (!error && order) {
+          while (attempts < 10 && !order) {
+            const { data, error } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('checkout_session_id', sessionId)
+              .maybeSingle();
+            
+            if (data) {
+              order = data;
+              break;
+            }
+            
+            // Wait 1 second between attempts
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            attempts++;
+          }
+          
+          if (order) {
             setPurchaseDetails(order);
+            // Redirect to orders page after 3 seconds
+            setTimeout(() => {
+              navigate('/marketplace?tab=orders');
+            }, 3000);
+          } else {
+            console.warn('Order not found after polling, redirecting anyway...');
+            setTimeout(() => {
+              navigate('/marketplace?tab=orders');
+            }, 2000);
           }
         } 
         // If this is coming from a direct order ID
@@ -48,7 +73,16 @@ const PurchaseSuccess = () => {
             
           if (!error && order) {
             setPurchaseDetails(order);
+            // Redirect to orders page after 3 seconds
+            setTimeout(() => {
+              navigate('/marketplace?tab=orders');
+            }, 3000);
           }
+        } else {
+          // No order info, redirect after short delay
+          setTimeout(() => {
+            navigate('/marketplace?tab=orders');
+          }, 2000);
         }
       } catch (err) {
         console.error('Error fetching purchase details:', err);

@@ -160,16 +160,6 @@ const Checkout = () => {
   return (
     <SidebarLayout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Secure Checkout Trust Banner */}
-        <Alert className="mb-6 border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
-          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="text-blue-900 dark:text-blue-100">Secure Checkout</AlertTitle>
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
-            You'll be redirected to Stripe's secure payment page to complete your purchase. 
-            Your payment information is protected by bank-level encryption.
-          </AlertDescription>
-        </Alert>
-
         {/* Cancelled Payment Banner */}
         {cancelled && (
           <Alert variant="warning" className="mb-6">

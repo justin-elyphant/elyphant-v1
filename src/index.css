@@ -10,7 +10,7 @@
 
 :root {
   /* Design system color tokens */
-  --background: 0 0% 97%;
+  --background: 0 0% 98.5%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
@@ -32,10 +32,10 @@
   --radius: 0.5rem;
   
   /* Unified Surface System */
-  --surface-primary: 0 0% 97%;
-  --surface-secondary: 0 0% 98.5%;
+  --surface-primary: 0 0% 98.5%;
+  --surface-secondary: 0 0% 99%;
   --surface-elevated: 0 0% 100%;
-  --surface-sunken: 0 0% 95%;
+  --surface-sunken: 0 0% 97%;
   --surface-subtle: 210 40% 97%;
   --border-subtle: 214.3 31.8% 95%;
   

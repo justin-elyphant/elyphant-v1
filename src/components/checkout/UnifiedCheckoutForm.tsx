@@ -368,11 +368,9 @@ const UnifiedCheckoutForm: React.FC = () => {
       console.log('✅ Skipping cart_sessions table - using metadata-based approach');
 
 
-      // Create payment intent with v2 endpoint (metadata-based)
-      const { data, error } = await invokeWithAuthRetry('create-payment-intent-v2', {
+      // Create checkout session (V2 modernized approach)
+      const { data, error } = await invokeWithAuthRetry('create-checkout-session', {
         body: {
-          amount: Math.round(totalAmount * 100),
-          currency: 'usd',
           cartItems: cartItems.map(item => ({
             product_id: item.product.product_id || item.product.id,
             name: item.product.name,
@@ -381,9 +379,17 @@ const UnifiedCheckoutForm: React.FC = () => {
             image_url: item.product.image || item.product.images?.[0],
             recipientAssignment: item.recipientAssignment
           })),
-          shippingInfo: checkoutData.shippingInfo,
+          deliveryGroups: enrichedDeliveryGroups,
+          shippingInfo: zmaCompatibleShippingInfo,
           giftOptions: giftOptions,
-          deliveryGroups: deliveryGroups,
+          pricingBreakdown: {
+            subtotal,
+            shippingCost,
+            giftingFee,
+            giftingFeeName,
+            giftingFeeDescription,
+            taxAmount
+          },
           metadata: {
             user_id: user.id,
             order_type: 'marketplace_purchase',
@@ -396,17 +402,22 @@ const UnifiedCheckoutForm: React.FC = () => {
       });
 
       if (error) {
-        console.error('Error creating payment intent:', error);
-        const errorMsg = 'Failed to initialize payment. Please try again.';
+        console.error('Error creating checkout session:', error);
+        const errorMsg = 'Failed to initialize checkout. Please try again.';
         setInitError(errorMsg);
         toast.error(errorMsg);
         setIsProcessing(false);
         return;
       }
 
-      setClientSecret(data.client_secret);
-      setPaymentIntentId(data.payment_intent_id);
-      console.log('✅ Payment intent created (order will be created by webhook after payment)');
+      if (data?.url) {
+        console.log('✅ Checkout session created, redirecting to Stripe...');
+        toast.success('Redirecting to secure checkout...');
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
       
     } catch (error: any) {
       console.error('💥 Error in createPaymentIntent:', error);

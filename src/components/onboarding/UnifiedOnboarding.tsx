@@ -21,7 +21,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ArrowRight, ArrowLeft, Check, Plus, Gift, X, Sparkles } from "lucide-react";
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
-import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
 import { AddressValidationResult, unifiedLocationService } from "@/services/location/UnifiedLocationService";
 
@@ -84,7 +83,6 @@ const UnifiedOnboarding: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateProfile } = useProfile();
-  const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
   const { handleOnboardingComplete } = useOnboardingCompletion();
 
   // Step state
@@ -554,26 +552,9 @@ const UnifiedOnboarding: React.FC = () => {
       // Clear localStorage flags and refetch profile data
       await handleOnboardingComplete();
 
-      // Trigger welcome email with user data and interests
+      // Welcome email functionality removed - email queue will handle welcome messages
       try {
-        const emailInterests = selectedInterests.length > 0 ? selectedInterests : ['popular gifts', 'trending'];
-        
-        console.log('🎁 Triggering welcome email with interests:', emailInterests);
-        
-        await scheduleDelayedWelcomeEmail({
-          userId: user.id,
-          userEmail: user.email || '',
-          userFirstName: firstName,
-          userLastName: lastName,
-          birthYear: formData.date_of_birth.getFullYear(), // Extract year from Date object
-          interests: emailInterests,
-          inviterName: undefined,
-          profileData: {
-            gender: undefined,
-            lifestyle: undefined,
-            favoriteCategories: undefined
-          }
-        });
+        console.log('✅ Profile interests saved for user:', user.id);
       } catch (emailError) {
         console.error('Non-blocking: Welcome email scheduling failed:', emailError);
       }

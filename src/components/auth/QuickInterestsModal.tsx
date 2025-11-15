@@ -7,7 +7,6 @@ import { Check, ArrowRight, Plus } from "lucide-react";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
-import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
 
 interface QuickInterestsModalProps {
@@ -44,7 +43,6 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
   const [newInterest, setNewInterest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateProfile } = useProfile();
-  const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
   const { handleOnboardingComplete } = useOnboardingCompletion();
 
   const toggleInterest = (interest: string) => {
@@ -108,27 +106,10 @@ const QuickInterestsModal: React.FC<QuickInterestsModalProps> = ({
       // Clear localStorage flags and refetch profile data
       await handleOnboardingComplete();
 
-      // Trigger welcome email with user data and interests
+      // Welcome email functionality removed - email queue will handle welcome messages
       if (userData) {
         try {
-          const emailInterests = selectedInterests.length > 0 ? selectedInterests : ['popular gifts', 'trending'];
-          
-          console.log('🎁 Triggering welcome email with interests:', emailInterests);
-          
-          await scheduleDelayedWelcomeEmail({
-            userId: userData.userId,
-            userEmail: userData.userEmail,
-            userFirstName: userData.userFirstName,
-            userLastName: userData.userLastName,
-            birthYear: userData.birthYear,
-            interests: emailInterests,
-            inviterName: undefined,
-            profileData: {
-              gender: undefined,
-              lifestyle: undefined,
-              favoriteCategories: undefined
-            }
-          });
+          console.log('✅ Profile interests saved for user:', userData.userId);
         } catch (emailError) {
           console.error('Non-blocking: Welcome email scheduling failed:', emailError);
           // Don't block the completion flow for email issues

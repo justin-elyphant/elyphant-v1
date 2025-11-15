@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SignUpFormComponent from "../signup/SignUpForm";
 import { SignUpFormValues } from "../signup/SignUpForm";
-import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
 interface SignUpFormProps {
   invitationData?: {
@@ -19,7 +18,6 @@ interface SignUpFormProps {
 const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { scheduleDelayedWelcomeEmail } = useWelcomeWishlist();
 
   const handleSignUp = useCallback(async (values: SignUpFormValues) => {
     setIsSubmitting(true);

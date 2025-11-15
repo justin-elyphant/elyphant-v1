@@ -3265,6 +3265,7 @@ export type Database = {
           payment_intent_id: string | null
           payment_status: string | null
           processing_attempts: number | null
+          receipt_sent_at: string | null
           retry_count: number | null
           retry_reason: string | null
           scheduled_delivery_date: string | null
@@ -3340,6 +3341,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_status?: string | null
           processing_attempts?: number | null
+          receipt_sent_at?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null
@@ -3415,6 +3417,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_status?: string | null
           processing_attempts?: number | null
+          receipt_sent_at?: string | null
           retry_count?: number | null
           retry_reason?: string | null
           scheduled_delivery_date?: string | null

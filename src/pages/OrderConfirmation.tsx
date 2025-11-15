@@ -22,7 +22,8 @@ interface Order {
   split_order_index: number | null;
   total_split_orders: number | null;
   cart_data?: any;
-  order_items?: any[];
+  line_items?: any[];
+  shipping_address?: any;
 }
 
 const OrderConfirmation = () => {
@@ -129,11 +130,11 @@ const OrderConfirmation = () => {
         eventType: eventType,
         eventDate: eventDate,
         budgetLimit: Math.ceil(totalAmount),
-        selectedProducts: orderData.order_items?.map(item => ({
-          productId: item.product_id,
-          name: item.product_name,
-          price: item.unit_price,
-          image: item.product_image
+        selectedProducts: orderData.line_items?.map((item: any) => ({
+          productId: item.product_id || item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image_url
         }))
       });
 
@@ -146,11 +147,11 @@ const OrderConfirmation = () => {
     try {
       let orderData = null;
 
-      // NEW: Check for checkout_session_id (Stripe Checkout Sessions)
+      // PRIMARY: Check for checkout_session_id (Stripe Checkout Sessions)
       if (sessionId) {
         const sessionResult = await (supabase as any)
           .from('orders')
-          .select('*, order_items(*)')
+          .select('*')
           .eq('checkout_session_id', sessionId)
           .maybeSingle();
         
@@ -159,21 +160,21 @@ const OrderConfirmation = () => {
         }
       }
       
-      // Try to find order by ID (UUID)
+      // Fallback: Try to find order by ID (UUID)
       if (!orderData && orderId) {
         const result = await (supabase as any)
           .from('orders')
-          .select('*, order_items(*)')
+          .select('*')
           .eq('id', orderId)
           .maybeSingle();
         orderData = result.data;
       }
 
-      // Fallback: Try to find by payment_intent_id (Stripe Payment Intent ID)
+      // Legacy: Try to find by payment_intent_id
       if (!orderData && orderId) {
         const paymentIntentResult = await (supabase as any)
           .from('orders')
-          .select('*, order_items(*)')
+          .select('*')
           .eq('payment_intent_id', orderId)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -186,10 +187,12 @@ const OrderConfirmation = () => {
 
       if (orderData) {
         setOrder(orderData);
+        
+        // Handle split orders (if applicable)
         if (orderData.is_split_order && !orderData.parent_order_id) {
           const childResult = await (supabase as any)
             .from('orders')
-            .select('*, order_items(*)')
+            .select('*')
             .eq('parent_order_id', orderData.id)
             .order('split_order_index');
           if (childResult.data) setChildOrders(childResult.data);
@@ -382,26 +385,26 @@ const OrderConfirmation = () => {
                   </div>
 
                   <div className="space-y-2">
-                    {child.order_items?.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 py-2 border-t">
-                        {item.product_image && (
-                          <img 
-                            src={item.product_image} 
-                            alt={item.product_name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.product_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Qty: {item.quantity} × ${item.unit_price.toFixed(2)}
-                          </p>
-                        </div>
-                        <p className="font-semibold">
-                          ${(item.quantity * item.unit_price).toFixed(2)}
+                  {child.line_items?.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 py-2 border-t">
+                      {item.image_url && (
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Qty: {item.quantity} × ${item.price.toFixed(2)}
                         </p>
                       </div>
-                    ))}
+                      <p className="font-semibold">
+                        ${(item.quantity * item.price).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
                   </div>
 
                   {child.cart_data?.giftOptions?.giftMessage && (
@@ -426,17 +429,17 @@ const OrderConfirmation = () => {
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.order_items?.map((item, idx) => (
+              {order.line_items?.map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center gap-4 pb-4 border-b last:border-0">
-                  {item.product_image && (
+                  {item.image_url && (
                     <img 
-                      src={item.product_image} 
-                      alt={item.product_name}
+                      src={item.image_url} 
+                      alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold">{item.product_name}</p>
+                    <p className="font-semibold">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
                       Quantity: {item.quantity}
                     </p>

@@ -48,8 +48,8 @@ const ZMAAccountManager = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('total_amount')
-        .eq('funding_status', 'awaiting_funds');
+        .select('id, total_amount')
+        .eq('status', 'pending');
 
       if (error) throw error;
 

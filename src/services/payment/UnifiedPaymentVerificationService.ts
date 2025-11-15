@@ -137,12 +137,12 @@ class UnifiedPaymentVerificationService {
   ): Promise<PaymentVerificationResult> {
     try {
       // Query Orders table directly - webhook keeps it updated
-      let query = supabase.from('orders').select('*');
+      let query = supabase.from('orders').select('id, order_number, status, payment_status, checkout_session_id, payment_intent_id, total_amount, created_at');
       
       if (sessionId) {
-        query = query.eq('stripe_session_id', sessionId);
+        query = query.eq('checkout_session_id', sessionId);
       } else if (paymentIntentId) {
-        query = query.eq('stripe_payment_intent_id', paymentIntentId);
+        query = query.eq('payment_intent_id', paymentIntentId);
       }
       
       const { data: order, error } = await query.maybeSingle();

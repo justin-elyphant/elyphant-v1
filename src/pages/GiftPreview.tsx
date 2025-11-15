@@ -69,13 +69,8 @@ const GiftPreview = () => {
           .update({ viewed_at: new Date().toISOString() })
           .eq('id', tokenData.id);
 
-        await supabase
-          .from('orders')
-          .update({ 
-            gift_preview_viewed: true,
-            gift_preview_viewed_at: new Date().toISOString()
-          })
-          .eq('id', tokenData.order_id);
+        // Note: gift_preview_viewed tracking removed from orders table
+        // Tracking is done via gift_preview_tokens.viewed_at instead
       }
 
       setGiftData(tokenData);

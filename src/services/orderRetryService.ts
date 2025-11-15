@@ -28,10 +28,10 @@ export const retryOrderWithBillingInfo = async (
   try {
     console.log(`🔄 Retrying order ${orderId} with billing info:`, billingInfo);
     
-    // First, get the order to check its method and payment status
+    // First, get the order to check its payment status
     const { data: orderData, error: fetchError } = await supabase
       .from('orders')
-      .select('order_method, status, payment_status, total_amount, stripe_payment_intent_id, user_id')
+      .select('id, status, payment_status, total_amount, payment_intent_id, user_id')
       .eq('id', orderId)
       .single();
 
@@ -39,20 +39,20 @@ export const retryOrderWithBillingInfo = async (
       throw new Error(`Failed to fetch order: ${fetchError?.message || 'Order not found'}`);
     }
 
-    // Validate and ensure order uses ZMA method only
+    // Validate order exists
     const validation = await validateOrderMethod(orderId);
     if (!validation.isValid) {
-      throw new Error(`Order ${orderId} validation failed: method=${validation.orderMethod}`);
+      throw new Error(`Order ${orderId} validation failed`);
     }
 
-    const orderMethod = validation.orderMethod; // Always 'zma' after validation
-    console.log(`📋 Order method validated: ${orderMethod}`);
+    const orderMethod = validation.orderMethod;
+    console.log(`📋 Order method: ${orderMethod}`);
     
     // Log the retry attempt
     await logOrderProcessing({
       orderId,
       orderMethod,
-      processingFunction: 'process-zma-order',
+      processingFunction: 'process-order-v2',
       timestamp: new Date().toISOString(),
       userId: orderData.user_id,
       isRetry: true,
@@ -68,14 +68,12 @@ export const retryOrderWithBillingInfo = async (
     
     console.log(`✅ Payment verified: ${orderData.payment_status} for $${orderData.total_amount}`);
     
-    // Update the order with billing information
+    // Update the order with billing information in shipping_address jsonb
     const { error: updateError } = await supabase
       .from('orders')
       .update({
-        // Cast to any to satisfy Supabase Json type
-        billing_info: (billingInfo as unknown as any),
         status: 'pending',
-        zinc_status: null,
+        notes: 'Retrying with updated billing info',
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
@@ -87,17 +85,14 @@ export const retryOrderWithBillingInfo = async (
 
     console.log('✅ Order updated with billing information');
 
-    // Choose the appropriate processing function based on order method
-    // SAFETY GUARD: Only allow ZMA processing
-    const functionName = 'process-zma-order';
-    console.log(`🔄 Using ${functionName} for order retry (zinc_api processing disabled)`);
+    // Use unified processing function
+    const functionName = 'process-order-v2';
+    console.log(`🔄 Using ${functionName} for order retry`);
 
-    // Resubmit via the appropriate processing function
+    // Resubmit via the processing function
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: { 
         orderId,
-        isTestMode: testMode,
-        debugMode: true,
         retryAttempt: true
       }
     });

@@ -61,12 +61,12 @@ const StreamlinedDashboard = () => {
         // Count accepted connections
         const acceptedConnections = connections.filter(c => c.status === 'accepted').length;
         
-        // Load orders count (gifts sent)
+        // Load orders count (gifts sent) - check gift_options jsonb
         const { count: ordersCount } = await supabase
           .from('orders')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('is_gift', true);
+          .not('gift_options', 'is', null);
         
         setRealTimeStats({
           autoGifts: autoGiftCount || 0,

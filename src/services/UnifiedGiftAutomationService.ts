@@ -1342,14 +1342,15 @@ class UnifiedGiftAutomationService {
 
     if (scheduledOrders) {
       scheduledOrders.forEach(order => {
+        const giftOptions = order.gift_options as any || {};
         scheduledGifts.push({
           id: `manual-${order.id}`,
           type: 'manual',
           userId,
           scheduledDate: new Date(order.scheduled_delivery_date!),
           giftOptions: {
-            giftMessage: order.gift_message || undefined,
-            isHidden: order.is_surprise_gift || false,
+            giftMessage: giftOptions.giftMessage || undefined,
+            isHidden: giftOptions.isSurprise || false,
           },
           status: 'scheduled'
         });

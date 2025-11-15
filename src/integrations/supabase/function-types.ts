@@ -20,5 +20,6 @@ export enum SUPABASE_FUNCTIONS {
   PROCESS_ORDER_V2 = "process-order-v2",
   SEND_ORDER_RECEIPT = "send-order-receipt",
   ORDER_MONITOR_V2 = "order-monitor-v2",
-  SCHEDULED_ORDER_PROCESSOR = "scheduled-order-processor"
+  SCHEDULED_ORDER_PROCESSOR = "scheduled-order-processor",
+  RECONCILE_CHECKOUT_SESSION = "reconcile-checkout-session"
 }

@@ -290,12 +290,16 @@ serve(async (req) => {
     // Create Checkout Session params
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
+      client_reference_id: user.id, // CRITICAL: Ensure user_id is always set
       line_items: lineItems,
       mode: 'payment',
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata,
       billing_address_collection: 'required',
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA'],
+      },
     };
 
     // For group gifts, hold funds in escrow until project completes

@@ -273,9 +273,32 @@ const OrderConfirmation = () => {
     );
   }
 
-  // Progressive error state
+  // Progressive error state with reconciliation option
   if (!order && showProgressiveError) {
     const timeElapsed = Math.floor((Date.now() - pollingStartTime) / 1000);
+    
+    const handleReconcile = async () => {
+      if (!sessionId) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('reconcile-checkout-session', {
+          body: { sessionId }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success && data.order_id) {
+          // Refresh to show the order
+          window.location.reload();
+        }
+      } catch (err: any) {
+        console.error('Reconciliation failed:', err);
+        alert(`Failed to create order: ${err.message || 'Unknown error'}. Please contact support.`);
+      } finally {
+        setLoading(false);
+      }
+    };
     
     return (
       <SidebarLayout>
@@ -295,6 +318,11 @@ const OrderConfirmation = () => {
               <Button onClick={() => window.location.reload()} variant="default">
                 Refresh Page
               </Button>
+              {sessionId && (
+                <Button onClick={handleReconcile} variant="secondary">
+                  Retry Order Creation
+                </Button>
+              )}
               <Button onClick={() => navigate('/orders')} variant="outline">
                 View All Orders
               </Button>

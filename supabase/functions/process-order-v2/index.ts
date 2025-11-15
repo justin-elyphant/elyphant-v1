@@ -17,14 +17,19 @@ serve(async (req) => {
     const body = await req.json();
     orderId = body.orderId;
     
-    console.log('📦 Processing order v2:', orderId);
+    console.log('📦 process-order-v2: Starting processing for order', orderId);
+
+    if (!orderId) {
+      throw new Error('Missing orderId in request body');
+    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
-    // Fetch order
+    // STEP 1: Fetch order with all required data
+    console.log('🔍 Fetching order details...');
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -32,236 +37,259 @@ serve(async (req) => {
       .single();
 
     if (orderError || !order) {
+      console.error('❌ Order not found:', orderId);
       throw new Error(`Order not found: ${orderId}`);
     }
 
-    // Validate payment status (NEW ARCHITECTURE: 'paid' or 'authorized')
+    console.log(`✅ Order found: ${order.order_number} | Status: ${order.status} | Payment: ${order.payment_status}`);
+
+    // STEP 2: Validate payment status
     if (order.payment_status !== 'paid' && order.payment_status !== 'authorized') {
+      console.error(`❌ Payment not confirmed: ${order.payment_status}`);
       throw new Error(`Order payment not confirmed: ${order.payment_status}`);
     }
 
-    // Validate order not already processing
+    // STEP 3: Check if already submitted to Zinc
     if (order.zinc_order_id) {
-      console.log('⚠️ Order already submitted to Zinc:', order.zinc_order_id);
+      console.log(`⚠️ Order already submitted to Zinc: ${order.zinc_order_id}`);
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'Order already processing',
           zinc_order_id: order.zinc_order_id 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
       );
     }
 
-    // Get order items from line_items JSONB column (NEW ARCHITECTURE)
+    // STEP 4: Extract line_items from JSONB column
     const lineItems = order.line_items;
     
     if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
-      throw new Error(`No line items found for order: ${orderId}`);
+      console.error('❌ No line_items found in order');
+      await markOrderRequiresAttention(
+        supabase, 
+        orderId, 
+        'No line items found in order data'
+      );
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No line items found',
+          requires_attention: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
-    // Transform line_items to match Zinc format
-    const orderItems = lineItems.map((item: any) => ({
-      product_id: item.product_id || item.productId || item.id,
-      quantity: item.quantity || 1,
-    }));
+    console.log(`✅ Found ${lineItems.length} line items`);
 
-    // Validate shipping info completeness
-    console.log('🔍 Validating shipping information...');
-    const shippingInfo = order.shipping_info;
-
-    if (!shippingInfo) {
-      throw new Error('No shipping information provided');
+    // STEP 5: Extract and validate shipping address (from JSONB column)
+    const shippingAddress = order.shipping_address;
+    
+    if (!shippingAddress) {
+      console.error('❌ No shipping_address found in order');
+      await markOrderRequiresAttention(
+        supabase, 
+        orderId, 
+        'No shipping address found in order data'
+      );
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No shipping address',
+          requires_attention: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
-    const requiredFields = {
-      name: shippingInfo.name,
-      address: shippingInfo.address_line1 || shippingInfo.address,
-      city: shippingInfo.city,
-      state: shippingInfo.state,
-      zip_code: shippingInfo.zip_code || shippingInfo.zipCode,
+    // CRITICAL: Accept both postal_code (preferred) and zip_code (legacy)
+    const zipCode = shippingAddress.postal_code || shippingAddress.zip_code || shippingAddress.zipCode;
+    
+    console.log('🔍 Validating shipping address fields...');
+    const requiredShippingFields = {
+      name: shippingAddress.name,
+      address_line1: shippingAddress.address_line1 || shippingAddress.address || shippingAddress.street,
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      postal_code: zipCode,
     };
 
-    const missingFields = Object.entries(requiredFields)
+    const missingFields = Object.entries(requiredShippingFields)
       .filter(([_, value]) => !value || (typeof value === 'string' && value.trim() === ''))
       .map(([key, _]) => key);
 
     if (missingFields.length > 0) {
       console.error('❌ Incomplete shipping address:', missingFields);
+      console.error('📦 Shipping address data:', JSON.stringify(shippingAddress, null, 2));
       
-      // Update order to failed status with clear error
-      await supabase
-        .from('orders')
-        .update({
-          status: 'failed',
-          zma_error: JSON.stringify({
-            error_code: 'incomplete_shipping_address',
-            missing_fields: missingFields,
-            message: `Cannot submit to Zinc: missing ${missingFields.join(', ')}`,
-            timestamp: new Date().toISOString(),
-          }),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
-
-      throw new Error(
-        `Incomplete shipping address. Missing required fields: ${missingFields.join(', ')}`
+      await markOrderRequiresAttention(
+        supabase, 
+        orderId, 
+        `Incomplete shipping address. Missing: ${missingFields.join(', ')}`
+      );
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Incomplete shipping address',
+          missing_fields: missingFields,
+          requires_attention: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
       );
     }
 
-    console.log('✅ Shipping information validated');
+    console.log(`✅ Shipping address validated: ${requiredShippingFields.city}, ${requiredShippingFields.state} ${requiredShippingFields.postal_code}`);
 
-    // Build Zinc API request
-    const zincRequest = buildZincRequest(order, orderItems);
-    
-    console.log('🔵 Submitting to Zinc API...');
-    console.log('📦 Zinc request payload:', JSON.stringify(zincRequest, null, 2));
+    // STEP 6: Build Zinc API request
+    const zincRequest = {
+      idempotency_key: orderId,
+      retailer: 'amazon',
+      products: lineItems.map((item: any) => ({
+        product_id: item.product_id || item.productId || item.id,
+        quantity: item.quantity || 1,
+      })),
+      max_price: Math.ceil(order.total_amount * 1.1),
+      shipping_address: {
+        first_name: requiredShippingFields.name.split(' ')[0] || requiredShippingFields.name,
+        last_name: requiredShippingFields.name.split(' ').slice(1).join(' ') || '',
+        address_line1: requiredShippingFields.address_line1,
+        address_line2: shippingAddress.address_line2 || '',
+        zip_code: requiredShippingFields.postal_code,
+        city: requiredShippingFields.city,
+        state: requiredShippingFields.state,
+        country: shippingAddress.country || 'US',
+      },
+      is_gift: order.is_auto_gift || false,
+      gift_message: order.gift_message || undefined,
+      shipping_method: 'cheapest',
+      payment_method: {
+        use_credentials: true,
+      },
+      webhooks: {
+        order_placed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
+        order_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
+        tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
+      },
+      client_notes: {
+        order_id: orderId,
+        order_number: order.order_number,
+        user_id: order.user_id,
+      },
+    };
 
-    // Submit to Zinc
+    console.log('🔵 Zinc API request prepared');
+    console.log('📦 Products:', zincRequest.products.length);
+    console.log('📍 Shipping to:', `${zincRequest.shipping_address.city}, ${zincRequest.shipping_address.state}`);
+
+    // STEP 7: Submit to Zinc API
+    const zincApiKey = Deno.env.get('ZINC_API_KEY');
+    if (!zincApiKey) {
+      throw new Error('ZINC_API_KEY not configured');
+    }
+
+    console.log('🚀 Submitting to Zinc API...');
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(Deno.env.get('ZINC_API_KEY') + ':')}`,
+        'Authorization': `Basic ${btoa(zincApiKey + ':')}`,
       },
       body: JSON.stringify(zincRequest),
     });
 
     const zincData = await zincResponse.json();
-    console.log('📥 Zinc API response:', JSON.stringify(zincData, null, 2));
 
     if (!zincResponse.ok) {
-      console.error('❌ Zinc API error response:', {
-        status: zincResponse.status,
-        statusText: zincResponse.statusText,
-        data: zincData
-      });
-      throw new Error(`Zinc API error: ${JSON.stringify(zincData)}`);
+      console.error('❌ Zinc API error:', zincData);
+      
+      await supabase
+        .from('orders')
+        .update({
+          status: 'requires_attention',
+          funding_hold_reason: `Zinc API error: ${zincData.message || 'Unknown error'}`,
+          zinc_error: zincData,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      throw new Error(`Zinc API error: ${zincData.message || 'Unknown error'}`);
     }
 
-    console.log('✅ Zinc order submitted successfully:', zincData.request_id);
+    const zincRequestId = zincData.request_id;
+    console.log(`✅ Zinc order submitted! Request ID: ${zincRequestId}`);
 
-    // Update order with Zinc details
-    const { error: updateError } = await supabase
+    // STEP 8: Update order with Zinc details
+    await supabase
       .from('orders')
       .update({
-        zinc_order_id: zincData.request_id,
         status: 'processing',
+        zinc_request_id: zincRequestId,
         zinc_status: 'pending',
-        last_zinc_update: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId);
 
-    if (updateError) {
-      console.error('❌ Failed to update order:', updateError);
-      throw updateError;
-    }
-
-    console.log('✅ Order updated to processing status');
+    console.log(`✅ Order ${orderId} updated to processing status`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        zinc_order_id: zincData.request_id,
         order_id: orderId,
+        zinc_request_id: zincRequestId,
+        message: 'Order submitted to Zinc successfully'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200
       }
     );
+
   } catch (error: any) {
-    console.error('❌ Error processing order:', error);
+    console.error('❌ process-order-v2 error:', error.message);
+    console.error('Stack:', error.stack);
     
-    // Update order status to failed
-    if (orderId) {
-      try {
-        const supabase = createClient(
-          Deno.env.get('SUPABASE_URL') || '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-        );
-        
-        // Check if error was already set (e.g., by shipping validation)
-        const { data: currentOrder } = await supabase
-          .from('orders')
-          .select('zma_error')
-          .eq('id', orderId)
-          .single();
-
-        // Only update error if not already set (preserves structured errors)
-        const updateData: any = {
-          status: 'failed',
-          updated_at: new Date().toISOString(),
-        };
-
-        if (!currentOrder?.zma_error) {
-          updateData.zma_error = error.message;
-        }
-
-        await supabase
-          .from('orders')
-          .update(updateData)
-          .eq('id', orderId);
-      } catch (updateError) {
-        console.error('❌ Failed to update order to failed status:', updateError);
-      }
-    }
-
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message,
+        order_id: orderId
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500
       }
     );
   }
 });
 
-function buildZincRequest(order: any, orderItems: any[]) {
-  const shippingInfo = order.shipping_info;
+async function markOrderRequiresAttention(
+  supabase: any,
+  orderId: string,
+  reason: string
+) {
+  console.log(`⚠️ Marking order ${orderId} as requires_attention: ${reason}`);
   
-  // Split name into first/last (shipping_info stores full name)
-  const nameParts = (shippingInfo.name || '').split(' ');
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
-
-  return {
-    retailer: 'amazon',
-    products: orderItems.map((item: any) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-    })),
-    max_price: order.total_amount * 100, // Zinc expects cents
-    shipping_address: {
-      first_name: firstName,
-      last_name: lastName,
-      address_line1: shippingInfo.address_line1 || shippingInfo.address,
-      address_line2: shippingInfo.address_line2 || shippingInfo.addressLine2 || '',
-      zip_code: shippingInfo.zip_code || shippingInfo.zipCode,
-      city: shippingInfo.city,
-      state: shippingInfo.state,
-      country: 'US',
-      phone_number: shippingInfo.phone || '5551234567',
-    },
-    is_gift: order.is_gift || false,
-    gift_message: order.gift_message || order.gift_options?.message || '',
-    shipping: {
-      order_by: 'price',
-      max_days: 5,
-      max_price: 1000, // $10 max shipping
-    },
-    webhooks: {
-      request_succeeded: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
-      request_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
-      tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
-      tracking_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
-      status_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook?orderId=${order.id}`,
-    },
-    client_notes: {
-      supabase_order_id: order.id,
-      payment_intent_id: order.payment_intent_id,
-      checkout_session_id: order.checkout_session_id,
-    },
-  };
+  await supabase
+    .from('orders')
+    .update({
+      status: 'requires_attention',
+      funding_hold_reason: reason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', orderId);
 }

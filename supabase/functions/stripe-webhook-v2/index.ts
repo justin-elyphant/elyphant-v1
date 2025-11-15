@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🪝 Processing Stripe webhook v2...');
+    console.log('🪝 Stripe Webhook v2 - Processing event...');
     
     const signature = req.headers.get('stripe-signature');
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -33,37 +33,41 @@ serve(async (req) => {
 
     try {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-      console.log(`✅ Webhook verified: ${event.type}`);
+      console.log(`✅ Webhook verified: ${event.type} | ID: ${event.id}`);
     } catch (err: any) {
       console.error('❌ Webhook signature verification failed:', err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
-    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Handle checkout session events (NEW - Phase 1)
+    // CORE: Handle checkout.session.completed (primary order creation path)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       await handleCheckoutSessionCompleted(session, supabase, stripe);
-    } else if (event.type === 'checkout.session.expired') {
+    } 
+    // CORE: Handle checkout.session.expired
+    else if (event.type === 'checkout.session.expired') {
       const session = event.data.object as Stripe.Checkout.Session;
       await handleCheckoutSessionExpired(session, supabase);
     }
-    // Handle payment intent events (LEGACY - Phase 1 migration)
+    // LEGACY: payment_intent events (no order creation, enrichment only)
     else if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      await handlePaymentSucceeded(paymentIntent, supabase, stripe);
-    } else if (event.type === 'payment_intent.payment_failed') {
+      console.log(`⚠️ LEGACY: payment_intent.succeeded ${paymentIntent.id} - enrichment only, no order creation`);
+      await enrichExistingOrder(paymentIntent, supabase);
+    } 
+    else if (event.type === 'payment_intent.payment_failed') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log(`⚠️ LEGACY: payment_intent.payment_failed ${paymentIntent.id} - updating existing order`);
       await handlePaymentFailed(paymentIntent, supabase);
     }
 
     return new Response(
-      JSON.stringify({ received: true }),
+      JSON.stringify({ received: true, event_type: event.type, event_id: event.id }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -81,396 +85,293 @@ serve(async (req) => {
   }
 });
 
-async function handlePaymentSucceeded(
-  paymentIntent: Stripe.PaymentIntent,
-  supabase: any,
-  stripe: Stripe
-) {
-  console.log('⚠️ LEGACY: Payment intent event received:', paymentIntent.id);
-  console.log('🔄 Attempting to find associated checkout session...');
-
-  // Try to find the checkout session for this payment intent
-  const sessions = await stripe.checkout.sessions.list({
-    payment_intent: paymentIntent.id,
-    limit: 1
-  });
-
-  if (sessions.data.length > 0) {
-    console.log('✅ Found checkout session, processing as session event...');
-    await handleCheckoutSessionCompleted(sessions.data[0], supabase, stripe);
-    return;
-  }
-
-  // If no session found, this is truly a legacy payment intent
-  console.error('❌ No checkout session found for payment intent');
-  console.log('⚠️ This payment intent was created outside checkout flow - skipping order creation');
-  
-  // Extract metadata for logging
-  const metadata = paymentIntent.metadata;
-
-  const cartItems = JSON.parse(metadata.cart_items);
-  const shippingAddress = JSON.parse(metadata.shipping_address || '{}');
-  const deliveryGroups = metadata.delivery_groups ? JSON.parse(metadata.delivery_groups) : null;
-  const giftOptions = metadata.gift_options ? JSON.parse(metadata.gift_options) : null;
-  const scheduledDate = metadata.scheduled_delivery_date || null;
-  const isAutoGift = metadata.is_auto_gift === 'true';
-  const autoGiftRuleId = metadata.auto_gift_rule_id || null;
-
-  // Check if order already exists (idempotency)
-  const { data: existingOrder } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('payment_intent_id', paymentIntent.id)
-    .maybeSingle();
-
-  if (existingOrder) {
-    console.log('⚠️ Order already exists for payment intent:', paymentIntent.id);
-    return;
-  }
-
-  // Determine order status
-  let orderStatus = 'payment_confirmed';
-  if (scheduledDate && new Date(scheduledDate) > new Date()) {
-    orderStatus = 'scheduled';
-  }
-
-  // Create order record
-  const orderData = {
-    user_id: metadata.user_id === 'guest' ? null : metadata.user_id,
-    payment_intent_id: paymentIntent.id,
-    status: orderStatus,
-    payment_status: 'paid',
-    total_amount: paymentIntent.amount / 100, // Convert from cents
-    currency: paymentIntent.currency,
-    line_items: cartItems,
-    shipping_address: shippingAddress,
-    scheduled_delivery_date: scheduledDate,
-    is_auto_gift: isAutoGift,
-    auto_gift_rule_id: autoGiftRuleId,
-    gift_options: giftOptions,
-    created_at: new Date().toISOString(),
-  };
-
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert(orderData)
-    .select()
-    .single();
-
-  if (orderError) {
-    console.error('❌ Failed to create order:', orderError);
-    throw orderError;
-  }
-
-  console.log('✅ Order created:', order.id);
-
-  // If NOT scheduled, process immediately
-  if (orderStatus === 'payment_confirmed') {
-    console.log('🚀 Triggering immediate order processing...');
-    
-    // Invoke process-order-v2 function
-    const { error: processError } = await supabase.functions.invoke('process-order-v2', {
-      body: { orderId: order.id }
-    });
-
-    if (processError) {
-      console.error('❌ Failed to trigger order processing:', processError);
-      // Don't throw - order is saved, can be retried
-    }
-  } else {
-    console.log('📅 Order scheduled for:', scheduledDate);
-  }
-}
-
+// ============================================================================
+// CORE HANDLER: checkout.session.completed
+// ============================================================================
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
   supabase: any,
   stripe: Stripe
 ) {
-  console.log('✅ Checkout session completed:', session.id);
+  const sessionId = session.id;
+  console.log(`📋 Processing checkout.session.completed: ${sessionId}`);
 
-  try {
-    // Check if order already exists (idempotency)
-    const { data: existingOrder } = await supabase
+  // STEP 1: Check for existing order (idempotency)
+  const { data: existingOrder } = await supabase
+    .from('orders')
+    .select('id, status, receipt_sent_at, user_id')
+    .eq('checkout_session_id', sessionId)
+    .single();
+
+  if (existingOrder) {
+    console.log(`✅ Order already exists: ${existingOrder.id} | Status: ${existingOrder.status}`);
+    console.log(`🔍 Idempotency check - skipping insert, checking follow-up steps...`);
+    
+    // Check if receipt needs to be sent
+    if (!existingOrder.receipt_sent_at) {
+      console.log(`📧 Receipt not sent yet, triggering email orchestrator...`);
+      await triggerEmailOrchestrator(existingOrder.id, supabase);
+    }
+    
+    // Check if processing needed (non-scheduled, not yet submitted)
+    const { data: fullOrder } = await supabase
       .from('orders')
-      .select('id')
-      .eq('checkout_session_id', session.id)
-      .maybeSingle();
-
-    if (existingOrder) {
-      console.log('⚠️ Order already exists for session:', session.id);
-      return { received: true };
-    }
-
-    // Extract ALL data from session metadata
-    const metadata = session.metadata || {};
-    
-    // Get line items from session
-    const lineItems = await getSessionLineItems(session, stripe);
-    
-    // Parse structured data from metadata (with safe fallbacks)
-    const deliveryGroups = metadata.delivery_groups ? tryParseJSON(metadata.delivery_groups, null) : null;
-    const giftOptions = {
-      message: metadata.gift_message || '',
-      isAnonymous: metadata.gift_is_anonymous === 'true'
-    };
-    
-    // Reconstruct shipping address from individual metadata fields
-    const shippingInfo = metadata.ship_name ? {
-      name: metadata.ship_name || '',
-      address_line1: metadata.ship_address_line1 || '',
-      address_line2: metadata.ship_address_line2 || '',
-      city: metadata.ship_city || '',
-      state: metadata.ship_state || '',
-      postal_code: metadata.ship_postal_code || '',
-      country: metadata.ship_country || 'US',
-      phone: metadata.ship_phone || ''
-    } : null;
-    const scheduledDate = metadata.scheduled_delivery_date || null;
-    const isAutoGift = metadata.is_auto_gift === 'true';
-    const autoGiftRuleId = metadata.auto_gift_rule_id || null;
-    const isGroupGift = metadata.is_group_gift === 'true';
-    const groupGiftProjectId = metadata.group_gift_project_id || null;
-
-    // Handle group gift contributions
-    if (isGroupGift && groupGiftProjectId) {
-      console.log('🎁 Processing group gift contribution');
-      
-      const contributionAmount = parseFloat(metadata.contribution_amount || '0');
-      
-      // Create/update contribution record
-      const { error: contributionError } = await supabase
-        .from('group_gift_contributions')
-        .upsert({
-          group_gift_project_id: groupGiftProjectId,
-          contributor_id: metadata.user_id,
-          committed_amount: contributionAmount,
-          stripe_payment_intent_id: session.payment_intent as string,
-          stripe_checkout_session_id: session.id,
-          contribution_status: 'paid',
-          contributed_at: new Date().toISOString(),
-        });
-        
-      if (contributionError) {
-        console.error('❌ Failed to create contribution:', contributionError);
-        throw contributionError;
-      }
-      
-      // Update project current_amount atomically
-      const { error: projectError } = await supabase.rpc(
-        'increment_group_gift_amount',
-        { 
-          project_id: groupGiftProjectId,
-          amount: contributionAmount 
-        }
-      );
-      
-      if (projectError) {
-        console.error('❌ Failed to update project amount:', projectError);
-        throw projectError;
-      }
-      
-      console.log('✅ Group gift contribution recorded');
-      return { received: true };
-    }
-
-    // Determine order status
-    let orderStatus = 'payment_confirmed';
-    let paymentStatus = 'paid';
-    
-    if (scheduledDate && new Date(scheduledDate) > new Date()) {
-      orderStatus = 'scheduled';
-      paymentStatus = 'authorized'; // Funds held, not yet captured
-    }
-
-    // Reconstruct pricing breakdown
-    const pricingBreakdown = {
-      subtotal: parseFloat(metadata.subtotal || '0'),
-      shippingCost: parseFloat(metadata.shipping_cost || '0'),
-      giftingFee: parseFloat(metadata.gifting_fee || '0'),
-      taxAmount: parseFloat(metadata.tax_amount || '0')
-    };
-
-    const totalAmount = pricingBreakdown.subtotal + pricingBreakdown.shippingCost + pricingBreakdown.giftingFee + pricingBreakdown.taxAmount;
-
-    // Create order record - ensure required financial fields are set per schema
-    const orderData = {
-      user_id: metadata.user_id === 'guest' ? null : metadata.user_id,
-      checkout_session_id: session.id,
-      payment_intent_id: session.payment_intent as string,
-      status: orderStatus,
-      payment_status: paymentStatus,
-      // Pricing fields (NOT NULL in current schema)
-      subtotal: pricingBreakdown.subtotal,
-      shipping_cost: pricingBreakdown.shippingCost,
-      tax_amount: pricingBreakdown.taxAmount,
-      gifting_fee: pricingBreakdown.giftingFee,
-      total_amount: totalAmount,
-      currency: (session.currency || 'usd'),
-      // Address/line items
-      line_items: lineItems,
-      shipping_address: shippingInfo || session.customer_details,
-      shipping_info: shippingInfo || session.customer_details,
-      // Scheduling and flags
-      scheduled_delivery_date: scheduledDate,
-      is_auto_gift: isAutoGift,
-      auto_gift_rule_id: autoGiftRuleId,
-      gift_options: giftOptions,
-      created_at: new Date().toISOString(),
-    };
-
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert(orderData)
-      .select()
+      .select('id, status, is_scheduled, zinc_order_id')
+      .eq('id', existingOrder.id)
       .single();
-
-    if (orderError) {
-      console.error('❌ Failed to create order:', orderError);
-      throw orderError;
-    }
-
-    console.log('✅ Order created from checkout session:', order.id);
-    console.log('📊 Order details:', {
-      order_id: order.id,
-      status: order.status,
-      payment_status: order.payment_status,
-      total_amount: order.total_amount,
-      line_items_count: order.line_items?.length || 0,
-      has_shipping_address: !!order.shipping_address,
-      is_scheduled: !!order.scheduled_delivery_date
-    });
-
-    // Send order confirmation email
-    console.log('📧 Sending order confirmation email...');
-    const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-receipt', {
-      body: { orderId: order.id }
-    });
-
-    if (emailError) {
-      console.error('❌ Failed to send confirmation email:', emailError);
-      // Don't throw - order is saved, email can be retried
-    } else {
-      console.log('✅ Order confirmation email sent successfully');
-    }
-
-    // If NOT scheduled, process immediately
-    if (orderStatus === 'payment_confirmed') {
-      console.log('🚀 Triggering immediate order processing for order:', order.id);
       
-      const { data: processResult, error: processError } = await supabase.functions.invoke('process-order-v2', {
-        body: { orderId: order.id }
-      });
-
-      if (processError) {
-        console.error('❌ Failed to trigger order processing:', processError);
-        // Don't throw - order is saved, can be retried manually
-      } else {
-        console.log('✅ Order processing triggered successfully:', processResult);
-      }
-    } else {
-      console.log('📅 Order scheduled for future delivery:', scheduledDate);
+    if (fullOrder && !fullOrder.is_scheduled && !fullOrder.zinc_order_id && fullOrder.status !== 'processing') {
+      console.log(`🔄 Order not yet processing, triggering process-order-v2...`);
+      await triggerOrderProcessing(fullOrder.id, supabase, existingOrder.user_id);
     }
-
-    return { received: true, orderId: order.id };
-  } catch (error) {
-    console.error('❌ Error handling checkout session:', error);
-    throw error;
+    
+    return;
   }
+
+  // STEP 2: Extract shipping from session.shipping_details (ALWAYS use this, not metadata)
+  const shippingDetails = session.shipping_details;
+  if (!shippingDetails || !shippingDetails.address) {
+    console.error('❌ No shipping_details found in checkout session');
+    throw new Error('Missing shipping details in checkout session');
+  }
+
+  const shippingAddress = {
+    name: shippingDetails.name || '',
+    address_line1: shippingDetails.address.line1 || '',
+    address_line2: shippingDetails.address.line2 || '',
+    city: shippingDetails.address.city || '',
+    state: shippingDetails.address.state || '',
+    postal_code: shippingDetails.address.postal_code || '', // CRITICAL: use postal_code
+    country: shippingDetails.address.country || 'US',
+  };
+
+  console.log(`📦 Shipping extracted: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
+
+  // Validate shipping completeness
+  const missingShippingFields = [];
+  if (!shippingAddress.address_line1) missingShippingFields.push('address_line1');
+  if (!shippingAddress.city) missingShippingFields.push('city');
+  if (!shippingAddress.state) missingShippingFields.push('state');
+  if (!shippingAddress.postal_code) missingShippingFields.push('postal_code');
+
+  if (missingShippingFields.length > 0) {
+    console.error(`❌ Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
+    throw new Error(`Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
+  }
+
+  // STEP 3: Extract metadata (essential scalars only)
+  const metadata = session.metadata || {};
+  const userId = metadata.user_id || session.client_reference_id;
+  const isScheduled = metadata.is_scheduled === 'true';
+  const scheduledDate = metadata.scheduled_delivery_date || null;
+  const isAutoGift = metadata.is_auto_gift === 'true';
+  const autoGiftRuleId = metadata.auto_gift_rule_id || null;
+  const deliveryGroupId = metadata.delivery_group_id || null;
+
+  console.log(`👤 User ID: ${userId} | Scheduled: ${isScheduled} | AutoGift: ${isAutoGift}`);
+
+  if (!userId) {
+    console.error('❌ No user_id in session metadata or client_reference_id');
+    throw new Error('Missing user_id in checkout session');
+  }
+
+  // STEP 4: Fetch line items from Stripe API
+  console.log(`📋 Fetching line items from Stripe...`);
+  const lineItemsResponse = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
+  const lineItems = lineItemsResponse.data.map((item: any) => ({
+    product_id: item.price?.product || item.description || 'unknown',
+    title: item.description || 'Product',
+    quantity: item.quantity || 1,
+    unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+    currency: item.price?.currency || 'usd',
+  }));
+
+  console.log(`✅ Found ${lineItems.length} line items`);
+
+  if (lineItems.length === 0) {
+    console.error('❌ No line items found in checkout session');
+    throw new Error('No line items in checkout session');
+  }
+
+  // STEP 5: Create order
+  const orderData = {
+    user_id: userId,
+    checkout_session_id: sessionId,
+    payment_intent_id: session.payment_intent as string || null,
+    status: isScheduled ? 'scheduled' : 'payment_confirmed',
+    payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
+    total_amount: session.amount_total ? session.amount_total / 100 : 0,
+    currency: session.currency || 'usd',
+    line_items: lineItems,
+    shipping_address: shippingAddress,
+    is_scheduled: isScheduled,
+    scheduled_delivery_date: scheduledDate,
+    is_auto_gift: isAutoGift,
+    auto_gift_rule_id: autoGiftRuleId,
+    delivery_group_id: deliveryGroupId,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  console.log(`💾 Creating order for user ${userId}...`);
+  const { data: newOrder, error: insertError } = await supabase
+    .from('orders')
+    .insert(orderData)
+    .select('id, order_number, status')
+    .single();
+
+  if (insertError) {
+    console.error('❌ Failed to create order:', insertError);
+    throw new Error(`Failed to create order: ${insertError.message}`);
+  }
+
+  console.log(`✅ Order created: ${newOrder.id} | Number: ${newOrder.order_number}`);
+
+  // STEP 6: Send receipt email (idempotent via orchestrator)
+  await triggerEmailOrchestrator(newOrder.id, supabase);
+
+  // STEP 7: Trigger processing if not scheduled
+  if (!isScheduled && session.payment_status === 'paid') {
+    console.log(`🚀 Triggering immediate order processing...`);
+    await triggerOrderProcessing(newOrder.id, supabase, userId);
+  } else if (isScheduled) {
+    console.log(`⏰ Order scheduled for ${scheduledDate} - skipping immediate processing`);
+  }
+
+  console.log(`✅ checkout.session.completed processing complete for ${sessionId}`);
 }
 
+// ============================================================================
+// CORE HANDLER: checkout.session.expired
+// ============================================================================
 async function handleCheckoutSessionExpired(
   session: Stripe.Checkout.Session,
   supabase: any
 ) {
-  console.log('⏱️ Checkout session expired:', session.id);
+  const sessionId = session.id;
+  console.log(`⏱️ Processing checkout.session.expired: ${sessionId}`);
 
-  // Log for abandoned cart tracking
-  await supabase.from('checkout_session_events').insert({
-    session_id: session.id,
-    event_type: 'expired',
-    user_id: session.metadata?.user_id || null,
-    created_at: new Date().toISOString(),
-  }).catch((err: any) => {
-    console.error('Failed to log expired session:', err);
-  });
+  const { data: existingOrder } = await supabase
+    .from('orders')
+    .select('id, status')
+    .eq('checkout_session_id', sessionId)
+    .single();
 
-  // Update cart session if exists
-  if (session.metadata?.user_id) {
+  if (existingOrder && existingOrder.status === 'payment_confirmed') {
+    console.log(`⚠️ Marking order as expired: ${existingOrder.id}`);
     await supabase
-      .from('cart_sessions')
+      .from('orders')
+      .update({ status: 'expired', updated_at: new Date().toISOString() })
+      .eq('id', existingOrder.id);
+  } else {
+    console.log(`ℹ️ No confirmed order found for expired session ${sessionId}`);
+  }
+}
+
+// ============================================================================
+// LEGACY: payment_intent enrichment (no order creation)
+// ============================================================================
+async function enrichExistingOrder(
+  paymentIntent: Stripe.PaymentIntent,
+  supabase: any
+) {
+  const piId = paymentIntent.id;
+  console.log(`🔍 LEGACY: Attempting to enrich existing order for payment_intent ${piId}`);
+
+  const { data: existingOrder } = await supabase
+    .from('orders')
+    .select('id, status, payment_status')
+    .eq('payment_intent_id', piId)
+    .single();
+
+  if (existingOrder) {
+    console.log(`✅ Found existing order ${existingOrder.id}, enriching payment status`);
+    await supabase
+      .from('orders')
       .update({ 
-        checkout_expired_at: new Date().toISOString(),
-        status: 'expired'
+        payment_status: 'paid',
+        updated_at: new Date().toISOString()
       })
-      .eq('user_id', session.metadata.user_id)
-      .eq('checkout_initiated_at', session.created)
-      .catch((err: any) => {
-        console.error('Failed to update cart session:', err);
-      });
+      .eq('id', existingOrder.id);
+  } else {
+    console.log(`ℹ️ No existing order found for payment_intent ${piId} - this is expected if using checkout sessions`);
   }
-
-  return { received: true };
 }
 
-async function getSessionLineItems(session: Stripe.Checkout.Session, stripe: Stripe): Promise<any[]> {
+// ============================================================================
+// LEGACY: payment_intent.payment_failed
+// ============================================================================
+async function handlePaymentFailed(
+  paymentIntent: Stripe.PaymentIntent,
+  supabase: any
+) {
+  const piId = paymentIntent.id;
+  console.log(`❌ Payment failed for payment_intent ${piId}`);
+
+  const { data: existingOrder } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('payment_intent_id', piId)
+    .single();
+
+  if (existingOrder) {
+    await supabase
+      .from('orders')
+      .update({ 
+        status: 'payment_failed',
+        payment_status: 'failed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingOrder.id);
+    console.log(`✅ Marked order ${existingOrder.id} as payment_failed`);
+  }
+}
+
+// ============================================================================
+// HELPER: Trigger email orchestrator (idempotent)
+// ============================================================================
+async function triggerEmailOrchestrator(orderId: string, supabase: any) {
   try {
-    console.log('📦 Fetching line items from Stripe session:', session.id);
+    console.log(`📧 Triggering email orchestrator for order ${orderId}...`);
+    const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      body: { orderId }
+    });
     
-    // Fetch line items from Stripe (up to 100 items per session)
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
-      limit: 100,
-      expand: ['data.price.product']
-    });
-
-    console.log(`✅ Found ${lineItems.data.length} line items`);
-
-    // Transform to our order format
-    return lineItems.data.map((item: any) => {
-      const product = item.price?.product;
-      const metadata = product?.metadata || {};
-      
-      return {
-        product_id: metadata.product_id || product?.id,
-        name: item.description || product?.name,
-        price: (item.amount_total || 0) / 100, // Convert cents to dollars
-        quantity: item.quantity || 1,
-        image_url: product?.images?.[0] || null,
-        recipient_id: metadata.recipient_id || null,
-        recipient_name: metadata.recipient_name || null
-      };
-    });
-  } catch (error) {
-    console.error('❌ Failed to fetch session line items:', error);
-    return [];
+    if (error) {
+      console.error(`❌ Email orchestrator error:`, error);
+    } else {
+      console.log(`✅ Email orchestrator triggered successfully`);
+    }
+  } catch (err: any) {
+    console.error(`❌ Failed to trigger email orchestrator:`, err.message);
   }
 }
 
-async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, supabase: any) {
-  console.error('❌ Payment failed:', paymentIntent.id);
-
-  // Log failure for monitoring
-  await supabase.from('payment_failures').insert({
-    payment_intent_id: paymentIntent.id,
-    user_id: paymentIntent.metadata.user_id === 'guest' ? null : paymentIntent.metadata.user_id,
-    error_code: paymentIntent.last_payment_error?.code,
-    error_message: paymentIntent.last_payment_error?.message,
-    created_at: new Date().toISOString(),
-  });
-
-  // If auto-gift, send notification to user
-  if (paymentIntent.metadata.is_auto_gift === 'true') {
-    console.log('🎁 Auto-gift payment failed, notifying user...');
-    // TODO: Send notification via email/in-app
-  }
-}
-
-// Helper function to safely parse JSON metadata (Phase 1 fix)
-function tryParseJSON(jsonString: string, fallback: any) {
+// ============================================================================
+// HELPER: Trigger order processing
+// ============================================================================
+async function triggerOrderProcessing(orderId: string, supabase: any, userId: string) {
   try {
-    return JSON.parse(jsonString);
-  } catch (error) {
-    console.warn('⚠️ Failed to parse metadata JSON, using fallback:', error);
-    return fallback;
+    console.log(`🚀 Triggering process-order-v2 for order ${orderId}...`);
+    
+    const { error } = await supabase.functions.invoke('process-order-v2', {
+      body: { orderId }
+    });
+    
+    if (error) {
+      console.error(`❌ process-order-v2 error:`, error);
+      await supabase
+        .from('orders')
+        .update({
+          status: 'requires_attention',
+          funding_hold_reason: `Failed to trigger processing: ${error.message}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+    } else {
+      console.log(`✅ process-order-v2 triggered successfully`);
+    }
+  } catch (err: any) {
+    console.error(`❌ Failed to trigger process-order-v2:`, err.message);
   }
 }

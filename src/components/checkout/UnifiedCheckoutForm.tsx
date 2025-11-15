@@ -347,8 +347,8 @@ const UnifiedCheckoutForm: React.FC = () => {
 
       console.log('🔍 DEBUG - zmaCompatibleShippingInfo built:', JSON.stringify(zmaCompatibleShippingInfo, null, 2));
 
-      // V2: All cart data will be in payment intent metadata (no cart_sessions)
-      console.log('✅ Skipping cart_sessions table - using metadata-based approach');
+      // V2: All cart data stored in Stripe Checkout Session metadata
+      console.log('✅ Using Stripe Checkout Sessions (legacy tables removed)');
 
 
       // Create checkout session (V2 modernized approach)

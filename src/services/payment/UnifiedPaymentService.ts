@@ -11,9 +11,8 @@
  * - Logged-in Users: user_carts table (server) + localStorage (cache)
  * 
  * CART STORAGE RULES:
- * - user_carts: Active cart for logged-in users (ONLY source of truth)
- * - cart_sessions: Abandoned cart tracking ONLY (written at checkout)
- * - localStorage: Guest carts + cache for logged-in users
+ * - localStorage: ONLY source of truth for all carts (guest + logged-in)
+ * - Legacy tables (user_carts, cart_sessions) removed in Phase 2
  * 
  * KEY CHANGES (Streamlined):
  * - ✅ Removed complex merge logic (simple transfer on login)
@@ -31,7 +30,7 @@
  * - MUST call UnifiedMarketplaceService for product operations
  * - MUST route Amazon orders through process-zma-order Edge Function
  * - MUST separate customer Stripe payments from business Amazon payments
- * - MUST use clear-user-cart-sessions for cleanup (deletes BOTH tables)
+ * - Cart cleanup is localStorage-only (legacy tables removed)
  * 
  * 🔗 SYSTEM INTEGRATION:
  * - UnifiedMarketplaceService: Product search, details, normalization
@@ -606,21 +605,7 @@ class UnifiedPaymentService {
     localStorage.removeItem(this.cartKey);
     localStorage.removeItem(`${this.cartKey}_version`);
     
-    // Clear server data via edge function (deletes from BOTH user_carts and cart_sessions)
-    if (this.currentUser) {
-      try {
-        const { data, error } = await supabase.functions.invoke('clear-user-cart-sessions', {
-          body: { userId: this.currentUser.id }
-        });
-        
-        if (error) throw error;
-        console.log(`[CART CLEAR] ✅ Server cleanup complete: ${data.sessionsDeleted} cart_sessions + ${data.cartsDeleted} user_carts deleted`);
-      } catch (error) {
-        console.error('[CART CLEAR] ❌ Error clearing server cart:', error);
-      }
-    } else {
-      console.log('[CART CLEAR] ✅ Guest cart cleared (local only)');
-    }
+    console.log('[CART CLEAR] ✅ Cart cleared (legacy tables removed)');
     
     toast.success('Cart cleared');
     this.notifyCartChange();
@@ -760,38 +745,9 @@ class UnifiedPaymentService {
         throw new Error('User must be authenticated');
       }
 
-      // LEGACY: Use v2 Supabase Edge Function with metadata
-      console.warn('⚠️ Using legacy payment intent flow (emergency fallback only)');
-      const { data, error } = await supabase.functions.invoke('create-payment-intent-v2', {
-        body: {
-          amount: Math.round(amount * 100), // Convert to cents
-          currency: 'usd',
-          cartItems: this.cartItems.map(item => ({
-            product_id: item.product.product_id || item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            image_url: item.product.image || item.product.images?.[0],
-            recipientAssignment: item.recipientAssignment
-          })),
-          metadata: {
-            user_id: user.id,
-            order_type: 'marketplace_purchase',
-            item_count: this.cartItems.length,
-            ...metadata
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Error creating payment intent:', error);
-        throw new Error('Failed to initialize payment');
-      }
-
-      return {
-        client_secret: data.client_secret,
-        payment_intent_id: data.payment_intent_id
-      };
+      // DEPRECATED: Legacy payment intent flow removed
+      // Use create-checkout-session for all payments
+      throw new Error('Legacy payment flow removed - use Stripe Checkout Sessions via create-checkout-session');
     } catch (error) {
       console.error('Error in createPaymentIntent:', error);
       throw error;

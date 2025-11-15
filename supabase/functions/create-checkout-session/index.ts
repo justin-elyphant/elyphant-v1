@@ -235,11 +235,13 @@ serve(async (req) => {
     // Store shipping address as individual metadata fields (no JSON)
     if (shippingInfo) {
       metadata.ship_name = String(shippingInfo.name || '').substring(0, 500);
-      metadata.ship_address_line1 = String(shippingInfo.address_line1 || '').substring(0, 500);
+      metadata.ship_address_line1 = String(shippingInfo.address_line1 || shippingInfo.street || '').substring(0, 500);
       metadata.ship_address_line2 = String(shippingInfo.address_line2 || '').substring(0, 500);
       metadata.ship_city = String(shippingInfo.city || '').substring(0, 500);
       metadata.ship_state = String(shippingInfo.state || '').substring(0, 500);
-      metadata.ship_postal_code = String(shippingInfo.postal_code || '').substring(0, 500);
+      metadata.ship_postal_code = String(
+        shippingInfo.postal_code || shippingInfo.zip_code || shippingInfo.zipCode || shippingInfo.postalCode || ''
+      ).substring(0, 500);
       metadata.ship_country = String(shippingInfo.country || 'US').substring(0, 500);
       metadata.ship_phone = String(shippingInfo.phone || '').substring(0, 500);
     }

@@ -64,30 +64,37 @@ export const ZMAFundingDashboard = () => {
 
       const currentBalance = balanceData?.balance || 0;
 
-      // Get orders awaiting funding
+      // Get orders awaiting funding - extract gifting_fee from line_items
       const { data: awaitingOrders, error: ordersError } = await supabase
         .from('orders')
-        .select('total_amount, gifting_fee')
-        .eq('funding_status', 'awaiting_funds');
+        .select('total_amount, line_items')
+        .eq('status', 'payment_confirmed'); // Orders with payment but not yet processed
 
       if (ordersError) throw ordersError;
+
+      const extractGiftingFee = (order: any) => {
+        const lineItems = order.line_items as any;
+        return lineItems?.gifting_fee || 0;
+      };
 
       const pendingValue = awaitingOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
       
       // Calculate Zinc cost (base amount excluding markup)
       const zincCost = awaitingOrders?.reduce((sum, o) => {
-        const baseAmount = (o.total_amount || 0) - (o.gifting_fee || 0);
+        const giftingFee = extractGiftingFee(o);
+        const baseAmount = (o.total_amount || 0) - giftingFee;
         return sum + baseAmount;
       }, 0) || 0;
       
       // Calculate markup retained (profit)
-      const markupRetained = awaitingOrders?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
+      const markupRetained = awaitingOrders?.reduce((sum, o) => sum + extractGiftingFee(o), 0) || 0;
       
       // Calculate average gifting fee percentage
       const avgGiftingFeePercent = awaitingOrders && awaitingOrders.length > 0
         ? awaitingOrders.reduce((sum, o) => {
+            const giftingFee = extractGiftingFee(o);
             if (o.total_amount && o.total_amount > 0) {
-              return sum + ((o.gifting_fee || 0) / o.total_amount) * 100;
+              return sum + (giftingFee / o.total_amount) * 100;
             }
             return sum;
           }, 0) / awaitingOrders.length

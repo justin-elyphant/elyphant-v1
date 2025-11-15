@@ -450,8 +450,8 @@ const OrderConfirmation = () => {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${(item.quantity * item.unit_price).toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">${item.unit_price.toFixed(2)} each</p>
+                    <p className="font-semibold">${(item.quantity * (item.unit_price || item.price || 0)).toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">${(item.unit_price || item.price || 0).toFixed(2)} each</p>
                   </div>
                 </div>
               ))}

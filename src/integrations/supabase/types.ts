@@ -3151,142 +3151,80 @@ export type Database = {
       orders: {
         Row: {
           auto_gift_rule_id: string | null
-          cancelled_at: string | null
-          cart_data: Json | null
           checkout_session_id: string | null
           created_at: string
           currency: string
-          delivery_group_id: string | null
-          expected_funding_date: string | null
-          funding_allocated_at: string | null
-          funding_hold_reason: string | null
+          estimated_delivery: string | null
+          fulfilled_at: string | null
           gift_options: Json | null
-          gift_preview_viewed: boolean | null
-          gift_preview_viewed_at: string | null
-          gifting_fee_description: string | null
-          gifting_fee_name: string | null
-          hold_for_scheduled_delivery: boolean | null
           id: string
           is_auto_gift: boolean | null
-          is_split_order: boolean | null
           line_items: Json | null
           notes: string | null
           order_number: string
-          parent_order_id: string | null
           payment_intent_id: string | null
           payment_status: string | null
-          receipt_sent_at: string | null
           scheduled_delivery_date: string | null
           shipping_address: Json | null
-          split_order_index: number | null
           status: string
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
-          thank_you_sent: boolean | null
-          thank_you_sent_at: string | null
           total_amount: number
-          total_split_orders: number | null
           tracking_number: string | null
           updated_at: string
           user_id: string | null
           zinc_order_id: string | null
-          zinc_scheduled_processing_date: string | null
+          zinc_request_id: string | null
         }
         Insert: {
           auto_gift_rule_id?: string | null
-          cancelled_at?: string | null
-          cart_data?: Json | null
           checkout_session_id?: string | null
           created_at?: string
           currency?: string
-          delivery_group_id?: string | null
-          expected_funding_date?: string | null
-          funding_allocated_at?: string | null
-          funding_hold_reason?: string | null
+          estimated_delivery?: string | null
+          fulfilled_at?: string | null
           gift_options?: Json | null
-          gift_preview_viewed?: boolean | null
-          gift_preview_viewed_at?: string | null
-          gifting_fee_description?: string | null
-          gifting_fee_name?: string | null
-          hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_auto_gift?: boolean | null
-          is_split_order?: boolean | null
           line_items?: Json | null
           notes?: string | null
           order_number: string
-          parent_order_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
-          receipt_sent_at?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
-          split_order_index?: number | null
           status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          thank_you_sent?: boolean | null
-          thank_you_sent_at?: string | null
           total_amount: number
-          total_split_orders?: number | null
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
           zinc_order_id?: string | null
-          zinc_scheduled_processing_date?: string | null
+          zinc_request_id?: string | null
         }
         Update: {
           auto_gift_rule_id?: string | null
-          cancelled_at?: string | null
-          cart_data?: Json | null
           checkout_session_id?: string | null
           created_at?: string
           currency?: string
-          delivery_group_id?: string | null
-          expected_funding_date?: string | null
-          funding_allocated_at?: string | null
-          funding_hold_reason?: string | null
+          estimated_delivery?: string | null
+          fulfilled_at?: string | null
           gift_options?: Json | null
-          gift_preview_viewed?: boolean | null
-          gift_preview_viewed_at?: string | null
-          gifting_fee_description?: string | null
-          gifting_fee_name?: string | null
-          hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_auto_gift?: boolean | null
-          is_split_order?: boolean | null
           line_items?: Json | null
           notes?: string | null
           order_number?: string
-          parent_order_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
-          receipt_sent_at?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
-          split_order_index?: number | null
           status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          thank_you_sent?: boolean | null
-          thank_you_sent_at?: string | null
           total_amount?: number
-          total_split_orders?: number | null
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
           zinc_order_id?: string | null
-          zinc_scheduled_processing_date?: string | null
+          zinc_request_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "orders_parent_order_id_fkey"
-            columns: ["parent_order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       password_reset_tokens: {
         Row: {

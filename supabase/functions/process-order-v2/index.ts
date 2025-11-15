@@ -35,8 +35,8 @@ serve(async (req) => {
       throw new Error(`Order not found: ${orderId}`);
     }
 
-    // Validate payment status
-    if (order.payment_status !== 'paid') {
+    // Validate payment status (NEW ARCHITECTURE: 'paid' or 'authorized')
+    if (order.payment_status !== 'paid' && order.payment_status !== 'authorized') {
       throw new Error(`Order payment not confirmed: ${order.payment_status}`);
     }
 
@@ -53,15 +53,18 @@ serve(async (req) => {
       );
     }
 
-    // Fetch order items
-    const { data: orderItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select('product_id, quantity')
-      .eq('order_id', orderId);
-
-    if (itemsError || !orderItems || orderItems.length === 0) {
-      throw new Error(`No order items found for order: ${orderId}`);
+    // Get order items from line_items JSONB column (NEW ARCHITECTURE)
+    const lineItems = order.line_items;
+    
+    if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
+      throw new Error(`No line items found for order: ${orderId}`);
     }
+
+    // Transform line_items to match Zinc format
+    const orderItems = lineItems.map((item: any) => ({
+      product_id: item.product_id || item.productId || item.id,
+      quantity: item.quantity || 1,
+    }));
 
     // Validate shipping info completeness
     console.log('🔍 Validating shipping information...');
@@ -112,6 +115,7 @@ serve(async (req) => {
     const zincRequest = buildZincRequest(order, orderItems);
     
     console.log('🔵 Submitting to Zinc API...');
+    console.log('📦 Zinc request payload:', JSON.stringify(zincRequest, null, 2));
 
     // Submit to Zinc
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
@@ -124,12 +128,18 @@ serve(async (req) => {
     });
 
     const zincData = await zincResponse.json();
+    console.log('📥 Zinc API response:', JSON.stringify(zincData, null, 2));
 
     if (!zincResponse.ok) {
+      console.error('❌ Zinc API error response:', {
+        status: zincResponse.status,
+        statusText: zincResponse.statusText,
+        data: zincData
+      });
       throw new Error(`Zinc API error: ${JSON.stringify(zincData)}`);
     }
 
-    console.log('✅ Zinc order submitted:', zincData.request_id);
+    console.log('✅ Zinc order submitted successfully:', zincData.request_id);
 
     // Update order with Zinc details
     const { error: updateError } = await supabase

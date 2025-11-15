@@ -175,13 +175,6 @@ export type Database = {
             foreignKeyName: "admin_alerts_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_alerts_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -599,13 +592,6 @@ export type Database = {
             foreignKeyName: "auto_gift_fulfillment_queue_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "auto_gift_fulfillment_queue_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -975,13 +961,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "user_special_dates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "automated_gift_executions_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
             referencedColumns: ["id"]
           },
           {
@@ -1912,13 +1891,6 @@ export type Database = {
             foreignKeyName: "gift_preview_tokens_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gift_preview_tokens_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2372,13 +2344,6 @@ export type Database = {
             foreignKeyName: "group_gift_projects_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_gift_projects_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2613,13 +2578,6 @@ export type Database = {
           target_order_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "manual_processing_logs_target_order_id_fkey"
-            columns: ["target_order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "manual_processing_logs_target_order_id_fkey"
             columns: ["target_order_id"]
@@ -2942,13 +2900,6 @@ export type Database = {
             foreignKeyName: "order_email_events_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_email_events_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -2992,13 +2943,6 @@ export type Database = {
             columns: ["contributor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_group_contributors_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
             referencedColumns: ["id"]
           },
           {
@@ -3070,13 +3014,6 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -3121,13 +3058,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "order_notes_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "order_notes_order_id_fkey"
             columns: ["order_id"]
@@ -3221,64 +3151,37 @@ export type Database = {
       orders: {
         Row: {
           auto_gift_rule_id: string | null
-          billing_info: Json | null
-          cancellation_reason: string | null
           cancelled_at: string | null
           cart_data: Json | null
           checkout_session_id: string | null
-          confirmation_email_sent: boolean | null
           created_at: string
           currency: string
           delivery_group_id: string | null
-          delivery_groups: Json | null
           expected_funding_date: string | null
-          followup_email_sent: boolean | null
           funding_allocated_at: string | null
           funding_hold_reason: string | null
-          funding_source: string | null
-          funding_status: string | null
-          gift_message: string | null
           gift_options: Json | null
           gift_preview_viewed: boolean | null
           gift_preview_viewed_at: string | null
-          gift_scheduling_options: Json | null
-          gifting_fee: number | null
           gifting_fee_description: string | null
           gifting_fee_name: string | null
-          group_gift_project_id: string | null
-          has_multiple_recipients: boolean | null
           hold_for_scheduled_delivery: boolean | null
           id: string
           is_auto_gift: boolean | null
-          is_gift: boolean | null
           is_split_order: boolean | null
-          is_surprise_gift: boolean | null
-          last_processing_attempt: string | null
-          last_zinc_update: string | null
           line_items: Json | null
-          merchant_tracking_data: Json | null
-          next_retry_at: string | null
-          order_method: string | null
+          notes: string | null
           order_number: string
           parent_order_id: string | null
-          payment_confirmation_sent: boolean | null
           payment_intent_id: string | null
           payment_status: string | null
-          processing_attempts: number | null
           receipt_sent_at: string | null
-          retry_count: number | null
-          retry_reason: string | null
           scheduled_delivery_date: string | null
           shipping_address: Json | null
-          shipping_cost: number
-          shipping_info: Json
           split_order_index: number | null
           status: string
-          status_update_emails_sent: Json | null
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
-          subtotal: number
-          tax_amount: number
           thank_you_sent: boolean | null
           thank_you_sent_at: string | null
           total_amount: number
@@ -3286,75 +3189,42 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
-          webhook_token: string | null
           zinc_order_id: string | null
           zinc_scheduled_processing_date: string | null
-          zinc_status: string | null
-          zinc_timeline_events: Json | null
-          zma_account_used: string | null
-          zma_error: string | null
-          zma_order_id: string | null
         }
         Insert: {
           auto_gift_rule_id?: string | null
-          billing_info?: Json | null
-          cancellation_reason?: string | null
           cancelled_at?: string | null
           cart_data?: Json | null
           checkout_session_id?: string | null
-          confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
           delivery_group_id?: string | null
-          delivery_groups?: Json | null
           expected_funding_date?: string | null
-          followup_email_sent?: boolean | null
           funding_allocated_at?: string | null
           funding_hold_reason?: string | null
-          funding_source?: string | null
-          funding_status?: string | null
-          gift_message?: string | null
           gift_options?: Json | null
           gift_preview_viewed?: boolean | null
           gift_preview_viewed_at?: string | null
-          gift_scheduling_options?: Json | null
-          gifting_fee?: number | null
           gifting_fee_description?: string | null
           gifting_fee_name?: string | null
-          group_gift_project_id?: string | null
-          has_multiple_recipients?: boolean | null
           hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_auto_gift?: boolean | null
-          is_gift?: boolean | null
           is_split_order?: boolean | null
-          is_surprise_gift?: boolean | null
-          last_processing_attempt?: string | null
-          last_zinc_update?: string | null
           line_items?: Json | null
-          merchant_tracking_data?: Json | null
-          next_retry_at?: string | null
-          order_method?: string | null
+          notes?: string | null
           order_number: string
           parent_order_id?: string | null
-          payment_confirmation_sent?: boolean | null
           payment_intent_id?: string | null
           payment_status?: string | null
-          processing_attempts?: number | null
           receipt_sent_at?: string | null
-          retry_count?: number | null
-          retry_reason?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
-          shipping_cost?: number
-          shipping_info: Json
           split_order_index?: number | null
           status?: string
-          status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
-          subtotal: number
-          tax_amount?: number
           thank_you_sent?: boolean | null
           thank_you_sent_at?: string | null
           total_amount: number
@@ -3362,75 +3232,42 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
-          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_scheduled_processing_date?: string | null
-          zinc_status?: string | null
-          zinc_timeline_events?: Json | null
-          zma_account_used?: string | null
-          zma_error?: string | null
-          zma_order_id?: string | null
         }
         Update: {
           auto_gift_rule_id?: string | null
-          billing_info?: Json | null
-          cancellation_reason?: string | null
           cancelled_at?: string | null
           cart_data?: Json | null
           checkout_session_id?: string | null
-          confirmation_email_sent?: boolean | null
           created_at?: string
           currency?: string
           delivery_group_id?: string | null
-          delivery_groups?: Json | null
           expected_funding_date?: string | null
-          followup_email_sent?: boolean | null
           funding_allocated_at?: string | null
           funding_hold_reason?: string | null
-          funding_source?: string | null
-          funding_status?: string | null
-          gift_message?: string | null
           gift_options?: Json | null
           gift_preview_viewed?: boolean | null
           gift_preview_viewed_at?: string | null
-          gift_scheduling_options?: Json | null
-          gifting_fee?: number | null
           gifting_fee_description?: string | null
           gifting_fee_name?: string | null
-          group_gift_project_id?: string | null
-          has_multiple_recipients?: boolean | null
           hold_for_scheduled_delivery?: boolean | null
           id?: string
           is_auto_gift?: boolean | null
-          is_gift?: boolean | null
           is_split_order?: boolean | null
-          is_surprise_gift?: boolean | null
-          last_processing_attempt?: string | null
-          last_zinc_update?: string | null
           line_items?: Json | null
-          merchant_tracking_data?: Json | null
-          next_retry_at?: string | null
-          order_method?: string | null
+          notes?: string | null
           order_number?: string
           parent_order_id?: string | null
-          payment_confirmation_sent?: boolean | null
           payment_intent_id?: string | null
           payment_status?: string | null
-          processing_attempts?: number | null
           receipt_sent_at?: string | null
-          retry_count?: number | null
-          retry_reason?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
-          shipping_cost?: number
-          shipping_info?: Json
           split_order_index?: number | null
           status?: string
-          status_update_emails_sent?: Json | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
-          subtotal?: number
-          tax_amount?: number
           thank_you_sent?: boolean | null
           thank_you_sent_at?: string | null
           total_amount?: number
@@ -3438,30 +3275,10 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
-          webhook_token?: string | null
           zinc_order_id?: string | null
           zinc_scheduled_processing_date?: string | null
-          zinc_status?: string | null
-          zinc_timeline_events?: Json | null
-          zma_account_used?: string | null
-          zma_error?: string | null
-          zma_order_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "orders_group_gift_project_id_fkey"
-            columns: ["group_gift_project_id"]
-            isOneToOne: false
-            referencedRelation: "group_gift_projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_parent_order_id_fkey"
-            columns: ["parent_order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "orders_parent_order_id_fkey"
             columns: ["parent_order_id"]
@@ -4246,13 +4063,6 @@ export type Database = {
             foreignKeyName: "refund_requests_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "refund_requests_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -4299,13 +4109,6 @@ export type Database = {
           zinc_order_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "return_events_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "order_monitoring_summary"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "return_events_order_id_fkey"
             columns: ["order_id"]
@@ -5704,57 +5507,7 @@ export type Database = {
       }
     }
     Views: {
-      order_monitoring_summary: {
-        Row: {
-          cancellation_reason: string | null
-          cancelled_at: string | null
-          created_at: string | null
-          has_active_alerts: boolean | null
-          has_pending_refund: boolean | null
-          id: string | null
-          monitoring_status: string | null
-          next_retry_at: string | null
-          order_number: string | null
-          retry_count: number | null
-          status: string | null
-          total_amount: number | null
-          updated_at: string | null
-          zinc_status: string | null
-        }
-        Insert: {
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          created_at?: string | null
-          has_active_alerts?: never
-          has_pending_refund?: never
-          id?: string | null
-          monitoring_status?: never
-          next_retry_at?: string | null
-          order_number?: string | null
-          retry_count?: number | null
-          status?: string | null
-          total_amount?: number | null
-          updated_at?: string | null
-          zinc_status?: string | null
-        }
-        Update: {
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          created_at?: string | null
-          has_active_alerts?: never
-          has_pending_refund?: never
-          id?: string | null
-          monitoring_status?: never
-          next_retry_at?: string | null
-          order_number?: string | null
-          retry_count?: number | null
-          status?: string | null
-          total_amount?: number | null
-          updated_at?: string | null
-          zinc_status?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       add_business_admin: {

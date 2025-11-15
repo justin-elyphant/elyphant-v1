@@ -1132,54 +1132,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cart_sessions: {
-        Row: {
-          abandoned_at: string | null
-          cart_data: Json
-          checkout_initiated_at: string | null
-          completed_at: string | null
-          created_at: string
-          id: string
-          is_recovered: boolean | null
-          last_recovery_email_sent: string | null
-          last_updated: string
-          recovery_emails_sent: number | null
-          session_id: string
-          total_amount: number | null
-          user_id: string | null
-        }
-        Insert: {
-          abandoned_at?: string | null
-          cart_data?: Json
-          checkout_initiated_at?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          is_recovered?: boolean | null
-          last_recovery_email_sent?: string | null
-          last_updated?: string
-          recovery_emails_sent?: number | null
-          session_id: string
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          abandoned_at?: string | null
-          cart_data?: Json
-          checkout_initiated_at?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          is_recovered?: boolean | null
-          last_recovery_email_sent?: string | null
-          last_updated?: string
-          recovery_emails_sent?: number | null
-          session_id?: string
-          total_amount?: number | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       connection_nudges: {
         Row: {
           connection_id: string | null
@@ -3067,87 +3019,6 @@ export type Database = {
           },
         ]
       }
-      order_recovery_logs: {
-        Row: {
-          created_at: string
-          error_message: string | null
-          id: string
-          metadata: Json | null
-          order_id: string
-          recovery_attempts: number | null
-          recovery_status: string
-          recovery_type: string
-          resolved_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          metadata?: Json | null
-          order_id: string
-          recovery_attempts?: number | null
-          recovery_status?: string
-          recovery_type: string
-          resolved_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          metadata?: Json | null
-          order_id?: string
-          recovery_attempts?: number | null
-          recovery_status?: string
-          recovery_type?: string
-          resolved_at?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      order_status_monitoring: {
-        Row: {
-          alert_sent: boolean | null
-          alert_sent_at: string | null
-          created_at: string
-          current_status: string
-          escalation_level: number | null
-          expected_status: string
-          id: string
-          metadata: Json | null
-          order_id: string
-          status_changed_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          alert_sent?: boolean | null
-          alert_sent_at?: string | null
-          created_at?: string
-          current_status: string
-          escalation_level?: number | null
-          expected_status: string
-          id?: string
-          metadata?: Json | null
-          order_id: string
-          status_changed_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          alert_sent?: boolean | null
-          alert_sent_at?: string | null
-          created_at?: string
-          current_status?: string
-          escalation_level?: number | null
-          expected_status?: string
-          id?: string
-          metadata?: Json | null
-          order_id?: string
-          status_changed_at?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       orders: {
         Row: {
           auto_gift_rule_id: string | null
@@ -3253,39 +3124,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_intents_cache: {
-        Row: {
-          amount: number
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          metadata: Json | null
-          request_fingerprint: string
-          stripe_payment_intent_id: string
-          user_id: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          metadata?: Json | null
-          request_fingerprint: string
-          stripe_payment_intent_id: string
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          metadata?: Json | null
-          request_fingerprint?: string
-          stripe_payment_intent_id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       payment_methods: {
         Row: {
           card_type: string
@@ -3322,48 +3160,6 @@ export type Database = {
           stripe_payment_method_id?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      payment_verification_audit: {
-        Row: {
-          created_at: string
-          error_details: Json | null
-          id: string
-          metadata: Json | null
-          order_id: string
-          resolved_at: string | null
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
-          verification_attempts: number | null
-          verification_method: string
-          verification_status: string
-        }
-        Insert: {
-          created_at?: string
-          error_details?: Json | null
-          id?: string
-          metadata?: Json | null
-          order_id: string
-          resolved_at?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          verification_attempts?: number | null
-          verification_method: string
-          verification_status: string
-        }
-        Update: {
-          created_at?: string
-          error_details?: Json | null
-          id?: string
-          metadata?: Json | null
-          order_id?: string
-          resolved_at?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          verification_attempts?: number | null
-          verification_method?: string
-          verification_status?: string
         }
         Relationships: []
       }
@@ -4056,48 +3852,6 @@ export type Database = {
           },
         ]
       }
-      scheduled_order_alerts: {
-        Row: {
-          alert_message: string
-          alert_type: string
-          created_at: string | null
-          days_overdue: number | null
-          id: string
-          is_resolved: boolean | null
-          metadata: Json | null
-          order_id: string | null
-          resolved_at: string | null
-          scheduled_delivery_date: string | null
-          updated_at: string
-        }
-        Insert: {
-          alert_message: string
-          alert_type: string
-          created_at?: string | null
-          days_overdue?: number | null
-          id?: string
-          is_resolved?: boolean | null
-          metadata?: Json | null
-          order_id?: string | null
-          resolved_at?: string | null
-          scheduled_delivery_date?: string | null
-          updated_at?: string
-        }
-        Update: {
-          alert_message?: string
-          alert_type?: string
-          created_at?: string | null
-          days_overdue?: number | null
-          id?: string
-          is_resolved?: boolean | null
-          metadata?: Json | null
-          order_id?: string | null
-          resolved_at?: string | null
-          scheduled_delivery_date?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       security_anomalies: {
         Row: {
           anomaly_type: string
@@ -4421,36 +4175,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_carts: {
-        Row: {
-          cart_data: Json
-          created_at: string
-          expires_at: string
-          id: string
-          session_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cart_data?: Json
-          created_at?: string
-          expires_at?: string
-          id?: string
-          session_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cart_data?: Json
-          created_at?: string
-          expires_at?: string
-          id?: string
-          session_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       user_connections: {
         Row: {

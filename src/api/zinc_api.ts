@@ -1,22 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SUPABASE_FUNCTIONS } from '@/integrations/supabase/function-types';
 
+// Legacy Zinc API test function - no longer available
+// Use admin-order-tools edge function for testing instead
 export const testZincApiKey = async (apiKey: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke(SUPABASE_FUNCTIONS.TEST_ZINC_API_KEY, {
-        body: {
-          api_key: apiKey
-        }
-      });
-      if (error) {
-        return null;
-      }
-      return true;
-    } catch(e) {
-      console.log('Test Zinc Api Key failed: ', e);
-      return null;
-    }
-}
+  console.warn('testZincApiKey is deprecated - Zinc API testing moved to admin-order-tools');
+  return null;
+};
 
 export const updateZincApiKey = async (id: string | null, key: string) => {
     try {

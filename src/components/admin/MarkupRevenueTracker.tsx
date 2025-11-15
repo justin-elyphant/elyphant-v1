@@ -25,37 +25,40 @@ export const MarkupRevenueTracker = () => {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-      // Get all-time metrics
+      // Get all-time metrics - extract gifting_fee from line_items jsonb
       const { data: allTimeData } = await supabase
         .from('orders')
-        .select('gifting_fee, total_amount')
-        .not('gifting_fee', 'is', null);
+        .select('line_items, total_amount');
 
       // Get this month's metrics
       const { data: monthData } = await supabase
         .from('orders')
-        .select('gifting_fee')
-        .gte('created_at', startOfMonth)
-        .not('gifting_fee', 'is', null);
+        .select('line_items')
+        .gte('created_at', startOfMonth);
 
       // Get today's metrics
       const { data: todayData } = await supabase
         .from('orders')
-        .select('gifting_fee')
-        .gte('created_at', startOfDay)
-        .not('gifting_fee', 'is', null);
+        .select('line_items')
+        .gte('created_at', startOfDay);
 
-      const totalAllTime = allTimeData?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
-      const totalThisMonth = monthData?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
-      const totalToday = todayData?.reduce((sum, o) => sum + (o.gifting_fee || 0), 0) || 0;
+      const extractGiftingFee = (order: any) => {
+        const lineItems = order.line_items as any;
+        return lineItems?.gifting_fee || 0;
+      };
+
+      const totalAllTime = allTimeData?.reduce((sum, o) => sum + extractGiftingFee(o), 0) || 0;
+      const totalThisMonth = monthData?.reduce((sum, o) => sum + extractGiftingFee(o), 0) || 0;
+      const totalToday = todayData?.reduce((sum, o) => sum + extractGiftingFee(o), 0) || 0;
       
       const totalOrders = allTimeData?.length || 0;
       const averagePerOrder = totalOrders > 0 ? totalAllTime / totalOrders : 0;
       
       // Calculate average markup percentage
       const avgPercentage = allTimeData?.reduce((sum, o) => {
+        const giftingFee = extractGiftingFee(o);
         if (o.total_amount && o.total_amount > 0) {
-          return sum + ((o.gifting_fee || 0) / o.total_amount) * 100;
+          return sum + (giftingFee / o.total_amount) * 100;
         }
         return sum;
       }, 0) || 0;

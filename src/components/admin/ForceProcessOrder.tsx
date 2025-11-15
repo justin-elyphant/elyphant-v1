@@ -39,7 +39,7 @@ const ForceProcessOrder = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, status, payment_status, funding_status, total_amount, created_at')
+        .select('id, order_number, status, payment_status, total_amount, created_at')
         .eq('id', orderId)
         .single();
 
@@ -50,8 +50,8 @@ const ForceProcessOrder = () => {
 
       setOrderInfo(data);
       
-      if (data.funding_status === 'awaiting_funds') {
-        toast.warning("⚠️ This order is waiting for ZMA funding");
+      if (data.payment_status !== 'paid') {
+        toast.warning("⚠️ Payment not confirmed for this order");
       }
     } catch (error) {
       console.error('Error checking order:', error);

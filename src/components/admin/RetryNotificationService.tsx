@@ -15,11 +15,10 @@ interface RetryOrder {
   id: string;
   order_number: string;
   status: string;
-  retry_count: number;
-  next_retry_at: string;
   created_at: string;
   total_amount: number;
   payment_status: string;
+  payment_retry_count: number;
 }
 
 const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess, onError }) => {
@@ -102,23 +101,18 @@ const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess,
   }, []);
 
   const getStatusColor = (order: RetryOrder) => {
-    const now = new Date();
-    const retryTime = new Date(order.next_retry_at);
-    
-    if (retryTime <= now) {
-      return 'bg-red-100 border-red-200'; // Overdue
-    } else if (retryTime.getTime() - now.getTime() < 30 * 60 * 1000) {
-      return 'bg-yellow-100 border-yellow-200'; // Due soon (30 minutes)
+    // No retry tracking in orders table anymore, show based on status
+    if (order.status === 'failed') {
+      return 'bg-red-100 border-red-200';
+    } else if (order.status === 'processing') {
+      return 'bg-yellow-100 border-yellow-200';
     }
-    return 'bg-blue-100 border-blue-200'; // Scheduled
+    return 'bg-blue-100 border-blue-200';
   };
 
   const getStatusBadge = (order: RetryOrder) => {
-    const now = new Date();
-    const retryTime = new Date(order.next_retry_at);
-    
-    if (retryTime <= now) {
-      return <Badge variant="destructive">Overdue</Badge>;
+    if (order.status === 'failed') {
+      return <Badge variant="destructive">Failed</Badge>;
     } else if (retryTime.getTime() - now.getTime() < 30 * 60 * 1000) {
       return <Badge variant="secondary">Due Soon</Badge>;
     }
@@ -181,7 +175,7 @@ const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess,
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-medium">{order.order_number}</span>
                       {getStatusBadge(order)}
-                      <Badge variant="outline">Attempt {order.retry_count + 1}/3</Badge>
+                      <Badge variant="outline">Attempt {order.payment_retry_count + 1}/3</Badge>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

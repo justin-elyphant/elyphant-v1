@@ -50,8 +50,9 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
     }
   };
 
-  // Extract customer name from shipping info or fallback
-  const customerName = order.customerName || (order as any).shipping_info?.name || "Customer";
+  // Extract customer name from shipping address jsonb
+  const shippingAddress = (order as any).shipping_address;
+  const customerName = order.customerName || shippingAddress?.name || "Customer";
 
   return (
     <Card>
@@ -88,8 +89,8 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
               <OrderStatusBadge 
                 status={order.status}
                 orderId={order.id}
-                stripePaymentIntentId={order.stripe_payment_intent_id}
-                stripeSessionId={order.stripe_session_id}
+                stripePaymentIntentId={order.payment_intent_id}
+                stripeSessionId={order.checkout_session_id}
                 createdAt={order.date}
                 onStatusUpdate={() => {
                   // Refresh the order data when status updates

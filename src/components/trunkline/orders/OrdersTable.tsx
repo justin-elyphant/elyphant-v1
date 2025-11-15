@@ -143,7 +143,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                     <div className="font-mono text-sm">
                       {order.order_number}
                     </div>
-                    {order.is_gift && (
+                    {(order as any).gift_options?.isGift && (
                       <Badge variant="outline" className="mt-1 text-xs">
                         Gift Order
                       </Badge>
@@ -161,11 +161,6 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(order.status)}
-                    {order.zinc_status && order.zinc_status !== order.status && (
-                      <div className="text-xs text-slate-600 mt-1">
-                        Zinc: {order.zinc_status}
-                      </div>
-                    )}
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">
@@ -207,24 +202,15 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
                     <div className="space-y-1">
-                      <Badge variant={order.order_method === 'zma' ? 'default' : 'secondary'} className="text-xs">
-                        {order.order_method === 'zma' ? 'ZMA' : 'Zinc API'}
+                      <Badge variant="secondary" className="text-xs">
+                        Zinc API
                       </Badge>
-                      {order.zma_account_used && (
-                        <div className="text-xs text-slate-600">
-                          {order.zma_account_used}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
                     {order.zinc_order_id ? (
                       <div className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
                         Zinc: {order.zinc_order_id}
-                      </div>
-                    ) : order.zma_order_id ? (
-                      <div className="font-mono text-xs bg-blue-100 px-2 py-1 rounded">
-                        ZMA: {order.zma_order_id}
                       </div>
                     ) : (
                       <span className="text-slate-400 text-xs">N/A</span>

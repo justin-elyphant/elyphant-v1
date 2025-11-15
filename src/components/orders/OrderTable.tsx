@@ -26,9 +26,8 @@ interface Order {
   status: string;
   user_id: string;
   order_number?: string;
-  stripe_payment_intent_id?: string;
-  stripe_session_id?: string;
-  zinc_status?: string;
+  payment_intent_id?: string;
+  checkout_session_id?: string;
   is_split_order?: boolean;
   total_split_orders?: number;
 }
@@ -86,8 +85,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
   }, [cancellingOrderId, orders, checkOrderEligibility]);
 
   const canShowActionButton = (order: Order) => {
-    return ['pending', 'failed', 'retry_pending', 'processing'].includes(order.status.toLowerCase()) &&
-           !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
+    return ['pending', 'failed', 'processing'].includes(order.status.toLowerCase());
   };
 
   const handleOrderAction = async (reason: string) => {
@@ -96,7 +94,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
     const order = orders.find(o => o.id === cancellingOrderId);
     if (!order) return;
 
-    const actionButton = getOrderActionButton(order.status, order.zinc_status, 
+    const actionButton = getOrderActionButton(order.status, null, 
       orderEligibility?.isProcessingStage);
     const isAbort = actionButton.type === 'abort';
     const actionFn = isAbort ? abortOrder : cancelOrder;
@@ -180,8 +178,8 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
                   <OrderStatusBadge 
                     status={order.status}
                     orderId={order.id}
-                    stripePaymentIntentId={order.stripe_payment_intent_id}
-                    stripeSessionId={order.stripe_session_id}
+                stripePaymentIntentId={order.payment_intent_id}
+                stripeSessionId={order.checkout_session_id}
                     createdAt={order.created_at}
                     onStatusUpdate={() => {
                       // Refresh the orders list when status updates

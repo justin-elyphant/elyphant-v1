@@ -13,7 +13,6 @@ interface StuckOrder {
   order_number: string;
   zinc_order_id: string;
   status: string;
-  zinc_status: string;
   created_at: string;
   hoursStuck: number;
 }
@@ -21,8 +20,8 @@ interface StuckOrder {
 interface PaymentVerificationOrder {
   id: string;
   order_number: string;
-  stripe_session_id: string;
-  stripe_payment_intent_id: string;
+  checkout_session_id: string;
+  payment_intent_id: string;
   payment_status: string;
   status: string;
   created_at: string;
@@ -44,7 +43,7 @@ const OrderMonitoring: React.FC = () => {
       
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, stripe_session_id, stripe_payment_intent_id, payment_status, status, created_at')
+        .select('id, order_number, checkout_session_id, payment_intent_id, payment_status, status, created_at')
         .eq('payment_status', 'payment_verification_failed')
         .lt('created_at', tenMinutesAgo)
         .order('created_at', { ascending: false });
@@ -57,8 +56,8 @@ const OrderMonitoring: React.FC = () => {
       const ordersWithMinutes: PaymentVerificationOrder[] = (data || []).map(order => ({
         id: order.id,
         order_number: order.order_number,
-        stripe_session_id: order.stripe_session_id,
-        stripe_payment_intent_id: order.stripe_payment_intent_id || '',
+        checkout_session_id: order.checkout_session_id,
+        payment_intent_id: order.payment_intent_id || '',
         payment_status: order.payment_status,
         status: order.status,
         created_at: order.created_at,
@@ -78,8 +77,8 @@ const OrderMonitoring: React.FC = () => {
       
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, zinc_order_id, status, zinc_status, created_at')
-        .or('status.eq.processing,zinc_status.eq.placed')
+        .select('id, order_number, zinc_order_id, status, created_at')
+        .eq('status', 'processing')
         .lt('created_at', sixHoursAgo)
         .order('created_at', { ascending: false });
 
@@ -158,8 +157,8 @@ const OrderMonitoring: React.FC = () => {
     try {
       const ordersToVerify = paymentVerificationOrders.map(order => ({
         id: order.id,
-        sessionId: order.stripe_session_id,
-        paymentIntentId: order.stripe_payment_intent_id
+          sessionId: order.checkout_session_id,
+          paymentIntentId: order.payment_intent_id
       }));
 
       console.log('Starting bulk payment verification for', ordersToVerify.length, 'orders');
@@ -293,7 +292,7 @@ const OrderMonitoring: React.FC = () => {
                         Zinc ID: {order.zinc_order_id || 'N/A'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Status: {order.status} / Zinc: {order.zinc_status || 'unknown'}
+                        Status: {order.status}
                       </p>
                     </div>
                   </div>
@@ -328,7 +327,7 @@ const OrderMonitoring: React.FC = () => {
                     <div>
                       <p className="font-medium">{order.order_number}</p>
                       <p className="text-sm text-muted-foreground">
-                        Session: {order.stripe_session_id?.slice(-8) || 'N/A'}
+                        Session: {order.checkout_session_id?.slice(-8) || 'N/A'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Status: {order.status} / Payment: {order.payment_status}

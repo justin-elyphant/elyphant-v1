@@ -10,13 +10,13 @@ interface StuckOrder {
   id: string;
   order_number: string;
   status: string;
-  zinc_status: string;
   zinc_order_id: string | null;
+  zinc_request_id: string | null;
   created_at: string;
   updated_at: string;
   total_amount: number;
   payment_status: string;
-  retry_count: number;
+  notes: string | null;
 }
 
 const OrderRecoveryTool = () => {
@@ -27,14 +27,13 @@ const OrderRecoveryTool = () => {
   const findStuckOrders = async () => {
     setLoading(true);
     try {
-      // Find orders stuck in processing for > 1 hour with zinc_status = 'submitted'
+      // Find orders stuck in processing for > 1 hour
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, status, zinc_status, zinc_order_id, created_at, updated_at, total_amount, payment_status, retry_count')
+        .select('id, order_number, status, zinc_order_id, zinc_request_id, created_at, updated_at, total_amount, payment_status, notes')
         .eq('status', 'processing')
-        .eq('zinc_status', 'submitted')
         .lt('updated_at', oneHourAgo)
         .order('created_at', { ascending: false });
 
@@ -60,25 +59,20 @@ const OrderRecoveryTool = () => {
     
     try {
       if (action === 'retry') {
-        // Mark for retry
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            status: 'retry_pending',
-            next_retry_at: new Date().toISOString(), // Retry immediately
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', orderId);
+        // Re-invoke process-order-v2 to retry
+        const { error } = await supabase.functions.invoke('process-order-v2', {
+          body: { orderId }
+        });
 
         if (error) throw error;
-        toast.success('Order marked for immediate retry');
+        toast.success('Order resubmitted for processing');
       } else {
         // Mark as failed
         const { error } = await supabase
           .from('orders')
           .update({
             status: 'failed',
-            zinc_status: 'manual_failed',
+            notes: 'Manual failed via admin recovery tool',
             updated_at: new Date().toISOString()
           })
           .eq('id', orderId);
@@ -156,8 +150,8 @@ const OrderRecoveryTool = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{order.order_number}</span>
                     <Badge variant="destructive">Stuck</Badge>
-                    {order.retry_count > 0 && (
-                      <Badge variant="outline">Retried {order.retry_count}x</Badge>
+                    {order.notes && (
+                      <Badge variant="outline" title={order.notes}>Has notes</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

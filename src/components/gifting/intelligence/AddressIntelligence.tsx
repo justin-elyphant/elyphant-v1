@@ -97,10 +97,10 @@ const AddressIntelligence: React.FC<AddressIntelligenceProps> = ({
         .select(`
           id,
           created_at,
-          shipping_info,
+          shipping_address,
           total_amount,
           status,
-          delivery_groups
+          line_items
         `)
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
@@ -110,8 +110,8 @@ const AddressIntelligence: React.FC<AddressIntelligenceProps> = ({
 
       // Filter orders with similar addresses
       const similarAddresses = (data || []).filter(order => {
-        const shippingInfo = order.shipping_info as any;
-        return shippingInfo && addressSimilarity(shippingInfo, address) > 0.7;
+        const shippingAddress = order.shipping_address as any;
+        return shippingAddress && addressSimilarity(shippingAddress, address) > 0.7;
       });
 
       setHistoricalData(similarAddresses);

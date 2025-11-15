@@ -48,25 +48,21 @@ const DuplicateChargePreventionDashboard = () => {
 
   const fetchRetryStats = async () => {
     try {
-      // Get retry statistics
+      // Get order statistics (retry tracking removed from orders table)
       const { data: orders, error } = await supabase
         .from('orders')
-        .select('status, retry_count, next_retry_at, created_at')
+        .select('status, created_at')
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()); // Last 7 days
 
       if (error) throw error;
 
       const stats = {
         total: orders?.length || 0,
-        pending: orders?.filter(o => o.status === 'retry_pending').length || 0,
+        pending: orders?.filter(o => o.status === 'pending').length || 0,
         processing: orders?.filter(o => o.status === 'processing').length || 0,
-        succeeded: orders?.filter(o => o.status === 'completed' && o.retry_count > 0).length || 0,
-        failed: orders?.filter(o => o.status === 'failed' && o.retry_count >= 3).length || 0,
-        overduePending: orders?.filter(o => 
-          o.status === 'retry_pending' && 
-          o.next_retry_at && 
-          new Date(o.next_retry_at) < new Date()
-        ).length || 0
+        succeeded: orders?.filter(o => o.status === 'fulfilled').length || 0,
+        failed: orders?.filter(o => o.status === 'failed').length || 0,
+        overduePending: 0 // Retry tracking moved to auto_gift_fulfillment_queue
       };
 
       setRetryStats(stats);

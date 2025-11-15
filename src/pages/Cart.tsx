@@ -544,15 +544,15 @@ const Cart = () => {
                           variant="ghost"
                           size="sm"
                           onClick={async () => {
-                            if (window.confirm('⚠️ EMERGENCY FULL RESET\n\nThis will:\n• Delete ALL server cart data (user_carts + cart_sessions)\n• Clear all local cart data\n• Reload the page\n\nUse this if cart issues persist.\n\nContinue?')) {
+                            if (window.confirm('⚠️ EMERGENCY FULL RESET\n\nThis will:\n• Clear all local cart data\n• Reload the page\n\nUse this if cart issues persist.\n\nContinue?')) {
                               try {
                                 if (!user?.id) {
                                   toast.error('Must be logged in');
                                   return;
                                 }
                                 
-                                toast.success('Server cart data cleared (legacy tables removed)');
-                                console.log('🧹 Server cleanup: Legacy cart_sessions and user_carts tables have been removed');
+                                toast.success('Cart data cleared');
+                                console.log('🧹 Cart cleanup: localStorage cleared (legacy tables removed)');
                                 
                                 toast.loading('Running local cleanup...');
                                 // emergencyCartCleanup() will reload the page

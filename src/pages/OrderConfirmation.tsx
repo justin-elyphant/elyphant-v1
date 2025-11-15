@@ -62,6 +62,14 @@ const OrderConfirmation = () => {
     const progressiveTimeout = setTimeout(() => {
       setShowProgressiveError(true);
     }, 15000);
+
+    // Auto-trigger reconciliation after 18 seconds if no order found
+    const autoReconcileTimeout = setTimeout(() => {
+      if (!order && sessionId) {
+        console.log('🔄 Auto-triggering reconciliation after 18s...');
+        handleReconcile();
+      }
+    }, 18000);
     
     // Stop polling after 30 seconds
     const stopPollingTimeout = setTimeout(() => clearInterval(interval), 30000);
@@ -69,10 +77,11 @@ const OrderConfirmation = () => {
     return () => {
       clearInterval(interval);
       clearTimeout(progressiveTimeout);
+      clearTimeout(autoReconcileTimeout);
       clearTimeout(stopPollingTimeout);
       clearTimeout(welcomeTimer);
     };
-  }, [orderId, sessionId]);
+  }, [orderId, sessionId, order]);
 
   const checkForAutoGiftUpsell = async (orderData: Order) => {
     try {
@@ -209,6 +218,32 @@ const OrderConfirmation = () => {
     }
   };
 
+  const handleReconcile = async () => {
+    if (!sessionId) return;
+    
+    setLoading(true);
+    try {
+      console.log('🔄 Invoking reconcile-checkout-session for:', sessionId);
+      const { data, error } = await supabase.functions.invoke('reconcile-checkout-session', {
+        body: { sessionId }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data.order_id) {
+        console.log('✅ Order reconciled:', data.order_id);
+        // Refresh to show the order
+        window.location.reload();
+      }
+    } catch (err: any) {
+      console.error('❌ Reconciliation failed:', err);
+      alert(`Failed to create order: ${err.message || 'Unknown error'}. Please contact support.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -276,29 +311,7 @@ const OrderConfirmation = () => {
   // Progressive error state with reconciliation option
   if (!order && showProgressiveError) {
     const timeElapsed = Math.floor((Date.now() - pollingStartTime) / 1000);
-    
-    const handleReconcile = async () => {
-      if (!sessionId) return;
-      
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('reconcile-checkout-session', {
-          body: { sessionId }
-        });
-        
-        if (error) throw error;
-        
-        if (data?.success && data.order_id) {
-          // Refresh to show the order
-          window.location.reload();
-        }
-      } catch (err: any) {
-        console.error('Reconciliation failed:', err);
-        alert(`Failed to create order: ${err.message || 'Unknown error'}. Please contact support.`);
-      } finally {
-        setLoading(false);
-      }
-    };
+
     
     return (
       <SidebarLayout>

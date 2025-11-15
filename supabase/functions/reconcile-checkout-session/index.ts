@@ -61,24 +61,27 @@ serve(async (req) => {
       throw new Error(`Payment not completed. Status: ${session.payment_status}`);
     }
 
-    // Extract shipping from session.shipping_details
-    const shippingDetails = session.shipping_details;
-    if (!shippingDetails || !shippingDetails.address) {
-      throw new Error('No shipping details found in session');
-    }
-
+    // Extract shipping from metadata (aligned with webhook)
+    const metadata = session.metadata || {};
     const shippingAddress = {
-      name: shippingDetails.name || '',
-      address_line1: shippingDetails.address.line1 || '',
-      address_line2: shippingDetails.address.line2 || '',
-      city: shippingDetails.address.city || '',
-      state: shippingDetails.address.state || '',
-      postal_code: shippingDetails.address.postal_code || '',
-      country: shippingDetails.address.country || 'US',
+      name: metadata.ship_name || '',
+      address_line1: metadata.ship_address_line1 || '',
+      address_line2: metadata.ship_address_line2 || '',
+      city: metadata.ship_city || '',
+      state: metadata.ship_state || '',
+      postal_code: metadata.ship_postal_code || '',
+      country: metadata.ship_country || 'US',
     };
 
-    // Extract metadata
-    const metadata = session.metadata || {};
+    console.log(`📦 Reconcile: Shipping from metadata: ${shippingAddress.city}, ${shippingAddress.state}`);
+
+    // Validate shipping
+    if (!shippingAddress.address_line1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postal_code) {
+      console.error('❌ Reconcile: Incomplete shipping in metadata');
+      console.log('[DEBUG] metadata keys:', Object.keys(metadata));
+      throw new Error('Incomplete shipping address in session metadata');
+    }
+
     const userId = metadata.user_id || session.client_reference_id;
 
     if (!userId) {

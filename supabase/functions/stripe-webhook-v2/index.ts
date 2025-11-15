@@ -152,11 +152,11 @@ async function handleCheckoutSessionCompleted(
 
   if (missingShippingFields.length > 0) {
     console.error(`❌ Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
+    console.log('[DEBUG] session.metadata keys:', Object.keys(session.metadata || {}));
     throw new Error(`Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
   }
 
-  // STEP 3: Extract metadata (essential scalars only)
-  const metadata = session.metadata || {};
+  // STEP 3: Extract scalars from metadata
   const userId = metadata.user_id || session.client_reference_id;
   const isScheduled = metadata.is_scheduled === 'true';
   const scheduledDate = metadata.scheduled_delivery_date || null;

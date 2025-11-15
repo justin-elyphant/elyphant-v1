@@ -31,6 +31,9 @@ verify_jwt = false
 [functions.admin-order-tools]
 verify_jwt = true
 
+[functions.reconcile-checkout-session]
+verify_jwt = false
+
 # ============================================
 # ESSENTIAL UTILITY FUNCTIONS
 # ============================================

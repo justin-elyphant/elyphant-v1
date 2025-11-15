@@ -59,6 +59,9 @@ verify_jwt = false
 [functions.setup-email-templates]
 verify_jwt = false
 
+[functions.ecommerce-email-orchestrator]
+verify_jwt = false
+
 [functions.detect-abandoned-carts]
 verify_jwt = false
 

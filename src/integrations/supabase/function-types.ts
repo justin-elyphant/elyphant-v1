@@ -17,6 +17,9 @@ export enum SUPABASE_FUNCTIONS {
   // Address & recipient functions
   COLLECT_RECIPIENT_ADDRESS = "collect-recipient-address",
   
+  // Email system
+  ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator",
+  
   // Nicole AI agent
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",
 }

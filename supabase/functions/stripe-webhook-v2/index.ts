@@ -293,17 +293,25 @@ async function handleCheckoutSessionCompleted(
 
     const totalAmount = pricingBreakdown.subtotal + pricingBreakdown.shippingCost + pricingBreakdown.giftingFee + pricingBreakdown.taxAmount;
 
-    // Create order record
+    // Create order record - ensure required financial fields are set per schema
     const orderData = {
       user_id: metadata.user_id === 'guest' ? null : metadata.user_id,
       checkout_session_id: session.id,
       payment_intent_id: session.payment_intent as string,
       status: orderStatus,
       payment_status: paymentStatus,
+      // Pricing fields (NOT NULL in current schema)
+      subtotal: pricingBreakdown.subtotal,
+      shipping_cost: pricingBreakdown.shippingCost,
+      tax_amount: pricingBreakdown.taxAmount,
+      gifting_fee: pricingBreakdown.giftingFee,
       total_amount: totalAmount,
-      currency: session.currency || 'usd',
+      currency: (session.currency || 'usd'),
+      // Address/line items
       line_items: lineItems,
       shipping_address: shippingInfo || session.customer_details,
+      shipping_info: shippingInfo || session.customer_details,
+      // Scheduling and flags
       scheduled_delivery_date: scheduledDate,
       is_auto_gift: isAutoGift,
       auto_gift_rule_id: autoGiftRuleId,

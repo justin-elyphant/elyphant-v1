@@ -296,10 +296,8 @@ serve(async (req) => {
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata,
-      billing_address_collection: 'required',
-      shipping_address_collection: {
-        allowed_countries: ['US', 'CA'],
-      },
+      // Shipping already collected at /checkout, passed in metadata (lines 236-245)
+      // Webhook reads from session.shipping_details populated by Stripe from metadata
     };
 
     // For group gifts, hold funds in escrow until project completes

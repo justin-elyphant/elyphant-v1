@@ -49,7 +49,7 @@ const PaymentSuccess = () => {
         const { data: existingOrder } = await supabase
           .from('orders')
           .select('id, order_number, status, payment_status, zinc_order_id')
-          .eq('stripe_session_id', sessionId)
+          .eq('checkout_session_id', sessionId)
           .single();
 
         if (existingOrder?.payment_status === 'succeeded') {
@@ -83,8 +83,8 @@ const PaymentSuccess = () => {
             // Poll the Orders table - webhook updates this
             const { data: order, error } = await supabase
               .from('orders')
-              .select('*')
-              .eq('stripe_session_id', sessionId)
+              .select('id, order_number, status, payment_status, total_amount')
+              .eq('checkout_session_id', sessionId)
               .maybeSingle();
 
             if (error) throw new Error(error.message);

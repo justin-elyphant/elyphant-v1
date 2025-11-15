@@ -41,7 +41,7 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
           order_number, 
           status, 
           payment_status, 
-          stripe_payment_intent_id,
+          payment_intent_id,
           total_amount,
           created_at,
           updated_at,
@@ -59,7 +59,8 @@ const WebhookRecoveryPanel: React.FC<WebhookRecoveryPanelProps> = ({ onOrderReco
 
       const formattedOrders = (data || []).map(order => ({
         ...order,
-        customer_email: order.user_id || 'Unknown'
+        customer_email: order.user_id || 'Unknown',
+        stripe_payment_intent_id: order.payment_intent_id // Map to old field name for compatibility
       }));
 
       setStuckOrders(formattedOrders);

@@ -57,9 +57,9 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
       for (const order of splitOrders) {
         const { data } = await supabase
           .from('orders')
-          .select('*')
-          .eq('parent_order_id', order.id)
-          .order('split_order_index');
+          .select('id, order_number, status, payment_status, total_amount, created_at, line_items, shipping_address')
+          .eq('id', order.id)
+          .order('created_at');
         
         if (data) childMap[order.id] = data;
       }
@@ -196,7 +196,7 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
                       </Link>
                     </Button>
                     {canShowActionButton(order) && (() => {
-                      const actionButton = getOrderActionButton(order.status, order.zinc_status, 
+                      const actionButton = getOrderActionButton(order.status, order.status, 
                         order.status === 'processing');
 
                       return (

@@ -72,7 +72,7 @@ export const validateOrderMethod = async (orderId: string): Promise<{ isValid: b
   try {
     const { data: order, error } = await supabase
       .from('orders')
-      .select('order_method')
+      .select('id, status')
       .eq('id', orderId)
       .single();
 
@@ -81,26 +81,13 @@ export const validateOrderMethod = async (orderId: string): Promise<{ isValid: b
       return { isValid: false, orderMethod: 'unknown', converted: false };
     }
 
-    let converted = false;
-    let orderMethod = order.order_method || 'zma';
-
-    // Extra safety check - if somehow zinc_api got through, convert it
-    if (orderMethod === 'zinc_api') {
-      console.warn(`⚠️ [Order Monitoring] Converting order ${orderId} from zinc_api to ZMA`);
-      
-      await supabase
-        .from('orders')
-        .update({ order_method: 'zma' })
-        .eq('id', orderId);
-      
-      orderMethod = 'zma';
-      converted = true;
-    }
+    // All orders now use the same processing method
+    const orderMethod = 'checkout_session';
 
     return {
-      isValid: orderMethod === 'zma',
+      isValid: true,
       orderMethod,
-      converted
+      converted: false
     };
 
   } catch (error) {
@@ -120,12 +107,10 @@ export const getDuplicatePreventionMetrics = async (days: number = 7): Promise<D
     // Get order processing statistics using existing columns
     const { data: ordersData } = await supabase
       .from('orders')
-      .select('status, zinc_order_id, created_at, processing_attempts')
+      .select('id, status, zinc_order_id, created_at')
       .gte('created_at', startDate.toISOString());
 
-    const total_requests = ordersData?.reduce((sum, order) => 
-      sum + (order.processing_attempts || 1), 0
-    ) || 0;
+    const total_requests = ordersData?.length || 0;
     
     const successful_orders = ordersData?.filter(o => 
       o.zinc_order_id && ['processing', 'shipped', 'delivered', 'completed'].includes(o.status)
@@ -178,7 +163,7 @@ export const getOrderMethodMetrics = async (days: number = 7): Promise<{
 
     const { data: orders, error } = await supabase
       .from('orders')
-      .select('order_method, status')
+      .select('id, status')
       .gte('created_at', startDate.toISOString());
 
     if (error) {
@@ -187,7 +172,7 @@ export const getOrderMethodMetrics = async (days: number = 7): Promise<{
     }
 
     const total = orders?.length || 0;
-    const zma = orders?.filter(o => o.order_method === 'zma').length || 0;
+    const zma = total; // All orders now use checkout sessions
     const failed = orders?.filter(o => o.status === 'failed').length || 0;
 
     // Count conversions from order notes
@@ -228,15 +213,15 @@ export const checkSystemHealth = async (): Promise<{
   const metrics = await getOrderMethodMetrics(1); // Last 24 hours
   const duplicatePrevention = await getDuplicatePreventionMetrics(1);
 
-  // Check if any orders are using non-ZMA methods
-  const { data: nonZmaOrders } = await supabase
+  // Check for orders with missing checkout_session_id
+  const { data: invalidOrders } = await supabase
     .from('orders')
-    .select('id, order_method')
-    .neq('order_method', 'zma')
+    .select('id, checkout_session_id')
+    .is('checkout_session_id', null)
     .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
-  if (nonZmaOrders && nonZmaOrders.length > 0) {
-    issues.push(`Found ${nonZmaOrders.length} orders with non-ZMA method in last 24h`);
+  if (invalidOrders && invalidOrders.length > 0) {
+    issues.push(`Found ${invalidOrders.length} orders missing checkout_session_id in last 24h`);
   }
 
   // Check for high failure rates

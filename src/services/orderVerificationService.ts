@@ -85,7 +85,7 @@ class OrderVerificationService {
       // Get order details from database
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .select('id, zinc_order_id, status, zinc_status')
+        .select('id, zinc_order_id, status')
         .eq('id', orderId)
         .single();
 
@@ -102,10 +102,9 @@ class OrderVerificationService {
       }
 
       // Check status with Zinc
-      const { data: statusResult, error: statusError } = await supabase.functions.invoke('check-zinc-order-status', {
+      const { data: statusResult, error: statusError } = await supabase.functions.invoke('order-monitor-v2', {
         body: {
-          singleOrderId: order.zinc_order_id,
-          debugMode: false
+          orderId: order.zinc_order_id
         }
       });
 

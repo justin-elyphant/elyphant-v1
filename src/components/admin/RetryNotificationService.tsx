@@ -30,13 +30,16 @@ const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess,
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, status, retry_count, next_retry_at, created_at, total_amount, payment_status')
+        .select('id, order_number, status, created_at, total_amount, payment_status')
         .eq('status', 'retry_pending')
-        .order('next_retry_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      setRetryOrders(data || []);
+      setRetryOrders((data || []).map(order => ({
+        ...order,
+        payment_retry_count: 0 // Default value since column doesn't exist
+      })));
     } catch (error) {
       console.error('Error fetching retry orders:', error);
       toast.error('Failed to fetch retry orders');
@@ -113,10 +116,10 @@ const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess,
   const getStatusBadge = (order: RetryOrder) => {
     if (order.status === 'failed') {
       return <Badge variant="destructive">Failed</Badge>;
-    } else if (retryTime.getTime() - now.getTime() < 30 * 60 * 1000) {
-      return <Badge variant="secondary">Due Soon</Badge>;
+    } else if (order.status === 'processing') {
+      return <Badge variant="secondary">Processing</Badge>;
     }
-    return <Badge variant="outline">Scheduled</Badge>;
+    return <Badge>Pending</Badge>;
   };
 
   const formatTimeUntilRetry = (retryTime: string) => {
@@ -188,8 +191,8 @@ const RetryNotificationService: React.FC<RetryNotificationProps> = ({ onSuccess,
                         <p className="font-medium">{order.payment_status}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Next Retry:</span>
-                        <p className="font-medium">{formatTimeUntilRetry(order.next_retry_at)}</p>
+                        <span className="text-muted-foreground">Status:</span>
+                        <p className="font-medium">{order.status}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Created:</span>

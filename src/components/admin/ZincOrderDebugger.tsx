@@ -45,21 +45,20 @@ const ZincOrderDebugger = () => {
         // Check ZMA order status
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
-          .select('*')
+          .select('id, order_number, status, payment_status, zinc_order_id, zinc_request_id, notes')
           .eq('id', orderRequestId)
-          .eq('order_method', 'zma')
           .single();
 
         if (orderError || !orderData) {
           setDebugLogs(`Database Error: ${orderError?.message || 'Order not found'}`);
-          toast(`Order not found or not a ZMA order`);
+          toast(`Order not found`);
           return;
         }
 
         setStatusResult({
           orderId: orderRequestId,
-          zmaOrderId: orderData.zma_order_id,
-          orderMethod: 'zma',
+          zincOrderId: orderData.zinc_order_id || undefined,
+          orderMethod: 'zinc_api',
           status: orderData.status,
           debugInfo: orderData
         });

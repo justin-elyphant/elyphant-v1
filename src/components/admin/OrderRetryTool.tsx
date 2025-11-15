@@ -32,7 +32,7 @@ const OrderRetryTool = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, status, payment_status, total_amount, order_method, stripe_payment_intent_id, created_at')
+        .select('id, order_number, status, payment_status, total_amount, payment_intent_id, created_at')
         .eq('id', orderId)
         .single();
 

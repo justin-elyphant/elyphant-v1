@@ -132,15 +132,13 @@ export const useAutoGiftTesting = () => {
         .from('orders')
         .select(`
           id,
-          recipient_name,
+          order_number,
           scheduled_delivery_date,
-          zinc_scheduled_processing_date,
-          hold_for_scheduled_delivery,
           status,
           created_at
         `)
-        .eq('hold_for_scheduled_delivery', true)
-        .order('zinc_scheduled_processing_date', { ascending: true });
+        .not('scheduled_delivery_date', 'is', null)
+        .order('scheduled_delivery_date', { ascending: true });
 
       if (error) {
         console.error('Error fetching scheduled orders:', error);

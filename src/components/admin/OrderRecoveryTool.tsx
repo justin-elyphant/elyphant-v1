@@ -170,8 +170,8 @@ const OrderRecoveryTool = () => {
                     <p className="font-medium">{order.payment_status}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Zinc Status:</span>
-                    <p className="font-medium">{order.zinc_status}</p>
+                    <span className="text-muted-foreground">Status:</span>
+                    <p className="font-medium">{order.status}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Created:</span>

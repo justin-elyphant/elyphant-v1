@@ -237,11 +237,11 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                           Cancel
                         </Button>
                       )}
-                      {order.stripe_payment_intent_id && (
+                      {order.payment_intent_id && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => window.open(`https://dashboard.stripe.com/payments/${order.stripe_payment_intent_id}`, '_blank')}
+                          onClick={() => window.open(`https://dashboard.stripe.com/payments/${order.payment_intent_id}`, '_blank')}
                         >
                           <CreditCard className="h-3 w-3 mr-1" />
                           Stripe

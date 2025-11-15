@@ -37,7 +37,7 @@ export default function ReturnTrackingTab() {
     },
     {
       title: "Processing",
-      value: returnedOrders.filter(o => o.zinc_status === 'processing').length.toString(),
+      value: returnedOrders.filter(o => o.status === 'processing').length.toString(),
       icon: AlertTriangle,
       trend: "Needs attention",
       trendUp: false,

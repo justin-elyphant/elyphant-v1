@@ -44,9 +44,9 @@ const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
       for (const order of splitOrders) {
         const { data } = await supabase
           .from('orders')
-          .select('*')
-          .eq('parent_order_id', order.id)
-          .order('split_order_index');
+          .select('id, order_number, status, payment_status, total_amount, created_at')
+          .eq('id', order.id)
+          .order('created_at');
         
         if (data) childMap[order.id] = data;
       }

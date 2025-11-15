@@ -128,24 +128,20 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
-  // STEP 2: Extract shipping from session.shipping_details (ALWAYS use this, not metadata)
-  const shippingDetails = session.shipping_details;
-  if (!shippingDetails || !shippingDetails.address) {
-    console.error('❌ No shipping_details found in checkout session');
-    throw new Error('Missing shipping details in checkout session');
-  }
-
+  // STEP 2: Extract shipping from metadata (collected at /checkout)
+  const metadata = session.metadata || {};
+  
   const shippingAddress = {
-    name: shippingDetails.name || '',
-    address_line1: shippingDetails.address.line1 || '',
-    address_line2: shippingDetails.address.line2 || '',
-    city: shippingDetails.address.city || '',
-    state: shippingDetails.address.state || '',
-    postal_code: shippingDetails.address.postal_code || '', // CRITICAL: use postal_code
-    country: shippingDetails.address.country || 'US',
+    name: metadata.ship_name || '',
+    address_line1: metadata.ship_address_line1 || '',
+    address_line2: metadata.ship_address_line2 || '',
+    city: metadata.ship_city || '',
+    state: metadata.ship_state || '',
+    postal_code: metadata.ship_postal_code || '',
+    country: metadata.ship_country || 'US',
   };
 
-  console.log(`📦 Shipping extracted: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
+  console.log(`📦 Shipping extracted from metadata: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
 
   // Validate shipping completeness
   const missingShippingFields = [];

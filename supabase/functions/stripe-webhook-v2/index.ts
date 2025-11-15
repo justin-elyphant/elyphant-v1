@@ -158,8 +158,8 @@ async function handleCheckoutSessionCompleted(
 
   // STEP 3: Extract scalars from metadata
   const userId = metadata.user_id || session.client_reference_id;
-  const isScheduled = metadata.is_scheduled === 'true';
   const scheduledDate = metadata.scheduled_delivery_date || null;
+  const isScheduled = !!scheduledDate && new Date(scheduledDate) > new Date();
   const isAutoGift = metadata.is_auto_gift === 'true';
   const autoGiftRuleId = metadata.auto_gift_rule_id || null;
   const deliveryGroupId = metadata.delivery_group_id || null;

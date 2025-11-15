@@ -73,13 +73,21 @@ serve(async (req) => {
       country: metadata.ship_country || 'US',
     };
 
-    console.log(`📦 Reconcile: Shipping from metadata: ${shippingAddress.city}, ${shippingAddress.state}`);
+    console.log(`📦 Reconcile: Shipping from metadata: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code || '[MISSING]'}`);
 
-    // Validate shipping
-    if (!shippingAddress.address_line1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postal_code) {
-      console.error('❌ Reconcile: Incomplete shipping in metadata');
+    // Detect missing fields
+    const missingFields = [
+      !shippingAddress.address_line1 && 'address_line1',
+      !shippingAddress.city && 'city',
+      !shippingAddress.state && 'state',
+      !shippingAddress.postal_code && 'postal_code'
+    ].filter(Boolean);
+
+    if (missingFields.length > 0) {
+      console.warn(`⚠️ [WARN] Reconcile: creating order with incomplete shipping; missing: ${missingFields.join(', ')}`);
       console.log('[DEBUG] metadata keys:', Object.keys(metadata));
-      throw new Error('Incomplete shipping address in session metadata');
+      // Mark as incomplete but continue (we'll create order with payment_confirmed status)
+      (shippingAddress as any).validation_warning = `missing_${missingFields.join('_')}`;
     }
 
     const userId = metadata.user_id || session.client_reference_id;

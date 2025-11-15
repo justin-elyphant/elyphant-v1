@@ -4,9 +4,6 @@ project_id = "dmkxtkvlispxeqfzlczr"
 # MODERNIZED V2 FUNCTIONS (New - Active)
 # ============================================
 
-[functions.create-payment-intent-v2]
-verify_jwt = true
-
 [functions.create-checkout-session]
 verify_jwt = true
 
@@ -64,9 +61,6 @@ verify_jwt = false
 
 [functions.detect-abandoned-carts]
 verify_jwt = false
-
-[functions.clear-user-cart-sessions]
-verify_jwt = true
 
 [functions.cleanup-auth-rate-limits]
 verify_jwt = false

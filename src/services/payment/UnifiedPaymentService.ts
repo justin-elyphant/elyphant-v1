@@ -638,34 +638,9 @@ class UnifiedPaymentService {
         return;
       }
 
-      console.log('[EMERGENCY RESET] Starting complete server cart cleanup');
-
-      // Delete ALL from user_carts
-      const { error: userCartError } = await supabase
-        .from('user_carts')
-        .delete()
-        .eq('user_id', this.currentUser.id);
-
-      if (userCartError) {
-        console.error('[EMERGENCY RESET] Error clearing user_carts:', userCartError);
-        toast.error(`Failed to clear user cart: ${userCartError.message}`);
-      } else {
-        console.log('[EMERGENCY RESET] ✅ Cleared user_carts');
-      }
-
-      // Delete ALL from cart_sessions
-      const { error: sessionsError } = await supabase
-        .from('cart_sessions')
-        .delete()
-        .eq('user_id', this.currentUser.id);
-
-      if (sessionsError) {
-        console.error('[EMERGENCY RESET] Error clearing cart_sessions:', sessionsError);
-        toast.error(`Failed to clear cart sessions: ${sessionsError.message}`);
-      } else {
-        console.log('[EMERGENCY RESET] ✅ Cleared all cart_sessions');
-      }
-
+      console.log('[EMERGENCY RESET] Starting cart cleanup (legacy tables removed - no action needed)');
+      toast.success('Cart cleared (checkout sessions handle cart data now)');
+      
       console.log('[EMERGENCY RESET] Server cleanup complete');
       toast.success('Server cart data cleared');
     } catch (error) {
@@ -1511,90 +1486,20 @@ class UnifiedPaymentService {
    * ONLY updates user_carts (single source of truth)
    * cart_sessions is ONLY updated at checkout via useCartSessionTracking
    */
+  
+  /**
+   * Sync cart to server (legacy - no longer needed with checkout sessions)
+   */
   private async syncCartToServer(): Promise<void> {
-    if (!this.currentUser) return;
-
-    try {
-      console.log(`[CART SYNC] 💾 Syncing ${this.cartItems.length} items to user_carts (single source of truth)`);
-      
-      const cartData = {
-        user_id: this.currentUser.id,
-        cart_data: this.cartItems as any,
-        expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Upsert to user_carts ONLY
-      const { error } = await supabase
-        .from('user_carts')
-        .upsert(cartData, { onConflict: 'user_id' });
-
-      if (error) {
-        // If upsert fails, use delete+insert fallback
-        console.log('[CART SYNC] Upsert failed, using delete+insert fallback:', error.message);
-        
-        await supabase
-          .from('user_carts')
-          .delete()
-          .eq('user_id', this.currentUser.id);
-        
-        const { error: insertError } = await supabase
-          .from('user_carts')
-          .insert(cartData);
-        
-        if (insertError) throw insertError;
-        console.log('[CART SYNC] ✅ Fallback sync complete');
-      } else {
-        console.log('[CART SYNC] ✅ Successfully synced to user_carts');
-      }
-    } catch (error) {
-      console.error('Error syncing cart to server:', error);
-    }
+    console.log('[CART SYNC] Legacy cart sync - no action needed (checkout sessions handle cart data)');
   }
 
   /**
-   * Load cart data from server - STREAMLINED
-   * ONLY loads from user_carts (single source of truth)
-   * cart_sessions is NEVER used for active cart loading
+   * Load cart from server (legacy - no longer needed with checkout sessions)
    */
   private async loadCartFromServer(): Promise<CartItem[]> {
-    if (!this.currentUser) return [];
-
-    try {
-      console.log(`[CART LOAD] 📥 Loading from user_carts (single source of truth) for user ${this.currentUser.id}`);
-      
-      // Load from user_carts ONLY
-      const { data: userData, error: userError } = await supabase
-        .from('user_carts')
-        .select('cart_data, updated_at')
-        .eq('user_id', this.currentUser.id)
-        .gt('expires_at', new Date().toISOString())
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (userError) {
-        console.error('[CART LOAD] Error loading user_carts:', userError);
-        return [];
-      }
-      
-      if (userData?.cart_data) {
-        const cartItems = userData.cart_data as unknown as CartItem[];
-        console.log(`[CART LOAD] ✅ Loaded ${cartItems.length} items from user_carts (updated: ${userData.updated_at})`);
-        
-        return cartItems.map(item => ({
-          ...item,
-          product: standardizeProduct(item.product)
-        }));
-      }
-
-      console.log('[CART LOAD] ✅ user_carts is empty - returning empty cart');
-      return [];
-      
-    } catch (error) {
-      console.error('[CART LOAD] ❌ Error loading cart from server:', error);
-      return [];
-    }
+    console.log('[CART LOAD] Legacy cart load - returning empty (checkout sessions handle cart data)');
+    return [];
   }
 
   /**

@@ -16,7 +16,8 @@ import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
 import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
 import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
-import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
+// Legacy component removed - email orchestrator testing moved to process-email-queue
+// import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
 import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
 
 export const TrunklineRouter: React.FC = () => {
@@ -66,7 +67,10 @@ export const TrunklineRouter: React.FC = () => {
               Orchestrator Tester Loaded
             </h2>
             <React.Suspense fallback={<div>Loading tester…</div>}>
-              <EmailOrchestratorTester />
+              {/* EmailOrchestratorTester removed - email orchestrator replaced by process-email-queue */}
+              <div className="p-4 text-center text-muted-foreground">
+                Email orchestrator testing removed. Use process-email-queue function instead.
+              </div>
             </React.Suspense>
           </div>
         );

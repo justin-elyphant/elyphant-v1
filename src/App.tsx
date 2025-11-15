@@ -16,7 +16,8 @@ import { EmployeeRedirectHandler } from "./components/auth/EmployeeRedirectHandl
 import { SessionMonitor } from "./components/auth/SessionMonitor";
 import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
+// Legacy cart persistence removed - checkout sessions handle cart data now
+// import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
 import { SimpleNicoleProvider } from "./components/ai/SimpleNicoleProvider";
 
 

@@ -15,7 +15,6 @@ import AddressAutocomplete from "@/components/settings/AddressAutocomplete";
 import InlineAddressVerification from "./InlineAddressVerification";
 import { supabase } from "@/integrations/supabase/client";
 import { AddressValidationResult } from "@/services/location/UnifiedLocationService";
-import { useWelcomeWishlist } from "@/hooks/useWelcomeWishlist";
 
 interface AddressVerificationData {
   address: {
@@ -58,7 +57,6 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddressVerified, setIsAddressVerified] = useState(false);
   const [addressVerificationData, setAddressVerificationData] = useState<AddressVerificationData | null>(null);
-  const { triggerWelcomeWishlist } = useWelcomeWishlist();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

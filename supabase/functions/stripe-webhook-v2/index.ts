@@ -331,10 +331,19 @@ async function handleCheckoutSessionCompleted(
     }
 
     console.log('✅ Order created from checkout session:', order.id);
+    console.log('📊 Order details:', {
+      order_id: order.id,
+      status: order.status,
+      payment_status: order.payment_status,
+      total_amount: order.total_amount,
+      line_items_count: order.line_items?.length || 0,
+      has_shipping_address: !!order.shipping_address,
+      is_scheduled: !!order.scheduled_delivery_date
+    });
 
     // Send order confirmation email
     console.log('📧 Sending order confirmation email...');
-    const { error: emailError } = await supabase.functions.invoke('send-order-receipt', {
+    const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-order-receipt', {
       body: { orderId: order.id }
     });
 
@@ -342,23 +351,25 @@ async function handleCheckoutSessionCompleted(
       console.error('❌ Failed to send confirmation email:', emailError);
       // Don't throw - order is saved, email can be retried
     } else {
-      console.log('✅ Order confirmation email sent');
+      console.log('✅ Order confirmation email sent successfully');
     }
 
     // If NOT scheduled, process immediately
     if (orderStatus === 'payment_confirmed') {
-      console.log('🚀 Triggering immediate order processing...');
+      console.log('🚀 Triggering immediate order processing for order:', order.id);
       
-      const { error: processError } = await supabase.functions.invoke('process-order-v2', {
+      const { data: processResult, error: processError } = await supabase.functions.invoke('process-order-v2', {
         body: { orderId: order.id }
       });
 
       if (processError) {
         console.error('❌ Failed to trigger order processing:', processError);
-        // Don't throw - order is saved, can be retried
+        // Don't throw - order is saved, can be retried manually
+      } else {
+        console.log('✅ Order processing triggered successfully:', processResult);
       }
     } else {
-      console.log('📅 Order scheduled for:', scheduledDate);
+      console.log('📅 Order scheduled for future delivery:', scheduledDate);
     }
 
     return { received: true, orderId: order.id };

@@ -40,13 +40,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get order details with items
+    // Get order details (NEW ARCHITECTURE: line_items stored in JSONB)
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select(`
-        *,
-        order_items (*)
-      `)
+      .select('*')
       .eq('id', orderId)
       .single();
 
@@ -87,15 +84,16 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Format order items for email
-    const orderItemsHtml = (order.order_items || []).map((item: any) => {
+    // Format order items for email (NEW ARCHITECTURE: from line_items JSONB)
+    const lineItems = order.line_items || [];
+    const orderItemsHtml = lineItems.map((item: any) => {
       const unit = Number(item.unit_price ?? item.price ?? 0);
       const qty = Number(item.quantity ?? 1);
       const lineTotal = unit * qty;
       return `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-          <div style="font-weight: 600;">${item.name || item.product_name || 'Item'}</div>
+          <div style="font-weight: 600;">${item.name || item.title || item.product_name || 'Item'}</div>
           ${item.variant_details ? `<div style=\"font-size: 14px; color: #6b7280;\">${item.variant_details}</div>` : ''}
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
@@ -107,15 +105,16 @@ const handler = async (req: Request): Promise<Response> => {
       </tr>`;
     }).join('');
 
-    // Calculate totals
-    const subtotal = (order.order_items || []).reduce((sum: number, item: any) => {
+    // Calculate totals (NEW ARCHITECTURE: use order financial fields)
+    const subtotal = Number(order.subtotal ?? lineItems.reduce((sum: number, item: any) => {
       const unit = Number(item.unit_price ?? item.price ?? 0);
       const qty = Number(item.quantity ?? 1);
       return sum + unit * qty;
-    }, 0);
+    }, 0));
     const shipping = Number(order.shipping_cost ?? 0);
     const tax = Number(order.tax_amount ?? 0);
-    const total = Number(order.total_amount ?? (subtotal + shipping + tax));
+    const giftingFee = Number(order.gifting_fee ?? 0);
+    const total = Number(order.total_amount ?? (subtotal + shipping + tax + giftingFee));
 
     // Get customer-facing status (hide internal Zinc status)
     const getCustomerFacingStatus = (rawStatus: string) => {
@@ -217,6 +216,12 @@ const handler = async (req: Request): Promise<Response> => {
               <tr>
                 <td style="padding: 8px 0;">Tax:</td>
                 <td style="padding: 8px 0; text-align: right;">$${tax.toFixed(2)}</td>
+              </tr>
+              ` : ''}
+              ${giftingFee > 0 ? `
+              <tr>
+                <td style="padding: 8px 0;">Gifting Fee:</td>
+                <td style="padding: 8px 0; text-align: right;">$${giftingFee.toFixed(2)}</td>
               </tr>
               ` : ''}
               <tr style="border-top: 2px solid #e5e7eb; font-weight: bold; font-size: 18px;">

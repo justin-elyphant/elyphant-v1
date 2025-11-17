@@ -309,7 +309,6 @@ serve(async (req) => {
         .insert({
           recipient_email: order.customer_email || order.shipping_address?.email,
           recipient_name: requiredShippingFields.name,
-          template_id: 'order_confirmation',
           event_type: 'order_confirmation',
           template_variables: {
             order_number: order.order_number,

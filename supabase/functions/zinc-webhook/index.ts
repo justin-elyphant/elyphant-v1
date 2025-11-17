@@ -174,7 +174,6 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
     if (order?.customer_email || order?.shipping_address?.email) {
       await supabase.from('email_queue').insert({
         recipient_email: order.customer_email || order.shipping_address.email,
-        template_id: 'order_failed',
         event_type: 'order_failed',
         template_variables: {
           order_number: order.order_number,
@@ -222,7 +221,6 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     if (order?.customer_email || order?.shipping_address?.email) {
       await supabase.from('email_queue').insert({
         recipient_email: order.customer_email || order.shipping_address.email,
-        template_id: 'order_shipped',
         event_type: 'order_shipped',
         template_variables: {
           order_number: order.order_number,

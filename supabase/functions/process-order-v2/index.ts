@@ -197,8 +197,10 @@ serve(async (req) => {
 
     console.log(`✅ All ${lineItems.length} product IDs validated as Amazon ASINs`);
 
-    // STEP 7: Build Zinc API request
+    // STEP 7: Build Zinc ZMA API request
+    // ZMA (Zinc Managed Accounts) uses Zinc's Amazon credentials
     const zincRequest = {
+      addax: true, // CRITICAL: Enables ZMA processing
       idempotency_key: orderId,
       retailer: 'amazon',
       products: lineItems.map((item: any) => ({
@@ -219,14 +221,17 @@ serve(async (req) => {
       is_gift: order.is_auto_gift || false,
       gift_message: order.gift_message || undefined,
       shipping_method: 'cheapest',
-      payment_method: {
-        use_credentials: true,
-      },
+      // NOTE: payment_method, retailer_credentials, and billing_address 
+      // MUST BE OMITTED for ZMA orders per Zinc documentation
       webhooks: {
-        order_placed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
-        order_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
-        tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook-handler`,
+        request_succeeded: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+        request_failed: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+        tracking_obtained: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+        tracking_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+        status_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
+        case_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
       },
+      addax_queue_timeout: 14400, // 4 hours queue timeout
       client_notes: {
         order_id: orderId,
         order_number: order.order_number,
@@ -277,10 +282,10 @@ serve(async (req) => {
     }
 
     const zincRequestId = zincData.request_id;
-    console.log(`✅ Zinc order submitted! Request ID: ${zincRequestId}`);
+    console.log(`✅ Zinc ZMA order submitted! Request ID: ${zincRequestId}`);
 
-    // STEP 8: Update order with Zinc details
-    await supabase
+    // STEP 9: Update order with Zinc details
+    const { error: updateError } = await supabase
       .from('orders')
       .update({
         status: 'processing',
@@ -290,7 +295,45 @@ serve(async (req) => {
       })
       .eq('id', orderId);
 
+    if (updateError) {
+      console.error('❌ Failed to update order after Zinc submission:', updateError);
+      throw new Error(`Database update failed: ${updateError.message}`);
+    }
+
     console.log(`✅ Order ${orderId} updated to processing status`);
+
+    // STEP 10: Queue order confirmation email
+    try {
+      console.log('📧 Queueing order confirmation email...');
+      const { error: emailError } = await supabase
+        .from('email_queue')
+        .insert({
+          recipient_email: order.customer_email || order.shipping_address?.email,
+          recipient_name: requiredShippingFields.name,
+          template_id: 'order_confirmation',
+          event_type: 'order_confirmation',
+          template_variables: {
+            order_number: order.order_number,
+            order_id: orderId,
+            customer_name: requiredShippingFields.name,
+            total_amount: order.total_amount,
+            currency: order.currency || 'USD',
+          },
+          priority: 'high',
+          scheduled_for: new Date().toISOString(),
+          status: 'pending',
+        });
+
+      if (emailError) {
+        console.error('⚠️ Failed to queue confirmation email:', emailError);
+        // Don't fail the order if email queue fails
+      } else {
+        console.log('✅ Order confirmation email queued');
+      }
+    } catch (emailErr) {
+      console.error('⚠️ Error queueing confirmation email:', emailErr);
+      // Don't fail the order if email queue fails
+    }
 
     return new Response(
       JSON.stringify({ 

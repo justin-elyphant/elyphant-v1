@@ -47,12 +47,11 @@ const Orders = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', user.id)
-        .is('parent_order_id', null) // Only fetch parent orders (not child splits)
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching orders:", error);

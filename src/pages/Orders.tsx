@@ -36,9 +36,21 @@ const Orders = () => {
     setIsRefreshing(true);
     setError(null);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setError("Please log in to view orders.");
+        toast.error("Please log in to view orders.");
+        setIsLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id)
         .is('parent_order_id', null) // Only fetch parent orders (not child splits)
         .order('created_at', { ascending: false });
 

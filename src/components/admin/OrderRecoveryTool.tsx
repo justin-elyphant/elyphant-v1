@@ -3,8 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AlertTriangle, RefreshCw, Clock, Package } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Clock, Package, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface StuckOrder {
   id: string;
@@ -155,71 +158,148 @@ const OrderRecoveryTool = () => {
   };
 
   return (
-    <Card>
+    <Card className="border-2">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Order Recovery Tool
-            </CardTitle>
-            <CardDescription>
-              Find and recover orders stuck in processing for over 1 hour
-            </CardDescription>
-          </div>
-          <Button onClick={findStuckOrders} disabled={loading}>
-            {loading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Scan for Stuck Orders
-              </>
-            )}
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Package className="h-6 w-6 text-primary" />
+          Universal Order Recovery Tool
+        </CardTitle>
+        <CardDescription className="text-base">
+          Works for all order types: one-off purchases, auto-gifts, and scheduled orders. 
+          Automatically detects stuck orders or manually recover any order by ID/number.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* Manual Order Recovery */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold mb-2 flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Manual Order Recovery
-          </h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            Enter an order ID or order number to manually trigger processing
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={manualOrderId}
-              onChange={(e) => setManualOrderId(e.target.value)}
-              placeholder="ORD-20251117-6327 or order ID"
-              className="flex-1 px-3 py-2 border rounded-md text-sm"
-            />
-            <Button
-              onClick={recoverManualOrder}
-              disabled={recovering.has(manualOrderId) || !manualOrderId.trim()}
-              size="sm"
+      <CardContent className="space-y-6">
+        {/* Usage Guide */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>How it works:</strong> Safe retry with payment validation, Zinc status check, 
+            and automatic processing via process-order-v2. Works for all order types.
+          </AlertDescription>
+        </Alert>
+
+        {/* Automatic Detection Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">🔍 Stuck Orders (Auto-Detection)</h3>
+              <p className="text-sm text-muted-foreground">
+                Orders stuck for over 1 hour (all types: one-off, auto-gift, scheduled)
+              </p>
+            </div>
+            <Button 
+              onClick={findStuckOrders} 
+              disabled={loading}
+              variant="outline"
             >
-              {recovering.has(manualOrderId) ? (
+              {loading ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Scanning...
                 </>
               ) : (
-                'Recover Order'
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Find Stuck Orders
+                </>
               )}
             </Button>
           </div>
+
+          {/* Manual Recovery Section */}
+        <div className="space-y-4 pt-6 border-t-2 mt-6">
+          <div>
+            <h3 className="text-lg font-semibold">🎯 Manual Recovery</h3>
+            <p className="text-sm text-muted-foreground">
+              Enter any order ID or order number to manually trigger recovery (works for all order types)
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="manual-order-id">Order ID or Order Number</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="manual-order-id"
+                  placeholder="e.g., ORD-20251117-6327 or order UUID"
+                  value={manualOrderId}
+                  onChange={(e) => setManualOrderId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      recoverManualOrder();
+                    }
+                  }}
+                  disabled={recovering.has(manualOrderId)}
+                />
+                <Button 
+                  onClick={recoverManualOrder}
+                  disabled={recovering.has(manualOrderId) || !manualOrderId.trim()}
+                >
+                  {recovering.has(manualOrderId) ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Recover Order'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {stuckOrders.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <p>Click "Scan for Stuck Orders" to find orphaned orders</p>
+        {stuckOrders.length > 0 && (
+          <div className="space-y-3">
+            {stuckOrders.map(order => (
+              <div key={order.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-medium">{order.order_number}</span>
+                      <Badge variant="secondary">{order.status}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Stuck for {Math.round((Date.now() - new Date(order.updated_at).getTime()) / (60 * 60 * 1000))} hours • 
+                      ${(order.total_amount / 100).toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => recoverOrder(order.id, 'retry')}
+                      disabled={recovering.has(order.id)}
+                    >
+                      {recovering.has(order.id) ? (
+                        <>
+                          <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+                          Retrying...
+                        </>
+                      ) : (
+                        'Retry'
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => recoverOrder(order.id, 'fail')}
+                      disabled={recovering.has(order.id)}
+                    >
+                      Mark Failed
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && stuckOrders.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No stuck orders found. Click "Find Stuck Orders" to scan.</p>
+          </div>
+        )}
           </div>
         ) : (
           <div className="space-y-3">

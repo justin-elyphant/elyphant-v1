@@ -4,8 +4,9 @@ import { useOrders } from "@/hooks/trunkline/useOrders";
 import OrderSearch from "./orders/OrderSearch";
 import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
-import RetryNotificationService from "@/components/admin/RetryNotificationService";
 import OrderRecoveryTool from "@/components/admin/OrderRecoveryTool";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
@@ -50,19 +51,25 @@ const TrunklineOrdersTab = () => {
         onOrderUpdated={refetch}
       />
 
-      {/* Order Recovery Tool - Find stuck orders */}
-      <OrderRecoveryTool />
-
-      {/* Retry Processing Queue */}
-      <RetryNotificationService 
-        onSuccess={(orderId, result) => {
-          console.log(`Order ${orderId} retry successful:`, result);
-          refetch(); // Refresh the orders list
-        }}
-        onError={(orderId, error) => {
-          console.error(`Order ${orderId} retry failed:`, error);
-        }}
-      />
+      {/* Universal Order Recovery Tool */}
+      <div className="mt-8">
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>📦 Order Recovery Guide</strong>
+            <br />
+            Use the tool below for ALL recovery scenarios:
+            <ul className="list-disc list-inside mt-2 text-sm">
+              <li>✅ One-off purchases stuck in payment_confirmed</li>
+              <li>✅ Auto-gifts that failed to reach Zinc</li>
+              <li>✅ Scheduled orders that missed their delivery date</li>
+              <li>✅ Manual recovery using order ID or number</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+        
+        <OrderRecoveryTool />
+      </div>
     </div>
   );
 };

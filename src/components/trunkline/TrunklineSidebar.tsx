@@ -159,8 +159,8 @@ export function TrunklineSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-slate-200">
-      <SidebarHeader className="border-b border-slate-200 p-4">
+    <Sidebar className="border-r border-slate-200 bg-background z-50 relative shadow-sm">
+      <SidebarHeader className="border-b border-slate-200 p-4 bg-background">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -188,7 +188,7 @@ export function TrunklineSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className="px-2 bg-background">
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -327,7 +327,7 @@ export function TrunklineSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-200 p-4">
+      <SidebarFooter className="border-t border-slate-200 p-4 bg-background">
         {state === "expanded" && (
           <div className="text-xs text-slate-500">
             <p>Order Processing API</p>

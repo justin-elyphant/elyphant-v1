@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import { useCart } from "@/contexts/CartContext";
 
 interface Order {
   id: string;
@@ -31,6 +32,7 @@ const OrderConfirmation = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const navigate = useNavigate();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [childOrders, setChildOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ const OrderConfirmation = () => {
   const [showAutoGiftUpsell, setShowAutoGiftUpsell] = useState(false);
   const [autoGiftInitialData, setAutoGiftInitialData] = useState<any>(null);
   const [showWelcomeBack, setShowWelcomeBack] = useState(true);
+  const [hasCartBeenCleared, setHasCartBeenCleared] = useState(false);
 
   useEffect(() => {
     if (!orderId && !sessionId) {
@@ -209,6 +212,13 @@ const OrderConfirmation = () => {
         
         // Check if order is from a wishlist for auto-gift upsell
         checkForAutoGiftUpsell(orderData);
+        
+        // Clear cart after successful order confirmation (only once)
+        if (!hasCartBeenCleared && (sessionId || orderId)) {
+          console.log('🛒 Clearing cart after successful order confirmation');
+          clearCart();
+          setHasCartBeenCleared(true);
+        }
         
         setLoading(false);
       }

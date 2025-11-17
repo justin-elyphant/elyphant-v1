@@ -79,10 +79,21 @@ const Orders = () => {
     setError(null);
     
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setError("Please log in to view orders.");
+        toast.error("Please log in to view orders.");
+        setIsRefreshing(false);
+        return;
+      }
+
       // First, refresh the order list from database
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {

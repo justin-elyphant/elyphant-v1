@@ -159,7 +159,7 @@ export function TrunklineSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-slate-200 bg-background z-[200] relative shadow-sm">
+    <Sidebar className="border-r border-slate-200 bg-background shadow-sm">
       <SidebarHeader className="border-b border-slate-200 p-4 bg-background">
         <div className="flex items-center gap-3">
           <Button

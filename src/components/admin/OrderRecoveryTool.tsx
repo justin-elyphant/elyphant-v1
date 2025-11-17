@@ -207,7 +207,63 @@ const OrderRecoveryTool = () => {
             </Button>
           </div>
 
-          {/* Manual Recovery Section */}
+          {stuckOrders.length > 0 && (
+            <div className="space-y-3">
+              {stuckOrders.map(order => (
+                <div key={order.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-medium">{order.order_number}</span>
+                        <Badge variant="secondary">{order.status}</Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Stuck for {Math.round((Date.now() - new Date(order.updated_at).getTime()) / (60 * 60 * 1000))} hours • 
+                        ${(order.total_amount / 100).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => recoverOrder(order.id, 'retry')}
+                        disabled={recovering.has(order.id)}
+                      >
+                        {recovering.has(order.id) ? (
+                          <>
+                            <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+                            Retrying...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="mr-1 h-3 w-3" />
+                            Retry
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => recoverOrder(order.id, 'fail')}
+                        disabled={recovering.has(order.id)}
+                      >
+                        <AlertTriangle className="mr-1 h-3 w-3" />
+                        Mark Failed
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && stuckOrders.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No stuck orders found. Click "Find Stuck Orders" to scan.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Manual Recovery Section */}
         <div className="space-y-4 pt-6 border-t-2 mt-6">
           <div>
             <h3 className="text-lg font-semibold">🎯 Manual Recovery</h3>
@@ -298,95 +354,6 @@ const OrderRecoveryTool = () => {
         {!loading && stuckOrders.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <p>No stuck orders found. Click "Find Stuck Orders" to scan.</p>
-          </div>
-        )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {stuckOrders.map((order) => (
-              <div
-                key={order.id}
-                className="p-4 rounded-lg border border-orange-200 bg-orange-50"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{order.order_number}</span>
-                    <Badge variant="destructive">Stuck</Badge>
-                    {order.notes && (
-                      <Badge variant="outline" title={order.notes}>Has notes</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    {getTimeSinceUpdate(order.updated_at)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
-                  <div>
-                    <span className="text-muted-foreground">Amount:</span>
-                    <p className="font-medium">${order.total_amount}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Payment:</span>
-                    <p className="font-medium">{order.payment_status}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Status:</span>
-                    <p className="font-medium">{order.status}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Created:</span>
-                    <p className="font-medium">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                {order.zinc_order_id && (
-                  <div className="text-xs text-muted-foreground mb-3">
-                    Zinc Request ID: {order.zinc_order_id}
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => recoverOrder(order.id, 'retry')}
-                    disabled={recovering.has(order.id) || order.payment_status !== 'succeeded'}
-                    size="sm"
-                    variant="default"
-                  >
-                    {recovering.has(order.id) ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Retry Now
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    onClick={() => recoverOrder(order.id, 'fail')}
-                    disabled={recovering.has(order.id)}
-                    size="sm"
-                    variant="destructive"
-                  >
-                    Mark as Failed
-                  </Button>
-                </div>
-
-                {order.payment_status !== 'succeeded' && (
-                  <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-700">
-                    <AlertTriangle className="h-4 w-4 inline mr-1" />
-                    Payment not confirmed - retry blocked
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
         )}
       </CardContent>

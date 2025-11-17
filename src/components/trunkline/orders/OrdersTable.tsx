@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle, X } from "lucide-react";
+import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle, X, RefreshCw } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +29,7 @@ interface OrdersTableProps {
 
 export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpdated }: OrdersTableProps) {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
   const { cancelOrder, isProcessing } = useOrderActions();
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -73,6 +76,41 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
     if (success) {
       setCancellingOrderId(null);
       onOrderUpdated?.();
+    }
+  };
+
+  const canRetryOrder = (order: any) => {
+    // Show retry button for:
+    // 1. payment_confirmed (stuck before Zinc)
+    // 2. failed orders
+    // 3. processing but no zinc_order_id (stuck between payment and Zinc)
+    return (
+      order.status.toLowerCase() === 'payment_confirmed' ||
+      order.status.toLowerCase() === 'failed' ||
+      (order.status.toLowerCase() === 'processing' && !order.zinc_order_id)
+    );
+  };
+
+  const handleRetryOrder = async (order: any) => {
+    setRetryingOrderId(order.id);
+    
+    try {
+      // Re-invoke process-order-v2 to retry processing
+      const { error } = await supabase.functions.invoke('process-order-v2', {
+        body: { orderId: order.id }
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Order ${order.order_number} submitted for retry`);
+      
+      // Refresh orders list after retry
+      onOrderUpdated?.();
+    } catch (error) {
+      console.error('Error retrying order:', error);
+      toast.error('Failed to retry order');
+    } finally {
+      setRetryingOrderId(null);
     }
   };
 
@@ -226,6 +264,17 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
+                      {canRetryOrder(order) && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleRetryOrder(order)}
+                          disabled={retryingOrderId === order.id}
+                        >
+                          <RefreshCw className={`h-3 w-3 mr-1 ${retryingOrderId === order.id ? 'animate-spin' : ''}`} />
+                          Retry
+                        </Button>
+                      )}
                       {canCancelOrder(order) && (
                         <Button
                           size="sm"

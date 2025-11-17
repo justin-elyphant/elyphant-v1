@@ -156,7 +156,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
           Orders ({orders.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 relative z-0">
         <div className="w-full overflow-x-auto">
           <div className="min-w-[800px] border rounded-md">{/* Fixed: Remove scrollarea, use plain overflow */}
             <Table>

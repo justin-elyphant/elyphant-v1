@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🪝 Stripe Webhook v2 - Processing event...');
+    console.log('🪝 [START] Stripe Webhook v2 - Processing event...');
     
     const signature = req.headers.get('stripe-signature');
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -33,9 +33,9 @@ serve(async (req) => {
 
     try {
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-      console.log(`✅ Webhook verified: ${event.type} | ID: ${event.id}`);
+      console.log(`✅ [${new Date().toISOString()}] Webhook verified: ${event.type} | ID: ${event.id}`);
     } catch (err: any) {
-      console.error('❌ Webhook signature verification failed:', err.message);
+      console.error(`❌ [${new Date().toISOString()}] Webhook signature verification failed:`, err.message);
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
@@ -47,25 +47,28 @@ serve(async (req) => {
     // CORE: Handle checkout.session.completed (primary order creation path)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log(`📋 [${new Date().toISOString()}] Processing checkout.session.completed: ${session.id}`);
       await handleCheckoutSessionCompleted(session, supabase, stripe);
     } 
     // CORE: Handle checkout.session.expired
     else if (event.type === 'checkout.session.expired') {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log(`⏱️ [${new Date().toISOString()}] Processing checkout.session.expired: ${session.id}`);
       await handleCheckoutSessionExpired(session, supabase);
     }
     // LEGACY: payment_intent events (no order creation, enrichment only)
     else if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log(`⚠️ LEGACY: payment_intent.succeeded ${paymentIntent.id} - enrichment only, no order creation`);
+      console.log(`⚠️ [${new Date().toISOString()}] LEGACY: payment_intent.succeeded ${paymentIntent.id} - enrichment only, no order creation`);
       await enrichExistingOrder(paymentIntent, supabase);
     } 
     else if (event.type === 'payment_intent.payment_failed') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log(`⚠️ LEGACY: payment_intent.payment_failed ${paymentIntent.id} - updating existing order`);
+      console.log(`⚠️ [${new Date().toISOString()}] LEGACY: payment_intent.payment_failed ${paymentIntent.id} - updating existing order`);
       await handlePaymentFailed(paymentIntent, supabase);
     }
 
+    console.log(`✅ [${new Date().toISOString()}] Webhook processing complete`);
     return new Response(
       JSON.stringify({ received: true, event_type: event.type, event_id: event.id }),
       { 
@@ -74,7 +77,7 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error('❌ Webhook processing error:', error);
+    console.error(`❌ [${new Date().toISOString()}] Webhook processing error:`, error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
@@ -94,9 +97,11 @@ async function handleCheckoutSessionCompleted(
   stripe: Stripe
 ) {
   const sessionId = session.id;
-  console.log(`📋 Processing checkout.session.completed: ${sessionId}`);
+  const startTime = Date.now();
+  console.log(`📋 [${new Date().toISOString()}] [START] Processing checkout.session.completed: ${sessionId}`);
 
   // STEP 1: Check for existing order (idempotency)
+  console.log(`🔍 [STEP 1] Checking for existing order...`);
   const { data: existingOrder } = await supabase
     .from('orders')
     .select('id, status, receipt_sent_at, user_id')
@@ -104,12 +109,12 @@ async function handleCheckoutSessionCompleted(
     .single();
 
   if (existingOrder) {
-    console.log(`✅ Order already exists: ${existingOrder.id} | Status: ${existingOrder.status}`);
-    console.log(`🔍 Idempotency check - skipping insert, checking follow-up steps...`);
+    console.log(`✅ [STEP 1] Order already exists: ${existingOrder.id} | Status: ${existingOrder.status}`);
+    console.log(`🔍 [STEP 1.1] Idempotency check - skipping insert, checking follow-up steps...`);
     
     // Check if receipt needs to be sent
     if (!existingOrder.receipt_sent_at) {
-      console.log(`📧 Receipt not sent yet, triggering email orchestrator...`);
+      console.log(`📧 [STEP 1.2] Receipt not sent yet, triggering email orchestrator...`);
       const lineItemsForRetry = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
       const lineItemsData = lineItemsForRetry.data.map((item: any) => ({
         product_id: item.price?.product || item.description || 'unknown',
@@ -122,6 +127,7 @@ async function handleCheckoutSessionCompleted(
     }
     
     // Check if processing needed (non-scheduled, not yet submitted)
+    console.log(`🔍 [STEP 1.3] Checking if order needs processing...`);
     const { data: fullOrder } = await supabase
       .from('orders')
       .select('id, status, is_scheduled, zinc_order_id')
@@ -129,14 +135,22 @@ async function handleCheckoutSessionCompleted(
       .single();
       
     if (fullOrder && !fullOrder.is_scheduled && !fullOrder.zinc_order_id && fullOrder.status !== 'processing') {
-      console.log(`🔄 Order not yet processing, triggering process-order-v2...`);
-      await triggerOrderProcessing(fullOrder.id, supabase, existingOrder.user_id);
+      console.log(`🔄 [STEP 1.4] Order not yet processing, triggering process-order-v2 with retry...`);
+      try {
+        await triggerOrderProcessingWithRetry(fullOrder.id, supabase, existingOrder.user_id);
+      } catch (err: any) {
+        console.error(`❌ [STEP 1.4] Processing retry failed:`, err);
+      }
     }
     
+    console.log(`✅ [${new Date().toISOString()}] Idempotent handling complete for ${existingOrder.id}`);
     return;
   }
 
+  console.log(`✅ [STEP 1] No existing order found - proceeding with creation`);
+
   // STEP 2: Extract shipping from metadata (collected at /checkout)
+  console.log(`🔍 [STEP 2] Extracting shipping address from session metadata...`);
   const metadata = session.metadata || {};
   
   const shippingAddress = {
@@ -149,7 +163,7 @@ async function handleCheckoutSessionCompleted(
     country: metadata.ship_country || 'US',
   };
 
-  console.log(`📦 Shipping extracted from metadata: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
+  console.log(`📦 [STEP 2] Shipping extracted: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
 
   // Validate shipping completeness
   const missingShippingFields = [];
@@ -159,12 +173,13 @@ async function handleCheckoutSessionCompleted(
   if (!shippingAddress.postal_code) missingShippingFields.push('postal_code');
 
   if (missingShippingFields.length > 0) {
-    console.error(`❌ Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
-    console.log('[DEBUG] session.metadata keys:', Object.keys(session.metadata || {}));
+    console.error(`❌ [STEP 2] Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
+    console.log(`[DEBUG] session.metadata keys:`, Object.keys(session.metadata || {}));
     throw new Error(`Incomplete shipping address: missing ${missingShippingFields.join(', ')}`);
   }
 
   // STEP 3: Extract scalars from metadata
+  console.log(`🔍 [STEP 3] Extracting order metadata...`);
   const userId = metadata.user_id || session.client_reference_id;
   const scheduledDate = metadata.scheduled_delivery_date || null;
   const isScheduled = !!scheduledDate && new Date(scheduledDate) > new Date();
@@ -172,7 +187,7 @@ async function handleCheckoutSessionCompleted(
   const autoGiftRuleId = metadata.auto_gift_rule_id || null;
   const deliveryGroupId = metadata.delivery_group_id || null;
 
-  console.log(`👤 User ID: ${userId} | Scheduled: ${isScheduled} | AutoGift: ${isAutoGift}`);
+  console.log(`✅ [STEP 3] User: ${userId} | Scheduled: ${isScheduled} | AutoGift: ${isAutoGift} | DeliveryGroup: ${deliveryGroupId}`);
 
   if (!userId) {
     console.error('❌ No user_id in session metadata or client_reference_id');
@@ -198,6 +213,7 @@ async function handleCheckoutSessionCompleted(
   }
 
   // STEP 5: Create order
+  console.log(`💾 [STEP 5] Creating order for user ${userId}...`);
   const orderData = {
     user_id: userId,
     checkout_session_id: sessionId,
@@ -219,7 +235,7 @@ async function handleCheckoutSessionCompleted(
     updated_at: new Date().toISOString(),
   };
 
-  console.log(`💾 Creating order for user ${userId}...`);
+  console.log(`💾 [STEP 5.1] Inserting order into database...`);
   const { data: newOrder, error: insertError } = await supabase
     .from('orders')
     .insert(orderData)
@@ -227,24 +243,34 @@ async function handleCheckoutSessionCompleted(
     .single();
 
   if (insertError) {
-    console.error('❌ Failed to create order:', insertError);
+    console.error(`❌ [STEP 5.1] Failed to create order:`, insertError);
     throw new Error(`Failed to create order: ${insertError.message}`);
   }
 
-  console.log(`✅ Order created: ${newOrder.id} | Number: ${newOrder.order_number}`);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`✅ [STEP 5] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number} | Status: ${newOrder.status}`);
 
   // STEP 6: Send receipt email (idempotent via orchestrator)
+  console.log(`📧 [STEP 6] Sending receipt email...`);
   await triggerEmailOrchestrator(newOrder.id, session, lineItems, supabase);
+  console.log(`✅ [STEP 6] Email orchestrator triggered`);
 
-  // STEP 7: Trigger processing if not scheduled
+  // STEP 7: Trigger processing if not scheduled WITH RETRY VERIFICATION
   if (!isScheduled && session.payment_status === 'paid') {
-    console.log(`🚀 Triggering immediate order processing...`);
-    await triggerOrderProcessing(newOrder.id, supabase, userId);
+    console.log(`🚀 [${new Date().toISOString()}] Triggering immediate order processing for ${newOrder.id}...`);
+    
+    try {
+      await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
+    } catch (processingError: any) {
+      console.error(`❌ [${new Date().toISOString()}] CRITICAL: Order processing failed for ${newOrder.id}:`, processingError);
+      // Don't throw - order is created, just log the failure
+      // Admin can use OrderRecoveryTool to retry manually
+    }
   } else if (isScheduled) {
-    console.log(`⏰ Order scheduled for ${scheduledDate} - skipping immediate processing`);
+    console.log(`⏰ [${new Date().toISOString()}] Order scheduled for ${scheduledDate} - skipping immediate processing`);
   }
 
-  console.log(`✅ checkout.session.completed processing complete for ${sessionId}`);
+  console.log(`✅ [${new Date().toISOString()}] checkout.session.completed processing complete for ${sessionId}`);
 }
 
 // ============================================================================
@@ -343,11 +369,11 @@ async function triggerEmailOrchestrator(
   supabase: any
 ) {
   try {
-    console.log(`📧 Triggering email orchestrator for order ${orderId}...`);
+    console.log(`📧 [${new Date().toISOString()}] Triggering email orchestrator for order ${orderId}...`);
     
     const recipientEmail = session.customer_details?.email;
     if (!recipientEmail) {
-      console.error(`❌ No customer email found in session ${session.id}`);
+      console.error(`❌ [${new Date().toISOString()}] No customer email found in session ${session.id}`);
       return;
     }
 
@@ -367,19 +393,92 @@ async function triggerEmailOrchestrator(
     });
     
     if (error) {
-      console.error(`❌ Email orchestrator error:`, error);
+      console.error(`❌ [${new Date().toISOString()}] Email orchestrator error:`, error);
     } else {
-      console.log(`✅ Email orchestrator triggered successfully for ${recipientEmail}`);
+      console.log(`✅ [${new Date().toISOString()}] Email orchestrator triggered successfully for ${recipientEmail}`);
     }
   } catch (err: any) {
-    console.error(`❌ Failed to trigger email orchestrator:`, err.message);
+    console.error(`❌ [${new Date().toISOString()}] Failed to trigger email orchestrator:`, err.message);
   }
 }
 
 // ============================================================================
-// HELPER: Trigger order processing
+// HELPER: Trigger order processing WITH RETRY AND VERIFICATION
+// ============================================================================
+async function triggerOrderProcessingWithRetry(orderId: string, supabase: any, userId: string) {
+  const maxRetries = 2;
+  const verificationDelayMs = 3000; // Wait 3 seconds before verification
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [${new Date().toISOString()}] Attempt ${attempt}/${maxRetries}: Invoking process-order-v2 for ${orderId}...`);
+      
+      const { data, error } = await supabase.functions.invoke('process-order-v2', {
+        body: { orderId, userId }
+      });
+
+      if (error) {
+        console.error(`❌ [${new Date().toISOString()}] process-order-v2 invocation error (attempt ${attempt}):`, error);
+        
+        if (attempt === maxRetries) {
+          throw new Error(`Failed to invoke process-order-v2 after ${maxRetries} attempts: ${error.message}`);
+        }
+        
+        console.log(`⏳ Retrying in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.log(`✅ [${new Date().toISOString()}] process-order-v2 invoked successfully (attempt ${attempt})`);
+      
+      // CRITICAL: Verify that Zinc submission actually happened
+      console.log(`🔍 [${new Date().toISOString()}] Verifying Zinc submission in ${verificationDelayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, verificationDelayMs));
+      
+      const { data: verifiedOrder, error: verifyError } = await supabase
+        .from('orders')
+        .select('zinc_order_id, zinc_request_id, status')
+        .eq('id', orderId)
+        .single();
+
+      if (verifyError) {
+        console.error(`❌ [${new Date().toISOString()}] Verification query failed:`, verifyError);
+        throw new Error('Failed to verify order after processing');
+      }
+
+      if (!verifiedOrder.zinc_order_id && !verifiedOrder.zinc_request_id) {
+        console.error(`❌ [${new Date().toISOString()}] VERIFICATION FAILED: Order ${orderId} has no Zinc IDs despite successful invocation`);
+        
+        if (attempt === maxRetries) {
+          throw new Error('Order processing verification failed - Zinc IDs not populated');
+        }
+        
+        console.log(`⏳ Retrying processing...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.log(`✅ [${new Date().toISOString()}] VERIFIED: Order ${orderId} successfully submitted to Zinc | Request: ${verifiedOrder.zinc_request_id} | Order: ${verifiedOrder.zinc_order_id}`);
+      return; // Success!
+      
+    } catch (err: any) {
+      console.error(`❌ [${new Date().toISOString()}] Processing attempt ${attempt} failed:`, err.message);
+      
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      
+      console.log(`⏳ Retrying in 2 seconds...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+}
+
+// ============================================================================
+// LEGACY: Keep old function for backward compatibility but add logging
 // ============================================================================
 async function triggerOrderProcessing(orderId: string, supabase: any, userId: string) {
+  console.log(`⚠️ [${new Date().toISOString()}] LEGACY: Using triggerOrderProcessing without retry. Consider using triggerOrderProcessingWithRetry.`);
   try {
     console.log(`🚀 Triggering process-order-v2 for order ${orderId}...`);
     

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AlertTriangle, RefreshCw, Clock } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Clock, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface StuckOrder {
@@ -23,6 +23,7 @@ const OrderRecoveryTool = () => {
   const [stuckOrders, setStuckOrders] = useState<StuckOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [recovering, setRecovering] = useState<Set<string>>(new Set());
+  const [manualOrderId, setManualOrderId] = useState('');
 
   const findStuckOrders = async () => {
     setLoading(true);
@@ -51,6 +52,53 @@ const OrderRecoveryTool = () => {
       toast.error('Failed to find stuck orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const recoverManualOrder = async () => {
+    if (!manualOrderId.trim()) {
+      toast.error('Please enter an order ID or order number');
+      return;
+    }
+
+    setRecovering(prev => new Set(prev).add(manualOrderId));
+    
+    try {
+      // Try to find the order by ID or order_number
+      const { data: order, error: fetchError } = await supabase
+        .from('orders')
+        .select('id, order_number, status, zinc_order_id')
+        .or(`id.eq.${manualOrderId},order_number.eq.${manualOrderId}`)
+        .single();
+
+      if (fetchError || !order) {
+        toast.error('Order not found');
+        setRecovering(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(manualOrderId);
+          return newSet;
+        });
+        return;
+      }
+
+      // Re-invoke process-order-v2 to retry
+      const { error } = await supabase.functions.invoke('process-order-v2', {
+        body: { orderId: order.id }
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Order ${order.order_number} submitted to Zinc for processing`);
+      setManualOrderId('');
+    } catch (error) {
+      console.error('Error recovering manual order:', error);
+      toast.error('Failed to recover order');
+    } finally {
+      setRecovering(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(manualOrderId);
+        return newSet;
+      });
     }
   };
 
@@ -135,6 +183,40 @@ const OrderRecoveryTool = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {/* Manual Order Recovery */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Manual Order Recovery
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Enter an order ID or order number to manually trigger processing
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={manualOrderId}
+              onChange={(e) => setManualOrderId(e.target.value)}
+              placeholder="ORD-20251117-6327 or order ID"
+              className="flex-1 px-3 py-2 border rounded-md text-sm"
+            />
+            <Button
+              onClick={recoverManualOrder}
+              disabled={recovering.has(manualOrderId) || !manualOrderId.trim()}
+              size="sm"
+            >
+              {recovering.has(manualOrderId) ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Recover Order'
+              )}
+            </Button>
+          </div>
+        </div>
+
         {stuckOrders.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <p>Click "Scan for Stuck Orders" to find orphaned orders</p>

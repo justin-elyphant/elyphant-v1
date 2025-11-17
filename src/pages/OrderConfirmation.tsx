@@ -480,7 +480,7 @@ const OrderConfirmation = () => {
                     />
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
+                    <p className="font-semibold">{item.title || item.name}</p>
                     <p className="text-sm text-muted-foreground">
                       Quantity: {item.quantity}
                     </p>
@@ -504,28 +504,55 @@ const OrderConfirmation = () => {
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>${order.cart_data?.subtotal?.toFixed(2) || '0.00'}</span>
-            </div>
-            {order.cart_data?.shippingCost > 0 && (
-              <div className="flex justify-between">
-                <span>Shipping:</span>
-                <span>${order.cart_data.shippingCost.toFixed(2)}</span>
-              </div>
-            )}
-            {order.cart_data?.taxAmount > 0 && (
-              <div className="flex justify-between">
-                <span>Tax:</span>
-                <span>${order.cart_data.taxAmount.toFixed(2)}</span>
-              </div>
-            )}
-            {order.cart_data?.giftingFee > 0 && (
-              <div className="flex justify-between">
-                <span>Gifting Fee:</span>
-                <span>${order.cart_data.giftingFee.toFixed(2)}</span>
-              </div>
-            )}
+            {(() => {
+              // Calculate breakdown from line_items
+              let subtotal = 0;
+              let shipping = 0;
+              let tax = 0;
+              let giftingFee = 0;
+              
+              order.line_items?.forEach(item => {
+                const itemTotal = item.quantity * (item.unit_price || item.price || 0);
+                const title = (item.title || item.name || '').toLowerCase();
+                
+                if (title.includes('shipping')) {
+                  shipping += itemTotal;
+                } else if (title.includes('tax')) {
+                  tax += itemTotal;
+                } else if (title.includes('gifting fee') || title.includes('gift fee')) {
+                  giftingFee += itemTotal;
+                } else {
+                  subtotal += itemTotal;
+                }
+              });
+
+              return (
+                <>
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  {shipping > 0 && (
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span>${shipping.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {tax > 0 && (
+                    <div className="flex justify-between">
+                      <span>Tax:</span>
+                      <span>${tax.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {giftingFee > 0 && (
+                    <div className="flex justify-between">
+                      <span>Gifting Fee:</span>
+                      <span>${giftingFee.toFixed(2)}</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             <div className="flex justify-between text-xl font-bold pt-2 border-t">
               <span>Total:</span>
               <span>${order.total_amount.toFixed(2)}</span>
@@ -534,42 +561,17 @@ const OrderConfirmation = () => {
         </Card>
 
         {/* Shipping Address - Single Recipient Only */}
-        {!isMultiRecipient && (
+        {!isMultiRecipient && order.shipping_address && (
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
             <div className="text-sm">
-              {(() => {
-                // Check if single-recipient gift order
-                if (order.cart_data?.has_multiple_recipients === false && 
-                    order.cart_data?.deliveryGroups?.length > 0) {
-                  const recipient = order.cart_data.deliveryGroups[0];
-                  const addr = recipient.shippingAddress;
-                  
-                  return (
-                    <>
-                      <p className="font-medium">
-                        {addr.name || `${addr.first_name || ''} ${addr.last_name || ''}`.trim() || recipient.connectionName}
-                      </p>
-                      <p>{addr.address_line1 || addr.address}</p>
-                      {addr.address_line2 && <p>{addr.address_line2}</p>}
-                      <p>{addr.city}, {addr.state} {addr.zip_code || addr.zipCode}</p>
-                      <p>{addr.country || 'United States'}</p>
-                    </>
-                  );
-                }
-                
-                // Otherwise use shipping_info
-                const shippingInfo = order.cart_data?.shippingInfo || {};
-                return (
-                  <>
-                    <p className="font-medium">{shippingInfo.name || 'Customer'}</p>
-                    <p>{shippingInfo.address_line1 || shippingInfo.address}</p>
-                    {shippingInfo.address_line2 && <p>{shippingInfo.address_line2}</p>}
-                    <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip_code || shippingInfo.zipCode}</p>
-                    <p>{shippingInfo.country || 'United States'}</p>
-                  </>
-                );
-              })()}
+              <p className="font-medium">{order.shipping_address.name || 'Customer'}</p>
+              <p>{order.shipping_address.address_line1}</p>
+              {order.shipping_address.address_line2 && <p>{order.shipping_address.address_line2}</p>}
+              <p>
+                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}
+              </p>
+              <p>{order.shipping_address.country || 'United States'}</p>
             </div>
           </Card>
         )}

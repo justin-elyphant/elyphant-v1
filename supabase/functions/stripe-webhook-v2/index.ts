@@ -110,7 +110,15 @@ async function handleCheckoutSessionCompleted(
     // Check if receipt needs to be sent
     if (!existingOrder.receipt_sent_at) {
       console.log(`📧 Receipt not sent yet, triggering email orchestrator...`);
-      await triggerEmailOrchestrator(existingOrder.id, supabase);
+      const lineItemsForRetry = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
+      const lineItemsData = lineItemsForRetry.data.map((item: any) => ({
+        product_id: item.price?.product || item.description || 'unknown',
+        title: item.description || 'Product',
+        quantity: item.quantity || 1,
+        unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+        currency: item.price?.currency || 'usd',
+      }));
+      await triggerEmailOrchestrator(existingOrder.id, session, lineItemsData, supabase);
     }
     
     // Check if processing needed (non-scheduled, not yet submitted)
@@ -200,11 +208,13 @@ async function handleCheckoutSessionCompleted(
     currency: session.currency || 'usd',
     line_items: lineItems,
     shipping_address: shippingAddress,
-    is_scheduled: isScheduled,
     scheduled_delivery_date: scheduledDate,
     is_auto_gift: isAutoGift,
     auto_gift_rule_id: autoGiftRuleId,
-    delivery_group_id: deliveryGroupId,
+    notes: deliveryGroupId ? JSON.stringify({ 
+      delivery_group_id: deliveryGroupId,
+      metadata_snapshot: new Date().toISOString()
+    }) : null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -224,7 +234,7 @@ async function handleCheckoutSessionCompleted(
   console.log(`✅ Order created: ${newOrder.id} | Number: ${newOrder.order_number}`);
 
   // STEP 6: Send receipt email (idempotent via orchestrator)
-  await triggerEmailOrchestrator(newOrder.id, supabase);
+  await triggerEmailOrchestrator(newOrder.id, session, lineItems, supabase);
 
   // STEP 7: Trigger processing if not scheduled
   if (!isScheduled && session.payment_status === 'paid') {
@@ -326,17 +336,40 @@ async function handlePaymentFailed(
 // ============================================================================
 // HELPER: Trigger email orchestrator (idempotent)
 // ============================================================================
-async function triggerEmailOrchestrator(orderId: string, supabase: any) {
+async function triggerEmailOrchestrator(
+  orderId: string,
+  session: Stripe.Checkout.Session,
+  lineItems: any[],
+  supabase: any
+) {
   try {
     console.log(`📧 Triggering email orchestrator for order ${orderId}...`);
+    
+    const recipientEmail = session.customer_details?.email;
+    if (!recipientEmail) {
+      console.error(`❌ No customer email found in session ${session.id}`);
+      return;
+    }
+
     const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
-      body: { orderId }
+      body: {
+        eventType: 'order_receipt',
+        recipientEmail: recipientEmail,
+        data: {
+          order_id: orderId,
+          checkout_session_id: session.id,
+          amount: session.amount_total ? session.amount_total / 100 : 0,
+          currency: session.currency || 'usd',
+          line_items: lineItems,
+          customer_name: session.customer_details?.name || recipientEmail,
+        }
+      }
     });
     
     if (error) {
       console.error(`❌ Email orchestrator error:`, error);
     } else {
-      console.log(`✅ Email orchestrator triggered successfully`);
+      console.log(`✅ Email orchestrator triggered successfully for ${recipientEmail}`);
     }
   } catch (err: any) {
     console.error(`❌ Failed to trigger email orchestrator:`, err.message);

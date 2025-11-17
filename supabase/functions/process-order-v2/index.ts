@@ -290,7 +290,6 @@ serve(async (req) => {
       .update({
         status: 'processing',
         zinc_request_id: zincRequestId,
-        zinc_status: 'pending',
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId);

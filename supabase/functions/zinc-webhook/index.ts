@@ -124,7 +124,6 @@ async function handleRequestSucceeded(supabase: any, orderId: string, payload: Z
     .from('orders')
     .update({
       zinc_order_id: payload.merchant_order_id || payload.order_id,
-      zinc_status: 'placed',
       status: 'processing',
       updated_at: new Date().toISOString(),
     })
@@ -145,14 +144,15 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
     .from('orders')
     .update({
       status: 'failed',
-      zinc_status: 'failed',
-      zinc_error: {
-        code: errorCode,
-        message: errorMessage,
-        data: payload.error?.data,
-        timestamp: new Date().toISOString(),
+      notes: {
+        zinc_error: {
+          code: errorCode,
+          message: errorMessage,
+          data: payload.error?.data,
+          timestamp: new Date().toISOString(),
+        },
+        funding_hold_reason: `Zinc ZMA error: ${errorCode} - ${errorMessage}`,
       },
-      funding_hold_reason: `Zinc ZMA error: ${errorCode} - ${errorMessage}`,
       updated_at: new Date().toISOString(),
     })
     .eq('id', orderId);
@@ -200,7 +200,6 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     .from('orders')
     .update({
       tracking_number: payload.tracking.tracking_number,
-      zinc_status: 'shipped',
       status: 'shipped',
       updated_at: new Date().toISOString(),
     })
@@ -256,7 +255,6 @@ async function handleStatusUpdate(supabase: any, orderId: string, payload: ZincW
     .from('orders')
     .update({
       status: newStatus,
-      zinc_status: payload.status,
       updated_at: new Date().toISOString(),
     })
     .eq('id', orderId);
@@ -272,7 +270,7 @@ async function handleCaseUpdate(supabase: any, orderId: string, payload: ZincWeb
   const { error } = await supabase
     .from('orders')
     .update({
-      zinc_status: 'case_opened',
+      status: 'requires_attention',
       updated_at: new Date().toISOString(),
       notes: {
         case_details: payload.case_details,

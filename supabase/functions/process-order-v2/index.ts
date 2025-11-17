@@ -155,7 +155,49 @@ serve(async (req) => {
 
     console.log(`✅ Shipping address validated: ${requiredShippingFields.city}, ${requiredShippingFields.state} ${requiredShippingFields.postal_code}`);
 
-    // STEP 6: Build Zinc API request
+    // STEP 6: Validate product IDs are Amazon ASINs (not Stripe IDs)
+    console.log('🔍 Validating product IDs...');
+    const invalidProducts = lineItems.filter((item: any) => {
+      const productId = item.product_id || item.productId || item.id;
+      // Amazon ASINs are typically 10 characters starting with B0
+      const isValidAsin = productId && (
+        /^B0[A-Z0-9]{8}$/i.test(productId) || // Standard ASIN format
+        /^[A-Z0-9]{10}$/i.test(productId)      // Alternative format
+      );
+      return !isValidAsin;
+    });
+
+    if (invalidProducts.length > 0) {
+      console.error('❌ Invalid product IDs detected (not Amazon ASINs):', 
+        invalidProducts.map((item: any) => ({
+          title: item.title,
+          product_id: item.product_id || item.productId || item.id
+        }))
+      );
+      
+      await markOrderRequiresAttention(
+        supabase, 
+        orderId, 
+        `Invalid product IDs: Expected Amazon ASINs but got: ${invalidProducts.map((i: any) => i.product_id || i.productId || i.id).join(', ')}`
+      );
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid product IDs - expected Amazon ASINs',
+          invalid_products: invalidProducts,
+          requires_attention: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+
+    console.log(`✅ All ${lineItems.length} product IDs validated as Amazon ASINs`);
+
+    // STEP 7: Build Zinc API request
     const zincRequest = {
       idempotency_key: orderId,
       retailer: 'amazon',
@@ -196,13 +238,17 @@ serve(async (req) => {
     console.log('📦 Products:', zincRequest.products.length);
     console.log('📍 Shipping to:', `${zincRequest.shipping_address.city}, ${zincRequest.shipping_address.state}`);
 
-    // STEP 7: Submit to Zinc API
+    // STEP 8: Submit to Zinc API
     const zincApiKey = Deno.env.get('ZINC_API_KEY');
     if (!zincApiKey) {
       throw new Error('ZINC_API_KEY not configured');
     }
 
     console.log('🚀 Submitting to Zinc API...');
+    console.log('📦 Product IDs being sent to Zinc:', 
+      zincRequest.products.map((p: any) => `${p.product_id} (qty: ${p.quantity})`).join(', ')
+    );
+    
     const zincResponse = await fetch('https://api.zinc.io/v1/orders', {
       method: 'POST',
       headers: {

@@ -116,14 +116,42 @@ async function handleCheckoutSessionCompleted(
     if (!existingOrder.receipt_sent_at) {
       console.log(`📧 [STEP 1.2] Receipt not sent yet, triggering email orchestrator...`);
       const lineItemsForRetry = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
-      const lineItemsData = lineItemsForRetry.data.map((item: any) => ({
-        product_id: item.price?.product || item.description || 'unknown',
-        title: item.description || 'Product',
-        quantity: item.quantity || 1,
-        unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
-        currency: item.price?.currency || 'usd',
-      }));
-      await triggerEmailOrchestrator(existingOrder.id, session, lineItemsData, supabase);
+      
+      // Extract Amazon ASINs from product metadata for receipt
+      const lineItemsData = await Promise.all(
+        lineItemsForRetry.data.map(async (item: any) => {
+          const stripeProductId = item.price?.product;
+          const description = item.description || 'Product';
+          
+          // Skip non-product items
+          if (description === 'Shipping' || description === 'Tax' || description.includes('Gifting Fee')) {
+            return null;
+          }
+          
+          let amazonAsin = 'unknown';
+          if (stripeProductId) {
+            try {
+              const product = await stripe.products.retrieve(stripeProductId);
+              amazonAsin = product.metadata?.product_id || 'unknown';
+            } catch (err) {
+              console.error(`⚠️  Failed to fetch product metadata:`, err);
+            }
+          }
+          
+          return {
+            product_id: amazonAsin,  // Use Amazon ASIN
+            title: description,
+            quantity: item.quantity || 1,
+            unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+            currency: item.price?.currency || 'usd',
+          };
+        })
+      );
+      
+      // Filter out null entries
+      const filteredLineItems = lineItemsData.filter((item): item is NonNullable<typeof item> => item !== null);
+      
+      await triggerEmailOrchestrator(existingOrder.id, session, filteredLineItems, supabase);
     }
     
     // Check if processing needed (non-scheduled, not yet submitted)
@@ -194,18 +222,56 @@ async function handleCheckoutSessionCompleted(
     throw new Error('Missing user_id in checkout session');
   }
 
-  // STEP 4: Fetch line items from Stripe API
-  console.log(`📋 Fetching line items from Stripe...`);
+  // STEP 4: Fetch line items from Stripe API and extract Amazon ASINs from metadata
+  console.log(`📋 [STEP 4] Fetching line items from Stripe...`);
   const lineItemsResponse = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
-  const lineItems = lineItemsResponse.data.map((item: any) => ({
-    product_id: item.price?.product || item.description || 'unknown',
-    title: item.description || 'Product',
-    quantity: item.quantity || 1,
-    unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
-    currency: item.price?.currency || 'usd',
-  }));
-
-  console.log(`✅ Found ${lineItems.length} line items`);
+  
+  // Extract line items and fetch product metadata to get Amazon ASINs
+  const lineItemsWithMetadata = await Promise.all(
+    lineItemsResponse.data.map(async (item: any) => {
+      const stripeProductId = item.price?.product;
+      
+      // Skip non-product items (Shipping, Tax, Gifting Fee)
+      const description = item.description || '';
+      if (description === 'Shipping' || description === 'Tax' || description.includes('Gifting Fee')) {
+        console.log(`⏭️  Skipping non-product item: ${description}`);
+        return null;
+      }
+      
+      // Fetch product to get metadata containing Amazon ASIN
+      let amazonAsin = 'unknown';
+      let recipientId = null;
+      let recipientName = '';
+      
+      if (stripeProductId) {
+        try {
+          const product = await stripe.products.retrieve(stripeProductId);
+          amazonAsin = product.metadata?.product_id || 'unknown';
+          recipientId = product.metadata?.recipient_id || null;
+          recipientName = product.metadata?.recipient_name || '';
+          
+          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Stripe ID: ${stripeProductId}`);
+        } catch (err) {
+          console.error(`⚠️  Failed to fetch product ${stripeProductId}:`, err);
+        }
+      }
+      
+      return {
+        product_id: amazonAsin,  // Use Amazon ASIN from metadata, not Stripe Price ID
+        title: description || 'Product',
+        quantity: item.quantity || 1,
+        unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
+        currency: item.price?.currency || 'usd',
+        recipient_id: recipientId === 'self' ? null : recipientId,  // Convert 'self' to null
+        recipient_name: recipientName,
+      };
+    })
+  );
+  
+  // Filter out null entries (non-product items)
+  const lineItems = lineItemsWithMetadata.filter((item): item is NonNullable<typeof item> => item !== null);
+  
+  console.log(`✅ [STEP 4] Found ${lineItems.length} product line items (filtered out fees/shipping/tax)`);
 
   if (lineItems.length === 0) {
     console.error('❌ No line items found in checkout session');

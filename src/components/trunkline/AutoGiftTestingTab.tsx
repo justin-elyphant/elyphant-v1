@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAutoGiftTesting } from '@/hooks/useAutoGiftTesting';
 import { Zap, PlayCircle, RefreshCw, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import OrderRecoveryTool from '@/components/admin/OrderRecoveryTool';
 
 const AutoGiftTestingTab = () => {
   const {
@@ -150,6 +151,9 @@ const AutoGiftTestingTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Order Recovery Tool */}
+      <OrderRecoveryTool />
 
       {/* Live Execution Monitor */}
       <Card>

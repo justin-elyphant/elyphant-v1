@@ -321,6 +321,17 @@ serve(async (req) => {
       if (!toEmail) {
         console.warn(`⚠️ No recipient email for ${order.order_number} – skipping email queue`);
       } else {
+        // Calculate pricing breakdown
+        const subtotal = lineItems.reduce((sum: number, item: any) => {
+          const unitPrice = item.price || item.unit_price || 0;
+          const qty = item.quantity || 1;
+          return sum + (unitPrice * qty);
+        }, 0);
+        
+        const shippingCost = 6.99;
+        const giftingFee = (subtotal * 0.10) + 1.00;
+        const taxAmount = 0; // Tax not currently calculated
+        
         const { error: emailError } = await supabase
           .from('email_queue')
           .insert({
@@ -335,6 +346,10 @@ serve(async (req) => {
               currency: order.currency || 'USD',
               gift_message: order.gift_options?.giftMessage || null,
               is_gift: order.gift_options?.isGift || false,
+              subtotal: subtotal,
+              shipping_cost: shippingCost,
+              tax_amount: taxAmount,
+              gifting_fee: giftingFee,
               items: lineItems.map((item: any) => ({
                 title: item.title,
                 quantity: item.quantity || 1,

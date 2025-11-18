@@ -112,11 +112,37 @@ const orderConfirmationTemplate = (props: any): string => {
         </td>
         <td>
           <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
-          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × ${item.currency || '$'}${item.price}</p>
+          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × ${item.currency || '$'}${item.price.toFixed(2)}</p>
         </td>
       </tr>
     </table>
     `).join('')}
+    
+    <!-- Pricing breakdown -->
+    <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Subtotal</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${props.currency || '$'}${props.subtotal ? props.subtotal.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Shipping</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${props.currency || '$'}${props.shipping_cost ? props.shipping_cost.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      ${props.tax_amount && props.tax_amount > 0 ? `
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Tax</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${props.currency || '$'}${props.tax_amount.toFixed(2)}</p></td>
+      </tr>
+      ` : ''}
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${props.currency || '$'}${props.gifting_fee ? props.gifting_fee.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      <tr style="border-top: 2px solid #e5e5e5;">
+        <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
+        <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">${props.currency || '$'}${props.total_amount ? props.total_amount.toFixed(2) : '0.00'}</p></td>
+      </tr>
+    </table>
     ` : ''}
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">

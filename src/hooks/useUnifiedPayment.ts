@@ -116,53 +116,18 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 };
 
 // ============================================================================
-// PAYMENT HOOK
+// LEGACY PAYMENT HOOK - REMOVED
 // ============================================================================
-
-export interface UseUnifiedPaymentReturn {
-  createPaymentIntent: (amount: number, metadata?: any) => Promise<{ client_secret: string; payment_intent_id: string }>;
-  processPaymentSuccess: (paymentIntentId: string, shippingInfo: ShippingInfo, billingInfo?: any) => Promise<any>;
-  isProcessingPayment: boolean;
-}
-
-/**
- * Payment processing hook for checkout operations
- */
-export const useUnifiedPayment = (): UseUnifiedPaymentReturn => {
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-
-  const createPaymentIntent = useCallback(async (amount: number, metadata: any = {}) => {
-    try {
-      setIsProcessingPayment(true);
-      return await unifiedPaymentService.createPaymentIntent(amount, metadata);
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  }, []);
-
-  const processPaymentSuccess = useCallback(async (
-    paymentIntentId: string, 
-    shippingInfo: ShippingInfo, 
-    billingInfo?: any
-  ) => {
-    try {
-      setIsProcessingPayment(true);
-      return await unifiedPaymentService.processPaymentSuccess(
-        paymentIntentId,
-        shippingInfo,
-        billingInfo
-      );
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  }, []);
-
-  return {
-    createPaymentIntent,
-    processPaymentSuccess,
-    isProcessingPayment
-  };
-};
+// 
+// ❌ useUnifiedPayment hook removed in Phase 5 cleanup
+// ✅ Production system uses Stripe Checkout Sessions exclusively
+// ✅ All payments via create-checkout-session edge function
+// ✅ Orders created by stripe-webhook-v2 (checkout.session.completed)
+//
+// If you need payment processing, use:
+// - UnifiedCheckoutForm with create-checkout-session
+// - UnifiedPaymentMethodManager for saved cards
+// ============================================================================
 
 // ============================================================================
 // LEGACY COMPATIBILITY

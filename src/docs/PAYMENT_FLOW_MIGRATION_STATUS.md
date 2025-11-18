@@ -37,18 +37,22 @@
 **Estimated Effort:** Complete
 **Priority:** ✅ DONE
 
-### 2. UnifiedPaymentService Legacy Method
-**Method:** `UnifiedPaymentService.createPaymentIntent()`
-**Location:** `src/services/payment/UnifiedPaymentService.ts:755-798`
-**Current Usage:** Called by deprecated components only
+### 2. UnifiedPaymentService Legacy Methods ✅ REMOVED
+**Methods:** 
+- `UnifiedPaymentService.createPaymentIntent()` ✅ DELETED
+- `UnifiedPaymentService.processPaymentSuccess()` ✅ DELETED
+**Location:** Removed from `src/services/payment/UnifiedPaymentService.ts`
 
 **Action:** 
-- ✅ Added deprecation warning logs
-- ✅ Added feature flag to redirect to checkout sessions
-- ⏳ Pending: Schedule for removal in Phase 5 cleanup
+- ✅ Removed createPaymentIntent() method (~37 lines)
+- ✅ Removed processPaymentSuccess() method (~70 lines)
+- ✅ Removed useUnifiedPayment hook from useUnifiedPayment.ts (~47 lines)
+- ✅ Updated class documentation to reflect Checkout Sessions only
+- ✅ Updated protection measures documentation
 
-**Estimated Effort:** 1 hour
-**Priority:** MEDIUM
+**Result:** ~154 lines of legacy code removed
+**Note:** useUnifiedPayment.ts file retained for useUnifiedCart hook export
+**Status:** ✅ COMPLETE
 
 ## 📦 EDGE FUNCTIONS STATUS
 
@@ -106,7 +110,11 @@
 - [ ] Failed payment recovery testing
 - [ ] Webhook idempotency testing
 
-### Phase 5: Legacy Cleanup ⏸️ 0% Complete
+### Phase 5: Legacy Cleanup 🚧 20% Complete
+- [x] Remove UnifiedPaymentService.createPaymentIntent() method
+- [x] Remove UnifiedPaymentService.processPaymentSuccess() method
+- [x] Remove useUnifiedPayment hook (useUnifiedPayment.ts now exports useUnifiedCart only)
+- [x] Update documentation (UNIFIED_PAYMENT_SYSTEM_PROTECTION_MEASURES.md)
 - [ ] Remove create-payment-intent-v2 edge function
 - [ ] Remove create-group-gift-contribution edge function
 - [ ] Remove deprecated UnifiedPaymentService methods

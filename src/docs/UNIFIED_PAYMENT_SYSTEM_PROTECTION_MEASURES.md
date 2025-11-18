@@ -228,24 +228,26 @@ class StripeClientManager {
 
 ## 🛡️ ZINC API PROTECTION (Amazon Orders)
 
-### Dual Payment Architecture
-**Status:** ✅ MAINTAINED - Complete separation of customer and business payments
+### Stripe Checkout Sessions Architecture
+**Status:** ✅ PRODUCTION - Single payment path via Checkout Sessions
 
 ```typescript
-// Customer pays business (Stripe)
-await unifiedPaymentService.processPaymentSuccess(paymentIntentId, shippingInfo);
+// Customer initiates checkout (Stripe Checkout Sessions)
+const { url, session_id } = await supabase.functions.invoke('create-checkout-session', {
+  body: { items, shippingInfo, userId }
+});
+window.location.href = url; // Redirect to Stripe hosted checkout
 
-// Business fulfills order (Zinc API - separate system)
-if (hasAmazonProducts) {
-  await this.processZincOrder(order.id); // Edge Function only
-}
+// Webhook creates order after payment success (stripe-webhook-v2)
+// Order routing: Amazon products → process-order-v2 → Zinc API
 ```
 
 **Critical Boundaries:**
 - Customer Stripe payments ≠ Business Amazon payments
-- NO mixing of payment methods
-- Protected business payment method access
+- NO Payment Intent flow (removed in Phase 5)
+- Orders created by webhook ONLY (stripe-webhook-v2)
 - Zinc API isolation through Edge Functions
+- PCI compliance built-in (Stripe hosts payment UI)
 
 ### Business Payment Method Protection
 **Status:** ✅ SECURED - Encrypted business payment methods

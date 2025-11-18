@@ -1182,8 +1182,8 @@ class UnifiedPaymentService {
    * Calculate shipping cost based on address and items
    */
   private calculateShippingCost(shippingInfo: ShippingInfo): number {
-    // Basic shipping calculation - can be enhanced
-    const baseShipping = 5.99;
+    // Basic shipping calculation - standardized to match Zinc's typical shipping cost
+    const baseShipping = 6.99;
     const itemCount = this.getItemCount();
     
     if (itemCount > 5) {

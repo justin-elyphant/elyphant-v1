@@ -75,8 +75,8 @@ const handler = async (req: Request): Promise<Response> => {
           }
         } else {
           // Route all modern emails to ecommerce orchestrator
-          // Merge metadata and template_variables for backward compatibility
-          const emailData = email.metadata || email.template_variables?.customData || {};
+          // Use template_variables directly (modern pattern) or metadata (if provided)
+          const emailData = email.metadata || email.template_variables || {};
           
           const { error: orchestratorError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {

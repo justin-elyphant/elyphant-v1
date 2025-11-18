@@ -214,7 +214,7 @@ serve(async (req) => {
         product_id: item.product_id || item.productId || item.id,
         quantity: item.quantity || 1,
       })),
-      max_price: Math.ceil(order.total_amount * 100 * 1.25), // Convert to cents with 25% buffer (10% was insufficient)
+      max_price: Math.ceil(order.total_amount * 100 * 1.30), // Convert to cents with 30% buffer (covers shipping variance + tax differences)
       shipping_address: {
         first_name: requiredShippingFields.name.split(' ')[0] || requiredShippingFields.name,
         last_name: requiredShippingFields.name.split(' ').slice(1).join(' ') || '',

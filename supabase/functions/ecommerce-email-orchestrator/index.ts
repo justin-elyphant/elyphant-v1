@@ -111,6 +111,12 @@ const orderConfirmationTemplate = (props: any): string => {
     </table>
     `).join('')}
     ` : ''}
+    ${props.is_gift && props.gift_message ? `
+    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
+      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    </div>
+    ` : ''}
     <table style="margin-top: 30px; width: 100%;">
       <tr><td align="center">
         <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">

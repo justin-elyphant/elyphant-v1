@@ -238,10 +238,11 @@ async function handleCheckoutSessionCompleted(
         return null;
       }
       
-      // Fetch product to get metadata containing Amazon ASIN
+      // Fetch product to get metadata containing Amazon ASIN and gift message
       let amazonAsin = 'unknown';
       let recipientId = null;
       let recipientName = '';
+      let giftMessage = '';
       
       if (stripeProductId) {
         try {
@@ -249,8 +250,9 @@ async function handleCheckoutSessionCompleted(
           amazonAsin = product.metadata?.product_id || 'unknown';
           recipientId = product.metadata?.recipient_id || null;
           recipientName = product.metadata?.recipient_name || '';
+          giftMessage = product.metadata?.gift_message || '';
           
-          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Stripe ID: ${stripeProductId}`);
+          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Stripe ID: ${stripeProductId} | Gift: ${giftMessage ? 'Yes' : 'No'}`);
         } catch (err) {
           console.error(`⚠️  Failed to fetch product ${stripeProductId}:`, err);
         }
@@ -264,6 +266,7 @@ async function handleCheckoutSessionCompleted(
         currency: item.price?.currency || 'usd',
         recipient_id: recipientId === 'self' ? null : recipientId,  // Convert 'self' to null
         recipient_name: recipientName,
+        gift_message: giftMessage,
       };
     })
   );
@@ -278,8 +281,25 @@ async function handleCheckoutSessionCompleted(
     throw new Error('No line items in checkout session');
   }
 
-  // STEP 5: Create order
-  console.log(`💾 [STEP 5] Creating order for user ${userId}...`);
+  // STEP 5: Extract gift messages from line items
+  const giftMessages = lineItems
+    .map((item: any) => item.gift_message)
+    .filter((msg: string) => msg && msg.trim());
+
+  const primaryGiftMessage = giftMessages.length > 0 ? giftMessages[0] : '';
+  const isGift = giftMessages.length > 0 || isAutoGift;
+
+  const gift_options = {
+    isGift,
+    giftMessage: primaryGiftMessage,
+    giftWrapping: false,
+    isSurpriseGift: false
+  };
+
+  console.log(`🎁 [STEP 5] Gift detection: ${isGift ? 'Yes' : 'No'} | Message: "${primaryGiftMessage}"`);
+
+  // STEP 6: Create order
+  console.log(`💾 [STEP 6] Creating order for user ${userId}...`);
   const orderData = {
     user_id: userId,
     checkout_session_id: sessionId,
@@ -290,6 +310,7 @@ async function handleCheckoutSessionCompleted(
     currency: session.currency || 'usd',
     line_items: lineItems,
     shipping_address: shippingAddress,
+    gift_options,
     scheduled_delivery_date: scheduledDate,
     is_auto_gift: isAutoGift,
     auto_gift_rule_id: autoGiftRuleId,
@@ -301,7 +322,7 @@ async function handleCheckoutSessionCompleted(
     updated_at: new Date().toISOString(),
   };
 
-  console.log(`💾 [STEP 5.1] Inserting order into database...`);
+  console.log(`💾 [STEP 6.1] Inserting order into database...`);
   const { data: newOrder, error: insertError } = await supabase
     .from('orders')
     .insert(orderData)
@@ -309,19 +330,19 @@ async function handleCheckoutSessionCompleted(
     .single();
 
   if (insertError) {
-    console.error(`❌ [STEP 5.1] Failed to create order:`, insertError);
+    console.error(`❌ [STEP 6.1] Failed to create order:`, insertError);
     throw new Error(`Failed to create order: ${insertError.message}`);
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-  console.log(`✅ [STEP 5] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number} | Status: ${newOrder.status}`);
+  console.log(`✅ [STEP 6] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number} | Status: ${newOrder.status}`);
 
-  // STEP 6: Send receipt email (idempotent via orchestrator)
-  console.log(`📧 [STEP 6] Sending receipt email...`);
+  // STEP 7: Send receipt email (idempotent via orchestrator)
+  console.log(`📧 [STEP 7] Sending receipt email...`);
   await triggerEmailOrchestrator(newOrder.id, session, lineItems, supabase);
-  console.log(`✅ [STEP 6] Email orchestrator triggered`);
+  console.log(`✅ [STEP 7] Email orchestrator triggered`);
 
-  // STEP 7: Trigger processing if not scheduled WITH RETRY VERIFICATION
+  // STEP 8: Trigger processing if not scheduled WITH RETRY VERIFICATION
   if (!isScheduled && session.payment_status === 'paid') {
     console.log(`🚀 [${new Date().toISOString()}] Triggering immediate order processing for ${newOrder.id}...`);
     

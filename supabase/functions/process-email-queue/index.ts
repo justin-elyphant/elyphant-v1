@@ -17,14 +17,24 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('📧 Processing email queue...');
+    // Check for force mode (bypass scheduled_for filter)
+    const url = new URL(req.url);
+    const force = url.searchParams.get('force') === 'true';
+    
+    console.log(`📧 Processing email queue... ${force ? '(FORCE MODE - processing all pending)' : ''}`);
 
     // Get pending emails that are ready to be sent
-    const { data: pendingEmails, error: fetchError } = await supabase
+    let query = supabase
       .from('email_queue')
       .select('*')
-      .eq('status', 'pending')
-      .lte('scheduled_for', new Date().toISOString())
+      .eq('status', 'pending');
+    
+    // Only apply scheduled_for filter in normal mode
+    if (!force) {
+      query = query.lte('scheduled_for', new Date().toISOString());
+    }
+    
+    const { data: pendingEmails, error: fetchError } = await query
       .order('scheduled_for', { ascending: true })
       .limit(50); // Process up to 50 emails at a time
 

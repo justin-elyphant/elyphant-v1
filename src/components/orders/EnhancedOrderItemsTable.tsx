@@ -72,7 +72,7 @@ const EnhancedOrderItemsTable = ({
                 <TableCell>
                   <div className="space-y-1">
                     <p className="font-medium leading-tight">
-                      {((item as any).product_name || item.name || "Product")
+                      {((item as any).product_name || (item as any).title || item.name || "Product")
                         .replace(/,?\s*\d+\s*(EA|ea|each|pack|ct|count|piece|pc|pcs|unit|units)\.?$/i, '')
                         .trim()}
                     </p>

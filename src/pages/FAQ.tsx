@@ -11,6 +11,40 @@ interface FAQItem {
 }
 
 const faqData: FAQItem[] = [
+  // Understanding Elyphant
+  {
+    category: "Understanding Elyphant",
+    question: "What is Elyphant and how is it different from other e-commerce sites?",
+    answer: "Elyphant is a social gifting platform that combines wishlist technology, AI-powered recommendations, and automated gifting to eliminate unwanted gifts. Unlike traditional e-commerce sites, we focus on ensuring every gift is something the recipient actually wants through verified wishlists, preference matching, and smart connection features."
+  },
+  {
+    category: "Understanding Elyphant",
+    question: "How does Elyphant reduce unwanted gifts?",
+    answer: "We use a three-pronged approach: (1) Wishlist verification ensures recipients directly choose what they want, (2) Nicole AI analyzes recipient preferences and interests to suggest perfect matches, and (3) Address verification confirms delivery accuracy. This data-driven approach reduces gift returns by up to 80% compared to traditional gift-giving."
+  },
+  {
+    category: "Understanding Elyphant",
+    question: "Why should I use Elyphant instead of shopping directly on Amazon?",
+    answer: "Elyphant adds a social layer on top of Amazon's product selection. You get wishlist access to see what friends and family actually want, AI recommendations based on their verified preferences, automated gifting for birthdays and holidays, group gift coordination, and privacy-protected gift messaging. We make Amazon shopping more thoughtful and personal."
+  },
+
+  // Returns & Exchanges Policy (New Section - Shopper Friendly)
+  {
+    category: "Returns & Exchanges",
+    question: "Does Elyphant offer returns or exchanges?",
+    answer: "We understand that sometimes gifts don't work out perfectly. At this time, Elyphant doesn't directly process returns or exchanges due to our fulfillment partnership with our third-party fulfillment provider. However, we've designed our platform to help you avoid unwanted gifts in the first place through wishlists, preferences, and AI-powered recommendations!\n\nFor recipients: All orders are sent as Amazon gift orders, which means you'll receive a gift receipt with your package. This gift receipt allows you to easily return or exchange items directly through Amazon's return process without affecting the gift-giver. Simply follow the instructions on your Amazon gift receipt."
+  },
+  {
+    category: "Returns & Exchanges",
+    question: "Why doesn't Elyphant process returns directly?",
+    answer: "Elyphant partners with Amazon for order fulfillment to give you access to millions of products with fast, reliable shipping. Since Amazon handles the physical delivery, they also manage the return process. This actually works in your favor - Amazon has one of the best return policies in e-commerce, with easy drop-offs at Amazon lockers, UPS stores, Whole Foods, and more!"
+  },
+  {
+    category: "Returns & Exchanges",
+    question: "How do I return a gift I received through Elyphant?",
+    answer: "It's easy! All Elyphant gifts are sent as Amazon gift orders with gift receipts. Here's how to return:\n\n1. Locate the gift receipt that came with your package (or check your email for the Amazon order details)\n2. Visit Amazon.com and sign in to your account\n3. Go to 'Returns & Orders'\n4. Find the order using your gift receipt details\n5. Follow Amazon's standard return process - you can print a label or drop off at a return location\n\nThe best part? Gift-givers won't see the reason for your return, protecting everyone's privacy."
+  },
+
   // Getting Started & Account
   {
     category: "Getting Started & Account",
@@ -27,280 +61,339 @@ const faqData: FAQItem[] = [
     question: "Is my personal data secure?",
     answer: "Yes, we take privacy seriously. Your data is encrypted and stored securely. We never share your personal information with third parties without your consent. You can control your privacy settings in your account."
   },
-
-  // Returns & Refunds
   {
-    category: "Returns & Refunds",
-    question: "How do I return an item I purchased through Elyphant?",
-    answer: "Since Elyphant uses Amazon for order fulfillment through our Zinc API integration, all returns are processed directly through Amazon's standard return process. You can initiate a return by visiting your Amazon account's 'Your Orders' section, or by contacting Amazon customer service directly. Amazon's return policy applies to all purchases made through Elyphant."
+    category: "Getting Started & Account",
+    question: "How do I update my profile information?",
+    answer: "Navigate to Settings in the top-right menu, then select the General tab. You can update your name, email, date of birth, shipping address, and other profile details from there."
   },
   {
-    category: "Returns & Refunds",
-    question: "What is Elyphant's return policy?",
-    answer: "Elyphant follows Amazon's return policy since we fulfill orders through Amazon. This typically includes a 30-day return window for most items. For specific return eligibility, please check the product page or Amazon's return policy for that particular item."
-  },
-  {
-    category: "Returns & Refunds",
-    question: "Can I get a refund for a gift that was sent?",
-    answer: "Yes, gifts can typically be returned following Amazon's gift return process. The recipient can return the gift for a refund or exchange without the giver knowing the return reason. Gift receipts are automatically included with gift orders."
-  },
-  {
-    category: "Returns & Refunds",
-    question: "How long do refunds take to process?",
-    answer: "Refund processing times follow Amazon's standard timeline, which is typically 3-5 business days after Amazon receives the returned item. The refund will be credited to the original payment method used for the purchase."
+    category: "Getting Started & Account",
+    question: "Can I delete my Elyphant account?",
+    answer: "Yes, you can delete your account from Settings > General > Delete Account. Please note that this action is permanent and will remove all your data, including wishlists, connections, and order history."
   },
 
-  // Ordering & Purchasing
+  // Order Fulfillment & Delivery
   {
-    category: "Ordering & Purchasing",
+    category: "Order Fulfillment & Delivery",
     question: "How does ordering work on Elyphant?",
-    answer: "Elyphant integrates with Amazon's marketplace through our Enhanced Zinc API system to provide access to millions of products. When you place an order, we process it through Amazon's fulfillment network, ensuring fast delivery and reliable service."
+    answer: "Elyphant integrates with Amazon's marketplace through our third-party fulfillment partner to provide access to millions of products. When you place an order, we process it through Amazon's fulfillment network, ensuring fast delivery and reliable service."
   },
   {
-    category: "Ordering & Purchasing",
+    category: "Order Fulfillment & Delivery",
+    question: "How long does delivery take?",
+    answer: "Delivery times vary by product and location, but most orders are fulfilled within 2-5 business days. You'll receive tracking information via email once your order ships."
+  },
+  {
+    category: "Order Fulfillment & Delivery",
+    question: "Can I track my order?",
+    answer: "Yes! After placing an order, you'll receive tracking information via email. You can also track your orders in your Elyphant account under 'Orders' or through the Amazon tracking system using the provided tracking number."
+  },
+  {
+    category: "Order Fulfillment & Delivery",
+    question: "What happens if my package doesn't arrive?",
+    answer: "If your package is marked as delivered but you haven't received it, please check with neighbors, your building's mailroom, or common delivery areas. If you still can't locate it, contact our support team at support@elyphant.com and we'll work with the carrier to resolve the issue."
+  },
+  {
+    category: "Order Fulfillment & Delivery",
+    question: "What areas do you deliver to?",
+    answer: "We deliver to all addresses serviced by Amazon in the United States. Our address verification system ensures your delivery location is valid before accepting orders."
+  },
+
+  // Auto-Gifting Features
+  {
+    category: "Auto-Gifting",
+    question: "What is auto-gifting and how does it work?",
+    answer: "Auto-gifting lets you set up automated gift deliveries for birthdays, anniversaries, holidays, and other special occasions. Once you create a rule with a recipient, budget, and occasion, Elyphant will automatically select and send gifts based on their wishlist or AI recommendations before the date arrives."
+  },
+  {
+    category: "Auto-Gifting",
+    question: "Can I approve auto-gifts before they're sent?",
+    answer: "Yes! You can choose to receive approval notifications 7 days before an auto-gift is scheduled to send. You'll see the selected gift and can approve, modify, or skip it before it's sent."
+  },
+  {
+    category: "Auto-Gifting",
+    question: "How do I set up recurring gifts for birthdays and holidays?",
+    answer: "Navigate to Gifting > Auto-Gifting, click 'Create Rule', select your recipient, choose the occasion (birthday, Christmas, Mother's Day, etc.), set your budget, and confirm. Elyphant will handle the rest automatically each year."
+  },
+  {
+    category: "Auto-Gifting",
+    question: "Will the recipient know the gift is automated?",
+    answer: "No! Auto-gifts look exactly like regular gifts. The recipient receives a beautifully wrapped package with your personalized gift message - there's no indication that it was automated."
+  },
+  {
+    category: "Auto-Gifting",
+    question: "Can I change or cancel an auto-gift rule?",
+    answer: "Yes, you can edit or delete auto-gift rules at any time from the Auto-Gifting dashboard. Changes must be made before the 7-day pre-notification window to affect upcoming gifts."
+  },
+
+  // Scheduled Delivery
+  {
+    category: "Scheduled Delivery",
+    question: "Can I schedule a gift to be delivered on a specific date?",
+    answer: "Yes! During checkout, you can choose a scheduled delivery date. We'll hold your payment and process the order to arrive as close to your selected date as possible."
+  },
+  {
+    category: "Scheduled Delivery",
+    question: "When does Elyphant charge my card for scheduled gifts?",
+    answer: "For scheduled deliveries, we authorize your card when you place the order but only capture the payment 2-3 days before the scheduled delivery date to ensure the order arrives on time."
+  },
+  {
+    category: "Scheduled Delivery",
+    question: "What happens if I need to change a scheduled delivery date?",
+    answer: "If you need to modify a scheduled delivery, contact our support team at support@elyphant.com as soon as possible. We can adjust dates if the order hasn't entered final processing yet (typically 48 hours before the scheduled date)."
+  },
+
+  // Group Gifts
+  {
+    category: "Group Gifts",
+    question: "How do group gifts work on Elyphant?",
+    answer: "Group gifts let multiple people contribute to a larger gift. The organizer creates a group gift project, invites contributors, sets a target amount, and shares the contribution link. Once funded, the organizer can purchase the gift using the pooled contributions."
+  },
+  {
+    category: "Group Gifts",
+    question: "How are contributions collected for group gifts?",
+    answer: "Contributors pledge their amount and their payment methods are authorized (not charged) when they commit. Once the group gift reaches its funding goal and the organizer triggers the purchase, all contributions are captured simultaneously and the gift is ordered."
+  },
+  {
+    category: "Group Gifts",
+    question: "What happens if a group gift doesn't reach its funding goal?",
+    answer: "If the deadline passes without reaching the goal, all authorized payments are released and contributors are not charged. The organizer can choose to extend the deadline, reduce the target amount, or cancel the project."
+  },
+  {
+    category: "Group Gifts",
+    question: "Can I see who contributed to a group gift?",
+    answer: "Yes, group members can see who contributed and their pledge amounts. However, you can choose to contribute anonymously if you prefer, which hides your name from other contributors (though the organizer can still see all contributions for coordination purposes)."
+  },
+
+  // Connections & Invitations
+  {
+    category: "Connections & Invitations",
+    question: "How do I invite friends and family to Elyphant?",
+    answer: "You can invite connections from the Connections page by clicking 'Add Connection' and entering their email. They'll receive an invitation to join Elyphant and connect with you."
+  },
+  {
+    category: "Connections & Invitations",
+    question: "What happens when I send a connection invitation?",
+    answer: "Your invitee receives an email invitation to join Elyphant. When they sign up using your invitation link, you're automatically connected, giving you both access to each other's wishlists (based on privacy settings) and enabling features like auto-gifting."
+  },
+  {
+    category: "Connections & Invitations",
+    question: "Can my connections see my personal information?",
+    answer: "Connections can only see information you've shared in your privacy settings. By default, connections can see your wishlist and gift preferences. Your full address, payment information, and other sensitive data are always private unless you explicitly choose to share."
+  },
+  {
+    category: "Connections & Invitations",
+    question: "How do I manage my connection privacy settings?",
+    answer: "Go to Settings > Privacy & Data Sharing to control what information each type of connection can see. You can adjust wishlist visibility, address sharing, and gift preference visibility individually."
+  },
+
+  // Address Verification
+  {
+    category: "Address Verification",
+    question: "Why does Elyphant verify addresses?",
+    answer: "Address verification ensures gifts are delivered successfully to valid locations. This reduces failed deliveries, lost packages, and the frustration of gifts not arriving on time for special occasions."
+  },
+  {
+    category: "Address Verification",
+    question: "What if my address doesn't verify automatically?",
+    answer: "If automatic verification fails, you can manually confirm your address. We'll mark it as 'user-confirmed' which still allows you to receive gifts. Common reasons for verification failure include new construction, rural routes, or recently changed street names."
+  },
+  {
+    category: "Address Verification",
+    question: "Can I update my address after verification?",
+    answer: "Yes, you can update your address at any time in Settings > Address. When you change your address, you'll need to verify the new address to ensure it's valid for deliveries."
+  },
+  {
+    category: "Address Verification",
+    question: "Is address verification required for all gifts?",
+    answer: "Address verification is strongly recommended and required for auto-gifts and connection-based gifts to protect both givers and recipients. For traditional checkout where you're providing a shipping address, verification helps ensure successful delivery but isn't strictly required."
+  },
+
+  // Payment & Pricing
+  {
+    category: "Payment & Pricing",
     question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards, debit cards, and other payment methods supported by Stripe, our secure payment processor. Your payment information is encrypted and never stored on our servers."
+    answer: "We accept all major credit cards (Visa, Mastercard, American Express, Discover) and debit cards through our secure payment processor, Stripe. Your payment information is encrypted and never stored on our servers."
   },
   {
-    category: "Ordering & Purchasing",
-    question: "How can I track my order?",
-    answer: "After placing an order, you'll receive tracking information via email. You can also track your orders in your Elyphant account under 'Orders' or through the Amazon tracking system using the provided tracking number."
+    category: "Payment & Pricing",
+    question: "When will my card be charged?",
+    answer: "For immediate orders, your card is charged when you complete checkout. For scheduled deliveries, we authorize your card at checkout but only capture the payment 2-3 days before delivery. For group gifts, payment is captured when the organizer triggers the purchase."
   },
   {
-    category: "Ordering & Purchasing",
-    question: "Can I modify or cancel my order after placing it?",
-    answer: "Order modifications depend on the fulfillment status. If the order hasn't been shipped yet, you may be able to modify or cancel it. Contact our support team immediately if you need to make changes."
+    category: "Payment & Pricing",
+    question: "Why is there a gifting fee?",
+    answer: "The gifting fee (10% + $1.00) covers gift wrapping, personalized message cards, platform maintenance, and customer support. This small fee enables us to provide a premium gifting experience with features like auto-gifting, AI recommendations, and wishlist coordination."
+  },
+  {
+    category: "Payment & Pricing",
+    question: "Is my payment information secure?",
+    answer: "Absolutely. We use Stripe, a PCI-DSS Level 1 certified payment processor trusted by millions of businesses worldwide. Your payment data is encrypted end-to-end and we never store your full card details on our servers."
+  },
+  {
+    category: "Payment & Pricing",
+    question: "Can I save payment methods for future purchases?",
+    answer: "Yes! During checkout, you can check 'Save this card for future use' to securely store your payment method. You can manage saved payment methods in Settings > Payments."
   },
 
-  // Gifting Features
+  // Gift Messages & Privacy
   {
-    category: "Gifting Features",
-    question: "How do group gifts work?",
-    answer: "Group gifts allow multiple people to contribute toward a single gift. Create a group gift project, invite contributors, set a target amount, and track contributions. Once funded, the gift is automatically purchased and sent to the recipient."
-  },
-  {
-    category: "Gifting Features",
-    question: "Can I schedule gifts to be sent automatically?",
-    answer: "Yes! Our auto-gifting feature lets you set up rules for automatic gift sending based on special dates like birthdays or anniversaries. You can set budgets, preferences, and notification settings for each rule."
-  },
-  {
-    category: "Gifting Features",
-    question: "How do surprise gifts work?",
-    answer: "For surprise gifts, we coordinate delivery timing and can hide purchase details from the recipient. You can specify delivery dates and include custom messages while keeping the gift a surprise."
-  },
-  {
-    category: "Gifting Features",
+    category: "Gift Messages & Privacy",
     question: "Can I include a personal message with my gift?",
-    answer: "Yes, you can add personalized gift messages that will be included with your order. These messages are printed on gift receipts or included as gift notes."
+    answer: "Yes! Every gift can include a personalized message. You'll be prompted to add a message during checkout. Your message will be included on a card with the gift delivery."
+  },
+  {
+    category: "Gift Messages & Privacy",
+    question: "Will the recipient see the price of the gift?",
+    answer: "No, gift recipients never see pricing information. All gifts are sent with gift receipts that omit prices, ensuring the surprise and thoughtfulness of your gift remain intact."
+  },
+  {
+    category: "Gift Messages & Privacy",
+    question: "How does Elyphant protect gift surprise?",
+    answer: "When sending gifts, recipients only see your gift message and that a gift is on the way - they don't see what the gift is, how much it cost, or delivery tracking details until after delivery (unless you choose to share). For wishlist items, we notify recipients of general 'activity' without revealing who purchased what."
+  },
+  {
+    category: "Gift Messages & Privacy",
+    question: "Can I send an anonymous gift?",
+    answer: "While you can omit your name from the gift message, the recipient will receive a gift receipt showing the order originated from Elyphant. For true anonymity, you would need to coordinate with our support team."
   },
 
-  // Connections & Social Features
+  // Nicole AI Assistant
   {
-    category: "Connections & Social Features",
-    question: "How do I connect with friends and family?",
-    answer: "You can send connection requests to friends and family members by searching for their email or username. Once connected, you can view their wishlists (if public), send gifts, and collaborate on group gifts."
+    category: "Nicole AI",
+    question: "What is Nicole and how can she help me?",
+    answer: "Nicole is Elyphant's AI shopping assistant. She can help you find perfect gifts based on recipient preferences, answer questions about products, suggest gift ideas for occasions, and guide you through the platform's features. Think of her as your personal gifting concierge!"
   },
   {
-    category: "Connections & Social Features",
-    question: "Can I control who can see my information?",
-    answer: "Yes, you have full control over your privacy settings. You can choose who can see your profile, wishlists, and gift history. You can also control who can send you connection requests and messages."
+    category: "Nicole AI",
+    question: "How does Nicole choose gift recommendations?",
+    answer: "Nicole analyzes multiple data points: recipient wishlist items, browsing history, stated interests, past gift feedback, occasion context, and your budget. She uses machine learning to match these factors with product attributes to suggest gifts with high likelihood of being loved."
   },
   {
-    category: "Connections & Social Features",
-    question: "How do I block or remove connections?",
-    answer: "You can manage your connections in your account settings. You can remove connections or block users if needed. Blocked users won't be able to contact you or see your profile information."
-  },
-
-  // Wishlists & Preferences
-  {
-    category: "Wishlists & Preferences",
-    question: "How do I create and manage wishlists?",
-    answer: "You can create multiple wishlists for different occasions or categories. Add items from our marketplace, categorize them by priority, and control who can view each wishlist. You can also import items from other websites."
+    category: "Nicole AI",
+    question: "Is Nicole available 24/7?",
+    answer: "Yes! Nicole is available anytime you need help. You can access her through the chat icon on most pages or by visiting the Nicole AI page directly."
   },
   {
-    category: "Wishlists & Preferences",
-    question: "Can I share my wishlist with others?",
-    answer: "Yes, you can share wishlists with specific people or make them public. You control the privacy settings for each wishlist individually."
+    category: "Nicole AI",
+    question: "Can Nicole help me find gifts for multiple people?",
+    answer: "Absolutely! Nicole can help you plan gifts for multiple recipients at once. Just tell her who you're shopping for, the occasion, and your budget constraints, and she'll coordinate recommendations across all recipients."
   },
-  {
-    category: "Wishlists & Preferences",
-    question: "How do I set my gift preferences?",
-    answer: "In your profile settings, you can specify your interests, preferred price ranges, favorite brands, and items you want to avoid. This helps our AI and your connections choose better gifts for you."
-  },
-
-  // AI & Personalization
-  {
-    category: "AI & Personalization",
-    question: "How does Nicole AI help with gift recommendations?",
-    answer: "Nicole is our AI assistant that analyzes recipient data, occasion context, and your preferences to suggest personalized gifts. She considers factors like age, interests, relationship type, and budget to provide tailored recommendations."
-  },
-  {
-    category: "AI & Personalization",
-    question: "Can I provide feedback on AI recommendations?",
-    answer: "Yes, your feedback helps improve our AI recommendations. Like or dislike suggestions, and provide reasons for your preferences. This data helps Nicole learn and provide better recommendations over time."
-  },
-  {
-    category: "AI & Personalization",
-    question: "How accurate are the AI gift suggestions?",
-    answer: "Our AI continuously learns from user interactions and feedback. While suggestions improve over time, we recommend reviewing all recommendations and considering your personal knowledge of the recipient."
-  },
-
-  // Marketplace & Products
-  {
-    category: "Marketplace & Products",
-    question: "Where do the products come from?",
-    answer: "Our products are sourced from Amazon's marketplace through our Enhanced Zinc API integration. This gives you access to millions of products with Amazon's quality standards, fast shipping, and return policies."
-  },
-  {
-    category: "Marketplace & Products",
-    question: "How do I search for specific products?",
-    answer: "Use our AI-enhanced search bar to find products by name, category, or description. You can also browse by categories or use our gift finder tool for occasion-based recommendations."
-  },
-  {
-    category: "Marketplace & Products",
-    question: "Are prices competitive with Amazon?",
-    answer: "Our pricing reflects Amazon's marketplace prices plus any applicable service fees. We're transparent about all costs during checkout, including shipping and taxes."
-  },
-
-  // Technical & Security
-  {
-    category: "Technical & Security",
-    question: "Is it safe to shop on Elyphant?",
-    answer: "Yes, we use industry-standard security measures including SSL encryption for all transactions. Payments are processed through Stripe, a certified PCI compliant payment processor. We never store your payment information."
-  },
-  {
-    category: "Technical & Security",
-    question: "What browsers does Elyphant support?",
-    answer: "Elyphant works on all modern web browsers including Chrome, Firefox, Safari, and Edge. We recommend using the latest version of your preferred browser for the best experience."
-  },
-  {
-    category: "Technical & Security",
-    question: "Can I use Elyphant on my mobile device?",
-    answer: "Yes, Elyphant is fully responsive and works great on mobile devices and tablets. We don't currently have a dedicated mobile app, but our web interface is optimized for mobile use."
-  },
-
-  // Billing & Subscriptions
-  {
-    category: "Billing & Subscriptions",
-    question: "Does Elyphant charge subscription fees?",
-    answer: "Elyphant operates on a transaction-based model. We may include service fees with certain orders, but there are no monthly subscription charges. All fees are clearly disclosed before purchase."
-  },
-  {
-    category: "Billing & Subscriptions",
-    question: "How do I view my purchase history?",
-    answer: "You can view all your orders and purchase history in your account under the 'Orders' section. This includes order details, tracking information, and receipt downloads."
-  },
-  {
-    category: "Billing & Subscriptions",
-    question: "Can I get receipts for my purchases?",
-    answer: "Yes, digital receipts are automatically sent to your email after each purchase. You can also download receipts from your account's order history section."
-  }
 ];
 
 const FAQ = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [openItems, setOpenItems] = useState<number[]>([]);
+  const [openItems, setOpenItems] = useState<Set<number>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = Array.from(new Set(faqData.map(item => item.category)));
+  const categories = ["all", ...Array.from(new Set(faqData.map(item => item.category)))];
 
-  const filteredFAQs = faqData.filter(
-    faq =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFAQs = faqData.filter(item => {
+    const matchesSearch = 
+      item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.answer.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const toggleItem = (index: number) => {
-    setOpenItems(prev =>
-      prev.includes(index)
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
+    const newOpenItems = new Set(openItems);
+    if (newOpenItems.has(index)) {
+      newOpenItems.delete(index);
+    } else {
+      newOpenItems.add(index);
+    }
+    setOpenItems(newOpenItems);
   };
-
-  const groupedFAQs = categories.reduce((acc, category) => {
-    acc[category] = filteredFAQs.filter(faq => faq.category === category);
-    return acc;
-  }, {} as Record<string, FAQItem[]>);
 
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
-          <p className="text-muted-foreground text-lg">
-            Find answers to common questions about Elyphant's features and services
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Help Center</h1>
+          <p className="text-lg text-muted-foreground">
+            Find answers to common questions about Elyphant
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search FAQs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="mb-8 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search for answers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category === "all" ? "All Topics" : category}
+              </Button>
+            ))}
+          </div>
         </div>
 
-        {/* FAQ Categories */}
-        <div className="space-y-8">
-          {categories.map(category => {
-            const categoryFAQs = groupedFAQs[category];
-            if (categoryFAQs.length === 0) return null;
-
-            return (
-              <div key={category} className="bg-card rounded-lg border p-6">
-                <h2 className="text-2xl font-semibold mb-4 text-foreground">
-                  {category}
-                </h2>
-                <div className="space-y-3">
-                  {categoryFAQs.map((faq, index) => {
-                    const globalIndex = faqData.indexOf(faq);
-                    const isOpen = openItems.includes(globalIndex);
-
-                    return (
-                      <div key={globalIndex} className="border-b border-border last:border-0 pb-3 last:pb-0">
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleItem(globalIndex)}
-                          className="w-full justify-between text-left p-0 h-auto font-medium hover:bg-transparent"
-                        >
-                          <span className="text-foreground">{faq.question}</span>
-                          {isOpen ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                          )}
-                        </Button>
-                        {isOpen && (
-                          <div className="mt-3 text-muted-foreground leading-relaxed">
-                            {faq.answer}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {filteredFAQs.length === 0 && searchTerm && (
-          <div className="text-center py-8">
+        {filteredFAQs.length === 0 ? (
+          <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No FAQs found matching "{searchTerm}". Try a different search term.
+              No questions found matching "{searchTerm}"
             </p>
+            <Button
+              variant="link"
+              onClick={() => setSearchTerm("")}
+              className="mt-4"
+            >
+              Clear search
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredFAQs.map((item, index) => (
+              <div
+                key={index}
+                className="border rounded-lg overflow-hidden bg-card"
+              >
+                <button
+                  onClick={() => toggleItem(index)}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
+                >
+                  <div className="text-left">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      {item.category}
+                    </div>
+                    <h3 className="font-medium">{item.question}</h3>
+                  </div>
+                  {openItems.has(index) ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0 ml-4" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0 ml-4" />
+                  )}
+                </button>
+                {openItems.has(index) && (
+                  <div className="px-6 py-4 bg-accent/30 border-t">
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
+                      {item.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Contact Support */}
-        <div className="mt-12 text-center bg-muted/50 rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-2">Still have questions?</h3>
+        <div className="mt-12 p-6 bg-accent/50 rounded-lg text-center">
+          <h2 className="text-xl font-semibold mb-2">Still have questions?</h2>
           <p className="text-muted-foreground mb-4">
-            Can't find what you're looking for? Our support team is here to help.
+            Can't find what you're looking for? Contact our support team.
           </p>
           <Button asChild>
             <a href="/contact">Contact Support</a>

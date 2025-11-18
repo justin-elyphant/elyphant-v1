@@ -104,19 +104,23 @@ const orderConfirmationTemplate = (props: any): string => {
     </table>
     ${props.items ? `
     <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
-    ${props.items.map((item: any) => `
+    ${props.items.map((item: any) => {
+      // Use item image if available, otherwise use placeholder
+      const imageUrl = item.image_url || 'https://via.placeholder.com/80x80/e5e5e5/666666?text=Product';
+      return `
     <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
       <tr>
-        <td style="padding-right: 16px;">
-          ${item.image_url ? `<img src="${item.image_url}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
+        <td style="padding-right: 16px; vertical-align: top;">
+          <img src="${imageUrl}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />
         </td>
-        <td>
+        <td style="vertical-align: top;">
           <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
           <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × ${item.currency || '$'}${item.price.toFixed(2)}</p>
         </td>
       </tr>
     </table>
-    `).join('')}
+    `;
+    }).join('')}
     
     <!-- Pricing breakdown -->
     <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">

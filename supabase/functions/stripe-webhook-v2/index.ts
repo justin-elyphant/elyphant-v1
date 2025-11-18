@@ -89,6 +89,67 @@ serve(async (req) => {
 });
 
 // ============================================================================
+// HELPER: Group line items by recipient for multi-recipient order splitting
+// ============================================================================
+interface DeliveryGroup {
+  deliveryGroupId: string;
+  recipientId: string | null;
+  recipientName: string;
+  items: any[];
+  giftMessage: string;
+  shippingAddress: any;
+}
+
+function groupItemsByRecipient(
+  lineItems: any[],
+  defaultShippingAddress: any,
+  metadata: any
+): DeliveryGroup[] {
+  const groupsMap = new Map<string, DeliveryGroup>();
+
+  for (const item of lineItems) {
+    const recipientId = item.recipient_id || null; // null for 'self'
+    const groupKey = recipientId || 'self';
+
+    if (!groupsMap.has(groupKey)) {
+      groupsMap.set(groupKey, {
+        deliveryGroupId: groupKey,
+        recipientId: recipientId,
+        recipientName: item.recipient_name || 'Self',
+        items: [],
+        giftMessage: item.gift_message || '',
+        shippingAddress: defaultShippingAddress, // Will be overridden for connections
+      });
+    }
+
+    const group = groupsMap.get(groupKey)!;
+    group.items.push(item);
+
+    // Update gift message if this item has one and group doesn't
+    if (item.gift_message && !group.giftMessage) {
+      group.giftMessage = item.gift_message;
+    }
+  }
+
+  return Array.from(groupsMap.values());
+}
+
+// ============================================================================
+// HELPER: Calculate total amount for a delivery group
+// ============================================================================
+function calculateGroupTotal(items: any[]): number {
+  const itemsTotal = items.reduce((sum, item) => {
+    return sum + (item.unit_price * item.quantity);
+  }, 0);
+
+  // Add shipping ($6.99) and gifting fee (10% + $1.00) per group
+  const shippingCost = 6.99;
+  const giftingFee = (itemsTotal * 0.10) + 1.00;
+  
+  return itemsTotal + shippingCost + giftingFee;
+}
+
+// ============================================================================
 // CORE HANDLER: checkout.session.completed
 // ============================================================================
 async function handleCheckoutSessionCompleted(
@@ -281,80 +342,174 @@ async function handleCheckoutSessionCompleted(
     throw new Error('No line items in checkout session');
   }
 
-  // STEP 5: Extract gift messages from line items
-  const giftMessages = lineItems
-    .map((item: any) => item.gift_message)
-    .filter((msg: string) => msg && msg.trim());
+  // STEP 5: Group line items by recipient (multi-recipient order splitting)
+  console.log(`📦 [STEP 5] Grouping line items by recipient for order splitting...`);
+  const deliveryGroups = groupItemsByRecipient(lineItems, shippingAddress, metadata);
+  console.log(`✅ [STEP 5] Found ${deliveryGroups.length} delivery group(s)`);
 
-  const primaryGiftMessage = giftMessages.length > 0 ? giftMessages[0] : '';
-  const isGift = giftMessages.length > 0 || isAutoGift;
-
-  const gift_options = {
-    isGift,
-    giftMessage: primaryGiftMessage,
-    giftWrapping: false,
-    isSurpriseGift: false
-  };
-
-  console.log(`🎁 [STEP 5] Gift detection: ${isGift ? 'Yes' : 'No'} | Message: "${primaryGiftMessage}"`);
-
-  // STEP 6: Create order
-  console.log(`💾 [STEP 6] Creating order for user ${userId}...`);
-  const orderData = {
-    user_id: userId,
-    checkout_session_id: sessionId,
-    payment_intent_id: session.payment_intent as string || null,
-    status: isScheduled ? 'scheduled' : 'payment_confirmed',
-    payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
-    total_amount: session.amount_total ? session.amount_total / 100 : 0,
-    currency: session.currency || 'usd',
-    line_items: lineItems,
-    shipping_address: shippingAddress,
-    gift_options,
-    scheduled_delivery_date: scheduledDate,
-    is_auto_gift: isAutoGift,
-    auto_gift_rule_id: autoGiftRuleId,
-    notes: deliveryGroupId ? JSON.stringify({ 
-      delivery_group_id: deliveryGroupId,
-      metadata_snapshot: new Date().toISOString()
-    }) : null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  console.log(`💾 [STEP 6.1] Inserting order into database...`);
-  const { data: newOrder, error: insertError } = await supabase
-    .from('orders')
-    .insert(orderData)
-    .select('id, order_number, status')
-    .single();
-
-  if (insertError) {
-    console.error(`❌ [STEP 6.1] Failed to create order:`, insertError);
-    throw new Error(`Failed to create order: ${insertError.message}`);
-  }
-
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-  console.log(`✅ [STEP 6] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number} | Status: ${newOrder.status}`);
-
-  // STEP 7: Send receipt email (idempotent via orchestrator)
-  console.log(`📧 [STEP 7] Sending receipt email...`);
-  await triggerEmailOrchestrator(newOrder.id, session, lineItems, supabase);
-  console.log(`✅ [STEP 7] Email orchestrator triggered`);
-
-  // STEP 8: Trigger processing if not scheduled WITH RETRY VERIFICATION
-  if (!isScheduled && session.payment_status === 'paid') {
-    console.log(`🚀 [${new Date().toISOString()}] Triggering immediate order processing for ${newOrder.id}...`);
+  // STEP 6: Create orders (parent + children for multi-recipient)
+  if (deliveryGroups.length === 1) {
+    // Single recipient - create one order (no split needed)
+    console.log(`💾 [STEP 6] Single recipient detected - creating standard order...`);
+    const group = deliveryGroups[0];
     
-    try {
-      await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
-    } catch (processingError: any) {
-      console.error(`❌ [${new Date().toISOString()}] CRITICAL: Order processing failed for ${newOrder.id}:`, processingError);
-      // Don't throw - order is created, just log the failure
-      // Admin can use OrderRecoveryTool to retry manually
+    const orderData = {
+      user_id: userId,
+      checkout_session_id: sessionId,
+      payment_intent_id: session.payment_intent as string || null,
+      status: isScheduled ? 'scheduled' : 'payment_confirmed',
+      payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
+      total_amount: session.amount_total ? session.amount_total / 100 : 0,
+      currency: session.currency || 'usd',
+      line_items: group.items,
+      shipping_address: group.shippingAddress,
+      gift_options: {
+        isGift: !!group.giftMessage || isAutoGift,
+        giftMessage: group.giftMessage,
+        giftWrapping: false,
+        isSurpriseGift: false
+      },
+      scheduled_delivery_date: scheduledDate,
+      is_auto_gift: isAutoGift,
+      auto_gift_rule_id: autoGiftRuleId,
+      delivery_group_id: group.deliveryGroupId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: newOrder, error: insertError } = await supabase
+      .from('orders')
+      .insert(orderData)
+      .select('id, order_number, status')
+      .single();
+
+    if (insertError) {
+      console.error(`❌ [STEP 6] Failed to create order:`, insertError);
+      throw new Error(`Failed to create order: ${insertError.message}`);
     }
-  } else if (isScheduled) {
-    console.log(`⏰ [${new Date().toISOString()}] Order scheduled for ${scheduledDate} - skipping immediate processing`);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ [STEP 6] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number}`);
+
+    // Send email and process
+    await triggerEmailOrchestrator(newOrder.id, session, group.items, supabase);
+    
+    if (!isScheduled && session.payment_status === 'paid') {
+      await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
+    }
+
+  } else {
+    // Multi-recipient - create parent + child orders
+    console.log(`💾 [STEP 6] Multi-recipient detected - creating parent + ${deliveryGroups.length} child orders...`);
+    
+    // Create parent order (for customer history, not sent to Zinc)
+    const parentOrderData = {
+      user_id: userId,
+      checkout_session_id: sessionId,
+      payment_intent_id: session.payment_intent as string || null,
+      status: 'split_parent',
+      payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
+      total_amount: session.amount_total ? session.amount_total / 100 : 0,
+      currency: session.currency || 'usd',
+      line_items: lineItems, // All items in parent
+      shipping_address: shippingAddress, // Primary shipping from metadata
+      gift_options: {
+        isGift: deliveryGroups.some(g => !!g.giftMessage),
+        giftMessage: 'Multi-recipient order - see child orders for details',
+        giftWrapping: false,
+        isSurpriseGift: false
+      },
+      notes: JSON.stringify({
+        is_multi_recipient: true,
+        total_delivery_groups: deliveryGroups.length
+      }),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: parentOrder, error: parentError } = await supabase
+      .from('orders')
+      .insert(parentOrderData)
+      .select('id, order_number')
+      .single();
+
+    if (parentError) {
+      console.error(`❌ [STEP 6.1] Failed to create parent order:`, parentError);
+      throw new Error(`Failed to create parent order: ${parentError.message}`);
+    }
+
+    console.log(`✅ [STEP 6.1] Parent order created: ${parentOrder.id} | Number: ${parentOrder.order_number}`);
+
+    // Create child orders (one per recipient, these get sent to Zinc)
+    const childOrderIds: string[] = [];
+    
+    for (let i = 0; i < deliveryGroups.length; i++) {
+      const group = deliveryGroups[i];
+      const groupLabel = String.fromCharCode(65 + i); // A, B, C, etc.
+      
+      console.log(`💾 [STEP 6.${i + 2}] Creating child order ${groupLabel} for recipient: ${group.recipientName || 'Self'}...`);
+      
+      const childOrderData = {
+        user_id: userId,
+        checkout_session_id: sessionId,
+        payment_intent_id: session.payment_intent as string || null,
+        parent_order_id: parentOrder.id,
+        delivery_group_id: group.deliveryGroupId,
+        status: isScheduled ? 'scheduled' : 'payment_confirmed',
+        payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
+        total_amount: calculateGroupTotal(group.items),
+        currency: session.currency || 'usd',
+        line_items: group.items,
+        shipping_address: group.shippingAddress,
+        gift_options: {
+          isGift: !!group.giftMessage || isAutoGift,
+          giftMessage: group.giftMessage,
+          giftWrapping: false,
+          isSurpriseGift: false
+        },
+        scheduled_delivery_date: scheduledDate,
+        is_auto_gift: isAutoGift,
+        auto_gift_rule_id: autoGiftRuleId,
+        notes: JSON.stringify({
+          parent_order_id: parentOrder.id,
+          delivery_group_label: groupLabel,
+          recipient_name: group.recipientName
+        }),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: childOrder, error: childError } = await supabase
+        .from('orders')
+        .insert(childOrderData)
+        .select('id, order_number, status')
+        .single();
+
+      if (childError) {
+        console.error(`❌ [STEP 6.${i + 2}] Failed to create child order ${groupLabel}:`, childError);
+        throw new Error(`Failed to create child order ${groupLabel}: ${childError.message}`);
+      }
+
+      console.log(`✅ [STEP 6.${i + 2}] Child order ${groupLabel} created: ${childOrder.id} | Number: ${childOrder.order_number}`);
+      childOrderIds.push(childOrder.id);
+
+      // Process child order immediately if not scheduled
+      if (!isScheduled && session.payment_status === 'paid') {
+        console.log(`🚀 [STEP 6.${i + 2}] Triggering processing for child order ${groupLabel}...`);
+        try {
+          await triggerOrderProcessingWithRetry(childOrder.id, supabase, userId);
+        } catch (processingError: any) {
+          console.error(`❌ Child order ${groupLabel} processing failed:`, processingError);
+        }
+      }
+    }
+
+    // Send single confirmation email to customer showing all recipients
+    console.log(`📧 [STEP 7] Sending consolidated receipt email for parent order ${parentOrder.id}...`);
+    await triggerEmailOrchestrator(parentOrder.id, session, lineItems, supabase);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ [STEP 6] Multi-recipient order complete in ${elapsed}s: Parent ${parentOrder.id} + ${childOrderIds.length} children`);
   }
 
   console.log(`✅ [${new Date().toISOString()}] checkout.session.completed processing complete for ${sessionId}`);

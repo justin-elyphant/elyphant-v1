@@ -3025,6 +3025,7 @@ export type Database = {
           checkout_session_id: string | null
           created_at: string
           currency: string
+          delivery_group_id: string | null
           estimated_delivery: string | null
           fulfilled_at: string | null
           gift_options: Json | null
@@ -3033,6 +3034,7 @@ export type Database = {
           line_items: Json | null
           notes: string | null
           order_number: string
+          parent_order_id: string | null
           payment_intent_id: string | null
           payment_status: string | null
           scheduled_delivery_date: string | null
@@ -3050,6 +3052,7 @@ export type Database = {
           checkout_session_id?: string | null
           created_at?: string
           currency?: string
+          delivery_group_id?: string | null
           estimated_delivery?: string | null
           fulfilled_at?: string | null
           gift_options?: Json | null
@@ -3058,6 +3061,7 @@ export type Database = {
           line_items?: Json | null
           notes?: string | null
           order_number: string
+          parent_order_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
@@ -3075,6 +3079,7 @@ export type Database = {
           checkout_session_id?: string | null
           created_at?: string
           currency?: string
+          delivery_group_id?: string | null
           estimated_delivery?: string | null
           fulfilled_at?: string | null
           gift_options?: Json | null
@@ -3083,6 +3088,7 @@ export type Database = {
           line_items?: Json | null
           notes?: string | null
           order_number?: string
+          parent_order_id?: string | null
           payment_intent_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
@@ -3095,7 +3101,15 @@ export type Database = {
           zinc_order_id?: string | null
           zinc_request_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_tokens: {
         Row: {

@@ -333,6 +333,13 @@ serve(async (req) => {
               customer_name: recipientName,
               total_amount: order.total_amount,
               currency: order.currency || 'USD',
+              items: lineItems.map((item: any) => ({
+                title: item.title,
+                quantity: item.quantity || 1,
+                price: item.price || item.unit_price || 0,
+                currency: order.currency || 'USD',
+                image_url: item.image_url || item.image || null,
+              })),
             },
             priority: 'high',
             scheduled_for: new Date().toISOString(),

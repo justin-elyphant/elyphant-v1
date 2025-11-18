@@ -344,6 +344,14 @@ serve(async (req) => {
           // Don't fail the order if email queue fails
         } else {
           console.log('✅ Order confirmation email queued');
+          
+          // Auto-kick email queue processor (dev helper - non-blocking)
+          try {
+            await supabase.functions.invoke('process-email-queue?force=true');
+            console.log('[email-queue] Auto-kicked email processor');
+          } catch (kickError) {
+            console.log('[email-queue] Auto-kick failed (non-blocking):', kickError?.message || kickError);
+          }
         }
       }
     } catch (emailErr) {

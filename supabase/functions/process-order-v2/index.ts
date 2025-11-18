@@ -43,6 +43,13 @@ serve(async (req) => {
 
     console.log(`✅ Order found: ${order.order_number} | Status: ${order.status} | Payment: ${order.payment_status}`);
 
+    // Fetch profile email/name for fallback
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', order.user_id)
+      .single();
+
     // STEP 2: Validate payment status
     if (order.payment_status !== 'paid' && order.payment_status !== 'authorized') {
       console.error(`❌ Payment not confirmed: ${order.payment_status}`);
@@ -301,32 +308,43 @@ serve(async (req) => {
 
     console.log(`✅ Order ${orderId} updated to processing status`);
 
-    // STEP 10: Queue order confirmation email
+    // STEP 10: Queue order confirmation email with fallback
     try {
       console.log('📧 Queueing order confirmation email...');
-      const { error: emailError } = await supabase
-        .from('email_queue')
-        .insert({
-          recipient_email: order.customer_email || order.shipping_address?.email,
-          recipient_name: requiredShippingFields.name,
-          event_type: 'order_confirmation',
-          template_variables: {
-            order_number: order.order_number,
-            order_id: orderId,
-            customer_name: requiredShippingFields.name,
-            total_amount: order.total_amount,
-            currency: order.currency || 'USD',
-          },
-          priority: 'high',
-          scheduled_for: new Date().toISOString(),
-          status: 'pending',
-        });
-
-      if (emailError) {
-        console.error('⚠️ Failed to queue confirmation email:', emailError);
-        // Don't fail the order if email queue fails
+      
+      // Derive email with fallback chain
+      const toEmail = order.shipping_address?.email || order.customer_email || profile?.email || null;
+      const recipientName = requiredShippingFields.name || profile?.name || 'Customer';
+      
+      console.log(`[email-queue] toEmail=${toEmail} order=${order.order_number}`);
+      
+      if (!toEmail) {
+        console.warn(`⚠️ No recipient email for ${order.order_number} – skipping email queue`);
       } else {
-        console.log('✅ Order confirmation email queued');
+        const { error: emailError } = await supabase
+          .from('email_queue')
+          .insert({
+            recipient_email: toEmail,
+            recipient_name: recipientName,
+            event_type: 'order_confirmation',
+            template_variables: {
+              order_number: order.order_number,
+              order_id: orderId,
+              customer_name: recipientName,
+              total_amount: order.total_amount,
+              currency: order.currency || 'USD',
+            },
+            priority: 'high',
+            scheduled_for: new Date().toISOString(),
+            status: 'pending',
+          });
+
+        if (emailError) {
+          console.error('⚠️ Failed to queue confirmation email:', emailError);
+          // Don't fail the order if email queue fails
+        } else {
+          console.log('✅ Order confirmation email queued');
+        }
       }
     } catch (emailErr) {
       console.error('⚠️ Error queueing confirmation email:', emailErr);

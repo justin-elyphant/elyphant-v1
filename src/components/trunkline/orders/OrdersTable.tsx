@@ -9,16 +9,7 @@ import { useOrders } from "@/hooks/trunkline/useOrders";
 import { useOrderActions } from "@/hooks/useOrderActions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import TrunklineCancelDialog from "./TrunklineCancelDialog";
 
 interface OrdersTableProps {
   orders: ReturnType<typeof useOrders>['orders'];
@@ -67,12 +58,15 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
   };
 
   const canCancelOrder = (order: any) => {
-    return ['pending', 'failed', 'retry_pending'].includes(order.status.toLowerCase()) &&
+    // Must have been submitted to Zinc and not already shipped/delivered/cancelled
+    return order.zinc_request_id && 
+           !['shipped', 'delivered', 'cancelled', 'cancellation_pending'].includes(order.status?.toLowerCase() || '') &&
            !['shipped', 'delivered', 'cancelled'].includes(order.zinc_status?.toLowerCase() || '');
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    const success = await cancelOrder(orderId, 'User cancelled via Trunkline order management');
+  const handleCancelOrder = async (reason: string) => {
+    if (!cancellingOrderId) return;
+    const success = await cancelOrder(cancellingOrderId, reason);
     if (success) {
       setCancellingOrderId(null);
       onOrderUpdated?.();
@@ -306,36 +300,22 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
         </div>
       </CardContent>
       
-      <AlertDialog open={!!cancellingOrderId} onOpenChange={() => setCancellingOrderId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Cancel Order
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this order? This action cannot be undone.
-              {cancellingOrderId && orders.find(o => o.id === cancellingOrderId)?.status === 'processing' && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
-                  <strong>Note:</strong> This order is currently being processed. Cancellation may take some time to complete.
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isProcessing}>
-              Keep Order
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => cancellingOrderId && handleCancelOrder(cancellingOrderId)}
-              disabled={isProcessing}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isProcessing ? 'Cancelling...' : 'Cancel Order'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TrunklineCancelDialog
+        isOpen={!!cancellingOrderId}
+        onClose={() => setCancellingOrderId(null)}
+        onConfirm={handleCancelOrder}
+        isProcessing={isProcessing}
+        orderNumber={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.order_number?.split('-').pop() || 
+          cancellingOrderId.slice(-6) : ''
+        }
+        orderStatus={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.status || 'unknown' : 'unknown'
+        }
+        orderAmount={cancellingOrderId ? 
+          orders.find(o => o.id === cancellingOrderId)?.total_amount || 0 : 0
+        }
+      />
     </Card>
   );
 }

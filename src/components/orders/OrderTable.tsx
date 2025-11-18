@@ -10,11 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, AlertTriangle, StopCircle } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
-import { useOrderActions } from "@/hooks/useOrderActions";
-import { useOrderEligibility } from "@/hooks/useOrderEligibility";
-import OrderCancelDialog from "./OrderCancelDialog";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 import SplitOrderDisplay from "./SplitOrderDisplay";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,11 +36,7 @@ interface OrderTableProps {
 }
 
 const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProps) => {
-  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
-  const [orderEligibility, setOrderEligibility] = useState<any>(null);
   const [childOrdersMap, setChildOrdersMap] = useState<Record<string, any[]>>({});
-  const { abortOrder, cancelOrder, isProcessing } = useOrderActions();
-  const { checkOrderEligibility, getOrderActionButton } = useOrderEligibility();
 
   // Fetch child orders for split orders
   useEffect(() => {
@@ -70,42 +62,6 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
     fetchChildOrders();
   }, [orders]);
 
-  // Check eligibility when selected order changes
-  useEffect(() => {
-    if (cancellingOrderId) {
-      const order = orders.find(o => o.id === cancellingOrderId);
-      if (order) {
-        const loadEligibility = async () => {
-          const eligibility = await checkOrderEligibility(order.id);
-          setOrderEligibility(eligibility);
-        };
-        loadEligibility();
-      }
-    }
-  }, [cancellingOrderId, orders, checkOrderEligibility]);
-
-  const canShowActionButton = (order: Order) => {
-    return ['pending', 'failed', 'processing'].includes(order.status.toLowerCase());
-  };
-
-  const handleOrderAction = async (reason: string) => {
-    if (!cancellingOrderId) return;
-    
-    const order = orders.find(o => o.id === cancellingOrderId);
-    if (!order) return;
-
-    const actionButton = getOrderActionButton(order.status, null, 
-      orderEligibility?.isProcessingStage);
-    const isAbort = actionButton.type === 'abort';
-    const actionFn = isAbort ? abortOrder : cancelOrder;
-    
-    const success = await actionFn(cancellingOrderId, reason);
-    if (success) {
-      setCancellingOrderId(null);
-      setOrderEligibility(null);
-      onOrderUpdated?.();
-    }
-  };
   
   if (isLoading) {
     return (
@@ -189,67 +145,17 @@ const OrderTable = ({ orders, isLoading, error, onOrderUpdated }: OrderTableProp
                 </TableCell>
                 <TableCell>${order.total_amount.toFixed(2)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 items-center">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/orders/${order.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                    {canShowActionButton(order) && (() => {
-                      const actionButton = getOrderActionButton(order.status, order.status, 
-                        order.status === 'processing');
-
-                      return (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCancellingOrderId(order.id)}
-                          disabled={isProcessing}
-                          className="text-red-500 hover:text-red-700 border-red-200 hover:border-red-300"
-                        >
-                          {actionButton.type === 'abort' ? (
-                            <>
-                              <StopCircle className="h-3 w-3 mr-1" />
-                              Abort
-                            </>
-                          ) : (
-                            <>
-                              <X className="h-3 w-3 mr-1" />
-                              Cancel
-                            </>
-                          )}
-                        </Button>
-                      );
-                    })()}
-                  </div>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/orders/${order.id}`}>
+                      View Details
+                    </Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
-      
-      <OrderCancelDialog
-        isOpen={!!cancellingOrderId}
-        onClose={() => {
-          setCancellingOrderId(null);
-          setOrderEligibility(null);
-        }}
-        onConfirm={handleOrderAction}
-        isProcessing={isProcessing}
-        orderNumber={cancellingOrderId ? 
-          orders.find(o => o.id === cancellingOrderId)?.order_number?.split('-').pop() || 
-          cancellingOrderId.slice(-6) : ''
-        }
-        orderStatus={cancellingOrderId ? 
-          orders.find(o => o.id === cancellingOrderId)?.status || 'unknown' : 'unknown'
-        }
-        orderAmount={cancellingOrderId ? 
-          orders.find(o => o.id === cancellingOrderId)?.total_amount || 0 : 0
-        }
-        isAbort={orderEligibility?.operationRecommendation === 'abort'}
-        abortReason={orderEligibility?.abortReason}
-      />
     </>
   );
 };

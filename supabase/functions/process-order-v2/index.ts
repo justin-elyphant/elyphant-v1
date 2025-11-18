@@ -225,8 +225,8 @@ serve(async (req) => {
         state: requiredShippingFields.state,
         country: shippingAddress.country || 'US',
       },
-      is_gift: order.gift_options?.isGift || false,
-      gift_message: order.gift_options?.isGift ? (order.gift_options?.giftMessage || null) : null,
+      is_gift: !!(order.gift_options?.giftMessage),
+      gift_message: order.gift_options?.giftMessage || null,
       shipping_method: 'cheapest',
       // NOTE: payment_method, retailer_credentials, and billing_address 
       // MUST BE OMITTED for ZMA orders per Zinc documentation

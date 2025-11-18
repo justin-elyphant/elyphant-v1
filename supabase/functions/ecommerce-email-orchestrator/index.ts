@@ -50,7 +50,7 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
         <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <tr>
             <td align="center" style="padding: 40px 30px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <img src="https://dmkxtkvlispxeqfzlczr.supabase.co/storage/v1/object/public/email-assets/elyphant-logo.png" alt="Elyphant" style="height: 50px; width: auto; display: block; margin: 0 auto;" />
+              <h1 style="margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Elyphant</h1>
             </td>
           </tr>
           <tr>

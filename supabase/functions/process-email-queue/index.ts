@@ -86,7 +86,12 @@ const handler = async (req: Request): Promise<Response> => {
         } else {
           // Route all modern emails to ecommerce orchestrator
           // Use template_variables directly (modern pattern) or metadata (if provided)
-          const emailData = email.metadata || email.template_variables || {};
+          // Check if metadata actually has keys (empty object is truthy but useless)
+          const emailData = (email.metadata && Object.keys(email.metadata).length > 0)
+            ? email.metadata
+            : (email.template_variables || {});
+          
+          console.log(`📤 Sending to orchestrator with data keys: ${Object.keys(emailData).join(', ')}`);
           
           const { error: orchestratorError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {

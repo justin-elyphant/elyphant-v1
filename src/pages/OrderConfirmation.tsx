@@ -441,18 +441,18 @@ const OrderConfirmation = () => {
                       {item.image_url && (
                         <img 
                           src={item.image_url} 
-                          alt={item.name}
+                          alt={item.title || item.name}
                           className="w-12 h-12 object-cover rounded"
                         />
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="font-medium text-sm">{item.title || item.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                          Qty: {item.quantity} × ${(item.unit_price || item.price || 0).toFixed(2)}
                         </p>
                       </div>
                       <p className="font-semibold">
-                        ${(item.quantity * item.price).toFixed(2)}
+                        ${(item.quantity * (item.unit_price || item.price || 0)).toFixed(2)}
                       </p>
                     </div>
                   ))}

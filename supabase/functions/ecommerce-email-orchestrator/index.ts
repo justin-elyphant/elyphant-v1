@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Utility function to truncate product titles for email display
+const truncateProductTitle = (title: string, maxLength: number = 60): string => {
+  if (!title) return '';
+  if (title.length <= maxLength) return title;
+  return title.substring(0, maxLength).trim() + '...';
+};
+
 interface EmailRequest {
   eventType: string;
   recipientEmail: string;
@@ -101,10 +108,10 @@ const orderConfirmationTemplate = (props: any): string => {
     <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
       <tr>
         <td style="padding-right: 16px;">
-          ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
+          ${item.image_url ? `<img src="${item.image_url}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
         </td>
         <td>
-          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${item.title}</p>
+          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
           <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × ${item.currency || '$'}${item.price}</p>
         </td>
       </tr>

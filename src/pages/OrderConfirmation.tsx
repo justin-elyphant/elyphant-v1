@@ -446,7 +446,7 @@ const OrderConfirmation = () => {
                         />
                       )}
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{item.title || item.name}</p>
+                        <p className="font-medium text-sm line-clamp-2">{item.title || item.name}</p>
                         <p className="text-xs text-muted-foreground">
                           Qty: {item.quantity} × ${(item.unit_price || item.price || 0).toFixed(2)}
                         </p>
@@ -490,7 +490,7 @@ const OrderConfirmation = () => {
                     />
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold">{item.title || item.name}</p>
+                    <p className="font-semibold line-clamp-2">{item.title || item.name}</p>
                     <p className="text-sm text-muted-foreground">
                       Quantity: {item.quantity}
                     </p>

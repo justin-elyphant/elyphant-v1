@@ -56,17 +56,6 @@ serve(async (req) => {
       console.log(`⏱️ [${new Date().toISOString()}] Processing checkout.session.expired: ${session.id}`);
       await handleCheckoutSessionExpired(session, supabase);
     }
-    // LEGACY: payment_intent events (no order creation, enrichment only)
-    else if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log(`⚠️ [${new Date().toISOString()}] LEGACY: payment_intent.succeeded ${paymentIntent.id} - enrichment only, no order creation`);
-      await enrichExistingOrder(paymentIntent, supabase);
-    } 
-    else if (event.type === 'payment_intent.payment_failed') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log(`⚠️ [${new Date().toISOString()}] LEGACY: payment_intent.payment_failed ${paymentIntent.id} - updating existing order`);
-      await handlePaymentFailed(paymentIntent, supabase);
-    }
 
     console.log(`✅ [${new Date().toISOString()}] Webhook processing complete`);
     return new Response(
@@ -539,65 +528,6 @@ async function handleCheckoutSessionExpired(
       .eq('id', existingOrder.id);
   } else {
     console.log(`ℹ️ No confirmed order found for expired session ${sessionId}`);
-  }
-}
-
-// ============================================================================
-// LEGACY: payment_intent enrichment (no order creation)
-// ============================================================================
-async function enrichExistingOrder(
-  paymentIntent: Stripe.PaymentIntent,
-  supabase: any
-) {
-  const piId = paymentIntent.id;
-  console.log(`🔍 LEGACY: Attempting to enrich existing order for payment_intent ${piId}`);
-
-  const { data: existingOrder } = await supabase
-    .from('orders')
-    .select('id, status, payment_status')
-    .eq('payment_intent_id', piId)
-    .single();
-
-  if (existingOrder) {
-    console.log(`✅ Found existing order ${existingOrder.id}, enriching payment status`);
-    await supabase
-      .from('orders')
-      .update({ 
-        payment_status: 'paid',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingOrder.id);
-  } else {
-    console.log(`ℹ️ No existing order found for payment_intent ${piId} - this is expected if using checkout sessions`);
-  }
-}
-
-// ============================================================================
-// LEGACY: payment_intent.payment_failed
-// ============================================================================
-async function handlePaymentFailed(
-  paymentIntent: Stripe.PaymentIntent,
-  supabase: any
-) {
-  const piId = paymentIntent.id;
-  console.log(`❌ Payment failed for payment_intent ${piId}`);
-
-  const { data: existingOrder } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('payment_intent_id', piId)
-    .single();
-
-  if (existingOrder) {
-    await supabase
-      .from('orders')
-      .update({ 
-        status: 'payment_failed',
-        payment_status: 'failed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingOrder.id);
-    console.log(`✅ Marked order ${existingOrder.id} as payment_failed`);
   }
 }
 

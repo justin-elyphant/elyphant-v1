@@ -214,7 +214,7 @@ serve(async (req) => {
         product_id: item.product_id || item.productId || item.id,
         quantity: item.quantity || 1,
       })),
-      max_price: Math.ceil(order.total_amount * 100 * 1.1), // Convert dollars to cents, add 10% safety buffer
+      max_price: Math.ceil(order.total_amount * 100 * 1.25), // Convert to cents with 25% buffer (10% was insufficient)
       shipping_address: {
         first_name: requiredShippingFields.name.split(' ')[0] || requiredShippingFields.name,
         last_name: requiredShippingFields.name.split(' ').slice(1).join(' ') || '',
@@ -238,7 +238,6 @@ serve(async (req) => {
         status_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
         case_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
       },
-      max_price: Math.ceil(order.total_amount * 100 * 1.25), // Convert to cents with 25% buffer for price changes/shipping/tax
       addax_queue_timeout: 14400, // 4 hours queue timeout
       client_notes: {
         order_id: orderId,

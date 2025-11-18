@@ -32,7 +32,6 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/help" className="hover:text-foreground">Help Center</Link></li>
               <li><Link to="/contact" className="hover:text-foreground">Contact Us</Link></li>
-              <li><Link to="/returns" className="hover:text-foreground">Returns</Link></li>
             </ul>
           </div>
           <div>

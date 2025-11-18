@@ -65,6 +65,8 @@ const VendorPartner = lazy(() => import("./pages/VendorPartner"));
 const VendorPortal = lazy(() => import("./pages/VendorPortal"));
 const VendorManagement = lazy(() => import("./pages/VendorManagement"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Contact = lazy(() => import("./pages/Contact"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const SMSConsent = lazy(() => import("./pages/SMSConsent"));
 const AutoGiftApprovalPage = lazy(() => import("./components/auto-gifts/AutoGiftApprovalPage"));
@@ -270,9 +272,12 @@ function AppContent() {
            <Route path="/vendor-partner" element={<VendorPartner />} />
            <Route path="/vendor-portal" element={<VendorPortal />} />
            <Route path="/vendor-management" element={<VendorManagement />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/sms-consent" element={<SMSConsent />} />
+           <Route path="/privacy" element={<PrivacyPolicy />} />
+           <Route path="/terms" element={<TermsOfService />} />
+           <Route path="/sms-consent" element={<SMSConsent />} />
+           <Route path="/help" element={<FAQ />} />
+           <Route path="/faq" element={<FAQ />} />
+           <Route path="/contact" element={<Contact />} />
            <Route path="/auto-gift-approval" element={<AutoGiftApprovalPage />} />
            <Route path="/auto-gifts/approve/:token" element={<AutoGiftApprovalPage />} />
            <Route path="/address/provide/:requestId" element={<AddressProviderPage />} />

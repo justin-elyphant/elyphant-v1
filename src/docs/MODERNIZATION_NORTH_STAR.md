@@ -63,15 +63,25 @@
 
 **Why Blocking:** Cannot safely delete legacy functions until database is clean
 
-### Priority 3: Remove `_v2` Suffixes (Est: 4 hours)
+### Priority 3: Frontend Legacy Code Cleanup ✅ COMPLETE
+**Phase 5A - UnifiedPaymentService cleanup:**
+- ✅ Removed createPaymentIntent() method (~37 lines)
+- ✅ Removed processPaymentSuccess() method (~70 lines)
+- ✅ Removed useUnifiedPayment hook from useUnifiedPayment.ts (~47 lines)
+- ✅ Updated class documentation to reflect Checkout Sessions only
+- ✅ Updated protection measures documentation
+**Result:** ~154 lines of legacy code removed, zero production risk
+**Note:** useUnifiedPayment.ts file retained for useUnifiedCart hook export
+
+### Priority 4: Remove `_v2` Suffixes (Est: 4 hours)
 **After Phase 2 complete:**
 - Rename all `*-v2` functions to final names
 - Update all function references in code
 - Deploy and verify
 
-### Priority 4: Delete Legacy Functions (Est: 1 day)
+### Priority 5: Delete Legacy Functions (Est: 1 day)
 **Delete 85 legacy functions:**
-- All old payment intent handlers
+- All old payment intent handlers (create-payment-intent-v2, etc.)
 - All cart session managers
 - All duplicate order detectors
 - All manual schedulers

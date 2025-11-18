@@ -1,6 +1,6 @@
 /*
  * ========================================================================
- * 🚨 UNIFIED PAYMENT SERVICE - STREAMLINED CART ARCHITECTURE 🚨
+ * 🚨 UNIFIED PAYMENT SERVICE - STRIPE CHECKOUT SESSIONS ONLY 🚨
  * ========================================================================
  * 
  * STREAMLINED CART ARCHITECTURE (Industry Standard):
@@ -19,28 +19,37 @@
  * - ✅ Removed cart_sessions from active cart loading
  * - ✅ Single direction flow (guest → user on login, never backwards)
  * - ✅ Edge function for cleanup (deletes from BOTH tables)
+ * - ✅ Legacy Payment Intent methods removed (Phase 5 cleanup)
+ * 
+ * PAYMENT ARCHITECTURE:
+ * - ✅ Stripe Checkout Sessions ONLY (hosted payment pages)
+ * - ✅ All payments via create-checkout-session edge function
+ * - ✅ Order creation via stripe-webhook-v2 (checkout.session.completed)
+ * - ❌ Payment Intent flow removed (createPaymentIntent, processPaymentSuccess)
  * 
  * BENEFITS:
  * - 50% less code (from ~2000 to ~500 lines)
  * - Eliminates "zombie cart" bug
  * - Industry-standard pattern (matches Shopify, WooCommerce)
  * - Single source of truth prevents conflicts
+ * - PCI compliance built-in (Stripe hosts payment UI)
  * 
  * ⚠️  CRITICAL ARCHITECTURE BOUNDARIES:
  * - MUST call UnifiedMarketplaceService for product operations
- * - MUST route Amazon orders through process-zma-order Edge Function
+ * - MUST route Amazon orders through process-order-v2 Edge Function
+ * - MUST use Stripe Checkout Sessions (NO Payment Intents)
  * - MUST separate customer Stripe payments from business Amazon payments
  * - Cart cleanup is localStorage-only (legacy tables removed)
  * 
  * 🔗 SYSTEM INTEGRATION:
  * - UnifiedMarketplaceService: Product search, details, normalization
- * - Enhanced Zinc API System: Amazon order processing via Edge Functions
- * - Stripe API: Customer payment processing via Edge Functions
+ * - process-order-v2: Zinc API order submission
+ * - stripe-webhook-v2: Order creation from Checkout Sessions
+ * - create-checkout-session: Single payment entry point
  * - CartContext: Thin wrapper around this service
- * - UnifiedCheckoutForm: Uses this service for orchestration
- * - useCartSessionTracking: Checkout-only (abandoned cart tracking)
+ * - UnifiedCheckoutForm: Uses Checkout Sessions exclusively
  * 
- * Last major update: 2025-10-17 (Streamlined Cart Architecture)
+ * Last major update: 2025-01-18 (Phase 5 Cleanup - Payment Intent removal)
  * ========================================================================
  */
 
@@ -704,129 +713,19 @@ class UnifiedPaymentService {
 
   /*
    * ========================================================================
-   * PAYMENT PROCESSING (Customer Stripe Payments)
+   * PAYMENT PROCESSING (Stripe Checkout Sessions ONLY)
+   * ========================================================================
+   * 
+   * ✅ All payment processing now uses Stripe Checkout Sessions
+   * ✅ Payments handled via create-checkout-session edge function
+   * ✅ Orders created via stripe-webhook-v2 (checkout.session.completed)
+   * 
+   * ❌ Legacy Payment Intent methods removed (Phase 5 cleanup):
+   *    - createPaymentIntent() → Use create-checkout-session instead
+   *    - processPaymentSuccess() → Orders created by webhook
    * ========================================================================
    */
 
-  /**
-   * Create Stripe payment intent for customer payment
-   * CRITICAL: This handles CUSTOMER payment only, not business fulfillment
-   * 
-   * ⚠️ DEPRECATED: This method uses the legacy payment intent flow.
-   * New code should use createCheckoutSession() for Stripe hosted checkout.
-   * This method is kept only for emergency fallback.
-   */
-  async createPaymentIntent(amount: number, metadata: any = {}): Promise<StripePaymentIntent> {
-    try {
-      // Import feature flags
-      const { featureFlagService } = await import('@/services/featureFlags');
-      
-      // 🚨 DEPRECATION WARNING
-      if (featureFlagService.isEnabled('ENABLE_PAYMENT_FLOW_LOGGING')) {
-        console.warn(
-          '⚠️ DEPRECATED: createPaymentIntent() called. This method uses legacy payment intent flow.',
-          'Caller should migrate to createCheckoutSession() for Stripe hosted checkout.',
-          'Stack trace:', new Error().stack
-        );
-      }
-
-      // Feature flag: Block if legacy flow is disabled
-      if (featureFlagService.isEnabled('USE_CHECKOUT_SESSIONS') && 
-          !featureFlagService.isEnabled('USE_LEGACY_PAYMENT_INTENTS')) {
-        throw new Error(
-          'Legacy createPaymentIntent() is disabled. ' +
-          'Please migrate caller to use createCheckoutSession() and handle redirect flow.'
-        );
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User must be authenticated');
-      }
-
-      // DEPRECATED: Legacy payment intent flow removed
-      // Use create-checkout-session for all payments
-      throw new Error('Legacy payment flow removed - use Stripe Checkout Sessions via create-checkout-session');
-    } catch (error) {
-      console.error('Error in createPaymentIntent:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Process successful customer payment and create order
-   */
-  async processPaymentSuccess(
-    paymentIntentId: string,
-    shippingInfo: ShippingInfo,
-    billingInfo?: any,
-    options: PaymentProcessingOptions = {}
-  ): Promise<Order> {
-    try {
-      this.isProcessing = true;
-
-      // Calculate order totals including gifting fee
-      const subtotal = this.getCartTotal();
-      const shippingCost = this.calculateShippingCost(shippingInfo);
-      const taxAmount = this.calculateTax(subtotal);
-      
-      // Calculate gifting fee using pricing settings (temporary fallback for UnifiedPaymentService)
-      // TODO: Integrate with usePricingSettings hook properly
-      const giftingFee = subtotal * 0.15; // 15% default gifting fee
-      const giftingFeeName = 'Elyphant Gifting Fee';
-      const giftingFeeDescription = 'Platform service fee for streamlined delivery and customer support';
-      
-      const totalAmount = subtotal + shippingCost + taxAmount + giftingFee;
-
-      // Prepare order data
-      const orderData: CreateOrderData = {
-        cartItems: this.cartItems,
-        subtotal,
-        shippingCost,
-        giftingFee,
-        giftingFeeName,
-        giftingFeeDescription,
-        taxAmount,
-        totalAmount,
-        shippingInfo,
-        giftOptions: {
-          isGift: options.isGift || false,
-          recipientName: '',
-          giftMessage: options.giftMessage || '',
-          giftWrapping: false,
-          isSurpriseGift: false,
-          scheduledDeliveryDate: options.scheduledDeliveryDate
-        },
-        paymentIntentId,
-        billingInfo,
-        deliveryGroups: this.generateDeliveryGroups()
-      };
-
-      // CRITICAL: Create order using existing service
-      const order = await createOrder(orderData);
-
-      // Check if this order needs Zinc processing (Amazon products)
-      const hasAmazonProducts = this.cartItems.some(item => 
-        this.isAmazonProduct(item.product)
-      );
-
-      if (hasAmazonProducts) {
-        // CRITICAL: Route to Enhanced Zinc API System via Edge Function
-        await this.processZincOrder(order.id);
-      }
-
-      // Clear cart after successful order
-      await this.clearCart();
-
-      return order;
-    } catch (error) {
-      console.error('Error processing payment success:', error);
-      throw error;
-    } finally {
-      this.isProcessing = false;
-    }
-  }
 
   /*
    * ========================================================================

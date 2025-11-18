@@ -6,16 +6,40 @@ import OrdersTable from "./orders/OrdersTable";
 import EmailApprovalPanel from "@/components/auto-gifts/EmailApprovalPanel";
 import OrderRecoveryTool from "@/components/admin/OrderRecoveryTool";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Info, Mail } from "lucide-react";
+import { processEmailQueueNow } from "@/services/emailQueueService";
+import { toast } from "sonner";
 
 const TrunklineOrdersTab = () => {
   const { orders, loading, error, filters, setFilters, refetch } = useOrders();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [processingEmails, setProcessingEmails] = useState(false);
 
   const handleOrderClick = (orderId: string) => {
     setSelectedOrderId(orderId);
     // TODO: Implement order detail modal/page
     console.log('View order:', orderId);
+  };
+
+  const handleProcessEmailQueue = async () => {
+    try {
+      setProcessingEmails(true);
+      const result = await processEmailQueueNow(true);
+      
+      toast.success("Email Queue Processed", {
+        description: `✅ Processed ${result.processed} emails${result.errors > 0 ? ` (${result.errors} errors)` : ''}`,
+      });
+      
+      console.log('[email-queue] Processed:', result);
+    } catch (error: any) {
+      console.error('[email-queue] Error:', error);
+      toast.error("Email Processing Failed", {
+        description: error.message || "Failed to process email queue",
+      });
+    } finally {
+      setProcessingEmails(false);
+    }
   };
 
   if (error) {
@@ -30,11 +54,23 @@ const TrunklineOrdersTab = () => {
 
   return (
     <div className="space-y-6 max-w-full overflow-hidden pr-4">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Order Management</h1>
-        <p className="text-slate-600 mt-1">
-          Monitor and manage orders from the Enhanced Zinc API System
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Order Management</h1>
+          <p className="text-slate-600 mt-1">
+            Monitor and manage orders from the Enhanced Zinc API System
+          </p>
+        </div>
+        <Button
+          onClick={handleProcessEmailQueue}
+          disabled={processingEmails}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Mail className="h-4 w-4" />
+          {processingEmails ? "Processing..." : "Process Email Queue"}
+        </Button>
       </div>
 
       <OrderSearch

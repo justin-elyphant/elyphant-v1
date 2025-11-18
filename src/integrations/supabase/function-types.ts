@@ -19,6 +19,7 @@ export enum SUPABASE_FUNCTIONS {
   
   // Email system
   ECOMMERCE_EMAIL_ORCHESTRATOR = "ecommerce-email-orchestrator",
+  PROCESS_EMAIL_QUEUE = "process-email-queue",
   
   // Nicole AI agent
   NICOLE_CHATGPT_AGENT = "nicole-chatgpt-agent",

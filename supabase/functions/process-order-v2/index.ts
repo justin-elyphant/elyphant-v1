@@ -330,7 +330,7 @@ serve(async (req) => {
         
         const shippingCost = 6.99;
         const giftingFee = (subtotal * 0.10) + 1.00;
-        const taxAmount = 0; // Tax not currently calculated
+        const taxAmount = subtotal * 0.0875; // 8.75% tax rate
         
         const { error: emailError } = await supabase
           .from('email_queue')

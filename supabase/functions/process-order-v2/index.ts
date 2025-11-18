@@ -350,13 +350,17 @@ serve(async (req) => {
               shipping_cost: shippingCost,
               tax_amount: taxAmount,
               gifting_fee: giftingFee,
-              items: lineItems.map((item: any) => ({
-                title: item.title,
-                quantity: item.quantity || 1,
-                price: item.price || item.unit_price || 0,
-                currency: order.currency || 'USD',
-                image_url: item.image_url || item.image || null,
-              })),
+              items: lineItems.map((item: any) => {
+                const imageUrl = item.image_url || item.image || '';
+                console.log(`📧 [Email] Product: ${item.title?.substring(0, 30)}... | Image: ${imageUrl ? 'Yes' : 'Missing'}`);
+                return {
+                  title: item.title,
+                  quantity: item.quantity || 1,
+                  price: item.price || item.unit_price || 0,
+                  currency: order.currency || 'USD',
+                  image_url: imageUrl,
+                };
+              }),
             },
             priority: 'high',
             scheduled_for: new Date().toISOString(),

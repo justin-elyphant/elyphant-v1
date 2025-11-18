@@ -304,7 +304,10 @@ async function handleCheckoutSessionCompleted(
           giftMessage = product.metadata?.gift_message || '';
           imageUrl = product.images?.[0] || '';  // Get first product image from Stripe
           
-          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Stripe ID: ${stripeProductId} | Gift: ${giftMessage ? 'Yes' : 'No'}`);
+          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Stripe ID: ${stripeProductId}`);
+          if (!imageUrl) {
+            console.warn(`⚠️  [IMAGE] No image URL for product: ${description} (${amazonAsin})`);
+          }
         } catch (err) {
           console.error(`⚠️  Failed to fetch product ${stripeProductId}:`, err);
         }

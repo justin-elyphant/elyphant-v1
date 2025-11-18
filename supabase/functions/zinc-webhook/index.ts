@@ -110,7 +110,6 @@ serve(async (req) => {
       console.log('🚫 Detected cancellation webhook');
       await handleCancellationWebhook(supabase, internalOrderId, payload);
     }
-    }
 
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook processed' }),

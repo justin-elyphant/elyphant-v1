@@ -126,7 +126,7 @@ const orderConfirmationTemplate = (props: any): string => {
 const orderShippedTemplate = (props: any): string => {
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Your Order Has Shipped! 📦</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.customer_name}, your order is on its way!</p>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.customer_name ? `Hi ${props.customer_name}, your` : 'Your'} order is on its way!</p>
     <table style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Order Number</p>
@@ -158,7 +158,7 @@ const orderShippedTemplate = (props: any): string => {
 const orderFailedTemplate = (props: any): string => {
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Order Processing Issue ⚠️</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.customer_name}, we encountered an issue with your order.</p>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.customer_name ? `Hi ${props.customer_name}, we` : 'We'} encountered an issue with your order.</p>
     <table style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #ef4444; text-transform: uppercase;">Order Number</p>
@@ -266,6 +266,26 @@ const autoGiftApprovalTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${props.occasion}` });
 };
 
+// Connection Established Template
+const connectionEstablishedTemplate = (props: any): string => {
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">You're Now Connected! 🎉</h2>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.recipient_name}, you and ${props.connection_name} are now connected on Elyphant!</p>
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">What you can do now:</h3>
+    <p style="margin: 0 0 10px 0; font-size: 14px;">🎁 <strong>View each other's wishlists</strong> - See what they really want</p>
+    <p style="margin: 0 0 10px 0; font-size: 14px;">🤖 <strong>Set up auto-gifts</strong> - Never miss their special occasions</p>
+    <p style="margin: 0 0 30px 0; font-size: 14px;">💬 <strong>Start chatting</strong> - Coordinate gifts and stay in touch</p>
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/gifting" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          Explore Gifting
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `You're now connected with ${props.connection_name}` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -288,6 +308,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
       return {
         html: connectionInvitationTemplate(data),
         subject: `${data.sender_name || 'Someone'} invited you to Elyphant! 🎉`
+      };
+    case 'connection_established':
+      return {
+        html: connectionEstablishedTemplate(data),
+        subject: `You're now connected with ${data.connection_name || 'a friend'}! 🎉`
       };
     case 'welcome_email':
       return {

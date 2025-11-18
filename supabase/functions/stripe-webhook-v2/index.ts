@@ -293,6 +293,7 @@ async function handleCheckoutSessionCompleted(
       let recipientId = null;
       let recipientName = '';
       let giftMessage = '';
+      let imageUrl = '';
       
       if (stripeProductId) {
         try {
@@ -301,6 +302,7 @@ async function handleCheckoutSessionCompleted(
           recipientId = product.metadata?.recipient_id || null;
           recipientName = product.metadata?.recipient_name || '';
           giftMessage = product.metadata?.gift_message || '';
+          imageUrl = product.images?.[0] || '';  // Get first product image from Stripe
           
           console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Stripe ID: ${stripeProductId} | Gift: ${giftMessage ? 'Yes' : 'No'}`);
         } catch (err) {
@@ -314,6 +316,7 @@ async function handleCheckoutSessionCompleted(
         quantity: item.quantity || 1,
         unit_price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
         currency: item.price?.currency || 'usd',
+        image_url: imageUrl,  // Include product image
         recipient_id: recipientId === 'self' ? null : recipientId,  // Convert 'self' to null
         recipient_name: recipientName,
         gift_message: giftMessage,

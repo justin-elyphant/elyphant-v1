@@ -37,7 +37,7 @@ const faqData: FAQItem[] = [
   {
     category: "Returns & Exchanges",
     question: "Why doesn't Elyphant process returns directly?",
-    answer: "Elyphant partners with Amazon for order fulfillment to give you access to millions of products with fast, reliable shipping. Since Amazon handles the physical delivery, they also manage the return process. This actually works in your favor - Amazon has one of the best return policies in e-commerce, with easy drop-offs at Amazon lockers, UPS stores, Whole Foods, and more!"
+    answer: "Elyphant uses a third-party fulfillment partner to process orders through Amazon's marketplace, giving you access to millions of products with fast, reliable shipping. Since orders are fulfilled through Amazon, returns are also handled through Amazon's return process. This actually works in your favor - Amazon has one of the best return policies in e-commerce, with easy drop-offs at Amazon lockers, UPS stores, Whole Foods, and more!"
   },
   {
     category: "Returns & Exchanges",
@@ -76,7 +76,7 @@ const faqData: FAQItem[] = [
   {
     category: "Order Fulfillment & Delivery",
     question: "How does ordering work on Elyphant?",
-    answer: "Elyphant integrates with Amazon's marketplace through our third-party fulfillment partner to provide access to millions of products. When you place an order, we process it through Amazon's fulfillment network, ensuring fast delivery and reliable service."
+    answer: "Elyphant works with a third-party fulfillment partner that processes orders through Amazon's marketplace, providing you access to millions of products. When you place an order, it's fulfilled through Amazon's network, ensuring fast delivery and reliable service."
   },
   {
     category: "Order Fulfillment & Delivery",

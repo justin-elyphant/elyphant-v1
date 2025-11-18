@@ -266,14 +266,6 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
   } catch (emailErr) {
     console.error('⚠️ Failed to queue shipping email:', emailErr);
   }
-        priority: 'normal',
-        scheduled_for: new Date().toISOString(),
-        status: 'pending',
-      });
-    }
-  } catch (emailErr) {
-    console.error('⚠️ Failed to queue shipping email:', emailErr);
-  }
 }
 
 async function handleStatusUpdate(supabase: any, orderId: string, payload: ZincWebhookPayload) {

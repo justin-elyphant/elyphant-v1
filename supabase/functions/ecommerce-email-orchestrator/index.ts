@@ -354,6 +354,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('RESEND_API_KEY not configured');
     }
 
+    // Get sender configuration from environment (with fallback to verified domain)
+    const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Elyphant';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notifications@elyphant.ai';
+    const senderAddress = `${fromName} <${fromEmail}>`;
+
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -361,7 +366,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Elyphant <noreply@elyphant.com>',
+        from: senderAddress,
         to: [recipientEmail],
         subject: subject,
         html: html,

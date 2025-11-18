@@ -225,8 +225,8 @@ serve(async (req) => {
         state: requiredShippingFields.state,
         country: shippingAddress.country || 'US',
       },
-      is_gift: order.is_auto_gift || false,
-      gift_message: order.gift_message || undefined,
+      is_gift: order.gift_options?.isGift || false,
+      gift_message: order.gift_options?.isGift ? (order.gift_options?.giftMessage || null) : null,
       shipping_method: 'cheapest',
       // NOTE: payment_method, retailer_credentials, and billing_address 
       // MUST BE OMITTED for ZMA orders per Zinc documentation
@@ -333,6 +333,8 @@ serve(async (req) => {
               customer_name: recipientName,
               total_amount: order.total_amount,
               currency: order.currency || 'USD',
+              gift_message: order.gift_options?.giftMessage || null,
+              is_gift: order.gift_options?.isGift || false,
               items: lineItems.map((item: any) => ({
                 title: item.title,
                 quantity: item.quantity || 1,

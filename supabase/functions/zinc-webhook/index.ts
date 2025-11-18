@@ -163,20 +163,35 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
     console.log(`✅ Order ${orderId} marked as failed: ${errorMessage}`);
   }
 
-  // Queue failure notification email
+  // Queue failure notification email with fallback
   try {
     const { data: order } = await supabase
       .from('orders')
-      .select('customer_email, order_number, shipping_address')
+      .select('customer_email, order_number, shipping_address, user_id')
       .eq('id', orderId)
       .single();
 
-    if (order?.customer_email || order?.shipping_address?.email) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', order?.user_id)
+      .single();
+
+    const toEmail = order?.shipping_address?.email || order?.customer_email || profile?.email || null;
+    const recipientName = order?.shipping_address?.name || profile?.name || 'Customer';
+
+    console.log(`[email-queue] order_failed toEmail=${toEmail} order=${order?.order_number}`);
+
+    if (!toEmail) {
+      console.warn(`⚠️ No recipient email for failed order ${order?.order_number}`);
+    } else {
       await supabase.from('email_queue').insert({
-        recipient_email: order.customer_email || order.shipping_address.email,
+        recipient_email: toEmail,
+        recipient_name: recipientName,
         event_type: 'order_failed',
         template_variables: {
           order_number: order.order_number,
+          customer_name: recipientName,
           error_message: errorMessage,
         },
         priority: 'high',
@@ -210,24 +225,47 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     console.log(`✅ Tracking updated for order ${orderId}: ${payload.tracking.tracking_number}`);
   }
 
-  // Queue shipping notification email
+  // Queue shipping notification email with fallback
   try {
     const { data: order } = await supabase
       .from('orders')
-      .select('customer_email, order_number, shipping_address')
+      .select('customer_email, order_number, shipping_address, user_id')
       .eq('id', orderId)
       .single();
 
-    if (order?.customer_email || order?.shipping_address?.email) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', order?.user_id)
+      .single();
+
+    const toEmail = order?.shipping_address?.email || order?.customer_email || profile?.email || null;
+    const recipientName = order?.shipping_address?.name || profile?.name || 'Customer';
+
+    console.log(`[email-queue] order_shipped toEmail=${toEmail} order=${order?.order_number}`);
+
+    if (!toEmail) {
+      console.warn(`⚠️ No recipient email for shipped order ${order?.order_number}`);
+    } else {
       await supabase.from('email_queue').insert({
-        recipient_email: order.customer_email || order.shipping_address.email,
+        recipient_email: toEmail,
+        recipient_name: recipientName,
         event_type: 'order_shipped',
         template_variables: {
           order_number: order.order_number,
+          customer_name: recipientName,
           tracking_number: payload.tracking.tracking_number,
           carrier: payload.tracking.carrier,
           tracking_url: payload.tracking.tracking_url,
         },
+        priority: 'normal',
+        scheduled_for: new Date().toISOString(),
+        status: 'pending',
+      });
+    }
+  } catch (emailErr) {
+    console.error('⚠️ Failed to queue shipping email:', emailErr);
+  }
         priority: 'normal',
         scheduled_for: new Date().toISOString(),
         status: 'pending',

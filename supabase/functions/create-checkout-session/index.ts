@@ -132,7 +132,8 @@ serve(async (req) => {
           metadata: {
             product_id: item.product_id || item.product?.product_id,
             recipient_id: item.recipientAssignment?.connectionId || '',
-            recipient_name: item.recipientAssignment?.connectionName || ''
+            recipient_name: item.recipientAssignment?.connectionName || '',
+            gift_message: item.recipientAssignment?.giftMessage || ''
           }
         },
         unit_amount: Math.round((item.price || item.product?.price || 0) * 100)

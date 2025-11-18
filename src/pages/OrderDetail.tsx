@@ -57,10 +57,7 @@ const OrderDetail = () => {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select(`
-            *,
-            order_items (*)
-          `)
+          .select('*')
           .eq('id', orderId)
           .single();
 
@@ -116,7 +113,7 @@ const OrderDetail = () => {
             gifting_fee: pricingBreakdown.gifting_fee,
             gifting_fee_name: pricingBreakdown.gifting_fee_name,
             gifting_fee_description: pricingBreakdown.gifting_fee_description,
-            items: data.order_items || [],
+            items: data.line_items || [],
             shipping_info: displayShippingInfo,
             customerName: shopperName,
             recipientName: recipientName,

@@ -23,7 +23,7 @@ const cleanProductName = (rawName: string): string => {
 // Generate cache key for the item
 const getCacheKey = (item: any): string => {
   const productId = item.product_id || item.asin || item.sku || item.product?.product_id;
-  const productName = cleanProductName(item.product_name || item.name || "Product");
+  const productName = cleanProductName((item as any).title || item.product_name || item.name || "Product");
   return `${productId || 'no-id'}_${productName}`;
 };
 
@@ -35,7 +35,7 @@ export const resolveOrderItemImage = async (item: any): Promise<ImageResolutionR
     return imageCache.get(cacheKey)!;
   }
 
-  const productName = cleanProductName(item.product_name || item.name || "Product");
+  const productName = cleanProductName((item as any).title || item.product_name || item.name || "Product");
   const productId = item.product_id || item.asin || item.sku || item.product?.product_id;
   const retailer = item.retailer || item.product?.retailer || "amazon";
 

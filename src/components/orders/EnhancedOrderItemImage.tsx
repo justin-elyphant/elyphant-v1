@@ -28,7 +28,7 @@ const EnhancedOrderItemImage: React.FC<EnhancedOrderItemImageProps> = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const productName = (item as any).product_name || item.name || "Product";
+  const productName = (item as any).title || (item as any).product_name || item.name || "Product";
   const cleanedName = productName.replace(/,?\s*\d+\s*(EA|ea|each|pack|ct|count|piece|pc|pcs|unit|units)\.?$/i, '').trim();
 
   useEffect(() => {

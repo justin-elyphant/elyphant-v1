@@ -238,6 +238,7 @@ serve(async (req) => {
         status_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
         case_updated: `${Deno.env.get('SUPABASE_URL')}/functions/v1/zinc-webhook`,
       },
+      max_price: Math.ceil(order.total_amount * 100 * 1.25), // Convert to cents with 25% buffer for price changes/shipping/tax
       addax_queue_timeout: 14400, // 4 hours queue timeout
       client_notes: {
         order_id: orderId,

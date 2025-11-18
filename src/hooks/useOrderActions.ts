@@ -5,70 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 export const useOrderActions = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const abortOrder = async (orderId: string, reason: string = 'User aborted') => {
+  // Note: abortOrder removed - Zinc only supports cancellation via API
+
+  const cancelOrder = async (orderId: string, reason: string = 'Admin cancelled') => {
     setIsProcessing(true);
-    toast.loading("Aborting order...", { id: `abort-${orderId}` });
+    toast.loading("Cancelling order with Zinc...", { id: `cancel-${orderId}` });
 
     try {
-      // Use the enhanced Zinc abort functionality
-      const { data, error } = await supabase.functions.invoke('zinc-order-management', {
-        body: {
-          action: 'abort_order',
-          orderId: orderId,
-          cancellationReason: reason
-        }
-      });
-
-      if (error) {
-        console.error('Order abort failed:', error);
-        toast.error(`Failed to abort order: ${error.message}`, { id: `abort-${orderId}` });
-        return false;
-      }
-
-      if (data.success) {
-        let successMessage = 'Order aborted successfully';
-        
-        if (data.operationType === 'cancel') {
-          successMessage = 'Order cancelled successfully (abort not available)';
-        } else if (data.abortMethod === 'immediate') {
-          successMessage = 'Order aborted immediately';
-        } else if (data.abortMethod === 'polled') {
-          successMessage = 'Order aborted after processing';
-        } else if (data.abortMethod === 'timeout_fallback') {
-          successMessage = 'Order cancelled (abort timed out)';
-        }
-        
-        if (data.refundInitiated) {
-          successMessage += '. Refund will be processed within 3-5 business days.';
-        }
-
-        toast.success(successMessage, { id: `abort-${orderId}` });
-        return true;
-      } else {
-        toast.error(data.error || 'Failed to abort order', { id: `abort-${orderId}` });
-        return false;
-      }
-    } catch (error) {
-      console.error('Unexpected error during abort:', error);
-      toast.error('An unexpected error occurred while aborting the order', { id: `abort-${orderId}` });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const cancelOrder = async (orderId: string, reason: string = 'User cancelled') => {
-    setIsProcessing(true);
-    toast.loading("Cancelling order...", { id: `cancel-${orderId}` });
-
-    try {
-      // Use the enhanced Zinc order management function
-      const { data, error } = await supabase.functions.invoke('zinc-order-management', {
-        body: {
-          action: 'cancel_order',
-          orderId: orderId,
-          cancellationReason: reason
-        }
+      // Use new cancel-zinc-order function for admin cancellations
+      const { data, error } = await supabase.functions.invoke('cancel-zinc-order', {
+        body: { orderId }
       });
 
       if (error) {
@@ -78,17 +24,7 @@ export const useOrderActions = () => {
       }
 
       if (data.success) {
-        let successMessage = 'Order cancelled successfully';
-        
-        if (data.refundInitiated) {
-          successMessage += '. Refund will be processed within 3-5 business days.';
-        }
-        
-        if (data.zincCancellation === 'successful') {
-          successMessage += ' The order was also cancelled with our fulfillment partner.';
-        }
-
-        toast.success(successMessage, { id: `cancel-${orderId}` });
+        toast.success(data.message || 'Cancellation request sent to Zinc', { id: `cancel-${orderId}` });
         return true;
       } else {
         toast.error(data.error || 'Failed to cancel order', { id: `cancel-${orderId}` });
@@ -169,7 +105,6 @@ export const useOrderActions = () => {
   };
 
   return {
-    abortOrder,
     cancelOrder,
     retryOrder,
     checkOrderStatus,

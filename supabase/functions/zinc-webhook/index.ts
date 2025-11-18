@@ -105,6 +105,13 @@ serve(async (req) => {
         console.log('⚠️ Unknown webhook type:', payload.type);
     }
 
+    // Handle cancellation-specific logic if this is a cancellation webhook
+    if (payload.client_notes?.cancellation_source === 'admin_trunkline') {
+      console.log('🚫 Detected cancellation webhook');
+      await handleCancellationWebhook(supabase, internalOrderId, payload);
+    }
+    }
+
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook processed' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
@@ -311,5 +318,61 @@ async function handleCaseUpdate(supabase: any, orderId: string, payload: ZincWeb
     console.error('❌ Failed to update case:', error);
   } else {
     console.log(`✅ Case update recorded for order ${orderId}`);
+  }
+}
+
+async function handleCancellationWebhook(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+  /**
+   * Handles cancellation-specific webhook responses from Zinc.
+   * Updates order status based on success/failure of cancellation.
+   */
+  
+  if (payload.type === 'request_succeeded') {
+    console.log('✅ Cancellation succeeded for order:', orderId);
+    
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'cancelled',
+        notes: {
+          cancellation_confirmed_at: new Date().toISOString(),
+          zinc_cancellation_status: 'succeeded',
+        }
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Failed to update cancelled order:', error);
+    }
+    
+  } else if (payload.type === 'request_failed') {
+    console.log('❌ Cancellation failed for order:', orderId);
+    
+    // Get current order to preserve existing data
+    const { data: order } = await supabase
+      .from('orders')
+      .select('notes, status')
+      .eq('id', orderId)
+      .single();
+    
+    const currentNotes = order?.notes || {};
+    
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'processing', // Revert to processing since cancellation failed
+        notes: {
+          ...currentNotes,
+          cancellation_failed_at: new Date().toISOString(),
+          zinc_cancellation_status: 'failed',
+          cancellation_error: payload.error?.message || 'Cancellation attempt failed',
+          cancellation_error_code: payload.error?.code,
+        }
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Failed to update failed cancellation:', error);
+    }
   }
 }

@@ -33,7 +33,6 @@ const files = [
   'send-welcome-wishlist/index.ts',
   'shared/zmaErrorClassification.ts',
   'sms-giftee-discovery/index.ts',
-  'stripe-webhook/index.ts',
   'test-cors/index.ts',
   'test-email-system/index.ts',
   'test-google-places/index.ts',
@@ -47,8 +46,7 @@ const files = [
   'verify-payment-intent/index.ts',
   'zinc-order-management/index.ts',
   'zinc-order-management/abortHelpers.ts',
-  'zinc-search/index.ts',
-  'zinc-webhook-handler/index.ts'
+  'zinc-search/index.ts'
 ];
 
 // This list tracks which files need @ts-nocheck added to suppress type errors

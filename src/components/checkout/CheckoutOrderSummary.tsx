@@ -57,7 +57,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
             <div key={item.product.id} className="flex items-center gap-3 w-full">
               <CartItemImage item={item} size="sm" className="flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm break-words">{item.product.name}</p>
+                <p className="font-medium text-sm break-words line-clamp-2">{item.product.name}</p>
                 {item.variationText && (
                   <p className="text-xs text-muted-foreground break-words">{item.variationText}</p>
                 )}

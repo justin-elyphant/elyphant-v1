@@ -19,19 +19,40 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
-    // Find orders in processing status
-    const { data: processingOrders, error: fetchError } = await supabase
+    // Query 1: Existing logic - orders with zinc_order_id (webhook received)
+    const { data: processingOrders, error: fetchError1 } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'processing')
       .not('zinc_order_id', 'is', null)
       .order('created_at', { ascending: true });
 
-    if (fetchError) {
-      throw fetchError;
+    if (fetchError1) {
+      throw fetchError1;
     }
 
-    console.log(`📦 Monitoring ${processingOrders?.length || 0} orders`);
+    // Query 2: NEW - orders missing webhooks (zinc_request_id exists but no zinc_order_id)
+    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    
+    const { data: webhookTimeoutOrders, error: fetchError2 } = await supabase
+      .from('orders')
+      .select('*')
+      .not('zinc_request_id', 'is', null)
+      .is('zinc_order_id', null)
+      .gte('created_at', fourHoursAgo)
+      .or(`last_polling_check_at.is.null,last_polling_check_at.lt.${fifteenMinutesAgo}`);
+
+    if (fetchError2) {
+      console.warn('⚠️ Error fetching webhook-timeout orders:', fetchError2);
+    }
+
+    const allOrders = [
+      ...(processingOrders || []),
+      ...(webhookTimeoutOrders || [])
+    ];
+
+    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing orders + ${webhookTimeoutOrders?.length || 0} webhook-timeout orders`);
 
     const results = {
       updated: [] as string[],
@@ -39,13 +60,17 @@ serve(async (req) => {
       failed: [] as { orderId: string; error: string }[],
     };
 
-    for (const order of processingOrders || []) {
+    for (const order of allOrders) {
       try {
-        console.log(`🔍 Checking Zinc status for order: ${order.id}`);
+        // Use zinc_request_id if zinc_order_id is missing (webhook timeout case)
+        const zincIdentifier = order.zinc_order_id || order.zinc_request_id;
+        const isWebhookTimeout = !order.zinc_order_id && order.zinc_request_id;
+
+        console.log(`🔍 Checking Zinc status for order: ${order.id} (${zincIdentifier}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
 
         // Check Zinc API for order status
         const zincResponse = await fetch(
-          `https://api.zinc.io/v1/orders/${order.zinc_order_id}`,
+          `https://api.zinc.io/v1/orders/${zincIdentifier}`,
           {
             headers: {
               'Authorization': `Basic ${btoa(Deno.env.get('ZINC_API_KEY') + ':')}`,
@@ -53,8 +78,18 @@ serve(async (req) => {
           }
         );
 
+        // Update last_polling_check_at regardless of response
+        await supabase
+          .from('orders')
+          .update({ last_polling_check_at: new Date().toISOString() })
+          .eq('id', order.id);
+
         if (!zincResponse.ok) {
-          console.warn(`⚠️ Failed to fetch Zinc status for ${order.zinc_order_id}`);
+          if (zincResponse.status === 404 && isWebhookTimeout) {
+            console.log(`⏳ Order ${order.id} still in Zinc queue (request_id: ${order.zinc_request_id})`);
+            continue;
+          }
+          console.warn(`⚠️ Failed to fetch Zinc status for ${zincIdentifier}: ${zincResponse.status}`);
           continue;
         }
 
@@ -64,6 +99,20 @@ serve(async (req) => {
         const updates: any = {
           updated_at: new Date().toISOString(),
         };
+
+        // NEW: If we found the order via polling (webhook timeout), populate zinc_order_id
+        if (isWebhookTimeout && zincData.merchant_order_id) {
+          console.log(`🔄 WEBHOOK TIMEOUT RECOVERY: Found order via polling for ${order.id}`);
+          updates.zinc_order_id = zincData.merchant_order_id;
+          updates.webhook_received_at = null; // Indicate this was caught by polling, not webhook
+          
+          // Add metadata about recovery method
+          updates.notes = order.notes 
+            ? `${order.notes} | Recovered via polling (webhook timeout)` 
+            : 'Recovered via polling (webhook timeout)';
+          
+          results.updated.push(order.id);
+        }
 
         if (zincData.code === 'order_placed') {
           updates.status = 'shipped';

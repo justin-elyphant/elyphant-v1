@@ -1,53 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CATEGORIES = [
-  "electronics", "flowers", "fashion", "pets", "home", "beauty", 
-  "sports", "athleisure", "books", "toys", "food", "arts", 
-  "health", "baby", "jewelry", "kitchen", "tech", "music", 
-  "gaming", "wedding", "best-selling", "gifts", "bags-purses", "outdoor"
-];
+// ⚠️ NIKE-ONLY TEST MODE - Full seed commented out for testing
+// const CATEGORIES = [
+//   "electronics", "flowers", "fashion", "pets", "home", "beauty", 
+//   "sports", "athleisure", "books", "toys", "food", "arts", 
+//   "health", "baby", "jewelry", "kitchen", "tech", "music", 
+//   "gaming", "wedding", "best-selling", "gifts", "bags-purses", "outdoor"
+// ];
 
-const BRANDS = [
-  // Original 5
-  "apple", "samsung", "nike", "adidas", "sony", "madein", "lego",
-  // Gaming (3)
-  "playstation", "xbox", "nintendo",
-  // Fashion (6)
-  "lululemon", "vuori", "patagonia", "the north face", "under armour", "columbia",
-  // Home Goods (4)
-  "le creuset", "kitchenaid", "cuisinart", "all-clad"
-];
+const CATEGORIES: string[] = []; // Skip categories for Nike test
 
-// Brand-specific related products for Nicole AI Layer 1
+// Nike-only test (6 searches × $0.01 = $0.06 for ~600 products)
+const BRANDS = ["nike"];
+
+// Nike-only related products
 const BRAND_RELATIONS: Record<string, string[]> = {
-  // Original 5
-  "apple": ["airpods", "apple watch", "iphone case", "magsafe charger", "apple pencil"],
-  "samsung": ["samsung charger", "samsung case", "samsung earbuds", "galaxy watch", "samsung buds"],
-  "nike": ["nike socks", "nike bag", "nike water bottle", "nike headband", "nike shorts"],
-  "adidas": ["adidas socks", "adidas bag", "adidas water bottle", "adidas shorts", "adidas hat"],
-  "sony": ["sony headphones", "sony controller", "sony camera lens", "sony memory card", "playstation games"],
-  "madein": ["carbon steel pan", "stainless steel cookware", "kitchen knife", "cutting board", "dutch oven"],
-  "lego": ["lego storage", "lego baseplate", "lego minifigures", "lego instructions book", "lego organizer"],
-  
-  // Gaming (3)
-  "playstation": ["ps5 controller", "ps5 headset", "ps5 games", "playstation plus", "ps5 storage"],
-  "xbox": ["xbox controller", "xbox headset", "xbox games", "xbox game pass", "xbox storage"],
-  "nintendo": ["nintendo switch games", "switch controller", "switch case", "switch screen protector", "animal crossing"],
-  
-  // Fashion (6)
-  "lululemon": ["lululemon leggings", "lululemon sports bra", "lululemon yoga mat", "lululemon belt bag", "lululemon shorts"],
-  "vuori": ["vuori joggers", "vuori shorts", "vuori hoodie", "vuori performance shirt", "vuori jacket"],
-  "patagonia": ["patagonia fleece", "patagonia backpack", "patagonia jacket", "patagonia vest", "patagonia hat"],
-  "the north face": ["north face jacket", "north face backpack", "north face fleece", "north face boots", "north face tent"],
-  "under armour": ["under armour shoes", "under armour shirt", "under armour shorts", "under armour backpack", "under armour socks"],
-  "columbia": ["columbia jacket", "columbia fleece", "columbia boots", "columbia backpack", "columbia hat"],
-  
-  // Home Goods (4)
-  "le creuset": ["le creuset dutch oven", "le creuset skillet", "le creuset baking dish", "le creuset pot", "le creuset utensils"],
-  "kitchenaid": ["kitchenaid mixer", "kitchenaid attachments", "kitchenaid blender", "kitchenaid food processor", "kitchenaid bowls"],
-  "cuisinart": ["cuisinart food processor", "cuisinart blender", "cuisinart knife set", "cuisinart pans", "cuisinart coffee maker"],
-  "all-clad": ["all-clad skillet", "all-clad cookware set", "all-clad sauce pan", "all-clad stockpot", "all-clad utensils"]
+  "nike": ["nike socks", "nike bag", "nike water bottle", "nike headband", "nike shorts"]
 };
 
 const corsHeaders = {
@@ -156,14 +125,16 @@ serve(async (req) => {
       }
     };
 
-    // 1. Seed categories (24 categories × 100 products = 2,400 products, $0.24)
-    console.log("📦 Phase 1: Seeding categories...");
-    for (const category of CATEGORIES) {
-      const query = `best selling ${category}`;
-      const count = await fetchAndStoreProducts(query, { type: 'category', value: category });
-      seedResults.categories[category] = count;
-      seedResults.totalProducts += count;
-      seedResults.totalCost += 0.01;
+    // 1. Seed categories (SKIPPED FOR NIKE TEST)
+    console.log("📦 Phase 1: Skipping categories for Nike-only test...");
+    if (CATEGORIES.length > 0) {
+      for (const category of CATEGORIES) {
+        const query = `best selling ${category}`;
+        const count = await fetchAndStoreProducts(query, { type: 'category', value: category });
+        seedResults.categories[category] = count;
+        seedResults.totalProducts += count;
+        seedResults.totalCost += 0.01;
+      }
     }
 
     // 2. Seed brands (20 brands × 100 products = 2,000 products, $0.20)

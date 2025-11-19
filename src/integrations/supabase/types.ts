@@ -2959,6 +2959,7 @@ export type Database = {
           gift_options: Json | null
           id: string
           is_auto_gift: boolean | null
+          last_polling_check_at: string | null
           line_items: Json | null
           notes: string | null
           order_number: string
@@ -2972,6 +2973,7 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
+          webhook_received_at: string | null
           zinc_order_id: string | null
           zinc_request_id: string | null
         }
@@ -2986,6 +2988,7 @@ export type Database = {
           gift_options?: Json | null
           id?: string
           is_auto_gift?: boolean | null
+          last_polling_check_at?: string | null
           line_items?: Json | null
           notes?: string | null
           order_number: string
@@ -2999,6 +3002,7 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          webhook_received_at?: string | null
           zinc_order_id?: string | null
           zinc_request_id?: string | null
         }
@@ -3013,6 +3017,7 @@ export type Database = {
           gift_options?: Json | null
           id?: string
           is_auto_gift?: boolean | null
+          last_polling_check_at?: string | null
           line_items?: Json | null
           notes?: string | null
           order_number?: string
@@ -3026,6 +3031,7 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          webhook_received_at?: string | null
           zinc_order_id?: string | null
           zinc_request_id?: string | null
         }

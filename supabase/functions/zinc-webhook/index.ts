@@ -58,7 +58,27 @@ serve(async (req) => {
       internalOrderId = order?.id;
     }
 
-    // 📊 DATABASE LOGGING: Log webhook receipt immediately
+    // 🔒 IDEMPOTENCY CHECK: Prevent duplicate processing
+    const { data: existingLog, error: checkError } = await supabase
+      .from('webhook_delivery_log')
+      .select('id, delivery_status')
+      .eq('event_id', payload.request_id)
+      .eq('event_type', isTestMode ? `test_${payload.type}` : payload.type)
+      .maybeSingle();
+
+    if (existingLog && existingLog.delivery_status === 'completed') {
+      console.log(`⚠️ Duplicate webhook detected: ${payload.type} for ${payload.request_id} - already processed`);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Already processed',
+          original_log_id: existingLog.id 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // 📊 DATABASE LOGGING: Log webhook receipt (idempotent)
     const logEntry = {
       event_type: isTestMode ? `test_${payload.type}` : payload.type,
       event_id: payload.request_id,
@@ -68,7 +88,20 @@ serve(async (req) => {
       created_at: new Date().toISOString(),
     };
 
-    await supabase.from('webhook_delivery_log').insert(logEntry);
+    const { error: logError } = await supabase
+      .from('webhook_delivery_log')
+      .upsert(
+        logEntry,
+        { 
+          onConflict: 'event_id,event_type',
+          ignoreDuplicates: false
+        }
+      );
+
+    if (logError) {
+      console.error('❌ Failed to log webhook:', logError);
+      // Continue processing even if logging fails
+    }
     
     console.log(`📊 Webhook logged to database: ${payload.type} for order ${internalOrderId || 'unknown'}`);
     
@@ -159,6 +192,14 @@ serve(async (req) => {
       })
       .eq('event_id', payload.request_id)
       .eq('event_type', payload.type);
+
+    // ✅ Mark webhook as successfully received in orders table
+    await supabase
+      .from('orders')
+      .update({ 
+        webhook_received_at: new Date().toISOString() 
+      })
+      .eq('id', internalOrderId);
 
     console.log(`✅ Webhook processing completed and logged for order ${internalOrderId}`);
 

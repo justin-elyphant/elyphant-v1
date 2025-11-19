@@ -95,6 +95,9 @@ verify_jwt = false
 [functions.validate-payment-methods]
 verify_jwt = false
 
+[functions.seed-product-catalog]
+verify_jwt = false
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

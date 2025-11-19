@@ -49,11 +49,7 @@ export const useScheduledGifts = () => {
             scheduled_delivery_date,
             created_at,
             updated_at,
-            order_items (
-              id,
-              product_name,
-              product_image
-            )
+            line_items
           `)
           .eq('user_id', user.id)
           .or('scheduled_delivery_date.not.is.null,status.in.(scheduled,processing,shipped)')
@@ -108,8 +104,9 @@ export const useScheduledGifts = () => {
             recipientEmail = rule.pending_recipient_email || recipientEmail;
           }
 
-          // Process each order item as a separate scheduled gift
-          order.order_items?.forEach(item => {
+          // Process each item in line_items JSONB as a separate scheduled gift
+          const lineItems = (order.line_items as any) || [];
+          lineItems.forEach((item: any) => {
             // Map order status to gift status
             let giftStatus: ScheduledGift['status'] = 'scheduled';
             switch (order.status) {

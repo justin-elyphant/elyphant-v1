@@ -105,21 +105,10 @@ const EmailTemplatesManager = () => {
     setSelectedTemplate(template);
     setShowPreview(true);
     
-    // Fetch the rendered HTML from the template renderer
-    try {
-      const { data, error } = await supabase.functions.invoke('render-email-template', {
-        body: { template_type: template.template_type }
-      });
-
-      if (error) throw error;
-      
-      if (data?.html) {
-        setSelectedTemplate({ ...template, html_template: data.html });
-      }
-    } catch (error: any) {
-      console.error('Error rendering template preview:', error);
-      // Fall back to stored HTML if rendering fails
-    }
+    // TODO: Email templates are now managed via ecommerce-email-orchestrator
+    // The render-email-template edge function no longer exists (removed during cleanup)
+    // Template preview shows the raw HTML stored in email_templates table
+    // For live template rendering with variables, use the TestEmailModal
   };
 
   const handleTestTemplate = (template: EmailTemplate) => {

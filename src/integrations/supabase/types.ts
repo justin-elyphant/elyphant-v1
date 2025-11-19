@@ -3431,6 +3431,66 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          brand: string | null
+          category: string | null
+          conversion_rate: number | null
+          created_at: string | null
+          freshness_score: number | null
+          id: string
+          image_url: string | null
+          last_refreshed_at: string | null
+          metadata: Json | null
+          price: number | null
+          product_id: string
+          purchase_count: number | null
+          retailer: string | null
+          search_terms: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          freshness_score?: number | null
+          id?: string
+          image_url?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          price?: number | null
+          product_id: string
+          purchase_count?: number | null
+          retailer?: string | null
+          search_terms?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          freshness_score?: number | null
+          id?: string
+          image_url?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          price?: number | null
+          product_id?: string
+          purchase_count?: number | null
+          retailer?: string | null
+          search_terms?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       profile_completion_analytics: {
         Row: {
           completion_score: number
@@ -3865,6 +3925,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      search_trends: {
+        Row: {
+          conversion_count: number | null
+          created_at: string | null
+          id: string
+          last_searched_at: string | null
+          search_count: number | null
+          search_query: string
+        }
+        Insert: {
+          conversion_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_searched_at?: string | null
+          search_count?: number | null
+          search_query: string
+        }
+        Update: {
+          conversion_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_searched_at?: string | null
+          search_count?: number | null
+          search_query?: string
+        }
+        Relationships: []
       }
       security_anomalies: {
         Row: {
@@ -5292,6 +5379,7 @@ export type Database = {
         }
         Returns: Json
       }
+      decay_product_freshness: { Args: never; Returns: undefined }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
       detect_abandoned_carts: { Args: never; Returns: undefined }
       emergency_security_verification: { Args: never; Returns: Json }
@@ -5321,6 +5409,17 @@ export type Database = {
       get_full_shipping_address_for_gifting: {
         Args: { target_user_id: string }
         Returns: Json
+      }
+      get_high_converting_products: {
+        Args: { p_category?: string; p_limit?: number }
+        Returns: {
+          brand: string
+          conversion_rate: number
+          image_url: string
+          price: number
+          product_id: string
+          title: string
+        }[]
       }
       get_masked_location: { Args: { target_user_id: string }; Returns: Json }
       get_nudge_summary: {

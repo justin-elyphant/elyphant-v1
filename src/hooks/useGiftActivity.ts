@@ -94,9 +94,7 @@ export const useGiftActivity = () => {
             status,
             total_amount,
             created_at,
-            order_items!inner(
-              product_name
-            )
+            line_items
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -204,7 +202,9 @@ export const useGiftActivity = () => {
 
           const recipientName = 'Recipient';
 
-          const productName = order.order_items?.[0]?.product_name || 'Unknown Product';
+          // Extract product name from line_items JSONB
+          const lineItems = order.line_items as any;
+          const productName = lineItems?.[0]?.title || lineItems?.[0]?.name || 'Unknown Product';
 
           let status: GiftActivity['status'] = 'success';
           switch (order.status) {

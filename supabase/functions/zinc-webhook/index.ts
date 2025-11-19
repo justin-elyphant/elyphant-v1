@@ -35,8 +35,54 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Manual test endpoint for debugging
+  const url = new URL(req.url);
+  const isTestMode = url.searchParams.get('test') === 'true';
+
   try {
     const payload: ZincWebhookPayload = await req.json();
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    );
+
+    // Extract internal order ID early for logging
+    let internalOrderId = payload.client_notes?.order_id;
+    if (!internalOrderId) {
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('zinc_request_id', payload.request_id)
+        .single();
+      internalOrderId = order?.id;
+    }
+
+    // 📊 DATABASE LOGGING: Log webhook receipt immediately
+    const logEntry = {
+      event_type: isTestMode ? `test_${payload.type}` : payload.type,
+      event_id: payload.request_id,
+      order_id: internalOrderId || null,
+      delivery_status: 'received',
+      metadata: payload,
+      created_at: new Date().toISOString(),
+    };
+
+    await supabase.from('webhook_delivery_log').insert(logEntry);
+    
+    console.log(`📊 Webhook logged to database: ${payload.type} for order ${internalOrderId || 'unknown'}`);
+    
+    if (isTestMode) {
+      console.log('🧪 TEST MODE: Webhook received and logged, skipping processing');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Test webhook logged successfully',
+          logged_entry: logEntry 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
     
     console.log('🔔 Zinc webhook received:', {
       type: payload.type,
@@ -44,27 +90,20 @@ serve(async (req) => {
       order_id: payload.order_id,
     });
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    );
-
-    // Extract our internal order ID from client_notes or find by zinc_request_id
-    let internalOrderId = payload.client_notes?.order_id;
-    
-    if (!internalOrderId) {
-      // Fallback: lookup by zinc_request_id
-      const { data: order } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('zinc_request_id', payload.request_id)
-        .single();
-      
-      internalOrderId = order?.id;
-    }
-
     if (!internalOrderId) {
       console.error('❌ Could not find order for request_id:', payload.request_id);
+      
+      // Log failure to database
+      await supabase.from('webhook_delivery_log').insert({
+        event_type: payload.type,
+        event_id: payload.request_id,
+        order_id: null,
+        delivery_status: 'failed',
+        error_message: 'Order not found',
+        metadata: payload,
+        created_at: new Date().toISOString(),
+      });
+      
       return new Response(
         JSON.stringify({ error: 'Order not found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
@@ -111,13 +150,48 @@ serve(async (req) => {
       await handleCancellationWebhook(supabase, internalOrderId, payload);
     }
 
+    // 📊 DATABASE LOGGING: Mark webhook as completed
+    await supabase
+      .from('webhook_delivery_log')
+      .update({ 
+        delivery_status: 'completed',
+        updated_at: new Date().toISOString() 
+      })
+      .eq('event_id', payload.request_id)
+      .eq('event_type', payload.type);
+
+    console.log(`✅ Webhook processing completed and logged for order ${internalOrderId}`);
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Webhook processed' }),
+      JSON.stringify({ success: true, message: 'Webhook processed and logged' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error: any) {
     console.error('❌ Zinc webhook error:', error.message);
+    
+    // 📊 DATABASE LOGGING: Log error
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      );
+      
+      const payload: ZincWebhookPayload = await req.json();
+      
+      await supabase.from('webhook_delivery_log').insert({
+        event_type: payload.type || 'unknown',
+        event_id: payload.request_id || 'unknown',
+        order_id: null,
+        delivery_status: 'failed',
+        error_message: error.message,
+        metadata: payload || {},
+        created_at: new Date().toISOString(),
+      });
+    } catch (logError) {
+      console.error('Failed to log error to database:', logError);
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

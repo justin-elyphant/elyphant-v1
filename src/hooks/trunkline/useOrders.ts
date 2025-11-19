@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
 type Order = Database['public']['Tables']['orders']['Row'] & {
-  order_items?: Database['public']['Tables']['order_items']['Row'][];
   profiles?: {
     name: string | null;
     email: string | null;
@@ -34,10 +33,7 @@ export const useOrders = () => {
 
       let query = supabase
         .from('orders')
-        .select(`
-          *,
-          order_items(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       // Apply filters

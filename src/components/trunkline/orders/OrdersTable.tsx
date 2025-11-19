@@ -206,7 +206,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                     <div className="flex items-center gap-1">
                       <Package className="h-3 w-3 text-slate-400" />
                       <span className="text-sm">
-                        {order.order_items?.length || 0} items
+                        {((order as any).line_items as any[])?.length || 0} items
                       </span>
                     </div>
                   </TableCell>

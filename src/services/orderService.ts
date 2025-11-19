@@ -231,50 +231,16 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 
   console.log('Order created successfully:', order.id);
 
+  // LEGACY CODE - DO NOT USE
+  // This order_items table insertion is DEPRECATED as of 2025-11-19
+  // Orders created by stripe-webhook-v2 store line items in orders.line_items JSONB column
+  // This code path is only used by legacy manual checkout (if any) and should be removed
+  // once all checkout flows use Stripe Checkout Sessions
+  
+  /*
   // CRITICAL: Create order items with enhanced validation and error handling
   const orderItems = orderData.cartItems.map(item => {
-    const recipientAssignment = item.recipientAssignment;
-    
-    // Enhanced validation for order item data
-    const productName = item.product.name || item.product.title || 'Unknown Product';
-    const productId = item.product.product_id || item.product.id || `temp_${Date.now()}`;
-    const unitPrice = Number(item.product.price) || 0;
-    const quantity = Number(item.quantity) || 1;
-    
-    // CRITICAL: Sanitize recipient data to handle "self" assignments and validate UUIDs
-    const sanitizedRecipientData = sanitizeRecipientData(
-      recipientAssignment?.connectionId,
-      recipientAssignment?.deliveryGroupId
-    );
-    
-    console.log('Creating order item:', {
-      product_id: productId,
-      product_name: productName,
-      unit_price: unitPrice,
-      quantity: quantity,
-      total_price: unitPrice * quantity,
-      original_connectionId: recipientAssignment?.connectionId,
-      sanitized_connectionId: sanitizedRecipientData.connectionId,
-      original_deliveryGroupId: recipientAssignment?.deliveryGroupId,
-      sanitized_deliveryGroupId: sanitizedRecipientData.deliveryGroupId
-    });
-    
-    return {
-      order_id: order.id,
-      product_id: productId,
-      product_name: productName,
-      product_image: item.product.image || null,
-      vendor: item.product.vendor || null,
-      quantity: quantity,
-      unit_price: unitPrice,
-      total_price: unitPrice * quantity,
-      recipient_connection_id: sanitizedRecipientData.connectionId,
-      delivery_group_id: sanitizedRecipientData.deliveryGroupId,
-      recipient_gift_message: recipientAssignment?.giftMessage || orderData.giftOptions?.giftMessage || null,
-      scheduled_delivery_date: recipientAssignment?.scheduledDeliveryDate || null,
-      variation_text: item.variationText || null,
-      selected_variations: item.selectedVariations ? JSON.parse(item.selectedVariations) : null
-    };
+...
   });
 
   console.log('Inserting order items:', orderItems);
@@ -290,6 +256,7 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
   }
 
   console.log('Order items created successfully:', createdItems.length);
+  */
 
   // CRITICAL: Save shipping address to user's address book
   try {
@@ -318,9 +285,8 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
       : (order as any).shipping_info,
     delivery_groups: Array.isArray((order as any).delivery_groups)
       ? (order as any).delivery_groups
-      : ((typeof (order as any).delivery_groups === 'string' && (order as any).delivery_groups ? JSON.parse((order as any).delivery_groups) : (order as any).delivery_groups)),
-    order_items: createdItems
-} as unknown as Order;
+      : ((typeof (order as any).delivery_groups === 'string' && (order as any).delivery_groups ? JSON.parse((order as any).delivery_groups) : (order as any).delivery_groups))
+  } as unknown as Order;
 };
 
 /*

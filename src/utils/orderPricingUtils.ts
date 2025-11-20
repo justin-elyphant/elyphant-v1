@@ -21,12 +21,28 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
   // Extract pricing from line_items JSONB if available
   const lineItems = order.line_items || {};
   
-  // Check for shipping and tax in line_items (which stores values in cents from Stripe/Zinc)
+  // Check for pricing breakdown in line_items (stored in cents from Stripe/Zinc)
+  // New format: { items: [...], subtotal: 999, shipping: 699, tax: 148, gifting_fee: 259 }
+  // Legacy format: just an array of items
   const shippingFromLineItems = lineItems.shipping ? lineItems.shipping / 100 : null;
   const taxFromLineItems = lineItems.tax ? lineItems.tax / 100 : null;
   const subtotalFromLineItems = lineItems.subtotal ? lineItems.subtotal / 100 : null;
+  const giftingFeeFromLineItems = lineItems.gifting_fee ? lineItems.gifting_fee / 100 : null;
   
-  // For new orders with complete pricing data
+  // For new orders with complete pricing data from line_items JSONB
+  if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {
+    return {
+      subtotal: subtotalFromLineItems,
+      shipping_cost: shippingFromLineItems || 0,
+      tax_amount: taxFromLineItems || 0,
+      gifting_fee: giftingFeeFromLineItems,
+      gifting_fee_name: 'Elyphant Gifting Fee',
+      gifting_fee_description: 'Platform service fee',
+      total: order.total || order.total_amount
+    };
+  }
+  
+  // For orders with explicit columns (legacy format)
   if (order.subtotal !== undefined && order.gifting_fee !== undefined) {
     return {
       subtotal: order.subtotal,

@@ -277,16 +277,37 @@ async function handleCheckoutSessionCompleted(
   const lineItemsResponse = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 });
   
   // Extract line items and fetch product metadata to get Amazon ASINs
+  // Capture pricing components from Stripe line items BEFORE filtering
+  let shippingAmount = 0;
+  let taxAmount = 0;
+  let giftingFeeAmount = 0;
+  let subtotalAmount = 0;
+  
   const lineItemsWithMetadata = await Promise.all(
     lineItemsResponse.data.map(async (item: any) => {
       const stripeProductId = item.price?.product;
-      
-      // Skip non-product items (Shipping, Tax, Gifting Fee)
       const description = item.description || '';
-      if (description === 'Shipping' || description === 'Tax' || description.includes('Gifting Fee')) {
-        console.log(`⏭️  Skipping non-product item: ${description}`);
+      const itemAmount = item.amount_total || 0; // Amount in cents
+      
+      // Capture non-product pricing items BEFORE skipping them
+      if (description === 'Shipping') {
+        shippingAmount = itemAmount;
+        console.log(`💰 Captured Shipping: $${(itemAmount / 100).toFixed(2)} (${itemAmount} cents)`);
         return null;
       }
+      if (description === 'Tax') {
+        taxAmount = itemAmount;
+        console.log(`💰 Captured Tax: $${(itemAmount / 100).toFixed(2)} (${itemAmount} cents)`);
+        return null;
+      }
+      if (description.includes('Gifting Fee')) {
+        giftingFeeAmount = itemAmount;
+        console.log(`💰 Captured Gifting Fee: $${(itemAmount / 100).toFixed(2)} (${itemAmount} cents)`);
+        return null;
+      }
+      
+      // This is a product item - accumulate subtotal
+      subtotalAmount += itemAmount;
       
       // Fetch product to get metadata containing Amazon ASIN and gift message
       let amazonAsin = 'unknown';
@@ -331,6 +352,7 @@ async function handleCheckoutSessionCompleted(
   const lineItems = lineItemsWithMetadata.filter((item): item is NonNullable<typeof item> => item !== null);
   
   console.log(`✅ [STEP 4] Found ${lineItems.length} product line items (filtered out fees/shipping/tax)`);
+  console.log(`💰 Pricing breakdown - Subtotal: $${(subtotalAmount / 100).toFixed(2)}, Shipping: $${(shippingAmount / 100).toFixed(2)}, Tax: $${(taxAmount / 100).toFixed(2)}, Gifting Fee: $${(giftingFeeAmount / 100).toFixed(2)}`);
 
   if (lineItems.length === 0) {
     console.error('❌ No line items found in checkout session');
@@ -356,7 +378,13 @@ async function handleCheckoutSessionCompleted(
       payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
       total_amount: session.amount_total ? session.amount_total / 100 : 0,
       currency: session.currency || 'usd',
-      line_items: group.items,
+      line_items: {
+        items: group.items,
+        subtotal: subtotalAmount,
+        shipping: shippingAmount,
+        tax: taxAmount,
+        gifting_fee: giftingFeeAmount
+      },
       shipping_address: group.shippingAddress,
       gift_options: {
         isGift: !!group.giftMessage || isAutoGift,
@@ -444,6 +472,13 @@ async function handleCheckoutSessionCompleted(
       
       console.log(`💾 [STEP 6.${i + 2}] Creating child order ${groupLabel} for recipient: ${group.recipientName || 'Self'}...`);
       
+      // Calculate proportional pricing for this group
+      const groupSubtotal = group.items.reduce((sum, item) => sum + (item.unit_price * item.quantity * 100), 0);
+      const groupProportion = subtotalAmount > 0 ? groupSubtotal / subtotalAmount : 1;
+      const groupShipping = Math.round(shippingAmount * groupProportion);
+      const groupTax = Math.round(taxAmount * groupProportion);
+      const groupGiftingFee = Math.round(giftingFeeAmount * groupProportion);
+      
       const childOrderData = {
         user_id: userId,
         checkout_session_id: sessionId,
@@ -454,7 +489,13 @@ async function handleCheckoutSessionCompleted(
         payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
         total_amount: calculateGroupTotal(group.items),
         currency: session.currency || 'usd',
-        line_items: group.items,
+        line_items: {
+          items: group.items,
+          subtotal: groupSubtotal,
+          shipping: groupShipping,
+          tax: groupTax,
+          gifting_fee: groupGiftingFee
+        },
         shipping_address: group.shippingAddress,
         gift_options: {
           isGift: !!group.giftMessage || isAutoGift,

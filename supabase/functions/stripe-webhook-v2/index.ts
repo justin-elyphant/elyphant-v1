@@ -600,14 +600,7 @@ async function triggerEmailOrchestrator(
       body: {
         eventType: 'order_confirmation',
         recipientEmail: recipientEmail,
-        data: {
-          order_id: orderId,
-          checkout_session_id: session.id,
-          amount: session.amount_total ? session.amount_total / 100 : 0,
-          currency: session.currency || 'usd',
-          line_items: lineItems,
-          customer_name: session.customer_details?.name || recipientEmail,
-        }
+        orderId: orderId // Let orchestrator fetch complete order details from DB
       }
     });
     

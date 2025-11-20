@@ -12,6 +12,7 @@ import { useProfile } from '@/contexts/profile/ProfileContext';
 import QuickEditModal from './QuickEditModal';
 import AddressVerificationBadge from '@/components/ui/AddressVerificationBadge';
 import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
+import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 
 interface CheckoutShippingReviewProps {
   shippingCost: number | null;
@@ -92,7 +93,12 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/cart')}
+              onClick={async () => {
+                // CRITICAL: Flush pending cart saves before navigation
+                console.log('🔄 [CheckoutShippingReview] Flushing cart before Edit in Cart navigation');
+                await unifiedPaymentService.flushPendingSaves();
+                navigate('/cart');
+              }}
               className="flex items-center gap-1"
             >
               <Edit className="h-4 w-4" />
@@ -115,7 +121,12 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               <Button 
                 variant="link" 
                 className="p-0 h-auto text-destructive underline"
-                onClick={() => navigate('/cart')}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  console.log('🔄 [CheckoutShippingReview] Flushing cart before incomplete alert navigation');
+                  await unifiedPaymentService.flushPendingSaves();
+                  navigate('/cart');
+                }}
               >
                 return to cart
               </Button>
@@ -234,6 +245,27 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                           <MessageSquare className="h-3 w-3" />
                         </Button>
                       </QuickEditModal>
+                    </div>
+                  </div>
+                )}
+
+                {group.scheduledDeliveryDate && (
+                  <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <p className="text-xs text-green-600 font-medium mb-1">Scheduled Delivery:</p>
+                        <p className="text-sm text-green-800 font-medium">
+                          {new Date(group.scheduledDeliveryDate).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-xs text-green-600 mt-1 italic">
+                          📅 Will be processed 4 days before delivery date to ensure on-time arrival
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

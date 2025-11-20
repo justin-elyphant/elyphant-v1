@@ -28,7 +28,6 @@ import OrderTimeline from "@/components/orders/OrderTimeline";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
 import { format } from "date-fns";
-import { OrderBackfillButton } from "@/components/admin/OrderBackfillButton";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
@@ -259,7 +258,6 @@ const OrderDetail = () => {
         </div>
         {/* Message Vendor functionality removed per user request */}
         <div className="hidden md:flex gap-2">
-          <OrderBackfillButton orderId={order.id} />
           {order.status === "shipped" && (
             <Button onClick={handleTrackPackage}>
               <MapPin className="h-4 w-4 mr-2" />

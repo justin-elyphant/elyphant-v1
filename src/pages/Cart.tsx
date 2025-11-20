@@ -25,6 +25,7 @@ import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 
 const Cart = () => {
   const { user } = useAuth();
@@ -54,7 +55,7 @@ const Cart = () => {
   // Legacy cart session tracking removed - checkout sessions handle this now
   // useCartSessionTracking(...)
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
       toast.error("Please sign in to continue with checkout");
       navigate("/signin");
@@ -100,6 +101,10 @@ const Cart = () => {
       console.info(`[Cart] Proceeding to checkout with incomplete addresses for: ${names}`);
       // Addresses can be completed inline on the checkout page; suppressing toast to avoid persistence across navigation
     }
+    
+    // CRITICAL: Flush any pending cart saves before navigation
+    console.log('🔄 [Cart] Flushing pending cart saves before checkout navigation');
+    await unifiedPaymentService.flushPendingSaves();
     
     navigate("/checkout");
   };

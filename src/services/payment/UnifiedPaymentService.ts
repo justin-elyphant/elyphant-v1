@@ -353,6 +353,36 @@ class UnifiedPaymentService {
   }
 
   /**
+   * Flush any pending debounced saves immediately
+   * Call this before navigation to ensure all cart changes are persisted
+   */
+  public async flushPendingSaves(): Promise<void> {
+    // Clear the debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
+    // Immediately save to localStorage
+    try {
+      const cartDataWithExpiry = {
+        items: this.cartItems,
+        expiresAt: Date.now() + (this.GUEST_CART_EXPIRATION_DAYS * 24 * 60 * 60 * 1000),
+        version: this.CART_VERSION
+      };
+      
+      localStorage.setItem(this.cartKey, JSON.stringify(cartDataWithExpiry));
+      
+      // Also sync to server if user is logged in
+      if (this.currentUser) {
+        await this.syncCartToServer();
+      }
+    } catch (error) {
+      console.error('Error flushing cart to storage:', error);
+    }
+  }
+
+  /**
    * Simple cart transfer on login - NO complex merging
    */
   private async transferGuestCart(): Promise<void> {

@@ -352,7 +352,7 @@ serve(async (req) => {
         console.warn(`⚠️ No recipient email for ${order.order_number} – skipping email queue`);
       } else {
         // Calculate pricing breakdown
-        const subtotal = lineItems.reduce((sum: number, item: any) => {
+        const subtotal = itemsArray.reduce((sum: number, item: any) => {
           const unitPrice = item.price || item.unit_price || 0;
           const qty = item.quantity || 1;
           return sum + (unitPrice * qty);
@@ -380,7 +380,7 @@ serve(async (req) => {
               shipping_cost: shippingCost,
               tax_amount: taxAmount,
               gifting_fee: giftingFee,
-              items: lineItems.map((item: any) => {
+              items: itemsArray.map((item: any) => {
                 const imageUrl = item.image_url || item.image || '';
                 console.log(`📧 [Email] Product: ${item.title?.substring(0, 30)}... | Image: ${imageUrl ? 'Yes' : 'Missing'}`);
                 return {

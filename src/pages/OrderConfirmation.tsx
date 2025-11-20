@@ -356,6 +356,26 @@ const OrderConfirmation = () => {
     );
   }
 
+  // Handle null order case
+  if (!order) {
+    return (
+      <SidebarLayout>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Order Not Found</AlertTitle>
+            <AlertDescription>
+              Unable to load order details. Please check your orders page.
+            </AlertDescription>
+          </Alert>
+          <div className="mt-4">
+            <Button onClick={() => navigate('/orders')}>View All Orders</Button>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
+
   const isMultiRecipient = order.is_split_order && !order.parent_order_id;
 
   return (

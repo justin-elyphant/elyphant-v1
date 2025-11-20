@@ -13,6 +13,7 @@ import QuickEditModal from './QuickEditModal';
 import AddressVerificationBadge from '@/components/ui/AddressVerificationBadge';
 import { useUnifiedProfile } from '@/hooks/useUnifiedProfile';
 import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
+import { formatScheduledDate } from '@/utils/dateUtils';
 
 interface CheckoutShippingReviewProps {
   shippingCost: number | null;
@@ -255,12 +256,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                       <div className="flex-1">
                         <p className="text-xs text-green-600 font-medium mb-1">Scheduled Delivery:</p>
                         <p className="text-sm text-green-800 font-medium">
-                          {new Date(group.scheduledDeliveryDate).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          {formatScheduledDate(group.scheduledDeliveryDate)}
                         </p>
                         <p className="text-xs text-green-600 mt-1 italic">
                           📅 Will be processed 4 days before delivery date to ensure on-time arrival

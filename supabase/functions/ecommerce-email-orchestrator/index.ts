@@ -403,19 +403,23 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Failed to fetch order: ${orderError?.message || 'Order not found'}`);
       }
 
-      // Extract customer email from shipping_address
-      const shippingAddress = order.shipping_address as any;
-      emailRecipient = order.customer_email || shippingAddress?.email;
-      
-      if (!emailRecipient) {
-        throw new Error('No recipient email found in order');
+      // Fetch user email from profiles table using user_id
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', order.user_id)
+        .single();
+
+      if (profileError || !profile?.email) {
+        throw new Error(`Failed to fetch user email: ${profileError?.message || 'Email not found'}`);
       }
+
+      emailRecipient = profile.email;
 
       // Format order data for email template
       const lineItems = (order.line_items as any)?.items || [];
-      const customerName = shippingAddress?.first_name 
-        ? `${shippingAddress.first_name} ${shippingAddress.last_name || ''}`.trim()
-        : 'Customer';
+      const shippingAddress = order.shipping_address as any;
+      const customerName = shippingAddress?.name || 'Customer';
 
       emailData = {
         customer_name: customerName,

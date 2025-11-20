@@ -112,7 +112,7 @@ const OrderDetail = () => {
             gifting_fee: pricingBreakdown.gifting_fee,
             gifting_fee_name: pricingBreakdown.gifting_fee_name,
             gifting_fee_description: pricingBreakdown.gifting_fee_description,
-            items: data.line_items || [],
+            items: (data.line_items as any)?.items || [],
             shipping_info: displayShippingInfo,
             customerName: shopperName,
             recipientName: recipientName,

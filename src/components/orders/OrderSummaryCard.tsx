@@ -31,7 +31,7 @@ const OrderSummaryCard = ({ order }: OrderSummaryCardProps) => {
     try {
       const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: { 
-          eventType: 'order_receipt',
+          eventType: 'order_confirmation',
           orderId: order.id
         }
       });

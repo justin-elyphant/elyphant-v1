@@ -18,12 +18,20 @@ export interface OrderPricingBreakdown {
  * Get complete pricing breakdown for an order, with backward compatibility for legacy orders
  */
 export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
+  // Extract pricing from line_items JSONB if available
+  const lineItems = order.line_items || {};
+  
+  // Check for shipping and tax in line_items (which stores values in cents from Stripe/Zinc)
+  const shippingFromLineItems = lineItems.shipping ? lineItems.shipping / 100 : null;
+  const taxFromLineItems = lineItems.tax ? lineItems.tax / 100 : null;
+  const subtotalFromLineItems = lineItems.subtotal ? lineItems.subtotal / 100 : null;
+  
   // For new orders with complete pricing data
   if (order.subtotal !== undefined && order.gifting_fee !== undefined) {
     return {
       subtotal: order.subtotal,
-      shipping_cost: order.shipping_cost || 0,
-      tax_amount: order.tax_amount || 0,
+      shipping_cost: order.shipping_cost || shippingFromLineItems || 0,
+      tax_amount: order.tax_amount || taxFromLineItems || 0,
       gifting_fee: order.gifting_fee,
       gifting_fee_name: order.gifting_fee_name || 'Elyphant Gifting Fee',
       gifting_fee_description: order.gifting_fee_description || 'Platform service fee',
@@ -33,8 +41,8 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
 
   // Legacy order handling - calculate missing values
   const total = order.total || order.total_amount || 0;
-  const shippingCost = order.shipping_cost || 0;
-  const taxAmount = order.tax_amount || 0;
+  const shippingCost = order.shipping_cost || shippingFromLineItems || 0;
+  const taxAmount = order.tax_amount || taxFromLineItems || 0;
   
   // For legacy orders, estimate the original subtotal and gifting fee
   // Reverse-engineer: total = subtotal + shipping + tax + giftingFee

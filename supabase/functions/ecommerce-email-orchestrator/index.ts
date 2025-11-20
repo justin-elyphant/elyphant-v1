@@ -13,6 +13,17 @@ const truncateProductTitle = (title: string, maxLength: number = 60): string => 
   return title.substring(0, maxLength).trim() + '...';
 };
 
+// Utility function to format scheduled delivery date
+const formatScheduledDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 interface EmailRequest {
   eventType: string;
   recipientEmail: string;
@@ -94,6 +105,15 @@ const orderConfirmationTemplate = (props: any): string => {
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
       Hi ${props.customer_name}, thank you for your order. We're preparing your items for shipment.
     </p>
+    ${props.scheduled_delivery_date ? `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
+      <tr><td>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Delivery</p>
+        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
+      </td></tr>
+    </table>
+    ` : ''}
     <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
@@ -437,7 +457,8 @@ const handler = async (req: Request): Promise<Response> => {
           image_url: item.image_url || item.image
         })),
         is_gift: (order.gift_options as any)?.is_gift || false,
-        gift_message: (order.gift_options as any)?.gift_message || null
+        gift_message: (order.gift_options as any)?.gift_message || null,
+        scheduled_delivery_date: order.scheduled_delivery_date || null
       };
     }
 

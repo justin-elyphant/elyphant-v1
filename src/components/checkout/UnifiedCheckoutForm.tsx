@@ -365,6 +365,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           deliveryGroups: enrichedDeliveryGroups,
           shippingInfo: zmaCompatibleShippingInfo,
           giftOptions: giftOptions,
+          scheduledDeliveryDate: giftOptions?.scheduledDeliveryDate || null,
           pricingBreakdown: {
             subtotal,
             shippingCost,
@@ -376,10 +377,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           metadata: {
             user_id: user.id,
             order_type: 'marketplace_purchase',
-            item_count: cartItems.length,
-            scheduledDeliveryDate: giftOptions.scheduledDeliveryDate || '',
-            isScheduledDelivery: Boolean(giftOptions.scheduleDelivery && giftOptions.scheduledDeliveryDate),
-            deliveryDate: giftOptions.scheduledDeliveryDate
+            item_count: cartItems.length
           }
         }
       });

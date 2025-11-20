@@ -106,6 +106,7 @@ const PaymentSection = ({
           })),
           deliveryGroups,
           shippingInfo,
+          scheduledDeliveryDate: giftOptions?.scheduledDeliveryDate || null,
           giftOptions,
           pricingBreakdown,
           metadata: {

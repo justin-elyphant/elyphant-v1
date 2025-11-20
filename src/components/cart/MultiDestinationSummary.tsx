@@ -6,6 +6,7 @@ import { DeliveryGroup } from '@/types/recipient';
 import { useProfile } from '@/contexts/profile/ProfileContext';
 import { CartItem } from '@/contexts/CartContext';
 import { formatDistanceToNow } from 'date-fns';
+import { formatScheduledDate } from '@/utils/dateUtils';
 
 interface MultiDestinationSummaryProps {
   deliveryGroups: DeliveryGroup[];
@@ -110,7 +111,7 @@ const MultiDestinationSummary: React.FC<MultiDestinationSummaryProps> = ({
                   {group.scheduledDeliveryDate && (
                     <div className={`mt-2 flex items-center gap-1 text-xs ${isPending ? 'text-amber-600' : 'text-green-600'}`}>
                       <Truck className="h-3 w-3" />
-                      Scheduled for: {new Date(group.scheduledDeliveryDate).toLocaleDateString()}
+                      Scheduled for: {formatScheduledDate(group.scheduledDeliveryDate)}
                     </div>
                   )}
                 </div>

@@ -11,6 +11,7 @@ import { CartItem } from '@/contexts/CartContext';
 import { DeliveryGroup } from '@/types/recipient';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { parseLocalDate } from '@/utils/dateUtils';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;
@@ -27,14 +28,14 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
     deliveryGroup.scheduledDeliveryDate ? 'scheduled' : 'now'
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    deliveryGroup.scheduledDeliveryDate ? new Date(deliveryGroup.scheduledDeliveryDate) : undefined
+    deliveryGroup.scheduledDeliveryDate ? parseLocalDate(deliveryGroup.scheduledDeliveryDate) : undefined
   );
 
   // Sync local state with prop changes to prevent stale UI
   React.useEffect(() => {
     if (deliveryGroup.scheduledDeliveryDate) {
       setDeliveryTiming('scheduled');
-      setSelectedDate(new Date(deliveryGroup.scheduledDeliveryDate));
+      setSelectedDate(parseLocalDate(deliveryGroup.scheduledDeliveryDate));
     } else {
       setDeliveryTiming('now');
       setSelectedDate(undefined);

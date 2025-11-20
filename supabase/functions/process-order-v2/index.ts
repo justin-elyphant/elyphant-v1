@@ -75,7 +75,17 @@ serve(async (req) => {
     // STEP 4: Extract line_items from JSONB column
     const lineItems = order.line_items;
     
-    if (!lineItems || !Array.isArray(lineItems) || lineItems.length === 0) {
+    // Handle both old (flat array) and new (nested object) formats
+    let itemsArray: any[];
+    if (Array.isArray(lineItems)) {
+      // Old format: flat array of items
+      itemsArray = lineItems;
+      console.log('📦 Using legacy flat array format for line_items');
+    } else if (lineItems && typeof lineItems === 'object' && lineItems.items) {
+      // New format: nested object with items array
+      itemsArray = lineItems.items;
+      console.log('📦 Using new nested format for line_items');
+    } else {
       console.error('❌ No line_items found in order');
       await markOrderRequiresAttention(
         supabase, 
@@ -95,7 +105,27 @@ serve(async (req) => {
       );
     }
 
-    console.log(`✅ Found ${lineItems.length} line items`);
+    if (!itemsArray || itemsArray.length === 0) {
+      console.error('❌ Empty line_items array');
+      await markOrderRequiresAttention(
+        supabase, 
+        orderId, 
+        'Empty line items array'
+      );
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No line items found',
+          requires_attention: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+
+    console.log(`✅ Found ${itemsArray.length} line items`);
 
     // STEP 5: Extract and validate shipping address (from JSONB column)
     const shippingAddress = order.shipping_address;
@@ -164,7 +194,7 @@ serve(async (req) => {
 
     // STEP 6: Validate product IDs are Amazon ASINs (not Stripe IDs)
     console.log('🔍 Validating product IDs...');
-    const invalidProducts = lineItems.filter((item: any) => {
+    const invalidProducts = itemsArray.filter((item: any) => {
       const productId = item.product_id || item.productId || item.id;
       // Amazon ASINs are typically 10 characters starting with B0
       const isValidAsin = productId && (
@@ -202,7 +232,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`✅ All ${lineItems.length} product IDs validated as Amazon ASINs`);
+    console.log(`✅ All ${itemsArray.length} product IDs validated as Amazon ASINs`);
 
     // STEP 7: Build Zinc ZMA API request
     // ZMA (Zinc Managed Accounts) uses Zinc's Amazon credentials
@@ -210,7 +240,7 @@ serve(async (req) => {
       addax: true, // CRITICAL: Enables ZMA processing
       idempotency_key: orderId,
       retailer: 'amazon',
-      products: lineItems.map((item: any) => ({
+      products: itemsArray.map((item: any) => ({
         product_id: item.product_id || item.productId || item.id,
         quantity: item.quantity || 1,
       })),

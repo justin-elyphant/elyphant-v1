@@ -380,12 +380,65 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { eventType, recipientEmail, data }: EmailRequest = await req.json();
+    const { eventType, recipientEmail, data, orderId }: EmailRequest & { orderId?: string } = await req.json();
 
-    console.log(`📧 Orchestrating ${eventType} email for ${recipientEmail}`);
+    console.log(`📧 Orchestrating ${eventType} email for ${recipientEmail || 'recipient'}`);
+
+    let emailData = data;
+    let emailRecipient = recipientEmail;
+
+    // If orderId provided for order_confirmation, fetch order details
+    if (eventType === 'order_confirmation' && orderId && !data) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !order) {
+        throw new Error(`Failed to fetch order: ${orderError?.message || 'Order not found'}`);
+      }
+
+      // Extract customer email from shipping_address
+      const shippingAddress = order.shipping_address as any;
+      emailRecipient = order.customer_email || shippingAddress?.email;
+      
+      if (!emailRecipient) {
+        throw new Error('No recipient email found in order');
+      }
+
+      // Format order data for email template
+      const lineItems = (order.line_items as any)?.items || [];
+      const customerName = shippingAddress?.first_name 
+        ? `${shippingAddress.first_name} ${shippingAddress.last_name || ''}`.trim()
+        : 'Customer';
+
+      emailData = {
+        customer_name: customerName,
+        order_number: order.order_number || `ORD-${order.id.slice(0, 8)}`,
+        order_id: order.id,
+        total_amount: order.total_amount || 0,
+        subtotal: (order.line_items as any)?.subtotal ? (order.line_items as any).subtotal / 100 : 0,
+        shipping_cost: (order.line_items as any)?.shipping ? (order.line_items as any).shipping / 100 : 0,
+        tax_amount: (order.line_items as any)?.tax ? (order.line_items as any).tax / 100 : 0,
+        gifting_fee: (order.line_items as any)?.gifting_fee ? (order.line_items as any).gifting_fee / 100 : 0,
+        items: lineItems.map((item: any) => ({
+          title: item.title || item.product_name || 'Product',
+          quantity: item.quantity || 1,
+          price: item.price ? item.price / 100 : 0,
+          image_url: item.image_url || item.image
+        })),
+        is_gift: (order.gift_options as any)?.is_gift || false,
+        gift_message: (order.gift_options as any)?.gift_message || null
+      };
+    }
 
     // Render template directly (no function invoke)
-    const { html, subject } = getEmailTemplate(eventType, data);
+    const { html, subject } = getEmailTemplate(eventType, emailData);
 
     if (!html || !subject) {
       throw new Error('Email template rendering returned invalid data');
@@ -410,7 +463,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: senderAddress,
-        to: [recipientEmail],
+        to: [emailRecipient],
         subject: subject,
         html: html,
       }),

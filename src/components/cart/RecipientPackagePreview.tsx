@@ -29,6 +29,18 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     deliveryGroup.scheduledDeliveryDate ? new Date(deliveryGroup.scheduledDeliveryDate) : undefined
   );
+
+  // Sync local state with prop changes to prevent stale UI
+  React.useEffect(() => {
+    if (deliveryGroup.scheduledDeliveryDate) {
+      setDeliveryTiming('scheduled');
+      setSelectedDate(new Date(deliveryGroup.scheduledDeliveryDate));
+    } else {
+      setDeliveryTiming('now');
+      setSelectedDate(undefined);
+    }
+  }, [deliveryGroup.scheduledDeliveryDate]);
+
   const groupItems = cartItems.filter(
     item => item.recipientAssignment?.deliveryGroupId === deliveryGroup.id
   );

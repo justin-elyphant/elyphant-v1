@@ -375,7 +375,7 @@ async function handleCheckoutSessionCompleted(
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
       status: isScheduled ? 'scheduled' : 'payment_confirmed',
-      payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
+      payment_status: session.payment_status === 'unpaid' ? 'authorized' : session.payment_status,
       total_amount: session.amount_total ? session.amount_total / 100 : 0,
       currency: session.currency || 'usd',
       line_items: {
@@ -598,7 +598,7 @@ async function triggerEmailOrchestrator(
 
     const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
-        eventType: 'order_receipt',
+        eventType: 'order_confirmation',
         recipientEmail: recipientEmail,
         data: {
           order_id: orderId,

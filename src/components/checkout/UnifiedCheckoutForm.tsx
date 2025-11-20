@@ -365,7 +365,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           deliveryGroups: enrichedDeliveryGroups,
           shippingInfo: zmaCompatibleShippingInfo,
           giftOptions: giftOptions,
-          scheduledDeliveryDate: giftOptions?.scheduledDeliveryDate || null,
+          scheduledDeliveryDate: deliveryGroups[0]?.scheduledDeliveryDate || null,
           pricingBreakdown: {
             subtotal,
             shippingCost,

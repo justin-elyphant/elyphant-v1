@@ -96,6 +96,42 @@ const TermsOfService = () => {
           </section>
 
           <section className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Shipping and Delivery</h2>
+            <h3 className="text-xl font-semibold mb-3">Third-Party Fulfillment</h3>
+            <p className="mb-4">
+              We utilize trusted third-party fulfillment partners to process and deliver your orders. While we carefully select our partners, we do not directly control the shipping and delivery process once orders are submitted for fulfillment.
+            </p>
+
+            <h3 className="text-xl font-semibold mb-3">Delivery Estimates</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Delivery timeframes are estimates provided by fulfillment partners</li>
+              <li>Estimates are not guaranteed and may vary based on location, weather, carrier delays, or other factors beyond our control</li>
+              <li>We are not responsible for delays in shipping or delivery caused by third-party carriers or fulfillment partners</li>
+              <li>Holiday periods may experience extended delivery times</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">Shipping Issues</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>All gift orders include a gift receipt for recipient convenience</li>
+              <li>Recipients can process returns or exchanges directly with the retailer using the gift receipt</li>
+              <li>We are not liable for lost, stolen, damaged, or undelivered packages once shipped by the fulfillment partner</li>
+              <li>Claims for lost or damaged packages must be filed with the carrier or retailer directly</li>
+              <li>We will assist with tracking information and support inquiries where possible</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">Address Accuracy</h3>
+            <p className="mb-4">
+              You are responsible for providing accurate and complete shipping addresses. We are not responsible for delivery failures, returns, or additional charges resulting from:
+            </p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Incorrect or incomplete addresses</li>
+              <li>Undeliverable addresses (abandoned, invalid, military, P.O. boxes where restricted)</li>
+              <li>Failed delivery attempts due to recipient unavailability</li>
+              <li>Address changes after order submission</li>
+            </ul>
+          </section>
+
+          <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">AI Services and Content</h2>
             <h3 className="text-xl font-semibold mb-3">AI-Generated Recommendations</h3>
             <ul className="list-disc pl-6 mb-4">
@@ -157,6 +193,8 @@ const TermsOfService = () => {
             <ul className="list-disc pl-6 mb-4">
               <li>We provide services "as is" without warranties</li>
               <li>We are not liable for indirect, incidental, or consequential damages</li>
+              <li>We are not responsible for shipping delays, lost packages, damaged packages, or delivery failures caused by third-party fulfillment partners, carriers, or circumstances beyond our control</li>
+              <li>Delivery estimates are provided for informational purposes only and are not guaranteed</li>
               <li>Our total liability is limited to the amount you paid for services</li>
               <li>Some jurisdictions do not allow certain limitations</li>
             </ul>

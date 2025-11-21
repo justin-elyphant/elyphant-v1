@@ -376,6 +376,7 @@ serve(async (req) => {
               customer_name: recipientName,
               total_amount: order.total_amount,
               currency: order.currency || 'USD',
+              scheduled_delivery_date: order.scheduled_delivery_date || null,
               gift_message: order.gift_options?.giftMessage || null,
               is_gift: order.gift_options?.isGift || false,
               subtotal: subtotal,

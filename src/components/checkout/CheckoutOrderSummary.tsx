@@ -30,7 +30,6 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   totalAmount,
   isLoadingShipping = false
 }) => {
-  const qualifiesForFreeShipping = subtotal >= 25;
   const isFreeShipping = shippingCost === 0;
   
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
@@ -85,7 +84,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
             ) : isFreeShipping ? (
               <span className="flex items-center gap-1 text-primary font-medium">
                 <Check className="h-4 w-4" />
-                {qualifiesForFreeShipping ? 'FREE ($25+ order)' : 'Free Delivery'}
+                Free Delivery
               </span>
             ) : (
               <span>${shippingCost.toFixed(2)}</span>

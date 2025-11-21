@@ -248,26 +248,15 @@ export const useCheckoutState = () => {
   };
 
   /*
-   * 🔗 CRITICAL: Shipping cost calculation - Flat $6.99 for MVP
+   * 🔗 CRITICAL: Shipping cost calculation - Flat $6.99 for ALL orders
    * 
-   * Simple flat-rate shipping:
-   * - Orders $25+: FREE shipping
-   * - Orders under $25: $6.99 flat rate
+   * Simple flat-rate shipping: $6.99 for all orders
    * 
    * This eliminates Zinc API shipping quote delays and provides predictable pricing.
    * Elyphant absorbs any shipping variance (actual cost may be $0-$10 from Zinc).
    */
   const getShippingCost = async (): Promise<number> => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    
-    // Keep the $25+ free shipping promotion
-    if (subtotal >= 25) {
-      console.log('✓ Order qualifies for FREE Shipping ($25+ threshold)');
-      return 0;
-    }
-    
-    // Flat $6.99 shipping for all orders under $25
-    console.log('💰 Applying flat $6.99 shipping (MVP approach - covers typical Amazon shipping costs)');
+    console.log('💰 Applying flat $6.99 shipping for all orders');
     return 6.99;
   };
 

@@ -294,40 +294,61 @@ class UnifiedPaymentService {
   private loadLocalCartDataSync(): CartItem[] {
     try {
       const savedCart = localStorage.getItem(this.cartKey);
-      if (savedCart) {
-        const parsedData = JSON.parse(savedCart);
+      if (!savedCart) return [];
+      
+      const parsedData = JSON.parse(savedCart);
+      
+      // CHECK VERSION AND MIGRATE
+      const cartVersion = parsedData?.version || 1; // Default to v1 if missing
+      
+      if (cartVersion < this.CART_VERSION) {
+        console.log(`[CART MIGRATION] Migrating cart from v${cartVersion} to v${this.CART_VERSION}`);
         
-        // Handle new format with expiration
-        if (parsedData && typeof parsedData === 'object' && parsedData.items) {
-          // Check if cart has expired
-          if (parsedData.expiresAt && Date.now() > parsedData.expiresAt) {
-            console.log('[CART EXPIRATION] Cart has expired, clearing');
-            localStorage.removeItem(this.cartKey);
-            return [];
-          }
-          
-          const items = parsedData.items || [];
-          // CRITICAL: Standardize all products to ensure images and other fields are correct
-          return items.map((item: CartItem) => ({
+        // Clear old cart - safest migration strategy
+        localStorage.removeItem(this.cartKey);
+        toast.info('Your cart has been updated to the latest version.', { duration: 3000 });
+        return [];
+      }
+      
+      // ADD EXPIRATION TO OLD CARTS
+      if (!parsedData.expiresAt) {
+        console.log('[CART MIGRATION] Adding expiration to legacy cart');
+        parsedData.expiresAt = Date.now() + (this.GUEST_CART_EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
+        // Save updated cart with expiration
+        localStorage.setItem(this.cartKey, JSON.stringify(parsedData));
+      }
+      
+      // Existing expiration check
+      if (parsedData.expiresAt && Date.now() > parsedData.expiresAt) {
+        console.log('[CART EXPIRATION] Cart has expired, clearing');
+        localStorage.removeItem(this.cartKey);
+        return [];
+      }
+      
+      // Handle new format with items
+      if (parsedData && typeof parsedData === 'object' && parsedData.items) {
+        const items = parsedData.items || [];
+        // CRITICAL: Standardize all products to ensure images and other fields are correct
+        return items.map((item: CartItem) => ({
+          ...item,
+          product: standardizeProduct(item.product)
+        }));
+      } else {
+        // Handle legacy format (array of items)
+        if (Array.isArray(parsedData)) {
+          // Standardize legacy format as well
+          return parsedData.map((item: CartItem) => ({
             ...item,
             product: standardizeProduct(item.product)
           }));
-        } else {
-          // Handle legacy format (array of items)
-          if (Array.isArray(parsedData)) {
-            // Standardize legacy format as well
-            return parsedData.map((item: CartItem) => ({
-              ...item,
-              product: standardizeProduct(item.product)
-            }));
-          }
-          return [];
         }
-      } else {
         return [];
       }
     } catch (error) {
       console.error('Error loading local cart data:', error);
+      // CORRUPTED CART RECOVERY
+      console.log('[CART RECOVERY] Clearing corrupted cart data');
+      localStorage.removeItem(this.cartKey);
       return [];
     }
   }
@@ -549,7 +570,7 @@ class UnifiedPaymentService {
   private performSecurityCleanup(): void {
     try {
       // Find all localStorage keys that could contain cart data
-      const cartKeysToCheck = [];
+      const cartKeysToCheck: string[] = [];
       
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -562,9 +583,24 @@ class UnifiedPaymentService {
       if (this.currentUser) {
         const validUserCartKey = `cart_${this.currentUser.id}`;
         cartKeysToCheck.forEach(key => {
-          if (key !== validUserCartKey && key !== `${validUserCartKey}_version`) {
-            localStorage.removeItem(key);
-            console.log(`[CART SECURITY] Removed stale cart data: ${key}`);
+          if (key !== validUserCartKey) {
+            // Check version before removing
+            const cartData = localStorage.getItem(key);
+            if (cartData) {
+              try {
+                const parsed = JSON.parse(cartData);
+                const version = parsed?.version || 1;
+                
+                if (version < this.CART_VERSION) {
+                  console.log(`[CART SECURITY] Removing outdated v${version} cart: ${key}`);
+                  localStorage.removeItem(key);
+                }
+              } catch {
+                // Corrupted data - remove it
+                console.log(`[CART SECURITY] Removing corrupted cart: ${key}`);
+                localStorage.removeItem(key);
+              }
+            }
           }
         });
       } else {
@@ -876,7 +912,6 @@ class UnifiedPaymentService {
     // Clear current cart from localStorage
     if (this.cartKey) {
       localStorage.removeItem(this.cartKey);
-      localStorage.removeItem(`${this.cartKey}_version`);
     }
     
     // Perform broader security cleanup

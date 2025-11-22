@@ -62,10 +62,26 @@ const Cart = () => {
       return;
     }
     
-    // Check for unassigned items first
+    // Check for unassigned items - only block if user lacks shipping address
     if (unassignedItems.length > 0) {
-      toast.error(`Please assign all ${unassignedItems.length} item${unassignedItems.length === 1 ? '' : 's'} to recipients before checkout`);
-      return;
+      const shippingAddress = profile?.shipping_address;
+      const hasCompleteAddress = shippingAddress && 
+        profile?.name &&
+        (shippingAddress.address_line1 || shippingAddress.street) &&
+        shippingAddress.city &&
+        shippingAddress.state &&
+        (shippingAddress.zip_code || shippingAddress.zipCode);
+      
+      if (!hasCompleteAddress) {
+        toast.error(
+          "Please complete your shipping address or assign recipients before checkout. " +
+          "Unassigned items will be shipped to your address."
+        );
+        return;
+      }
+      
+      // User has complete address - allow checkout with unassigned items
+      console.log(`✅ [Cart] Proceeding with ${unassignedItems.length} unassigned item(s) - will ship to user address`);
     }
     
     // Check that all delivery groups have complete addresses

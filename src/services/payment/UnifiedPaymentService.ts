@@ -623,7 +623,6 @@ class UnifiedPaymentService {
   private clearGuestCartData(): void {
     try {
       localStorage.removeItem('guest_cart');
-      localStorage.removeItem('guest_cart_version');
       console.log('[CART SECURITY] Cleared guest cart data');
     } catch (error) {
       console.error('Error clearing guest cart data:', error);
@@ -715,7 +714,6 @@ class UnifiedPaymentService {
   private clearUserCartData(userId: string): void {
     try {
       localStorage.removeItem(`cart_${userId}`);
-      localStorage.removeItem(`cart_${userId}_version`);
       console.log(`[CART SECURITY] Cleared cart data for user ${userId}`);
     } catch (error) {
       console.error(`Error clearing cart data for user ${userId}:`, error);
@@ -870,7 +868,6 @@ class UnifiedPaymentService {
     // Clear local state immediately
     this.cartItems = [];
     localStorage.removeItem(this.cartKey);
-    localStorage.removeItem(`${this.cartKey}_version`);
     
     console.log('[CART CLEAR] ✅ Cart cleared (legacy tables removed)');
     

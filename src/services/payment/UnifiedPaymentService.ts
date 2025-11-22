@@ -130,8 +130,14 @@ class UnifiedPaymentService {
   private lastMergedServerHash: string = '';
 
   constructor() {
+    // Test localStorage availability on initialization
+    this.testLocalStorageAvailability();
+    
     // Initialize cart on service creation
     this.initializeCart();
+    
+    // Expose diagnostic function globally for debugging
+    (window as any).debugCart = this.debugCart.bind(this);
   }
 
   /*
@@ -139,6 +145,51 @@ class UnifiedPaymentService {
    * INITIALIZATION & PERSISTENCE
    * ========================================================================
    */
+
+  /**
+   * Test localStorage availability and quota
+   * Critical for diagnosing cart persistence issues
+   */
+  private testLocalStorageAvailability(): void {
+    console.log(`🧪 [CART INIT] Testing localStorage availability...`);
+    
+    try {
+      const testKey = '__elyphant_cart_storage_test__';
+      const testValue = 'test_data_' + Date.now();
+      
+      // Test write
+      localStorage.setItem(testKey, testValue);
+      console.log(`✅ [CART INIT] localStorage write test passed`);
+      
+      // Test read
+      const readValue = localStorage.getItem(testKey);
+      if (readValue === testValue) {
+        console.log(`✅ [CART INIT] localStorage read test passed`);
+      } else {
+        console.error(`❌ [CART INIT] localStorage read test FAILED - expected "${testValue}", got "${readValue}"`);
+        toast.error("Cart storage may be unreliable. Please check browser settings.", { duration: 7000 });
+      }
+      
+      // Test delete
+      localStorage.removeItem(testKey);
+      const deletedValue = localStorage.getItem(testKey);
+      if (deletedValue === null) {
+        console.log(`✅ [CART INIT] localStorage delete test passed`);
+      } else {
+        console.error(`❌ [CART INIT] localStorage delete test FAILED - item still exists after removal`);
+      }
+      
+      console.log(`✅ [CART INIT] localStorage fully operational`);
+    } catch (error) {
+      console.error(`❌ [CART INIT] localStorage TEST FAILED:`, error);
+      
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        toast.error("Browser storage is full. Cart will not persist. Please clear browser data.", { duration: 10000 });
+      } else {
+        toast.error("Cart storage is disabled or unavailable. Cart will not persist across sessions.", { duration: 10000 });
+      }
+    }
+  }
 
   /**
    * Initialize cart with localStorage data and auth integration
@@ -325,13 +376,22 @@ class UnifiedPaymentService {
 
   /**
    * Save cart to localStorage (debounced) and sync to server if user is logged in
+   * Industry-standard 500ms debounce (matches Redux, TanStack, modern e-commerce)
    */
   private saveCartToStorage(): void {
+    const saveTimestamp = Date.now();
+    console.log(`🛒 [CART SAVE] saveCartToStorage() invoked at ${new Date(saveTimestamp).toISOString()}`);
+    console.log(`🛒 [CART SAVE] cartKey: ${this.cartKey}, items count: ${this.cartItems.length}`);
+    
     if (this.debounceTimer) {
+      console.log(`🛒 [CART SAVE] Clearing existing debounce timer`);
       clearTimeout(this.debounceTimer);
     }
 
+    console.log(`🛒 [CART SAVE] Setting 500ms debounce timer (industry standard)`);
     this.debounceTimer = setTimeout(() => {
+      console.log(`🛒 [CART SAVE] Debounce timer fired - executing save`);
+      
       try {
         // Add expiration timestamp for guest carts
         const cartDataWithExpiry = {
@@ -340,16 +400,62 @@ class UnifiedPaymentService {
           version: this.CART_VERSION
         };
         
-        localStorage.setItem(this.cartKey, JSON.stringify(cartDataWithExpiry));
+        const serialized = JSON.stringify(cartDataWithExpiry);
+        console.log(`🛒 [CART SAVE] Attempting localStorage.setItem() with key: ${this.cartKey}, data size: ${serialized.length} bytes`);
+        
+        localStorage.setItem(this.cartKey, serialized);
+        console.log(`✅ [CART SAVE] localStorage.setItem() succeeded`);
+        
+        // Verify save by reading back immediately
+        const verification = localStorage.getItem(this.cartKey);
+        if (!verification) {
+          console.error(`❌ [CART SAVE] VERIFICATION FAILED: localStorage.getItem() returned null after successful setItem()`);
+          toast.error("Cart may not persist. Please check browser settings.", { duration: 5000 });
+        } else {
+          const verifiedData = JSON.parse(verification);
+          const verifiedItemCount = verifiedData?.items?.length || 0;
+          if (verifiedItemCount !== this.cartItems.length) {
+            console.error(`❌ [CART SAVE] VERIFICATION FAILED: Item count mismatch. Expected ${this.cartItems.length}, got ${verifiedItemCount}`);
+            toast.error("Cart save verification failed. Items may not persist.", { duration: 5000 });
+          } else {
+            console.log(`✅ [CART SAVE] Verification passed: ${verifiedItemCount} items confirmed in localStorage`);
+          }
+        }
         
         // Also sync to server if user is logged in
         if (this.currentUser) {
+          console.log(`🛒 [CART SAVE] User logged in - scheduling server sync`);
           this.scheduleServerSync();
         }
       } catch (error) {
-        console.error('Error saving cart to storage:', error);
+        console.error(`❌ [CART SAVE] localStorage.setItem() FAILED:`, error);
+        
+        // Check for quota exceeded error
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+          console.error(`❌ [CART SAVE] localStorage quota exceeded`);
+          toast.error("Storage full. Please clear browser data or reduce cart size.", { duration: 7000 });
+        } else {
+          console.error(`❌ [CART SAVE] Unexpected error during save:`, error);
+          toast.error("Failed to save cart. Your cart may not persist after refresh.", { duration: 7000 });
+        }
+        
+        // Attempt immediate retry without debounce as recovery
+        console.log(`🔄 [CART SAVE] Attempting immediate retry without debounce...`);
+        try {
+          const retryData = {
+            items: this.cartItems,
+            expiresAt: Date.now() + (this.GUEST_CART_EXPIRATION_DAYS * 24 * 60 * 60 * 1000),
+            version: this.CART_VERSION
+          };
+          localStorage.setItem(this.cartKey, JSON.stringify(retryData));
+          console.log(`✅ [CART SAVE] Retry succeeded`);
+          toast.success("Cart recovered and saved successfully.", { duration: 3000 });
+        } catch (retryError) {
+          console.error(`❌ [CART SAVE] Retry also failed:`, retryError);
+          // User already notified above
+        }
       }
-    }, 500);
+    }, 500); // Industry-standard 500ms debounce (Redux, TanStack, Shopify patterns)
   }
 
   /**
@@ -357,8 +463,11 @@ class UnifiedPaymentService {
    * Call this before navigation to ensure all cart changes are persisted
    */
   public async flushPendingSaves(): Promise<void> {
+    console.log(`🚀 [CART FLUSH] flushPendingSaves() called - forcing immediate save`);
+    
     // Clear the debounce timer
     if (this.debounceTimer) {
+      console.log(`🚀 [CART FLUSH] Clearing pending debounce timer`);
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
@@ -371,14 +480,18 @@ class UnifiedPaymentService {
         version: this.CART_VERSION
       };
       
+      console.log(`🚀 [CART FLUSH] Executing immediate localStorage.setItem() with key: ${this.cartKey}`);
       localStorage.setItem(this.cartKey, JSON.stringify(cartDataWithExpiry));
+      console.log(`✅ [CART FLUSH] Immediate save succeeded`);
       
       // Also sync to server if user is logged in
       if (this.currentUser) {
+        console.log(`🚀 [CART FLUSH] Syncing to server`);
         await this.syncCartToServer();
       }
     } catch (error) {
-      console.error('Error flushing cart to storage:', error);
+      console.error(`❌ [CART FLUSH] Immediate save failed:`, error);
+      toast.error("Failed to save cart before navigation. Changes may be lost.", { duration: 5000 });
     }
   }
 
@@ -479,6 +592,85 @@ class UnifiedPaymentService {
     } catch (error) {
       console.error('Error clearing guest cart data:', error);
     }
+  }
+
+  /**
+   * Diagnostic function to debug cart persistence issues
+   * Available globally as window.debugCart()
+   */
+  public debugCart(): void {
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`🔍 CART DIAGNOSTIC REPORT - ${new Date().toISOString()}`);
+    console.log(`${'='.repeat(80)}\n`);
+    
+    // 1. Current cart key
+    console.log(`📋 Current Cart Key: ${this.cartKey}`);
+    console.log(`👤 Current User ID: ${this.currentUser?.id || 'GUEST'}\n`);
+    
+    // 2. In-memory cart state
+    console.log(`💾 In-Memory Cart State:`);
+    console.log(`   - Items Count: ${this.cartItems.length}`);
+    console.log(`   - Total Quantity: ${this.cartItems.reduce((sum, item) => sum + item.quantity, 0)}`);
+    if (this.cartItems.length > 0) {
+      console.log(`   - Items:`, this.cartItems.map(item => ({
+        id: item.product.product_id,
+        title: item.product.title,
+        quantity: item.quantity,
+        price: item.product.price
+      })));
+    }
+    console.log();
+    
+    // 3. localStorage keys scan
+    console.log(`🗄️  localStorage Cart Keys:`);
+    const cartKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('cart_') || key === 'guest_cart')) {
+        cartKeys.push(key);
+        const data = localStorage.getItem(key);
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            const itemCount = parsed?.items?.length || (Array.isArray(parsed) ? parsed.length : 0);
+            console.log(`   - ${key}: ${itemCount} items, ${data.length} bytes`);
+          } catch {
+            console.log(`   - ${key}: ${data.length} bytes (parse failed)`);
+          }
+        }
+      }
+    }
+    if (cartKeys.length === 0) {
+      console.log(`   ⚠️  NO CART KEYS FOUND IN LOCALSTORAGE`);
+    }
+    console.log();
+    
+    // 5. localStorage write test
+    console.log(`🧪 localStorage Write Test:`);
+    try {
+      const testKey = '__elyphant_cart_diagnostic_test__';
+      const testData = { timestamp: Date.now(), test: 'data' };
+      localStorage.setItem(testKey, JSON.stringify(testData));
+      const readBack = localStorage.getItem(testKey);
+      localStorage.removeItem(testKey);
+      
+      if (readBack) {
+        console.log(`   ✅ Write test PASSED - localStorage is functional`);
+      } else {
+        console.log(`   ❌ Write test FAILED - data not readable after write`);
+      }
+    } catch (error) {
+      console.log(`   ❌ Write test FAILED:`, error);
+    }
+    console.log();
+    
+    // 6. Debounce timer status
+    console.log(`⏱️  Debounce Timer: ${this.debounceTimer ? 'ACTIVE (save pending)' : 'INACTIVE'}`);
+    console.log();
+    
+    console.log(`${'='.repeat(80)}`);
+    console.log(`💡 To test cart save manually, run: unifiedPaymentService.flushPendingSaves()`);
+    console.log(`${'='.repeat(80)}\n`);
   }
 
   /**

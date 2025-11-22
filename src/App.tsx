@@ -19,6 +19,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 // Legacy cart persistence removed - checkout sessions handle cart data now
 // import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
 import { SimpleNicoleProvider } from "./components/ai/SimpleNicoleProvider";
+import { performProductionCartCleanup } from "./utils/cartProductionCleanup";
 
 
 // Immediate load for critical pages
@@ -98,6 +99,9 @@ function App() {
   useEffect(() => {
     const startTime = performance.now();
     console.log("App: Starting app initialization");
+    
+    // Run one-time production cart cleanup
+    performProductionCartCleanup();
     
     // Initialize onboarding flow testing in development
     if (process.env.NODE_ENV === 'development') {

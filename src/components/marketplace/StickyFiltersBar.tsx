@@ -81,7 +81,7 @@ const StickyFiltersBar = ({
                 {recentSearches.map((term, idx) => (
                   <CarouselItem key={term + idx} className="pl-2 basis-auto">
                     <button
-                      className="inline-flex items-center rounded-full bg-gradient-to-r from-purple-100 to-blue-100 px-3 py-1 text-purple-700 font-semibold text-xs shadow-sm border border-purple-200 hover:from-purple-200 hover:to-blue-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 whitespace-nowrap transform hover:scale-105"
+                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-foreground font-semibold text-xs shadow-sm border border-border hover:bg-muted/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring whitespace-nowrap transform hover:scale-105"
                       type="button"
                       style={{ lineHeight: 1.2 }}
                       onClick={() => onRecentSearchClick?.(term)}

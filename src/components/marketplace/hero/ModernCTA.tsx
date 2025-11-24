@@ -68,8 +68,7 @@ const ModernCTA: React.FC = () => {
           <div className="space-y-3">
             <Button 
               size="lg" 
-              style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
-              className="w-full text-white font-semibold shadow-lg hover:opacity-90"
+              className="w-full bg-elyphant-gradient text-white font-semibold shadow-lg hover:opacity-90"
               onClick={() => {
                 setAuthModalMode("signup");
                 setShowAuthModal(true);

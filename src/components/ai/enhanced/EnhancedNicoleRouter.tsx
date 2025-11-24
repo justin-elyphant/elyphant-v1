@@ -128,7 +128,7 @@ const EnhancedNicoleRouter: React.FC<EnhancedNicoleRouterProps> = ({
     <Button
       variant="outline"
       size="sm"
-      className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 hover:border-purple-300 text-purple-700"
+      className="bg-muted border-border hover:border-muted-foreground text-foreground"
     >
       <MessageCircle className="w-4 h-4 mr-2" />
       Ask Nicole

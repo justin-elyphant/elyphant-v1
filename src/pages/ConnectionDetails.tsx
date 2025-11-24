@@ -87,7 +87,7 @@ const ConnectionDetails = () => {
         </Button>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-48 rounded-t-lg relative mb-16">
+      <div className="bg-muted h-48 rounded-t-lg relative mb-16">
         <div className="absolute -bottom-16 left-8">
           <Avatar className="h-32 w-32 border-4 border-white">
             <AvatarImage src={connection.imageUrl} alt={connection.name} />

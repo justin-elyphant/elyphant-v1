@@ -44,9 +44,8 @@ const BotButton: React.FC<BotButtonProps> = ({
       variant={variant}
       size={isMobile ? "icon" : size}
       onClick={handleClick}
-      style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
       className={cn(
-        "relative transition-all duration-200 hover:scale-105 hover:opacity-90 touch-manipulation",
+        "bg-elyphant-gradient relative transition-all duration-200 hover:scale-105 hover:opacity-90 touch-manipulation",
         "text-white border-0",
         "focus:ring-2 focus:ring-purple-500 focus:ring-offset-2",
         isMobile ? "h-8 w-8 p-2" : "px-3 py-2",

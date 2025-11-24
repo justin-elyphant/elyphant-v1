@@ -46,8 +46,8 @@ const ResultsPreviewStep = ({ botState, closeBot }: ResultsPreviewStepProps) => 
       </div>
 
       {/* Preview Statistics */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200 relative">
-        <h4 className="font-semibold text-gray-900 mb-3">AI Recommendations Summary</h4>
+      <div className="bg-muted p-4 rounded-lg border border-border relative">
+        <h4 className="font-semibold text-foreground mb-3">AI Recommendations Summary</h4>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="bg-white p-2 rounded border">
             <div className="font-bold text-blue-600">{previewStats.totalRecommendations}</div>
@@ -102,17 +102,17 @@ const ResultsPreviewStep = ({ botState, closeBot }: ResultsPreviewStepProps) => 
       </div>
 
       {/* Sign Up CTA */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 rounded-lg text-white">
+      <div className="bg-elyphant-gradient p-4 rounded-lg text-white">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="h-5 w-5" />
           <span className="font-semibold">Unlock All {previewStats.totalRecommendations} Recommendations</span>
         </div>
-        <p className="text-sm text-purple-100 mb-3">
+        <p className="text-sm text-white/90 mb-3">
           Sign up to see personalized results, friend-based matches, and save your searches.
         </p>
         <Button 
           onClick={handleSignUp}
-          className="w-full bg-white text-purple-600 hover:bg-gray-100"
+          className="w-full bg-white text-purple-600 hover:bg-white/90"
         >
           <ArrowRight className="h-4 w-4 mr-2" />
           Sign Up & See All Results

@@ -38,7 +38,7 @@ const DesktopHorizontalNav: React.FC = () => {
       label: "Account", 
       href: "/dashboard", 
       icon: User,
-      match: (path: string) => path.startsWith("/dashboard") || path.startsWith("/settings") || path.startsWith("/profile")
+      match: (path: string) => (path.startsWith("/dashboard") && !location.search.includes("tab=auto-gifts")) || path.startsWith("/settings") || path.startsWith("/profile")
     }
   ];
 

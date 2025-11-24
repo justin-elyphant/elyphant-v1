@@ -8,7 +8,7 @@ interface MySizesSelectorProps {
     bottoms?: string;
     shoes?: string;
     ring?: string;
-    fitPreference?: string;
+    fit_preference?: string;
   };
   selectedSize: string | null;
   onSizeChange: (size: string) => void;

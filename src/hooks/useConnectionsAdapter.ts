@@ -444,8 +444,8 @@ export const useConnectionsAdapter = () => {
       connectedUserIds.add(currentUser.user.id); // Exclude self
       
       existingConnections?.forEach(conn => {
-        connectedUserIds.add(conn.user_id);
-        connectedUserIds.add(conn.connected_user_id);
+        if (conn.user_id) connectedUserIds.add(conn.user_id);
+        if (conn.connected_user_id) connectedUserIds.add(conn.connected_user_id);
       });
 
       // Get blocked users to exclude
@@ -455,8 +455,8 @@ export const useConnectionsAdapter = () => {
         .or(`blocker_id.eq.${currentUser.user.id},blocked_id.eq.${currentUser.user.id}`);
 
       blockedUsers?.forEach(block => {
-        connectedUserIds.add(block.blocked_id);
-        connectedUserIds.add(block.blocker_id);
+        if (block.blocked_id) connectedUserIds.add(block.blocked_id);
+        if (block.blocker_id) connectedUserIds.add(block.blocker_id);
       });
 
       console.log('🚫 [useConnectionsAdapter] Excluding users:', connectedUserIds.size, 'already connected/blocked users');
@@ -488,10 +488,11 @@ export const useConnectionsAdapter = () => {
       }
 
       // Also get some random suggestions from users who allow public discovery
+      const excludedIds = Array.from(connectedUserIds).filter(id => id); // Filter out null/undefined
       const { data: randomSuggestions } = await supabase
         .from('profiles')
         .select('id, name, username, first_name, last_name, profile_image, bio')
-        .not('id', 'in', `(${Array.from(connectedUserIds).join(',')})`)
+        .not('id', 'in', `(${excludedIds.join(',')})`)
         .limit(5);
 
       randomSuggestions?.forEach(profile => {

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
@@ -10,6 +10,10 @@ import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import OverviewTab from "@/components/dashboard/tabs/OverviewTab";
+import AutoGiftsTab from "@/components/dashboard/tabs/AutoGiftsTab";
+import ActivityTab from "@/components/dashboard/tabs/ActivityTab";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -17,8 +21,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
+  
+  // Get active tab from URL param, default to overview
+  const activeTab = searchParams.get('tab') || 'overview';
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,7 +127,26 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <DashboardGrid />
+            {/* iOS-style Tabs */}
+            <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
+              <TabsList className="w-full rounded-full bg-muted p-1 mb-4">
+                <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
+                <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">Auto-Gifts</TabsTrigger>
+                <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview">
+                <OverviewTab />
+              </TabsContent>
+              
+              <TabsContent value="auto-gifts">
+                <AutoGiftsTab />
+              </TabsContent>
+              
+              <TabsContent value="activity">
+                <ActivityTab />
+              </TabsContent>
+            </Tabs>
           </ResponsiveContainer>
         </div>
       </div>
@@ -156,7 +183,26 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <DashboardGrid />
+        {/* iOS-style Tabs */}
+        <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
+          <TabsList className="w-full max-w-2xl rounded-full bg-muted p-1 mb-6">
+            <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
+            <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">Auto-Gifts</TabsTrigger>
+            <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview">
+            <OverviewTab />
+          </TabsContent>
+          
+          <TabsContent value="auto-gifts">
+            <AutoGiftsTab />
+          </TabsContent>
+          
+          <TabsContent value="activity">
+            <ActivityTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </SidebarLayout>
   );

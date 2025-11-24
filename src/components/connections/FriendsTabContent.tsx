@@ -10,13 +10,15 @@ interface FriendsTabContentProps {
   searchTerm: string;
   onRelationshipChange: (connectionId: string, newRelationship: RelationshipType, customValue?: string) => void;
   onAutoGiftToggle: (connectionId: string, enabled: boolean) => void;
+  onConnectionClick?: (connection: Connection) => void;
 }
 
 const FriendsTabContent: React.FC<FriendsTabContentProps> = ({ 
   friends, 
   searchTerm, 
   onRelationshipChange,
-  onAutoGiftToggle
+  onAutoGiftToggle,
+  onConnectionClick
 }) => {
   if (friends.length === 0) {
     return (
@@ -42,6 +44,7 @@ const FriendsTabContent: React.FC<FriendsTabContentProps> = ({
           friend={friend}
           onRelationshipChange={onRelationshipChange}
           onAutoGiftToggle={onAutoGiftToggle}
+          onCardClick={onConnectionClick}
         />
       ))}
     </div>

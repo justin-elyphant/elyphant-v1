@@ -22,9 +22,10 @@ interface FriendCardProps {
   friend: Connection;
   onRelationshipChange: (connectionId: string, newRelationship: RelationshipType, customValue?: string) => void;
   onAutoGiftToggle: (connectionId: string, enabled: boolean) => void;
+  onCardClick?: (connection: Connection) => void;
 }
 
-const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, onAutoGiftToggle }) => {
+const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, onAutoGiftToggle, onCardClick }) => {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
@@ -93,7 +94,11 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
 
   return (
     <>
-      <Card key={friend.id} className="overflow-hidden">
+      <Card 
+        key={friend.id} 
+        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+        onClick={() => onCardClick?.(friend)}
+      >
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-3">

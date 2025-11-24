@@ -10,6 +10,7 @@ import ProductImageGallery from "@/components/marketplace/product-details/Produc
 import ProductDetailsSidebar from "@/components/marketplace/product-details/ProductDetailsSidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const ProductDetailsPage: React.FC = () => {
   const { id } = useParams();
@@ -112,17 +113,23 @@ const ProductDetailsPage: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-elyphant-grey">
-      {/* Back navigation - Desktop & Mobile */}
-      <div className="bg-white border-b sticky top-0 z-40">
+    <motion.div 
+      className="min-h-screen bg-elyphant-grey pb-safe"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    >
+      {/* Back navigation - Desktop & Mobile with iOS Backdrop Blur */}
+      <div className="bg-white/80 backdrop-blur-xl border-b sticky top-0 z-40 safe-top">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={handleBack}
-            className="flex items-center gap-2 text-elyphant-black hover:text-elyphant-black hover:bg-gray-100"
+            className="flex items-center gap-2 text-elyphant-black hover:text-elyphant-black hover:bg-gray-100 min-h-[44px] marketplace-touch-target"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
             <span className="hidden md:inline">Back to Shop</span>
             <span className="md:hidden">Back</span>
           </Button>
@@ -150,9 +157,7 @@ const ProductDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Mobile Bottom CTA Bar - iOS-style - Hidden, sidebar handles all CTAs */}
-    </div>
+    </motion.div>
   );
 };
 

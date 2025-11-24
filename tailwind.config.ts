@@ -202,6 +202,13 @@ export default {
 				'safe-left': 'env(safe-area-inset-left)',
 				'safe-right': 'env(safe-area-inset-right)',
 			},
+			padding: {
+				'safe': 'env(safe-area-inset-bottom)',
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
+			},
 			fontSize: {
 				'xs': ['var(--text-xs)', { lineHeight: 'var(--leading-normal)' }],
 				'sm': ['var(--text-sm)', { lineHeight: 'var(--leading-normal)' }],

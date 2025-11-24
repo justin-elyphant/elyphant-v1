@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import MainLayout from "@/components/layout/MainLayout";
 import SEOWrapper from "@/components/seo/SEOWrapper";
@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Heart, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PersonalizedGiftingSections from "@/components/marketplace/PersonalizedGiftingSections";
-import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { nicoleMarketplaceIntelligenceService } from "@/services/gifting/NicoleMarketplaceIntelligenceService";
@@ -52,14 +52,13 @@ interface PersonalizedMarketplaceProps {}
 const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   const { recipientName } = useParams<{ recipientName: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { addToCart } = useCart();
   
   const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(true);
   const [personalizedError, setPersonalizedError] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
 
   // Get event context from location state or URL params - memoized to prevent re-renders
   const eventContext = useMemo(() => ({
@@ -334,8 +333,14 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
   // Product interaction handlers
   const handleProductClick = (product: any) => {
     console.log('Product clicked:', product);
-    setSelectedProduct(product);
-    setShowProductDetails(true);
+    const productId = product.product_id || product.id;
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product,
+        context: 'personalized',
+        returnPath: location.pathname
+      }
+    });
   };
 
   const handleAddToCart = async (product: any) => {
@@ -453,17 +458,6 @@ const PersonalizedMarketplace: React.FC<PersonalizedMarketplaceProps> = () => {
             </div>
           )}
         </div>
-        
-        {/* Product Details Dialog */}
-        <ProductDetailsDialog
-          product={selectedProduct}
-          open={showProductDetails}
-          onOpenChange={(open) => {
-            setShowProductDetails(open);
-            if (!open) setSelectedProduct(null);
-          }}
-          userData={null}
-        />
       </MainLayout>
     </SEOWrapper>
   );

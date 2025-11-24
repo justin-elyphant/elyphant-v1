@@ -41,7 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { formatRecipientNameForUrl, clearPersonalizedData } from "@/utils/personalizedMarketplaceUtils";
 import { useStableNavigation } from "@/hooks/useStableNavigation";
 
-import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+
 import { supabase } from "@/integrations/supabase/client";
 import { standardizeProduct } from '@/components/marketplace/product-item/productUtils';
 import { fetchProductDetails } from '@/components/marketplace/zinc/services/productDetailsService';

@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { optimizedMarketplaceService } from "@/services/marketplace/OptimizedMarketplaceService";
-import ProductDetailsDialog from "./ProductDetailsDialog";
+
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import BrandHeroSection from "./BrandHeroSection";
 import CategoryHeroSection from "./CategoryHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
 import { supabase } from "@/integrations/supabase/client";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { getCategoryByValue } from "@/constants/categories";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
 import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
@@ -87,9 +87,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const displayProducts = personalizedProducts.length > 0 ? personalizedProducts : products;
   
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({});
   const [searchParams] = useSearchParams();
@@ -383,9 +382,15 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Memoized product interaction handlers to prevent recreation
   const handleProductClick = useCallback((product: any) => {
     console.log('Product clicked:', product);
-    setSelectedProduct(product);
-    setShowProductDetails(true);
-  }, []);
+    const productId = product.product_id || product.id;
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product,
+        context: isPersonalizedActive ? 'personalized' : 'marketplace',
+        returnPath: location.pathname + location.search
+      }
+    });
+  }, [navigate, location, isPersonalizedActive]);
 
   const handleAddToCart = useCallback(async (product: any) => {
     console.log('Add to cart:', product);
@@ -849,16 +854,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       {/* Variation Test Mode - for development */}
       {SHOW_VARIATION_TEST && (
         <VariationTestPage />
-      )}
-      
-      {/* Product Details Dialog */}
-      {selectedProduct && (
-        <ProductDetailsDialog
-          product={selectedProduct}
-          open={showProductDetails}
-          onOpenChange={setShowProductDetails}
-          userData={null}
-        />
       )}
       
     </div>

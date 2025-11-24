@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { X, Search, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -14,7 +15,7 @@ import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { enhancedZincApiService } from "@/services/enhancedZincApiService";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
-import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
+
 
 interface ShoppingPanelProps {
   isOpen: boolean;
@@ -30,6 +31,8 @@ const ShoppingPanel = ({
   onProductAdded
 }: ShoppingPanelProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { products } = useProducts();
   const { addToWishlist, isAdding } = useWishlist();
@@ -38,8 +41,6 @@ const ShoppingPanel = ({
   const [hasSearched, setHasSearched] = useState(false);
   const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
 
   // Fetch diverse trending products from Amazon
   useEffect(() => {
@@ -99,8 +100,16 @@ const ShoppingPanel = ({
   };
 
   const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setShowDetails(true);
+    const productId = product.product_id || product.id;
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product,
+        context: 'shopping',
+        recipientId: wishlistId,
+        returnPath: location.pathname
+      }
+    });
+    onClose(); // Close the shopping panel
   };
 
   const handleQuickAdd = async (product: Product) => {
@@ -204,17 +213,6 @@ const ShoppingPanel = ({
           )}
         </div>
       </div>
-
-      {/* Product Details Dialog */}
-      <ProductDetailsDialog
-        product={selectedProduct}
-        open={showDetails}
-        onOpenChange={setShowDetails}
-        userData={null}
-        context="wishlist"
-        source={hasSearched ? 'ai' : 'trending'}
-        onWishlistChange={() => onProductAdded?.(selectedProduct)}
-      />
     </div>
   );
 

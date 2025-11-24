@@ -31,6 +31,19 @@ export interface Profile {
   address_verification_method?: string;
   address_verified_at?: string;
   address_last_updated?: string;
+  // Flexible metadata storage for sizes, themes, and feature flags
+  metadata?: {
+    sizes?: {
+      tops?: string;
+      bottoms?: string;
+      shoes?: string;
+      ring?: string;
+      fit_preference?: "slim" | "regular" | "relaxed";
+    };
+    theme?: "light" | "dark" | "system";
+    feature_flags?: Record<string, boolean>;
+    [key: string]: any; // Allow additional metadata fields
+  };
   // New gifting properties
   gift_giving_preferences?: {
     occasions?: string[];

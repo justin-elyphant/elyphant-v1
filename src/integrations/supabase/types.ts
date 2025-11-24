@@ -3495,6 +3495,7 @@ export type Database = {
           important_dates: Json | null
           interests: Json | null
           last_name: string
+          metadata: Json | null
           name: string | null
           onboarding_completed: boolean | null
           profile_image: string | null
@@ -3536,6 +3537,7 @@ export type Database = {
           important_dates?: Json | null
           interests?: Json | null
           last_name: string
+          metadata?: Json | null
           name?: string | null
           onboarding_completed?: boolean | null
           profile_image?: string | null
@@ -3577,6 +3579,7 @@ export type Database = {
           important_dates?: Json | null
           interests?: Json | null
           last_name?: string
+          metadata?: Json | null
           name?: string | null
           onboarding_completed?: boolean | null
           profile_image?: string | null

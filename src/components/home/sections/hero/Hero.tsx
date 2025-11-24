@@ -31,8 +31,8 @@ const Hero = () => {
   // Handler for Start Gifting: routes to gifting approach selection
   const handleStartGifting = () => {
     if (user) {
-      // Navigate directly to gifting approach selection
-      navigate('/gifting');
+      // Navigate directly to auto-gifts tab on dashboard
+      navigate('/dashboard?tab=auto-gifts');
     } else {
       // Redirect to auth with gifting as the next destination
       navigate('/auth?redirect=/gifting');

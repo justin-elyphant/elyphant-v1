@@ -8,8 +8,8 @@ const QuickGiftCTA = () => {
   const navigate = useNavigate();
   
   const handleOpenGifting = () => {
-    // Navigate to gifting approach selection for auto-gifting setup
-    navigate('/gifting');
+    // Navigate to auto-gifts tab on dashboard
+    navigate('/dashboard?tab=auto-gifts');
   };
 
   return (

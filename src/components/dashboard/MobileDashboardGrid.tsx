@@ -255,7 +255,7 @@ const MobileDashboardGrid = () => {
           ))}
           
           {/* Add more card */}
-          <Link to="/recently-viewed">
+          <Link to="/dashboard?tab=activity">
             <Card className="flex-shrink-0 w-44 border-dashed mobile-card-hover">
               <CardContent className="p-3 flex items-center justify-center h-full">
                 <div className="text-center">

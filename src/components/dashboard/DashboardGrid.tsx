@@ -243,7 +243,7 @@ const DashboardGrid = () => {
             </CardHeader>
             <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
               <Button asChild className="w-full touch-target-44 text-sm h-10 min-w-0">
-                <Link to="/gifting" className="flex items-center justify-center gap-2">
+                <Link to="/dashboard?tab=auto-gifts" className="flex items-center justify-center gap-2">
                   <span>Open Gifting</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
@@ -440,10 +440,10 @@ const DashboardGrid = () => {
               </div>
               <div className="flex gap-2">
                 <Button asChild variant="outline" size="sm" className="flex-1 text-xs h-8">
-                  <Link to="/recently-viewed">Recent</Link>
+                  <Link to="/dashboard?tab=activity">Recent</Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="flex-1 text-xs h-8">
-                  <Link to="/search">Search</Link>
+                  <Link to="/marketplace">Search</Link>
                 </Button>
               </div>
             </div>
@@ -501,9 +501,9 @@ const DashboardGrid = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-16 flex-col gap-1 touch-target-44">
-                  <Link to="/nicole">
-                    <Brain className="h-6 w-6" />
-                    <span className="text-xs">Ask Nicole</span>
+                  <Link to="/marketplace">
+                    <Search className="h-6 w-6" />
+                    <span className="text-xs">Search</span>
                   </Link>
                 </Button>
               </div>

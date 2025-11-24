@@ -28,8 +28,6 @@ import Auth from "./pages/Auth";
 import MobileBottomNavigation from "./components/navigation/MobileBottomNavigation";
 
 // Lazy load non-critical pages
-const SearchPage = lazy(() => import("./pages/SearchPage"));
-const DiscoverPage = lazy(() => import("./pages/DiscoverPage"));
 const GiftPreview = lazy(() => import("./pages/GiftPreview"));
 
 // Lazy load non-critical pages with retry logic
@@ -49,12 +47,10 @@ const ResetPasswordLaunch = lazy(() => import("./pages/ResetPasswordLaunch"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Settings = lazy(() => import("./pages/Settings"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
-const OrderStatusDashboard = lazy(() => import("./pages/OrderStatusDashboard"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Connections = lazy(() => import("./pages/Connections"));
-const ConnectionDetail = lazy(() => import("./pages/ConnectionDetail"));
 const Wishlists = lazy(() => import("./pages/Wishlists"));
 const WishlistWorkspace = lazy(() => import("./pages/WishlistWorkspace"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
@@ -74,14 +70,8 @@ const AutoGiftApprovalPage = lazy(() => import("./components/auto-gifts/AutoGift
 const AddressProviderPage = lazy(() => import("./pages/AddressProviderPage"));
 
 // New dedicated feature pages
-const GiftingHub = lazy(() => import("./pages/GiftingHub"));
-const Nicole = lazy(() => import("./pages/Nicole"));
-const Account = lazy(() => import("./pages/Account"));
 const Payments = lazy(() => import("./pages/Payments"));
-const RecentlyViewed = lazy(() => import("./pages/RecentlyViewed"));
 const ProductDetailsPage = lazy(() => import("./pages/ProductDetails"));
-const ProfileComplete = lazy(() => import("./pages/ProfileComplete"));
-const EnhancedMarketplacePage = lazy(() => import("./pages/EnhancedMarketplacePage"));
 
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
@@ -181,10 +171,9 @@ function AppContent() {
       console.log('🔓 Auth signout event received, redirecting to home');
       // Comprehensive list of protected routes that require authentication
       const protectedRoutes = [
-        '/dashboard', '/profile', '/settings', '/marketplace', '/gifting', '/events',
+        '/dashboard', '/profile', '/settings', '/marketplace',
         '/cart', '/checkout', '/orders', '/messages', '/connections', '/wishlists',
-        '/payments', '/nicole', '/account', '/profile-setup', '/recently-viewed',
-        '/auto-gift-approval', '/order-status', '/trunkline'
+        '/payments', '/profile-setup', '/auto-gift-approval', '/trunkline'
       ];
       
       // Check if user is on any protected route and redirect to home
@@ -238,39 +227,33 @@ function AppContent() {
           <Route path="/gifts/preview/:token" element={<GiftPreview />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/auth" element={<Auth />} />
           
-          {/* New dedicated feature pages */}
-          <Route path="/gifting" element={<GiftingHub />} />
-          <Route path="/events" element={<GiftingHub />} />
-          {/* Temporarily hidden - Nicole AI page */}
-          {/* <Route path="/nicole" element={<Nicole />} /> */}
+          {/* Redirects for consolidated pages */}
           <Route path="/account" element={<Navigate to="/settings" replace />} />
-          
-          <Route path="/profile/complete" element={<ProfileComplete />} />
+          <Route path="/search" element={<Navigate to="/marketplace" replace />} />
+          <Route path="/discover" element={<Navigate to="/marketplace" replace />} />
+          <Route path="/gifting" element={<Navigate to="/dashboard?tab=auto-gifts" replace />} />
+          <Route path="/events" element={<Navigate to="/dashboard?tab=auto-gifts" replace />} />
+          <Route path="/recently-viewed" element={<Navigate to="/dashboard?tab=activity" replace />} />
+          <Route path="/connection/:connectionId" element={<Navigate to="/connections" replace />} />
           
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/reset-password/launch" element={<ResetPasswordLaunch />} />
           <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/enhanced-marketplace" element={<EnhancedMarketplacePage />} />
           <Route path="/marketplace/for/:recipientName" element={<Marketplace />} />
           <Route path="/marketplace/product/:id" element={<ProductDetailsPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/payments" element={<Payments />} />
-          <Route path="/order-status" element={<OrderStatusDashboard />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/messages/:userId" element={<Chat />} />
           <Route path="/connections" element={<Connections />} />
-          <Route path="/connection/:connectionId" element={<ConnectionDetail />} />
           <Route path="/wishlists" element={<Wishlists />} />
           <Route path="/wishlist/:wishlistId" element={<WishlistWorkspace />} />
           <Route path="/shared-wishlist/:wishlistId" element={<WishlistWorkspace />} />
-          <Route path="/recently-viewed" element={<RecentlyViewed />} />
-           <Route path="/about" element={<AboutUs />} />
+          <Route path="/about" element={<AboutUs />} />
            <Route path="/careers" element={<Careers />} />
            <Route path="/press" element={<Press />} />
            <Route path="/vendor-partner" element={<VendorPartner />} />

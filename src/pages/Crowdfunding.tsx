@@ -82,7 +82,7 @@ const Crowdfunding = () => {
               <p className="text-sm text-muted-foreground mb-6">
                 Soon you'll be able to create group gift campaigns, invite contributors, and make gifting a collaborative experience.
               </p>
-              <Button onClick={() => navigate("/gifting")}>
+              <Button onClick={() => navigate("/dashboard?tab=auto-gifts")}>
                 Explore Individual Gifts
               </Button>
             </div>

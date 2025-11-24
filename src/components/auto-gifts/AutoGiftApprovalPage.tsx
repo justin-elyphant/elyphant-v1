@@ -107,7 +107,7 @@ const AutoGiftApprovalPage = () => {
       }
 
       toast.success("Auto-gift approved! Order is being processed.");
-      navigate('/gifting', { 
+      navigate('/dashboard?tab=auto-gifts', { 
         state: { message: 'Auto-gift approved successfully!' }
       });
 
@@ -136,7 +136,7 @@ const AutoGiftApprovalPage = () => {
       }
 
       toast.success("Auto-gift rejected");
-      navigate('/gifting', { 
+      navigate('/dashboard?tab=auto-gifts', { 
         state: { message: 'Auto-gift rejected successfully' }
       });
 

@@ -19,8 +19,8 @@ const HomeCTA = () => {
   
   const handleStartGifting = () => {
     if (user) {
-      // Authenticated user: navigate to gifting approach selection
-      navigate("/gifting");
+      // Authenticated user: navigate to auto-gifts tab on dashboard
+      navigate("/dashboard?tab=auto-gifts");
     } else {
       // Not logged in: navigate to auth with gifting redirect
       navigate("/auth?redirect=/gifting");

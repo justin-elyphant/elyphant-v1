@@ -125,7 +125,7 @@ const ResetPassword = () => {
         toast.success(result.message || 'Password reset successfully! For security, all other sessions have been signed out.');
         
         // Navigate directly to main app after successful password reset
-        navigate('/gifting', { replace: true });
+        navigate('/dashboard?tab=auto-gifts', { replace: true });
       } else {
         toast.error(result.error || 'Failed to reset password. Please try again.');
       }

@@ -1,5 +1,6 @@
 
 import React, { useState, memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingCart, Share, Truck } from "lucide-react";
@@ -64,6 +65,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   isInCategorySection = false,
   context = 'marketplace'
 }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists, wishlists } = useUnifiedWishlistSystem();
   const { addItem } = useRecentlyViewed();
@@ -100,11 +102,13 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     });
     trackProductView(product);
     
-    // Use onClick prop if provided, otherwise onProductClick
+    // Navigate to full-page product details
     if (onClick) {
       onClick();
     } else {
-      onProductClick();
+      navigate(`/marketplace/product/${productId}`, {
+        state: { product, context: context || 'marketplace' }
+      });
     }
   };
 

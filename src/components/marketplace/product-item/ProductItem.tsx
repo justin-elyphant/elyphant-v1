@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Product } from "@/types/product";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth";
@@ -29,6 +30,7 @@ const ProductItem = ({
   isFavorited,
   statusBadge,
 }: ProductItemProps) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
   const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
@@ -57,7 +59,9 @@ const ProductItem = ({
   };
 
   const handleProductClick = () => {
-    onProductClick(productId);
+    navigate(`/marketplace/product/${productId}`, {
+      state: { product, context: 'marketplace' }
+    });
   };
 
   // Prevent cart button clicks from triggering product modal

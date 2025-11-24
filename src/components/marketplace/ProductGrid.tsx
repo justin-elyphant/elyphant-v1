@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -36,6 +37,7 @@ const ProductGrid = ({
   savedFilters,
   onFilterChange
 }: ProductGridProps) => {
+  const navigate = useNavigate();
   // State management
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [dlgOpen, setDlgOpen] = useState<boolean>(false);
@@ -97,11 +99,8 @@ const ProductGrid = ({
     setWishlistRefreshTrigger(prev => prev + 1);
   }, [loadWishlists]);
 
-  // Optimized product click handler
   const handleProductClick = useCallback((productId: string) => {
     console.log("Product clicked:", productId);
-    setSelectedProduct(productId);
-    setDlgOpen(true);
     
     // Find the product and add to recently viewed
     const product = products.find(p => (p.product_id || p.id) === productId);
@@ -113,13 +112,18 @@ const ProductGrid = ({
         image: product.image,
         price: product.price
       });
+      
+      // Navigate to full-page product details
+      navigate(`/marketplace/product/${productId}`, {
+        state: { product, context: 'marketplace' }
+      });
     }
     
     // Track product view if callback provided
     if (onProductView) {
       onProductView(productId);
     }
-  }, [products, addItem, onProductView]);
+  }, [products, addItem, onProductView, navigate]);
 
   // Optimized wishlist toggle with better error handling
   const toggleWishlist = useCallback(async (e: React.MouseEvent, productInfo: any) => {

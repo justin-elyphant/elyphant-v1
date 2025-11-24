@@ -97,10 +97,10 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] px-4 pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60]">
       {/* iOS-style rounded container with backdrop blur */}
-      <div className="bg-white/80 backdrop-blur-xl border border-border rounded-2xl shadow-2xl mx-2 mb-2">
-        <div className="flex items-center justify-around py-2">
+      <div className="bg-white/80 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-floating">
+        <div className="flex items-center justify-around h-20 px-4 pb-[env(safe-area-inset-bottom)]">
           {tabs.map((tab) => {
             const isActive = isTabActive(tab);
             
@@ -110,16 +110,21 @@ const MobileBottomNavigation: React.FC = () => {
                 to={tab.href}
                 onClick={() => triggerHapticFeedback('selection')}
                 className={cn(
-                  "flex flex-col items-center justify-center min-h-[60px] flex-1 rounded-xl transition-all",
-                  isActive ? "bg-red-50 text-destructive" : "text-muted-foreground",
+                  "flex flex-col items-center justify-center h-full flex-1 rounded-xl transition-all px-2",
+                  isActive ? "bg-gradient-to-r from-purple-600 to-sky-500 text-white" : "text-muted-foreground",
                   "active:scale-95" // Spring animation
                 )}
               >
                 {/* Icon with badge */}
                 <div className="relative">
-                  {tab.icon}
+                  {React.cloneElement(tab.icon as React.ReactElement, {
+                    className: cn(
+                      "h-6 w-6",
+                      isActive ? "text-white" : "text-muted-foreground"
+                    )
+                  })}
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-md">
                       {tab.badge > 99 ? '99+' : tab.badge}
                     </span>
                   )}

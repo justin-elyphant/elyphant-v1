@@ -193,6 +193,11 @@ export default {
 				'16': 'var(--space-16)',
 				'20': 'var(--space-20)',
 				'24': 'var(--space-24)',
+				// iOS Safe Area Insets
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
 			},
 			fontSize: {
 				'xs': ['var(--text-xs)', { lineHeight: 'var(--leading-normal)' }],

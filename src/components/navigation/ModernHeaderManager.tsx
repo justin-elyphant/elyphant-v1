@@ -11,6 +11,8 @@ import UserButton from "@/components/auth/UserButton";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 import MobileAuthMenu from "./MobileAuthMenu";
+import DesktopHorizontalNav from "./DesktopHorizontalNav";
+import SearchIconTrigger from "./SearchIconTrigger";
 
 interface ModernHeaderManagerProps {
   mode?: "main" | "minimal" | "marketplace-focused";
@@ -67,41 +69,25 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       <nav className="bg-transparent">
         <div className="w-full px-4" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
-            "flex items-center",
+            "flex items-center justify-between",
             config.height
           )}>
-            {/* Logo - always consistent size */}
-            <div className={cn(
-              "flex-shrink-0",
-              config.logoSize
-            )}>
+            {/* Logo - 20% width */}
+            <div className="flex-shrink-0 w-32 md:w-48">
               <Logo />
             </div>
 
-            {/* Search Bar - always visible on desktop */}
-            {config.showSearch && (
-              <div className={cn(
-                "hidden md:flex",
-                config.searchWidth
-              )}>
-                <AIEnhancedSearchBar />
+            {/* Desktop Horizontal Navigation - 60% width */}
+            {user && (
+              <div className="hidden md:flex flex-1 justify-center">
+                <DesktopHorizontalNav />
               </div>
             )}
 
-            {/* Breadcrumbs for deep pages */}
-            {showBreadcrumbs && (
-              <div className="hidden lg:flex items-center text-sm text-muted-foreground mx-4">
-                <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-                <span className="mx-2">/</span>
-                <span>Current Page</span>
-              </div>
-            )}
-
-            {/* Desktop Auth & Cart - always visible */}
-            <div className="hidden md:flex items-center gap-commerce flex-shrink-0">
-              {config.showCart && (
-                <OptimizedShoppingCartButton />
-              )}
+            {/* Desktop Right Utilities - 20% width */}
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+              {config.showSearch && <SearchIconTrigger />}
+              {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 

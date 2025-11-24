@@ -56,8 +56,7 @@ export const GiftPathSelector: React.FC<GiftPathSelectorProps> = ({
           <div className="pt-2">
             <Button 
               onClick={() => onSelectPath('ai-autopilot')}
-              style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
-              className="w-full min-h-[44px] text-white hover:opacity-90 marketplace-touch-target text-sm md:text-base"
+              className="w-full min-h-[44px] bg-elyphant-gradient text-white hover:opacity-90 marketplace-touch-target text-sm md:text-base"
             >
               <Zap className="h-4 w-4 mr-2" />
               Schedule Gifts

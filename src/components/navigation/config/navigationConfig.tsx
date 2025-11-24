@@ -97,7 +97,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
         {
           id: "gifting",
           label: "Gifting Hub",
-          href: "/gifting",
+          href: "/dashboard?tab=auto-gifts",
           icon: <Gift className="h-5 w-5" />,
           section: "secondary" as const,
           requiresAuth: true

@@ -7,13 +7,14 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsLayout from "@/components/settings/SettingsLayout";
 import GeneralSettings from "@/components/settings/GeneralSettings";
+import MySizesSettings from "@/components/settings/MySizesSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import PrivacySecuritySettings from "@/components/settings/PrivacySecuritySettings";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
-type SettingsTab = "general" | "notifications" | "privacy";
+type SettingsTab = "general" | "sizes" | "notifications" | "privacy";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,7 @@ const Settings = () => {
   const mapSectionToTab = (section: string | null): SettingsTab | null => {
     switch (section) {
       case 'profile': return 'general';
+      case 'sizes': return 'sizes';
       case 'notifications': return 'notifications';  
       case 'privacy': return 'privacy';
       case 'billing': return 'general'; // billing info is in general settings
@@ -125,6 +127,7 @@ const Settings = () => {
 
   const tabs = [
     { id: "general", label: "My Profile" },
+    { id: "sizes", label: "My Sizes" },
     { id: "notifications", label: "My Notifications" },
     { id: "privacy", label: "My Privacy & Security" },
   ];
@@ -133,6 +136,8 @@ const Settings = () => {
     switch (activeTab) {
       case "general":
         return <GeneralSettings key={`general-${forceRefreshCount}`} />;
+      case "sizes":
+        return <MySizesSettings />;
       case "notifications":
         return <NotificationSettings />;
       case "privacy":

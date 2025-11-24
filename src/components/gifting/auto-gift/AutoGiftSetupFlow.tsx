@@ -13,12 +13,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Gift, DollarSign, Calendar, Users, Sparkles, 
-  CheckCircle, ArrowRight, Bell, ShoppingCart, CreditCard 
+  CheckCircle, ArrowRight, Bell, ShoppingCart, CreditCard, Ruler
 } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { RecipientSearchCombobox } from "./RecipientSearchCombobox";
 import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
 import SmartHolidayInfo from "./SmartHolidayInfo";
@@ -57,6 +58,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
   const { connections, pendingInvitations, fetchConnections } = useEnhancedConnections();
+  const { profile } = useProfile();
+  // Get user sizes from profile metadata (cast for JSONB field access)
+  const userSizes = (profile as any)?.metadata?.sizes || null;
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -639,6 +643,51 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     Our system automatically finds the perfect gift by checking: 1) Recipient's wishlist items 2) Their preferences and interests 3) AI-powered smart recommendations if needed
                   </p>
                 </div>
+
+                {/* Show user sizes if available */}
+                {userSizes && (
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Ruler className="h-4 w-4" />
+                      Your Saved Sizes (for Nicole AI)
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+                      {userSizes.tops && (
+                        <div>
+                          <span className="font-medium text-foreground">Tops:</span> {userSizes.tops}
+                        </div>
+                      )}
+                      {userSizes.bottoms && (
+                        <div>
+                          <span className="font-medium text-foreground">Bottoms:</span> {userSizes.bottoms}
+                        </div>
+                      )}
+                      {userSizes.shoes && (
+                        <div>
+                          <span className="font-medium text-foreground">Shoes:</span> {userSizes.shoes}
+                        </div>
+                      )}
+                      {userSizes.ring && (
+                        <div>
+                          <span className="font-medium text-foreground">Ring:</span> {userSizes.ring}
+                        </div>
+                      )}
+                      {userSizes.fit_preference && (
+                        <div className="col-span-2">
+                          <span className="font-medium text-foreground">Fit:</span> {userSizes.fit_preference}
+                        </div>
+                      )}
+                    </div>
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="text-xs p-0 h-auto mt-3"
+                      onClick={() => window.open('/settings?tab=sizes', '_blank')}
+                    >
+                      Update sizes →
+                    </Button>
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="budget">Budget Limit ($)</Label>

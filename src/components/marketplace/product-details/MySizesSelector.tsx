@@ -51,14 +51,14 @@ const MySizesSelector: React.FC<MySizesSelectorProps> = ({
   if (!sizeOptions) return null;
   
   return (
-    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <div className="p-4 bg-muted border border-border rounded-lg">
       <div className="flex items-start gap-2 mb-3">
-        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+        <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-blue-900">
+          <p className="text-sm font-medium text-foreground">
             Your Saved Size: {sizeOptions[0]}
           </p>
-          <p className="text-xs text-blue-700 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             From your profile settings
           </p>
         </div>
@@ -67,7 +67,7 @@ const MySizesSelector: React.FC<MySizesSelectorProps> = ({
       <Button 
         size="sm"
         variant="outline"
-        className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+        className="w-full"
         onClick={() => onSizeChange(sizeOptions[0])}
       >
         Use My Size ({sizeOptions[0]})

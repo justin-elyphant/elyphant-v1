@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Product } from "@/types/product";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -9,7 +9,6 @@ import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useAuth } from "@/contexts/auth";
 import { sortProducts } from "./hooks/utils/categoryUtils";
 import ProductItem from "./product-item/ProductItem";
-import ProductDetailsDialog from "./ProductDetailsDialog";
 import SignUpDialog from "./SignUpDialog";
 import ProductGridDisplay from "./ProductGridDisplay";
 
@@ -38,9 +37,8 @@ const ProductGrid = ({
   onFilterChange
 }: ProductGridProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   // State management
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [dlgOpen, setDlgOpen] = useState<boolean>(false);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   const [wishlistRefreshTrigger, setWishlistRefreshTrigger] = useState(0);
   
@@ -158,12 +156,6 @@ const ProductGrid = ({
     return user ? isProductWishlisted(productId) : false;
   }, [user, isProductWishlisted, wishlistRefreshTrigger]);
 
-  // Memoize selected product data
-  const selectedProductData = useMemo(() => {
-    if (!selectedProduct) return null;
-    return products.find(p => (p.product_id || p.id) === selectedProduct) || null;
-  }, [selectedProduct, products]);
-
   return (
     <div className="safe-area-inset mobile-grid-optimized">
       <ProductGridDisplay
@@ -174,14 +166,6 @@ const ProductGrid = ({
         toggleWishlist={toggleWishlist}
         isFavorited={isFavorited}
         isMobile={isMobile}
-      />
-
-      <ProductDetailsDialog
-        product={selectedProductData}
-        open={dlgOpen}
-        onOpenChange={setDlgOpen}
-        userData={userData}
-        onWishlistChange={handleWishlistChange}
       />
 
       <SignUpDialog

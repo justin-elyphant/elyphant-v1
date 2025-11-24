@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ShoppingBag, Gift, Heart, MessageSquare } from "lucide-react";
+import { ShoppingBag, Gift, Heart, MessageSquare, User } from "lucide-react";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 
 const DesktopHorizontalNav: React.FC = () => {
@@ -33,6 +33,12 @@ const DesktopHorizontalNav: React.FC = () => {
       icon: MessageSquare,
       badge: unreadMessagesCount,
       match: (path: string) => path.startsWith("/messages")
+    },
+    { 
+      label: "Account", 
+      href: "/dashboard", 
+      icon: User,
+      match: (path: string) => path.startsWith("/dashboard") || path.startsWith("/settings") || path.startsWith("/profile")
     }
   ];
 
@@ -47,21 +53,18 @@ const DesktopHorizontalNav: React.FC = () => {
             key={link.href}
             to={link.href}
             className={cn(
-              "relative py-2 px-1 text-base font-medium transition-colors",
-              "hover:text-foreground",
-              isActive ? "text-foreground" : "text-muted-foreground"
+              "relative py-2 px-4 min-h-[44px] text-base font-medium rounded-lg transition-all",
+              "flex items-center gap-2",
+              isActive 
+                ? "bg-elyphant-gradient text-white" 
+                : "text-muted-foreground hover:bg-muted"
             )}
           >
-            <div className="flex items-center gap-2">
-              <span>{link.label}</span>
-              {link.badge !== undefined && link.badge > 0 && (
-                <span className="bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                  {link.badge > 99 ? '99+' : link.badge}
-                </span>
-              )}
-            </div>
-            {isActive && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-destructive" />
+            <span>{link.label}</span>
+            {link.badge !== undefined && link.badge > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-md">
+                {link.badge > 99 ? '99+' : link.badge}
+              </span>
             )}
           </Link>
         );

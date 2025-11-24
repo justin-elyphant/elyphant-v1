@@ -55,8 +55,7 @@ export const NicoleCTAButtons: React.FC<NicoleCTAButtonsProps> = ({
         onClick={() => onCTAClick(ctaData)}
         variant={variant}
         size="sm"
-        style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
-        className="text-white shadow-lg hover:shadow-xl hover:opacity-90 transition-all duration-200 rounded-full px-4 py-2 text-sm font-medium"
+        className="bg-elyphant-gradient text-white shadow-lg hover:shadow-xl hover:opacity-90 transition-all duration-200 rounded-full px-4 py-2 text-sm font-medium"
       >
         <Icon className="w-4 h-4 mr-2" />
         {ctaData.label}

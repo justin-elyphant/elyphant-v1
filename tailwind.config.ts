@@ -19,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			backgroundImage: {
+				'elyphant-gradient': 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

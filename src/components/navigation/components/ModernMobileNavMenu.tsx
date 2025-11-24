@@ -95,17 +95,17 @@ const ModernMobileNavMenu = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-8 text-white">
+        <div className="bg-muted px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold">Menu</h2>
-              <p className="text-purple-100 text-sm">Discover amazing gifts</p>
+              <h2 className="text-xl font-bold text-foreground">Menu</h2>
+              <p className="text-muted-foreground text-sm">Discover amazing gifts</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+              className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
             >
-              <LogOut className="h-5 w-5 rotate-180" />
+              <LogOut className="h-5 w-5 rotate-180 text-foreground" />
             </button>
           </div>
         </div>
@@ -261,7 +261,11 @@ const ModernMobileNavMenu = ({
             <>
               <Separator />
               <div className="space-y-3">
-                <Button asChild className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                <Button 
+                  asChild 
+                  style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
+                  className="w-full h-12 text-white hover:opacity-90"
+                >
                   <Link to="/signup" onClick={onClose}>
                     <User className="h-5 w-5 mr-2" />
                     Create Account

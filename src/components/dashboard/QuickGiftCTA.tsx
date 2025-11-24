@@ -26,8 +26,7 @@ const QuickGiftCTA = () => {
           </div>
           <Button 
             onClick={handleOpenGifting}
-            style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
-            className="text-white border-0 shadow-md hover:opacity-90 h-10 sm:h-9 w-full sm:w-auto"
+            className="bg-elyphant-gradient text-white border-0 shadow-md hover:opacity-90 h-10 sm:h-9 w-full sm:w-auto"
             size="sm"
           >
             <Zap className="h-4 w-4 mr-2" />

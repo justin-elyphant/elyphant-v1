@@ -21,7 +21,7 @@ const LegalLayout: React.FC<LegalLayoutProps> = ({
               alt="Elyphant" 
               className="h-8 w-8 mr-3" 
             />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-foreground">
               Elyphant
             </h1>
           </div>

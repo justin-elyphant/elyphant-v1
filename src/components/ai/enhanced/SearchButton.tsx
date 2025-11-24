@@ -14,8 +14,7 @@ const SearchButton: React.FC<SearchButtonProps> = ({ onSearch, isLoading = false
       onClick={onSearch}
       disabled={isLoading}
       size="lg"
-      style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
-      className="text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:opacity-90 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+      className="bg-elyphant-gradient text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:shadow-xl hover:opacity-90 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
     >
       {isLoading ? (
         <>

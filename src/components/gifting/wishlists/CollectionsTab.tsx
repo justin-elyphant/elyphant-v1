@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gift, Heart, Package, Target, Eye, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
@@ -8,15 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
-import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+
 import { toast } from "sonner";
 import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 const CollectionsTab = () => {
   const { wishlists, loading, removeFromWishlist } = useUnifiedWishlistSystem();
   const { user } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
+  const navigate = useNavigate();
 
   const { totalItems, wishlistCount, allItems } = React.useMemo(() => {
     const totalItems = wishlists?.reduce((total, wishlist) => total + (wishlist.items?.length || 0), 0) || 0;
@@ -35,9 +34,10 @@ const CollectionsTab = () => {
   }, [wishlists]);
 
   const handleProductClick = (item: any) => {
+    const productId = item.product_id || item.id;
     const productData = {
-      id: item.product_id || item.id,
-      product_id: item.product_id || item.id,
+      id: productId,
+      product_id: productId,
       title: item.name || item.title,
       name: item.name || item.title,
       price: item.price,
@@ -54,8 +54,13 @@ const CollectionsTab = () => {
       availability: item.availability || 'in_stock'
     };
     
-    setSelectedProduct(productData);
-    setShowProductDetails(true);
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product: productData,
+        context: 'wishlist',
+        returnPath: '/wishlists'
+      }
+    });
   };
 
   const handleRemoveItem = async (e: React.MouseEvent, item: any) => {
@@ -219,16 +224,6 @@ const CollectionsTab = () => {
           </div>
         )}
       </div>
-
-      {/* Product Details Dialog */}
-      {selectedProduct && (
-        <ProductDetailsDialog
-          product={selectedProduct}
-          open={showProductDetails}
-          onOpenChange={setShowProductDetails}
-          userData={user}
-        />
-      )}
     </div>
   );
 };

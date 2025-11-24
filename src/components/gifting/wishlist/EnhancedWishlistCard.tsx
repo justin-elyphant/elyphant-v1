@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart, Trash2, Gift, ExternalLink, Calendar, Check, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +20,7 @@ import { formatPriceWithDetection } from "@/utils/productSourceDetection";
 import { WishlistItem } from "@/types/profile";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
+
 import { Product } from "@/types/product";
 
 interface EnhancedWishlistCardProps {
@@ -55,8 +56,8 @@ const EnhancedWishlistCard = ({
   className
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -108,24 +109,35 @@ const EnhancedWishlistCard = ({
     onSelectionChange?.(item.id, checked);
   };
 
-  // Transform WishlistItem to Product format for dialog
-  const transformToProduct = (): Product => ({
-    id: item.product_id || item.id,
-    product_id: item.product_id || item.id,
-    title: item.name || item.title || "Product",
-    name: item.name || item.title || "Product",
-    price: item.price || 0,
-    image: item.image_url || "/placeholder.svg",
-    images: [item.image_url || "/placeholder.svg"],
-    brand: item.brand || "",
-    rating: (item as any).stars || (item as any).rating || 0,
-    reviewCount: (item as any).review_count || (item as any).reviews || 0,
-    vendor: (item as any).vendor,
-    retailer: (item as any).retailer,
-    productSource: (item as any).product_source,
-    isZincApiProduct: (item as any).isZincApiProduct,
-    skipCentsDetection: (item as any).skipCentsDetection,
-  });
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const productId = item.product_id || item.id;
+    const productData = {
+      id: productId,
+      product_id: productId,
+      title: item.name || item.title || "Product",
+      name: item.name || item.title || "Product",
+      price: item.price || 0,
+      image: item.image_url || "/placeholder.svg",
+      images: [item.image_url || "/placeholder.svg"],
+      brand: item.brand || "",
+      rating: (item as any).stars || (item as any).rating || 0,
+      reviewCount: (item as any).review_count || (item as any).reviews || 0,
+      vendor: (item as any).vendor,
+      retailer: (item as any).retailer,
+      productSource: (item as any).product_source,
+      isZincApiProduct: (item as any).isZincApiProduct,
+      skipCentsDetection: (item as any).skipCentsDetection,
+    };
+    
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product: productData,
+        context: 'wishlist',
+        returnPath: window.location.pathname
+      }
+    });
+  };
 
   // Use database product_source for accurate pricing
   const formattedPrice = formatPriceWithDetection({
@@ -196,8 +208,8 @@ const EnhancedWishlistCard = ({
 
         <CardContent className="p-0">
           {/* Image - Larger for Babylist feel */}
-          <div className="aspect-square bg-muted overflow-hidden cursor-pointer min-h-[240px]" onClick={() => !isSelectionMode && setShowDetails(true)}>
-            <img 
+          <div className="aspect-square bg-muted overflow-hidden cursor-pointer min-h-[240px]" onClick={(e) => !isSelectionMode && handleViewDetails(e)}>
+            <img
               src={normalizeImageUrl(item.image_url, { bucket: 'product-images', fallback: '/placeholder.svg' })} 
               alt={item.name || item.title || "Product"}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
@@ -243,7 +255,7 @@ const EnhancedWishlistCard = ({
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        onClick={() => setShowDetails(true)}
+                        onClick={handleViewDetails}
                         className="text-xs"
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
@@ -267,16 +279,6 @@ const EnhancedWishlistCard = ({
           </div>
         </CardContent>
       </Card>
-
-      {/* Product Details Dialog - Wishlist First */}
-      <ProductDetailsDialog
-        product={transformToProduct()}
-        open={showDetails}
-        onOpenChange={setShowDetails}
-        userData={null}
-        context="wishlist"
-        source="wishlist"
-      />
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

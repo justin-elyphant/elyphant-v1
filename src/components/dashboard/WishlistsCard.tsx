@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Heart, Plus, ArrowRight, Gift, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,15 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useAuth } from "@/contexts/auth";
-import ProductDetailsDialog from "@/components/marketplace/ProductDetailsDialog";
+
 
 const WishlistsCard = () => {
   const { wishlists, loading } = useUnifiedWishlistSystem();
   const { user } = useAuth();
-  
-  // Product details dialog state
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Don't show the card if user is not authenticated
   if (!user) {
@@ -52,10 +50,10 @@ const WishlistsCard = () => {
   }, [wishlists]);
 
   const handleProductClick = (item: any) => {
-    // Convert wishlist item to product format for the dialog
+    const productId = item.product_id || item.id;
     const productData = {
-      id: item.product_id || item.id,
-      product_id: item.product_id || item.id,
+      id: productId,
+      product_id: productId,
       title: item.name || item.title,
       name: item.name || item.title,
       price: item.price,
@@ -66,13 +64,13 @@ const WishlistsCard = () => {
       vendor: item.brand
     };
     
-    setSelectedProduct(productData);
-    setShowProductDetails(true);
-  };
-
-  const handleWishlistChange = () => {
-    // Callback for when wishlists change from the product dialog
-    // Could trigger a refresh if needed
+    navigate(`/marketplace/product/${productId}`, {
+      state: {
+        product: productData,
+        context: 'wishlist',
+        returnPath: '/dashboard?tab=wishlists'
+      }
+    });
   };
 
   return (
@@ -217,15 +215,6 @@ const WishlistsCard = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Product Details Dialog */}
-      <ProductDetailsDialog
-        product={selectedProduct}
-        open={showProductDetails}
-        onOpenChange={setShowProductDetails}
-        userData={user}
-        onWishlistChange={handleWishlistChange}
-      />
     </>
   );
 };

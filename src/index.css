@@ -91,11 +91,19 @@
   --stepper-completed: 142 76% 36%;
   --stepper-inactive: 215.4 16.3% 46.9%;
   
-  /* Enhanced gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(221.2 83.2% 58.3%));
+  /* Elyphant Brand Colors - E-commerce Minimalism */
+  --elyphant-grey: 0 0% 96.9%;        /* #F7F7F7 - Page background */
+  --elyphant-white: 0 0% 100%;        /* #FFFFFF - Card backgrounds */
+  --elyphant-black: 0 0% 16.9%;       /* #2B2B2B - Primary text */
+  --elyphant-grey-text: 220 14% 46%;  /* #6B7280 - Secondary text */
+  --elyphant-success: 142 76% 36%;    /* #10B981 - Success states */
+  
+  /* Elyphant Brand Gradient (from logo: purple → sky blue) */
+  --elyphant-gradient: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);
+  
+  /* Keep minimal functional gradients */
   --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
   --gradient-subtle: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
-  --gradient-wishlist: linear-gradient(135deg, hsl(330 81% 60%), hsl(280 79% 62%));
   
   /* Enhanced shadows */
   --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);

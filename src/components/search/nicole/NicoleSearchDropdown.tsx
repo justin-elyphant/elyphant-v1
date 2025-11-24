@@ -134,9 +134,9 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
     <>
       <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="flex items-center justify-between p-3 border-b border-border bg-muted">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+          <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }} />
           <span className="text-sm font-medium text-foreground">Nicole AI Assistant</span>
         </div>
         <div className="flex items-center gap-1">

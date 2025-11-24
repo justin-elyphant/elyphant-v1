@@ -105,7 +105,8 @@ const FindGiftsCard = () => {
           
           <div className="flex justify-center">
             <Button 
-              className="px-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-md" 
+              style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
+              className="px-8 text-white hover:opacity-90 shadow-md" 
               asChild
             >
               <Link to="/marketplace" className="flex items-center gap-2">

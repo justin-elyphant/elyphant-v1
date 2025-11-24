@@ -16,8 +16,8 @@ const InvitationSentStep = ({
   return (
     <div className="space-y-6">
       <div className="text-center space-y-4">
-        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-          <CheckCircle2 className="w-8 h-8 text-white" />
+        <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8 text-elyphant-success" />
         </div>
         
         <div>
@@ -28,11 +28,11 @@ const InvitationSentStep = ({
         </div>
       </div>
 
-      <Card className="border-2 border-green-200 bg-green-50/50">
+      <Card className="border-2 border-border bg-muted">
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <Mail className="w-5 h-5 text-green-600" />
-            <h3 className="font-semibold text-green-800">What happens next?</h3>
+            <Mail className="w-5 h-5 text-elyphant-success" />
+            <h3 className="font-semibold text-foreground">What happens next?</h3>
           </div>
           
           <div className="space-y-3 text-sm">

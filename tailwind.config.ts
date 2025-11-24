@@ -69,6 +69,19 @@ export default {
 					elevated: 'hsl(var(--surface-elevated))',
 					sunken: 'hsl(var(--surface-sunken))'
 				},
+				// Elyphant Brand Colors - E-commerce Minimalism
+				elyphant: {
+					// Foundation (80% of UI) - Monochromatic base
+					grey: '#F7F7F7',       // Page background
+					white: '#FFFFFF',      // Card backgrounds
+					black: '#2B2B2B',      // Primary text
+					'grey-text': '#6B7280', // Secondary text
+					// Brand Accent (20% of UI) - Strategic use only
+					purple: '#9333ea',     // Purple from logo gradient
+					blue: '#0ea5e9',       // Sky blue from logo gradient
+					// Semantic
+					success: '#10B981',    // Order success, delivery confirmed
+				},
 				slate: {
 					50: '#f8fafc',
 					100: '#f1f5f9',

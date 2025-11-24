@@ -1,9 +1,7 @@
 
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import ProductDetailsDialog from "../product-details/ProductDetailsDialog";
+import React, { useEffect } from "react";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { Product } from "@/types/product";
-import SignUpDialog from "../SignUpDialog";
 
 interface ProductDetailsManagerProps {
   products: Product[];
@@ -12,45 +10,33 @@ interface ProductDetailsManagerProps {
 
 const ProductDetailsManager: React.FC<ProductDetailsManagerProps> = ({ products, userData }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const productId = searchParams.get("productId");
-  const [showProductDetails, setShowProductDetails] = useState<string | null>(productId);
-  const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
+  // Redirect ?productId query param to full-page route
   useEffect(() => {
     if (productId) {
-      setShowProductDetails(productId);
-    } else {
-      setShowProductDetails(null);
-    }
-  }, [productId]);
-
-  const selectedProduct = showProductDetails !== null 
-    ? products.find(p => p.product_id === showProductDetails)
-    : null;
-
-  return (
-    <>
-      {/* Sign Up Dialog for non-authenticated interactions */}
-      <SignUpDialog 
-        open={showSignUpDialog}
-        onOpenChange={setShowSignUpDialog} 
-      />
+      const product = products.find(p => p.product_id === productId);
       
-      {/* Product Details Dialog */}
-      <ProductDetailsDialog 
-        productId={selectedProduct?.product_id || null}
-        open={showProductDetails !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            const newParams = new URLSearchParams(searchParams);
-            newParams.delete("productId");
-            setSearchParams(newParams);
-          }
-        }}
-        userData={userData}
-      />
-    </>
-  );
+      // Navigate to full-page product details
+      navigate(`/marketplace/product/${productId}`, {
+        state: { 
+          product,
+          context: 'marketplace',
+          returnPath: location.pathname
+        },
+        replace: true // Replace history entry to avoid back button confusion
+      });
+      
+      // Clear the productId query param
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("productId");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [productId, products, navigate, location.pathname, searchParams, setSearchParams]);
+
+  return null; // Component now only handles redirects
 };
 
 export default ProductDetailsManager;

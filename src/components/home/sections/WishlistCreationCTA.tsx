@@ -11,9 +11,8 @@ import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import SignUpDialog from "@/components/marketplace/SignUpDialog";
-import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
 import { Product } from "@/types/product";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
@@ -26,11 +25,11 @@ const WishlistCreationCTA = () => {
   const { quickAddToWishlist, wishlists } = useUnifiedWishlistSystem();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const { addItem: addToRecentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
@@ -155,8 +154,14 @@ const WishlistCreationCTA = () => {
       brand: product.brand || ''
     });
 
-    // Open modal instead of navigating
-    setSelectedProductId(String(productId));
+    // Navigate to full-page product details
+    navigate(`/marketplace/product/${productId}`, {
+      state: { 
+        product, 
+        context: 'wishlist',
+        returnPath: location.pathname
+      }
+    });
   };
 
   return (
@@ -332,18 +337,6 @@ const WishlistCreationCTA = () => {
       <SignUpDialog 
         open={showSignUpDialog} 
         onOpenChange={setShowSignUpDialog} 
-      />
-
-      <ProductDetailsDialog
-        productId={selectedProductId}
-        open={selectedProductId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedProductId(null);
-          }
-        }}
-        userData={user}
-        source="wishlist"
       />
       
     </FullBleedSection>

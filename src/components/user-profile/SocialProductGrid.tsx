@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import ProductDetailsDialog from "@/components/marketplace/product-details/ProductDetailsDialog";
+import { useNavigate, useLocation } from "react-router-dom";
 import WishlistItemManagementDialog from "./WishlistItemManagementDialog";
 import ResponsiveProductGrid from "./ResponsiveProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
@@ -45,15 +45,15 @@ interface EnhancedProduct extends Product {
 }
 
 const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnProfile, isPreviewMode = false }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [products, setProducts] = useState<ProductWithSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<EnhancedProduct | null>(null);
   
   // Extract display name for personalized headings
   const displayName = profile?.display_name || profile?.full_name || profile?.username || "Their";
   const [selectedWishlistItem, setSelectedWishlistItem] = useState<WishlistItem | null>(null);
-  const [showProductDialog, setShowProductDialog] = useState(false);
   const [showWishlistItemDialog, setShowWishlistItemDialog] = useState(false);
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
@@ -321,8 +321,14 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         isZincApiProduct: product.source === 'trending' || product.source === 'ai'
       };
       
-      setSelectedProduct(productForDialog);
-      setShowProductDialog(true);
+      // Navigate to full-page product details
+      navigate(`/marketplace/product/${product.product_id}`, {
+        state: {
+          product: productForDialog,
+          context: 'profile',
+          returnPath: location.pathname
+        }
+      });
     }
   };
 
@@ -568,15 +574,6 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       </DesktopProfileWrapper>
 
       {/* Dialogs */}
-      <ProductDetailsDialog
-        product={selectedProduct}
-        open={showProductDialog}
-        onOpenChange={setShowProductDialog}
-        userData={profile}
-        source={selectedProduct?.source}
-        onWishlistChange={handleItemRemoved}
-      />
-
       <WishlistItemManagementDialog
         item={selectedWishlistItem}
         open={showWishlistItemDialog}

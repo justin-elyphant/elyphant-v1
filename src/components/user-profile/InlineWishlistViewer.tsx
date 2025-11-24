@@ -245,7 +245,7 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
 
         {/* Upcoming Event Banner */}
         {upcomingEvent && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+          <div className="mb-6 p-4 bg-muted border border-border rounded-lg">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3 flex-1">
                 <span className="text-3xl">{getEventEmoji(upcomingEvent.date_type)}</span>

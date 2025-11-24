@@ -28,7 +28,8 @@ const AuthButtons = () => {
         <Button
           size="sm"
           onClick={handleGetStarted}
-          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white border-0 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+          style={{ background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)' }}
+          className="text-white border-0 font-semibold shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-200"
         >
           Get Started
         </Button>

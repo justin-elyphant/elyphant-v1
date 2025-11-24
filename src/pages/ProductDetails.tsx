@@ -151,27 +151,7 @@ const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Mobile Bottom CTA Bar - iOS-style */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t pb-safe">
-        <div className="flex gap-3 px-4 py-3">
-          <Button 
-            className="flex-1 bg-elyphant-accent hover:bg-elyphant-accent/90 h-12"
-            onClick={() => {
-              // Add to cart logic handled in sidebar
-            }}
-          >
-            Add to Cart
-          </Button>
-          <Button 
-            className="flex-1 bg-elyphant-black hover:bg-elyphant-black/90 h-12"
-            onClick={() => {
-              // Buy now logic handled in sidebar
-            }}
-          >
-            Buy Now
-          </Button>
-        </div>
-      </div>
+      {/* Mobile Bottom CTA Bar - iOS-style - Hidden, sidebar handles all CTAs */}
     </div>
   );
 };

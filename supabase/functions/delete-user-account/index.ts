@@ -40,77 +40,90 @@ Deno.serve(async (req) => {
 
     console.log(`Starting account deletion for user: ${userId}`);
 
+    // Helper function to safely delete with error logging
+    const safeDelete = async (tableName: string, column: string, value: any) => {
+      try {
+        const { error } = await supabaseAdmin.from(tableName).delete().eq(column, value);
+        if (error) {
+          console.error(`Error deleting from ${tableName}:`, error);
+        } else {
+          console.log(`✓ Deleted from ${tableName}`);
+        }
+      } catch (err) {
+        console.error(`Exception deleting from ${tableName}:`, err);
+      }
+    };
+
     // Delete user data from all tables (in order of foreign key dependencies)
 
     // Delete group gifts and contributions
-    await supabaseAdmin.from('group_gift_contributions').delete().eq('contributor_id', userId);
-    await supabaseAdmin.from('group_gift_projects').delete().eq('coordinator_id', userId);
+    await safeDelete('group_gift_contributions', 'contributor_id', userId);
+    await safeDelete('group_gift_projects', 'coordinator_id', userId);
     
-    // Delete order-related data
-    await supabaseAdmin.from('order_items').delete().eq('order_id', userId);
-    await supabaseAdmin.from('orders').delete().eq('user_id', userId);
+    // Delete order-related data (order_items table was removed)
+    await safeDelete('orders', 'user_id', userId);
 
     // Delete auto-gifting data
-    await supabaseAdmin.from('automated_gift_executions').delete().eq('user_id', userId);
-    await supabaseAdmin.from('auto_gifting_rules').delete().eq('user_id', userId);
-    await supabaseAdmin.from('auto_gifting_settings').delete().eq('user_id', userId);
-    await supabaseAdmin.from('auto_gift_notifications').delete().eq('user_id', userId);
-    await supabaseAdmin.from('auto_gift_event_logs').delete().eq('user_id', userId);
-    await supabaseAdmin.from('auto_gift_data_access').delete().eq('user_id', userId);
-    await supabaseAdmin.from('approval_conversations').delete().eq('user_id', userId);
-    await supabaseAdmin.from('email_approval_tokens').delete().eq('user_id', userId);
+    await safeDelete('automated_gift_executions', 'user_id', userId);
+    await safeDelete('auto_gifting_rules', 'user_id', userId);
+    await safeDelete('auto_gifting_settings', 'user_id', userId);
+    await safeDelete('auto_gift_notifications', 'user_id', userId);
+    await safeDelete('auto_gift_event_logs', 'user_id', userId);
+    await safeDelete('auto_gift_data_access', 'user_id', userId);
+    await safeDelete('approval_conversations', 'user_id', userId);
+    await safeDelete('email_approval_tokens', 'user_id', userId);
 
     // Delete connections and related data
-    await supabaseAdmin.from('user_connections').delete().eq('user_id', userId);
-    await supabaseAdmin.from('user_connections').delete().eq('connected_user_id', userId);
-    await supabaseAdmin.from('connection_nudges').delete().eq('user_id', userId);
-    await supabaseAdmin.from('blocked_users').delete().eq('blocker_id', userId);
-    await supabaseAdmin.from('blocked_users').delete().eq('blocked_id', userId);
+    await safeDelete('user_connections', 'user_id', userId);
+    await safeDelete('user_connections', 'connected_user_id', userId);
+    await safeDelete('connection_nudges', 'user_id', userId);
+    await safeDelete('blocked_users', 'blocker_id', userId);
+    await safeDelete('blocked_users', 'blocked_id', userId);
 
     // Delete address data
-    await supabaseAdmin.from('address_requests').delete().eq('requester_id', userId);
-    await supabaseAdmin.from('address_requests').delete().eq('recipient_id', userId);
-    await supabaseAdmin.from('address_intelligence').delete().eq('user_id', userId);
-    await supabaseAdmin.from('user_addresses').delete().eq('user_id', userId);
+    await safeDelete('address_requests', 'requester_id', userId);
+    await safeDelete('address_requests', 'recipient_id', userId);
+    await safeDelete('address_intelligence', 'user_id', userId);
+    await safeDelete('user_addresses', 'user_id', userId);
 
     // Delete wishlists and items
-    await supabaseAdmin.from('wishlist_items').delete().eq('user_id', userId);
-    await supabaseAdmin.from('wishlists').delete().eq('user_id', userId);
+    await safeDelete('wishlist_items', 'user_id', userId);
+    await safeDelete('wishlists', 'user_id', userId);
 
     // Delete messages and group chats
-    await supabaseAdmin.from('messages').delete().eq('sender_id', userId);
-    await supabaseAdmin.from('messages').delete().eq('recipient_id', userId);
-    await supabaseAdmin.from('group_chat_members').delete().eq('user_id', userId);
-    await supabaseAdmin.from('group_chats').delete().eq('creator_id', userId);
+    await safeDelete('messages', 'sender_id', userId);
+    await safeDelete('messages', 'recipient_id', userId);
+    await safeDelete('group_chat_members', 'user_id', userId);
+    await safeDelete('group_chats', 'creator_id', userId);
 
     // Delete gift-related data
-    await supabaseAdmin.from('gift_proposal_votes').delete().eq('user_id', userId);
-    await supabaseAdmin.from('gift_searches').delete().eq('user_id', userId);
-    await supabaseAdmin.from('gift_templates').delete().eq('user_id', userId);
-    await supabaseAdmin.from('gift_recommendations').delete().eq('user_id', userId);
-    await supabaseAdmin.from('gift_invitation_analytics').delete().eq('user_id', userId);
-    await supabaseAdmin.from('gift_intelligence_cache').delete().eq('user_id', userId);
+    await safeDelete('gift_proposal_votes', 'user_id', userId);
+    await safeDelete('gift_searches', 'user_id', userId);
+    await safeDelete('gift_templates', 'user_id', userId);
+    await safeDelete('gift_recommendations', 'user_id', userId);
+    await safeDelete('gift_invitation_analytics', 'user_id', userId);
+    await safeDelete('gift_intelligence_cache', 'user_id', userId);
 
     // Delete special dates
-    await supabaseAdmin.from('user_special_dates').delete().eq('user_id', userId);
+    await safeDelete('user_special_dates', 'user_id', userId);
 
     // Delete payment methods
-    await supabaseAdmin.from('payment_methods').delete().eq('user_id', userId);
+    await safeDelete('payment_methods', 'user_id', userId);
 
     // Delete email and notification data
-    await supabaseAdmin.from('email_preferences').delete().eq('user_id', userId);
-    await supabaseAdmin.from('notifications').delete().eq('user_id', userId);
-    await supabaseAdmin.from('birthday_email_tracking').delete().eq('user_id', userId);
+    await safeDelete('email_preferences', 'user_id', userId);
+    await safeDelete('notifications', 'user_id', userId);
+    await safeDelete('birthday_email_tracking', 'user_id', userId);
 
     // Delete AI and analytics data
-    await supabaseAdmin.from('ai_gift_searches').delete().eq('user_id', userId);
-    await supabaseAdmin.from('ai_suggestion_insights').delete().eq('user_id', userId);
-    await supabaseAdmin.from('conversation_threads').delete().eq('user_id', userId);
-    await supabaseAdmin.from('profile_completion_analytics').delete().eq('user_id', userId);
-    await supabaseAdmin.from('user_type_audit_log').delete().eq('user_id', userId);
+    await safeDelete('ai_gift_searches', 'user_id', userId);
+    await safeDelete('ai_suggestion_insights', 'user_id', userId);
+    await safeDelete('conversation_threads', 'user_id', userId);
+    await safeDelete('profile_completion_analytics', 'user_id', userId);
+    await safeDelete('user_type_audit_log', 'user_id', userId);
 
     // Delete profile last (has dependencies)
-    await supabaseAdmin.from('profiles').delete().eq('id', userId);
+    await safeDelete('profiles', 'id', userId);
 
     console.log(`Deleted all user data for: ${userId}`);
 

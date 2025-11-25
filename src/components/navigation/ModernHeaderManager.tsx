@@ -102,7 +102,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             )}
 
             {/* Desktop Right Utilities */}
-            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0 min-w-[180px] justify-end">
               <Button
                 variant="ghost"
                 size="icon"

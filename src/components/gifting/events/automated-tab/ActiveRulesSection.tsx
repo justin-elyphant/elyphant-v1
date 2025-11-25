@@ -8,6 +8,7 @@ import { Trash2, DollarSign, Bell, Gift, Pause } from "lucide-react";
 import { UnifiedGiftRule, unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { toast } from "sonner";
+import { getOccasionDisplayName, getRecipientDisplayName, getSourceDisplayName, formatBudgetDisplay } from "@/utils/autoGiftDisplayHelpers";
 
 interface ActiveRulesSectionProps {
   rules: UnifiedGiftRule[];
@@ -94,9 +95,9 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-base">{rule.date_type}</CardTitle>
+                  <CardTitle className="text-base">{getOccasionDisplayName(rule.date_type)}</CardTitle>
                   <CardDescription>
-                    Recipient ID: {rule.recipient_id}
+                    For {getRecipientDisplayName(rule)}
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -115,16 +116,18 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center space-x-2">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span>Budget: ${rule.budget_limit || 0}</span>
+                    <span>{formatBudgetDisplay(rule.budget_limit)}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Gift className="h-4 w-4 text-muted-foreground" />
-                    <span>Source: {rule.gift_selection_criteria?.source || "wishlist"}</span>
+                    <span>Source: {getSourceDisplayName(rule.gift_selection_criteria?.source)}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Bell className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      Reminders: {rule.notification_preferences?.days_before?.join(", ") || "None"} days before
+                      {rule.notification_preferences?.days_before?.length 
+                        ? `${rule.notification_preferences.days_before.join(", ")} days before`
+                        : "No reminders"}
                     </span>
                   </div>
                 </div>

@@ -129,7 +129,7 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
       </div>
 
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
+        <div className="flex flex-wrap gap-2 p-3 bg-muted rounded-lg border border-border">
           <span className="text-sm text-muted-foreground mr-2">Selected:</span>
           {value.map((event, idx) => (
             <Badge key={idx} variant="secondary" className="gap-1">
@@ -147,8 +147,8 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
           return (
             <div key={option.value}>
               <div
-                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer hover:border-primary/50 ${
-                  selected ? "border-primary bg-primary/5" : "border-border"
+                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer hover:border-muted/80 ${
+                  selected ? "border-muted bg-muted" : "border-border"
                 }`}
                 onClick={() => handleEventToggle(option.value)}
               >
@@ -157,7 +157,7 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
                   onCheckedChange={() => handleEventToggle(option.value)}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <Icon className="h-5 w-5 text-muted-foreground" />
+                <Icon className={`h-5 w-5 ${selected ? "text-gradient-to-r from-purple-600 to-sky-500" : "text-muted-foreground"}`} />
                 <div className="flex-1">
                   <p className="font-medium">{option.label}</p>
                 </div>

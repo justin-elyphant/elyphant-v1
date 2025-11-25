@@ -465,7 +465,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            {ruleId ? 'Edit Auto-Gifting Rule' : 'Set Up Auto-Gifting'}
+            {ruleId ? 'Edit AI Gifting Rule' : 'Set Up AI Gifting'}
           </DialogTitle>
         </DialogHeader>
 
@@ -491,13 +491,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           {/* Step 1: Recipient Selection */}
           <TabsContent value="0" className="space-y-4 pb-32">
             {initialData?.recipientName && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                  <CheckCircle className="h-4 w-4" />
+              <div className="p-3 bg-muted border border-border rounded-lg">
+                <div className="flex items-center gap-2 text-foreground">
+                  <CheckCircle className="h-4 w-4 text-blue-500" />
                   <span className="font-medium">Event Details Pre-filled</span>
                 </div>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Setting up auto-gifting for {initialData.recipientName}'s {initialData.eventType}
+                <p className="text-sm text-muted-foreground mt-1">
+                  Setting up AI Gifting for {initialData.recipientName}'s {initialData.eventType}
                   {initialData.eventDate && ` on ${new Date(initialData.eventDate).toLocaleDateString()}`}
                 </p>
               </div>
@@ -518,12 +518,12 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   <Label htmlFor="recipient" className="flex items-center gap-2">
                     Recipient
                     {initialData?.recipientName && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                         Pre-filled
                       </Badge>
                     )}
                     {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                         Pending Invitation
                       </Badge>
                     )}
@@ -613,13 +613,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           {/* Step 2: Budget & Payment */}
           <TabsContent value="1" className="space-y-4 pb-32">
             {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                  <Bell className="h-4 w-4" />
+              <div className="p-3 bg-muted border border-border rounded-lg">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Bell className="h-4 w-4 text-amber-500" />
                   <span className="font-medium">Pending Invitation</span>
                 </div>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  Auto-gifting will activate once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your connection and provides their shipping address.
+                <p className="text-sm text-muted-foreground mt-1">
+                  AI Gifting will activate once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your connection and provides their shipping address.
                 </p>
               </div>
             )}
@@ -734,12 +734,12 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           {/* Step 3: Notifications & Approval */}
           <TabsContent value="2" className="space-y-4 pb-32">
             {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                  <Bell className="h-4 w-4" />
+              <div className="p-3 bg-muted border border-border rounded-lg">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Bell className="h-4 w-4 text-amber-500" />
                   <span className="font-medium">Pending Invitation</span>
                 </div>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   The gift will be automatically sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your invitation and provides their shipping address.
                 </p>
               </div>
@@ -863,7 +863,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     formData.budgetLimit < 5
                   }
                 >
-                  {isLoading ? "Creating..." : "Create Auto-Gift Rule"}
+                  {isLoading ? "Scheduling..." : "Schedule AI Gift"}
                   <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               )}

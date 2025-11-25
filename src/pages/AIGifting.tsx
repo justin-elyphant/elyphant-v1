@@ -52,7 +52,7 @@ const AIGifting = () => {
                   className="bg-white text-purple-700 hover:bg-white/90 h-11 font-semibold"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Rule
+                  {rules.length === 0 ? "Schedule Your First Gift" : "Schedule Another Gift"}
                 </Button>
                 <Button 
                   variant="ghost" 

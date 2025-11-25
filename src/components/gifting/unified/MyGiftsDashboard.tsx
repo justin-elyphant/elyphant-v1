@@ -253,7 +253,7 @@ export const MyGiftsDashboard: React.FC<MyGiftsDashboardProps> = ({
                 </p>
                 <Button>
                   <Bot className="h-4 w-4 mr-2" />
-                  Create Your First Rule
+                  Schedule Your First Gift
                 </Button>
               </CardContent>
             </Card>

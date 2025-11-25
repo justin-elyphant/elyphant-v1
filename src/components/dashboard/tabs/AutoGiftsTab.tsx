@@ -70,7 +70,7 @@ const AutoGiftsTab = () => {
               Set up AI-powered gifting for special occasions
             </p>
             <Button asChild>
-              <Link to="/auto-gifts/setup">Create Your First Rule</Link>
+              <Link to="/auto-gifts/setup">Schedule Your First Gift</Link>
             </Button>
           </CardContent>
         </Card>

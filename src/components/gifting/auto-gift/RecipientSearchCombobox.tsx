@@ -215,7 +215,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </PopoverTrigger>
         <div ref={popoverContainerRef} />
         <PopoverContent 
-          className="w-[440px] p-0 z-[10000] pointer-events-auto bg-background shadow-md border"
+          className="w-[440px] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border"
           align="start"
           side="bottom"
           sideOffset={8}
@@ -254,7 +254,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
               <div className="p-2">
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3" />
                   Your Connections
                 </div>
                   {acceptedConnections.map((connection) => {
@@ -270,7 +271,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           connection.relationship_type || undefined
                         )}
                         className={cn(
-                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
+                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]",
                           isSelected && "bg-accent"
                         )}
                       >
@@ -286,10 +287,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           {connection.profile_username}
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">
                         {connection.relationship_type}
                       </Badge>
-                      {isSelected && <Check className="h-4 w-4" />}
+                      {isSelected && <Check className="h-4 w-4 text-purple-600" />}
                     </button>
                   );
                 })}
@@ -299,7 +300,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             {/* Pending Invitations Section */}
             {pendingInvitations.length > 0 && searchQuery.length < 2 && (
               <>
-                {acceptedConnections.length > 0 && <Separator />}
+                {acceptedConnections.length > 0 && <Separator className="my-1" />}
                 <div className="p-2">
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -317,7 +318,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           invitation.relationship_type || undefined
                         )}
                         className={cn(
-                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer",
+                          "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]",
                           isSelected && "bg-accent"
                         )}
                       >
@@ -332,10 +333,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                             {invitation.pending_recipient_email}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs text-muted-foreground border-border">
+                        <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">
                           Pending
                         </Badge>
-                        {isSelected && <Check className="h-4 w-4" />}
+                        {isSelected && <Check className="h-4 w-4 text-purple-600" />}
                       </button>
                     );
                   })}
@@ -353,7 +354,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             {/* Search Results Section */}
             {searchQuery.length >= 2 && searchResults.length > 0 && (
               <>
-                {(acceptedConnections.length > 0 || pendingInvitations.length > 0) && <Separator />}
+                {(acceptedConnections.length > 0 || pendingInvitations.length > 0) && <Separator className="my-1" />}
                 <div className="p-2">
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                     Search Results
@@ -364,7 +365,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                     return (
                       <div
                         key={result.id}
-                        className={`flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent ${isClickable ? 'cursor-pointer' : ''}`}
+                        className={`flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent min-h-[44px] ${isClickable ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (isClickable) {
                             setSelectedLabel(result.name || null);
@@ -396,10 +397,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           </div>
                         </div>
                         {result.connectionStatus === 'connected' && (
-                          <Badge variant="secondary" className="text-xs">Connected</Badge>
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">Connected</Badge>
                         )}
                         {result.connectionStatus === 'pending' && (
-                          <Badge variant="outline" className="text-xs">Request Sent</Badge>
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">Request Sent</Badge>
                         )}
                         {result.connectionStatus === 'none' && (
                           <Button
@@ -410,14 +411,14 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                               handleSendConnectionRequest(result.id, result.name);
                             }}
                             disabled={sendingRequestTo === result.id}
-                            className="h-7 text-xs"
+                            className="h-8 text-xs min-w-[120px]"
                           >
                             {sendingRequestTo === result.id ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
                               <>
-                                <UserPlus className="h-3 w-3 mr-1" />
-                                Schedule + Request
+                                <UserPlus className="h-3 w-3 mr-1.5" />
+                                Connect
                               </>
                             )}
                           </Button>
@@ -437,7 +438,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             )}
 
             {/* Add New Recipient Action */}
-            <Separator />
+            <Separator className="my-1" />
             <div className="p-2">
               <button
                 type="button"
@@ -447,9 +448,9 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                   setShowNewRecipientForm(true);
                   setOpen(false);
                 }}
-                className="w-full flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent cursor-pointer text-primary"
+                className="w-full flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent cursor-pointer text-foreground min-h-[44px]"
               >
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 text-purple-600" />
                 <div className="flex-1 text-left">
                   <div className="font-medium">Send invitation via email</div>
                   <div className="text-xs text-muted-foreground">

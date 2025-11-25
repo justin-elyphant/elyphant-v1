@@ -8,9 +8,17 @@ interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_STATE_KEY = "elyphant_sidebar_open";
+
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const headerWrapperRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(120);
+  
+  // Load sidebar state from localStorage, default to open (true = open)
+  const [defaultOpen, setDefaultOpen] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
+    return saved !== null ? saved === "true" : true; // Default to open
+  });
 
   useLayoutEffect(() => {
     const update = () => {
@@ -57,6 +65,12 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     };
   }, []);
 
+  // Persist sidebar state to localStorage when it changes
+  const handleOpenChange = (open: boolean) => {
+    setDefaultOpen(open);
+    localStorage.setItem(SIDEBAR_STATE_KEY, String(open));
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden max-w-[100vw]">
       {/* Fixed header wrapper with measured height */}
@@ -65,7 +79,10 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       </div>
       
       {/* Sidebar layout below header */}
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider 
+        defaultOpen={defaultOpen}
+        onOpenChange={handleOpenChange}
+      >
         <div
           className="flex w-full overflow-x-hidden"
           style={{

@@ -139,7 +139,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         
         {/* 4 CTA BUTTONS - Wishlist-first hierarchy */}
         <div className="space-y-3">
-          {/* Position 1: Add to Wishlist - PRIMARY (Black border) */}
+          {/* Position 1: Add to Wishlist - PRIMARY (Black filled) */}
           {user && (
             <WishlistSelectionPopoverButton 
               product={{
@@ -149,7 +149,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
                 price: productPrice,
                 brand: product.brand || "",
               }}
-              triggerClassName="w-full h-12 border-2 border-elyphant-black bg-white text-elyphant-black hover:bg-elyphant-black hover:text-white font-medium transition-colors"
+              triggerClassName="w-full h-12 bg-elyphant-black text-white hover:bg-elyphant-black/90 font-medium transition-colors"
               showText={true}
             />
           )}

@@ -87,7 +87,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             )}
 
             {/* Desktop Right Utilities */}
-            <div className="hidden md:flex items-center gap-3 flex-shrink-0 min-w-[200px]">
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0 min-w-[200px] ml-auto">
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>

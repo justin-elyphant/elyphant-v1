@@ -34,7 +34,7 @@ const CategoryLinks: React.FC = () => {
           key={category.label}
           to={category.path}
           className={cn(
-            "text-sm font-medium text-elyphant-black hover:opacity-70 transition-opacity h-11 flex items-center border-b-2 border-transparent hover:border-elyphant-black/20",
+            "text-sm font-medium text-elyphant-black hover:opacity-70 transition-opacity h-11 flex items-center border-b-2 border-transparent hover:border-elyphant-black/20 whitespace-nowrap",
             isActive(category.path) && "border-elyphant-black"
           )}
         >

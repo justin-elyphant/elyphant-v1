@@ -23,7 +23,15 @@ const RelationshipSelector: React.FC<RelationshipSelectorProps> = ({
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={true} collisionPadding={8}>
+      <SelectContent 
+        position="popper" 
+        side="bottom" 
+        align="start" 
+        sideOffset={6} 
+        avoidCollisions={true} 
+        collisionPadding={8}
+        className="max-h-[300px] overflow-y-auto"
+      >
         {Object.entries(RELATIONSHIP_CATEGORIES).map(([categoryKey, category]) => (
           <SelectGroup key={categoryKey}>
             <SelectLabel>{category.label}</SelectLabel>

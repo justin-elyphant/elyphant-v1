@@ -173,6 +173,8 @@ Deno.serve(async (req) => {
     // 20. Email and notification data
     await safeDelete('notifications', 'user_id', userId);
     await safeDelete('birthday_email_tracking', 'user_id', userId);
+    await safeDelete('email_queue', 'recipient_email', userEmail || '');
+    await safeDelete('email_analytics', 'recipient_email', userEmail || '');
 
     // 21. AI and search data
     await safeDelete('ai_gift_searches', 'user_id', userId);

@@ -157,7 +157,7 @@ const MultiEventSelector = ({ value = [], onChange }: MultiEventSelectorProps) =
                   onCheckedChange={() => handleEventToggle(option.value)}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <Icon className={`h-5 w-5 ${selected ? "text-gradient-to-r from-purple-600 to-sky-500" : "text-muted-foreground"}`} />
+                <Icon className={`h-5 w-5 ${selected ? "text-purple-600" : "text-muted-foreground"}`} />
                 <div className="flex-1">
                   <p className="font-medium">{option.label}</p>
                 </div>

@@ -250,6 +250,30 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             )}
           </div>
 
+          {/* Invite New User - Top Priority Action */}
+          <div className="p-2 bg-gradient-to-r from-purple-50 to-sky-50 dark:from-purple-950/20 dark:to-sky-950/20 border-b border-border/50">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowNewRecipientForm(true);
+                setOpen(false);
+              }}
+              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm bg-background hover:bg-accent cursor-pointer text-foreground min-h-[44px] border border-border/50 shadow-sm transition-all hover:shadow-md"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500 flex-shrink-0">
+                <Mail className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <div className="font-semibold">Invite Someone New</div>
+                <div className="text-xs text-muted-foreground">
+                  Add someone not on Elyphant yet
+                </div>
+              </div>
+            </button>
+          </div>
+
           <div className="max-h-[280px] overflow-y-auto">
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
@@ -433,32 +457,9 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             {/* No Results */}
             {searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                No users found. Try adding via email below.
+                No users found. Try inviting them via email at the top.
               </div>
             )}
-
-            {/* Add New Recipient Action */}
-            <Separator className="my-1" />
-            <div className="p-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowNewRecipientForm(true);
-                  setOpen(false);
-                }}
-                className="w-full flex items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent cursor-pointer text-foreground min-h-[44px]"
-              >
-                <Mail className="h-4 w-4 text-purple-600" />
-                <div className="flex-1 text-left">
-                  <div className="font-medium">Send invitation via email</div>
-                  <div className="text-xs text-muted-foreground">
-                    Add someone not on Elyphant yet
-                  </div>
-                </div>
-              </button>
-            </div>
           </div>
         </PopoverContent>
       </Popover>

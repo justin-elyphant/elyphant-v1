@@ -120,7 +120,7 @@ const OrderProgressStepper = ({
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-4">
       <CardContent className="p-4 sm:p-6">
         <div className="order-progress-stepper relative">
           <div className="flex justify-between items-start gap-2 sm:gap-4">
@@ -130,14 +130,18 @@ const OrderProgressStepper = ({
               
               return (
                 <div key={step.id} className="order-progress-step flex flex-col items-center text-center flex-1 min-w-0 relative">
-                  {/* Icon Circle */}
+                  {/* Icon Circle - Lululemon Minimalist Style */}
                   <div
                     className={cn(
-                      "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-2 mb-3 transition-all shadow-sm relative z-10",
-                      stepStatus === "completed" && "bg-green-600 border-green-600 text-white shadow-green-200",
-                      stepStatus === "active" && "bg-primary border-primary text-primary-foreground shadow-primary/20",
-                      stepStatus === "inactive" && "bg-background border-border text-muted-foreground"
+                      "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-2 mb-3 transition-all relative z-10",
+                      stepStatus === "completed" && "bg-foreground border-foreground text-background",
+                      stepStatus === "active" && "bg-gradient-to-r from-purple-600 to-sky-500 border-transparent text-white shadow-lg shadow-purple-500/20",
+                      stepStatus === "inactive" && "bg-muted border-border text-muted-foreground"
                     )}
+                    style={{
+                      minHeight: '44px',
+                      minWidth: '44px'
+                    }}
                   >
                     {stepStatus === "completed" ? (
                       <Check className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -150,8 +154,8 @@ const OrderProgressStepper = ({
                   <div className="space-y-1 min-w-0 w-full px-1">
                     <h4 className={cn(
                       "text-xs sm:text-sm font-semibold leading-tight",
-                      stepStatus === "active" && "text-primary",
-                      stepStatus === "completed" && "text-green-600", 
+                      stepStatus === "active" && "bg-gradient-to-r from-purple-600 to-sky-500 bg-clip-text text-transparent",
+                      stepStatus === "completed" && "text-foreground", 
                       stepStatus === "inactive" && "text-muted-foreground"
                     )}>
                       {step.label}
@@ -177,7 +181,7 @@ const OrderProgressStepper = ({
                   key={index} 
                   className={cn(
                     "h-0.5 transition-colors",
-                    currentStepStatus === "completed" ? "bg-green-600" : "bg-border"
+                    currentStepStatus === "completed" ? "bg-foreground" : "bg-border"
                   )} 
                   style={{ 
                     width: `calc((100% - ${steps.length * 48}px) / ${steps.length - 1})`,
@@ -191,14 +195,14 @@ const OrderProgressStepper = ({
         </div>
 
         {status === "shipped" && estimatedDelivery && (
-          <div className="mt-6 p-4 bg-muted rounded-lg">
+          <div className="mt-4 p-4 bg-muted rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Estimated Delivery</span>
-              <span className="text-sm font-bold text-primary">{estimatedDelivery}</span>
+              <span className="text-sm font-semibold">{estimatedDelivery}</span>
             </div>
             <div className="w-full bg-border rounded-full h-1">
               <div 
-                className="tracking-progress w-3/4"
+                className="bg-gradient-to-r from-purple-600 to-sky-500 h-1 rounded-full transition-all"
                 style={{ width: "75%" }}
               />
             </div>

@@ -131,7 +131,7 @@ const MobileBottomNavigation: React.FC = () => {
                 </div>
                 
                 {/* Label */}
-                <span className="text-xs font-medium mt-1">
+                <span className="text-xs font-medium mt-1 whitespace-nowrap">
                   {tab.label}
                 </span>
               </Link>

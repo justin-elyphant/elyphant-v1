@@ -81,10 +81,13 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Category Links - Desktop only */}
+            {/* Left Spacer to center category links */}
+            <div className="hidden lg:flex flex-1" />
+
+            {/* Category Links - Desktop only, centered */}
             <CategoryLinks />
 
-            {/* Spacer to push right utilities */}
+            {/* Right Spacer to center category links */}
             <div className="hidden lg:flex flex-1" />
 
             {/* Desktop Search Bar - Right aligned, compact */}

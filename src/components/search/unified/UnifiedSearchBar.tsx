@@ -327,36 +327,11 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   return (
     <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       <form onSubmit={handleSearch} className="relative">
-        <div ref={barRef} className={`relative flex items-center transition-all duration-300 ${
-          mobile 
-            ? 'bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
-            : 'bg-white border border-gray-300 rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600'
-        } ${
-          isNicoleMode ? 'ring-2 ring-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50' : ''
-        }`}>
-          {/* Mode Toggle - Hidden on desktop */}
-          {mobile && (
-            <div className="absolute left-2 z-10 flex items-center gap-1.5">
-              <Search className="h-3.5 w-3.5 transition-colors duration-200 text-muted-foreground" />
-              <IOSSwitch
-                size="sm"
-                checked={isNicoleMode}
-                onCheckedChange={handleModeToggle}
-                className="touch-manipulation scale-90"
-              />
-              <Bot className={`transition-colors duration-200 h-3.5 w-3.5 ${isNicoleMode ? 'text-purple-500' : 'text-muted-foreground'}`} />
-              {isNicoleMode && (
-                <Sparkles className="text-purple-500 animate-pulse h-2.5 w-2.5" />
-              )}
-            </div>
-          )}
-          
-          {/* Desktop search icon */}
-          {!mobile && (
-            <div className="absolute left-4 z-10">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-          )}
+        <div ref={barRef} className="relative flex items-center transition-all duration-300 bg-white border border-gray-300 rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600">
+          {/* Search icon - consistent across all breakpoints */}
+          <div className={`absolute z-10 ${mobile ? 'left-3' : 'left-4'}`}>
+            <Search className={`text-gray-400 ${mobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
+          </div>
           
           <Input
             ref={inputRef}
@@ -366,10 +341,10 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
-            className={`transition-all duration-300 bg-transparent border-0 ${
+            className={`transition-all duration-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-500 ${
               mobile 
-                ? 'text-base py-3 h-11 pl-24 pr-16 focus:ring-0 focus:outline-none' 
-                : "h-11 text-sm pl-12 pr-24 focus:ring-0 focus:outline-none placeholder:text-gray-500"
+                ? 'text-base h-11 pl-12 pr-12' 
+                : 'h-11 text-sm pl-12 pr-12'
             }`}
             style={{ fontSize: mobile ? '16px' : '14px' }}
           />
@@ -388,27 +363,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 className="h-8 w-8 p-0 hover:bg-gray-100"
               >
                 <X className="h-4 w-4 text-gray-500" />
-              </Button>
-            )}
-            
-            {isNicoleMode && isMobile && (
-              <VoiceInputButton
-                isListening={isListening}
-                onVoiceInput={handleVoiceInput}
-                mobile={mobile}
-              />
-            )}
-            
-            {mobile && (
-              <Button
-                type="submit"
-                size="sm"
-                className="h-8 px-4 text-sm font-medium"
-              >
-                {isNicoleMode ? "Ask" : "Search"}
-                {isNicoleMode && (
-                  <Badge variant="secondary" className="ml-1.5 text-xs">AI</Badge>
-                )}
               </Button>
             )}
           </div>

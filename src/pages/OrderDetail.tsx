@@ -230,15 +230,24 @@ const OrderDetail = () => {
   return (
     <>
       <Header />
-      <div className="container max-w-6xl mx-auto py-8 px-4 pb-20 lg:pb-8 overflow-x-hidden mt-[120px]">
-        <div className="mb-6">
-          <Button variant="outline" onClick={() => navigate("/orders")}>
+      <div 
+        className="container max-w-6xl mx-auto px-4 pb-20 lg:pb-8 overflow-x-hidden"
+        style={{ 
+          paddingTop: 'max(1.5rem, calc(env(safe-area-inset-top, 0px) + 1.5rem))'
+        }}
+      >
+        <div className="mb-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/orders")}
+            className="h-11"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Orders
           </Button>
         </div>
 
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div>
           <h1 className="text-2xl font-bold">Order {formatOrderNumberWithHash(order.id)}</h1>
           <p className="text-muted-foreground">
@@ -276,8 +285,8 @@ const OrderDetail = () => {
       />
 
       {/* Order Summary and Details Grid */}
-      <div className="grid gap-6 lg:grid-cols-3 mb-6 min-w-0">
-        <div className="lg:col-span-2 space-y-6 min-w-0">
+      <div className="grid gap-4 lg:grid-cols-3 mb-4 min-w-0">
+        <div className="lg:col-span-2 space-y-4 min-w-0">
           <OrderSummaryCard order={order} />
           
           {/* Order Items - Responsive */}
@@ -294,7 +303,7 @@ const OrderDetail = () => {
           )}
         </div>
         
-        <div className="space-y-6 min-w-0">
+        <div className="space-y-4 min-w-0">
           <ShippingInfoCard order={order} />
           
           {/* Tracking Information */}

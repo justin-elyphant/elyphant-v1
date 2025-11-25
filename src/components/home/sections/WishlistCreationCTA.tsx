@@ -238,6 +238,8 @@ const WishlistCreationCTA = () => {
                         onToggleWishlist={() => handleProductWishlistClick(product)}
                         onAddToCart={handleAddToCart}
                         onClick={() => handleProductClick(product)}
+                        context="wishlist"
+                        hideTopRightAction={true}
                       />
                     </div>
                   </div>
@@ -265,6 +267,8 @@ const WishlistCreationCTA = () => {
                       onToggleWishlist={() => handleProductWishlistClick(product)}
                       onAddToCart={handleAddToCart}
                       onClick={() => handleProductClick(product)}
+                      context="wishlist"
+                      hideTopRightAction={true}
                     />
                   </div>
                 ))}

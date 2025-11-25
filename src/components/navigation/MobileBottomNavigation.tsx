@@ -29,7 +29,7 @@ const MobileBottomNavigation: React.FC = () => {
     },
     {
       id: 'auto-gifts',
-      label: 'Auto-Gifts',
+      label: 'AI Gifting',
       href: '/dashboard?tab=auto-gifts',
       icon: <Gift className="h-6 w-6" />
     },

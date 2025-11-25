@@ -43,15 +43,15 @@ const AutoGiftsTab = () => {
   }, [user]);
 
   if (loading) {
-    return <div className="text-muted-foreground">Loading auto-gifts...</div>;
+    return <div className="text-muted-foreground">Loading AI gifting rules...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Auto-Gift Rules</h2>
-          <p className="text-muted-foreground">Manage your automated gifting</p>
+          <h2 className="text-2xl font-semibold">AI Gifting Rules</h2>
+          <p className="text-muted-foreground">Manage your AI-powered gifting</p>
         </div>
         <Button asChild>
           <Link to="/auto-gifts/setup">
@@ -65,9 +65,9 @@ const AutoGiftsTab = () => {
         <Card>
           <CardContent className="pt-6 text-center">
             <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">No auto-gift rules yet</h3>
+            <h3 className="text-lg font-medium mb-2">No AI gifting rules yet</h3>
             <p className="text-muted-foreground mb-4">
-              Set up automated gifting for special occasions
+              Set up AI-powered gifting for special occasions
             </p>
             <Button asChild>
               <Link to="/auto-gifts/setup">Create Your First Rule</Link>

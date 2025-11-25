@@ -24,8 +24,8 @@ const AutoGiftSuccessStep = ({
 
   const handleViewDashboard = () => {
     closeBot();
-    // Navigate to auto-gifting dashboard
-    window.location.href = '/dashboard?tab=auto-gifting';
+    // Navigate to AI gifting dashboard
+    window.location.href = '/dashboard?tab=auto-gifts';
   };
 
   const handleSetupAnother = () => {
@@ -41,7 +41,7 @@ const AutoGiftSuccessStep = ({
         </div>
         
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-green-700">Auto-Gifting Activated!</h2>
+          <h2 className="text-2xl font-bold text-green-700">AI Gifting Activated!</h2>
           <p className="text-muted-foreground">
             Nicole will now handle {occasion} gifts for {recipient?.connected_user_id || 'them'} automatically
           </p>
@@ -107,7 +107,7 @@ const AutoGiftSuccessStep = ({
             onClick={handleViewDashboard}
           >
             <Settings className="w-4 h-4 mr-2" />
-            View Auto-Gifting Dashboard
+            View AI Gifting Dashboard
           </Button>
           
           <Button 
@@ -116,7 +116,7 @@ const AutoGiftSuccessStep = ({
             onClick={handleSetupAnother}
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Set Up Auto-Gifting for Someone Else
+            Set Up AI Gifting for Someone Else
           </Button>
         </div>
       </div>
@@ -131,7 +131,7 @@ const AutoGiftSuccessStep = ({
             <div className="space-y-1">
               <p className="font-medium text-sm">Pro Tip</p>
               <p className="text-sm text-muted-foreground">
-                Add more friends to your connections to set up auto-gifting for birthdays, anniversaries, and other special occasions. Nicole gets smarter with each relationship!
+                Add more friends to your connections to set up AI gifting for birthdays, anniversaries, and other special occasions. Nicole gets smarter with each relationship!
               </p>
             </div>
           </div>

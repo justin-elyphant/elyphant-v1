@@ -30,7 +30,7 @@ const QuickGiftCTA = () => {
             size="sm"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Enable Auto-Gifting
+            Enable AI Gifting
           </Button>
         </div>
       </div>

@@ -183,7 +183,7 @@ const MySizesSettings = () => {
                 How this helps
               </p>
               <p>
-                Nicole AI uses your size information to filter gift recommendations and ensure auto-gifts fit perfectly. Your sizes are private and only visible to you.
+                Nicole AI uses your size information to filter gift recommendations and ensure AI gifts fit perfectly. Your sizes are private and only visible to you.
               </p>
             </div>
           </div>

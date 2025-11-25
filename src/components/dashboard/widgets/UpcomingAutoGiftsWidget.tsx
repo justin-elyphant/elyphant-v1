@@ -48,12 +48,12 @@ const UpcomingAutoGiftsWidget = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
-          Upcoming Auto-Gifts
+          Upcoming AI Gifts
         </CardTitle>
       </CardHeader>
       <CardContent>
         {upcomingGifts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No upcoming auto-gifts scheduled</p>
+          <p className="text-sm text-muted-foreground">No upcoming AI gifts scheduled</p>
         ) : (
           <div className="space-y-3">
             {upcomingGifts.map((gift) => (

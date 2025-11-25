@@ -5,7 +5,7 @@ import { NavDropdownItem } from "@/components/navigation/NavigationDropdown";
 
 export const getDefaultLinks = () => [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Auto-Gifts", href: "/dashboard?tab=auto-gifts" },
+  { label: "AI Gifting", href: "/dashboard?tab=auto-gifts" },
   { label: "Social Hub", href: "/social" },
   { label: "Nicole AI", href: "/nicole" },
   { label: "Account Settings", href: "/settings" }

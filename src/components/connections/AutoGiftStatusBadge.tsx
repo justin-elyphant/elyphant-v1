@@ -18,7 +18,7 @@ export const AutoGiftStatusBadge: React.FC<AutoGiftStatusBadgeProps> = ({
       case 'ready':
         return {
           icon: CheckCircle,
-          text: 'Auto-Gift Ready',
+          text: 'AI Gifting Ready',
           variant: 'default' as const,
           className: 'bg-success text-success-foreground border-success'
         };
@@ -32,7 +32,7 @@ export const AutoGiftStatusBadge: React.FC<AutoGiftStatusBadgeProps> = ({
       case 'disabled':
         return {
           icon: Ban,
-          text: 'Auto-Gift Disabled',
+          text: 'AI Gifting Disabled',
           variant: 'secondary' as const,
           className: 'bg-muted text-muted-foreground border-muted'
         };

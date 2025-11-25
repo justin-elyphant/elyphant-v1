@@ -16,7 +16,7 @@ const DesktopHorizontalNav: React.FC = () => {
       match: (path: string) => path.startsWith("/marketplace")
     },
     { 
-      label: "Auto-Gifts", 
+      label: "AI Gifting", 
       href: "/dashboard?tab=auto-gifts", 
       icon: Gift,
       match: (path: string) => path.startsWith("/dashboard") && location.search.includes("tab=auto-gifts")

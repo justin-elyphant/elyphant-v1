@@ -332,7 +332,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                             {invitation.pending_recipient_email}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+                        <Badge variant="outline" className="text-xs text-muted-foreground border-border">
                           Pending
                         </Badge>
                         {isSelected && <Check className="h-4 w-4" />}

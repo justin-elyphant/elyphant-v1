@@ -81,7 +81,10 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Left Spacer to center category links */}
+            {/* Tablet-only spacer to push right utilities */}
+            <div className="hidden md:flex lg:hidden flex-1" />
+
+            {/* Left Spacer to center category links on desktop */}
             <div className="hidden lg:flex flex-1" />
 
             {/* Category Links - Desktop only, centered */}

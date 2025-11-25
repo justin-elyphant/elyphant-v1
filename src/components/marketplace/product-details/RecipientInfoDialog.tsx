@@ -18,7 +18,7 @@ const RecipientInfoDialog = ({
 }: RecipientInfoDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg pb-safe">
         <DialogHeader className="sticky top-0 z-10 bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b pt-2 pb-3">
           <DialogTitle>Gift Recipient Information</DialogTitle>
           <DialogDescription>

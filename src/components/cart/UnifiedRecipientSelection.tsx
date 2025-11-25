@@ -645,9 +645,9 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                   </div>
 
                   {/* Info badge explaining address collection */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">
-                      📦 <strong>{newRecipientForm.name || 'The recipient'}</strong> will provide their shipping address when they sign up.
+                  <div className="bg-muted border border-border rounded-lg p-3">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="text-purple-600">📦</span> <strong>{newRecipientForm.name || 'The recipient'}</strong> will provide their shipping address when they sign up.
                     </p>
                   </div>
                 </form>
@@ -656,7 +656,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                 <div className="flex gap-2 pt-4 border-t">
                   <Button 
                     type="submit" 
-                    className="flex-1"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:from-purple-700 hover:to-sky-600"
                     onClick={handleNewRecipientSubmit}
                     disabled={isCreatingRecipient}
                   >

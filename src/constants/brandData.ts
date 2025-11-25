@@ -95,6 +95,30 @@ export const brandData: Record<string, BrandData> = {
     secondaryColor: "hsl(45, 100%, 50%)",
     backgroundGradient: "linear-gradient(135deg, hsl(348, 100%, 98%) 0%, hsl(45, 100%, 95%) 100%)",
     ctaText: "Build with LEGO"
+  },
+  yeti: {
+    id: "yeti",
+    name: "Yeti",
+    logo: "https://logo.clearbit.com/yeti.com",
+    searchTerm: "yeti",
+    heroTagline: "Wildly Stronger. Keep Ice Longer.",
+    description: "Premium coolers, drinkware, and outdoor gear built for the wild. Engineered to be virtually indestructible.",
+    primaryColor: "hsl(209, 61%, 16%)",
+    secondaryColor: "hsl(209, 61%, 95%)",
+    backgroundGradient: "linear-gradient(135deg, hsl(209, 61%, 98%) 0%, hsl(209, 61%, 92%) 100%)",
+    ctaText: "Shop Yeti"
+  },
+  playstation: {
+    id: "playstation",
+    name: "PlayStation",
+    logo: "https://logo.clearbit.com/playstation.com",
+    searchTerm: "playstation",
+    heroTagline: "Play Has No Limits",
+    description: "Explore the ultimate gaming experience with PlayStation's cutting-edge consoles, games, and accessories.",
+    primaryColor: "hsl(218, 100%, 50%)",
+    secondaryColor: "hsl(218, 100%, 95%)",
+    backgroundGradient: "linear-gradient(135deg, hsl(218, 100%, 98%) 0%, hsl(218, 100%, 92%) 100%)",
+    ctaText: "Explore PlayStation"
   }
 };
 

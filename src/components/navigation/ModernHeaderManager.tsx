@@ -69,28 +69,25 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       <nav className="bg-transparent">
         <div className="w-full px-4" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
-            "flex items-center justify-between",
+            "flex items-center gap-4",
             config.height
           )}>
-            {/* Logo - 20% width */}
-            <div className="flex-shrink-0 w-32 md:w-48">
+            {/* Logo */}
+            <div className="flex-shrink-0 w-32 md:w-40">
               <Logo />
             </div>
 
-            {/* Desktop Horizontal Navigation - 60% width */}
-            {user && (
-              <div className="hidden md:flex flex-1 justify-center">
-                <DesktopHorizontalNav />
+            {/* Centered Search Bar */}
+            {config.showSearch && (
+              <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-auto">
+                <div className="w-full max-w-xl">
+                  <AIEnhancedSearchBar />
+                </div>
               </div>
             )}
 
-            {/* Desktop Right Utilities - 20% width */}
+            {/* Desktop Right Utilities */}
             <div className="hidden md:flex items-center gap-3 flex-shrink-0">
-              {config.showSearch && (
-                <div className="w-64 lg:w-80">
-                  <AIEnhancedSearchBar />
-                </div>
-              )}
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>

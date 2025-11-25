@@ -16,6 +16,7 @@ import MobileAuthMenu from "./MobileAuthMenu";
 import DesktopHorizontalNav from "./DesktopHorizontalNav";
 import SearchIconTrigger from "./SearchIconTrigger";
 import CategoryLinks from "./CategoryLinks";
+import TabletCategoryLinks from "./TabletCategoryLinks";
 
 interface ModernHeaderManagerProps {
   mode?: "main" | "minimal" | "marketplace-focused";
@@ -81,17 +82,17 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Tablet-only spacer to push right utilities */}
-            <div className="hidden md:flex lg:hidden flex-1" />
+            {/* Left Spacer to center category links */}
+            <div className="hidden md:flex flex-1" />
 
-            {/* Left Spacer to center category links on desktop */}
-            <div className="hidden lg:flex flex-1" />
+            {/* Tablet Category Links - 4 strategic links */}
+            <TabletCategoryLinks />
 
-            {/* Category Links - Desktop only, centered */}
+            {/* Desktop Category Links - All 7 links */}
             <CategoryLinks />
 
             {/* Right Spacer to center category links */}
-            <div className="hidden lg:flex flex-1" />
+            <div className="hidden md:flex flex-1" />
 
             {/* Desktop Search Bar - Right aligned, compact */}
             {config.showSearch && (

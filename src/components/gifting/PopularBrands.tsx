@@ -51,6 +51,12 @@ const popularBrands = [
     logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/LEGO_logo.svg/2048px-LEGO_logo.svg.png", 
     productCount: 76 
   },
+  { 
+    id: 9, 
+    name: "PlayStation", 
+    logoUrl: "https://logo.clearbit.com/playstation.com", 
+    productCount: 98 
+  }
 ];
 
 const PopularBrands = () => {
@@ -98,7 +104,7 @@ const PopularBrands = () => {
       </div>
       
       {/* Grid layout for mobile-first approach */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-3 md:gap-4">
         {popularBrands.map((brand) => (
           <Link 
             to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`} 

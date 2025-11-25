@@ -144,17 +144,17 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         </CardTitle>
       </CardHeader>
       
-      <div className="px-6 pt-4 pb-2 border-b bg-blue-50/50 dark:bg-blue-950/20">
+      <div className="px-6 pt-4 pb-2 border-b bg-muted">
         <div className="flex items-start gap-3 text-sm">
-          <UserPlus className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-          <p className="text-blue-900/80 dark:text-blue-100/80 leading-relaxed">
+          <UserPlus className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
+          <p className="text-muted-foreground leading-relaxed">
             <strong className="font-semibold">Setting up auto-gifting:</strong> After sending the invitation, 
             you'll continue to configure gift preferences, budget, and notification settings.
           </p>
         </div>
       </div>
       
-      <CardContent className="p-6 pb-32 pt-16 md:pt-20 overflow-y-auto ios-smooth-scroll">
+      <CardContent className="p-6 pb-safe pt-16 md:pt-20 overflow-y-auto ios-smooth-scroll">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -187,10 +187,10 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
                 <p className="text-xs text-muted-foreground mt-1">Checking email...</p>
               )}
               {emailExists === true && (
-                <p className="text-xs text-amber-600 mt-1">⚠️ This user is already on Elyphant - we'll send a connection request instead</p>
+                <p className="text-xs text-muted-foreground mt-1"><span className="text-amber-600">⚠️</span> This user is already on Elyphant - we'll send a connection request instead</p>
               )}
               {emailExists === false && (
-                <p className="text-xs text-green-600 mt-1">✓ Available - invitation will be sent</p>
+                <p className="text-xs text-muted-foreground mt-1"><span className="text-green-600">✓</span> Available - invitation will be sent</p>
               )}
             </div>
           </div>
@@ -230,7 +230,7 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
             <Button 
               type="submit"
               disabled={isCreating}
-              className="flex-1"
+              className="flex-1 bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:from-purple-700 hover:to-sky-600"
             >
               {isCreating ? (
                 <div className="flex items-center gap-2">

@@ -40,7 +40,7 @@ const UnifiedGiftTimingDashboard = () => {
           <CardContent className="flex items-center p-6">
             <Zap className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-muted-foreground">Auto-Gifting Rules</p>
+              <p className="text-sm font-medium text-muted-foreground">AI Gifting Rules</p>
               <p className="text-2xl font-bold">{stats.automatedGifts}</p>
             </div>
           </CardContent>
@@ -139,7 +139,7 @@ const UnifiedGiftTimingDashboard = () => {
                 • Production-ready execution engine
               </div>
               <Button variant="outline" size="sm" className="w-full">
-                Manage Auto-Gifting Rules
+                Manage AI Gifting Rules
               </Button>
             </div>
           </CardContent>

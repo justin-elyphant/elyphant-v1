@@ -64,7 +64,7 @@ const AppSidebar = () => {
   // Gifting section
   const giftingItems = [
     {
-      title: "Auto-Gifts",
+      title: "AI Gifting",
       url: "/dashboard?tab=auto-gifts",
       icon: Gift,
     },

@@ -26,7 +26,7 @@ export const AutoGiftNudgeButton: React.FC<AutoGiftNudgeButtonProps> = ({
 
   const getButtonText = () => {
     if (!hasActiveRules) {
-      return 'Set up auto-gifting';
+      return 'Set up AI gifting';
     }
     if (missingData.length > 0) {
       return `Request ${missingData.join(' & ')}`;
@@ -36,11 +36,11 @@ export const AutoGiftNudgeButton: React.FC<AutoGiftNudgeButtonProps> = ({
 
   const getTooltipText = () => {
     if (!hasActiveRules) {
-      return `Set up automatic gifting for ${connection.name}`;
+      return `Set up AI-powered gifting for ${connection.name}`;
     }
     if (missingData.length > 0) {
       const dataTypes = missingData.join(' and ');
-      return `Ask ${connection.name} to share their ${dataTypes} for auto-gifting`;
+      return `Ask ${connection.name} to share their ${dataTypes} for AI gifting`;
     }
     return `Send a friendly reminder to ${connection.name}`;
   };
@@ -50,9 +50,9 @@ export const AutoGiftNudgeButton: React.FC<AutoGiftNudgeButtonProps> = ({
       setIsLoading(true);
 
       if (!hasActiveRules) {
-        // Navigate to auto-gift setup for this connection
-        toast.info('Auto-gift setup coming soon!', {
-          description: `We'll help you set up automatic gifting for ${connection.name}`
+        // Navigate to AI gifting setup for this connection
+        toast.info('AI gifting setup coming soon!', {
+          description: `We'll help you set up AI-powered gifting for ${connection.name}`
         });
         return;
       }

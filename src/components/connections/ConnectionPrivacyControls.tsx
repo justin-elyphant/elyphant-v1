@@ -135,7 +135,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
       {hasAnyBlocks && (
         <div className="flex items-center gap-2 p-3 bg-warning/10 text-warning rounded-lg">
           <AlertTriangle className="h-4 w-4" />
-          <span className="text-sm">Auto-gifting is disabled due to blocked data</span>
+          <span className="text-sm">AI gifting is disabled due to blocked data</span>
         </div>
       )}
 
@@ -155,7 +155,7 @@ export const ConnectionPrivacyControls: React.FC<ConnectionPrivacyControlsProps>
         </h4>
         <p className="text-sm text-muted-foreground">
           Control what information you're sharing with {connection.name} for gift-giving purposes.
-          Blocking data will prevent them from accessing this information for auto-gifting.
+          Blocking data will prevent them from accessing this information for AI gifting.
         </p>
 
         <div className="space-y-4">

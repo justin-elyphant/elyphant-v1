@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import ActiveRulesSection from "@/components/gifting/events/automated-tab/ActiveRulesSection";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import HowItWorksModal from "@/components/gifting/auto-gift/HowItWorksModal";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const AIGifting = () => {
@@ -15,6 +16,7 @@ const AIGifting = () => {
   const { profile } = useProfile();
   const { rules, loading } = useAutoGifting();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   if (loading) {
     return (
@@ -55,6 +57,7 @@ const AIGifting = () => {
                   {rules.length === 0 ? "Schedule Your First Gift" : "Schedule Another Gift"}
                 </Button>
                 <Button 
+                  onClick={() => setHowItWorksOpen(true)}
                   variant="ghost" 
                   className="text-white hover:bg-white/10 h-11"
                 >
@@ -170,6 +173,12 @@ const AIGifting = () => {
       <AutoGiftSetupFlow
         open={setupDialogOpen}
         onOpenChange={setSetupDialogOpen}
+      />
+
+      {/* How It Works Modal */}
+      <HowItWorksModal
+        open={howItWorksOpen}
+        onOpenChange={setHowItWorksOpen}
       />
     </SidebarLayout>
   );

@@ -80,13 +80,10 @@ const SelectContent = React.forwardRef<
       )}
       position={position}
       {...props}
-      onWheel={(e) => {
-        e.stopPropagation();
-      }}
     >
       <SelectPrimitive.Viewport
         className={cn(
-          "p-1 overflow-y-auto overscroll-contain touch-pan-y pointer-events-auto",
+          "p-1 overflow-y-auto overscroll-contain touch-pan-y",
           position === "popper" &&
             "w-full min-w-[var(--radix-select-trigger-width)]"
         )}
@@ -95,9 +92,7 @@ const SelectContent = React.forwardRef<
           scrollbarWidth: 'thin',
           maxHeight: '240px'
         } as React.CSSProperties}
-        onWheel={(e) => {
-          e.stopPropagation();
-        }}
+        onWheel={(e) => e.stopPropagation()}
       >
         {children}
       </SelectPrimitive.Viewport>

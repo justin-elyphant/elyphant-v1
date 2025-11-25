@@ -73,7 +73,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             config.height
           )}>
             {/* Logo */}
-            <div className="flex-shrink-0 w-24 md:w-32 lg:w-40">
+            <div className="flex-shrink-0 w-24 md:w-40">
               <Logo />
             </div>
 

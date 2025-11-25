@@ -141,7 +141,7 @@ const Dashboard = () => {
             <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
               <TabsList className="w-full rounded-full bg-muted p-1 mb-4">
                 <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
-                <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">Auto-Gifts</TabsTrigger>
+                <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">AI Gifting</TabsTrigger>
                 <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
               </TabsList>
               
@@ -185,7 +185,7 @@ const Dashboard = () => {
         <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
           <TabsList className="w-full max-w-2xl rounded-full bg-muted p-1 mb-6">
             <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
-            <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">Auto-Gifts</TabsTrigger>
+            <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">AI Gifting</TabsTrigger>
             <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
           </TabsList>
           

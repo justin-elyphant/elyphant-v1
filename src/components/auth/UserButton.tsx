@@ -231,11 +231,12 @@ const UserButton = () => {
       
       <DropdownMenuContent 
         align="end" 
-        className="w-64 bg-background z-50 max-h-[80vh] overflow-y-auto relative mt-2"
+        sideOffset={8}
+        className="w-64 bg-background z-50 max-h-[80vh] overflow-y-auto overflow-visible"
       >
-        {/* Triangle Pointer */}
-        <div className="absolute -top-2 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-border" />
-        <div className="absolute -top-[7px] right-[17px] w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[7px] border-b-background" />
+        {/* Triangle Pointer - positioned above dropdown */}
+        <div className="absolute -top-[8px] right-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-border z-10" />
+        <div className="absolute -top-[7px] right-[25px] w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[7px] border-b-background z-20" />
         
         {/* Enhanced Profile Header */}
         <div className="flex items-center gap-3 p-4 border-b border-border">

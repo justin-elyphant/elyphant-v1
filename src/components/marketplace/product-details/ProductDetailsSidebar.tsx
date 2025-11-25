@@ -137,27 +137,24 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           </div>
         )}
         
-        {/* 4 CTA BUTTONS - Lululemon-inspired hierarchy */}
+        {/* 4 CTA BUTTONS - Wishlist-first hierarchy */}
         <div className="space-y-3">
-          {/* Primary: Add to Cart */}
-          <Button 
-            className="w-full bg-elyphant-accent hover:bg-elyphant-accent/90 text-white font-medium h-12"
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            Add to Cart
-          </Button>
+          {/* Position 1: Add to Wishlist - PRIMARY (Black border) */}
+          {user && (
+            <WishlistSelectionPopoverButton 
+              product={{
+                id: productId,
+                name: productName,
+                image: productImage,
+                price: productPrice,
+                brand: product.brand || "",
+              }}
+              triggerClassName="w-full h-12 border-2 border-elyphant-black bg-white text-elyphant-black hover:bg-elyphant-black hover:text-white font-medium transition-colors"
+              showText={true}
+            />
+          )}
           
-          {/* Secondary: Buy Now */}
-          <Button 
-            className="w-full bg-elyphant-black hover:bg-elyphant-black/90 text-white font-medium h-12"
-            onClick={handleBuyNow}
-          >
-            <CreditCard className="h-5 w-5 mr-2" />
-            Buy Now
-          </Button>
-          
-          {/* Tertiary: Schedule as Gift */}
+          {/* Position 2: Schedule as Gift - SECONDARY */}
           <Button 
             variant="outline"
             className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
@@ -167,7 +164,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             Schedule as Gift
           </Button>
           
-          {/* Tertiary: Create Auto-Gift */}
+          {/* Position 3: Create Auto-Gift - SECONDARY */}
           <Button 
             variant="outline"
             className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
@@ -176,23 +173,17 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             <Gift className="h-5 w-5 mr-2" />
             Create Auto-Gift
           </Button>
+          
+          {/* Position 4: Add to Cart - TERTIARY */}
+          <Button 
+            variant="outline"
+            className="w-full border border-gray-300 bg-white text-elyphant-grey-text font-medium h-12 hover:border-gray-400"
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="h-5 w-5 mr-2" />
+            Add to Cart
+          </Button>
         </div>
-        
-        {/* Wishlist Button - Subtle placement */}
-        {user && (
-          <div className="pt-3 border-t">
-            <WishlistSelectionPopoverButton 
-              product={{
-                id: productId,
-                name: productName,
-                image: productImage,
-                price: productPrice,
-                brand: product.brand || "",
-              }}
-              triggerClassName="w-full text-sm text-elyphant-grey-text hover:text-elyphant-black justify-center"
-            />
-          </div>
-        )}
         
         {/* Expandable Accordion Sections */}
         <Accordion type="single" collapsible className="border-t pt-6">

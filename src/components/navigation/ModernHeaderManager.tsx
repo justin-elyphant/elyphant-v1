@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useHeaderState } from "@/hooks/useHeaderState";
+import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Component imports
 import Logo from "@/components/home/components/Logo";
@@ -28,6 +30,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
   const authContext = useAuth();
   const { isScrolled, config } = useHeaderState();
   const headerRef = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
 
   // Handle case where AuthProvider context is not yet available
   if (!authContext) {
@@ -88,12 +91,28 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
 
             {/* Desktop Right Utilities */}
             <div className="hidden md:flex items-center gap-3 flex-shrink-0 min-w-[200px] ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/wishlists")}
+                aria-label="Wishlists"
+              >
+                <Heart className="h-5 w-5" />
+              </Button>
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
             {/* Mobile Right Side - always consistent */}
             <div className="md:hidden flex items-center ml-auto gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/wishlists")}
+                aria-label="Wishlists"
+              >
+                <Heart className="h-5 w-5" />
+              </Button>
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <MobileAuthMenu />}
             </div>

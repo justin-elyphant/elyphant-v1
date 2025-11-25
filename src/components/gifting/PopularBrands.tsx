@@ -24,7 +24,7 @@ const popularBrands = [
   { 
     id: 3, 
     name: "Samsung", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg", 
+    logoUrl: "https://logo.clearbit.com/samsung.com", 
     productCount: 167 
   },
   { 

@@ -17,6 +17,7 @@ interface WishlistSelectionPopoverButtonProps {
   triggerClassName?: string;
   onAdded?: () => void;
   isWishlisted?: boolean;
+  showText?: boolean;
 }
 
 const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonProps> = ({
@@ -24,6 +25,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
   triggerClassName,
   onAdded,
   isWishlisted,
+  showText = false,
 }) => {
   const isMobile = useIsMobile();
   const { isProductWishlisted, loadWishlists } = useUnifiedWishlistSystem();
@@ -51,7 +53,20 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
     }, 100);
   };
 
-  const triggerNode = (
+  const triggerNode = showText ? (
+    <Button
+      variant="ghost"
+      className={triggerClassName || ""}
+      aria-label="Add to wishlist"
+    >
+      <Heart
+        className="h-5 w-5 mr-2"
+        fill={computedIsWishlisted ? "currentColor" : "none"}
+        strokeWidth={2}
+      />
+      Add to Wishlist
+    </Button>
+  ) : (
     <Button
       variant="ghost"
       size="icon"

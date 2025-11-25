@@ -155,7 +155,7 @@ const MonthlyOrders = ({ orders, onOrderUpdated }: MonthlyOrdersProps) => {
                       ) : (
                         <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       )}
-                      <Calendar className="h-5 w-5 text-primary" />
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <CardTitle className="text-lg">
                           {formatMonthYear(monthKey)}

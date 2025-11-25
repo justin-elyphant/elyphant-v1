@@ -6,10 +6,10 @@ const ElyphantTextLogo = () => {
       <img 
         src="/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" 
         alt="Elyphant logo" 
-        className="h-12 md:h-16 w-auto"
+        className="h-10 md:h-16 w-auto"
       />
       <span
-        className="text-2xl md:text-3xl font-bold tracking-tight"
+        className="text-xl md:text-3xl font-bold tracking-tight"
         style={{
           background: 'linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%)',
           WebkitBackgroundClip: 'text',

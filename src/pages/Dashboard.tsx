@@ -95,8 +95,8 @@ const Dashboard = () => {
   // At this point, loading/timeouts are resolved. If still no user and on dashboard, let useEffect redirect.
   if (!user && !isLoading && !localLoadingTimeout && location.pathname === '/dashboard') return null;
 
-  // Get first name from auth metadata or profile
-  const firstName = user?.user_metadata?.first_name;
+  // Get first name from profile
+  const firstName = profile?.first_name || profile?.name?.split(' ')[0] || user?.user_metadata?.first_name;
 
   // Get time of day greeting
   const getTimeOfDayGreeting = () => {

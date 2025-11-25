@@ -13,7 +13,6 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/dashboard/tabs/OverviewTab";
 import AutoGiftsTab from "@/components/dashboard/tabs/AutoGiftsTab";
-import ActivityTab from "@/components/dashboard/tabs/ActivityTab";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -142,7 +141,6 @@ const Dashboard = () => {
               <TabsList className="w-full rounded-full bg-muted p-1 mb-4">
                 <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
                 <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">AI Gifting</TabsTrigger>
-                <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
               </TabsList>
               
               <TabsContent value="overview">
@@ -151,10 +149,6 @@ const Dashboard = () => {
               
               <TabsContent value="auto-gifts">
                 <AutoGiftsTab />
-              </TabsContent>
-              
-              <TabsContent value="activity">
-                <ActivityTab />
               </TabsContent>
             </Tabs>
           </ResponsiveContainer>
@@ -186,7 +180,6 @@ const Dashboard = () => {
           <TabsList className="w-full max-w-2xl rounded-full bg-muted p-1 mb-6">
             <TabsTrigger value="overview" className="flex-1 rounded-full">Overview</TabsTrigger>
             <TabsTrigger value="auto-gifts" className="flex-1 rounded-full">AI Gifting</TabsTrigger>
-            <TabsTrigger value="activity" className="flex-1 rounded-full">Activity</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview">
@@ -195,10 +188,6 @@ const Dashboard = () => {
           
           <TabsContent value="auto-gifts">
             <AutoGiftsTab />
-          </TabsContent>
-          
-          <TabsContent value="activity">
-            <ActivityTab />
           </TabsContent>
         </Tabs>
       </div>

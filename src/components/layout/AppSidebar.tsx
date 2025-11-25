@@ -65,7 +65,7 @@ const AppSidebar = () => {
   const giftingItems = [
     {
       title: "AI Gifting",
-      url: "/dashboard?tab=auto-gifts",
+      url: "/ai-gifting",
       icon: Gift,
     },
     {
@@ -100,10 +100,6 @@ const AppSidebar = () => {
   const isActiveRoute = (url: string) => {
     if (url === "/") {
       return location.pathname === "/";
-    }
-    // Special handling for auto-gifts tab
-    if (url === "/dashboard?tab=auto-gifts") {
-      return location.pathname === "/dashboard" && location.search.includes("tab=auto-gifts");
     }
     return location.pathname.startsWith(url);
   };

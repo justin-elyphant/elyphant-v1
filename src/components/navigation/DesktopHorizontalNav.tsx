@@ -17,9 +17,9 @@ const DesktopHorizontalNav: React.FC = () => {
     },
     { 
       label: "AI Gifting", 
-      href: "/dashboard?tab=auto-gifts", 
+      href: "/ai-gifting", 
       icon: Gift,
-      match: (path: string) => path.startsWith("/dashboard") && location.search.includes("tab=auto-gifts")
+      match: (path: string) => path.startsWith("/ai-gifting")
     },
     { 
       label: "Wishlists", 
@@ -38,7 +38,7 @@ const DesktopHorizontalNav: React.FC = () => {
       label: "Account", 
       href: "/dashboard", 
       icon: User,
-      match: (path: string) => (path.startsWith("/dashboard") && !location.search.includes("tab=auto-gifts")) || path.startsWith("/settings") || path.startsWith("/profile")
+      match: (path: string) => path.startsWith("/dashboard") || path.startsWith("/settings") || path.startsWith("/profile")
     }
   ];
 

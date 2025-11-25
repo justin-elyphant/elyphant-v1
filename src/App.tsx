@@ -48,6 +48,7 @@ const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Settings = lazy(() => import("./pages/Settings"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AIGifting = lazy(() => import("./pages/AIGifting"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Connections = lazy(() => import("./pages/Connections"));
@@ -216,6 +217,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/ai-gifting" element={<AIGifting />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
@@ -233,8 +235,8 @@ function AppContent() {
           <Route path="/account" element={<Navigate to="/settings" replace />} />
           <Route path="/search" element={<Navigate to="/marketplace" replace />} />
           <Route path="/discover" element={<Navigate to="/marketplace" replace />} />
-          <Route path="/gifting" element={<Navigate to="/dashboard?tab=auto-gifts" replace />} />
-          <Route path="/events" element={<Navigate to="/dashboard?tab=auto-gifts" replace />} />
+          <Route path="/gifting" element={<Navigate to="/ai-gifting" replace />} />
+          <Route path="/events" element={<Navigate to="/ai-gifting" replace />} />
           <Route path="/recently-viewed" element={<Navigate to="/dashboard?tab=activity" replace />} />
           <Route path="/connection/:connectionId" element={<Navigate to="/connections" replace />} />
           

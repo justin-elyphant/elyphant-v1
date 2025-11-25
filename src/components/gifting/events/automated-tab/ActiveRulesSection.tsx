@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, DollarSign, Bell, Gift, Pause } from "lucide-react";
+import { Trash2, DollarSign, Bell, Gift } from "lucide-react";
 import { UnifiedGiftRule, unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { toast } from "sonner";
@@ -21,46 +21,42 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
     await updateRule(ruleId, { is_active: isActive });
   };
 
-  const handleCancelRule = async (ruleId: string) => {
+  const handleDeleteRule = async (ruleId: string) => {
     try {
-      // First check what can be cancelled
+      // Check for pending executions that will be cancelled
       const cancellationCheck = await unifiedGiftManagementService.canCancelRule(ruleId);
       
-      if (!cancellationCheck.canCancel) {
-        alert(cancellationCheck.reason);
-        return;
-      }
-
-      // Show comprehensive cancellation dialog
+      // Build confirmation message
       const executionInfo = Object.entries(cancellationCheck.executions)
-        .filter(([key, count]) => count > 0)
-        .map(([key, count]) => `${count} ${key} execution${count !== 1 ? 's' : ''}`)
+        .filter(([key, count]) => count > 0 && (key === 'pending' || key === 'processing'))
+        .map(([key, count]) => `${count} ${key} gift${count !== 1 ? 's' : ''}`)
         .join(', ');
 
       const message = executionInfo 
-        ? `Cancel this auto-gifting rule?\n\nThis will also cancel: ${executionInfo}\n\nThis action cannot be undone.`
-        : "Cancel this auto-gifting rule? This action cannot be undone.";
+        ? `Delete this AI Gifting rule?\n\nThis will also cancel: ${executionInfo}\n\nThis action cannot be undone.`
+        : "Delete this AI Gifting rule? This action cannot be undone.";
 
       const confirmed = confirm(message);
-      if (confirmed) {
-        const result = await unifiedGiftManagementService.cancelAutoGiftRule(ruleId, "Cancelled by user");
-        if (result.success) {
-          toast.success(result.message);
-          // Trigger component refresh without full reload
-          window.location.href = window.location.pathname;
-        } else {
-          toast.error(result.message);
+      if (!confirmed) return;
+
+      // If there are pending executions, cancel them first
+      if (executionInfo) {
+        const cancelResult = await unifiedGiftManagementService.cancelAutoGiftRule(ruleId, "Rule deleted by user");
+        if (!cancelResult.success) {
+          toast.error(`Failed to cancel pending gifts: ${cancelResult.message}`);
+          return;
+        }
+        if (cancelResult.cancelledExecutions > 0) {
+          toast.success(`Cancelled ${cancelResult.cancelledExecutions} pending gift${cancelResult.cancelledExecutions !== 1 ? 's' : ''}`);
         }
       }
-    } catch (error) {
-      console.error('Error cancelling rule:', error);
-      toast.error('Failed to cancel auto-gifting rule');
-    }
-  };
 
-  const handleDeleteRule = async (ruleId: string) => {
-    if (confirm("Are you sure you want to delete this auto-gifting rule? This action cannot be undone.")) {
+      // Now delete the rule
       await deleteRule(ruleId);
+      toast.success('AI Gifting rule deleted successfully');
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      toast.error('Failed to delete AI Gifting rule');
     }
   };
 
@@ -132,16 +128,7 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleCancelRule(rule.id)}
-                    disabled={!rule.is_active}
-                  >
-                    <Pause className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
+                <div className="flex justify-end">
                   <Button 
                     variant="outline" 
                     size="sm" 

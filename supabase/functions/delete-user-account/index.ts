@@ -54,75 +54,132 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Delete user data from all tables (in order of foreign key dependencies)
+    // Delete user data from all tables (in comprehensive order to avoid FK violations)
 
-    // Delete group gifts and contributions
+    // 1. Security and session tables (no FK dependencies)
+    await safeDelete('security_logs', 'user_id', userId);
+    await safeDelete('security_anomalies', 'user_id', userId);
+    await safeDelete('security_audit', 'user_id', userId);
+    await safeDelete('trusted_devices', 'user_id', userId);
+    await safeDelete('user_sessions', 'user_id', userId);
+    
+    // 2. Presence and interaction tables
+    await safeDelete('user_presence', 'user_id', userId);
+    await safeDelete('typing_indicators', 'user_id', userId);
+    await safeDelete('user_interaction_events', 'user_id', userId);
+    
+    // 3. Analytics tables
+    await safeDelete('product_analytics', 'user_id', userId);
+    await safeDelete('purchase_analytics', 'user_id', userId);
+    await safeDelete('gift_recommendation_analytics', 'user_id', userId);
+    await safeDelete('nicole_discovery_log', 'user_id', userId);
+    await safeDelete('profile_completion_analytics', 'user_id', userId);
+    await safeDelete('user_type_audit_log', 'user_id', userId);
+    
+    // 4. Rate limiting and cost tracking
+    await safeDelete('message_rate_limits', 'user_id', userId);
+    await safeDelete('zma_order_rate_limits', 'user_id', userId);
+    await safeDelete('zma_cost_tracking', 'user_id', userId);
+    await safeDelete('zma_security_events', 'user_id', userId);
+    
+    // 5. Cache and history tables
+    await safeDelete('invitation_context_cache', 'user_id', userId);
+    await safeDelete('user_search_history', 'user_id', userId);
+    await safeDelete('gift_intelligence_cache', 'user_id', userId);
+    
+    // 6. API and roles
+    await safeDelete('api_keys', 'user_id', userId);
+    await safeDelete('user_roles', 'user_id', userId);
+    
+    // 7. Business and vendor tables
+    await safeDelete('business_admins', 'user_id', userId);
+    await safeDelete('vendor_accounts', 'user_id', userId);
+    
+    // 8. Rewards and tracking
+    await safeDelete('invitation_rewards', 'user_id', userId);
+    await safeDelete('group_gift_tracking_access', 'user_id', userId);
+    
+    // 9. Pending and queue tables
+    await safeDelete('pending_gift_invitations', 'inviter_id', userId);
+    await safeDelete('pending_gift_invitations', 'invitee_id', userId);
+    await safeDelete('offline_message_queue', 'user_id', userId);
+    
+    // 10. Preferences tables
+    await safeDelete('privacy_settings', 'user_id', userId);
+    await safeDelete('user_notification_preferences', 'user_id', userId);
+    await safeDelete('recipient_preferences', 'user_id', userId);
+    await safeDelete('recipient_profiles', 'user_id', userId);
+    await safeDelete('recipient_intelligence_profiles', 'user_id', userId);
+    await safeDelete('email_preferences', 'user_id', userId);
+    
+    // 11. Group gifts and contributions
     await safeDelete('group_gift_contributions', 'contributor_id', userId);
     await safeDelete('group_gift_projects', 'coordinator_id', userId);
+    await safeDelete('contributions', 'contributor_id', userId);
+    await safeDelete('funding_campaigns', 'creator_id', userId);
     
-    // Delete order-related data (order_items table was removed)
+    // 12. Orders and payment methods
     await safeDelete('orders', 'user_id', userId);
+    await safeDelete('payment_methods', 'user_id', userId);
 
-    // Delete auto-gifting data
+    // 13. Auto-gifting data
     await safeDelete('automated_gift_executions', 'user_id', userId);
     await safeDelete('auto_gifting_rules', 'user_id', userId);
     await safeDelete('auto_gifting_settings', 'user_id', userId);
     await safeDelete('auto_gift_notifications', 'user_id', userId);
     await safeDelete('auto_gift_event_logs', 'user_id', userId);
     await safeDelete('auto_gift_data_access', 'user_id', userId);
+    await safeDelete('auto_gift_payment_audit', 'user_id', userId);
+    await safeDelete('auto_gift_fulfillment_queue', 'user_id', userId);
     await safeDelete('approval_conversations', 'user_id', userId);
     await safeDelete('email_approval_tokens', 'user_id', userId);
 
-    // Delete connections and related data
+    // 14. Connections and related data
     await safeDelete('user_connections', 'user_id', userId);
     await safeDelete('user_connections', 'connected_user_id', userId);
     await safeDelete('connection_nudges', 'user_id', userId);
     await safeDelete('blocked_users', 'blocker_id', userId);
     await safeDelete('blocked_users', 'blocked_id', userId);
 
-    // Delete address data
+    // 15. Address data
     await safeDelete('address_requests', 'requester_id', userId);
     await safeDelete('address_requests', 'recipient_id', userId);
     await safeDelete('address_intelligence', 'user_id', userId);
     await safeDelete('user_addresses', 'user_id', userId);
 
-    // Delete wishlists and items
+    // 16. Wishlists and items
     await safeDelete('wishlist_items', 'user_id', userId);
+    await safeDelete('wishlist_purchase_tracking', 'purchaser_id', userId);
     await safeDelete('wishlists', 'user_id', userId);
 
-    // Delete messages and group chats
+    // 17. Messages and group chats
     await safeDelete('messages', 'sender_id', userId);
     await safeDelete('messages', 'recipient_id', userId);
     await safeDelete('group_chat_members', 'user_id', userId);
     await safeDelete('group_chats', 'creator_id', userId);
 
-    // Delete gift-related data
+    // 18. Gift-related data
     await safeDelete('gift_proposal_votes', 'user_id', userId);
     await safeDelete('gift_searches', 'user_id', userId);
     await safeDelete('gift_templates', 'user_id', userId);
     await safeDelete('gift_recommendations', 'user_id', userId);
     await safeDelete('gift_invitation_analytics', 'user_id', userId);
-    await safeDelete('gift_intelligence_cache', 'user_id', userId);
+    await safeDelete('gift_invitation_analytics', 'invited_user_id', userId);
+    await safeDelete('gift_preview_tokens', 'recipient_email', userEmail || '');
 
-    // Delete special dates
+    // 19. Special dates
     await safeDelete('user_special_dates', 'user_id', userId);
 
-    // Delete payment methods
-    await safeDelete('payment_methods', 'user_id', userId);
-
-    // Delete email and notification data
-    await safeDelete('email_preferences', 'user_id', userId);
+    // 20. Email and notification data
     await safeDelete('notifications', 'user_id', userId);
     await safeDelete('birthday_email_tracking', 'user_id', userId);
 
-    // Delete AI and analytics data
+    // 21. AI and search data
     await safeDelete('ai_gift_searches', 'user_id', userId);
     await safeDelete('ai_suggestion_insights', 'user_id', userId);
     await safeDelete('conversation_threads', 'user_id', userId);
-    await safeDelete('profile_completion_analytics', 'user_id', userId);
-    await safeDelete('user_type_audit_log', 'user_id', userId);
 
-    // Delete profile last (has dependencies)
+    // 22. Profile last (has dependencies)
     await safeDelete('profiles', 'id', userId);
 
     console.log(`Deleted all user data for: ${userId}`);

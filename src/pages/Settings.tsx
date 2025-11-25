@@ -80,6 +80,18 @@ const Settings = () => {
     }
   }, [user, loading, navigate]);
 
+  // Detect stuck state: authenticated but no profile (partial deletion scenario)
+  useEffect(() => {
+    if (user && !loading && !profile && !error) {
+      console.error("⚠️ Stuck state detected: User authenticated but profile is null");
+      toast.error("Your profile could not be found. Please sign in again.");
+      // Sign out to clear the stuck state
+      supabase.auth.signOut().then(() => {
+        navigate("/");
+      });
+    }
+  }, [user, loading, profile, error, navigate]);
+
   // Add timeout for loading state
   useEffect(() => {
     if (loading && !hasTimedOut) {

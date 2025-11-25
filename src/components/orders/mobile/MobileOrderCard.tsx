@@ -67,7 +67,7 @@ const MobileOrderCard = ({ order, onOrderUpdated }: MobileOrderCardProps) => {
           <Button 
             variant="default" 
             size="sm"
-            className="flex-1"
+            className="flex-1 h-11"
             asChild
           >
             <Link to={`/orders/${order.id}`}>

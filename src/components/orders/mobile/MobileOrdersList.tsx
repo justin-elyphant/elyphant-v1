@@ -58,7 +58,7 @@ const MobileOrdersList = ({ orders, isLoading, error, onOrderUpdated }: MobileOr
           paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' 
         }}
       >
-        <p className="text-red-500 mb-2">{error}</p>
+        <p className="text-muted-foreground mb-2">{error}</p>
         <p className="text-muted-foreground">Please try again later.</p>
       </div>
     );

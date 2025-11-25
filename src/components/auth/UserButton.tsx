@@ -229,7 +229,10 @@ const UserButton = () => {
         </button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-64 bg-background z-50 max-h-[80vh] overflow-y-auto">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-64 bg-background z-50 max-h-[80vh] overflow-y-auto relative before:content-[''] before:absolute before:-top-2 before:right-4 before:w-0 before:h-0 before:border-l-[8px] before:border-l-transparent before:border-r-[8px] before:border-r-transparent before:border-b-[8px] before:border-b-border after:content-[''] after:absolute after:-top-[7px] after:right-[17px] after:w-0 after:h-0 after:border-l-[7px] after:border-l-transparent after:border-r-[7px] after:border-r-transparent after:border-b-[7px] after:border-b-background"
+      >
         {/* Enhanced Profile Header */}
         <div className="flex items-center gap-3 p-4 border-b border-border">
           <Avatar className="h-10 w-10">
@@ -252,6 +255,17 @@ const UserButton = () => {
           </div>
         </div>
 
+        {/* Dashboard Link */}
+        <DropdownMenuItem 
+          className={navigationStyles.dropdownItem}
+          onClick={() => navigate("/dashboard")}
+        >
+          <LayoutDashboard className={navigationStyles.dropdownIcon} />
+          <span className={navigationStyles.dropdownLabel}>Dashboard</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
         {/* Unified Navigation Sections */}
         {sections.map((section, sectionIndex) => (
           <div key={section.id}>
@@ -259,10 +273,7 @@ const UserButton = () => {
               <DropdownMenuItem 
                 key={item.id}
                 className={navigationStyles.dropdownItem}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(item.href);
-                }}
+                onClick={() => navigate(item.href)}
               >
                 {item.icon && React.cloneElement(item.icon as React.ReactElement, { 
                   className: navigationStyles.dropdownIcon 

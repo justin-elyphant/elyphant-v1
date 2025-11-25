@@ -23,9 +23,9 @@ const popularBrands = [
   },
   { 
     id: 3, 
-    name: "Samsung", 
-    logoUrl: "https://logo.clearbit.com/samsung.com", 
-    productCount: 167 
+    name: "Yeti", 
+    logoUrl: "https://logo.clearbit.com/yeti.com", 
+    productCount: 152 
   },
   { 
     id: 4, 

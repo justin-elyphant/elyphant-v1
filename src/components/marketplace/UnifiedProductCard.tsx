@@ -50,6 +50,8 @@ type UnifiedProductCardProps =
       onToggleWishlist?: () => void;
       onClick?: () => void;
       onAddToCart?: (product: Product) => void;
+      context?: 'marketplace' | 'wishlist';
+      hideTopRightAction?: boolean;
     }
   // General ProductCard interface
   | {
@@ -115,6 +117,8 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
           onToggleWishlist={giftingProps.onToggleWishlist}
           onAddToCart={giftingProps.onAddToCart}
           viewMode="grid"
+          context={giftingProps.context}
+          hideTopRightAction={giftingProps.hideTopRightAction}
         />
       );
     }

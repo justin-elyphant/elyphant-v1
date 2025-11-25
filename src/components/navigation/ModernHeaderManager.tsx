@@ -77,9 +77,9 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Centered Search Bar */}
+            {/* Right-aligned Search Bar */}
             {config.showSearch && (
-              <div className="hidden md:flex flex-1 justify-center">
+              <div className="hidden md:flex flex-1 justify-end">
                 <div className="w-full max-w-md">
                   <AIEnhancedSearchBar />
                 </div>

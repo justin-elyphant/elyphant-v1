@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import ActiveRulesSection from "@/components/gifting/events/automated-tab/ActiveRulesSection";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const AIGifting = () => {
   const { user } = useAuth();
@@ -27,8 +28,9 @@ const AIGifting = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted pb-safe" style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top, 0px))" }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <SidebarLayout>
+      <div className="min-h-screen bg-muted pb-safe">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Hero Section */}
         <div className="grid lg:grid-cols-2 gap-6 pt-4">
           {/* Left Side - Gradient Hero Card */}
@@ -161,6 +163,7 @@ const AIGifting = () => {
         <div className="pb-8">
           <ActiveRulesSection rules={rules} />
         </div>
+        </div>
       </div>
 
       {/* Auto-Gift Setup Dialog */}
@@ -168,7 +171,7 @@ const AIGifting = () => {
         open={setupDialogOpen}
         onOpenChange={setSetupDialogOpen}
       />
-    </div>
+    </SidebarLayout>
   );
 };
 

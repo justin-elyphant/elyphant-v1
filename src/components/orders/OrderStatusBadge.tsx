@@ -60,9 +60,9 @@ const OrderStatusBadge = ({
           displayText: 'Verifying Payment',
           variant: 'secondary' as const,
           style: { 
-            backgroundColor: 'hsl(var(--blue-500))', 
-            color: 'white',
-            border: 'none'
+            color: 'hsl(var(--foreground))',
+            backgroundColor: 'transparent',
+            border: '1px solid hsl(var(--border))'
           },
           icon: <Clock className="h-3 w-3 mr-1" />,
           showRefresh: true,
@@ -73,9 +73,9 @@ const OrderStatusBadge = ({
           displayText: 'Needs Review',
           variant: 'destructive' as const,
           style: { 
-            backgroundColor: 'hsl(var(--amber-500))', 
-            color: 'white',
-            border: 'none'
+            color: 'hsl(var(--muted-foreground))',
+            backgroundColor: 'transparent',
+            border: '1px solid hsl(var(--border))'
           },
           icon: <AlertTriangle className="h-3 w-3 mr-1" />,
           showRefresh: true,
@@ -112,40 +112,45 @@ const OrderStatusBadge = ({
   };
 
   const getCustomStyle = (statusToCheck: string = status) => {
+    // Lululemon-inspired minimalist style - no colored backgrounds
     switch (statusToCheck.toLowerCase()) {
       case "delivered":
         return { 
-          backgroundColor: "hsl(var(--status-delivered))", 
-          color: "white",
-          border: "none"
+          color: "hsl(var(--foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
         };
       case "shipped":
         return { 
-          backgroundColor: "hsl(var(--status-shipped))", 
-          color: "white",
-          border: "none"
+          color: "hsl(var(--foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
         };
       case "processing":
         return { 
-          backgroundColor: "hsl(var(--status-processing))", 
-          color: "white",
-          border: "none"
+          color: "hsl(var(--foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
         };
       case "pending":
         return { 
-          backgroundColor: "hsl(var(--status-pending))", 
-          color: "white",
-          border: "none"
+          color: "hsl(var(--muted-foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
         };
       case "cancelled":
       case "failed":
         return { 
-          backgroundColor: "hsl(var(--status-cancelled))", 
-          color: "white",
-          border: "none"
+          color: "hsl(var(--muted-foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
         };
       default:
-        return {};
+        return {
+          color: "hsl(var(--foreground))",
+          backgroundColor: "transparent",
+          border: "1px solid hsl(var(--border))"
+        };
     }
   };
 

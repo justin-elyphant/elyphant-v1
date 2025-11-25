@@ -98,6 +98,16 @@ const Dashboard = () => {
   // Get first name from auth metadata or profile
   const firstName = user?.user_metadata?.first_name;
 
+  // Get time of day greeting
+  const getTimeOfDayGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 18) return 'afternoon';
+    return 'evening';
+  };
+  
+  const timeOfDay = getTimeOfDayGreeting();
+
   // Mobile-first layout optimization
   if (isMobile) {
     return (
@@ -118,10 +128,10 @@ const Dashboard = () => {
               <div className="flex flex-col gap-2 mb-3">
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-foreground mb-1 line-clamp-1">
-                    {firstName ? `${firstName}'s Account` : 'My Account'}
+                    Good {timeOfDay}{firstName ? `, ${firstName}` : ''}
                   </h1>
                   <p className="text-muted-foreground text-sm line-clamp-2">
-                    Your central hub for all Elyphant features
+                    How can we help you gift today? Explore gifting, social connections, and more.
                   </p>
                 </div>
               </div>
@@ -162,10 +172,10 @@ const Dashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">
-                {firstName ? `${firstName}'s Account` : 'My Account'}
+                Good {timeOfDay}{firstName ? `, ${firstName}` : ''}
               </h1>
               <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-3">
-                Your central hub for all Elyphant features. Explore gifting, social connections, and more.
+                How can we help you gift today? Explore gifting, social connections, and more.
               </p>
             </div>
             {profile && (

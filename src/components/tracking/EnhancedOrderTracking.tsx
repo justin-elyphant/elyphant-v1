@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
 import { getTrackingAccess, GroupGiftProject } from '@/services/groupGiftService';
 import { useToast } from '@/hooks/use-toast';
+import SimplifiedOrderTimeline from './SimplifiedOrderTimeline';
 
 interface TrackingStep {
   status: string;
@@ -307,10 +308,10 @@ const EnhancedOrderTracking = ({ orderId: propOrderId, projectId }: EnhancedOrde
                 <CardTitle className="text-2xl mb-1 flex items-center gap-2">
                   Order {order.id}
                   {order.isGroupGift && (
-                    <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                      <Users className="h-3 w-3 mr-1" />
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground border border-border rounded-full px-3 py-1">
+                      <Users className="h-3 w-3" />
                       Group Gift
-                    </Badge>
+                    </span>
                   )}
                 </CardTitle>
                 <CardDescription className="flex items-center">
@@ -319,12 +320,7 @@ const EnhancedOrderTracking = ({ orderId: propOrderId, projectId }: EnhancedOrde
                 </CardDescription>
               </div>
               <div className="text-right">
-                <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                  order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                  order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <div className="text-sm font-semibold text-foreground">
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
@@ -437,50 +433,8 @@ const EnhancedOrderTracking = ({ orderId: propOrderId, projectId }: EnhancedOrde
                 {/* Tracking Timeline */}
                 {canViewTracking ? (
                   <>
-                    <h3 className="font-semibold mb-4">Tracking Timeline</h3>
-                    <div className="space-y-3">
-                      {order.steps.map((step, index) => (
-                        <div key={index} className="flex">
-                          <div className="mr-4 relative">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              step.completed 
-                                ? 'bg-primary text-primary-foreground' 
-                                : 'bg-muted text-muted-foreground'
-                            }`}>
-                              {step.status === 'Order Placed' && <Clock className="h-4 w-4" />}
-                              {step.status === 'Contributions Collected' && <Users className="h-4 w-4" />}
-                              {step.status === 'Order Processed' && <PackageOpen className="h-4 w-4" />}
-                              {step.status === 'Shipped' && <Package className="h-4 w-4" />}
-                              {step.status === 'Out for Delivery' && <Truck className="h-4 w-4" />}
-                              {step.status === 'Delivered' && <CheckCircle2 className="h-4 w-4" />}
-                            </div>
-                            
-                            {index < order.steps.length - 1 && (
-                              <div className={`absolute left-4 top-8 w-0.5 h-8 ${
-                                step.completed ? 'bg-primary' : 'bg-muted'
-                              }`}></div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 pb-8">
-                            <div className="font-medium">{step.status}</div>
-                            
-                            {step.completed && (
-                              <div className="text-sm text-muted-foreground mt-1">
-                                <div>{step.timestamp}</div>
-                                {step.location && <div>{step.location}</div>}
-                              </div>
-                            )}
-                            
-                            {step.current && (
-                              <div className="mt-1 text-sm text-primary font-medium">
-                                Current Status
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <h3 className="font-semibold mb-6">Tracking Timeline</h3>
+                    <SimplifiedOrderTimeline steps={order.steps} />
                   </>
                 ) : (
                   <div className="text-center py-12">

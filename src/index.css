@@ -78,18 +78,7 @@
   --space-20: 5rem;      /* 80px */
   --space-24: 6rem;      /* 96px */
   
-  /* Enhanced order status colors */
-  --status-pending: 35 91% 65%;
-  --status-processing: 221.2 83.2% 53.3%;
-  --status-shipped: 142 76% 36%;
-  --status-delivered: 142 76% 36%;
-  --status-cancelled: 0 84.2% 60.2%;
-  --status-failed: 0 84.2% 60.2%;
-  
-  /* Progress stepper colors */
-  --stepper-active: 221.2 83.2% 53.3%;
-  --stepper-completed: 142 76% 36%;
-  --stepper-inactive: 215.4 16.3% 46.9%;
+  /* Legacy order status colors - kept for backward compatibility but not used in new UI */
   
   /* Elyphant Brand Colors - E-commerce Minimalism */
   --elyphant-grey: 0 0% 96.9%;        /* #F7F7F7 - Page background */

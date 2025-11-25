@@ -77,9 +77,9 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Search Bar - Right on tablet, centered on desktop */}
+            {/* Desktop Search Bar - centered */}
             {config.showSearch && (
-              <div className="hidden md:flex flex-1 md:justify-end lg:justify-center">
+              <div className="hidden lg:flex flex-1 justify-center">
                 <div className="w-full max-w-md">
                   <AIEnhancedSearchBar />
                 </div>
@@ -99,9 +99,9 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
           </div>
 
-          {/* Mobile Search Bar - always visible */}
+          {/* Mobile + Tablet Search Bar - second layer */}
           {config.showSearch && (
-            <div className="md:hidden bg-gray-50/80 border-t border-gray-200 py-3">
+            <div className="lg:hidden bg-gray-50/80 border-t border-gray-200 py-3">
               <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>

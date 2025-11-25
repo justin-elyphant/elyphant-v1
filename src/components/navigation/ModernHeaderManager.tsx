@@ -86,7 +86,11 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
 
             {/* Desktop Right Utilities - 20% width */}
             <div className="hidden md:flex items-center gap-3 flex-shrink-0">
-              {config.showSearch && <SearchIconTrigger />}
+              {config.showSearch && (
+                <div className="w-64 lg:w-80">
+                  <AIEnhancedSearchBar />
+                </div>
+              )}
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
             </div>

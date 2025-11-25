@@ -329,33 +329,34 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       <form onSubmit={handleSearch} className="relative">
         <div ref={barRef} className={`relative flex items-center transition-all duration-300 ${
           mobile 
-            ? 'bg-background border border-border rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
-            : 'bg-background border border-border rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
+            ? 'bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md focus-within:shadow-md'
+            : 'bg-white border border-gray-300 rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600'
         } ${
           isNicoleMode ? 'ring-2 ring-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50' : ''
         }`}>
-          {/* Mode Toggle */}
-          <div className={`absolute z-10 ${
-            mobile ? 'left-2 flex items-center gap-1.5' : 'left-3 flex items-center gap-2'
-          }`}>
-            <Search className={`transition-colors duration-200 ${
-              mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
-            } ${isNicoleMode ? 'text-purple-500' : 'text-muted-foreground'}`} />
-            <IOSSwitch
-              size="sm"
-              checked={isNicoleMode}
-              onCheckedChange={handleModeToggle}
-              className={`touch-manipulation ${mobile ? 'scale-90' : ''}`}
-            />
-            <Bot className={`transition-colors duration-200 ${
-              mobile ? 'h-3.5 w-3.5' : 'h-4 w-4'
-            } ${isNicoleMode ? 'text-purple-500' : 'text-muted-foreground'}`} />
-            {isNicoleMode && (
-              <Sparkles className={`text-purple-500 animate-pulse ${
-                mobile ? 'h-2.5 w-2.5' : 'h-3 w-3'
-              }`} />
-            )}
-          </div>
+          {/* Mode Toggle - Hidden on desktop */}
+          {mobile && (
+            <div className="absolute left-2 z-10 flex items-center gap-1.5">
+              <Search className="h-3.5 w-3.5 transition-colors duration-200 text-muted-foreground" />
+              <IOSSwitch
+                size="sm"
+                checked={isNicoleMode}
+                onCheckedChange={handleModeToggle}
+                className="touch-manipulation scale-90"
+              />
+              <Bot className={`transition-colors duration-200 h-3.5 w-3.5 ${isNicoleMode ? 'text-purple-500' : 'text-muted-foreground'}`} />
+              {isNicoleMode && (
+                <Sparkles className="text-purple-500 animate-pulse h-2.5 w-2.5" />
+              )}
+            </div>
+          )}
+          
+          {/* Desktop search icon */}
+          {!mobile && (
+            <div className="absolute left-4 z-10">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+          )}
           
           <Input
             ref={inputRef}
@@ -368,11 +369,12 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             className={`transition-all duration-300 bg-transparent border-0 ${
               mobile 
                 ? 'text-base py-3 h-11 pl-24 pr-16 focus:ring-0 focus:outline-none' 
-                : "h-12 text-base pl-32 pr-32 focus:ring-0 focus:outline-none"
+                : "h-11 text-sm pl-12 pr-24 focus:ring-0 focus:outline-none placeholder:text-gray-500"
             }`}
+            style={{ fontSize: mobile ? '16px' : '14px' }}
           />
           
-          <div className="absolute right-2 flex items-center space-x-1">
+          <div className={`absolute flex items-center space-x-1 ${mobile ? 'right-2' : 'right-3'}`}>
             {query && (
               <Button
                 type="button"
@@ -383,9 +385,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                   setSearchQuery("");
                   inputRef.current?.focus();
                 }}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-gray-100"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-gray-500" />
               </Button>
             )}
             
@@ -397,16 +399,29 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               />
             )}
             
-            <Button
-              type="submit"
-              size="sm"
-              className={`${mobile ? 'h-8' : 'h-8'} px-4 text-sm font-medium`}
-            >
-              {isNicoleMode ? "Ask" : "Search"}
-              {isNicoleMode && (
-                <Badge variant="secondary" className="ml-1.5 text-xs">AI</Badge>
-              )}
-            </Button>
+            {!mobile && (
+              <Button
+                type="submit"
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <Search className="h-4 w-4 text-gray-500" />
+              </Button>
+            )}
+            
+            {mobile && (
+              <Button
+                type="submit"
+                size="sm"
+                className="h-8 px-4 text-sm font-medium"
+              >
+                {isNicoleMode ? "Ask" : "Search"}
+                {isNicoleMode && (
+                  <Badge variant="secondary" className="ml-1.5 text-xs">AI</Badge>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </form>

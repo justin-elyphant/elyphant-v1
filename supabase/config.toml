@@ -98,6 +98,9 @@ verify_jwt = false
 [functions.seed-product-catalog]
 verify_jwt = false
 
+[functions.delete-user-account]
+verify_jwt = true
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

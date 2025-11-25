@@ -178,18 +178,6 @@ const Dashboard = () => {
                 How can we help you gift today? Explore gifting, social connections, and more.
               </p>
             </div>
-            {profile && (
-              <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-medium text-foreground">
-                    {profile.display_name || `${firstName || 'User'}`}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {user?.email}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
         

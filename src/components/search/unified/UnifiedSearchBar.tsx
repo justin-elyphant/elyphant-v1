@@ -399,17 +399,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               />
             )}
             
-            {!mobile && (
-              <Button
-                type="submit"
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-gray-100"
-              >
-                <Search className="h-4 w-4 text-gray-500" />
-              </Button>
-            )}
-            
             {mobile && (
               <Button
                 type="submit"

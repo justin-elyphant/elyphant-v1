@@ -30,7 +30,7 @@ const MobileBottomNavigation: React.FC = () => {
     {
       id: 'auto-gifts',
       label: 'AI Gifting',
-      href: '/dashboard?tab=auto-gifts',
+      href: '/ai-gifting',
       icon: <Gift className="h-6 w-6" />
     },
     {
@@ -61,7 +61,7 @@ const MobileBottomNavigation: React.FC = () => {
     }
     // Auto-Gifts
     if (tab.id === "auto-gifts") {
-      return location.pathname.startsWith("/dashboard") && location.search.includes("tab=auto-gifts");
+      return location.pathname.startsWith("/ai-gifting");
     }
     // Wishlists
     if (tab.id === "wishlists") {

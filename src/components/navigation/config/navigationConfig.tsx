@@ -65,56 +65,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
   ];
 
   const sections: NavigationSection[] = [
-    // Primary Navigation
-    {
-      id: "primary",
-      title: "Navigate",
-      items: [
-        {
-          id: "home",
-          label: "Home",
-          href: "/",
-          icon: <Home className="h-5 w-5" />,
-          section: "primary"
-        }
-      ]
-    },
-
-    // Main Features (Authenticated)
-    ...(isAuthenticated ? [{
-      id: "features",
-      title: "Features",
-      items: [
-        {
-          id: "dashboard",
-          label: "Dashboard",
-          href: "/dashboard",
-          icon: <LayoutDashboard className="h-5 w-5" />,
-          badge: badges.issues > 0 ? badges.issues : undefined,
-          section: "secondary" as const,
-          requiresAuth: true
-        },
-        {
-          id: "gifting",
-          label: "Gifting Hub",
-          href: "/dashboard?tab=auto-gifts",
-          icon: <Gift className="h-5 w-5" />,
-          section: "secondary" as const,
-          requiresAuth: true
-        },
-        /* Temporarily hidden - Nicole AI
-        {
-          id: "nicole",
-          label: "Nicole AI",
-          href: "/nicole",
-          icon: <Brain className="h-5 w-5" />,
-          section: "secondary" as const
-        }
-        */
-      ]
-    }] : []),
-
-    // Account Section (Authenticated)
+    // Account Section (Authenticated) - Simplified for dropdown
     ...(isAuthenticated ? [{
       id: "account",
       title: "My Account",
@@ -137,61 +88,10 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
           requiresAuth: true
         },
         {
-          id: "wishlists",
-          label: "Wishlists",
-          href: "/wishlists",
-          icon: <Heart className="h-5 w-5" />,
-          section: "account" as const,
-          requiresAuth: true
-        },
-        {
-          id: "orders",
-          label: "Orders",
-          href: "/orders",
-          icon: <Package className="h-5 w-5" />,
-          section: "account" as const,
-          requiresAuth: true
-        },
-        {
           id: "payments",
           label: "Payment Methods",
           href: "/payments",
           icon: <CreditCard className="h-5 w-5" />,
-          section: "account" as const,
-          requiresAuth: true
-        }
-      ]
-    }] : []),
-
-    // Communication (Authenticated)
-    ...(isAuthenticated ? [{
-      id: "communication",
-      title: "Connect",
-      items: [
-        {
-          id: "messages",
-          label: "Messages",
-          href: "/messages",
-          icon: <MessageSquare className="h-5 w-5" />,
-          badge: badges.messages > 0 ? badges.messages : undefined,
-          section: "account" as const,
-          requiresAuth: true
-        },
-        {
-          id: "connections",
-          label: "Connections",
-          href: "/connections",
-          icon: <UserCheck className="h-5 w-5" />,
-          badge: badges.connections > 0 ? badges.connections : undefined,
-          section: "account" as const,
-          requiresAuth: true
-        },
-        {
-          id: "notifications",
-          label: "Notifications",
-          href: "/notifications",
-          icon: <Bell className="h-5 w-5" />,
-          badge: badges.notifications > 0 ? badges.notifications : undefined,
           section: "account" as const,
           requiresAuth: true
         }
@@ -203,31 +103,6 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
       id: "support",
       title: "Support",
       items: [
-        ...(isAuthenticated ? [
-          {
-            id: "recent",
-            label: "Recently Viewed",
-            href: "/recently-viewed",
-            icon: <Clock className="h-5 w-5" />,
-            section: "support" as const,
-            requiresAuth: true
-          }
-        ] : [
-          {
-            id: "featured",
-            label: "Featured Deals",
-            href: "/featured-deals",
-            icon: <Star className="h-5 w-5" />,
-            section: "support" as const
-          },
-          {
-            id: "guides",
-            label: "Gift Guides",
-            href: "/gift-guides",
-            icon: <Gift className="h-5 w-5" />,
-            section: "support" as const
-          }
-        ]),
         {
           id: "help",
           label: "Help & Support",

@@ -12,19 +12,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  Home,
   ShoppingBag,
   ShoppingCart,
   Heart,
   Package,
   Gift,
   Users,
-  Brain,
-  LayoutGrid,
-  User,
-  MessageCircle
+  MessageCircle,
+  Bell,
 } from "lucide-react";
 import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
@@ -32,26 +30,21 @@ import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
 import { useUnreadMessagesCount } from "@/hooks/useUnreadMessagesCount";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
+import { useCart } from "@/contexts/CartContext";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const unreadMessagesCount = useUnreadMessagesCount();
   const { pendingConnections } = useConnectionsAdapter();
+  const { unreadCount: notificationsCount } = useNotifications();
+  const { getItemCount } = useCart();
+  const cartItemCount = getItemCount();
 
-  // Personal dashboard 
-  const personalItems = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutGrid,
-    },
-  ];
-
-  // Shopping workflows
+  // Shopping section
   const shoppingItems = [
     {
-      title: "Marketplace",
+      title: "Shop",
       url: "/marketplace",
       icon: ShoppingBag,
     },
@@ -59,17 +52,37 @@ const AppSidebar = () => {
       title: "Cart",
       url: "/cart",
       icon: ShoppingCart,
+      badge: cartItemCount > 0 ? cartItemCount : undefined,
+    },
+    {
+      title: "Orders",
+      url: "/orders",
+      icon: Package,
     },
   ];
 
-  // Communication and AI workflows
-  const communicationItems = [
+  // Gifting section
+  const giftingItems = [
+    {
+      title: "Auto-Gifts",
+      url: "/dashboard?tab=auto-gifts",
+      icon: Gift,
+    },
+    {
+      title: "Wishlists",
+      url: "/wishlists",
+      icon: Heart,
+    },
     {
       title: "Connections",
       url: "/connections",
       icon: Users,
       badge: pendingConnections.length > 0 ? pendingConnections.length : undefined,
     },
+  ];
+
+  // Communication section
+  const communicationItems = [
     {
       title: "Messages",
       url: "/messages",
@@ -77,22 +90,20 @@ const AppSidebar = () => {
       badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
     },
     {
-      title: "Gifting Hub",
-      url: "/gifting",
-      icon: Gift,
+      title: "Notifications",
+      url: "/notifications",
+      icon: Bell,
+      badge: notificationsCount > 0 ? notificationsCount : undefined,
     },
-    /* Temporarily hidden - Nicole AI
-    {
-      title: "Nicole AI",
-      url: "/nicole",
-      icon: Brain,
-    },
-    */
   ];
 
   const isActiveRoute = (url: string) => {
     if (url === "/") {
       return location.pathname === "/";
+    }
+    // Special handling for auto-gifts tab
+    if (url === "/dashboard?tab=auto-gifts") {
+      return location.pathname === "/dashboard" && location.search.includes("tab=auto-gifts");
     }
     return location.pathname.startsWith(url);
   };
@@ -103,25 +114,6 @@ const AppSidebar = () => {
         <Logo />
       </SidebarHeader>
       <SidebarContent>
-        {/* Personal Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {personalItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Shopping Section */}
         <SidebarGroup>
           <SidebarGroupLabel>Shopping</SidebarGroupLabel>
@@ -133,6 +125,11 @@ const AppSidebar = () => {
                     <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
+                      {item.badge && (
+                        <Badge variant="destructive" className="ml-auto text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -141,9 +138,33 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Communication & AI Section */}
+        {/* Gifting Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Communication & AI</SidebarGroupLabel>
+          <SidebarGroupLabel>Gifting</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {giftingItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActiveRoute(item.url)}>
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                      {item.badge && (
+                        <Badge variant="destructive" className="ml-auto text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Communication Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Communication</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {communicationItems.map((item) => (

@@ -15,6 +15,7 @@ import OptimizedShoppingCartButton from "@/components/marketplace/components/Opt
 import MobileAuthMenu from "./MobileAuthMenu";
 import DesktopHorizontalNav from "./DesktopHorizontalNav";
 import SearchIconTrigger from "./SearchIconTrigger";
+import CategoryLinks from "./CategoryLinks";
 
 interface ModernHeaderManagerProps {
   mode?: "main" | "minimal" | "marketplace-focused";
@@ -80,17 +81,21 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Desktop Search Bar - centered */}
+            {/* Category Links - Desktop only */}
+            <CategoryLinks />
+
+            {/* Spacer to push right utilities */}
+            <div className="hidden lg:flex flex-1" />
+
+            {/* Desktop Search Bar - Right aligned, compact */}
             {config.showSearch && (
-              <div className="hidden lg:flex flex-1 justify-center">
-                <div className="w-full max-w-md">
-                  <AIEnhancedSearchBar />
-                </div>
+              <div className="hidden lg:block w-64">
+                <AIEnhancedSearchBar />
               </div>
             )}
 
             {/* Desktop Right Utilities */}
-            <div className="hidden md:flex items-center gap-3 flex-shrink-0 min-w-[200px] ml-auto">
+            <div className="hidden md:flex items-center gap-3 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="icon"

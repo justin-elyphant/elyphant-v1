@@ -125,8 +125,8 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
 
 
   return (
-    <Card className="w-full max-w-2xl mx-auto max-h-[90vh] flex flex-col">
-      <CardHeader className="sticky top-0 z-10 bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b shrink-0 pt-5 pb-3">
+    <Card className="w-full max-w-2xl mx-auto flex flex-col">
+      <CardHeader className="sticky top-0 z-10 bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur border-b shrink-0 pt-5 pb-3 space-y-3">
         <CardTitle className="grid grid-cols-[auto_1fr_auto] items-center gap-2 leading-tight text-center">
           <Button
             variant="ghost"
@@ -142,19 +142,18 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
             <UserPlus className="h-5 w-5 mx-auto" />
           </span>
         </CardTitle>
-      </CardHeader>
-      
-      <div className="px-6 pt-4 pb-2 border-b bg-muted">
-        <div className="flex items-start gap-3 text-sm">
+        
+        {/* Info box merged into sticky header */}
+        <div className="flex items-start gap-3 text-sm bg-muted rounded-lg p-3 mx-1">
           <UserPlus className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
           <p className="text-muted-foreground leading-relaxed">
-            <strong className="font-semibold">Setting up auto-gifting:</strong> After sending the invitation, 
+            <strong className="font-semibold">Setting up AI Gifting:</strong> After sending the invitation, 
             you'll continue to configure gift preferences, budget, and notification settings.
           </p>
         </div>
-      </div>
+      </CardHeader>
       
-      <CardContent className="p-6 pb-safe pt-16 md:pt-20 overflow-y-auto ios-smooth-scroll">
+      <CardContent className="p-6 overflow-y-auto ios-smooth-scroll flex-1">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -217,20 +216,20 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 pb-24 md:pb-4 sticky bottom-0 bg-background border-t -mx-6 px-6 py-4 mt-6">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onCancel}
               disabled={isCreating}
-              className="flex-1"
+              className="flex-1 min-h-[44px]"
             >
               Cancel
             </Button>
             <Button 
               type="submit"
               disabled={isCreating}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:from-purple-700 hover:to-sky-600"
+              className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:from-purple-700 hover:to-sky-600"
             >
               {isCreating ? (
                 <div className="flex items-center gap-2">

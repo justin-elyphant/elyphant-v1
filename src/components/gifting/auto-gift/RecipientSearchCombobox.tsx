@@ -466,7 +466,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
 
       {/* New Recipient Form Dialog */}
       <Dialog open={showNewRecipientForm} onOpenChange={setShowNewRecipientForm}>
-        <DialogContent>
+        <DialogContent className="p-0 pb-24 md:pb-6">
           <NewRecipientForm
             onRecipientCreate={handleNewRecipientCreated}
             onCancel={() => setShowNewRecipientForm(false)}

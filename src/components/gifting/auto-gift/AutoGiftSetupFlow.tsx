@@ -462,9 +462,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden">
         <div 
           ref={scrollContainerRef}
-          className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom pt-2"
+          className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom"
         >
-        <DialogHeader className="pb-3">
+        <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
             {ruleId ? 'Edit AI Gifting Rule' : 'Set Up AI Gifting'}
@@ -472,7 +472,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         </DialogHeader>
 
         {/* Progress Steps */}
-        <Tabs value={currentStep.toString()} className="w-full mt-2">
+        <Tabs value={currentStep.toString()} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             {steps.map((step, index) => {
               const Icon = step.icon;

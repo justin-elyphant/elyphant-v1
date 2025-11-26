@@ -510,31 +510,35 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return (
       <div className="container mx-auto px-4 py-6 pt-safe-top pb-safe">
           <MarketplaceHeader />
-          <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          <div className="lg:hidden">
+            <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          </div>
           
           {/* Filter Pills */}
-          <FilterPills
-            filters={activeFilters}
-            onRemoveFilter={(filterType, value) => {
-              const newFilters = { ...activeFilters };
-              
-              // Handle array-based filters (categories and smart filters)
-              if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filterType) && value) {
-                newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
-                if (newFilters[filterType].length === 0) {
+          <div className="lg:hidden">
+            <FilterPills
+              filters={activeFilters}
+              onRemoveFilter={(filterType, value) => {
+                const newFilters = { ...activeFilters };
+                
+                // Handle array-based filters (categories and smart filters)
+                if (['category', 'gender', 'brand', 'size', 'color', 'fit'].includes(filterType) && value) {
+                  newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
+                  if (newFilters[filterType].length === 0) {
+                    delete newFilters[filterType];
+                  }
+                } else if (filterType === 'priceRange') {
+                  newFilters.priceRange = [0, 500];
+                } else {
+                  // Handle single-value filters
                   delete newFilters[filterType];
                 }
-              } else if (filterType === 'priceRange') {
-                newFilters.priceRange = [0, 500];
-              } else {
-                // Handle single-value filters
-                delete newFilters[filterType];
-              }
-              
-              setActiveFilters(newFilters);
-            }}
-            onClearAll={() => setActiveFilters({})}
-          />
+                
+                setActiveFilters(newFilters);
+              }}
+              onClearAll={() => setActiveFilters({})}
+            />
+          </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="space-y-3">

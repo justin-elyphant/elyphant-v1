@@ -1836,30 +1836,39 @@ class UnifiedGiftManagementService {
     const sanitizedEmail = recipientEmail.trim().toLowerCase();
     const sanitizedName = recipientName.trim();
 
-    // Auto-fetch shipping address from existing user profile if not provided
-    if (!shippingAddress) {
-      console.log('🔍 [ADDRESS_FETCH] No shipping address provided, checking if recipient is existing user...');
-      
-      const { data: existingUser, error: userError } = await supabase
-        .from('profiles')
-        .select('id, name, shipping_address')
-        .eq('email', sanitizedEmail)
-        .maybeSingle();
+    // Check if recipient already exists as a registered user
+    console.log('🔍 [USER_CHECK] Checking if recipient is an existing user...');
+    
+    const { data: existingUser, error: userError } = await supabase
+      .from('profiles')
+      .select('id, name, shipping_address')
+      .eq('email', sanitizedEmail)
+      .maybeSingle();
 
-      if (userError) {
-        console.warn('⚠️ [ADDRESS_FETCH] Error checking for existing user:', userError);
-      } else if (existingUser?.shipping_address) {
-        console.log('✅ [ADDRESS_FETCH] Auto-fetched shipping address from existing user profile:', {
-          userId: existingUser.id,
-          userName: existingUser.name,
-          hasAddress: true
-        });
+    if (userError) {
+      console.warn('⚠️ [USER_CHECK] Error checking for existing user:', userError);
+    }
+
+    const isExistingUser = !!existingUser;
+    
+    if (isExistingUser) {
+      console.log('✅ [EXISTING_USER] Recipient is already registered:', {
+        userId: existingUser.id,
+        userName: existingUser.name,
+        hasAddress: !!existingUser.shipping_address
+      });
+      
+      // Auto-fetch shipping address from existing user profile if not provided
+      if (!shippingAddress && existingUser.shipping_address) {
+        console.log('✅ [ADDRESS_FETCH] Auto-fetched shipping address from existing user profile');
         shippingAddress = existingUser.shipping_address;
-      } else {
-        console.log('ℹ️ [ADDRESS_FETCH] No existing user or no shipping address in profile');
       }
     } else {
-      console.log('✅ [ADDRESS_PROVIDED] Shipping address explicitly provided');
+      console.log('ℹ️ [NEW_USER] Recipient is not yet registered');
+      
+      if (shippingAddress) {
+        console.log('✅ [ADDRESS_PROVIDED] Shipping address explicitly provided for new user');
+      }
     }
 
     const recipientPhone = shippingAddress?.phone || null;
@@ -1960,10 +1969,27 @@ class UnifiedGiftManagementService {
         return data;
       }
 
-      // Create new pending connection
-      console.log('➕ [CREATE] Creating new pending connection...');
+      // Create new connection (pending for existing users, pending_invitation for new users)
+      const connectionStatus = isExistingUser ? 'pending' : 'pending_invitation';
+      console.log(`➕ [CREATE] Creating new ${connectionStatus} connection...`);
       
-      const insertData = {
+      const insertData = isExistingUser ? {
+        // Existing user: create proper pending connection with connected_user_id
+        user_id: user.user.id,
+        connected_user_id: existingUser!.id,
+        status: 'pending' as const,
+        relationship_type: relationshipType,
+        pending_recipient_email: sanitizedEmail, // Keep for reference
+        pending_recipient_name: sanitizedName,
+        pending_recipient_phone: recipientPhone,
+        pending_shipping_address: shippingAddress || null,
+        pending_recipient_dob: birthday,
+        relationship_context: relationshipContext,
+        invitation_sent_at: new Date().toISOString(),
+        invitation_reminder_count: 0,
+        created_at: new Date().toISOString()
+      } : {
+        // New user: create pending_invitation without connected_user_id
         user_id: user.user.id,
         connected_user_id: null,
         status: 'pending_invitation' as const,
@@ -1971,7 +1997,7 @@ class UnifiedGiftManagementService {
         pending_recipient_email: sanitizedEmail,
         pending_recipient_name: sanitizedName,
         pending_recipient_phone: recipientPhone,
-        pending_shipping_address: shippingAddress || null, // Allow NULL for recipient-owned addresses
+        pending_shipping_address: shippingAddress || null,
         pending_recipient_dob: birthday,
         relationship_context: relationshipContext,
         invitation_sent_at: new Date().toISOString(),

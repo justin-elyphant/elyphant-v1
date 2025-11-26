@@ -37,6 +37,9 @@ import { useFilteredProducts } from "./hooks/useFilteredProducts";
 import VariationTestPage from "./VariationTestPage";
 import QuickVariationTest from "./QuickVariationTest";
 import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
+import SubCategoryTabs from "./SubCategoryTabs";
+import DesktopFilterSidebar from "./filters/DesktopFilterSidebar";
+import FilterSortRow from "./filters/FilterSortRow";
 
 // Add test mode flag - set to true to show variation test page
 const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
@@ -90,10 +93,13 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<any>({});
+  const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { addToCart } = useCart();
+  
+  // Secondary filter row state
+  const [activeTab, setActiveTab] = useState<"all" | "near-you">("all");
   
   // Performance monitoring
   const { 
@@ -715,130 +721,249 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         );
       })()}
 
-      {/* Quick Filters - Only for non-personalized */}
+      {/* Quick Filters - Only for non-personalized, hidden on desktop when showing sidebar */}
       {!isPersonalizedActive && (
         <>
-          <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          {/* Sub-Category Tabs - Below hero, above filters */}
+          {showSearchInfo && (
+            <div className="mb-4">
+              <SubCategoryTabs />
+            </div>
+          )}
           
-          {/* Filter Pills */}
-          <FilterPills
-            filters={activeFilters}
-            onRemoveFilter={(filterType, value) => {
-              const newFilters = { ...activeFilters };
+          {/* Desktop: Two-column layout with sidebar */}
+          <div className="hidden lg:flex gap-8 items-start">
+            {/* Left: Filter Sidebar */}
+            {showSearchInfo && (
+              <DesktopFilterSidebar
+                productCount={filteredPaginatedProducts.length}
+                activeFilters={activeFilters}
+                onFilterChange={(newFilters) => {
+                  setActiveFilters(newFilters);
+                  // Trigger enhanced search if needed
+                  if (urlSearchTerm) {
+                    const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+                    const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
+                    if (hasChanges) {
+                      setTimeout(() => triggerEnhancedSearch(newFilters), 100);
+                    }
+                  }
+                }}
+              />
+            )}
+            
+            {/* Right: Main content */}
+            <div className="flex-1">
+              {/* Secondary Filter Row */}
+              {showSearchInfo && (
+                <FilterSortRow
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  sortBy={activeFilters?.sortBy || 'relevance'}
+                  onSortChange={(value) => setActiveFilters({ ...activeFilters, sortBy: value })}
+                  className="mb-6"
+                />
+              )}
               
-              // Handle array-based filters (categories and smart filters) - EXPANDED
-              if (['category', 'gender', 'brand', 'size', 'color', 'fit', 'waist', 'inseam', 'material', 'style', 'features'].includes(filterType) && value) {
-                newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
-                if (newFilters[filterType].length === 0) {
+              {/* Products Grid */}
+              {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
+                <>
+                  {shouldUseVirtualization ? (
+                    <VirtualizedProductGrid
+                      products={filteredPaginatedProducts}
+                      viewMode={viewMode}
+                      onProductClick={handleProductClick}
+                      onAddToCart={handleAddToCart}
+                      onShare={handleShare}
+                      getProductStatus={getProductStatus}
+                      className="mb-8"
+                      containerHeight={600}
+                      itemHeight={400}
+                    />
+                  ) : (
+                    <OptimizedProductGrid
+                      products={filteredPaginatedProducts}
+                      viewMode={viewMode}
+                      onProductClick={handleProductClick}
+                      onAddToCart={handleAddToCart}
+                      onShare={handleShare}
+                      getProductStatus={getProductStatus}
+                      className="mb-8"
+                    />
+                  )}
+
+                  {/* Load More Button */}
+                  {hasMore && showSearchInfo && (
+                    <div className="flex justify-center mt-8">
+                      <Button 
+                        onClick={() => {
+                          console.log('Load More button clicked!', { hasMore, isPaginationLoading });
+                          loadMore();
+                        }} 
+                        disabled={isPaginationLoading}
+                        className="min-w-[160px]"
+                        variant="outline"
+                      >
+                        {isPaginationLoading ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          `Load More Products`
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Empty State */}
+              {filteredPaginatedProducts.length === 0 && !isLoading && (
+                <div className="text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1H9a1 1 0 00-1 1v1m7 0V4a1 1 0 00-1-1H6a1 1 0 00-1 1v1" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                    <p className="text-gray-500">
+                      {showSearchInfo 
+                        ? "Try adjusting your search terms or filters"
+                        : "We're loading our product catalog. Please check back soon!"
+                      }
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Mobile: Original layout with quick filters and drawer */}
+          <div className="lg:hidden">
+            <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+            
+            {/* Filter Pills */}
+            <FilterPills
+              filters={activeFilters}
+              onRemoveFilter={(filterType, value) => {
+                const newFilters = { ...activeFilters };
+                
+                // Handle array-based filters (categories and smart filters) - EXPANDED
+                if (['category', 'gender', 'brand', 'size', 'color', 'fit', 'waist', 'inseam', 'material', 'style', 'features'].includes(filterType) && value) {
+                  newFilters[filterType] = (newFilters[filterType] || []).filter((item: string) => item !== value);
+                  if (newFilters[filterType].length === 0) {
+                    delete newFilters[filterType];
+                  }
+                } else if (filterType === 'priceRange') {
+                  newFilters.priceRange = [0, 500];
+                } else {
+                  // Handle single-value filters
                   delete newFilters[filterType];
                 }
-              } else if (filterType === 'priceRange') {
-                newFilters.priceRange = [0, 500];
-              } else {
-                // Handle single-value filters
-                delete newFilters[filterType];
-              }
-              
-              setActiveFilters(newFilters);
-              
-              // Check if this is a critical filter change that should trigger new search
-              const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
-              if (criticalFilters.includes(filterType) && urlSearchTerm) {
-                console.log('🔍 Critical filter removed, triggering enhanced search...');
-                setTimeout(() => {
-                  triggerEnhancedSearch(newFilters);
-                }, 100);
-              }
-            }}
-            onClearAll={() => {
-              setActiveFilters({});
-              // Reset to original search when clearing all filters
-              if (urlSearchTerm) {
-                setTimeout(() => {
-                  triggerEnhancedSearch({});
-                }, 100);
-              }
-            }}
-          />
+                
+                setActiveFilters(newFilters);
+                
+                // Check if this is a critical filter change that should trigger new search
+                const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+                if (criticalFilters.includes(filterType) && urlSearchTerm) {
+                  console.log('🔍 Critical filter removed, triggering enhanced search...');
+                  setTimeout(() => {
+                    triggerEnhancedSearch(newFilters);
+                  }, 100);
+                }
+              }}
+              onClearAll={() => {
+                setActiveFilters({});
+                // Reset to original search when clearing all filters
+                if (urlSearchTerm) {
+                  setTimeout(() => {
+                    triggerEnhancedSearch({});
+                  }, 100);
+                }
+              }}
+            />
+            
+            {/* Mobile Products Grid */}
+            {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
+              <>
+                {shouldUseVirtualization ? (
+                  <VirtualizedProductGrid
+                    products={filteredPaginatedProducts}
+                    viewMode={viewMode}
+                    onProductClick={handleProductClick}
+                    onAddToCart={handleAddToCart}
+                    onShare={handleShare}
+                    getProductStatus={getProductStatus}
+                    className="mb-8"
+                    containerHeight={600}
+                    itemHeight={400}
+                  />
+                ) : (
+                  <OptimizedProductGrid
+                    products={filteredPaginatedProducts}
+                    viewMode={viewMode}
+                    onProductClick={handleProductClick}
+                    onAddToCart={handleAddToCart}
+                    onShare={handleShare}
+                    getProductStatus={getProductStatus}
+                    className="mb-8"
+                  />
+                )}
+
+                {/* Load More Button */}
+                {hasMore && showSearchInfo && (
+                  <div className="flex justify-center mt-8">
+                    <Button 
+                      onClick={() => {
+                        console.log('Load More button clicked!', { hasMore, isPaginationLoading });
+                        loadMore();
+                      }} 
+                      disabled={isPaginationLoading}
+                      className="min-w-[160px]"
+                      variant="outline"
+                    >
+                      {isPaginationLoading ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        `Load More Products`
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+            
+            {/* Mobile Empty State */}
+            {filteredPaginatedProducts.length === 0 && !isLoading && (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1H9a1 1 0 00-1 1v1m7 0V4a1 1 0 00-1-1H6a1 1 0 00-1 1v1" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                  <p className="text-gray-500">
+                    {showSearchInfo 
+                      ? "Try adjusting your search terms or filters"
+                      : "We're loading our product catalog. Please check back soon!"
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && !isPersonalizedActive && (
         <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} />
-      )}
-
-      {/* Products Grid (when search is active, personalized, or as fallback) */}
-      {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
-        <>
-          {shouldUseVirtualization ? (
-            <VirtualizedProductGrid
-              products={filteredPaginatedProducts}
-              viewMode={viewMode}
-              onProductClick={handleProductClick}
-              onAddToCart={handleAddToCart}
-              onShare={handleShare}
-              getProductStatus={getProductStatus}
-              className="mb-8"
-              containerHeight={600}
-              itemHeight={400}
-            />
-          ) : (
-            <OptimizedProductGrid
-              products={filteredPaginatedProducts}
-              viewMode={viewMode}
-              onProductClick={handleProductClick}
-              onAddToCart={handleAddToCart}
-              onShare={handleShare}
-              getProductStatus={getProductStatus}
-              className="mb-8"
-            />
-          )}
-
-          {/* Load More Button */}
-          {hasMore && showSearchInfo && (
-            <div className="flex justify-center mt-8">
-              <Button 
-                onClick={() => {
-                  console.log('Load More button clicked!', { hasMore, isPaginationLoading });
-                  loadMore();
-                }} 
-                disabled={isPaginationLoading}
-                className="min-w-[160px]"
-                variant="outline"
-              >
-                {isPaginationLoading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  `Load More Products`
-                )}
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Empty State */}
-      {filteredPaginatedProducts.length === 0 && !isLoading && (
-        <div className="text-center py-12">
-          <div className="max-w-md mx-auto">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8V4a1 1 0 00-1-1H9a1 1 0 00-1 1v1m7 0V4a1 1 0 00-1-1H6a1 1 0 00-1 1v1" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-500">
-              {showSearchInfo 
-                ? "Try adjusting your search terms or filters"
-                : "We're loading our product catalog. Please check back soon!"
-              }
-            </p>
-          </div>
-        </div>
       )}
       
       {/* Advanced Filters Drawer */}

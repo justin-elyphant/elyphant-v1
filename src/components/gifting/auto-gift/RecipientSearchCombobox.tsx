@@ -215,7 +215,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </PopoverTrigger>
         <div ref={popoverContainerRef} />
         <PopoverContent 
-          className="w-[440px] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border"
+          className="max-w-[440px] w-[calc(100vw-32px)] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border overflow-hidden"
           align="start"
           side="bottom"
           sideOffset={8}

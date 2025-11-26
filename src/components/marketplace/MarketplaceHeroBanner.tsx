@@ -34,28 +34,28 @@ const MarketplaceHeroBanner: React.FC<MarketplaceHeroBannerProps> = ({
           return {
             title: "Gifts for Her",
             subtitle: "Thoughtful gifts she'll love and cherish",
-            icon: <Heart className="h-8 w-8 md:h-10 md:w-10 text-pink-300 mb-4" />,
+            icon: <Heart className="h-8 w-8 md:h-10 md:w-10 text-white/80 mb-4" />,
             badges: ["💝 Thoughtful Selection", "✨ Premium Quality", "🚚 Fast Delivery"]
           };
         case 'giftsForHim':
           return {
             title: "Gifts for Him",
             subtitle: "Perfect gifts for the special man in your life",
-            icon: <Gift className="h-8 w-8 md:h-10 md:w-10 text-blue-300 mb-4" />,
+            icon: <Gift className="h-8 w-8 md:h-10 md:w-10 text-white/80 mb-4" />,
             badges: ["🎁 Curated for Men", "⚡ Top Quality", "🚚 Quick Shipping"]
           };
         case 'giftsUnder50':
           return {
             title: "Gifts Under $50",
             subtitle: "Great gifts that won't break the bank",
-            icon: <DollarSign className="h-8 w-8 md:h-10 md:w-10 text-green-300 mb-4" />,
+            icon: <DollarSign className="h-8 w-8 md:h-10 md:w-10 text-white/80 mb-4" />,
             badges: ["💰 Budget Friendly", "🎯 Best Value", "✨ Quality Guaranteed"]
           };
         case 'luxury':
           return {
             title: "Luxury Gifts",
             subtitle: "Premium gifts for special occasions",
-            icon: <Gem className="h-8 w-8 md:h-10 md:w-10 text-purple-300 mb-4" />,
+            icon: <Gem className="h-8 w-8 md:h-10 md:w-10 text-white/80 mb-4" />,
             badges: ["👑 Premium Quality", "🌟 Luxury Brands", "🎁 Special Occasions"]
           };
       }

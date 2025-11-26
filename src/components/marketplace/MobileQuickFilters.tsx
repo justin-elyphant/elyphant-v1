@@ -33,7 +33,7 @@ const MobileQuickFilters = ({
     {
       key: "rating4",
       label: "4+ Stars",
-      icon: <Star className="h-3 w-3 fill-current text-amber-500" />,
+      icon: <Star className="h-3 w-3 fill-current" />,
       active: activeFilters.rating >= 4,
       action: () => onFilterChange({ ...activeFilters, rating: 4 })
     },
@@ -63,7 +63,7 @@ const MobileQuickFilters = ({
             size="sm"
             className={`flex items-center gap-1 whitespace-nowrap h-8 px-3 text-xs ${
               filter.active 
-                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                ? "bg-gray-900 hover:bg-gray-800 text-white" 
                 : "bg-white hover:bg-gray-50"
             }`}
             onClick={filter.action}

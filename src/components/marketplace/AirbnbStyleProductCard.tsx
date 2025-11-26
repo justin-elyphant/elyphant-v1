@@ -257,80 +257,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           onLoad={() => console.log('Image loaded successfully:', getProductImage())}
         />
         
-        {/* Image Navigation Arrows */}
-        {getProductImages().length > 1 && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentImageIndex(prev => 
-                  prev === 0 ? getProductImages().length - 1 : prev - 1
-                );
-              }}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentImageIndex(prev => 
-                  prev === getProductImages().length - 1 ? 0 : prev + 1
-                );
-              }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </>
-        )}
         
-        {/* Image Dots Indicator */}
-        {getProductImages().length > 1 && (
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {getProductImages().map((_, index) => (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentImageIndex(index);
-                }}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-        
-        {/* Product Status Badges - Top Left */}
-        <ProductStatusBadges
-          isBestSeller={isBestSeller()}
-          isNewArrival={isNewArrival()}
-          isRecentlyViewed={isRecentlyViewed()}
-          bestSellerType={getBestSellerType()}
-          badgeText={getBadgeText()}
-          product={product}
-        />
-
-        {/* Custom Status Badge - Top Left (below product status badges) */}
-        {statusBadge && (
-          <div className="absolute top-20 left-2 z-10">
-            <Badge className={cn("text-xs font-medium", statusBadge.color)}>
-              {statusBadge.badge}
-            </Badge>
-          </div>
-        )}
-
-        {/* Vendor Badge - Top Left (below other badges) */}
-        {isLocal && (
-          <div className="absolute left-2 z-10" style={{ top: statusBadge ? '144px' : '80px' }}>
-            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs font-medium">
-              <MapPin className="h-3 w-3 mr-1" />
-              Local Vendor
-            </Badge>
-          </div>
-        )}
 
         {/* Context-Aware Icon - Top Right */}
         {!hideTopRightAction && (
@@ -368,14 +295,14 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                           triggerClassName={cn(
                             "p-2 rounded-full transition-all shadow-sm",
                             isWishlisted 
-                              ? "bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105" 
-                              : "bg-white/80 text-gray-600 hover:text-pink-500 hover:bg-white"
+                              ? "bg-gray-900 hover:bg-gray-800" 
+                              : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white"
                           )}
                           onAdded={handleWishlistAdded}
                           isWishlisted={isWishlisted}
                         />
                         {wishlistCount > 1 && (
-                          <div className="absolute -top-1 -right-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">
+                          <div className="absolute -top-1 -right-1 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">
                             {wishlistCount}
                           </div>
                         )}
@@ -400,22 +327,13 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                   }}
                   className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
                 >
-                  <Heart className="h-4 w-4 text-gray-600 hover:text-pink-500 transition-colors" />
+                  <Heart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
                 </button>
               )
             )}
           </div>
         )}
 
-        {/* Limited Time Badge - Bottom Right */}
-        {product.tags?.includes("limited") && (
-          <div className="absolute bottom-3 right-3 z-10">
-            <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-              <Clock className="h-3 w-3 mr-1" />
-              Limited
-            </Badge>
-          </div>
-        )}
       </div>
 
       {/* Content Section - Clean Airbnb Style */}
@@ -453,22 +371,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
         )}
 
-        {/* Tags Display - Only show in non-category sections and non-mobile */}
-        {!isInCategorySection && !isMobile && product.tags && product.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {product.tags.slice(0, 2).map((tag: string, i: number) => (
-              <span 
-                key={i} 
-                className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-sm"
-              >
-                {tag}
-              </span>
-            ))}
-            {product.tags.length > 2 && (
-              <span className="text-xs text-gray-500">+{product.tags.length - 2}</span>
-            )}
-          </div>
-        )}
 
         {/* Bottom Section: Price Left, Actions Right */}
         <div className="flex items-center justify-between pt-2 mt-auto">
@@ -490,38 +392,10 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 </span>
               )}
             </div>
-            {product.tags?.includes("trending") && (
-              <span className="text-xs text-orange-600 font-medium">trending</span>
-            )}
           </div>
 
           {/* Action Buttons - Bottom Right - Context Aware */}
           <div className="flex items-center gap-1 relative z-30">
-            {/* Share Button - Always visible */}
-            {onShare ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShare(product);
-                }}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
-                title="Share product"
-              >
-                <Share className="h-4 w-4" />
-              </button>
-            ) : (
-              <SocialShareButton
-                product={{
-                  ...product,
-                  id: productId,
-                  name: getProductTitle()
-                } as any}
-                variant="ghost"
-                size="sm"
-                className="p-2 hover:bg-gray-100"
-              />
-            )}
-            
             {/* Primary Action Button - Context Aware */}
             {context === 'wishlist' ? (
               // Wishlist context: Heart/Wishlist button prominent
@@ -574,7 +448,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                         "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
                         isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
                         isWishlisted 
-                          ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105" 
+                          ? "bg-gray-900 text-white hover:bg-gray-800" 
                           : "bg-gray-900 text-white hover:bg-gray-800"
                       )}
                       onAdded={handleWishlistAdded}
@@ -588,7 +462,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                       handleWishlistClick();
                     }}
                     className={cn(
-                      "flex items-center justify-center bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-full hover:shadow-lg hover:scale-105 transition-all shadow-sm shrink-0",
+                      "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-all shadow-sm shrink-0",
                       isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
                     )}
                     aria-label="Add to wishlist"

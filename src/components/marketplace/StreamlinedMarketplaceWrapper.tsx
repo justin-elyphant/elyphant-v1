@@ -502,7 +502,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Show loading skeleton
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 pt-safe-top pb-safe">
           <MarketplaceHeader />
           <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
           
@@ -545,7 +545,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Show error state
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 pt-safe-top pb-safe">
         <MarketplaceHeader />
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
@@ -563,7 +563,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         containerRef.current = el;
         intersectionRef(el);
       }}
-      className={`container mx-auto px-4 py-6 ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
+      className={`container mx-auto px-4 py-6 pt-safe-top pb-safe ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
       {/* Conditional Hero Section - Hide if personalized or there's an active search */}
       {!isPersonalizedActive && !urlSearchTerm && (

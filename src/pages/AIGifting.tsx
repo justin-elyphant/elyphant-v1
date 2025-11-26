@@ -196,6 +196,14 @@ const AIGifting = () => {
           autoApprove: false,
           giftMessage: editingRule.gift_message || ""
         } : undefined}
+        onRequestEditRule={(rule) => {
+          // Close current dialog and reopen with the selected rule
+          setSetupDialogOpen(false);
+          setEditingRule(rule);
+          setTimeout(() => {
+            setSetupDialogOpen(true);
+          }, 100);
+        }}
       />
 
       {/* How It Works Modal */}

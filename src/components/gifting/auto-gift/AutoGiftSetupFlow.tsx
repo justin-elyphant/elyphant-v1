@@ -37,6 +37,7 @@ interface AutoGiftSetupFlowProps {
   recipientId?: string;
   initialData?: any; // For editing existing rules
   ruleId?: string; // For updating existing rules
+  onRequestEditRule?: (rule: any) => void; // Callback to request editing a different rule
 }
 
 interface SetupStep {
@@ -53,7 +54,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   eventType,
   recipientId,
   initialData,
-  ruleId
+  ruleId,
+  onRequestEditRule
 }) => {
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
@@ -558,13 +560,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       }
                     }}
                     onEditExistingRule={(rule) => {
-                      // Close the setup dialog and reopen it with the rule data
-                      onOpenChange(false);
-                      setTimeout(() => {
-                        // Trigger parent component to open edit mode
-                        // This will be handled by AIGifting.tsx
-                        toast.info("Opening edit mode for existing rule...");
-                      }, 100);
+                      if (onRequestEditRule) {
+                        onRequestEditRule(rule);
+                      }
                     }}
                   />
                   {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (

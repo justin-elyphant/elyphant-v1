@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Check, ChevronsUpDown, Search, Loader2, UserPlus, Mail, Users, Clock } from "lucide-react";
+import { useAutoGifting } from "@/hooks/useAutoGifting";
+import { UnifiedGiftRule } from "@/services/UnifiedGiftManagementService";
+import ExistingRulesDialog from "./ExistingRulesDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -29,6 +32,7 @@ interface RecipientSearchComboboxProps {
   connections: EnhancedConnection[];
   pendingInvitations: EnhancedConnection[];
   onNewRecipientCreate: (recipient: UnifiedRecipient) => void;
+  onEditExistingRule?: (rule: UnifiedGiftRule) => void;
 }
 
 export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = ({
@@ -37,8 +41,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   connections,
   pendingInvitations,
   onNewRecipientCreate,
+  onEditExistingRule,
 }) => {
   const { user } = useAuth();
+  const { rules } = useAutoGifting();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSearchResult[]>([]);
@@ -50,6 +56,12 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [existingRulesDialogOpen, setExistingRulesDialogOpen] = useState(false);
+  const [selectedRecipientWithRules, setSelectedRecipientWithRules] = useState<{
+    name: string;
+    id: string;
+    rules: UnifiedGiftRule[];
+  } | null>(null);
 
   // Get selected connection name for display
   const selectedConnection = 
@@ -192,9 +204,33 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   };
 
   const handleSelect = (recipientId: string, recipientName?: string, relationshipType?: string) => {
-    onChange({ recipientId, recipientName, relationshipType });
-    setOpen(false);
-    setSearchQuery("");
+    // Check if this recipient has existing rules
+    const existingRules = rules.filter(rule => {
+      // Match by recipient_id or pending_recipient_email
+      if (rule.recipient_id && rule.recipient_id === recipientId) {
+        return true;
+      }
+      if (rule.pending_recipient_email && rule.pending_recipient_email === recipientId) {
+        return true;
+      }
+      return false;
+    });
+
+    if (existingRules.length > 0 && onEditExistingRule) {
+      // Show existing rules dialog
+      setSelectedRecipientWithRules({
+        name: recipientName || 'Recipient',
+        id: recipientId,
+        rules: existingRules
+      });
+      setExistingRulesDialogOpen(true);
+      setOpen(false);
+    } else {
+      // Proceed with normal selection
+      onChange({ recipientId, recipientName, relationshipType });
+      setOpen(false);
+      setSearchQuery("");
+    }
   };
 
   const handleNewRecipientCreated = (recipient: UnifiedRecipient) => {
@@ -526,6 +562,27 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           />
         </DialogContent>
       </Dialog>
+
+      {/* Existing Rules Dialog */}
+      {selectedRecipientWithRules && (
+        <ExistingRulesDialog
+          open={existingRulesDialogOpen}
+          onOpenChange={setExistingRulesDialogOpen}
+          recipientName={selectedRecipientWithRules.name}
+          rules={selectedRecipientWithRules.rules}
+          onEditRule={(rule) => {
+            if (onEditExistingRule) {
+              onEditExistingRule(rule);
+            }
+          }}
+          onCreateNew={() => {
+            onChange({
+              recipientId: selectedRecipientWithRules.id,
+              recipientName: selectedRecipientWithRules.name
+            });
+          }}
+        />
+      )}
     </>
   );
 };

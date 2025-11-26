@@ -204,29 +204,46 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   };
 
   // Shared content component to avoid duplication
-  const RecipientSelectorContent = () => (
-    <>
-      <div className="flex items-center border-b px-3 py-2 cursor-text" onClick={() => inputRef.current?.focus()}>
-        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-        <input
-          id="recipient-search-input"
-          ref={inputRef}
-          type="text"
-          placeholder="Search friends..."
-          value={searchQuery}
-          onChange={(e) => {
-            console.log('[RecipientSearchCombobox] input change:', e.target.value);
-            setSearchQuery(e.target.value);
-          }}
-          className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
-          autoComplete="off"
-          autoFocus
-          onFocus={() => console.log('[RecipientSearchCombobox] input focused')}
-        />
-        {isSearching && (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin opacity-50" />
-        )}
-      </div>
+  const RecipientSelectorContent = () => {
+    // Filter connections based on search query
+    const filteredConnections = searchQuery.length >= 2
+      ? acceptedConnections.filter(c => 
+          c.profile_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.profile_username?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : acceptedConnections;
+
+    const filteredPendingInvitations = searchQuery.length >= 2
+      ? pendingInvitations.filter(inv => 
+          inv.profile_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          inv.pending_recipient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          inv.pending_recipient_email?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : pendingInvitations;
+
+    return (
+      <>
+        <div className="flex items-center border-b px-3 py-2 cursor-text" onClick={() => inputRef.current?.focus()}>
+          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <input
+            id="recipient-search-input"
+            ref={inputRef}
+            type="text"
+            placeholder="Search friends..."
+            value={searchQuery}
+            onChange={(e) => {
+              console.log('[RecipientSearchCombobox] input change:', e.target.value);
+              setSearchQuery(e.target.value);
+            }}
+            className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
+            autoComplete="off"
+            autoFocus
+            onFocus={() => console.log('[RecipientSearchCombobox] input focused')}
+          />
+          {isSearching && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin opacity-50" />
+          )}
+        </div>
 
       {/* Invite New User - Top Priority Action */}
       <div className="p-2 bg-gradient-to-r from-purple-50 to-sky-50 dark:from-purple-950/20 dark:to-sky-950/20 border-b border-border/50">
@@ -252,15 +269,15 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </button>
       </div>
 
-      <div className="max-h-[280px] overflow-y-auto pb-24">
-        {/* Your Connections Section */}
-        {acceptedConnections.length > 0 && searchQuery.length < 2 && (
-          <div className="p-2">
-            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              Your Connections
-            </div>
-              {acceptedConnections.map((connection) => {
+        <div className="max-h-[280px] overflow-y-auto pb-24">
+          {/* Your Connections Section */}
+          {filteredConnections.length > 0 && (
+            <div className="p-2">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                Your Connections
+              </div>
+                {filteredConnections.map((connection) => {
                 const connectionId = connection.display_user_id || connection.connected_user_id;
                 const isSelected = value === connectionId;
                 
@@ -299,16 +316,16 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </div>
         )}
 
-        {/* Pending Invitations Section */}
-        {pendingInvitations.length > 0 && searchQuery.length < 2 && (
-          <>
-            {acceptedConnections.length > 0 && <Separator className="my-1" />}
-            <div className="p-2">
-              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Pending Invitations
-              </div>
-              {pendingInvitations.map((invitation) => {
+          {/* Pending Invitations Section */}
+          {filteredPendingInvitations.length > 0 && (
+            <>
+              {filteredConnections.length > 0 && <Separator className="my-1" />}
+              <div className="p-2">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Pending Invitations
+                </div>
+                {filteredPendingInvitations.map((invitation) => {
                 const isSelected = value === invitation.id;
                 
                 return (
@@ -346,17 +363,17 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </>
         )}
 
-        {/* Helper hint when nothing to show yet */}
-        {searchQuery.length < 2 && acceptedConnections.length === 0 && pendingInvitations.length === 0 && (
-          <div className="p-3 text-xs text-muted-foreground">
-            Type 2+ characters to search all Elyphant users
-          </div>
-        )}
+          {/* Helper hint when nothing to show yet */}
+          {searchQuery.length < 2 && acceptedConnections.length === 0 && pendingInvitations.length === 0 && (
+            <div className="p-3 text-xs text-muted-foreground">
+              Type 2+ characters to search all Elyphant users
+            </div>
+          )}
 
-        {/* Search Results Section */}
-        {searchQuery.length >= 2 && searchResults.length > 0 && (
-          <>
-            {(acceptedConnections.length > 0 || pendingInvitations.length > 0) && <Separator className="my-1" />}
+          {/* Search Results Section - New Users */}
+          {searchQuery.length >= 2 && searchResults.length > 0 && (
+            <>
+              {(filteredConnections.length > 0 || filteredPendingInvitations.length > 0) && <Separator className="my-1" />}
             <div className="p-2">
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                 Search Results
@@ -432,15 +449,16 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </>
         )}
 
-        {/* No Results */}
-        {searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No users found. Try inviting them via email at the top.
-          </div>
-        )}
-      </div>
-    </>
-  );
+          {/* No Results */}
+          {searchQuery.length >= 2 && !isSearching && searchResults.length === 0 && filteredConnections.length === 0 && filteredPendingInvitations.length === 0 && (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              No users found. Try inviting them via email at the top.
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
 
   return (
     <>

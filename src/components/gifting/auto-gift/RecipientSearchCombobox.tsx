@@ -252,7 +252,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </button>
       </div>
 
-      <div className="max-h-[280px] overflow-y-auto">
+      <div className="max-h-[280px] overflow-y-auto pb-24">
         {/* Your Connections Section */}
         {acceptedConnections.length > 0 && searchQuery.length < 2 && (
           <div className="p-2">

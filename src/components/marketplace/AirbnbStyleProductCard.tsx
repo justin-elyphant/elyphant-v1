@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 import OptimizedImage from "./ui/OptimizedImage";
+import ColorSwatches from "./ColorSwatches";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -259,77 +260,38 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         
         
 
-        {/* Context-Aware Icon - Top Right */}
+        {/* Heart Icon - Top Right (Lululemon Style - Simple Outline) */}
         {!hideTopRightAction && (
           <div className="absolute top-3 right-3 z-50" onClick={e => e.stopPropagation()}>
-            {context === 'wishlist' ? (
-              // Wishlist context: Show cart icon
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleAddToCartClick}
-                      className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
-                    >
-                      <ShoppingCart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Add to cart</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            {user ? (
+              <WishlistSelectionPopoverButton
+                product={{
+                  id: productId,
+                  name: getProductTitle(),
+                  image: getProductImage(),
+                  price: product.price,
+                  brand: product.brand || "",
+                }}
+                triggerClassName={cn(
+                  "p-2 rounded-full shadow-sm transition-all backdrop-blur-sm",
+                  isWishlisted 
+                    ? "bg-foreground hover:bg-foreground/90" 
+                    : "bg-white/90 hover:bg-white"
+                )}
+                onAdded={handleWishlistAdded}
+                isWishlisted={isWishlisted}
+              />
             ) : (
-              // Marketplace context: Show heart icon with gradient when wishlisted
-              user ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        <WishlistSelectionPopoverButton
-                          product={{
-                            id: productId,
-                            name: getProductTitle(),
-                            image: getProductImage(),
-                            price: product.price,
-                            brand: product.brand || "",
-                          }}
-                          triggerClassName={cn(
-                            "p-2 rounded-full transition-all shadow-sm",
-                            isWishlisted 
-                              ? "bg-gray-900 hover:bg-gray-800" 
-                              : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white"
-                          )}
-                          onAdded={handleWishlistAdded}
-                          isWishlisted={isWishlisted}
-                        />
-                        {wishlistCount > 1 && (
-                          <div className="absolute -top-1 -right-1 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-sm">
-                            {wishlistCount}
-                          </div>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isWishlisted 
-                        ? wishlistCount > 1 
-                          ? `In ${wishlistCount} wishlists` 
-                          : "In wishlist"
-                        : "Add to wishlist"
-                      }
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleWishlistClick();
-                  }}
-                  className="p-2 bg-white/80 rounded-full shadow-sm hover:bg-white transition-colors"
-                >
-                  <Heart className="h-4 w-4 text-gray-600 hover:text-gray-900 transition-colors" />
-                </button>
-              )
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleWishlistClick();
+                }}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors"
+              >
+                <Heart className="h-4 w-4 text-muted-foreground" />
+              </button>
             )}
           </div>
         )}
@@ -350,30 +312,36 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </div>
         )}
 
-        {/* Brand Name First (Amazon Style) */}
-        <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-          {(product.brand && product.brand.trim()) || "AMAZON"}
-        </p>
+        {/* Color Swatches - Lululemon Style */}
+        <ColorSwatches 
+          colors={(product as any).colors || []}
+          maxVisible={5}
+          className="mb-2"
+        />
 
-        {/* Product Title - Fixed to exactly 2 lines */}
-        <h3 className="font-medium text-gray-900 line-clamp-2 text-sm leading-snug max-h-[2.5rem] overflow-hidden mt-0.5">
-          {getProductTitle()}
-        </h3>
+        {/* Title and Price - Single Row (Lululemon Style) */}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-medium text-foreground text-sm leading-snug flex-1 line-clamp-2">
+            {getProductTitle()}
+          </h3>
+          <span className="font-semibold text-foreground text-sm whitespace-nowrap shrink-0">
+            {getProductPrice()}
+          </span>
+        </div>
 
-        {/* Rating Row */}
+        {/* Rating - Subtle (Lululemon Style) */}
         {getRating() > 0 && (
-          <div className="flex items-center text-xs mt-1">
-            <Star className="h-3 w-3 text-gray-900 fill-gray-900 mr-1" />
-            <span className="font-medium text-gray-900">{getRating().toFixed(1)}</span>
+          <div className="flex items-center text-xs text-muted-foreground mb-2">
+            <Star className="h-3 w-3 text-muted-foreground fill-muted-foreground mr-1" />
+            <span>{getRating().toFixed(1)}</span>
             {getReviewCount() > 0 && (
-              <span className="text-gray-500 ml-1">({getReviewCount()})</span>
+              <span className="ml-1">({getReviewCount()})</span>
             )}
           </div>
         )}
 
-
-        {/* Bottom Section: Price Left, Actions Right */}
-        <div className="flex items-center justify-between pt-2 mt-auto">
+        {/* Bottom Section: Wishlist Action */}
+        <div className="flex items-center justify-between pt-1 mt-auto">
           {/* Price Section - Bottom Left */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2">

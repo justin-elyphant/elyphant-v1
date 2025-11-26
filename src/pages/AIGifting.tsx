@@ -17,6 +17,7 @@ const AIGifting = () => {
   const { rules, loading } = useAutoGifting();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<any>(null);
 
   if (loading) {
     return (
@@ -164,7 +165,13 @@ const AIGifting = () => {
 
         {/* Active Rules Section */}
         <div className="pb-8">
-          <ActiveRulesSection rules={rules} />
+          <ActiveRulesSection 
+            rules={rules} 
+            onEditRule={(rule) => {
+              setEditingRule(rule);
+              setSetupDialogOpen(true);
+            }}
+          />
         </div>
         </div>
       </div>
@@ -172,7 +179,23 @@ const AIGifting = () => {
       {/* Auto-Gift Setup Dialog */}
       <AutoGiftSetupFlow
         open={setupDialogOpen}
-        onOpenChange={setSetupDialogOpen}
+        onOpenChange={(open) => {
+          setSetupDialogOpen(open);
+          if (!open) {
+            setEditingRule(null);
+          }
+        }}
+        ruleId={editingRule?.id}
+        initialData={editingRule ? {
+          recipientId: editingRule.recipient_id || editingRule.pending_recipient_email,
+          eventType: editingRule.date_type,
+          budgetLimit: editingRule.budget_limit,
+          selectedPaymentMethodId: editingRule.payment_method_id,
+          emailNotifications: editingRule.notification_preferences?.email ?? true,
+          notificationDays: editingRule.notification_preferences?.days_before || [7, 3, 1],
+          autoApprove: false,
+          giftMessage: editingRule.gift_message || ""
+        } : undefined}
       />
 
       {/* How It Works Modal */}

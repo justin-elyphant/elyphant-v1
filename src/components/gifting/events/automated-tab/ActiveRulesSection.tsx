@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, DollarSign, Bell, Gift } from "lucide-react";
+import { Trash2, DollarSign, Bell, Gift, Pencil } from "lucide-react";
 import { UnifiedGiftRule, unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { toast } from "sonner";
@@ -12,9 +12,10 @@ import { getOccasionDisplayName, getRecipientDisplayName, getSourceDisplayName, 
 
 interface ActiveRulesSectionProps {
   rules: UnifiedGiftRule[];
+  onEditRule?: (rule: UnifiedGiftRule) => void;
 }
 
-const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
+const ActiveRulesSection = ({ rules, onEditRule }: ActiveRulesSectionProps) => {
   const { updateRule, deleteRule } = useAutoGifting();
 
   const handleToggleRule = async (ruleId: string, isActive: boolean) => {
@@ -128,12 +129,23 @@ const ActiveRulesSection = ({ rules }: ActiveRulesSectionProps) => {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  {onEditRule && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onEditRule(rule)}
+                      className="min-h-[44px]"
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleDeleteRule(rule.id)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive min-h-[44px]"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete

@@ -557,6 +557,15 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                         scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                       }
                     }}
+                    onEditExistingRule={(rule) => {
+                      // Close the setup dialog and reopen it with the rule data
+                      onOpenChange(false);
+                      setTimeout(() => {
+                        // Trigger parent component to open edit mode
+                        // This will be handled by AIGifting.tsx
+                        toast.info("Opening edit mode for existing rule...");
+                      }, 100);
+                    }}
                   />
                   {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
                     <p className="text-sm text-muted-foreground mt-2">

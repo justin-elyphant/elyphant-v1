@@ -8,12 +8,14 @@ interface AddressVerificationWarningProps {
   recipientId: string;
   connections: EnhancedConnection[];
   pendingInvitations: EnhancedConnection[];
+  sentRequests: EnhancedConnection[];
 }
 
 const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
   recipientId,
   connections,
-  pendingInvitations
+  pendingInvitations,
+  sentRequests
 }) => {
   const [verificationStatus, setVerificationStatus] = useState<{
     verified: boolean;
@@ -39,6 +41,15 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
         );
       }
 
+      // Check outgoing sent requests (status: pending, user is sender)
+      if (!connection) {
+        connection = sentRequests.find(c => 
+          c.id === recipientId ||
+          c.connected_user_id === recipientId ||
+          c.display_user_id === recipientId
+        );
+      }
+
       if (!connection) {
         console.log('⚠️ [AddressVerificationWarning] Connection not found for recipientId:', recipientId);
         setVerificationStatus(null);
@@ -54,6 +65,33 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
           connectionName,
           isPending: true
         });
+        return;
+      }
+
+      // For outgoing pending requests (status: pending, user is sender)
+      // Check the recipient's address verification status
+      if (connection.status === 'pending') {
+        const targetUserId = connection.connected_user_id || connection.display_user_id;
+        
+        if (targetUserId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('address_verified, name')
+            .eq('id', targetUserId)
+            .single();
+
+          setVerificationStatus({
+            verified: profile?.address_verified || false,
+            connectionName: profile?.name || connectionName,
+            isPending: true // Connection is pending
+          });
+        } else {
+          setVerificationStatus({
+            verified: false,
+            connectionName,
+            isPending: true
+          });
+        }
         return;
       }
 
@@ -86,7 +124,7 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
     if (recipientId) {
       checkVerification();
     }
-  }, [recipientId, connections, pendingInvitations]);
+  }, [recipientId, connections, pendingInvitations, sentRequests]);
 
   if (!verificationStatus) return null;
 
@@ -97,6 +135,9 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
         <AlertTitle className="text-green-700 dark:text-green-300">Address Verified ✓</AlertTitle>
         <AlertDescription className="text-green-600 dark:text-green-400">
           {verificationStatus.connectionName}'s address is verified and ready for auto-gifting.
+          {verificationStatus.isPending && (
+            <span className="block text-xs mt-1 opacity-75">(Connection pending)</span>
+          )}
         </AlertDescription>
       </Alert>
     );

@@ -32,6 +32,7 @@ export const useEnhancedConnections = () => {
   const [connections, setConnections] = useState<EnhancedConnection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<EnhancedConnection[]>([]);
   const [pendingInvitations, setPendingInvitations] = useState<EnhancedConnection[]>([]);
+  const [sentRequests, setSentRequests] = useState<EnhancedConnection[]>([]);
   const [followers, setFollowers] = useState<EnhancedConnection[]>([]);
   const [following, setFollowing] = useState<EnhancedConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,7 @@ export const useEnhancedConnections = () => {
       setConnections([]);
       setPendingRequests([]);
       setPendingInvitations([]);
+      setSentRequests([]);
       setFollowers([]);
       setFollowing([]);
       setLoading(false);
@@ -174,6 +176,11 @@ export const useEnhancedConnections = () => {
         conn.status === 'pending' && conn.connected_user_id === user.id
       );
       
+      // Outgoing pending requests (sent by current user, not yet accepted)
+      const sentPending = deduplicatedConnections.filter(conn => 
+        conn.status === 'pending' && conn.user_id === user.id
+      );
+      
       // Pending invitations that the user has sent
       const invitations = deduplicatedConnections.filter(conn => 
         conn.status === 'pending_invitation' && conn.user_id === user.id
@@ -195,6 +202,7 @@ export const useEnhancedConnections = () => {
       setConnections(accepted);
       setPendingRequests(pending);
       setPendingInvitations(invitations);
+      setSentRequests(sentPending);
       setFollowers(followerConnections);
       setFollowing(followingConnections);
     } catch (err) {
@@ -205,6 +213,7 @@ export const useEnhancedConnections = () => {
       setConnections([]);
       setPendingRequests([]);
       setPendingInvitations([]);
+      setSentRequests([]);
       setFollowers([]);
       setFollowing([]);
       
@@ -349,6 +358,7 @@ export const useEnhancedConnections = () => {
     connections,
     pendingRequests,
     pendingInvitations,
+    sentRequests,
     followers,
     following,
     loading,

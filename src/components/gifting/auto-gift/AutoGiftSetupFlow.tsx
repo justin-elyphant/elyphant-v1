@@ -59,7 +59,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 }) => {
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
-  const { connections, pendingInvitations, fetchConnections } = useEnhancedConnections();
+  const { connections, pendingInvitations, sentRequests, fetchConnections } = useEnhancedConnections();
   const { profile } = useProfile();
   // Get user sizes from profile metadata (cast for JSONB field access)
   const userSizes = (profile as any)?.metadata?.sizes || null;
@@ -578,6 +578,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     recipientId={formData.recipientId}
                     connections={connections}
                     pendingInvitations={pendingInvitations}
+                    sentRequests={sentRequests}
                   />
                 )}
 

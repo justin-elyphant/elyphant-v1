@@ -96,8 +96,8 @@ export const useEnhancedConnections = () => {
         let profileEmail = profile?.email;
         let profileUsername = profile?.username;
         
-        // For pending invitations, use the pending recipient data
-        if (conn.status === 'pending_invitation') {
+        // For pending invitations OR outgoing pending requests, use the pending recipient data
+        if (conn.status === 'pending_invitation' || conn.status === 'pending') {
           profileName = conn.pending_recipient_name || profileName;
           profileEmail = conn.pending_recipient_email || profileEmail;
           profileUsername = conn.pending_recipient_name 

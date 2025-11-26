@@ -829,7 +829,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         </Tabs>
 
         {/* Navigation - Fixed at bottom with safe area */}
-        <div className="sticky bottom-0 bg-background border-t pt-4 pb-4 md:pb-4 pb-safe-bottom px-6 mt-4">
+        <div className="sticky bottom-0 bg-background border-t pt-4 pb-24 md:pb-4 px-6 mt-4" style={{ paddingBottom: 'max(6rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               Step {currentStep + 1} of {steps.length}

@@ -215,7 +215,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </PopoverTrigger>
         <div ref={popoverContainerRef} />
         <PopoverContent 
-          className="max-w-[440px] w-[calc(100vw-32px)] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border overflow-hidden"
+          className="max-w-[440px] w-[calc(100vw-64px)] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border overflow-hidden box-border"
           align="start"
           side="bottom"
           sideOffset={8}
@@ -234,7 +234,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
               id="recipient-search-input"
               ref={inputRef}
               type="text"
-              placeholder="Find friends on Elyphant..."
+              placeholder="Search friends..."
               value={searchQuery}
               onChange={(e) => {
                 console.log('[RecipientSearchCombobox] input change:', e.target.value);
@@ -274,7 +274,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             </button>
           </div>
 
-          <div className="max-h-[280px] overflow-y-auto">
+          <div className="max-h-[280px] overflow-y-auto overflow-x-hidden">
             {/* Your Connections Section */}
             {acceptedConnections.length > 0 && searchQuery.length < 2 && (
               <div className="p-2">

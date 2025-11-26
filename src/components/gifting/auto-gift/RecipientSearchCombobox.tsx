@@ -228,7 +228,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             },0)
           }}
         >
-          <div className="flex items-center border-b px-3 py-2 cursor-text" onClick={() => inputRef.current?.focus()}>
+          <div className="flex items-center border-b px-3 py-2 cursor-text overflow-hidden min-w-0" onClick={() => inputRef.current?.focus()}>
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               id="recipient-search-input"
@@ -240,7 +240,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                 console.log('[RecipientSearchCombobox] input change:', e.target.value);
                 setSearchQuery(e.target.value);
               }}
-              className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
+              className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
               autoComplete="off"
               autoFocus
               onFocus={() => console.log('[RecipientSearchCombobox] input focused')}
@@ -260,12 +260,12 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                 setShowNewRecipientForm(true);
                 setOpen(false);
               }}
-              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm bg-background hover:bg-accent cursor-pointer text-foreground min-h-[44px] border border-border/50 shadow-sm transition-all hover:shadow-md"
+              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm bg-background hover:bg-accent cursor-pointer text-foreground min-h-[44px] border border-border/50 shadow-sm transition-all hover:shadow-md overflow-hidden min-w-0"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500 flex-shrink-0">
                 <Mail className="h-4 w-4 text-white" />
               </div>
-              <div className="flex-1 text-left">
+              <div className="flex-1 text-left min-w-0 overflow-hidden">
                 <div className="font-semibold">Invite Someone New</div>
                 <div className="text-xs text-muted-foreground">
                   Add someone not on Elyphant yet
@@ -305,7 +305,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                           {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 text-left">
+                      <div className="flex-1 text-left min-w-0 overflow-hidden">
                         <div className="font-medium">{connection.profile_name}</div>
                         <div className="text-xs text-muted-foreground">
                           {connection.profile_username}
@@ -351,7 +351,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                             {invitation.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 text-left">
+                        <div className="flex-1 text-left min-w-0 overflow-hidden">
                           <div className="font-medium">{invitation.profile_name}</div>
                           <div className="text-xs text-muted-foreground">
                             {invitation.pending_recipient_email}

@@ -31,6 +31,7 @@ interface RecipientSearchComboboxProps {
   }) => void;
   connections: EnhancedConnection[];
   pendingInvitations: EnhancedConnection[];
+  sentRequests: EnhancedConnection[];
   onNewRecipientCreate: (recipient: UnifiedRecipient) => void;
   onEditExistingRule?: (rule: UnifiedGiftRule) => void;
 }
@@ -40,6 +41,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   onChange,
   connections,
   pendingInvitations,
+  sentRequests,
   onNewRecipientCreate,
   onEditExistingRule,
 }) => {
@@ -66,7 +68,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   // Get selected connection name for display
   const selectedConnection = 
     connections.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value) ||
-    pendingInvitations.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value);
+    pendingInvitations.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value) ||
+    sentRequests.find(c => (c.display_user_id || c.connected_user_id) === value || c.id === value);
   
   const selectedName = selectedConnection?.profile_name || (selectedConnection as any)?.pending_recipient_name || selectedLabel || "Select a recipient";
 
@@ -80,9 +83,10 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const existingUserIds = useMemo(() => {
     return new Set([
       ...acceptedConnections.map(c => c.display_user_id || c.connected_user_id),
-      ...pendingInvitations.map(c => c.display_user_id || c.connected_user_id)
+      ...pendingInvitations.map(c => c.display_user_id || c.connected_user_id),
+      ...sentRequests.map(c => c.display_user_id || c.connected_user_id)
     ].filter(Boolean));
-  }, [acceptedConnections, pendingInvitations]);
+  }, [acceptedConnections, pendingInvitations, sentRequests]);
 
   // Debounced search
   useEffect(() => {
@@ -257,6 +261,13 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         )
       : pendingInvitations;
 
+    const filteredSentRequests = searchQuery.length >= 2
+      ? sentRequests.filter(req => 
+          req.profile_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          req.profile_username?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : sentRequests;
+
     return (
       <>
         <div className="flex items-center border-b px-3 py-2 cursor-text" onClick={() => inputRef.current?.focus()}>
@@ -390,6 +401,55 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                     </div>
                     <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">
                       Pending
+                    </Badge>
+                    {isSelected && <Check className="h-4 w-4 text-purple-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+          {/* Sent Requests Section */}
+          {filteredSentRequests.length > 0 && (
+            <>
+              {(filteredConnections.length > 0 || filteredPendingInvitations.length > 0) && <Separator className="my-1" />}
+              <div className="p-2">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Request Sent
+                </div>
+                {filteredSentRequests.map((request) => {
+                const requestId = request.connected_user_id || request.display_user_id;
+                const isSelected = value === requestId;
+                
+                return (
+                  <button
+                    key={request.id}
+                    onClick={() => handleSelect(
+                      requestId!, 
+                      request.profile_name || undefined,
+                      request.relationship_type || undefined
+                    )}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]",
+                      isSelected && "bg-accent"
+                    )}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={request.profile_image} />
+                      <AvatarFallback>
+                        {request.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{request.profile_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {request.profile_username}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs">
+                      Request Sent
                     </Badge>
                     {isSelected && <Check className="h-4 w-4 text-purple-600" />}
                   </button>

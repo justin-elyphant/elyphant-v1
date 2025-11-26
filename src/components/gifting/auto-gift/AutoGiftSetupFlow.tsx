@@ -542,6 +542,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                     }
                     connections={connections}
                     pendingInvitations={pendingInvitations}
+                    sentRequests={sentRequests}
                     onNewRecipientCreate={async (recipient) => {
                       setFormData(prev => ({ 
                         ...prev, 

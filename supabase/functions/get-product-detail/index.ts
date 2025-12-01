@@ -9,29 +9,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const fetchApiKey = async () => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') 
+// Initialize Supabase client for cache operations
+const initSupabase = () => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing environment variables for Supabase connection')
+    throw new Error('Missing Supabase environment variables');
   }
   
-  // Use service role key for system access to API keys
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data, error } = await supabase
-  .from('api_keys')
-  .select('key')
-  .limit(1)
-  .single();
-  
-  if(error) {
-    console.error('Error fetching API key: ', error);
-    return null;
-  }
-  return data.key;
-}
+  return createClient(supabaseUrl, supabaseServiceKey);
+};
 
 // Process best seller indicators from detailed product response
 const processBestSellerData = (product: any) => {
@@ -101,12 +89,71 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
   if (method === 'POST') {
-    const api_key = await fetchApiKey();
-    if(!api_key) {
-      return new Response('API key not found', { status: 404 });
+    // Get Zinc API key from secrets
+    const api_key = Deno.env.get('ZINC_API_KEY');
+    if (!api_key) {
+      console.error('ZINC_API_KEY secret not configured');
+      return new Response(
+        JSON.stringify({ success: false, message: 'API key not configured' }), 
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders }}
+      );
     }
-    const {product_id, retailer} = await req.json();
+    
+    const { product_id, retailer = 'amazon' } = await req.json();
+    const supabase = initSupabase();
+    
     try {
+      // PHASE 2: Cache-First Architecture (Nicole AI Core)
+      // Check products table FIRST before calling Zinc API
+      const { data: cachedProduct, error: cacheError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('product_id', product_id)
+        .single();
+      
+      const now = new Date();
+      const CACHE_FRESHNESS_DAYS = 7;
+      
+      // Return cached data if fresh (within 7 days)
+      if (cachedProduct && !cacheError) {
+        const lastRefreshed = cachedProduct.last_refreshed_at 
+          ? new Date(cachedProduct.last_refreshed_at) 
+          : null;
+        
+        const daysSinceRefresh = lastRefreshed 
+          ? (now.getTime() - lastRefreshed.getTime()) / (1000 * 60 * 60 * 24)
+          : 999;
+        
+        if (daysSinceRefresh < CACHE_FRESHNESS_DAYS) {
+          console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old`);
+          
+          // Increment view count
+          await supabase
+            .from('products')
+            .update({ view_count: (cachedProduct.view_count || 0) + 1 })
+            .eq('product_id', product_id);
+          
+          // Return cached data with metadata fields extracted
+          const enhancedData = {
+            ...cachedProduct,
+            ...(cachedProduct.metadata || {}),
+            // Backward compatibility
+            image: cachedProduct.metadata?.main_image || cachedProduct.image,
+            hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0)
+          };
+          
+          return new Response(JSON.stringify(enhancedData), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        } else {
+          console.log(`[Cache STALE] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old, refreshing...`);
+        }
+      } else {
+        console.log(`[Cache MISS] Product ${product_id} - fetching from Zinc API`);
+      }
+      
+      // Fetch from Zinc API (either cache miss or stale)
       const response = await fetch(`https://api.zinc.io/v1/products/${product_id}?retailer=${retailer}`, {
         method: 'GET',
         headers: {
@@ -159,6 +206,61 @@ serve(async (req) => {
         variantCount: enhancedData.all_variants?.length || 0,
         description: enhancedData.description ? enhancedData.description.substring(0, 100) + '...' : 'No description'
       });
+      
+      // PHASE 2: Store COMPLETE Zinc response in products table
+      // Store all 30+ fields in metadata JSONB
+      const productPayload = {
+        product_id: product_id,
+        title: enhancedData.title,
+        price: enhancedData.price,
+        image: enhancedData.main_image || enhancedData.image,
+        retailer: retailer,
+        stars: enhancedData.stars,
+        review_count: enhancedData.review_count || enhancedData.num_reviews,
+        source_query: 'product_detail',
+        last_refreshed_at: now.toISOString(),
+        freshness_score: 100,
+        view_count: (cachedProduct?.view_count || 0) + 1,
+        metadata: {
+          // Store ALL Zinc fields in metadata JSONB
+          main_image: enhancedData.main_image,
+          images: enhancedData.images,
+          all_variants: enhancedData.all_variants,
+          variant_specifics: enhancedData.variant_specifics,
+          product_description: enhancedData.product_description,
+          feature_bullets: enhancedData.feature_bullets,
+          stars: enhancedData.stars,
+          review_count: enhancedData.review_count || enhancedData.num_reviews,
+          package_dimensions: enhancedData.package_dimensions,
+          epids: enhancedData.epids,
+          categories: enhancedData.categories,
+          authors: enhancedData.authors,
+          original_retail_price: enhancedData.original_retail_price,
+          question_count: enhancedData.question_count,
+          asin: enhancedData.asin,
+          handmade: enhancedData.handmade,
+          digital: enhancedData.digital,
+          // Preserve all other fields from Zinc API
+          ...Object.keys(data).reduce((acc, key) => {
+            if (!['product_id', 'title', 'price', 'retailer'].includes(key)) {
+              acc[key] = data[key];
+            }
+            return acc;
+          }, {} as any)
+        }
+      };
+      
+      // Upsert to products table
+      const { error: upsertError } = await supabase
+        .from('products')
+        .upsert(productPayload, { onConflict: 'product_id' });
+      
+      if (upsertError) {
+        console.error('Error upserting product to cache:', upsertError);
+        // Don't fail the request, just log the error
+      } else {
+        console.log(`[Cache UPDATED] Product ${product_id} stored with complete metadata`);
+      }
 
       return new Response(JSON.stringify(enhancedData), {
         status: 200,

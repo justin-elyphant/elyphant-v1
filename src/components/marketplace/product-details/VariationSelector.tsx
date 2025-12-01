@@ -2,8 +2,28 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Color name to CSS color mapping for common colors
+const colorMap: Record<string, string> = {
+  'black': '#000000',
+  'white': '#FFFFFF',
+  'red': '#DC2626',
+  'blue': '#2563EB',
+  'navy': '#1E3A8A',
+  'green': '#16A34A',
+  'yellow': '#EAB308',
+  'orange': '#EA580C',
+  'pink': '#EC4899',
+  'purple': '#9333EA',
+  'gray': '#6B7280',
+  'grey': '#6B7280',
+  'brown': '#92400E',
+  'beige': '#D4C5B9',
+  'gold': '#F59E0B',
+  'silver': '#94A3B8',
+};
 
 // Types for product variations
 type VariantSpecific = {
@@ -129,36 +149,43 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
             </label>
             
             {dimension.name.toLowerCase() === 'color' ? (
-              // Color variations as buttons/swatches
+              // Color variations as swatches with 44px touch targets
               <div className="flex flex-wrap gap-2">
                 {dimension.values.map(value => {
                   const isSelected = selectedVariations[dimension.name] === value;
                   const isAvailable = isValueAvailable(dimension.name, value);
+                  const colorHex = colorMap[value.toLowerCase()];
                   
                   return (
                     <Button
                       key={value}
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
+                      variant="outline"
                       disabled={!isAvailable}
                       onClick={() => handleVariationSelect(dimension.name, value)}
                       className={cn(
-                        "h-8 px-3 text-xs",
+                        "min-h-[44px] px-3 text-xs font-medium transition-all",
+                        isSelected && "border-2 border-elyphant-black ring-2 ring-elyphant-black/20",
                         !isAvailable && "opacity-50 cursor-not-allowed"
                       )}
                     >
+                      {colorHex && (
+                        <span 
+                          className="w-4 h-4 rounded-full mr-2 border border-gray-300"
+                          style={{ backgroundColor: colorHex }}
+                        />
+                      )}
                       {value}
                     </Button>
                   );
                 })}
               </div>
             ) : (
-              // Other variations as dropdown
+              // Other variations as dropdown with 44px touch target
               <Select
                 value={selectedVariations[dimension.name] || ""}
                 onValueChange={(value) => handleVariationSelect(dimension.name, value)}
               >
-                <SelectTrigger className="w-full h-9 bg-background">
+                <SelectTrigger className="w-full min-h-[44px] bg-background">
                   <SelectValue placeholder={`Select ${dimension.name.toLowerCase()}`} />
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50">
@@ -170,7 +197,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
                         value={value}
                         disabled={!isAvailable}
                         className={cn(
-                          "cursor-pointer",
+                          "cursor-pointer min-h-[44px]",
                           !isAvailable && "opacity-50 cursor-not-allowed"
                         )}
                       >
@@ -185,9 +212,17 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
         ))}
       </div>
 
+      {/* Disclaimers */}
+      <div className="pt-3 space-y-2 border-t">
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>Image and price may vary by selection</span>
+        </div>
+      </div>
+      
       {/* Selected variation summary */}
       {Object.keys(selectedVariations).length > 0 && (
-        <div className="pt-2 border-t">
+        <div className="pt-2">
           <div className="flex flex-wrap gap-1">
             {Object.entries(selectedVariations).map(([dimension, value]) => (
               <Badge key={dimension} variant="secondary" className="text-xs">

@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import { useProductVariations } from "@/hooks/useProductVariations";
 
 const ProductDetailsPage: React.FC = () => {
   const { id } = useParams();
@@ -25,6 +26,18 @@ const ProductDetailsPage: React.FC = () => {
   
   const [productDetail, setProductDetail] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentImages, setCurrentImages] = useState<string[]>([]);
+  const [fetchingVariantImages, setFetchingVariantImages] = useState(false);
+  
+  // Use product variations hook at parent level
+  const {
+    hasVariations,
+    selectedProductId,
+    handleVariationChange,
+    getEffectiveProductId,
+    getVariationDisplayText,
+    isVariationComplete
+  } = useProductVariations(productDetail);
   
   // Fetch product details on mount
   useEffect(() => {
@@ -40,12 +53,44 @@ const ProductDetailsPage: React.FC = () => {
         fetchProductDetail(String(productId), 'amazon');
       } else {
         setProductDetail(product);
+        setCurrentImages(getProductImages(product));
         setLoading(false);
       }
     } else if (id) {
       fetchProductDetail(id, 'amazon');
     }
   }, [product, id]);
+  
+  // Fetch variant images when variant selection changes
+  useEffect(() => {
+    if (!productDetail || !hasVariations || !selectedProductId) return;
+    
+    // Don't fetch if selectedProductId is the same as parent product
+    const parentProductId = String(productDetail.product_id || productDetail.id);
+    if (selectedProductId === parentProductId) {
+      setCurrentImages(getProductImages(productDetail));
+      return;
+    }
+    
+    // Fetch variant product details (cache-first via get-product-detail)
+    const fetchVariantImages = async () => {
+      setFetchingVariantImages(true);
+      try {
+        const variantData = await getProductDetail(selectedProductId, 'amazon');
+        if (variantData) {
+          const variantImages = getProductImages(variantData);
+          setCurrentImages(variantImages);
+        }
+      } catch (error) {
+        console.error('Error fetching variant images:', error);
+        // Keep showing parent images on error
+      } finally {
+        setFetchingVariantImages(false);
+      }
+    };
+    
+    fetchVariantImages();
+  }, [selectedProductId, productDetail, hasVariations]);
   
   const fetchProductDetail = async (productId: string, retailer: string) => {
     setLoading(true);
@@ -66,6 +111,7 @@ const ProductDetailsPage: React.FC = () => {
           retailer: retailer || 'amazon'
         };
         setProductDetail(enhancedProduct);
+        setCurrentImages(getProductImages(enhancedProduct));
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);
@@ -146,8 +192,9 @@ const ProductDetailsPage: React.FC = () => {
           {/* LEFT 60%: Images */}
           <div className="col-span-12 lg:col-span-7">
             <ProductImageGallery 
-              images={getProductImages(productDetail)}
+              images={currentImages.length > 0 ? currentImages : getProductImages(productDetail)}
               productName={getProductName(productDetail)}
+              isLoading={fetchingVariantImages}
             />
           </div>
           
@@ -157,6 +204,11 @@ const ProductDetailsPage: React.FC = () => {
               product={productDetail}
               user={user}
               context={context}
+              hasVariations={hasVariations}
+              handleVariationChange={handleVariationChange}
+              getEffectiveProductId={getEffectiveProductId}
+              getVariationDisplayText={getVariationDisplayText}
+              isVariationComplete={isVariationComplete}
             />
           </div>
         </div>

@@ -1,5 +1,6 @@
 
 import React from "react";
+import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
 
 interface SingleImageViewProps {
   imageSrc: string;
@@ -11,7 +12,9 @@ const SingleImageView = ({ imageSrc, altText, onImageClick }: SingleImageViewPro
   return (
     <div className="aspect-square relative group">
       <img 
-        src={imageSrc} 
+        src={getHighResAmazonImage(imageSrc, 'detail')}
+        srcSet={getAmazonImageSrcSet(imageSrc)}
+        sizes="(max-width: 768px) 100vw, 60vw"
         alt={altText}
         className="w-full h-full object-contain rounded-md cursor-pointer transition-transform hover:scale-105"
         onError={(e) => {

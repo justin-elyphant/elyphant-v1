@@ -5,6 +5,7 @@ import {
   CarouselItem 
 } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
+import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
 
 interface CarouselItemsProps {
   images: string[];
@@ -20,7 +21,9 @@ const CarouselItems = ({ images, productName, onImageError, onImageClick }: Caro
         <CarouselItem key={`image-${idx}-${img.slice(-20)}`}>
           <div className="aspect-square relative group">
             <img 
-              src={img} 
+              src={getHighResAmazonImage(img, 'detail')}
+              srcSet={getAmazonImageSrcSet(img)}
+              sizes="(max-width: 768px) 100vw, 60vw"
               alt={`${productName} view ${idx + 1}`}
               className="w-full h-full object-contain rounded-md cursor-pointer transition-transform hover:scale-105"
               onError={() => onImageError(idx)}

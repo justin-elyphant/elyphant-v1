@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 import OptimizedImage from "./ui/OptimizedImage";
 import ColorSwatches from "./ColorSwatches";
+import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -145,19 +146,14 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     
     const highQualityImage = (product as any).main_image;
     if (highQualityImage) {
-      return highQualityImage;
+      return getHighResAmazonImage(highQualityImage, 'card');
     }
     
     const images = product.images || [product.image] || ["/placeholder.svg"];
     const selectedImage = images[currentImageIndex] || images[0] || "/placeholder.svg";
     
-    // If it's an Amazon image URL, try to get higher resolution version
-    if (selectedImage && selectedImage.includes('amazon.com') && selectedImage.includes('._AC_UL320_')) {
-      // Replace small resolution with larger one for better quality
-      return selectedImage.replace('._AC_UL320_', '._AC_UL480_');
-    }
-    
-    return selectedImage;
+    // Optimize Amazon images for card context (1500px for sharp retina display)
+    return getHighResAmazonImage(selectedImage, 'card');
   };
 
   const getProductImages = () => {
@@ -169,13 +165,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
     const allImages = mainImage ? [mainImage, ...standardImages] : standardImages;
     const uniqueImages = [...new Set(allImages.filter(Boolean))];
     
-    // Enhance Amazon image URLs for better quality
-    return uniqueImages.map(img => {
-      if (img && img.includes('amazon.com') && img.includes('._AC_UL320_')) {
-        return img.replace('._AC_UL320_', '._AC_UL480_');
-      }
-      return img;
-    });
+    // Optimize all Amazon images to high-resolution
+    return uniqueImages.map(img => getHighResAmazonImage(img, 'card'));
   };
 
   const getProductTitle = () => {
@@ -248,6 +239,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       )}>
         <img
           src={getProductImage()}
+          srcSet={getAmazonImageSrcSet(getProductImage())}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           alt={getProductTitle()}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"

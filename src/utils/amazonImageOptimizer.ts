@@ -41,22 +41,37 @@ export const getHighResAmazonImage = (
 
   // Strip existing size suffix to get base URL
   const baseUrl = url.replace(AMAZON_SIZE_SUFFIX_REGEX, '.');
+  
+  let optimizedUrl: string;
 
   // Apply appropriate resolution for each context
   switch (context) {
     case 'fullscreen':
       // Original quality - highest resolution for zoom
-      return baseUrl;
+      optimizedUrl = baseUrl;
+      break;
     case 'detail':
     case 'card':
       // 1500px for cards and product detail carousel (sharp on retina displays)
-      return baseUrl.replace(/\.(\w+)$/, '._SL1500_.$1');
+      optimizedUrl = baseUrl.replace(/\.(\w+)$/, '._SL1500_.$1');
+      break;
     case 'thumbnail':
       // 320px for small thumbnails
-      return baseUrl.replace(/\.(\w+)$/, '._SL320_.$1');
+      optimizedUrl = baseUrl.replace(/\.(\w+)$/, '._SL320_.$1');
+      break;
     default:
-      return baseUrl.replace(/\.(\w+)$/, '._SL1500_.$1');
+      optimizedUrl = baseUrl.replace(/\.(\w+)$/, '._SL1500_.$1');
   }
+  
+  // Log optimization for debugging
+  if (url !== optimizedUrl) {
+    console.log(`[Image Optimizer] ${context}:`, {
+      original: url.substring(url.lastIndexOf('/') + 1),
+      optimized: optimizedUrl.substring(optimizedUrl.lastIndexOf('/') + 1)
+    });
+  }
+  
+  return optimizedUrl;
 };
 
 /**

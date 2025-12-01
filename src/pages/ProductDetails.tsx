@@ -28,6 +28,7 @@ const ProductDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [currentImages, setCurrentImages] = useState<string[]>([]);
   const [fetchingVariantImages, setFetchingVariantImages] = useState(false);
+  const [displayedProduct, setDisplayedProduct] = useState<Product | null>(null);
   
   // Use product variations hook at parent level
   const {
@@ -200,16 +201,16 @@ const ProductDetailsPage: React.FC = () => {
           
           {/* RIGHT 40%: Product Details Sidebar */}
           <div className="col-span-12 lg:col-span-5">
-            <ProductDetailsSidebar 
-              product={productDetail}
-              user={user}
-              context={context}
-              hasVariations={hasVariations}
-              handleVariationChange={handleVariationChange}
-              getEffectiveProductId={getEffectiveProductId}
-              getVariationDisplayText={getVariationDisplayText}
-              isVariationComplete={isVariationComplete}
-            />
+          <ProductDetailsSidebar
+            product={displayedProduct || productDetail}
+            user={user}
+            context={context}
+            hasVariations={hasVariations}
+            handleVariationChange={handleVariationChange}
+            getEffectiveProductId={getEffectiveProductId}
+            getVariationDisplayText={getVariationDisplayText}
+            isVariationComplete={isVariationComplete}
+          />
           </div>
         </div>
       </div>

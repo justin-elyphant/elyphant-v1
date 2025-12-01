@@ -165,6 +165,38 @@ serve(async (req) => {
       
       console.log('Raw Zinc API response for product detail:', JSON.stringify(data, null, 2));
       
+      // PHASE 2A: Fetch Offers API for accurate current pricing
+      let currentPrice = data.price;
+      try {
+        const offersResponse = await fetch(
+          `https://api.zinc.io/v1/products/${product_id}/offers?retailer=${retailer}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': 'Basic ' + btoa(`${api_key}:`)
+            }
+          }
+        );
+        
+        if (offersResponse.ok) {
+          const offersData = await offersResponse.json();
+          console.log('Offers API response:', JSON.stringify(offersData, null, 2));
+          
+          // Find best offer (first-party seller, available)
+          const bestOffer = offersData.offers?.find((offer: any) => 
+            offer.available && offer.seller?.first_party
+          ) || offersData.offers?.[0];
+          
+          if (bestOffer?.price) {
+            currentPrice = bestOffer.price;
+            console.log(`[Offers API] Updated price from ${data.price} to ${currentPrice}`);
+          }
+        }
+      } catch (offersError) {
+        console.log('Offers API error (non-fatal):', offersError);
+        // Continue with original price if offers fetch fails
+      }
+      
       // Process best seller data for the product detail
       const bestSellerData = processBestSellerData(data);
       
@@ -191,6 +223,7 @@ serve(async (req) => {
         image: data.main_image || data.image,
         description: extractDescription(data),
         rating: data.stars || data.rating,
+        price: currentPrice, // Use offers API price if available
         // Proper variation handling - ensure arrays are preserved
         all_variants: Array.isArray(data.all_variants) ? data.all_variants : [],
         variant_specifics: Array.isArray(data.variant_specifics) ? data.variant_specifics : [],
@@ -212,7 +245,7 @@ serve(async (req) => {
       const productPayload = {
         product_id: product_id,
         title: enhancedData.title,
-        price: enhancedData.price,
+        price: currentPrice, // Use offers API price if available
         image: enhancedData.main_image || enhancedData.image,
         retailer: retailer,
         stars: enhancedData.stars,
@@ -236,6 +269,7 @@ serve(async (req) => {
           categories: enhancedData.categories,
           authors: enhancedData.authors,
           original_retail_price: enhancedData.original_retail_price,
+          current_price: currentPrice, // Store offers API price
           question_count: enhancedData.question_count,
           asin: enhancedData.asin,
           handmade: enhancedData.handmade,

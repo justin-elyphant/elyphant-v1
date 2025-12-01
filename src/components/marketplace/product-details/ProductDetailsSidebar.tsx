@@ -15,19 +15,29 @@ import ReviewsSection from "./ReviewsSection";
 import SizeGuideContent from "./SizeGuideContent";
 import ScheduleGiftModal from "./ScheduleGiftModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
-import { useProductVariations } from "@/hooks/useProductVariations";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 
 interface ProductDetailsSidebarProps {
   product: Product;
   user: any;
   context?: string;
+  // Variation props from parent
+  hasVariations: boolean;
+  handleVariationChange: (newSelections: any, newProductId: string) => void;
+  getEffectiveProductId: () => string;
+  getVariationDisplayText: () => string;
+  isVariationComplete: () => boolean;
 }
 
 const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({ 
   product, 
   user,
-  context = 'marketplace'
+  context = 'marketplace',
+  hasVariations,
+  handleVariationChange,
+  getEffectiveProductId,
+  getVariationDisplayText,
+  isVariationComplete
 }) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -37,15 +47,6 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   
   // Get user's saved sizes from profile.metadata.sizes (cast to any for JSONB access)
   const userSizes = (profile as any)?.metadata?.sizes;
-  
-  // Use product variations hook
-  const {
-    hasVariations,
-    handleVariationChange,
-    getEffectiveProductId,
-    getVariationDisplayText,
-    isVariationComplete
-  } = useProductVariations(product);
   
   const productId = String(product.product_id || product.id);
   const productName = product.title || product.name || "";

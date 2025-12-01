@@ -3,6 +3,7 @@ import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useImageGallery } from '@/hooks/useImageGallery';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getHighResAmazonImage } from '@/utils/amazonImageOptimizer';
 
 interface FullscreenImageModalProps {
   images: string[];
@@ -147,7 +148,7 @@ const FullscreenImageModal = ({
       >
         <div className="relative max-w-full max-h-full">
           <img
-            src={currentImage}
+            src={getHighResAmazonImage(currentImage, 'fullscreen')}
             alt={`${productName} - Image ${currentIndex + 1}`}
             className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
               isZoomed ? 'scale-150 cursor-grab' : 'cursor-pointer'
@@ -212,7 +213,7 @@ const FullscreenImageModal = ({
                 }`}
               >
                 <img
-                  src={img}
+                  src={getHighResAmazonImage(img, 'thumbnail')}
                   alt={`${productName} thumbnail ${index + 1}`}
                   className="w-full h-full object-cover rounded"
                   onError={(e) => {

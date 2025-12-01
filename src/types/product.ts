@@ -76,4 +76,23 @@ export type Product = {
   productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
   skipCentsDetection?: boolean;
   isZincApiProduct?: boolean; // Legacy compatibility flag
+  
+  // Complete product data metadata (from Zinc API)
+  metadata?: {
+    current_price?: number;
+    main_image?: string;
+    images?: string[];
+    all_variants?: any[];
+    variant_specifics?: any[];
+    product_description?: string;
+    feature_bullets?: string[];
+    stars?: number;
+    review_count?: number;
+    package_dimensions?: any;
+    epids?: any;
+    categories?: string[];
+    authors?: string[];
+    original_retail_price?: number;
+    [key: string]: any; // Allow additional Zinc API fields
+  };
 };

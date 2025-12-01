@@ -8,7 +8,8 @@ interface ProductPriceAndRatingProps {
 }
 
 const ProductPriceAndRating: React.FC<ProductPriceAndRatingProps> = ({ product }) => {
-  const price = product.price || 0;
+  // Prefer current_price from offers API (stored in metadata), fallback to product.price
+  const price = product.metadata?.current_price || product.price || 0;
   const rating = product.rating || product.stars || 0;
   const reviewCount = product.reviewCount || product.num_reviews || 0;
   

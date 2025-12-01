@@ -52,11 +52,30 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   const productImage = product.image || "";
   const productPrice = product.price || 0;
   
-  // 1. Add to Cart
+  // 1. Add to Cart - PHASE 6: Validate variations before adding
   const handleAddToCart = () => {
-    addToCart(product);
+    // Validate variation selection
+    if (hasVariations && !isVariationComplete()) {
+      toast.error("Please select all product options", {
+        description: "Choose size, color, and other options before adding to cart"
+      });
+      return;
+    }
+    
+    // Get effective product ID (selected variant or base product)
+    const effectiveProductId = getEffectiveProductId();
+    const variationText = getVariationDisplayText();
+    
+    // Add to cart with variation info
+    const cartProduct = {
+      ...product,
+      product_id: effectiveProductId,
+      variationText: variationText || undefined
+    };
+    
+    addToCart(cartProduct);
     toast.success("Added to cart", {
-      description: "Continue shopping or checkout when ready",
+      description: variationText ? `${variationText}` : "Continue shopping or checkout when ready",
       action: {
         label: "View Cart",
         onClick: () => navigate("/cart")

@@ -1,21 +1,41 @@
-import React from "react";
+import React, { useState } from "react";
 import { Product } from "@/types/product";
+import DOMPurify from "dompurify";
+import { Button } from "@/components/ui/button";
 
 interface ProductDetailsContentProps {
   product: Product;
 }
 
 const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({ product }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const description = product.product_description || product.description || "";
   const features = product.feature_bullets || product.product_details || [];
+  
+  // PHASE 5: Sanitize HTML description with DOMPurify
+  const sanitizedDescription = description ? DOMPurify.sanitize(description) : "";
+  const shouldTruncate = description.length > 300;
+  const displayDescription = (!isExpanded && shouldTruncate) 
+    ? sanitizedDescription.substring(0, 300) + "..." 
+    : sanitizedDescription;
   
   return (
     <div className="space-y-4 py-3">
       {description && (
         <div>
-          <p className="text-sm text-elyphant-grey-text leading-relaxed">
-            {description}
-          </p>
+          <div 
+            className="text-sm text-elyphant-grey-text leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: displayDescription }}
+          />
+          {shouldTruncate && (
+            <Button
+              variant="link"
+              className="px-0 text-xs text-elyphant-black mt-2"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? "Show less" : "Read more"}
+            </Button>
+          )}
         </div>
       )}
       

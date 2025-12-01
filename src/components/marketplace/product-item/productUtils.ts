@@ -82,22 +82,32 @@ export const getProductCategory = (product: Product): string => {
 
 /**
  * Get all product images as an array
+ * PHASE 3: Prefer main_image over images[0] per Zinc guidance
  */
 export const getProductImages = (product: Product): string[] => {
   if (!product) return [];
   
-  // If product has an images array, return it
+  const results: string[] = [];
+  
+  // CRITICAL: Prefer main_image first (per Zinc API guidance)
+  if (product.main_image && typeof product.main_image === 'string') {
+    results.push(product.main_image);
+  }
+  
+  // Then add additional images from images array
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    return product.images.filter(img => img && typeof img === 'string');
+    const filteredImages = product.images
+      .filter(img => img && typeof img === 'string' && img !== product.main_image);
+    results.push(...filteredImages);
   }
   
-  // If product has a single image, return it as an array
-  if (product.image && typeof product.image === 'string') {
-    return [product.image];
+  // Fallback to single image field if nothing else
+  if (results.length === 0 && product.image && typeof product.image === 'string') {
+    results.push(product.image);
   }
   
-  // Fallback to empty array
-  return [];
+  // Return array or empty array
+  return results.length > 0 ? results : [];
 };
 
 /**

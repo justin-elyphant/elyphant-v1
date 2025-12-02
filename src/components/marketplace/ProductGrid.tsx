@@ -113,7 +113,11 @@ const ProductGrid = ({
       
       // Navigate to full-page product details
       navigate(`/marketplace/product/${productId}`, {
-        state: { product, context: 'marketplace' }
+        state: { 
+          product, 
+          context: 'marketplace',
+          returnPath: window.location.pathname + window.location.search
+        }
       });
     }
     

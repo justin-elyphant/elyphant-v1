@@ -60,7 +60,11 @@ const ProductItem = ({
 
   const handleProductClick = () => {
     navigate(`/marketplace/product/${productId}`, {
-      state: { product, context: 'marketplace' }
+      state: { 
+        product, 
+        context: 'marketplace',
+        returnPath: window.location.pathname + window.location.search
+      }
     });
   };
 

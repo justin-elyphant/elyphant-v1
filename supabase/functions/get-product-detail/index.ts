@@ -137,8 +137,11 @@ serve(async (req) => {
           const enhancedData = {
             ...cachedProduct,
             ...(cachedProduct.metadata || {}),
-            // Backward compatibility
-            image: cachedProduct.metadata?.main_image || cachedProduct.image,
+            // Backward compatibility - use image_url from DB, main_image from metadata
+            image: cachedProduct.metadata?.main_image || cachedProduct.image_url,
+            // Extract ratings from metadata for client
+            stars: cachedProduct.metadata?.stars,
+            review_count: cachedProduct.metadata?.review_count,
             hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0)
           };
           
@@ -246,39 +249,45 @@ serve(async (req) => {
       });
       
       // PHASE 2: Store COMPLETE Zinc response in products table
-      // Store all 30+ fields in metadata JSONB
+      // Use correct column names that match schema (image_url, not image)
+      // Store stars/review_count in metadata JSONB, not as top-level columns
       const productPayload = {
         product_id: product_id,
         title: enhancedData.title,
-        price: currentPrice, // Use offers API price if available
-        image: enhancedData.main_image || enhancedData.image,
+        price: currentPrice,
+        image_url: enhancedData.main_image || enhancedData.image || null,
         retailer: retailer,
-        stars: enhancedData.stars,
-        review_count: enhancedData.review_count || enhancedData.num_reviews,
-        source_query: 'product_detail',
+        brand: enhancedData.brand || null,
+        category: enhancedData.categories?.[0] || null,
         last_refreshed_at: now.toISOString(),
         freshness_score: 100,
         view_count: (cachedProduct?.view_count || 0) + 1,
         metadata: {
-          // Store ALL Zinc fields in metadata JSONB
-          main_image: enhancedData.main_image,
-          images: enhancedData.images,
-          all_variants: enhancedData.all_variants,
-          variant_specifics: enhancedData.variant_specifics,
-          product_description: enhancedData.product_description,
-          feature_bullets: enhancedData.feature_bullets,
+          // Store ALL rating/review data in metadata JSONB
           stars: enhancedData.stars,
           review_count: enhancedData.review_count || enhancedData.num_reviews,
+          // Store complete image arrays
+          main_image: enhancedData.main_image,
+          images: enhancedData.images,
+          // Store all variant data
+          all_variants: enhancedData.all_variants,
+          variant_specifics: enhancedData.variant_specifics,
+          // Store descriptions
+          product_description: enhancedData.product_description,
+          feature_bullets: enhancedData.feature_bullets,
+          // Store other Zinc fields
           package_dimensions: enhancedData.package_dimensions,
           epids: enhancedData.epids,
           categories: enhancedData.categories,
           authors: enhancedData.authors,
           original_retail_price: enhancedData.original_retail_price,
-          current_price: currentPrice, // Store offers API price
+          current_price: currentPrice,
           question_count: enhancedData.question_count,
           asin: enhancedData.asin,
           handmade: enhancedData.handmade,
           digital: enhancedData.digital,
+          num_offers: enhancedData.num_offers,
+          num_sales: enhancedData.num_sales,
           // Preserve all other fields from Zinc API
           ...Object.keys(data).reduce((acc, key) => {
             if (!['product_id', 'title', 'price', 'retailer'].includes(key)) {

@@ -18,8 +18,10 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   className = "",
   showParentheses = false
 }) => {
-  // No reviews, don't display
-  if (!rating && !reviewCount) return null;
+  // Only show rating when we have MEANINGFUL cached data (both rating > 0 AND review count > 0)
+  // This ensures non-cached products show clean cards without sloppy placeholder ratings
+  const numericReviewCount = typeof reviewCount === 'string' ? parseInt(reviewCount, 10) : reviewCount;
+  if (!rating || rating <= 0 || !numericReviewCount || numericReviewCount <= 0) return null;
   
   // Set the star size based on the size prop
   const getStarSize = () => {

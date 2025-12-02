@@ -47,8 +47,10 @@ const ProductDetailsPage: React.FC = () => {
     if (product) {
       // We have partial data - show it immediately
       const productId = product.product_id || product.id;
-      const needsEnhancement = product && 
-        (!product.images || product.images.length <= 1) && 
+      const needsEnhancement = product && (
+        (!product.images || product.images.length <= 1) ||
+        (!product.all_variants || product.all_variants.length === 0)
+      ) && 
         productId && 
         String(productId).trim() !== "";
       

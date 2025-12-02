@@ -185,22 +185,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   };
 
   const getRating = () => {
-    const rating = product.stars || product.rating || product.metadata?.stars || 0;
-    // 🔍 DIAGNOSTIC: Log rating data for products that SHOULD have ratings
-    const productAny = product as any;
-    if (productAny.stars || productAny.review_count || productAny.is_cached) {
-      console.log(`🔍 [CARD DIAGNOSTIC] ${product.product_id}:`, {
-        stars: productAny.stars,
-        rating: productAny.rating,
-        'metadata?.stars': productAny.metadata?.stars,
-        review_count: productAny.review_count,
-        reviewCount: productAny.reviewCount,
-        'metadata?.review_count': productAny.metadata?.review_count,
-        is_cached: productAny.is_cached,
-        resolved_rating: rating
-      });
-    }
-    return rating;
+    return product.stars || product.rating || product.metadata?.stars || 0;
   };
 
   const getReviewCount = () => {

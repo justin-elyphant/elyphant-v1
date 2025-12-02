@@ -115,7 +115,13 @@ const ProductDetailsPage: React.FC = () => {
         setCurrentImages(getProductImages(enhancedProduct));
         
         // Signal marketplace to refresh with updated cache data
+        // Store the search term from returnPath so marketplace can re-search with updated cache
         sessionStorage.setItem('marketplace-needs-refresh', 'true');
+        const returnPath = location.state?.returnPath || '';
+        const searchMatch = returnPath.match(/[?&]search=([^&]*)/);
+        if (searchMatch) {
+          sessionStorage.setItem('marketplace-refresh-term', decodeURIComponent(searchMatch[1]));
+        }
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);

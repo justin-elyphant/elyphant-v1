@@ -82,7 +82,31 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     try {
       console.log(`[useUnifiedMarketplace] Starting search: "${searchTerm}", options:`, searchOptions);
       
-      const results = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
+      let results = await unifiedMarketplaceService.searchProducts(searchTerm, searchOptions);
+      
+      // Client-side merge: inject viewed product's rating data to bypass DB read-after-write latency
+      const viewedProductJson = sessionStorage.getItem('marketplace-viewed-product');
+      if (viewedProductJson) {
+        try {
+          const viewedProduct = JSON.parse(viewedProductJson);
+          results = results.map((p: Product) => {
+            // Merge rating data if this product matches and doesn't already have ratings
+            if (p.product_id === viewedProduct.product_id && !p.stars && viewedProduct.stars > 0) {
+              console.log(`[useUnifiedMarketplace] Client-side merge: injecting ratings for ${p.product_id}`);
+              return {
+                ...p,
+                stars: viewedProduct.stars,
+                review_count: viewedProduct.review_count,
+                is_cached: true
+              };
+            }
+            return p;
+          });
+          sessionStorage.removeItem('marketplace-viewed-product');
+        } catch (e) {
+          console.warn('[useUnifiedMarketplace] Failed to parse viewed product data:', e);
+        }
+      }
       
       // Only update if this is still the current search
       if (state.lastSearchId === searchId || isNewSearch) {

@@ -122,6 +122,17 @@ const ProductDetailsPage: React.FC = () => {
         if (searchMatch) {
           sessionStorage.setItem('marketplace-refresh-term', decodeURIComponent(searchMatch[1]));
         }
+        
+        // Store viewed product's rating data for immediate client-side merge
+        // This bypasses database read-after-write latency on first "Back to Shop"
+        const dataAny = data as any;
+        const viewedProductData = {
+          product_id: productId,
+          stars: dataAny.stars || data.rating || 0,
+          review_count: dataAny.review_count || dataAny.num_reviews || data.reviewCount || 0,
+          is_cached: true
+        };
+        sessionStorage.setItem('marketplace-viewed-product', JSON.stringify(viewedProductData));
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);

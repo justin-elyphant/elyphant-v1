@@ -12,7 +12,6 @@ import MySizesSelector from "./MySizesSelector";
 import VariationSelector from "./VariationSelector";
 import ProductDetailsContent from "./ProductDetailsContent";
 import ReviewsSection from "./ReviewsSection";
-import SizeGuideContent from "./SizeGuideContent";
 import ScheduleGiftModal from "./ScheduleGiftModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -222,15 +221,6 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             </AccordionTrigger>
             <AccordionContent>
               <ReviewsSection product={product} />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="size" className="border-b-0">
-            <AccordionTrigger className="text-base font-semibold text-elyphant-black hover:no-underline">
-              Size Guide
-            </AccordionTrigger>
-            <AccordionContent>
-              <SizeGuideContent category={product.category} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

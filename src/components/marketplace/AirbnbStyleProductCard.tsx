@@ -20,6 +20,7 @@ import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 import OptimizedImage from "./ui/OptimizedImage";
 import ColorSwatches from "./ColorSwatches";
 import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
+import ProductRating from "@/components/shared/ProductRating";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -323,36 +324,13 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </span>
         </div>
 
-        {/* Rating - Enhanced with Partial Stars */}
-        {getRating() > 0 && (
-          <div className="flex items-center text-xs mb-2">
-            <div className="flex items-center mr-1">
-              {[...Array(5)].map((_, i) => {
-                const fillPercent = Math.min(100, Math.max(0, (getRating() - i) * 100));
-                
-                return (
-                  <div key={i} className="relative inline-block">
-                    <Star className="h-3 w-3 text-gray-300 fill-gray-300" />
-                    {fillPercent > 0 && (
-                      <div 
-                        className="absolute inset-0 overflow-hidden"
-                        style={{ width: `${fillPercent}%` }}
-                      >
-                        <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <span className="text-muted-foreground">{getRating().toFixed(1)}</span>
-            {getReviewCount() > 0 && (
-              <span className="text-muted-foreground ml-1">
-                ({getReviewCount() >= 1000 ? `${(getReviewCount() / 1000).toFixed(1)}K` : getReviewCount()})
-              </span>
-            )}
-          </div>
-        )}
+        {/* Rating - Using Shared Component */}
+        <ProductRating 
+          rating={getRating()}
+          reviewCount={getReviewCount()}
+          size="sm"
+          className="mb-2"
+        />
 
         {/* Bottom Section: Wishlist Action */}
         <div className="flex items-center justify-between pt-1 mt-auto">

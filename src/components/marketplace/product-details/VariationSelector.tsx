@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SearchableColorDropdown } from "./SearchableColorDropdown";
+import { CollapsibleSwatchGrid } from "./CollapsibleSwatchGrid";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Color name to CSS color mapping for common colors
 const colorMap: Record<string, string> = {
@@ -23,6 +26,31 @@ const colorMap: Record<string, string> = {
   'beige': '#D4C5B9',
   'gold': '#F59E0B',
   'silver': '#94A3B8',
+  'teal': '#14B8A6',
+  'cyan': '#06B6D4',
+  'coral': '#F97316',
+  'charcoal': '#374151',
+  'carbon': '#1F2937',
+};
+
+// Extract primary color from compound names like "Black/Carbon/Active Teal"
+const extractPrimaryColor = (colorName: string): string | null => {
+  const lowerName = colorName.toLowerCase();
+  if (colorMap[lowerName]) return colorMap[lowerName];
+  
+  const parts = lowerName.split(/[\/\-\s]+/);
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (colorMap[trimmed]) return colorMap[trimmed];
+  }
+  
+  const colorKeywords = Object.keys(colorMap);
+  for (const keyword of colorKeywords) {
+    if (lowerName.includes(keyword)) {
+      return colorMap[keyword];
+    }
+  }
+  return null;
 };
 
 // Types for product variations
@@ -149,36 +177,70 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
             </label>
             
             {dimension.name.toLowerCase() === 'color' ? (
-              // Color variations as swatches with 44px touch targets
-              <div className="flex flex-wrap gap-2">
-                {dimension.values.map(value => {
-                  const isSelected = selectedVariations[dimension.name] === value;
-                  const isAvailable = isValueAvailable(dimension.name, value);
-                  const colorHex = colorMap[value.toLowerCase()];
-                  
-                  return (
-                    <Button
-                      key={value}
-                      variant="outline"
-                      disabled={!isAvailable}
-                      onClick={() => handleVariationSelect(dimension.name, value)}
-                      className={cn(
-                        "min-h-[44px] px-3 text-xs font-medium transition-all",
-                        isSelected && "border-2 border-elyphant-black ring-2 ring-elyphant-black/20",
-                        !isAvailable && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      {colorHex && (
-                        <span 
-                          className="w-4 h-4 rounded-full mr-2 border border-gray-300"
-                          style={{ backgroundColor: colorHex }}
-                        />
-                      )}
-                      {value}
-                    </Button>
-                  );
-                })}
-              </div>
+              // Adaptive color selector based on option count
+              dimension.values.length <= 6 ? (
+                // Simple swatch grid for 1-6 colors
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {dimension.values.map(value => {
+                      const isSelected = selectedVariations[dimension.name] === value;
+                      const isAvailable = isValueAvailable(dimension.name, value);
+                      const colorHex = extractPrimaryColor(value);
+                      
+                      return (
+                        <Tooltip key={value}>
+                          <TooltipTrigger asChild>
+                            <button
+                              disabled={!isAvailable}
+                              onClick={() => isAvailable && handleVariationSelect(dimension.name, value)}
+                              className={cn(
+                                "w-[44px] h-[44px] flex items-center justify-center rounded-lg transition-all",
+                                "hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                                !isAvailable && "opacity-40 cursor-not-allowed"
+                              )}
+                            >
+                              <span 
+                                className={cn(
+                                  "w-8 h-8 rounded-full transition-all",
+                                  isSelected && "ring-2 ring-offset-2 ring-foreground",
+                                  colorHex === '#FFFFFF' && "border border-border",
+                                  !colorHex && "bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500"
+                                )}
+                                style={colorHex ? { backgroundColor: colorHex } : undefined}
+                              />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[200px]">
+                            <p className="text-xs">{value}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                  {selectedVariations[dimension.name] && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Selected: <span className="font-medium text-foreground">{selectedVariations[dimension.name]}</span>
+                    </p>
+                  )}
+                </TooltipProvider>
+              ) : dimension.values.length <= 12 ? (
+                // Collapsible swatch grid for 7-12 colors
+                <CollapsibleSwatchGrid
+                  values={dimension.values}
+                  selected={selectedVariations[dimension.name]}
+                  onSelect={(value) => handleVariationSelect(dimension.name, value)}
+                  isValueAvailable={(value) => isValueAvailable(dimension.name, value)}
+                  initialShow={6}
+                />
+              ) : (
+                // Searchable dropdown for 13+ colors
+                <SearchableColorDropdown
+                  values={dimension.values}
+                  selected={selectedVariations[dimension.name]}
+                  onSelect={(value) => handleVariationSelect(dimension.name, value)}
+                  isValueAvailable={(value) => isValueAvailable(dimension.name, value)}
+                />
+              )
             ) : (
               // Other variations as dropdown with 44px touch target
               <Select

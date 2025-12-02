@@ -45,28 +45,46 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   // Convert reviewCount to string if it's a valid value
   const reviewCountStr = (reviewCount !== undefined && reviewCount !== null) ? String(reviewCount) : undefined;
   
-  const starCount = 5;
-  const fullStars = Math.floor(rating);
-  const halfStar = rating % 1 >= 0.5;
+  // Format review count for display (e.g., 2100 -> 2.1K)
+  const formatReviewCount = (count: number | string): string => {
+    const numCount = typeof count === 'string' ? parseInt(count, 10) : count;
+    if (isNaN(numCount)) return '';
+    if (numCount >= 1000) {
+      return `${(numCount / 1000).toFixed(1)}K`;
+    }
+    return numCount.toString();
+  };
+  
+  const formattedReviewCount = reviewCountStr ? formatReviewCount(reviewCountStr) : '';
   
   return (
-    <div className={cn("flex items-center", className)}>
-      <div className="flex items-center text-yellow-400">
-        {[...Array(starCount)].map((_, i) => (
-          <Star
-            key={i}
-            className={cn(
-              starSize,
-              i < fullStars 
-                ? "fill-yellow-400 text-yellow-400" 
-                : "fill-gray-200 text-gray-200"
-            )}
-          />
-        ))}
+    <div className={cn("flex items-center gap-1", className)}>
+      <div className="flex items-center">
+        {[...Array(5)].map((_, i) => {
+          // Calculate fill percentage for each star (0-100%)
+          const fillPercent = Math.min(100, Math.max(0, (rating - i) * 100));
+          
+          return (
+            <div key={i} className="relative inline-block">
+              {/* Background (empty) star */}
+              <Star className={cn(starSize, "text-gray-300 fill-gray-300")} />
+              
+              {/* Foreground (filled) star with partial clip */}
+              {fillPercent > 0 && (
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fillPercent}%` }}
+                >
+                  <Star className={cn(starSize, "text-amber-400 fill-amber-400")} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-      {reviewCountStr && (
-        <span className={`ml-1 text-muted-foreground ${textSize}`}>
-          {showParentheses ? `(${reviewCountStr})` : reviewCountStr}
+      {formattedReviewCount && (
+        <span className={cn("text-muted-foreground", textSize)}>
+          {showParentheses ? `(${formattedReviewCount})` : formattedReviewCount}
         </span>
       )}
     </div>

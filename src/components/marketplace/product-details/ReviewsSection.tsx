@@ -38,12 +38,24 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ product }) => {
         </div>
       </div>
       
-      {/* Reviews Info */}
-      <div className="text-sm text-elyphant-grey-text">
+      {/* Reviews Info with Amazon Link */}
+      <div className="text-sm text-elyphant-grey-text space-y-3">
         <p>
-          Product reviews are sourced from verified Amazon purchases. 
-          Click through to Amazon to read detailed customer reviews and ratings.
+          Product reviews are sourced from verified Amazon purchases.
         </p>
+        
+        {/* Read all reviews on Amazon link */}
+        {(product.asin || product.product_id) && (
+          <a 
+            href={`https://amazon.com/dp/${product.asin || product.product_id}#customerReviews`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+          >
+            Read all {reviewCount > 0 ? `${reviewCount.toLocaleString()} ` : ''}reviews on Amazon
+            <span className="text-lg leading-none">→</span>
+          </a>
+        )}
       </div>
     </div>
   );

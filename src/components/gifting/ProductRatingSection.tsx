@@ -15,19 +15,42 @@ const ProductRatingSection: React.FC<ProductRatingSectionProps> = ({
   isMobile,
 }) => {
   if (rating <= 0) return null;
+  
+  // Format review count (e.g., 2100 -> 2.1K)
+  const formatReviewCount = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+  
   return (
-    <div className="flex items-center mt-1 text-xs text-amber-500">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={cn(
-            "h-3 w-3",
-            i < Math.round(rating) ? "fill-amber-500 text-amber-500" : "text-gray-300"
-          )}
-        />
-      ))}
-      <span className="text-gray-500 ml-1">
-        {reviewCount}
+    <div className="flex items-center mt-1 text-xs">
+      <div className="flex items-center">
+        {Array.from({ length: 5 }).map((_, i) => {
+          // Calculate fill percentage for each star
+          const fillPercent = Math.min(100, Math.max(0, (rating - i) * 100));
+          
+          return (
+            <div key={i} className="relative inline-block">
+              {/* Background (empty) star */}
+              <Star className="h-3 w-3 text-gray-300 fill-gray-300" />
+              
+              {/* Foreground (filled) star with partial clip */}
+              {fillPercent > 0 && (
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fillPercent}%` }}
+                >
+                  <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <span className="text-muted-foreground ml-1">
+        ({formatReviewCount(reviewCount)})
       </span>
     </div>
   );

@@ -637,7 +637,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           const finalTitle = categoryDisplayName || displayTitle;
           
           return (
-            <div className="mb-8">
+            <div className="mb-8 pt-6">
               <div className="text-center">
                 <h1 className="text-3xl font-bold text-foreground mb-2 capitalize">
                   {finalTitle}
@@ -665,7 +665,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           } as const;
           const { title, subtitle } = map[quick];
           return (
-            <div className="mb-8">
+            <div className="mb-8 pt-6">
               <div className="text-center">
                 <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>
                 <p className="text-lg text-muted-foreground mb-4">{subtitle}</p>

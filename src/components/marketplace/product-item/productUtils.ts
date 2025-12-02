@@ -211,8 +211,8 @@ export const standardizeProduct = (product: any): any => {
     retailer: product.retailer || product.vendor || "Amazon",
     rating: product.rating || product.stars || product.metadata?.stars || product.metadata?.rating || 0,
     stars: product.stars || product.rating || product.metadata?.stars || product.metadata?.rating || 0,
-    reviewCount: product.reviewCount || product.num_reviews || product.metadata?.review_count || product.metadata?.num_reviews || 0,
-    num_reviews: product.num_reviews || product.reviewCount || product.metadata?.review_count || product.metadata?.num_reviews || 0,
+    reviewCount: product.reviewCount || product.review_count || product.num_reviews || product.metadata?.review_count || product.metadata?.num_reviews || 0,
+    num_reviews: product.num_reviews || product.review_count || product.reviewCount || product.metadata?.review_count || product.metadata?.num_reviews || 0,
     
     // Enhanced brand extraction - try multiple possible brand field names
     brand: product.brand || 

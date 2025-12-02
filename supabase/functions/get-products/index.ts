@@ -8,6 +8,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Initialize Supabase client for cache operations
+const getSupabaseClient = () => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('⚠️ Supabase credentials not found, cache enrichment disabled');
+    return null;
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+};
+
 /**
  * Get Zinc API key from environment variables (unified approach)
  */
@@ -21,6 +34,182 @@ const getZincApiKey = () => {
   
   console.log('✅ Zinc API key loaded from environment');
   return apiKey;
+};
+
+/**
+ * Enrich search results with cached product data (ratings, reviews, images)
+ * This is the core of our cache-first strategy for cost savings
+ */
+const enrichWithCachedData = async (supabase: any, products: any[]) => {
+  if (!supabase || !products || products.length === 0) {
+    return { products, cacheHits: 0, cacheMisses: products?.length || 0 };
+  }
+
+  const productIds = products.map(p => p.product_id || p.asin).filter(Boolean);
+  
+  if (productIds.length === 0) {
+    return { products, cacheHits: 0, cacheMisses: products.length };
+  }
+
+  try {
+    console.log(`🔍 Checking cache for ${productIds.length} products...`);
+    
+    const { data: cachedProducts, error } = await supabase
+      .from('products')
+      .select('product_id, metadata, view_count, last_refreshed_at')
+      .in('product_id', productIds);
+
+    if (error) {
+      console.error('❌ Cache query failed:', error.message);
+      return { products, cacheHits: 0, cacheMisses: products.length };
+    }
+
+    // Create lookup map for fast access
+    const cacheMap = new Map();
+    (cachedProducts || []).forEach((cached: any) => {
+      cacheMap.set(cached.product_id, cached);
+    });
+
+    let cacheHits = 0;
+    let cacheMisses = 0;
+
+    // Enrich products with cached data
+    const enrichedProducts = products.map(product => {
+      const productId = product.product_id || product.asin;
+      const cached = cacheMap.get(productId);
+
+      if (cached && cached.metadata) {
+        cacheHits++;
+        const metadata = cached.metadata;
+        
+        return {
+          ...product,
+          // Enrich with cached rating data
+          stars: metadata.stars || product.stars,
+          review_count: metadata.review_count || product.review_count,
+          // Enrich with cached images if available
+          images: metadata.images || product.images,
+          main_image: metadata.main_image || product.main_image || product.image,
+          // Add cache metadata for smart sorting
+          is_cached: true,
+          view_count: cached.view_count || 0,
+          // Calculate popularity score for sorting
+          popularity_score: calculatePopularityScore(cached, metadata)
+        };
+      } else {
+        cacheMisses++;
+        return {
+          ...product,
+          is_cached: false,
+          view_count: 0,
+          popularity_score: 0
+        };
+      }
+    });
+
+    console.log(`✅ Cache enrichment: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / products.length * 100)}% hit rate)`);
+    
+    return { products: enrichedProducts, cacheHits, cacheMisses };
+  } catch (error) {
+    console.error('❌ Cache enrichment error:', error);
+    return { products, cacheHits: 0, cacheMisses: products.length };
+  }
+};
+
+/**
+ * Calculate popularity score for smart sorting
+ * Higher scores = cached products with good data float to top
+ */
+const calculatePopularityScore = (cached: any, metadata: any) => {
+  let score = 0;
+  
+  // View count contributes to popularity (max 50 points)
+  score += Math.min(50, (cached.view_count || 0) * 2);
+  
+  // Having ratings is valuable (50 points)
+  if (metadata.stars && metadata.review_count) {
+    score += 50;
+  }
+  
+  // High ratings boost score (up to 25 points)
+  if (metadata.stars && metadata.stars >= 4) {
+    score += (metadata.stars - 3) * 25;
+  }
+  
+  // More reviews = more trusted (up to 25 points)
+  if (metadata.review_count) {
+    score += Math.min(25, Math.log10(metadata.review_count + 1) * 10);
+  }
+  
+  return score;
+};
+
+/**
+ * Sort products by popularity score (cached products with data first)
+ */
+const sortByPopularity = (products: any[]) => {
+  return [...products].sort((a, b) => {
+    // Sort by popularity score descending
+    return (b.popularity_score || 0) - (a.popularity_score || 0);
+  });
+};
+
+/**
+ * Track search query for Nicole AI trending analysis
+ */
+const trackSearchTrend = async (supabase: any, query: string) => {
+  if (!supabase || !query || query.length < 2) return;
+
+  try {
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    // Upsert to search_trends table
+    const { error } = await supabase
+      .from('search_trends')
+      .upsert(
+        { 
+          search_query: normalizedQuery,
+          search_count: 1,
+          last_searched_at: new Date().toISOString()
+        },
+        { 
+          onConflict: 'search_query',
+          ignoreDuplicates: false 
+        }
+      );
+
+    if (error) {
+      // If upsert fails, try increment approach
+      const { data: existing } = await supabase
+        .from('search_trends')
+        .select('id, search_count')
+        .eq('search_query', normalizedQuery)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('search_trends')
+          .update({ 
+            search_count: (existing.search_count || 0) + 1,
+            last_searched_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('search_trends')
+          .insert({ 
+            search_query: normalizedQuery,
+            search_count: 1,
+            last_searched_at: new Date().toISOString()
+          });
+      }
+    }
+    
+    console.log(`📊 Tracked search trend: "${normalizedQuery}"`);
+  } catch (error) {
+    // Don't fail the request if trend tracking fails
+    console.warn('⚠️ Search trend tracking failed:', error);
+  }
 };
 
 // Process best seller indicators from Zinc response
@@ -529,6 +718,9 @@ serve(async (req) => {
     
     console.log('✅ Using Zinc API key from environment');
     
+    // Initialize Supabase client for cache operations
+    const supabase = getSupabaseClient();
+    
     const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, electronics = false, brandCategories = false, filters = {}} = await req.json();
     
     // Extract price filters from filters object
@@ -539,13 +731,27 @@ serve(async (req) => {
     
     console.log('Price filter extracted:', priceFilter);
     
+    // Track search trend for Nicole AI (async, non-blocking)
+    if (query) {
+      trackSearchTrend(supabase, query);
+    }
+    
     try {
       // Handle luxury category batch search
       if (luxuryCategories) {
         console.log('Processing luxury category batch request with price filter:', priceFilter);
         const luxuryData = await searchLuxuryCategories(api_key, page, priceFilter);
         
-        return new Response(JSON.stringify(luxuryData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, luxuryData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...luxuryData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -556,7 +762,16 @@ serve(async (req) => {
         console.log('Processing gifts for her category batch request with price filter:', priceFilter);
         const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(giftsForHerData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHerData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...giftsForHerData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -567,7 +782,16 @@ serve(async (req) => {
         console.log('Processing electronics category batch request with price filter:', priceFilter);
         const electronicsData = await searchElectronicsCategories(api_key, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(electronicsData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, electronicsData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...electronicsData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -578,7 +802,16 @@ serve(async (req) => {
         console.log('Processing best selling category batch request with price filter:', priceFilter);
         const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(bestSellingData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, bestSellingData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...bestSellingData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -589,7 +822,16 @@ serve(async (req) => {
         console.log('Processing gifts for him category batch request with price filter:', priceFilter);
         const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(giftsForHimData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHimData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...giftsForHimData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -600,7 +842,16 @@ serve(async (req) => {
         console.log('Processing gifts under $50 category batch request with price filter:', priceFilter);
         const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(giftsUnder50Data), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsUnder50Data.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...giftsUnder50Data,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -611,7 +862,16 @@ serve(async (req) => {
         console.log(`Processing brand categories request for: ${query} with price filter:`, priceFilter);
         const brandData = await searchBrandCategories(api_key, query, page, limit, priceFilter);
         
-        return new Response(JSON.stringify(brandData), {
+        // Enrich with cached data
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, brandData.results);
+        const sortedProducts = sortByPopularity(enrichedProducts);
+        
+        return new Response(JSON.stringify({
+          ...brandData,
+          products: sortedProducts,
+          results: sortedProducts,
+          cacheStats: { hits: cacheHits, misses: cacheMisses }
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -718,12 +978,19 @@ serve(async (req) => {
         });
       }
 
+      // Enrich with cached data (ratings, reviews, images)
+      const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, filteredResults);
+      
+      // Sort by popularity (cached products with good data first)
+      const sortedProducts = sortByPopularity(enrichedProducts);
+
       return new Response(JSON.stringify({
-        products: filteredResults, // Changed from 'results' to 'products' for consistency
-        results: filteredResults,  // Keep 'results' for backward compatibility
-        total: filteredResults.length,
+        products: sortedProducts, // Changed from 'results' to 'products' for consistency
+        results: sortedProducts,  // Keep 'results' for backward compatibility
+        total: sortedProducts.length,
         originalTotal: data.total || 0,
-        priceFiltered: (filters?.min_price || filters?.max_price) ? true : false
+        priceFiltered: (filters?.min_price || filters?.max_price) ? true : false,
+        cacheStats: { hits: cacheHits, misses: cacheMisses }
       }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

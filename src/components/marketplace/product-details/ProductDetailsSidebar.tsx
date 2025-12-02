@@ -218,7 +218,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           
           <AccordionItem value="reviews" className="border-b-0">
             <AccordionTrigger className="text-base font-semibold text-elyphant-black hover:no-underline">
-              Reviews ({product.reviewCount || product.num_reviews || 0})
+              Reviews ({product.reviewCount || product.num_reviews || product.metadata?.review_count || 0})
             </AccordionTrigger>
             <AccordionContent>
               <ReviewsSection product={product} />

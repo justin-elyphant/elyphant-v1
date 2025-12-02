@@ -1,7 +1,7 @@
 import React from "react";
-import { Star } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { Product } from "@/types/product";
+import ProductRating from "@/components/shared/ProductRating";
 
 interface ProductPriceAndRatingProps {
   product: Product;
@@ -10,15 +10,9 @@ interface ProductPriceAndRatingProps {
 const ProductPriceAndRating: React.FC<ProductPriceAndRatingProps> = ({ product }) => {
   // Prefer current_price from offers API (stored in metadata), fallback to product.price
   const price = product.metadata?.current_price || product.price || 0;
-  const rating = product.rating || product.stars || 0;
-  const reviewCount = product.reviewCount || product.num_reviews || 0;
-  
-  const formatReviewCount = (count: number): string => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
-    }
-    return count.toString();
-  };
+  const rating = product.stars || product.rating || product.metadata?.stars || 0;
+  const reviewCount = product.reviewCount || product.num_reviews || 
+                      product.metadata?.review_count || 0;
   
   return (
     <div className="space-y-3">
@@ -31,19 +25,7 @@ const ProductPriceAndRating: React.FC<ProductPriceAndRatingProps> = ({ product }
       
       {/* Rating */}
       {rating > 0 && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            <Star className="h-4 w-4 text-elyphant-black fill-elyphant-black" />
-            <span className="ml-1 text-sm font-semibold text-elyphant-black">
-              {rating.toFixed(1)}
-            </span>
-          </div>
-          {reviewCount > 0 && (
-            <span className="text-sm text-elyphant-grey-text">
-              ({formatReviewCount(reviewCount)} reviews)
-            </span>
-          )}
-        </div>
+        <ProductRating rating={rating} reviewCount={reviewCount} size="md" />
       )}
     </div>
   );

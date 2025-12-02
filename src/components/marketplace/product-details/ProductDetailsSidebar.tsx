@@ -190,7 +190,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             onClick={handleAutoGift}
           >
             <Gift className="h-5 w-5 mr-2" />
-            Create AI Gift
+            AI Gifting
           </Button>
           
           {/* Position 4: Add to Cart - TERTIARY */}

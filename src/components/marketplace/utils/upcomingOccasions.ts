@@ -92,12 +92,6 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     {
-      name: "Green Monday",
-      searchTerm: "holiday deals",
-      date: new Date(2025, 11, 8, 23, 59, 59, 999), // December 8, 2025
-      type: "holiday"
-    },
-    {
       name: "Hanukkah Begins",
       searchTerm: "hanukkah gifts",
       date: new Date(2025, 11, 21, 23, 59, 59, 999), // December 21, 2025

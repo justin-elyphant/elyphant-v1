@@ -113,6 +113,9 @@ const ProductDetailsPage: React.FC = () => {
         };
         setProductDetail(enhancedProduct);
         setCurrentImages(getProductImages(enhancedProduct));
+        
+        // Signal marketplace to refresh with updated cache data
+        sessionStorage.setItem('marketplace-needs-refresh', 'true');
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);

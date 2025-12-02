@@ -286,6 +286,19 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     handleUrlSearch();
   }, [urlSearchTerm, category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Trigger on category changes too
 
+  // Check for marketplace refresh flag (set when user views product detail page)
+  useEffect(() => {
+    const needsRefresh = sessionStorage.getItem('marketplace-needs-refresh');
+    if (needsRefresh === 'true') {
+      sessionStorage.removeItem('marketplace-needs-refresh');
+      // Small delay to ensure component is fully mounted
+      setTimeout(() => {
+        console.log('[useUnifiedMarketplace] Refreshing after product detail view');
+        refresh();
+      }, 100);
+    }
+  }, []); // Only check on mount
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

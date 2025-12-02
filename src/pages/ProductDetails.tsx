@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { Product } from "@/types/product";
 import { getProductDetail } from "@/api/product";
-import { getProductName, getProductImages, standardizeProduct } from "@/components/marketplace/product-item/productUtils";
+import { getProductName, getProductImages } from "@/components/marketplace/product-item/productUtils";
 import ProductImageGallery from "@/components/marketplace/product-details/ProductImageGallery";
 import ProductDetailsSidebar from "@/components/marketplace/product-details/ProductDetailsSidebar";
 import { Spinner } from "@/components/ui/spinner";
@@ -40,19 +40,25 @@ const ProductDetailsPage: React.FC = () => {
     isVariationComplete
   } = useProductVariations(productDetail);
   
-  // Fetch product details on mount - ALWAYS call to ensure caching
+  // Fetch product details on mount
   useEffect(() => {
-    // If we have navigation state, show it immediately for instant UI
     if (product) {
-      setProductDetail(product);
-      setCurrentImages(getProductImages(product));
-    }
-    
-    // ALWAYS call get-product-detail to ensure the product is cached in database
-    // This enables smart sorting on marketplace return - the edge function is cache-first efficient
-    const productId = product?.product_id || product?.id || id;
-    if (productId && String(productId).trim() !== "") {
-      fetchProductDetail(String(productId), 'amazon');
+      // Check if we need to enhance the product data
+      const productId = product.product_id || product.id;
+      const needsEnhancement = product && 
+        (!product.images || product.images.length <= 1) && 
+        productId && 
+        String(productId).trim() !== "";
+      
+      if (needsEnhancement) {
+        fetchProductDetail(String(productId), 'amazon');
+      } else {
+        setProductDetail(product);
+        setCurrentImages(getProductImages(product));
+        setLoading(false);
+      }
+    } else if (id) {
+      fetchProductDetail(id, 'amazon');
     }
   }, [product, id]);
   
@@ -99,22 +105,17 @@ const ProductDetailsPage: React.FC = () => {
           toast.error('Product details not available');
         }
       } else {
-        // SINGLE SOURCE OF TRUTH: Merge navigation state with API data, then standardize
-        // This preserves ratings from search results if API returns null
-        const mergedData = {
-          ...product,  // Navigation state first (may have rating data from search)
-          ...data,     // API data overrides
+        const enhancedProduct = {
+          ...data,
           product_id: productId,
+          isZincApiProduct: true,
           retailer: retailer || 'amazon'
         };
-        
-        // Use standardizeProduct for consistent field normalization
-        const enhancedProduct = standardizeProduct(mergedData);
-        
         setProductDetail(enhancedProduct);
         setCurrentImages(getProductImages(enhancedProduct));
         
         // Signal marketplace to refresh with updated cache data
+        // Store the search term from returnPath so marketplace can re-search with updated cache
         sessionStorage.setItem('marketplace-needs-refresh', 'true');
         const returnPath = location.state?.returnPath || '';
         const searchMatch = returnPath.match(/[?&]search=([^&]*)/);
@@ -123,12 +124,15 @@ const ProductDetailsPage: React.FC = () => {
         }
         
         // Store viewed product's rating data for immediate client-side merge
-        sessionStorage.setItem('marketplace-viewed-product', JSON.stringify({
+        // This bypasses database read-after-write latency on first "Back to Shop"
+        const dataAny = data as any;
+        const viewedProductData = {
           product_id: productId,
-          stars: enhancedProduct.stars || 0,
-          review_count: enhancedProduct.reviewCount || enhancedProduct.num_reviews || 0,
+          stars: dataAny.stars || data.rating || 0,
+          review_count: dataAny.review_count || dataAny.num_reviews || data.reviewCount || 0,
           is_cached: true
-        }));
+        };
+        sessionStorage.setItem('marketplace-viewed-product', JSON.stringify(viewedProductData));
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);
@@ -155,9 +159,7 @@ const ProductDetailsPage: React.FC = () => {
   
   if (!id) return null;
   
-  // Only show loading spinner when no product data exists at all
-  // If we have navigation state, show it immediately while API fetches in background
-  if (loading && !productDetail) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-elyphant-grey flex items-center justify-center">
         <Spinner />

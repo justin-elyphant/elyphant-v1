@@ -260,7 +260,7 @@ serve(async (req) => {
         brand: enhancedData.brand || null,
         category: enhancedData.categories?.[0] || null,
         last_refreshed_at: now.toISOString(),
-        freshness_score: 100,
+        freshness_score: 1.0,
         view_count: (cachedProduct?.view_count || 0) + 1,
         metadata: {
           // Store ALL rating/review data in metadata JSONB

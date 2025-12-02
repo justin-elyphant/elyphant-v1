@@ -8,7 +8,7 @@ import { getProductDetail } from "@/api/product";
 import { getProductName, getProductImages } from "@/components/marketplace/product-item/productUtils";
 import ProductImageGallery from "@/components/marketplace/product-details/ProductImageGallery";
 import ProductDetailsSidebar from "@/components/marketplace/product-details/ProductDetailsSidebar";
-import { Spinner } from "@/components/ui/spinner";
+import ProductDetailsSkeleton from "@/components/marketplace/product-details/ProductDetailsSkeleton";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
@@ -24,9 +24,11 @@ const ProductDetailsPage: React.FC = () => {
   const product = location.state?.product || null;
   const context = location.state?.context || 'marketplace';
   
-  const [productDetail, setProductDetail] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [currentImages, setCurrentImages] = useState<string[]>([]);
+  // Show partial data immediately from navigation state
+  const [productDetail, setProductDetail] = useState<Product | null>(product);
+  const [loading, setLoading] = useState(!product); // Only show loading if no initial data
+  const [enhancing, setEnhancing] = useState(false); // Background enhancement in progress
+  const [currentImages, setCurrentImages] = useState<string[]>(product ? getProductImages(product) : []);
   const [fetchingVariantImages, setFetchingVariantImages] = useState(false);
   const [displayedProduct, setDisplayedProduct] = useState<Product | null>(null);
   
@@ -43,7 +45,7 @@ const ProductDetailsPage: React.FC = () => {
   // Fetch product details on mount
   useEffect(() => {
     if (product) {
-      // Check if we need to enhance the product data
+      // We have partial data - show it immediately
       const productId = product.product_id || product.id;
       const needsEnhancement = product && 
         (!product.images || product.images.length <= 1) && 
@@ -51,14 +53,17 @@ const ProductDetailsPage: React.FC = () => {
         String(productId).trim() !== "";
       
       if (needsEnhancement) {
-        fetchProductDetail(String(productId), 'amazon');
+        // Enhance in background without blocking UI
+        setEnhancing(true);
+        fetchProductDetail(String(productId), 'amazon', false);
       } else {
         setProductDetail(product);
         setCurrentImages(getProductImages(product));
-        setLoading(false);
       }
     } else if (id) {
-      fetchProductDetail(id, 'amazon');
+      // No initial data - show skeleton and fetch
+      setLoading(true);
+      fetchProductDetail(id, 'amazon', true);
     }
   }, [product, id]);
   
@@ -93,8 +98,11 @@ const ProductDetailsPage: React.FC = () => {
     fetchVariantImages();
   }, [selectedProductId, productDetail, hasVariations]);
   
-  const fetchProductDetail = async (productId: string, retailer: string) => {
-    setLoading(true);
+  const fetchProductDetail = async (productId: string, retailer: string, showLoadingState: boolean) => {
+    if (showLoadingState) {
+      setLoading(true);
+    }
+    
     try {
       const data = await getProductDetail(productId, retailer);
       if (!data) {
@@ -143,6 +151,7 @@ const ProductDetailsPage: React.FC = () => {
       }
     } finally {
       setLoading(false);
+      setEnhancing(false);
     }
   };
   
@@ -159,11 +168,13 @@ const ProductDetailsPage: React.FC = () => {
   
   if (!id) return null;
   
-  if (loading) {
+  // Show skeleton only when we have no data at all
+  if (loading && !productDetail) {
     return (
-      <div className="min-h-screen bg-elyphant-grey flex items-center justify-center">
-        <Spinner />
-      </div>
+      <>
+        <UnifiedShopperHeader mode="main" />
+        <ProductDetailsSkeleton />
+      </>
     );
   }
   
@@ -215,7 +226,7 @@ const ProductDetailsPage: React.FC = () => {
             <ProductImageGallery 
               images={currentImages.length > 0 ? currentImages : getProductImages(productDetail)}
               productName={getProductName(productDetail)}
-              isLoading={fetchingVariantImages}
+              isLoading={fetchingVariantImages || enhancing}
             />
           </div>
           

@@ -40,25 +40,19 @@ const ProductDetailsPage: React.FC = () => {
     isVariationComplete
   } = useProductVariations(productDetail);
   
-  // Fetch product details on mount
+  // Fetch product details on mount - ALWAYS call to ensure caching
   useEffect(() => {
+    // If we have navigation state, show it immediately for instant UI
     if (product) {
-      // Check if we need to enhance the product data
-      const productId = product.product_id || product.id;
-      const needsEnhancement = product && 
-        (!product.images || product.images.length <= 1) && 
-        productId && 
-        String(productId).trim() !== "";
-      
-      if (needsEnhancement) {
-        fetchProductDetail(String(productId), 'amazon');
-      } else {
-        setProductDetail(product);
-        setCurrentImages(getProductImages(product));
-        setLoading(false);
-      }
-    } else if (id) {
-      fetchProductDetail(id, 'amazon');
+      setProductDetail(product);
+      setCurrentImages(getProductImages(product));
+    }
+    
+    // ALWAYS call get-product-detail to ensure the product is cached in database
+    // This enables smart sorting on marketplace return - the edge function is cache-first efficient
+    const productId = product?.product_id || product?.id || id;
+    if (productId && String(productId).trim() !== "") {
+      fetchProductDetail(String(productId), 'amazon');
     }
   }, [product, id]);
   
@@ -159,7 +153,9 @@ const ProductDetailsPage: React.FC = () => {
   
   if (!id) return null;
   
-  if (loading) {
+  // Only show loading spinner when no product data exists at all
+  // If we have navigation state, show it immediately while API fetches in background
+  if (loading && !productDetail) {
     return (
       <div className="min-h-screen bg-elyphant-grey flex items-center justify-center">
         <Spinner />

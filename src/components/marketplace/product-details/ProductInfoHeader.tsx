@@ -8,8 +8,9 @@ interface ProductInfoHeaderProps {
 
 const ProductInfoHeader = ({ product }: ProductInfoHeaderProps) => {
   // Handle both field naming conventions for compatibility
-  const rating = product.stars || product.rating || 0;
-  const reviewCount = product.review_count || product.reviewCount || 0;
+  const rating = product.stars || product.rating || product.metadata?.stars || 0;
+  const reviewCount = product.reviewCount || product.num_reviews || 
+                      product.metadata?.review_count || 0;
   
   return (
     <div>

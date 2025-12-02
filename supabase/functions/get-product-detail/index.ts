@@ -127,11 +127,13 @@ serve(async (req) => {
         if (daysSinceRefresh < CACHE_FRESHNESS_DAYS) {
           console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old`);
           
-          // Increment view count
-          await supabase
-            .from('products')
-            .update({ view_count: (cachedProduct.view_count || 0) + 1 })
-            .eq('product_id', product_id);
+          // Background update view count (non-blocking)
+          EdgeRuntime.waitUntil(
+            supabase
+              .from('products')
+              .update({ view_count: (cachedProduct.view_count || 0) + 1 })
+              .eq('product_id', product_id)
+          );
           
           // Return cached data with metadata fields extracted
           const enhancedData = {
@@ -156,32 +158,32 @@ serve(async (req) => {
         console.log(`[Cache MISS] Product ${product_id} - fetching from Zinc API`);
       }
       
-      // Fetch from Zinc API (either cache miss or stale)
-      const response = await fetch(`https://api.zinc.io/v1/products/${product_id}?retailer=${retailer}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${api_key}:`)
-        }
-      });
+      const authHeader = 'Basic ' + btoa(`${api_key}:`);
+      
+      // PARALLEL API CALLS: Fetch Product Details AND Offers simultaneously
+      const startTime = Date.now();
+      
+      const [productResponse, offersResponse] = await Promise.all([
+        fetch(`https://api.zinc.io/v1/products/${product_id}?retailer=${retailer}`, {
+          method: 'GET',
+          headers: { 'Authorization': authHeader }
+        }),
+        fetch(`https://api.zinc.io/v1/products/${product_id}/offers?retailer=${retailer}`, {
+          method: 'GET',
+          headers: { 'Authorization': authHeader }
+        }).catch(() => null) // Non-fatal if offers fail
+      ]);
+      
+      console.log(`[Zinc API] Parallel fetch completed in ${Date.now() - startTime}ms`);
 
-      const data = await response.json();
+      const data = await productResponse.json();
       
       console.log('Raw Zinc API response for product detail:', JSON.stringify(data, null, 2));
       
-      // PHASE 2A: Fetch Offers API for accurate current pricing
+      // Process offers response for accurate current pricing
       let currentPrice = data.price;
-      try {
-        const offersResponse = await fetch(
-          `https://api.zinc.io/v1/products/${product_id}/offers?retailer=${retailer}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Basic ' + btoa(`${api_key}:`)
-            }
-          }
-        );
-        
-        if (offersResponse.ok) {
+      if (offersResponse && offersResponse.ok) {
+        try {
           const offersData = await offersResponse.json();
           console.log('Offers API response:', JSON.stringify(offersData, null, 2));
           
@@ -199,10 +201,9 @@ serve(async (req) => {
             currentPrice = bestOffer.price;
             console.log(`[Offers API] Updated price from ${data.price} to ${currentPrice}`);
           }
+        } catch (offersError) {
+          console.log('Offers API parse error (non-fatal):', offersError);
         }
-      } catch (offersError) {
-        console.log('Offers API error (non-fatal):', offersError);
-        // Continue with original price if offers fetch fails
       }
       
       // Process best seller data for the product detail
@@ -298,22 +299,28 @@ serve(async (req) => {
         }
       };
       
-      // Upsert to products table
-      const { error: upsertError } = await supabase
-        .from('products')
-        .upsert(productPayload, { onConflict: 'product_id' });
-      
-      if (upsertError) {
-        console.error('Error upserting product to cache:', upsertError);
-        // Don't fail the request, just log the error
-      } else {
-        console.log(`[Cache UPDATED] Product ${product_id} stored with complete metadata`);
-      }
-
-      return new Response(JSON.stringify(enhancedData), {
+      // Return response immediately, then cache in background
+      const response = new Response(JSON.stringify(enhancedData), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+      
+      // BACKGROUND DB WRITE: Use waitUntil to not block response
+      EdgeRuntime.waitUntil(
+        (async () => {
+          const { error: upsertError } = await supabase
+            .from('products')
+            .upsert(productPayload, { onConflict: 'product_id' });
+          
+          if (upsertError) {
+            console.error('Error upserting product to cache:', upsertError);
+          } else {
+            console.log(`[Cache UPDATED] Product ${product_id} stored with complete metadata`);
+          }
+        })()
+      );
+
+      return response;
     } catch(error) {
       console.log('Error', error);
       return new Response(

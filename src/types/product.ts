@@ -20,6 +20,7 @@ export type Product = {
   rating?: number; // Alias for stars
   stars?: number;
   reviewCount?: number; // Alias for num_reviews
+  review_count?: number; // Zinc API field
   num_reviews?: number;
   
   // Optional fields that might be present in some products

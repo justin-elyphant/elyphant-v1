@@ -180,11 +180,12 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   };
 
   const getRating = () => {
-    return product.rating || product.stars || 0;
+    return product.stars || product.rating || product.metadata?.stars || 0;
   };
 
   const getReviewCount = () => {
-    return product.reviewCount || product.num_reviews || 0;
+    return product.review_count || product.reviewCount || product.num_reviews || 
+           product.metadata?.review_count || 0;
   };
 
   // Additional helper functions from other cards
@@ -476,6 +477,25 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 </button>
               )
             )}
+            
+            {/* Share Button */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <SocialShareButton
+                product={{
+                  id: productId,
+                  name: getProductTitle(),
+                  image: getProductImage(),
+                  price: product.price,
+                  brand: product.brand || "",
+                }}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "rounded-full",
+                  isMobile ? "min-w-[44px] min-h-[44px]" : "w-9 h-9"
+                )}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -15,50 +15,84 @@ export const generateDynamicButtonText = (
     return "Shop Gifts";
   }
 
-  // For friend events with authenticated users
-  if (isAuthenticated && friendName && targetEvent.personName) {
-    return `Shop Gifts for ${friendName}`;
+  // For friend-specific events (connection events), personalize the button
+  if (friendName && (targetEvent.personName || targetEvent.type === 'birthday' || targetEvent.type === 'anniversary')) {
+    const firstName = friendName.split(' ')[0];
+    if (targetEvent.type === 'birthday') {
+      return `Shop ${firstName}'s Birthday Gift`;
+    }
+    if (targetEvent.type === 'anniversary') {
+      return `Shop ${firstName}'s Anniversary Gift`;
+    }
+    return `Shop ${firstName}'s Gift`;
   }
 
-  // For holidays - extract the holiday name and format it properly
-  const eventName = targetEvent.name;
+  // For holiday events, use the holiday name
+  const eventName = targetEvent.name.toLowerCase();
   
-  // Handle common holiday patterns
-  if (eventName.toLowerCase().includes("father's day")) {
-    return "Shop Father's Day Gifts";
+  // Check for connection event patterns (e.g., "Emma's Birthday")
+  if (eventName.includes("'s birthday")) {
+    const name = targetEvent.name.split("'s")[0];
+    return `Shop ${name}'s Birthday Gift`;
   }
-  if (eventName.toLowerCase().includes("mother's day")) {
-    return "Shop Mother's Day Gifts";
+  
+  if (eventName.includes("'s anniversary")) {
+    const name = targetEvent.name.split("'s")[0];
+    return `Shop ${name}'s Anniversary Gift`;
   }
-  if (eventName.toLowerCase().includes("christmas")) {
+  
+  if (eventName.includes("holiday gifts")) {
+    return "Shop Holiday Gifts";
+  }
+  
+  if (eventName.includes("hanukkah")) {
+    return "Shop Hanukkah Gifts";
+  }
+  
+  if (eventName.includes("christmas")) {
     return "Shop Christmas Gifts";
   }
-  if (eventName.toLowerCase().includes("valentine")) {
+  
+  if (eventName.includes("valentine")) {
     return "Shop Valentine's Day Gifts";
   }
-  if (eventName.toLowerCase().includes("birthday")) {
+  
+  if (eventName.includes("mother")) {
+    return "Shop Mother's Day Gifts";
+  }
+  
+  if (eventName.includes("father")) {
+    return "Shop Father's Day Gifts";
+  }
+  
+  if (eventName.includes("black friday")) {
+    return "Shop Black Friday Deals";
+  }
+  
+  if (eventName.includes("cyber monday")) {
+    return "Shop Cyber Monday Deals";
+  }
+  
+  if (eventName.includes("birthday")) {
     return isAuthenticated && friendName 
       ? `Shop Birthday Gifts for ${friendName}`
       : "Shop Birthday Gifts";
   }
-  if (eventName.toLowerCase().includes("anniversary")) {
+  
+  if (eventName.includes("anniversary")) {
     return "Shop Anniversary Gifts";
   }
-  if (eventName.toLowerCase().includes("graduation")) {
+  
+  if (eventName.includes("graduation")) {
     return "Shop Graduation Gifts";
   }
-  if (eventName.toLowerCase().includes("wedding")) {
+  
+  if (eventName.includes("wedding")) {
     return "Shop Wedding Gifts";
-  }
-  if (eventName.toLowerCase().includes("holiday gifts")) {
-    return "Shop Holiday Gifts";
-  }
-  if (eventName.toLowerCase().includes("hanukkah")) {
-    return "Shop Hanukkah Gifts";
   }
 
   // Generic format for other events
-  return `Shop ${eventName} Gifts`;
+  return `Shop ${targetEvent.name} Gifts`;
 };
 
 export const generateSearchQuery = (

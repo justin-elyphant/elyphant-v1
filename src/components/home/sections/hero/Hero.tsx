@@ -74,14 +74,14 @@ const Hero = () => {
       {/* Desktop Countdown Card */}
       {targetEvent && !isMobile && (
         <div className="absolute top-4 right-4 z-20 intersection-target safe-area-inset">
-          <GiftCountdown event={targetEvent} />
+          <GiftCountdown event={targetEvent} friendOccasions={friendOccasions} />
         </div>
       )}
 
       {/* Mobile Compact Countdown Banner */}
       {targetEvent && isMobile && (
         <div className="absolute top-0 left-0 right-0 z-20 safe-area-inset-top">
-          <GiftCountdown event={targetEvent} />
+          <GiftCountdown event={targetEvent} friendOccasions={friendOccasions} />
         </div>
       )}
 

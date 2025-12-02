@@ -68,12 +68,6 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     {
-      name: "Thanksgiving",
-      searchTerm: "thanksgiving gifts",
-      date: new Date(2025, 10, 27, 23, 59, 59, 999), // November 27, 2025 - Fourth Thursday in November
-      type: "holiday"
-    },
-    {
       name: "Black Friday",
       searchTerm: "black friday deals",
       date: new Date(2025, 10, 28, 23, 59, 59, 999), // November 28, 2025 - Day after Thanksgiving
@@ -92,9 +86,9 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     {
-      name: "Hanukkah Begins",
-      searchTerm: "hanukkah gifts",
-      date: new Date(2025, 11, 21, 23, 59, 59, 999), // December 21, 2025
+      name: "Holiday Gifts",
+      searchTerm: "holiday gifts",
+      date: new Date(2025, 11, 25, 23, 59, 59, 999), // December 25, 2025 - covers holiday shopping season
       type: "holiday"
     },
     {
@@ -142,9 +136,9 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
       type: "holiday"
     },
     {
-      name: "Thanksgiving",
-      searchTerm: "thanksgiving gifts",
-      date: new Date(2026, 10, 26, 23, 59, 59, 999), // November 26, 2026 - Fourth Thursday in November
+      name: "Holiday Gifts",
+      searchTerm: "holiday gifts",
+      date: new Date(2026, 11, 25, 23, 59, 59, 999), // December 25, 2026
       type: "holiday"
     }
   ];
@@ -166,6 +160,14 @@ export const getUpcomingOccasions = (): GiftOccasion[] => {
 export const getNextHoliday = (): GiftOccasion | null => {
   const occasions = getUpcomingOccasions();
   return occasions.find(occasion => occasion.type === "holiday") || null;
+};
+
+// Helper to get alternative holidays for toggling
+export const getAlternativeHolidays = (primaryHoliday: string): { name: string; searchTerm: string }[] => {
+  if (primaryHoliday === "Holiday Gifts") {
+    return [{ name: "Hanukkah Gifts", searchTerm: "hanukkah gifts" }];
+  }
+  return [];
 };
 
 // Helper to merge holiday and personal occasions

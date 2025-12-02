@@ -50,6 +50,12 @@ export const generateDynamicButtonText = (
   if (eventName.toLowerCase().includes("wedding")) {
     return "Shop Wedding Gifts";
   }
+  if (eventName.toLowerCase().includes("holiday gifts")) {
+    return "Shop Holiday Gifts";
+  }
+  if (eventName.toLowerCase().includes("hanukkah")) {
+    return "Shop Hanukkah Gifts";
+  }
 
   // Generic format for other events
   return `Shop ${eventName} Gifts`;

@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { Product } from "@/types/product";
 import { getProductDetail } from "@/api/product";
-import { getProductName, getProductImages } from "@/components/marketplace/product-item/productUtils";
+import { getProductName, getProductImages, standardizeProduct } from "@/components/marketplace/product-item/productUtils";
 import ProductImageGallery from "@/components/marketplace/product-details/ProductImageGallery";
 import ProductDetailsSidebar from "@/components/marketplace/product-details/ProductDetailsSidebar";
 import { Spinner } from "@/components/ui/spinner";
@@ -99,17 +99,22 @@ const ProductDetailsPage: React.FC = () => {
           toast.error('Product details not available');
         }
       } else {
-        const enhancedProduct = {
-          ...data,
+        // SINGLE SOURCE OF TRUTH: Merge navigation state with API data, then standardize
+        // This preserves ratings from search results if API returns null
+        const mergedData = {
+          ...product,  // Navigation state first (may have rating data from search)
+          ...data,     // API data overrides
           product_id: productId,
-          isZincApiProduct: true,
           retailer: retailer || 'amazon'
         };
+        
+        // Use standardizeProduct for consistent field normalization
+        const enhancedProduct = standardizeProduct(mergedData);
+        
         setProductDetail(enhancedProduct);
         setCurrentImages(getProductImages(enhancedProduct));
         
         // Signal marketplace to refresh with updated cache data
-        // Store the search term from returnPath so marketplace can re-search with updated cache
         sessionStorage.setItem('marketplace-needs-refresh', 'true');
         const returnPath = location.state?.returnPath || '';
         const searchMatch = returnPath.match(/[?&]search=([^&]*)/);
@@ -118,15 +123,12 @@ const ProductDetailsPage: React.FC = () => {
         }
         
         // Store viewed product's rating data for immediate client-side merge
-        // This bypasses database read-after-write latency on first "Back to Shop"
-        const dataAny = data as any;
-        const viewedProductData = {
+        sessionStorage.setItem('marketplace-viewed-product', JSON.stringify({
           product_id: productId,
-          stars: dataAny.stars || data.rating || 0,
-          review_count: dataAny.review_count || dataAny.num_reviews || data.reviewCount || 0,
+          stars: enhancedProduct.stars || 0,
+          review_count: enhancedProduct.reviewCount || enhancedProduct.num_reviews || 0,
           is_cached: true
-        };
-        sessionStorage.setItem('marketplace-viewed-product', JSON.stringify(viewedProductData));
+        }));
       }
     } catch (error) {
       console.error('Error fetching product detail:', error);

@@ -322,13 +322,33 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           </span>
         </div>
 
-        {/* Rating - Subtle (Lululemon Style) */}
+        {/* Rating - Enhanced with Partial Stars */}
         {getRating() > 0 && (
-          <div className="flex items-center text-xs text-muted-foreground mb-2">
-            <Star className="h-3 w-3 text-muted-foreground fill-muted-foreground mr-1" />
-            <span>{getRating().toFixed(1)}</span>
+          <div className="flex items-center text-xs mb-2">
+            <div className="flex items-center mr-1">
+              {[...Array(5)].map((_, i) => {
+                const fillPercent = Math.min(100, Math.max(0, (getRating() - i) * 100));
+                
+                return (
+                  <div key={i} className="relative inline-block">
+                    <Star className="h-3 w-3 text-gray-300 fill-gray-300" />
+                    {fillPercent > 0 && (
+                      <div 
+                        className="absolute inset-0 overflow-hidden"
+                        style={{ width: `${fillPercent}%` }}
+                      >
+                        <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <span className="text-muted-foreground">{getRating().toFixed(1)}</span>
             {getReviewCount() > 0 && (
-              <span className="ml-1">({getReviewCount()})</span>
+              <span className="text-muted-foreground ml-1">
+                ({getReviewCount() >= 1000 ? `${(getReviewCount() / 1000).toFixed(1)}K` : getReviewCount()})
+              </span>
             )}
           </div>
         )}

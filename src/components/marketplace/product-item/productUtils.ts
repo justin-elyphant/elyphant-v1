@@ -209,10 +209,10 @@ export const standardizeProduct = (product: any): any => {
     category_name: product.category_name || product.category || "General",
     vendor: product.vendor || product.retailer || "Amazon",
     retailer: product.retailer || product.vendor || "Amazon",
-    rating: product.rating || product.stars || 4.5,
-    stars: product.stars || product.rating || 4.5,
-    reviewCount: product.reviewCount || product.num_reviews || 10,
-    num_reviews: product.num_reviews || product.reviewCount || 10,
+    rating: product.rating || product.stars || product.metadata?.stars || product.metadata?.rating || 0,
+    stars: product.stars || product.rating || product.metadata?.stars || product.metadata?.rating || 0,
+    reviewCount: product.reviewCount || product.num_reviews || product.metadata?.review_count || product.metadata?.num_reviews || 0,
+    num_reviews: product.num_reviews || product.reviewCount || product.metadata?.review_count || product.metadata?.num_reviews || 0,
     
     // Enhanced brand extraction - try multiple possible brand field names
     brand: product.brand || 

@@ -182,9 +182,14 @@ serve(async (req) => {
           const offersData = await offersResponse.json();
           console.log('Offers API response:', JSON.stringify(offersData, null, 2));
           
-          // Find best offer (first-party seller, available)
+          // Find best offer (prioritize NEW condition, then first-party seller, then any available)
           const bestOffer = offersData.offers?.find((offer: any) => 
-            offer.available && offer.seller?.first_party
+            offer.available && 
+            offer.seller?.first_party && 
+            (!offer.condition || offer.condition === 'New')
+          ) || offersData.offers?.find((offer: any) => 
+            offer.available && 
+            (!offer.condition || offer.condition === 'New')
           ) || offersData.offers?.[0];
           
           if (bestOffer?.price) {

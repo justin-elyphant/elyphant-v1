@@ -22,6 +22,7 @@ export interface SearchOptions {
   minPrice?: number;
   maxPrice?: number;
   silent?: boolean; // Prevent toasts for background searches
+  bypassCache?: boolean; // Force fresh fetch, skip frontend cache
 }
 
 export interface MarketplaceState {
@@ -138,11 +139,15 @@ class UnifiedMarketplaceService {
       }
     }
     
-    // Check cache first for other searches
-    if (this.isCacheValid(cacheKey)) {
+    // Check cache first for other searches (unless bypassCache is set)
+    if (!options.bypassCache && this.isCacheValid(cacheKey)) {
       const cached = this.cache.get(cacheKey)!;
       console.log(`[UnifiedMarketplaceService] Cache hit for: ${cacheKey}`);
       return cached.data;
+    }
+    
+    if (options.bypassCache) {
+      console.log(`[UnifiedMarketplaceService] Bypassing cache for refresh: ${cacheKey}`);
     }
 
     // Check if same request is already in progress

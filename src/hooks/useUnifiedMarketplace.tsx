@@ -299,7 +299,8 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       setTimeout(() => {
         if (currentSearchTerm) {
           console.log('[useUnifiedMarketplace] Refreshing after product detail view with term:', currentSearchTerm);
-          executeSearch(currentSearchTerm, { maxResults: 20 });
+          // Use bypassCache: true to skip frontend cache and get fresh data with updated cache enrichment
+          executeSearch(currentSearchTerm, { maxResults: 20, bypassCache: true });
         } else {
           console.log('[useUnifiedMarketplace] Refreshing after product detail view via handleUrlSearch');
           handleUrlSearch();

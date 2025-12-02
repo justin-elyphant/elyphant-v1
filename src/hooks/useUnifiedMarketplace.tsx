@@ -6,6 +6,38 @@ import { unifiedMarketplaceService, SearchOptions, MarketplaceState } from "@/se
 import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
 import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 
+/**
+ * Client-side popularity sort to match edge function logic
+ * Used after client-side merge to position newly-rated products correctly
+ */
+const sortByPopularityClientSide = (products: Product[]): Product[] => {
+  return [...products].sort((a, b) => {
+    const scoreA = calculateClientScore(a);
+    const scoreB = calculateClientScore(b);
+    return scoreB - scoreA;
+  });
+};
+
+const calculateClientScore = (product: Product): number => {
+  let score = 0;
+  const stars = product.stars || (product as any).rating || 0;
+  const reviewCount = product.review_count || (product as any).reviewCount || 0;
+  
+  // Having ratings is valuable (50 points)
+  if (stars > 0 && reviewCount > 0) score += 50;
+  
+  // High ratings boost score (up to 25 points)
+  if (stars >= 4) score += (stars - 3) * 25;
+  
+  // More reviews = more trusted (up to 25 points)
+  if (reviewCount > 0) score += Math.min(25, Math.log10(reviewCount + 1) * 10);
+  
+  // Cached products get priority (10 points)
+  if ((product as any).is_cached) score += 10;
+  
+  return score;
+};
+
 interface UseUnifiedMarketplaceOptions {
   autoLoadOnMount?: boolean;
   defaultSearchTerm?: string;
@@ -89,10 +121,12 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       if (viewedProductJson) {
         try {
           const viewedProduct = JSON.parse(viewedProductJson);
+          let didMerge = false;
           results = results.map((p: Product) => {
             // Merge rating data if this product matches and doesn't already have ratings
             if (p.product_id === viewedProduct.product_id && !p.stars && viewedProduct.stars > 0) {
               console.log(`[useUnifiedMarketplace] Client-side merge: injecting ratings for ${p.product_id}`);
+              didMerge = true;
               return {
                 ...p,
                 stars: viewedProduct.stars,
@@ -102,6 +136,13 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
             }
             return p;
           });
+          
+          // Re-sort products after merge to position newly-rated product correctly
+          if (didMerge) {
+            results = sortByPopularityClientSide(results);
+            console.log('[useUnifiedMarketplace] Re-sorted products after client-side merge');
+          }
+          
           sessionStorage.removeItem('marketplace-viewed-product');
         } catch (e) {
           console.warn('[useUnifiedMarketplace] Failed to parse viewed product data:', e);

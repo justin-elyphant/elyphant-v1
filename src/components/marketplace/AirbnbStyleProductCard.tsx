@@ -113,7 +113,11 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
       onClick();
     } else {
       navigate(`/marketplace/product/${productId}`, {
-        state: { product, context: context || 'marketplace' }
+        state: { 
+          product, 
+          context: context || 'marketplace',
+          returnPath: window.location.pathname + window.location.search
+        }
       });
     }
   };

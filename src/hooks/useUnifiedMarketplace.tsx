@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { Product } from "@/types/product";
 import { unifiedMarketplaceService, SearchOptions, MarketplaceState } from "@/services/marketplace/UnifiedMarketplaceService";
 import { extractBudgetFromNicoleContext } from "@/services/marketplace/nicoleContextUtils";
@@ -286,18 +286,27 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     handleUrlSearch();
   }, [urlSearchTerm, category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Trigger on category changes too
 
+  // Get location for detecting back navigation
+  const location = useLocation();
+
   // Check for marketplace refresh flag (set when user views product detail page)
   useEffect(() => {
     const needsRefresh = sessionStorage.getItem('marketplace-needs-refresh');
     if (needsRefresh === 'true') {
       sessionStorage.removeItem('marketplace-needs-refresh');
-      // Small delay to ensure component is fully mounted
+      // Use urlSearchTerm from URL params (more reliable than state.searchTerm)
+      const currentSearchTerm = urlSearchTerm || state.searchTerm;
       setTimeout(() => {
-        console.log('[useUnifiedMarketplace] Refreshing after product detail view');
-        refresh();
+        if (currentSearchTerm) {
+          console.log('[useUnifiedMarketplace] Refreshing after product detail view with term:', currentSearchTerm);
+          executeSearch(currentSearchTerm, { maxResults: 20 });
+        } else {
+          console.log('[useUnifiedMarketplace] Refreshing after product detail view via handleUrlSearch');
+          handleUrlSearch();
+        }
       }, 100);
     }
-  }, []); // Only check on mount
+  }, [location.pathname, location.search]); // Re-check when location changes (back navigation)
 
   // Cleanup on unmount
   useEffect(() => {

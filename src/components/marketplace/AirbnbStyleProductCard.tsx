@@ -181,20 +181,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   };
 
   const getRating = () => {
-    const rating = product.stars || product.rating || product.metadata?.stars || 0;
-    // Debug: Log rating data
-    if (getReviewCount() > 0) {
-      console.log('Product rating data:', {
-        productId: productId,
-        title: getProductTitle().substring(0, 30),
-        stars: product.stars,
-        rating: product.rating,
-        metadataStars: product.metadata?.stars,
-        finalRating: rating,
-        reviewCount: getReviewCount()
-      });
-    }
-    return rating;
+    return product.stars || product.rating || product.metadata?.stars || 0;
   };
 
   const getReviewCount = () => {

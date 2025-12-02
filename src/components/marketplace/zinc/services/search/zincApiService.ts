@@ -58,8 +58,9 @@ export const searchZincApi = async (
         images: product.images || [product.image || product.main_image],
         category: product.category,
         retailer: product.retailer || 'Amazon via Zinc',
-        rating: product.rating || product.stars,
-        review_count: product.review_count || product.num_reviews,
+        rating: product.rating || product.stars || 0,
+        stars: product.stars || product.rating || 0,
+        review_count: product.review_count || product.num_reviews || 0,
         url: product.url || product.product_url,
         brand: product.brand || '',
         availability: product.availability || 'in_stock'

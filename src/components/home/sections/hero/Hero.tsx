@@ -16,7 +16,7 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
-import heroThanksgivingImage from "@/assets/hero-thanksgiving.jpg";
+import heroChristmasImage from "@/assets/christmas-hero.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated will-change-transform"
         style={{
-          backgroundImage: `url('${heroThanksgivingImage}')`,
+          backgroundImage: `url('${heroChristmasImage}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'left center',
         }}

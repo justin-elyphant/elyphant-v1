@@ -138,11 +138,8 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
 
   const handleInputBlur = () => {
     setInputFocused(false);
-    setTimeout(() => {
-      if (!inputFocused) {
-        setShowSuggestions(false);
-      }
-    }, 150);
+    // Don't close on blur - let click-outside handler manage closing
+    // This prevents race conditions with selection clicks
   };
 
   const handleSearch = (e: React.FormEvent) => {

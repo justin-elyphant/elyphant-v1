@@ -200,17 +200,22 @@ class EnhancedZincApiService {
     console.log(`🎯 Query Enhancement:`, queryEnhancement);
     console.log(`🎯 Detected Category:`, detectedCategory);
     
-    // Generate cache key for enhanced caching
-    const cacheKey = `search_${query}_${page}_${limit}_${JSON.stringify(filters || {})}`;
+    // Generate cache key for enhanced caching (exclude bypassCache from key)
+    const { bypassCache, ...filtersForKey } = filters || {};
+    const cacheKey = `search_${query}_${page}_${limit}_${JSON.stringify(filtersForKey)}`;
     
-    // Check existing Map cache first (preserving existing cache as primary layer)
-    const cachedResult = this.cache.get(cacheKey);
-    if (cachedResult && (Date.now() - cachedResult.timestamp) < 30 * 60 * 1000) { // 30 minute TTL
-      console.log(`🎯 Cache HIT (Map): ${cacheKey}`);
-      return {
-        results: cachedResult.data,
-        cached: true
-      };
+    // Check existing Map cache first - UNLESS bypassCache is set
+    if (!bypassCache) {
+      const cachedResult = this.cache.get(cacheKey);
+      if (cachedResult && (Date.now() - cachedResult.timestamp) < 30 * 60 * 1000) { // 30 minute TTL
+        console.log(`🎯 Cache HIT (Map): ${cacheKey}`);
+        return {
+          results: cachedResult.data,
+          cached: true
+        };
+      }
+    } else {
+      console.log(`🎯 Bypassing enhancedZincApiService 30-min cache for: ${cacheKey}`);
     }
     
     // Special handling for category searches

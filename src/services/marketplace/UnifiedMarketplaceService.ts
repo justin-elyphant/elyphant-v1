@@ -354,9 +354,10 @@ class UnifiedMarketplaceService {
         }
         response = await enhancedZincApiService.searchBrandCategories(searchTerm, maxResults, searchOptions);
       } else if (searchTerm.trim()) {
-        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'} and filters:`, searchOptions);
+        console.log(`[UnifiedMarketplaceService] Executing standard search: "${searchTerm}" with price range: ${minPrice || 'any'}-${maxPrice || 'any'}, bypassCache: ${options.bypassCache}, and filters:`, searchOptions);
         // Removed toast notification to prevent "searching for" tokens from appearing during automatic searches
-        response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, searchOptions);
+        // Pass bypassCache through to enhancedZincApiService to skip its 30-min cache
+        response = await enhancedZincApiService.searchProducts(searchTerm, 1, maxResults, { ...searchOptions, bypassCache: options.bypassCache });
         
         // Enhanced diverse search strategy for Nicole context
         if (nicoleContext && nicoleContext.interests && nicoleContext.interests.length > 0) {

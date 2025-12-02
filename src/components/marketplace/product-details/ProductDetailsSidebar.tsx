@@ -102,7 +102,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   // 4. Create Auto-Gift
   const handleAutoGift = () => {
     if (!user) {
-      toast.error("Please sign in to create auto-gifts");
+      toast.error("Please sign in to create AI gifts");
       navigate("/auth");
       return;
     }
@@ -183,14 +183,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             Schedule as Gift
           </Button>
           
-          {/* Position 3: Create Auto-Gift - SECONDARY */}
+          {/* Position 3: Create AI Gift - SECONDARY */}
           <Button 
             variant="outline"
             className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
             onClick={handleAutoGift}
           >
             <Gift className="h-5 w-5 mr-2" />
-            Create Auto-Gift
+            Create AI Gift
           </Button>
           
           {/* Position 4: Add to Cart - TERTIARY */}

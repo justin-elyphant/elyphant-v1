@@ -332,27 +332,6 @@ class EnhancedZincApiService {
       // Enhance product data with best seller information
       let enhancedResults = data.results.map((product: any) => this.enhanceProductData(product));
 
-      // 🔍 DIAGNOSTIC: Log products WITH ratings from edge function cache enrichment
-      const productsWithRatings = enhancedResults.filter((p: any) => p.stars > 0 || p.review_count > 0);
-      console.log(`🔍 [DIAGNOSTIC] Products with ratings from edge function:`, {
-        totalProducts: enhancedResults.length,
-        productsWithRatings: productsWithRatings.length,
-        ratedProducts: productsWithRatings.map((p: any) => ({
-          product_id: p.product_id,
-          title: p.title?.substring(0, 40),
-          stars: p.stars,
-          review_count: p.review_count,
-          is_cached: p.is_cached
-        }))
-      });
-
-      // Debug logging for gender detection issue
-      console.log(`🔍 API Search Results for "${finalQuery}":`, {
-        totalResults: enhancedResults.length,
-        sampleTitles: enhancedResults.slice(0, 3).map(p => p.title),
-        allTitles: enhancedResults.map(p => p.title)
-      });
-
       // Phase 2: Apply smart filtering if we got more results than requested
       if (enhancedResults.length > limit && queryEnhancement.searchStrategy === 'multi-size') {
         // Smart product selection for better size distribution

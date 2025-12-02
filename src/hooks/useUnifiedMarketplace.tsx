@@ -294,8 +294,10 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     const needsRefresh = sessionStorage.getItem('marketplace-needs-refresh');
     if (needsRefresh === 'true') {
       sessionStorage.removeItem('marketplace-needs-refresh');
-      // Use urlSearchTerm from URL params (more reliable than state.searchTerm)
-      const currentSearchTerm = urlSearchTerm || state.searchTerm;
+      // Get search term from: 1) stored term from product detail, 2) URL params, 3) current state
+      const storedSearchTerm = sessionStorage.getItem('marketplace-refresh-term');
+      sessionStorage.removeItem('marketplace-refresh-term');
+      const currentSearchTerm = storedSearchTerm || urlSearchTerm || state.searchTerm;
       setTimeout(() => {
         if (currentSearchTerm) {
           console.log('[useUnifiedMarketplace] Refreshing after product detail view with term:', currentSearchTerm);

@@ -281,35 +281,32 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     }
   }, [state.searchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, executeSearch]);
 
-  // Handle URL parameter changes - use specific dependencies to avoid infinite loops
-  useEffect(() => {
-    handleUrlSearch();
-  }, [urlSearchTerm, category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]); // Trigger on category changes too
-
   // Get location for detecting back navigation
   const location = useLocation();
 
-  // Check for marketplace refresh flag (set when user views product detail page)
+  // Handle URL parameter changes - check for refresh flag first
   useEffect(() => {
+    // Check if we need to bypass cache (returning from product detail page)
     const needsRefresh = sessionStorage.getItem('marketplace-needs-refresh');
     if (needsRefresh === 'true') {
       sessionStorage.removeItem('marketplace-needs-refresh');
-      // Get search term from: 1) stored term from product detail, 2) URL params, 3) current state
       const storedSearchTerm = sessionStorage.getItem('marketplace-refresh-term');
       sessionStorage.removeItem('marketplace-refresh-term');
       const currentSearchTerm = storedSearchTerm || urlSearchTerm || state.searchTerm;
-      setTimeout(() => {
-        if (currentSearchTerm) {
-          console.log('[useUnifiedMarketplace] Refreshing after product detail view with term:', currentSearchTerm);
-          // Use bypassCache: true to skip frontend cache and get fresh data with updated cache enrichment
-          executeSearch(currentSearchTerm, { maxResults: 20, bypassCache: true });
-        } else {
-          console.log('[useUnifiedMarketplace] Refreshing after product detail view via handleUrlSearch');
-          handleUrlSearch();
-        }
-      }, 100);
+      
+      console.log('[useUnifiedMarketplace] Refreshing after product detail view with term:', currentSearchTerm);
+      if (currentSearchTerm) {
+        // Use bypassCache: true to skip frontend cache and get fresh data with updated cache enrichment
+        executeSearch(currentSearchTerm, { maxResults: 20, bypassCache: true });
+      } else {
+        handleUrlSearch();
+      }
+      return; // Don't run normal handleUrlSearch after refresh
     }
-  }, [location.pathname, location.search]); // Re-check when location changes (back navigation)
+    
+    // Normal URL search handling
+    handleUrlSearch();
+  }, [urlSearchTerm, category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType, location.pathname, location.search]);
 
   // Cleanup on unmount
   useEffect(() => {

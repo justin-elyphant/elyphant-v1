@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useImageGallery } from '@/hooks/useImageGallery';
@@ -22,7 +22,9 @@ const FullscreenImageModal = ({
 }: FullscreenImageModalProps) => {
   const isMobile = useIsMobile();
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     currentIndex,
@@ -49,10 +51,20 @@ const FullscreenImageModal = ({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Reset zoom when image changes
+  // Reset zoom and loading when image changes
   useEffect(() => {
     setIsZoomed(false);
+    setIsLoading(true);
   }, [currentIndex]);
+
+  // Center scroll container when zoomed
+  useEffect(() => {
+    if (isZoomed && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+      container.scrollTop = (container.scrollHeight - container.clientHeight) / 2;
+    }
+  }, [isZoomed]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -66,12 +78,13 @@ const FullscreenImageModal = ({
 
   // Touch handlers for swipe navigation
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isZoomed) return; // Don't swipe when zoomed
     const touch = e.touches[0];
     setTouchStart({ x: touch.clientX, y: touch.clientY });
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart) return;
+    if (!touchStart || isZoomed) return;
 
     const touch = e.changedTouches[0];
     const deltaX = touchStart.x - touch.clientX;
@@ -90,22 +103,28 @@ const FullscreenImageModal = ({
   };
 
   const handleImageClick = () => {
-    if (isMobile) {
-      setIsZoomed(!isZoomed);
-    }
+    setIsZoomed(!isZoomed);
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
   };
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex flex-col"
+      style={{ 
+        paddingTop: 'env(safe-area-inset-top)', 
+        paddingBottom: 'env(safe-area-inset-bottom)' 
+      }}
       onClick={onClose}
     >
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
-        <div className="text-white">
-          <h3 className="text-heading-4 truncate max-w-64">{productName}</h3>
+      {/* Header - Always visible with strong contrast */}
+      <div className="relative z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
+        <div className="text-white min-w-0 flex-1">
+          <h3 className="text-heading-4 truncate max-w-[70vw]">{productName}</h3>
           {totalImages > 1 && (
             <p className="text-body-sm text-white/70">
               {currentIndex + 1} of {totalImages}
@@ -113,56 +132,76 @@ const FullscreenImageModal = ({
           )}
         </div>
         
-        <div className="flex items-center gap-2">
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsZoomed(!isZoomed);
-              }}
-              className="text-white hover:bg-white/20"
-            >
-              {isZoomed ? <ZoomOut className="h-5 w-5" /> : <ZoomIn className="h-5 w-5" />}
-            </Button>
-          )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsZoomed(!isZoomed);
+            }}
+            className="text-white hover:bg-white/20 h-11 w-11"
+          >
+            {isZoomed ? <ZoomOut className="h-5 w-5" /> : <ZoomIn className="h-5 w-5" />}
+          </Button>
           
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 h-11 w-11"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      {/* Main Image Container */}
+      {/* Main Image Container - Viewport constrained */}
       <div 
-        className="absolute inset-0 flex items-center justify-center p-4 pt-20 pb-20"
+        className="flex-1 relative flex items-center justify-center px-4 md:px-16"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="relative max-w-full max-h-full">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="animate-pulse bg-white/10 rounded-lg w-64 h-64 md:w-96 md:h-96" />
+          </div>
+        )}
+
+        {/* Scrollable container for zoom */}
+        <div 
+          ref={scrollContainerRef}
+          className={`relative ${
+            isZoomed 
+              ? 'overflow-auto w-full h-full cursor-grab active:cursor-grabbing' 
+              : 'overflow-hidden flex items-center justify-center'
+          }`}
+          style={{ maxHeight: 'calc(100vh - 12rem)' }}
+        >
           <img
             src={getHighResAmazonImage(currentImage, 'fullscreen')}
             alt={`${productName} - Image ${currentIndex + 1}`}
-            className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
-              isZoomed ? 'scale-150 cursor-grab' : 'cursor-pointer'
+            className={`transition-all duration-300 ${
+              isLoading ? 'opacity-0' : 'opacity-100'
+            } ${
+              isZoomed 
+                ? 'w-[200%] max-w-none' 
+                : 'max-w-full max-h-[calc(100vh-12rem)] object-contain cursor-zoom-in'
             }`}
             onClick={handleImageClick}
+            onLoad={handleImageLoad}
             onError={(e) => {
               console.error(`Fullscreen image failed to load:`, currentImage);
               e.currentTarget.src = "/placeholder.svg";
+              setIsLoading(false);
             }}
           />
         </div>
 
-        {/* Navigation Arrows - Desktop only */}
-        {!isMobile && totalImages > 1 && (
+        {/* Navigation Arrows - 44px+ touch targets */}
+        {totalImages > 1 && (
           <>
             {hasPrevious && (
               <Button
@@ -172,9 +211,9 @@ const FullscreenImageModal = ({
                   e.stopPropagation();
                   goToPrevious();
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12"
+                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 h-12 w-12 md:h-14 md:w-14 rounded-full"
               >
-                <ChevronLeft className="h-8 w-8" />
+                <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
               </Button>
             )}
             
@@ -186,18 +225,18 @@ const FullscreenImageModal = ({
                   e.stopPropagation();
                   goToNext();
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12"
+                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 h-12 w-12 md:h-14 md:w-14 rounded-full"
               >
-                <ChevronRight className="h-8 w-8" />
+                <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
               </Button>
             )}
           </>
         )}
       </div>
 
-      {/* Bottom Thumbnail Strip - for multiple images */}
+      {/* Bottom Thumbnail Strip - Monochromatic styling */}
       {totalImages > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="relative z-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
           <div className="flex justify-center gap-2 p-4 overflow-x-auto">
             {images.map((img, index) => (
               <button
@@ -206,9 +245,9 @@ const FullscreenImageModal = ({
                   e.stopPropagation();
                   goToIndex(index);
                 }}
-                className={`flex-shrink-0 w-16 h-16 rounded border-2 transition-all ${
+                className={`flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded border-2 transition-all ${
                   index === currentIndex
-                    ? 'border-primary'
+                    ? 'border-white'
                     : 'border-white/30 hover:border-white/60'
                 }`}
               >

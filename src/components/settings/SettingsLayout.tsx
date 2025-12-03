@@ -27,6 +27,12 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 
   const handleBackToNavigation = () => {
     onTabChange("");
+    window.scrollTo(0, 0);
+  };
+
+  const handleTabChange = (tab: string) => {
+    onTabChange(tab);
+    window.scrollTo(0, 0);
   };
 
   const getActiveTabLabel = () => {
@@ -38,7 +44,7 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
     <div className="container max-w-5xl mx-auto py-6 md:py-8 px-4">
       {showCardNavigation ? (
         // Card-based navigation for mobile/tablet (and desktop)
-        <SettingsCardNavigation onSelectSection={onTabChange} />
+        <SettingsCardNavigation onSelectSection={handleTabChange} />
       ) : (
         // Section content view with back button
         <div className="space-y-6">
@@ -57,7 +63,7 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 
           {/* Desktop horizontal tabs (hidden on mobile/tablet) */}
           <div className="hidden lg:block">
-            <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="mb-6 w-full max-w-lg">
                 {tabs.map((tab) => (
                   <TabsTrigger

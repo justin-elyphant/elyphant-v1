@@ -264,6 +264,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                       key={product.product_id || product.id}
                       product={product}
                       onProductClick={() => navigate(`/product/${product.product_id || product.id}`)}
+                      context="wishlist"
                     />
                   ))}
                 </div>

@@ -56,7 +56,10 @@ import { toast } from 'sonner';
 import { useCheckoutState } from '@/components/marketplace/checkout/useCheckoutState';
 import CheckoutOrderSummary from './CheckoutOrderSummary';
 import CheckoutShippingReview from './CheckoutShippingReview';
+import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { triggerHapticFeedback, HapticPatterns } from '@/utils/haptics';
 
 /*
  * 🎯 CORE CHECKOUT COMPONENT
@@ -74,6 +77,7 @@ const UnifiedCheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, clearCart, deliveryGroups, getItemsByRecipient, updateRecipientAssignment } = useCart();
+  const isMobile = useIsMobile();
   
   // CRITICAL: This hook manages all checkout state and validation
   const {
@@ -536,21 +540,33 @@ const UnifiedCheckoutForm: React.FC = () => {
         </div>
       )}
     <div className="w-full max-w-full overflow-x-hidden">
-      <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container checkout-content-spacing">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+      {/* iOS-Style Sticky Header */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="flex items-center gap-3 py-4">
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => navigate('/cart')}
-              className="p-1 h-8 w-8"
+              size="icon"
+              onClick={() => {
+                triggerHapticFeedback(HapticPatterns.navigationTap);
+                navigate('/cart');
+              }}
+              className="h-11 w-11 touch-target-44"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl sm:text-3xl font-bold">Checkout</h1>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold">Checkout</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">Review your order and complete payment</p>
+            </div>
           </div>
-          <p className="text-muted-foreground ml-11">Review your order and complete payment</p>
+          
+          {/* Lululemon-style Step Indicator */}
+          <CheckoutProgressIndicator currentStep="shipping" />
         </div>
+      </div>
+      
+      <div className="container mx-auto px-4 py-6 max-w-4xl mobile-container pb-40 lg:pb-8">
 
         <div className="w-full max-w-full grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Checkout Content - Mobile: Stack vertically */}
@@ -643,6 +659,38 @@ const UnifiedCheckoutForm: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Sticky Bottom CTA Bar - Mobile Only */}
+      {isMobile && (
+        <div className="fixed bottom-20 left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40">
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-lg font-bold">
+                {isLoadingShipping ? 'Calculating...' : `$${totalAmount.toFixed(2)}`}
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                triggerHapticFeedback(HapticPatterns.buttonTap);
+                createCheckoutSession();
+              }}
+              disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
+              className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
+              size="lg"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );

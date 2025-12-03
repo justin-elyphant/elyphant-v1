@@ -44,9 +44,9 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   return (
     <Card className="w-full lg:sticky lg:top-6">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShoppingBag className="h-5 w-5" />
-          Order Summary
+        <CardTitle className="flex items-center justify-between">
+          <span>Order Summary</span>
+          <span className="text-sm font-normal text-muted-foreground">{items.length} item{items.length !== 1 ? 's' : ''}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

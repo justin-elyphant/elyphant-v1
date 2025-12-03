@@ -246,7 +246,7 @@ const Cart = () => {
       <ZincMetadataDebugger />
       <div className={cn(
         "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing",
-        isMobile && cartItems.length > 0 ? "pb-28" : "py-8"
+        isMobile && cartItems.length > 0 ? "pb-40" : "py-8"
       )}>
         {/* Sticky Header with Backdrop Blur - iOS Style */}
         <div className={cn(
@@ -597,9 +597,9 @@ const Cart = () => {
           />
         )}
         
-        {/* Sticky Bottom CTA Bar - Mobile Only */}
+        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Above Bottom Nav */}
         {isMobile && cartItems.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-50 pb-safe">
+          <div className="fixed bottom-16 left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40">
             <div className="flex items-center justify-between gap-4 p-4">
               <div>
                 <p className="text-xs text-muted-foreground">Total</p>

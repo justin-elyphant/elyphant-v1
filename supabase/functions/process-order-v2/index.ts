@@ -340,85 +340,9 @@ serve(async (req) => {
 
     console.log(`✅ Order ${orderId} updated to processing status`);
 
-    // STEP 10: Queue order confirmation email with fallback
-    try {
-      console.log('📧 Queueing order confirmation email...');
-      
-      // Derive email with fallback chain
-      const toEmail = order.shipping_address?.email || order.customer_email || profile?.email || null;
-      const recipientName = requiredShippingFields.name || profile?.name || 'Customer';
-      
-      console.log(`[email-queue] toEmail=${toEmail} order=${order.order_number}`);
-      
-      if (!toEmail) {
-        console.warn(`⚠️ No recipient email for ${order.order_number} – skipping email queue`);
-      } else {
-        // Calculate pricing breakdown
-        const subtotal = itemsArray.reduce((sum: number, item: any) => {
-          const unitPrice = item.price || item.unit_price || 0;
-          const qty = item.quantity || 1;
-          return sum + (unitPrice * qty);
-        }, 0);
-        
-        const shippingCost = 6.99;
-        const giftingFee = (subtotal * 0.10) + 1.00;
-        const taxAmount = subtotal * 0.0875; // 8.75% tax rate
-        
-        const { error: emailError } = await supabase
-          .from('email_queue')
-          .insert({
-            recipient_email: toEmail,
-            recipient_name: recipientName,
-            event_type: 'order_confirmation',
-            template_variables: {
-              order_number: order.order_number,
-              order_id: orderId,
-              customer_name: recipientName,
-              total_amount: order.total_amount,
-              currency: order.currency || 'USD',
-              scheduled_delivery_date: order.scheduled_delivery_date || null,
-              gift_message: order.gift_options?.giftMessage || null,
-              is_gift: order.gift_options?.isGift || false,
-              subtotal: subtotal,
-              shipping_cost: shippingCost,
-              tax_amount: taxAmount,
-              gifting_fee: giftingFee,
-              items: itemsArray.map((item: any) => {
-                const imageUrl = item.image_url || item.image || '';
-                console.log(`📧 [Email] Product: ${item.title?.substring(0, 30)}... | Image: ${imageUrl ? 'Yes' : 'Missing'}`);
-                return {
-                  title: item.title,
-                  quantity: item.quantity || 1,
-                  price: item.price || item.unit_price || 0,
-                  currency: order.currency || 'USD',
-                  image_url: imageUrl,
-                };
-              }),
-            },
-            priority: 'high',
-            scheduled_for: new Date().toISOString(),
-            status: 'pending',
-          });
-
-        if (emailError) {
-          console.error('⚠️ Failed to queue confirmation email:', emailError);
-          // Don't fail the order if email queue fails
-        } else {
-          console.log('✅ Order confirmation email queued');
-          
-          // Auto-kick email queue processor (dev helper - non-blocking)
-          try {
-            await supabase.functions.invoke('process-email-queue?force=true');
-            console.log('[email-queue] Auto-kicked email processor');
-          } catch (kickError) {
-            console.log('[email-queue] Auto-kick failed (non-blocking):', kickError?.message || kickError);
-          }
-        }
-      }
-    } catch (emailErr) {
-      console.error('⚠️ Error queueing confirmation email:', emailErr);
-      // Don't fail the order if email queue fails
-    }
+    // NOTE: Order confirmation email is sent by stripe-webhook-v2, not here
+    // This prevents duplicate emails (webhook sends on order creation, before Zinc processing)
+    console.log('📧 Order confirmation email handled by stripe-webhook-v2');
 
     return new Response(
       JSON.stringify({ 

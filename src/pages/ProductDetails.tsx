@@ -90,22 +90,21 @@ const ProductDetailsPage: React.FC = () => {
           const variantImages = getProductImages(variantData);
           setCurrentImages(variantImages);
           
-          // Normalize price - Zinc returns cents, convert to dollars if needed
-          let normalizedPrice = variantData.price;
-          if (variantData.price && Number.isInteger(variantData.price) && variantData.price >= 100) {
-            // Likely cents, convert to dollars
-            normalizedPrice = variantData.price / 100;
-          }
+          // FIXED: Zinc Product Detail API returns prices in DOLLARS, not cents
+          // The price should be used as-is without conversion
+          const variantPrice = variantData.price || productDetail.price || 0;
           
-          // Update displayedProduct with variant data (including correct image and normalized price)
+          // Update displayedProduct with variant data (including correct image and price)
+          // Set skipCentsDetection to prevent formatPrice from re-converting dollars to cents
           setDisplayedProduct({
             ...productDetail,
             ...variantData,
             product_id: selectedProductId,
             image: variantImages[0] || productDetail.image,
             images: variantImages,
-            price: normalizedPrice, // Use normalized price to prevent double conversion
-            skipCentsDetection: true // Flag to prevent standardizeProduct from converting again
+            price: variantPrice, // Use price directly - Zinc Detail API returns dollars
+            skipCentsDetection: true, // Prevent cart from re-converting this price
+            isZincApiProduct: false // Override to prevent cents conversion in cart
           });
         }
       } catch (error) {
@@ -137,7 +136,8 @@ const ProductDetailsPage: React.FC = () => {
         const enhancedProduct = {
           ...data,
           product_id: productId,
-          isZincApiProduct: true,
+          isZincApiProduct: false, // FIXED: Zinc Detail API returns dollars, not cents
+          skipCentsDetection: true, // Prevent cart from converting price
           retailer: retailer || 'amazon'
         };
         setProductDetail(enhancedProduct);

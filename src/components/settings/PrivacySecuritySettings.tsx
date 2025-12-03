@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
 import { SessionManagement } from "./SessionManagement";
 import { ActiveSessionsCard } from "./ActiveSessionsCard";
-import { TrustedDevicesCard } from "./TrustedDevicesCard";
 
 const PrivacySecuritySettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -154,9 +153,6 @@ const PrivacySecuritySettings: React.FC = () => {
 
       {/* Active Sessions Management */}
       <ActiveSessionsCard />
-
-      {/* Trusted Devices */}
-      <TrustedDevicesCard />
 
       {/* Session Management - Phase 2 Enterprise Feature */}
       <SessionManagement />

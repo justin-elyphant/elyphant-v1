@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
 import { SessionManagement } from "./SessionManagement";
 import { ActiveSessionsCard } from "./ActiveSessionsCard";
-import { TrustedDevicesCard } from "./TrustedDevicesCard";
 import DataSharingSectionWrapper from "./DataSharingSectionWrapper";
 
 const PrivacySharingSettings: React.FC = () => {
@@ -158,9 +157,6 @@ const PrivacySharingSettings: React.FC = () => {
 
       {/* Active Sessions Management */}
       <ActiveSessionsCard />
-
-      {/* Trusted Devices */}
-      <TrustedDevicesCard />
 
       {/* Session Management - Phase 2 Enterprise Feature */}
       <SessionManagement />

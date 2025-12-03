@@ -11,6 +11,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+import SimpleRecipientSelector, { SelectedRecipient } from "./SimpleRecipientSelector";
 
 interface ScheduleGiftModalProps {
   open: boolean;
@@ -25,8 +27,14 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
 }) => {
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [giftMessage, setGiftMessage] = useState("");
+  const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  
+  // Get user's address from profile
+  const userAddress = profile?.shipping_address;
+  const userName = profile?.name || "Myself";
   
   const handleSchedule = () => {
     if (!scheduledDate) {
@@ -34,19 +42,54 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
       return;
     }
     
+    // Build recipient assignment based on selection
+    let recipientAssignment: any = {
+      scheduledDeliveryDate: scheduledDate.toISOString()
+    };
+    
+    if (giftMessage) {
+      recipientAssignment.giftMessage = giftMessage;
+    }
+    
+    if (selectedRecipient) {
+      if (selectedRecipient.type === 'self') {
+        recipientAssignment = {
+          ...recipientAssignment,
+          connectionId: 'self',
+          connectionName: userName,
+          shippingAddress: selectedRecipient.shippingAddress
+        };
+      } else if (selectedRecipient.type === 'connection' && selectedRecipient.connectionId) {
+        recipientAssignment = {
+          ...recipientAssignment,
+          connectionId: selectedRecipient.connectionId,
+          connectionName: selectedRecipient.connectionName,
+          shippingAddress: selectedRecipient.shippingAddress
+        };
+      }
+      // For 'later' type, we just keep the date and message
+    }
+    
     // Add to cart with scheduled delivery metadata
     addToCart({
       ...product,
       deliveryGroup: {
-        scheduledDeliveryDate: scheduledDate.toISOString()
+        scheduledDeliveryDate: scheduledDate.toISOString(),
+        connectionId: selectedRecipient?.connectionId,
+        connectionName: selectedRecipient?.connectionName
       },
-      recipientAssignment: giftMessage ? {
-        giftMessage: giftMessage
-      } : undefined
+      recipientAssignment
     } as any);
     
+    // Build success message
+    const recipientText = selectedRecipient?.type === 'self' 
+      ? `to ${userName}` 
+      : selectedRecipient?.type === 'connection' 
+        ? `to ${selectedRecipient.connectionName}`
+        : '';
+    
     toast.success("Gift scheduled!", {
-      description: `Will be delivered on ${format(scheduledDate, 'PPP')}`,
+      description: `Will be delivered ${recipientText} on ${format(scheduledDate, 'PPP')}`.trim(),
       action: {
         label: "View Cart",
         onClick: () => navigate("/cart")
@@ -54,23 +97,44 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
     });
     
     onOpenChange(false);
+    resetForm();
+  };
+  
+  const resetForm = () => {
     setScheduledDate(undefined);
     setGiftMessage("");
+    setSelectedRecipient(null);
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      onOpenChange(isOpen);
+      if (!isOpen) resetForm();
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-elyphant-black">
+          <DialogTitle className="text-xl font-bold text-foreground">
             Schedule Gift Delivery
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 pt-4">
-          {/* Date Picker */}
+          {/* Step 1: Recipient Selection */}
           <div>
-            <label className="text-sm font-semibold text-elyphant-black mb-2 block">
+            <label className="text-sm font-semibold text-foreground mb-2 block">
+              Who is this gift for?
+            </label>
+            <SimpleRecipientSelector
+              value={selectedRecipient}
+              onChange={setSelectedRecipient}
+              userAddress={userAddress}
+              userName={userName}
+            />
+          </div>
+          
+          {/* Step 2: Date Picker */}
+          <div>
+            <label className="text-sm font-semibold text-foreground mb-2 block">
               Delivery Date
             </label>
             <Popover>
@@ -93,14 +157,15 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
                   onSelect={setScheduledDate}
                   disabled={(date) => date < new Date()}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
           
-          {/* Gift Message */}
+          {/* Step 3: Gift Message */}
           <div>
-            <label className="text-sm font-semibold text-elyphant-black mb-2 block">
+            <label className="text-sm font-semibold text-foreground mb-2 block">
               Gift Message (Optional)
             </label>
             <Textarea
@@ -111,7 +176,7 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
               rows={3}
               className="resize-none"
             />
-            <p className="text-xs text-elyphant-grey-text mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {giftMessage.length}/200 characters
             </p>
           </div>
@@ -126,7 +191,7 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
               Cancel
             </Button>
             <Button 
-              className="flex-1 h-11 bg-elyphant-accent hover:bg-elyphant-accent/90 text-white"
+              className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
               onClick={handleSchedule}
             >
               Schedule Gift

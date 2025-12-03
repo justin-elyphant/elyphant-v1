@@ -94,33 +94,60 @@ serve(async (req) => {
         }
 
         const zincData = await zincResponse.json();
+        console.log(`📋 Zinc response for ${order.id}:`, JSON.stringify(zincData).substring(0, 500));
         
         // Update order based on Zinc status
         const updates: any = {
           updated_at: new Date().toISOString(),
         };
 
+        // Parse Zinc response - handle actual API structure
+        // Zinc returns: _type: 'order_response', merchant_order_ids: [{merchant_order_id, tracking_url}], delivery_dates: [{date}]
+        const isSuccessful = zincData._type === 'order_response' ||
+          zincData.status_updates?.some((u: any) => u.type === 'request.finished' && u.data?.success);
+        
+        // Extract merchant order ID from correct nested location
+        const merchantOrderId = zincData.merchant_order_ids?.[0]?.merchant_order_id ||
+          zincData.merchant_order_id;
+        
+        // Extract delivery date from correct location
+        const estimatedDelivery = zincData.delivery_dates?.[0]?.date ||
+          zincData.tracking?.estimated_delivery;
+        
+        // Extract tracking info
+        const trackingUrl = zincData.merchant_order_ids?.[0]?.tracking_url ||
+          zincData.tracking?.tracking_url;
+        
+        const trackingNumber = zincData.tracking?.tracking_number;
+        
+        // Check for failed status
+        const isFailed = zincData.code === 'failed' || zincData.code === 'cancelled' ||
+          zincData._type === 'error';
+
         // NEW: If we found the order via polling (webhook timeout), populate zinc_order_id
-        if (isWebhookTimeout && zincData.merchant_order_id) {
+        if (isWebhookTimeout && merchantOrderId) {
           console.log(`🔄 WEBHOOK TIMEOUT RECOVERY: Found order via polling for ${order.id}`);
-          updates.zinc_order_id = zincData.merchant_order_id;
+          updates.zinc_order_id = merchantOrderId;
           updates.webhook_received_at = null; // Indicate this was caught by polling, not webhook
           
           // Add metadata about recovery method
           updates.notes = order.notes 
             ? `${order.notes} | Recovered via polling (webhook timeout)` 
             : 'Recovered via polling (webhook timeout)';
-          
-          results.updated.push(order.id);
         }
 
-        if (zincData.code === 'order_placed') {
+        if (isSuccessful && merchantOrderId) {
           updates.status = 'shipped';
-          updates.zinc_order_id = zincData.merchant_order_id;
-          updates.tracking_number = zincData.tracking?.tracking_number;
-          updates.estimated_delivery = zincData.tracking?.estimated_delivery;
+          updates.zinc_order_id = merchantOrderId;
+          if (trackingNumber) updates.tracking_number = trackingNumber;
+          if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
+          if (trackingUrl) {
+            // Store tracking URL in notes or a dedicated field
+            const trackingNote = `Tracking: ${trackingUrl}`;
+            updates.notes = updates.notes ? `${updates.notes} | ${trackingNote}` : trackingNote;
+          }
           
-          console.log(`✅ Order ${order.id} placed with merchant`);
+          console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
           results.updated.push(order.id);
         } 
         else if (zincData.code === 'delivered') {
@@ -130,12 +157,15 @@ serve(async (req) => {
           console.log(`📬 Order ${order.id} delivered`);
           results.updated.push(order.id);
         }
-        else if (zincData.code === 'failed' || zincData.code === 'cancelled') {
+        else if (isFailed) {
           updates.status = 'failed';
-          updates.notes = zincData.message || 'Order failed in Zinc';
+          updates.notes = zincData.message || zincData.error?.message || 'Order failed in Zinc';
           
-          console.log(`❌ Order ${order.id} failed in Zinc`);
+          console.log(`❌ Order ${order.id} failed in Zinc: ${updates.notes}`);
           results.updated.push(order.id);
+        }
+        else {
+          console.log(`⏳ Order ${order.id} still processing (no final status yet)`);
         }
 
         // Check if order is stuck (>24 hours in processing)

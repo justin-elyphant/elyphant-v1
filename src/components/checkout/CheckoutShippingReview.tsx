@@ -77,22 +77,22 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <MapPin className="h-5 w-5 flex-shrink-0" />
             <span className="font-semibold">Shipping</span>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0 text-xs">
-              {totalDestinations} dest{totalDestinations > 1 ? 's' : ''}
-            </Badge>
+            <span className="text-sm font-normal text-muted-foreground">
+              {totalDestinations} destination{totalDestinations > 1 ? 's' : ''}
+            </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Mobile: Collapsible toggle */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="sm:hidden"
+              className="sm:hidden h-11 w-11 touch-target-44"
             >
-              {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={async () => {
                 // CRITICAL: Flush pending cart saves before navigation
@@ -100,10 +100,9 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                 await unifiedPaymentService.flushPendingSaves();
                 navigate('/cart');
               }}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 h-11 px-3 touch-target-44 underline underline-offset-4 text-muted-foreground hover:text-foreground"
             >
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit in Cart</span>
+              <span className="hidden sm:inline">Edit</span>
               <span className="sm:hidden">Edit</span>
             </Button>
           </div>

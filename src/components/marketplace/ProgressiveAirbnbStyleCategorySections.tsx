@@ -15,6 +15,7 @@ import { devLog } from "@/utils/performanceOptimizations";
 interface ProgressiveAirbnbStyleCategorySectionsProps {
   className?: string;
   onProductClick?: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
 }
 
 interface CategoryData {
@@ -39,7 +40,8 @@ const IMMEDIATE_LOAD_COUNT = 2;
 
 export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbStyleCategorySectionsProps> = ({ 
   className, 
-  onProductClick 
+  onProductClick,
+  onAddToCart
 }) => {
   const navigate = useNavigate();
   const [categoryData, setCategoryData] = useState<Record<string, CategoryData>>({});
@@ -214,6 +216,7 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
               }}
               onSeeAll={handleSeeAll}
               onProductClick={handleProductClick}
+              onAddToCart={onAddToCart}
             />
           );
         }
@@ -240,6 +243,7 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
               isLoading={data.isLoading}
               onSeeAll={() => handleSeeAll(category.key)}
               onProductClick={handleProductClick}
+              onAddToCart={onAddToCart}
               showSeeAll={data.products.length > 0}
             />
           </div>
@@ -257,6 +261,7 @@ interface LazyloadedCategorySectionProps {
   onLoadCategory: () => void;
   onSeeAll: (categoryKey: string) => void;
   onProductClick: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
 }
 
 const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
@@ -265,7 +270,8 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
   hasBackground,
   onLoadCategory,
   onSeeAll,
-  onProductClick
+  onProductClick,
+  onAddToCart
 }) => {
   const { isVisible, ref } = useOptimizedIntersectionObserver({
     threshold: 0.01, // Lower threshold to trigger earlier
@@ -319,6 +325,7 @@ const LazyloadedCategorySection: React.FC<LazyloadedCategorySectionProps> = ({
         isLoading={data.isLoading}
         onSeeAll={() => onSeeAll(category.key)}
         onProductClick={onProductClick}
+        onAddToCart={onAddToCart}
         showSeeAll={data.products.length > 0}
       />
     </div>

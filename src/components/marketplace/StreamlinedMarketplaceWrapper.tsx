@@ -967,7 +967,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
       {/* Category Sections (when no search active) */}
       {!showSearchInfo && !isPersonalizedActive && (
-        <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} />
+        <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} onAddToCart={handleAddToCart} />
       )}
       
       {/* Advanced Filters Drawer */}

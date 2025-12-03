@@ -16,6 +16,7 @@ import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelecti
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
 import CartItemImage from "@/components/cart/CartItemImage";
 import ItemGiftMessageSection from "@/components/cart/ItemGiftMessageSection";
+import RecipientPackagePreview from "@/components/cart/RecipientPackagePreview";
 import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
@@ -204,6 +205,11 @@ const Cart = () => {
     toast.success(`Assigned ${unassignedItems.length} items to your address`);
   };
 
+  const handlePackageSchedulingUpdate = (groupId: string, scheduledDate: string | null) => {
+    updateDeliveryGroupScheduling(groupId, scheduledDate);
+    toast.success(scheduledDate ? 'Delivery date scheduled' : 'Delivery timing updated');
+  };
+
   const unassignedItems = getUnassignedItems();
   
   const shippingAddress = profile?.shipping_address;
@@ -263,6 +269,23 @@ const Cart = () => {
                 onAssignAll={handleAssignAllToRecipients}
                 onAssignToMe={handleAssignAllToMe}
               />
+
+              {/* Package Previews - Collapsed Accordion */}
+              {deliveryGroups.length > 0 && (
+                <div className="mb-6 space-y-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                    Packages ({deliveryGroups.length})
+                  </p>
+                  {deliveryGroups.map(group => (
+                    <RecipientPackagePreview
+                      key={group.id}
+                      deliveryGroup={group}
+                      cartItems={cartItems}
+                      onPackageSchedulingUpdate={handlePackageSchedulingUpdate}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Cart Items - Simplified Lululemon Style */}
               <div className="space-y-4">

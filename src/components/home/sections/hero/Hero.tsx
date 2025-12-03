@@ -16,6 +16,7 @@ import { LocalStorageService } from "@/services/localStorage/LocalStorageService
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
+import { HolidayHeroText } from "./HolidayHeroText";
 import heroChristmasImage from "@/assets/christmas-hero.jpg";
 
 const Hero = () => {
@@ -89,9 +90,7 @@ const Hero = () => {
       <div className="relative z-10 flex items-center min-h-[80vh] md:min-h-[85vh]">
         <ResponsiveContainer className={`${targetEvent && isMobile ? 'pt-16' : targetEvent ? 'pt-8' : 'pt-8'} safe-area-inset safe-area-inset-top`}>
           <div className="max-w-2xl text-white">
-            <h1 className="text-heading-1 md:text-4xl lg:text-5xl text-white mb-6 leading-tight text-shadow-lg no-select">
-              Connecting Through Gifting
-            </h1>
+            <HolidayHeroText nextHoliday={nextHoliday} />
             <p className="text-body-lg text-gray-100 mb-8 leading-relaxed max-w-xl text-shadow-md no-select">
               Create wishlists to always get the gifts you want, automate gift-giving, and never miss 
               an important celebration again. Our platform handles everything from selection to delivery.

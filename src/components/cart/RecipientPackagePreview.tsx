@@ -46,7 +46,7 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
   }, [deliveryGroup.scheduledDeliveryDate]);
 
   const groupItems = cartItems.filter(
-    item => item.recipientAssignment?.deliveryGroupId === deliveryGroup.id
+    item => item.recipientAssignment?.connectionId === deliveryGroup.connectionId
   );
 
   // Analyze gift messages

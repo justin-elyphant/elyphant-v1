@@ -222,7 +222,28 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
             {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
           </div>
 
-      <div className="max-h-[300px] overflow-y-auto">
+      <div className="max-h-[400px] overflow-y-auto">
+        {/* Invite New Recipient Option - TOP of list for visibility */}
+        {onInviteNew && (
+          <div className="p-2">
+            <button
+              type="button"
+              onClick={() => setShowInviteForm(true)}
+              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
+                <UserPlus className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <div className="font-medium">Invite New Recipient</div>
+                <div className="text-xs text-muted-foreground">Send an invitation via email</div>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {onInviteNew && <Separator />}
+
         {/* Ship to Myself Option */}
         <div className="p-2">
           <button
@@ -355,35 +376,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
           </button>
         </div>
 
-          {/* Empty state */}
-          {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              No connections found matching "{searchQuery}"
-            </div>
-          )}
-
-          {/* Invite New Recipient Option */}
-          {onInviteNew && (
-            <>
-              <Separator />
-              <div className="p-2">
-                <button
-                  type="button"
-                  onClick={() => setShowInviteForm(true)}
-                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
-                    <UserPlus className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Invite New Recipient</div>
-                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
-                  </div>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        {/* Empty state */}
+        {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            No connections found matching "{searchQuery}"
+          </div>
+        )}
+      </div>
       </>
       )}
     </>
@@ -427,7 +426,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[350px] p-0" align="start">
+      <PopoverContent className="w-[350px] p-0 pointer-events-auto" align="start">
         <SelectorContent />
       </PopoverContent>
     </Popover>

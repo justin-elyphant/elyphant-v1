@@ -14,7 +14,7 @@ export const HolidayHeroText = ({ nextHoliday }: HolidayHeroTextProps) => {
     <h1 className="text-heading-1 md:text-4xl lg:text-5xl text-white mb-6 leading-tight text-shadow-lg no-select">
       Connecting Through Gifting
       <span 
-        className={`block mt-2 text-2xl md:text-3xl lg:text-4xl ${holidayConfig.tailwindClass}`}
+        className={`block mt-2 text-3xl md:text-4xl lg:text-5xl ${holidayConfig.tailwindClass}`}
       >
         {holidayConfig.displayText}
       </span>

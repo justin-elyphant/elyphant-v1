@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Smartphone, Monitor, Tablet, MapPin, Clock, Shield, AlertCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Smartphone, Monitor, Tablet, Clock, Shield, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { 
@@ -22,11 +23,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const MAX_VISIBLE_SESSIONS = 3;
+
 export function ActiveSessionsCard() {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showTerminateAll, setShowTerminateAll] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadSessions();
@@ -63,14 +67,27 @@ export function ActiveSessionsCard() {
   };
 
   const getDeviceIcon = (userAgent: string | null) => {
-    if (!userAgent) return <Monitor className="h-4 w-4" />;
+    if (!userAgent) return <Monitor className="h-4 w-4 text-muted-foreground" />;
     if (userAgent.includes('Mobile') || userAgent.includes('iPhone') || userAgent.includes('Android')) {
-      return <Smartphone className="h-4 w-4" />;
+      return <Smartphone className="h-4 w-4 text-muted-foreground" />;
     }
     if (userAgent.includes('Tablet') || userAgent.includes('iPad')) {
-      return <Tablet className="h-4 w-4" />;
+      return <Tablet className="h-4 w-4 text-muted-foreground" />;
     }
-    return <Monitor className="h-4 w-4" />;
+    return <Monitor className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  const getDeviceName = (userAgent: string | null) => {
+    if (!userAgent) return 'Unknown Device';
+    
+    // Extract browser name
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Edge')) return 'Edge';
+    
+    // Fallback to cleaned user agent
+    return userAgent.split('(')[0]?.trim() || 'Unknown Device';
   };
 
   const formatTimeAgo = (timestamp: string) => {
@@ -87,11 +104,24 @@ export function ActiveSessionsCard() {
     return `${diffDays}d ago`;
   };
 
+  // Sort sessions: current first, then by last activity
+  const sortedSessions = [...sessions].sort((a, b) => {
+    if (a.isCurrent) return -1;
+    if (b.isCurrent) return 1;
+    return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
+  });
+
+  const visibleSessions = isExpanded ? sortedSessions : sortedSessions.slice(0, MAX_VISIBLE_SESSIONS);
+  const hasMoreSessions = sortedSessions.length > MAX_VISIBLE_SESSIONS;
+
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Active Sessions</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Shield className="h-4 w-4" />
+            Active Sessions
+          </CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
       </Card>
@@ -101,89 +131,114 @@ export function ActiveSessionsCard() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="h-4 w-4" />
                 Active Sessions
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {sessions.length}
+                </Badge>
               </CardTitle>
-              <CardDescription>
-                Manage devices that are currently signed in to your account
+              <CardDescription className="text-xs mt-1">
+                Manage signed-in devices
               </CardDescription>
             </div>
             {sessions.length > 1 && (
               <Button 
                 variant="destructive" 
                 size="sm"
+                className="shrink-0 text-xs h-8"
                 onClick={() => setShowTerminateAll(true)}
               >
-                Sign Out All Others
+                Sign Out Others
               </Button>
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="pt-0">
           {sessions.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No active sessions found</p>
+            <div className="text-center py-4 text-muted-foreground">
+              <AlertCircle className="h-6 w-6 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No active sessions</p>
             </div>
           ) : (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                className={`p-4 rounded-lg border ${
-                  session.isCurrent ? 'border-primary bg-primary/5' : 'border-border'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      {getDeviceIcon(session.userAgent)}
-                      <span className="font-medium">
-                        {session.userAgent?.split('(')[0]?.trim() || 'Unknown Device'}
-                      </span>
-                      {session.isCurrent && (
-                        <Badge variant="default" className="ml-2">
-                          Current Device
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                      {session.locationData?.country && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {session.locationData.city && `${session.locationData.city}, `}
-                          {session.locationData.country}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTimeAgo(session.lastActivityAt)}
-                      </div>
-                    </div>
-                    
-                    {session.ipAddress && (
-                      <div className="text-xs text-muted-foreground">
-                        IP: {session.ipAddress}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {!session.isCurrent && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleTerminateSession(session.id)}
+            <>
+              <ScrollArea className={isExpanded && sortedSessions.length > 4 ? "h-[280px]" : undefined}>
+                <div className="space-y-2">
+                  {visibleSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className={`p-3 rounded-lg border flex items-center justify-between gap-3 ${
+                        session.isCurrent 
+                          ? 'border-primary/30 bg-primary/5' 
+                          : 'border-border bg-muted/30'
+                      }`}
                     >
-                      Sign Out
-                    </Button>
-                  )}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="shrink-0">
+                          {getDeviceIcon(session.userAgent)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm truncate">
+                              {getDeviceName(session.userAgent)}
+                            </span>
+                            {session.isCurrent && (
+                              <Badge variant="default" className="text-xs px-1.5 py-0 h-5 shrink-0">
+                                Current
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                            <Clock className="h-3 w-3" />
+                            {formatTimeAgo(session.lastActivityAt)}
+                            {session.locationData?.country && (
+                              <span className="ml-2">
+                                • {session.locationData.city || session.locationData.country}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {!session.isCurrent && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 text-xs h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleTerminateSession(session.id)}
+                        >
+                          Sign Out
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))
+              </ScrollArea>
+              
+              {hasMoreSessions && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs h-8 text-muted-foreground"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      Show {sortedSessions.length - MAX_VISIBLE_SESSIONS} more
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

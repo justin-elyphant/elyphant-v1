@@ -259,8 +259,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
         
         
 
-        {/* Heart Icon - Top Right (Lululemon Style - Simple Outline) */}
-        {!hideTopRightAction && (
+        {/* Heart Icon - Top Right (Lululemon Style - Simple Outline) - Hide in wishlist context since heart is at bottom */}
+        {!hideTopRightAction && context !== 'wishlist' && (
           <div className="absolute top-3 right-3 z-50" onClick={e => e.stopPropagation()}>
             {user ? (
               <WishlistSelectionPopoverButton
@@ -341,6 +341,25 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
 
           {/* Action Buttons - Bottom Right - Context Aware */}
           <div className="flex items-center gap-1 relative z-30">
+            {/* Share Button - First */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <SocialShareButton
+                product={{
+                  id: productId,
+                  name: getProductTitle(),
+                  image: getProductImage(),
+                  price: product.price,
+                  brand: product.brand || "",
+                }}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "rounded-full",
+                  isMobile ? "min-w-[44px] min-h-[44px]" : "w-9 h-9"
+                )}
+              />
+            </div>
+
             {/* Primary Action Button - Context Aware */}
             {context === 'wishlist' ? (
               // Wishlist context: Heart/Wishlist button prominent
@@ -440,25 +459,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                 </button>
               )
             )}
-            
-            {/* Share Button */}
-            <div onClick={(e) => e.stopPropagation()}>
-              <SocialShareButton
-                product={{
-                  id: productId,
-                  name: getProductTitle(),
-                  image: getProductImage(),
-                  price: product.price,
-                  brand: product.brand || "",
-                }}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "rounded-full",
-                  isMobile ? "min-w-[44px] min-h-[44px]" : "w-9 h-9"
-                )}
-              />
-            </div>
           </div>
         </div>
       </div>

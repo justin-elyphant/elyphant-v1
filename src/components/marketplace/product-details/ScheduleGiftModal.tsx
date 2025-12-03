@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { ScrollDatePicker } from "@/components/ui/scroll-date-picker";
+import { ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
@@ -219,35 +218,23 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
             )}
           </div>
           
-          {/* Step 2: Date Picker */}
+          {/* Step 2: Date Picker - iOS Style Scroll Wheel */}
           <div>
             <label className="text-sm font-semibold text-foreground mb-2 block">
               Delivery Date
             </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-11",
-                    !scheduledDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {scheduledDate ? format(scheduledDate, "PPP") : "Select date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[100]" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
-                <Calendar
-                  mode="single"
-                  selected={scheduledDate}
-                  onSelect={setScheduledDate}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="border border-border rounded-lg overflow-hidden bg-background">
+              <ScrollDatePicker
+                value={scheduledDate}
+                onChange={setScheduledDate}
+                minDate={new Date()}
+              />
+            </div>
+            {scheduledDate && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Selected: {format(scheduledDate, "EEEE, MMMM d, yyyy")}
+              </p>
+            )}
           </div>
           
           {/* Step 3: Gift Message */}

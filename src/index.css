@@ -779,3 +779,54 @@ body {
     }
   }
 }
+
+/* Scroll Date Picker Styling */
+.scroll-date-picker {
+  --picker-item-height: 44px;
+}
+
+.scroll-date-picker .picker-container {
+  background: hsl(var(--background));
+}
+
+.scroll-date-picker .picker-inner {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+}
+
+.scroll-date-picker .picker-column {
+  flex: 1;
+}
+
+.scroll-date-picker .picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--picker-item-height);
+  font-size: 1rem;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.15s ease;
+}
+
+.scroll-date-picker .picker-item-selected {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.scroll-date-picker .picker-highlight {
+  background: hsl(var(--muted));
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Calendar } from "lucide-react";
+import { ShoppingCart, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
@@ -15,6 +15,8 @@ import ReviewsSection from "./ReviewsSection";
 import ScheduleGiftModal from "./ScheduleGiftModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { getDisplayTitle, cleanTitle } from "@/utils/productTitleUtils";
 
 interface ProductDetailsSidebarProps {
   product: Product;
@@ -41,14 +43,21 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const isMobile = useIsMobile();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showScheduleGiftModal, setShowScheduleGiftModal] = useState(false);
+  const [showFullTitle, setShowFullTitle] = useState(false);
   
   // Get user's saved sizes from profile.metadata.sizes (cast to any for JSONB access)
   const userSizes = (profile as any)?.metadata?.sizes;
   
   const productId = String(product.product_id || product.id);
-  const productName = product.title || product.name || "";
+  const rawProductName = product.title || product.name || "";
+  const cleanedTitle = cleanTitle(rawProductName);
+  const displayTitle = isMobile 
+    ? getDisplayTitle(rawProductName, { device: 'mobile', context: 'detail', brand: product.brand })
+    : getDisplayTitle(rawProductName, { device: 'desktop', context: 'detail', brand: product.brand });
+  const isTruncated = displayTitle.endsWith('...');
   const productImage = product.image || "";
   const productPrice = product.price || 0;
   
@@ -105,8 +114,20 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         {/* Product Title */}
         <div>
           <h1 className="text-2xl font-bold text-elyphant-black leading-tight">
-            {productName}
+            {showFullTitle ? cleanedTitle : displayTitle}
           </h1>
+          {isTruncated && (
+            <button
+              onClick={() => setShowFullTitle(!showFullTitle)}
+              className="text-sm text-elyphant-grey-text hover:text-elyphant-black flex items-center gap-1 mt-1 transition-colors"
+            >
+              {showFullTitle ? (
+                <>Show less <ChevronUp className="h-3 w-3" /></>
+              ) : (
+                <>See full title <ChevronDown className="h-3 w-3" /></>
+              )}
+            </button>
+          )}
           {product.brand && (
             <p className="text-sm text-elyphant-grey-text mt-1">
               {product.brand}
@@ -145,7 +166,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             <WishlistSelectionPopoverButton 
               product={{
                 id: productId,
-                name: productName,
+                name: rawProductName,
                 image: productImage,
                 price: productPrice,
                 brand: product.brand || "",

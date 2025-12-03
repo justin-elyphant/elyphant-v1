@@ -15,12 +15,14 @@ import SignUpDialog from "@/components/marketplace/SignUpDialog";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMinBreakpoint } from "@/hooks/use-breakpoint";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 import OptimizedImage from "./ui/OptimizedImage";
 import ColorSwatches from "./ColorSwatches";
 import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
 import ProductRating from "@/components/shared/ProductRating";
+import { getDisplayTitle } from "@/utils/productTitleUtils";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -77,6 +79,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   const { addItem } = useRecentlyViewed();
   const { trackProductView } = useProductDataSync();
   const isMobile = useIsMobile();
+  const isTablet = !useMinBreakpoint('lg') && !isMobile;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSignUpDialog, setShowSignUpDialog] = useState(false);
   
@@ -175,6 +178,17 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   };
 
   const getProductTitle = () => {
+    const rawTitle = product.title || product.name || "Product";
+    const device = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
+    return getDisplayTitle(rawTitle, { 
+      device, 
+      context: 'card', 
+      brand: product.brand 
+    });
+  };
+
+  // Get raw title for sharing (full title, not truncated)
+  const getRawProductTitle = () => {
     return product.title || product.name || "Product";
   };
 
@@ -346,7 +360,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
               <SocialShareButton
                 product={{
                   id: productId,
-                  name: getProductTitle(),
+                  name: getRawProductTitle(),
                   image: getProductImage(),
                   price: product.price,
                   brand: product.brand || "",

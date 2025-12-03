@@ -3,10 +3,26 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import MyWishlists from "@/components/gifting/MyWishlists";
+import MobileWishlistHub from "@/components/gifting/wishlist/MobileWishlistHub";
+import TabletWishlistLayout from "@/components/gifting/wishlist/TabletWishlistLayout";
 import CollectionsTab from "@/components/gifting/wishlists/CollectionsTab";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
+import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
+import EditWishlistDialog from "@/components/gifting/wishlist/EditWishlistDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 import "@/styles/mobile-wishlist.css";
 
 const Wishlists = () => {
@@ -14,78 +30,150 @@ const Wishlists = () => {
   const { profile } = useProfile();
   const [activeTab, setActiveTab] = useState("wishlists");
 
-  // Get user's first name from profile, with fallbacks
-  const getUserFirstName = () => {
-    // Use profile first_name if available (cast to any due to outdated types)
-    if ((profile as any)?.first_name?.trim()) {
-      return (profile as any).first_name.trim();
-    }
-    
-    // Fallback to auth metadata
-    if (user?.user_metadata?.first_name?.trim()) {
-      return user.user_metadata.first_name.trim();
-    }
-    
-    // Fallback to extracting from full name
-    if (user?.user_metadata?.name) {
-      const firstName = user.user_metadata.name.split(' ')[0].trim();
-      if (firstName) return firstName;
-    }
-    
-    return "My";
+  // Wishlist management
+  const {
+    wishlists,
+    loading: isLoading,
+    createWishlist,
+    deleteWishlist,
+  } = useUnifiedWishlistSystem();
+
+  // Dialog states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [currentWishlistId, setCurrentWishlistId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Get current wishlist for editing
+  const currentWishlist = wishlists?.find(w => w.id === currentWishlistId) || null;
+
+  // Handlers
+  const handleCreateWishlist = async (values: { title: string; description?: string }) => {
+    await createWishlist({ title: values.title, description: values.description || "" });
+    setCreateDialogOpen(false);
   };
 
-  const userName = getUserFirstName();
-  const pageTitle = userName === "My" ? "My Wishlists" : `${userName}'s Wishlists`;
+  const handleEditWishlist = (id: string) => {
+    setCurrentWishlistId(id);
+    setEditDialogOpen(true);
+  };
 
-  // Detect mobile screen size for conditional layout
-  const [isMobile, setIsMobile] = React.useState(false);
+  const handleDeleteWishlist = (id: string) => {
+    setCurrentWishlistId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (currentWishlistId) {
+      try {
+        setDeleting(true);
+        await deleteWishlist(currentWishlistId);
+        setDeleteDialogOpen(false);
+        setCurrentWishlistId(null);
+      } finally {
+        setDeleting(false);
+      }
+    }
+  };
+
+  // Detect screen size for conditional layout
+  const [screenSize, setScreenSize] = React.useState<'mobile' | 'tablet' | 'desktop'>('desktop');
 
   React.useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setScreenSize('mobile');
+      } else if (width < 1024) {
+        setScreenSize('tablet');
+      } else {
+        setScreenSize('desktop');
+      }
     };
     
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Mobile layout without sidebar
-  if (isMobile) {
+  // Shared dialogs component
+  const WishlistDialogs = () => (
+    <>
+      <CreateWishlistDialog 
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={handleCreateWishlist}
+      />
+
+      <EditWishlistDialog 
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSubmit={async () => setEditDialogOpen(false)}
+        wishlist={currentWishlist}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete wishlist?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{currentWishlist?.title}" and all items within it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+
+  // Mobile layout - New MobileWishlistHub
+  if (screenSize === 'mobile') {
     return (
       <ProductProvider>
-        <div className="min-h-screen bg-background">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            {/* Mobile tab navigation */}
-            <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
-              <div className="safe-area-top" />
-              <div className="px-4 py-2">
-                <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
-                  <TabsTrigger value="wishlists" className="rounded-lg text-sm font-medium">
-                    My Wishlists
-                  </TabsTrigger>
-                  <TabsTrigger value="collections" className="rounded-lg text-sm font-medium">
-                    Collections
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-            </div>
-            
-            <TabsContent value="wishlists" className="mt-0 h-full">
-              <MyWishlists />
-            </TabsContent>
-            
-            <TabsContent value="collections" className="mt-0 p-4">
-              <CollectionsTab />
-            </TabsContent>
-          </Tabs>
-        </div>
+        <MobileWishlistHub
+          wishlists={wishlists || []}
+          onCreateWishlist={() => setCreateDialogOpen(true)}
+          onEditWishlist={handleEditWishlist}
+          onDeleteWishlist={handleDeleteWishlist}
+        />
+        <WishlistDialogs />
       </ProductProvider>
     );
   }
 
-  // Desktop layout - Full width immersive shopping experience
+  // Tablet layout - New TabletWishlistLayout with CompactProfileHeader
+  if (screenSize === 'tablet') {
+    return (
+      <ProductProvider>
+        <TabletWishlistLayout
+          wishlists={wishlists || []}
+          onCreateWishlist={() => setCreateDialogOpen(true)}
+          onEditWishlist={handleEditWishlist}
+          onDeleteWishlist={handleDeleteWishlist}
+        />
+        <WishlistDialogs />
+      </ProductProvider>
+    );
+  }
+
+  // Desktop layout - Full width immersive shopping experience (existing)
   return (
     <SidebarLayout>
       <ProductProvider>

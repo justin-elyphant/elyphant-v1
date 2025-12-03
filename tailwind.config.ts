@@ -174,9 +174,21 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'shimmer': 'shimmer 3s ease-in-out infinite'
 			},
-			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-			},
+		fontFamily: {
+			sans: ['Inter', 'system-ui', 'sans-serif'],
+			// Holiday themed fonts
+			'halloween': ['Creepster', 'cursive'],
+			'christmas': ['Mountains of Christmas', 'cursive'],
+			'holidays': ['Great Vibes', 'cursive'],
+			'valentines': ['Dancing Script', 'cursive'],
+			'easter': ['Satisfy', 'cursive'],
+			'mothers': ['Pacifico', 'cursive'],
+			'fathers': ['Playfair Display', 'serif'],
+			'graduation': ['Cinzel', 'serif'],
+			'school': ['Bubblegum Sans', 'cursive'],
+			'blackfriday': ['Bebas Neue', 'sans-serif'],
+			'cybermonday': ['Orbitron', 'sans-serif'],
+		},
 			boxShadow: {
 				'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
 				'card': '0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 1px 4px -1px rgba(0, 0, 0, 0.06)',

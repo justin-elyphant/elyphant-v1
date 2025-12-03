@@ -14,7 +14,7 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
-type SettingsTab = "general" | "sizes" | "notifications" | "privacy";
+type SettingsTab = "general" | "sizes" | "notifications" | "privacy" | "";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
@@ -33,8 +33,9 @@ const Settings = () => {
     }
   };
   
-  const initialTab = tabParam || mapSectionToTab(sectionParam) || "general";
-  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+// Empty string means show card navigation, otherwise show specific tab
+  const initialTab = tabParam || mapSectionToTab(sectionParam) || "";
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const { profile, loading, error, refetchProfile } = useProfile();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -154,8 +155,10 @@ const Settings = () => {
         return <NotificationSettings />;
       case "privacy":
         return <PrivacySecuritySettings />;
+      case "":
+        return null; // Card navigation is shown by SettingsLayout
       default:
-        return <GeneralSettings key={`general-${forceRefreshCount}`} />;
+        return null;
     }
   };
 
@@ -164,7 +167,7 @@ const Settings = () => {
       <SettingsLayout
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as SettingsTab)}
+        onTabChange={(tab) => setActiveTab(tab)}
       >
         {renderTabContent()}
       </SettingsLayout>

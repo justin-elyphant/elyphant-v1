@@ -108,10 +108,12 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
     const effectiveProductId = getEffectiveProductId ? getEffectiveProductId() : String(product.product_id || product.id);
     const variationText = getVariationDisplayText ? getVariationDisplayText() : undefined;
     
-    // Build variant-aware cart product
+    // Build variant-aware cart product - explicitly include image/images from the (variant) product
     const cartProduct = {
       ...product,
       product_id: effectiveProductId,
+      image: product.image, // Ensure variant image is passed
+      images: product.images, // Ensure variant images array is passed
       variationText: variationText || undefined
     };
     

@@ -122,21 +122,26 @@ export const standardizeProduct = (product: any): any => {
       const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
       
       if (rawPrice > 0) {
-        // ENHANCED: More comprehensive Zinc product detection for pricing
-        const isZincProduct = 
-          product.retailer === 'Amazon' || 
-          product.retailer === 'amazon' ||
-          product.vendor === 'Amazon' || 
-          product.vendor === 'Amazon via Zinc' ||
-          product.source === 'zinc' ||
-          product.productSource === 'zinc_api' ||
-          product.isZincApiProduct === true;
-        
-        if (isZincProduct && Number.isInteger(rawPrice) && rawPrice >= 100) {
-          // Convert from cents to dollars for Zinc API products
-          normalizedPrice = rawPrice / 100;
-        } else {
+        // SKIP conversion if already normalized (skipCentsDetection flag set)
+        if (product.skipCentsDetection === true) {
           normalizedPrice = rawPrice;
+        } else {
+          // ENHANCED: More comprehensive Zinc product detection for pricing
+          const isZincProduct = 
+            product.retailer === 'Amazon' || 
+            product.retailer === 'amazon' ||
+            product.vendor === 'Amazon' || 
+            product.vendor === 'Amazon via Zinc' ||
+            product.source === 'zinc' ||
+            product.productSource === 'zinc_api' ||
+            product.isZincApiProduct === true;
+          
+          if (isZincProduct && Number.isInteger(rawPrice) && rawPrice >= 100) {
+            // Convert from cents to dollars for Zinc API products
+            normalizedPrice = rawPrice / 100;
+          } else {
+            normalizedPrice = rawPrice;
+          }
         }
       } else {
         normalizedPrice = 19.99; // fallback

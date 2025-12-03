@@ -90,13 +90,22 @@ const ProductDetailsPage: React.FC = () => {
           const variantImages = getProductImages(variantData);
           setCurrentImages(variantImages);
           
-          // Update displayedProduct with variant data (including correct image)
+          // Normalize price - Zinc returns cents, convert to dollars if needed
+          let normalizedPrice = variantData.price;
+          if (variantData.price && Number.isInteger(variantData.price) && variantData.price >= 100) {
+            // Likely cents, convert to dollars
+            normalizedPrice = variantData.price / 100;
+          }
+          
+          // Update displayedProduct with variant data (including correct image and normalized price)
           setDisplayedProduct({
             ...productDetail,
             ...variantData,
             product_id: selectedProductId,
             image: variantImages[0] || productDetail.image,
-            images: variantImages
+            images: variantImages,
+            price: normalizedPrice, // Use normalized price to prevent double conversion
+            skipCentsDetection: true // Flag to prevent standardizeProduct from converting again
           });
         }
       } catch (error) {

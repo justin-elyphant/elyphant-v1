@@ -662,7 +662,7 @@ const UnifiedCheckoutForm: React.FC = () => {
       
       {/* Sticky Bottom CTA Bar - Mobile Only */}
       {isMobile && (
-        <div className="fixed bottom-20 left-0 right-0 bg-background backdrop-blur-xl border-t z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-40 pb-safe">
           <div className="flex items-center justify-between gap-4 p-4">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>

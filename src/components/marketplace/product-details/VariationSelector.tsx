@@ -89,7 +89,7 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
   const [selectedVariations, setSelectedVariations] = useState<SelectedVariations>({});
   const [availableDimensions, setAvailableDimensions] = useState<VariationDimension[]>([]);
 
-  // Initialize selected variations from current product
+  // Initialize selected variations from current product and sync with parent
   useEffect(() => {
     if (currentVariantSpecs.length > 0) {
       const initial: SelectedVariations = {};
@@ -97,8 +97,16 @@ export const VariationSelector: React.FC<VariationSelectorProps> = ({
         initial[spec.dimension] = spec.value;
       });
       setSelectedVariations(initial);
+      
+      // Sync with parent: notify parent hook of initial selection
+      const matchingVariant = variants?.find(variant => 
+        variant.variant_specifics.every(spec => 
+          initial[spec.dimension] === spec.value
+        )
+      );
+      onVariationChange(initial, matchingVariant?.product_id || '');
     }
-  }, [currentVariantSpecs]);
+  }, [currentVariantSpecs, variants, onVariationChange]);
 
   // Parse and organize variation dimensions
   useEffect(() => {

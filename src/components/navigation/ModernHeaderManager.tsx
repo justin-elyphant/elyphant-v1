@@ -72,7 +72,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       )}
     >
       <nav className="bg-transparent">
-        <div className="w-full px-4" style={{ width: '100%', maxWidth: 'none' }}>
+        <div className="w-full px-4 md:px-6 lg:px-4" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
             "flex items-center gap-6 md:gap-8",
             config.height

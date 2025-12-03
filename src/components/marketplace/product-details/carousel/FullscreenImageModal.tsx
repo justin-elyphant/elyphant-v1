@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useImageGallery } from '@/hooks/useImageGallery';
@@ -78,7 +79,7 @@ const FullscreenImageModal = ({
 
   // Touch handlers for swipe navigation
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isZoomed) return; // Don't swipe when zoomed
+    if (isZoomed) return;
     const touch = e.touches[0];
     setTouchStart({ x: touch.clientX, y: touch.clientY });
   };
@@ -90,7 +91,6 @@ const FullscreenImageModal = ({
     const deltaX = touchStart.x - touch.clientX;
     const deltaY = Math.abs(touchStart.y - touch.clientY);
     
-    // Only handle horizontal swipes (not vertical scrolls)
     if (Math.abs(deltaX) > 50 && deltaY < 100) {
       if (deltaX > 0 && hasNext) {
         goToNext();
@@ -112,17 +112,17 @@ const FullscreenImageModal = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex flex-col"
+      className="fixed inset-0 z-[100] bg-black flex flex-col"
       style={{ 
-        paddingTop: 'env(safe-area-inset-top)', 
-        paddingBottom: 'env(safe-area-inset-bottom)' 
+        paddingTop: 'max(env(safe-area-inset-top), 0px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 0px)'
       }}
       onClick={onClose}
     >
-      {/* Header - Always visible with strong contrast */}
-      <div className="relative z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
+      {/* Header - Fixed height */}
+      <div className="flex-shrink-0 h-16 flex items-center justify-between px-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="text-white min-w-0 flex-1">
           <h3 className="text-heading-4 truncate max-w-[70vw]">{productName}</h3>
           {totalImages > 1 && (
@@ -156,9 +156,9 @@ const FullscreenImageModal = ({
         </div>
       </div>
 
-      {/* Main Image Container - Viewport constrained */}
+      {/* Main Image Container - Fills remaining space */}
       <div 
-        className="flex-1 relative flex items-center justify-center px-4 md:px-16"
+        className="flex-1 relative flex items-center justify-center overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -173,12 +173,11 @@ const FullscreenImageModal = ({
         {/* Scrollable container for zoom */}
         <div 
           ref={scrollContainerRef}
-          className={`relative ${
+          className={`w-full h-full flex items-center justify-center ${
             isZoomed 
-              ? 'overflow-auto w-full h-full cursor-grab active:cursor-grabbing' 
-              : 'overflow-hidden flex items-center justify-center'
+              ? 'overflow-auto cursor-grab active:cursor-grabbing' 
+              : 'overflow-hidden'
           }`}
-          style={{ maxHeight: 'calc(100vh - 12rem)' }}
         >
           <img
             src={getHighResAmazonImage(currentImage, 'fullscreen')}
@@ -188,7 +187,7 @@ const FullscreenImageModal = ({
             } ${
               isZoomed 
                 ? 'w-[200%] max-w-none' 
-                : 'max-w-full max-h-[calc(100vh-12rem)] object-contain cursor-zoom-in'
+                : 'max-w-full max-h-full object-contain cursor-zoom-in p-4'
             }`}
             onClick={handleImageClick}
             onLoad={handleImageLoad}
@@ -200,44 +199,46 @@ const FullscreenImageModal = ({
           />
         </div>
 
-        {/* Navigation Arrows - 44px+ touch targets */}
+        {/* Navigation Arrows */}
         {totalImages > 1 && (
           <>
-            {hasPrevious && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goToPrevious();
-                }}
-                className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 h-12 w-12 md:h-14 md:w-14 rounded-full"
-              >
-                <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+              disabled={!hasPrevious}
+              className={`absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 h-12 w-12 md:h-14 md:w-14 rounded-full ${
+                !hasPrevious ? 'opacity-30 cursor-not-allowed' : ''
+              }`}
+            >
+              <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
+            </Button>
             
-            {hasNext && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goToNext();
-                }}
-                className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 h-12 w-12 md:h-14 md:w-14 rounded-full"
-              >
-                <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+              disabled={!hasNext}
+              className={`absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 h-12 w-12 md:h-14 md:w-14 rounded-full ${
+                !hasNext ? 'opacity-30 cursor-not-allowed' : ''
+              }`}
+            >
+              <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
+            </Button>
           </>
         )}
       </div>
 
-      {/* Bottom Thumbnail Strip - Monochromatic styling */}
+      {/* Bottom Thumbnail Strip - Fixed height */}
       {totalImages > 1 && (
-        <div className="relative z-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-          <div className="flex justify-center gap-2 p-4 overflow-x-auto">
+        <div className="flex-shrink-0 h-20 md:h-24 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center">
+          <div className="flex gap-2 px-4 overflow-x-auto max-w-full">
             {images.map((img, index) => (
               <button
                 key={index}
@@ -245,7 +246,7 @@ const FullscreenImageModal = ({
                   e.stopPropagation();
                   goToIndex(index);
                 }}
-                className={`flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded border-2 transition-all ${
+                className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded border-2 transition-all ${
                   index === currentIndex
                     ? 'border-white'
                     : 'border-white/30 hover:border-white/60'
@@ -266,6 +267,9 @@ const FullscreenImageModal = ({
       )}
     </div>
   );
+
+  // Render using portal to ensure it's above all other content
+  return createPortal(modalContent, document.body);
 };
 
 export default FullscreenImageModal;

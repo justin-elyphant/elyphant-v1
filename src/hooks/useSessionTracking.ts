@@ -36,27 +36,30 @@ export const useSessionTracking = (session: Session | null) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        // Check if session already exists
+        // Check if session already exists for this device (dedupe by fingerprint, not token)
         const { data: existingSession } = await supabase
           .from('user_sessions')
           .select('id')
-          .eq('session_token', accessToken)
+          .eq('device_fingerprint', fingerprint.hash)
           .eq('user_id', userId)
+          .eq('is_active', true)
           .single();
 
         if (existingSession) {
-          // Update existing session
+          // Update existing session (same device) - just refresh activity and token
           await supabase
             .from('user_sessions')
             .update({
+              session_token: accessToken, // Update to current token
               last_activity_at: new Date().toISOString(),
               is_active: true,
+              expires_at: expiresAt.toISOString(),
             })
             .eq('id', existingSession.id);
           
           setSessionId(existingSession.id);
         } else {
-          // Create new session record
+          // Create new session record (new device)
           const { data: newSession, error } = await supabase
             .from('user_sessions')
             .insert({

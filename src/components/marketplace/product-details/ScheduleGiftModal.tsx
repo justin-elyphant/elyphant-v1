@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
@@ -12,7 +12,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 import { useProfile } from "@/contexts/profile/ProfileContext";
+import { useAuth } from "@/contexts/auth";
 import SimpleRecipientSelector, { SelectedRecipient } from "./SimpleRecipientSelector";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 
 interface ScheduleGiftModalProps {
   open: boolean;
@@ -28,13 +30,55 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [giftMessage, setGiftMessage] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { user } = useAuth();
   
   // Get user's address from profile
   const userAddress = profile?.shipping_address;
   const userName = profile?.name || "Myself";
+
+  // Handle inviting a new recipient
+  const handleInviteNew = async (name: string, email: string) => {
+    if (!user) {
+      toast.error("Please sign in to invite recipients");
+      return;
+    }
+    
+    setIsInviting(true);
+    try {
+      const connection = await unifiedGiftManagementService.createPendingConnection(
+        email,
+        name,
+        "friend",
+        user.id
+      );
+      
+      if (connection && connection.id) {
+        // Select the newly created connection
+        setSelectedRecipient({
+          type: 'connection',
+          connectionId: connection.id,
+          connectionName: name,
+          addressVerified: false
+        });
+        toast.success("Invitation sent!", {
+          description: `${name} will receive an email to share their address`
+        });
+      } else {
+        toast.error("Failed to send invitation", {
+          description: "Please try again"
+        });
+      }
+    } catch (error) {
+      console.error("Error inviting recipient:", error);
+      toast.error("Failed to send invitation");
+    } finally {
+      setIsInviting(false);
+    }
+  };
   
   const handleSchedule = () => {
     if (!scheduledDate) {
@@ -129,7 +173,37 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
               onChange={setSelectedRecipient}
               userAddress={userAddress}
               userName={userName}
+              onInviteNew={handleInviteNew}
             />
+            
+            {/* Address Verification Status */}
+            {selectedRecipient && selectedRecipient.type !== 'later' && (
+              <div className="mt-2">
+                {selectedRecipient.type === 'self' || selectedRecipient.addressVerified ? (
+                  <div className="flex items-center gap-1.5 text-xs text-green-600">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>Address verified</span>
+                  </div>
+                ) : selectedRecipient.addressVerified === false ? (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                    <span>Address not verified - recipient will be asked to confirm</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                    <span>Address will be verified at checkout</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {isInviting && (
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Sending invitation...</span>
+              </div>
+            )}
           </div>
           
           {/* Step 2: Date Picker */}

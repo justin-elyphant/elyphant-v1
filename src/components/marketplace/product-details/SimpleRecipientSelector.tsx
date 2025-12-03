@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { Check, ChevronsUpDown, Search, User, Users, Clock, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Search, User, Users, Clock, Loader2, UserPlus, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerTitle } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useEnhancedConnections, EnhancedConnection } from "@/hooks/profile/useEnhancedConnections";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,16 +34,21 @@ interface SimpleRecipientSelectorProps {
   onChange: (recipient: SelectedRecipient) => void;
   userAddress?: any; // User's own shipping address from profile
   userName?: string;
+  onInviteNew?: (name: string, email: string) => void;
 }
 
 export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = ({
   value,
   onChange,
   userAddress,
-  userName = "Myself"
+  userName = "Myself",
+  onInviteNew
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
   const isMobile = useIsMobile();
   
   const { connections, pendingInvitations, loading } = useEnhancedConnections();
@@ -136,23 +143,84 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     return !!connection.pending_shipping_address;
   };
 
+  const handleInviteSubmit = () => {
+    if (inviteName.trim() && inviteEmail.trim() && onInviteNew) {
+      onInviteNew(inviteName.trim(), inviteEmail.trim());
+      setInviteName("");
+      setInviteEmail("");
+      setShowInviteForm(false);
+      setOpen(false);
+    }
+  };
+
+  const resetInviteForm = () => {
+    setShowInviteForm(false);
+    setInviteName("");
+    setInviteEmail("");
+  };
+
   // Shared content
   const SelectorContent = () => (
     <>
-      {/* Search input */}
-      <div className="flex items-center border-b px-3 py-2">
-        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-        <input
-          type="text"
-          placeholder="Search connections..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground"
-          autoComplete="off"
-          autoFocus
-        />
-        {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
-      </div>
+      {/* Invite Form */}
+      {showInviteForm ? (
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Invite New Recipient</h3>
+            <Button variant="ghost" size="sm" onClick={resetInviteForm} className="h-8 px-2">
+              Cancel
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-name" className="text-xs">Name</Label>
+              <Input
+                id="invite-name"
+                placeholder="Recipient's name"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email" className="text-xs">Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="recipient@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleInviteSubmit}
+            disabled={!inviteName.trim() || !inviteEmail.trim()}
+            className="w-full h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
+          >
+            Send Invitation
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            They'll receive an email to share their shipping address
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Search input - text-base prevents iOS zoom */}
+          <div className="flex items-center border-b px-3 py-2">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <input
+              type="text"
+              placeholder="Search connections..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
+              autoComplete="off"
+              autoFocus
+            />
+            {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
+          </div>
 
       <div className="max-h-[300px] overflow-y-auto">
         {/* Ship to Myself Option */}
@@ -287,13 +355,37 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
           </button>
         </div>
 
-        {/* Empty state */}
-        {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No connections found matching "{searchQuery}"
-          </div>
-        )}
-      </div>
+          {/* Empty state */}
+          {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              No connections found matching "{searchQuery}"
+            </div>
+          )}
+
+          {/* Invite New Recipient Option */}
+          {onInviteNew && (
+            <>
+              <Separator />
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteForm(true)}
+                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
+                    <UserPlus className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Invite New Recipient</div>
+                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </>
+      )}
     </>
   );
 
@@ -312,7 +404,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="max-h-[85vh] backdrop-blur-xl pb-safe">
+        <DrawerContent className="max-h-[85vh] bg-background/95 backdrop-blur-xl pb-safe">
           <VisuallyHidden>
             <DrawerTitle>Select Recipient</DrawerTitle>
           </VisuallyHidden>

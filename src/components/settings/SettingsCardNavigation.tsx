@@ -1,5 +1,5 @@
 import React from "react";
-import { User, MapPin, Ruler, Calendar, Heart, Gift, Bell, Shield, ChevronRight } from "lucide-react";
+import { User, MapPin, Ruler, Calendar, Heart, Bell, Shield, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -40,12 +40,6 @@ const settingsSections: SettingsSection[] = [
     icon: Heart,
     title: "My Interests",
     description: "Interests for personalized gift recommendations"
-  },
-  {
-    id: "gifting",
-    icon: Gift,
-    title: "My Gifting",
-    description: "Gift preferences and wishlist settings"
   },
   {
     id: "notifications",

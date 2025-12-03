@@ -10,14 +10,14 @@ import MyAddressSettings from "@/components/settings/MyAddressSettings";
 import MySizesSettings from "@/components/settings/MySizesSettings";
 import MyEventsSettings from "@/components/settings/MyEventsSettings";
 import MyInterestsSettings from "@/components/settings/MyInterestsSettings";
-import MyGiftingSettings from "@/components/settings/MyGiftingSettings";
+
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import PrivacySharingSettings from "@/components/settings/PrivacySharingSettings";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
-type SettingsTab = "info" | "address" | "sizes" | "events" | "interests" | "gifting" | "notifications" | "privacy" | "";
+type SettingsTab = "info" | "address" | "sizes" | "events" | "interests" | "notifications" | "privacy" | "";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
@@ -35,7 +35,7 @@ const Settings = () => {
       case 'dates': return 'events';
       case 'events': return 'events';
       case 'interests': return 'interests';
-      case 'gifting': return 'gifting';
+      case 'gifting': return 'interests'; // Redirect legacy gifting to interests
       case 'notifications': return 'notifications';  
       case 'privacy': return 'privacy';
       case 'billing': return 'info';
@@ -147,7 +147,6 @@ const Settings = () => {
     { id: "sizes", label: "My Sizes" },
     { id: "events", label: "My Events" },
     { id: "interests", label: "My Interests" },
-    { id: "gifting", label: "My Gifting" },
     { id: "notifications", label: "My Notifications" },
     { id: "privacy", label: "Privacy & Sharing" },
   ];
@@ -164,8 +163,6 @@ const Settings = () => {
         return <MyEventsSettings key={`events-${forceRefreshCount}`} />;
       case "interests":
         return <MyInterestsSettings key={`interests-${forceRefreshCount}`} />;
-      case "gifting":
-        return <MyGiftingSettings key={`gifting-${forceRefreshCount}`} />;
       case "notifications":
         return <NotificationSettings />;
       case "privacy":

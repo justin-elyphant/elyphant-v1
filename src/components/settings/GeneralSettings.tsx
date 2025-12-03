@@ -14,7 +14,6 @@ import AddressSection from "./AddressSection";
 import DataSharingSection from "./DataSharingSection";
 import ImportantDatesFormSection from "./ImportantDatesFormSection";
 import InterestsFormSection from "./InterestsFormSection";
-import GiftingPreferencesSection from "./GiftingPreferencesSection";
 import { unifiedLocationService } from "@/services/location/UnifiedLocationService";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { StandardizedAddress } from "@/services/googlePlacesService";
@@ -213,12 +212,11 @@ const GeneralSettings = () => {
           });
         })} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">My Info</TabsTrigger>
               <TabsTrigger value="address">My Address</TabsTrigger>
               <TabsTrigger value="dates">My Events</TabsTrigger>
               <TabsTrigger value="interests">My Interests</TabsTrigger>
-              <TabsTrigger value="gifting">My Gifting</TabsTrigger>
               <TabsTrigger value="privacy">My Data</TabsTrigger>
             </TabsList>
             
@@ -250,10 +248,6 @@ const GeneralSettings = () => {
                 addInterest={handleAddInterest}
                 isAutoSaving={isAutoSavingInterests}
               />
-            </TabsContent>
-            
-            <TabsContent value="gifting" className="mt-6">
-              <GiftingPreferencesSection />
             </TabsContent>
             
             <TabsContent value="privacy" className="mt-6">

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Heart, Brain, Sparkles, Calendar, ArrowRight } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Plus, Heart, Brain, Sparkles, Calendar, ArrowRight, Settings } from "lucide-react";
+import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -173,6 +176,49 @@ const AIGifting = () => {
             }}
           />
         </div>
+
+        {/* AI Settings Section */}
+        <Card className="bg-background">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">AI Settings</CardTitle>
+                <CardDescription>Customize how our AI learns your preferences</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="save-preferences" className="text-sm font-medium">Save search preferences</Label>
+                <p className="text-xs text-muted-foreground">Allow AI to remember your gift search patterns</p>
+              </div>
+              <Switch 
+                id="save-preferences" 
+                defaultChecked 
+                onCheckedChange={(checked) => {
+                  toast.success(checked ? "Search preferences enabled" : "Search preferences disabled");
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="smart-suggestions" className="text-sm font-medium">Smart suggestions</Label>
+                <p className="text-xs text-muted-foreground">Get personalized gift recommendations based on your history</p>
+              </div>
+              <Switch 
+                id="smart-suggestions" 
+                defaultChecked 
+                onCheckedChange={(checked) => {
+                  toast.success(checked ? "Smart suggestions enabled" : "Smart suggestions disabled");
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
         </div>
       </div>
 

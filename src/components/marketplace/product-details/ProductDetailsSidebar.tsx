@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Gift } from "lucide-react";
+import { ShoppingCart, Calendar } from "lucide-react";
 import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
@@ -12,7 +12,7 @@ import MySizesSelector from "./MySizesSelector";
 import VariationSelector from "./VariationSelector";
 import ProductDetailsContent from "./ProductDetailsContent";
 import ReviewsSection from "./ReviewsSection";
-
+import ScheduleGiftModal from "./ScheduleGiftModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 
@@ -42,7 +42,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  
+  const [showScheduleGiftModal, setShowScheduleGiftModal] = useState(false);
   
   // Get user's saved sizes from profile.metadata.sizes (cast to any for JSONB access)
   const userSizes = (profile as any)?.metadata?.sizes;
@@ -89,22 +89,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
     navigate("/checkout");
   };
   
-  // 3. Create Auto-Gift
-  const handleAutoGift = () => {
+  // 3. Schedule as Gift
+  const handleScheduleGift = () => {
     if (!user) {
-      toast.error("Please sign in to create AI gifts");
+      toast.error("Please sign in to schedule gifts");
       navigate("/auth");
       return;
     }
-    // Navigate to auto-gifting with product context
-    navigate("/dashboard?tab=auto-gifts", { 
-      state: { 
-        preselectedProduct: product 
-      } 
-    });
-    toast.info("Set up auto-gifting for this product", {
-      description: "Complete the setup to automatically send this gift"
-    });
+    setShowScheduleGiftModal(true);
   };
   
   return (
@@ -163,14 +155,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             />
           )}
           
-          {/* Position 2: AI Gifting - SECONDARY */}
+          {/* Position 2: Schedule as Gift - SECONDARY */}
           <Button 
             variant="outline"
             className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
-            onClick={handleAutoGift}
+            onClick={handleScheduleGift}
           >
-            <Gift className="h-5 w-5 mr-2" />
-            AI Gifting
+            <Calendar className="h-5 w-5 mr-2" />
+            Schedule as Gift
           </Button>
           
           {/* Position 3: Add to Cart - TERTIARY */}
@@ -206,6 +198,12 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         </Accordion>
       </div>
       
+      {/* Gift Scheduling Modal */}
+      <ScheduleGiftModal
+        open={showScheduleGiftModal}
+        onOpenChange={setShowScheduleGiftModal}
+        product={product}
+      />
     </>
   );
 };

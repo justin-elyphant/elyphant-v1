@@ -77,6 +77,7 @@ const ProductDetailsPage: React.FC = () => {
     const parentProductId = String(productDetail.product_id || productDetail.id);
     if (selectedProductId === parentProductId) {
       setCurrentImages(getProductImages(productDetail));
+      setDisplayedProduct(null); // Reset to use base product
       return;
     }
     
@@ -88,6 +89,15 @@ const ProductDetailsPage: React.FC = () => {
         if (variantData) {
           const variantImages = getProductImages(variantData);
           setCurrentImages(variantImages);
+          
+          // Update displayedProduct with variant data (including correct image)
+          setDisplayedProduct({
+            ...productDetail,
+            ...variantData,
+            product_id: selectedProductId,
+            image: variantImages[0] || productDetail.image,
+            images: variantImages
+          });
         }
       } catch (error) {
         console.error('Error fetching variant images:', error);

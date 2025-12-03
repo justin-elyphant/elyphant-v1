@@ -6,11 +6,12 @@ import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Gift, UserPlus, Calendar, Pencil } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { emergencyCartCleanup } from "@/utils/cartSecurityUtils";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 import UnifiedRecipientSelection from "@/components/cart/UnifiedRecipientSelection";
 import UnassignedItemsSection from "@/components/cart/UnassignedItemsSection";
@@ -47,6 +48,8 @@ const Cart = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const handleCheckout = async () => {
+    triggerHapticFeedback(HapticPatterns.addToCart);
+    
     if (!user) {
       toast.error("Please sign in to continue with checkout");
       navigate("/signin");
@@ -64,6 +67,7 @@ const Cart = () => {
         (shippingAddress.zip_code || shippingAddress.zipCode);
       
       if (!hasCompleteAddress) {
+        triggerHapticFeedback(HapticPatterns.errorAction);
         toast.error(
           "Please complete your shipping address or assign recipients before checkout. " +
           "Unassigned items will be shipped to your address."
@@ -106,6 +110,17 @@ const Cart = () => {
     await unifiedPaymentService.flushPendingSaves();
     
     navigate("/checkout");
+  };
+
+  // Haptic-enabled handlers
+  const handleQuantityChange = (productId: string, newQty: number) => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    updateQuantity(productId, newQty);
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    triggerHapticFeedback(HapticPatterns.removeItem);
+    removeFromCart(productId);
   };
 
   const handleAssignRecipient = (productId: string) => {
@@ -229,20 +244,29 @@ const Cart = () => {
   return (
     <SidebarLayout>
       <ZincMetadataDebugger />
-      <div className="container mx-auto px-4 py-8 max-w-4xl mobile-container mobile-content-spacing">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+      <div className={cn(
+        "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing",
+        isMobile && cartItems.length > 0 ? "pb-28" : "py-8"
+      )}>
+        {/* Sticky Header with Backdrop Blur - iOS Style */}
+        <div className={cn(
+          "flex items-center gap-4 -mx-4 px-4 py-4 mb-4",
+          isMobile && "sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b"
+        )}>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
-            className="touch-target-44"
+            onClick={() => {
+              triggerHapticFeedback(HapticPatterns.navigationTap);
+              navigate(-1);
+            }}
+            className="h-11 w-11 touch-target-44"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Shopping Cart</h1>
-            <p className="text-muted-foreground">
+            <h1 className={cn("font-bold", isMobile ? "text-xl" : "text-2xl")}>Shopping Cart</h1>
+            <p className="text-sm text-muted-foreground">
               {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
             </p>
           </div>
@@ -318,39 +342,39 @@ const Cart = () => {
                           })}
                         </p>
                         
-                        {/* Quantity Controls */}
+                        {/* Quantity Controls - 44px touch targets */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center border rounded">
+                          <div className="flex items-center border rounded-lg">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => updateQuantity(item.product.product_id, item.quantity - 1)}
+                              size="icon"
+                              onClick={() => handleQuantityChange(item.product.product_id, item.quantity - 1)}
                               disabled={item.quantity <= 1}
-                              className="h-8 w-8 p-0"
+                              className="h-11 w-11 quantity-btn-press touch-target-44"
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
+                            <span className="px-4 py-2 text-sm font-medium min-w-[3rem] text-center">
                               {item.quantity}
                             </span>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => updateQuantity(item.product.product_id, item.quantity + 1)}
+                              size="icon"
+                              onClick={() => handleQuantityChange(item.product.product_id, item.quantity + 1)}
                               disabled={item.quantity >= 10}
-                              className="h-8 w-8 p-0"
+                              className="h-11 w-11 quantity-btn-press touch-target-44"
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                           
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => removeFromCart(item.product.product_id)}
-                            className="text-muted-foreground hover:text-destructive"
+                            size="icon"
+                            onClick={() => handleRemoveItem(item.product.product_id)}
+                            className="h-11 w-11 text-muted-foreground hover:text-destructive touch-target-44"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
                         
@@ -371,17 +395,23 @@ const Cart = () => {
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-2">
                                   <button
-                                    onClick={() => handleAssignRecipient(item.product.product_id)}
-                                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                                    onClick={() => {
+                                      triggerHapticFeedback(HapticPatterns.buttonTap);
+                                      handleAssignRecipient(item.product.product_id);
+                                    }}
+                                    className="text-xs text-muted-foreground hover:text-foreground underline min-h-[44px] flex items-center px-2"
                                   >
                                     Change
                                   </button>
                                   <span className="text-muted-foreground">|</span>
                                   <button
-                                    onClick={() => handleUnassignRecipient(item.product.product_id)}
-                                    className="text-xs text-muted-foreground hover:text-destructive underline"
+                                    onClick={() => {
+                                      triggerHapticFeedback(HapticPatterns.removeItem);
+                                      handleUnassignRecipient(item.product.product_id);
+                                    }}
+                                    className="text-xs text-muted-foreground hover:text-destructive underline min-h-[44px] flex items-center px-2"
                                   >
                                     Remove
                                   </button>
@@ -458,78 +488,99 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Order Summary - Simplified */}
-            <div className={isMobile ? 'order-2' : ''}>
-              <div className="bg-background border rounded-lg p-6 sticky top-4">
-                <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-                
-                <div className="space-y-3 mb-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+            {/* Order Summary - Desktop Only */}
+            {!isMobile && (
+              <div>
+                <div className="bg-background border rounded-lg p-6 sticky top-4">
+                  <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+                  
+                  <div className="space-y-3 mb-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+                      <span>{formatPrice(cartTotal)}</span>
+                    </div>
+                    
+                    {/* Compact recipient summary */}
+                    {recipientSummary.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipping to</span>
+                        <span className="text-right text-xs">
+                          {recipientSummary.map((r, i) => (
+                            <span key={r.name}>
+                              {r.name} ({r.count}){i < recipientSummary.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Shipping</span>
+                      <span className="text-muted-foreground">Calculated at checkout</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tax</span>
+                      <span className="text-muted-foreground">Calculated at checkout</span>
+                    </div>
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="flex justify-between text-lg font-semibold mb-6">
+                    <span>Total</span>
                     <span>{formatPrice(cartTotal)}</span>
                   </div>
                   
-                  {/* Compact recipient summary */}
-                  {recipientSummary.length > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Shipping to</span>
-                      <span className="text-right text-xs">
-                        {recipientSummary.map((r, i) => (
-                          <span key={r.name}>
-                            {r.name} ({r.count}){i < recipientSummary.length - 1 ? ', ' : ''}
-                          </span>
-                        ))}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-muted-foreground">Calculated at checkout</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span className="text-muted-foreground">Calculated at checkout</span>
-                  </div>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <div className="flex justify-between text-lg font-semibold mb-6">
-                  <span>Total</span>
-                  <span>{formatPrice(cartTotal)}</span>
-                </div>
-                
-                <div className="space-y-3">
-                  <Button 
-                    onClick={handleCheckout}
-                    className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white"
-                    size={isMobile ? "lg" : "default"}
-                    disabled={!hasCompleteAddress}
-                  >
-                    {hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address'}
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => navigate("/marketplace")}
-                    className="w-full"
-                    size={isMobile ? "lg" : "default"}
-                  >
-                    Continue Shopping
-                  </Button>
-                  
-                  {cartItems.length > 0 && (
-                    <button
-                      onClick={clearCart}
-                      className="w-full text-xs text-muted-foreground hover:text-destructive py-2"
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={handleCheckout}
+                      className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white"
+                      disabled={!hasCompleteAddress}
                     >
-                      Clear Cart
-                    </button>
-                  )}
+                      {hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address'}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        triggerHapticFeedback(HapticPatterns.navigationTap);
+                        navigate("/marketplace");
+                      }}
+                      className="w-full"
+                    >
+                      Continue Shopping
+                    </Button>
+                    
+                    {cartItems.length > 0 && (
+                      <button
+                        onClick={() => {
+                          triggerHapticFeedback(HapticPatterns.removeItem);
+                          clearCart();
+                        }}
+                        className="w-full text-xs text-muted-foreground hover:text-destructive py-2 min-h-[44px]"
+                      >
+                        Clear Cart
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+            
+            {/* Mobile Summary Card - Compact */}
+            {isMobile && (
+              <div className="order-2 bg-muted/30 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+                  <span className="font-medium">{formatPrice(cartTotal)}</span>
+                </div>
+                {recipientSummary.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Shipping to: {recipientSummary.map(r => r.name).join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -544,6 +595,25 @@ const Cart = () => {
             title="Select Recipient"
             selectedRecipientId={selectedItemId}
           />
+        )}
+        
+        {/* Sticky Bottom CTA Bar - Mobile Only */}
+        {isMobile && cartItems.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-50 pb-safe">
+            <div className="flex items-center justify-between gap-4 p-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-lg font-bold">{formatPrice(cartTotal)}</p>
+              </div>
+              <Button 
+                onClick={handleCheckout}
+                className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white h-12"
+                disabled={!hasCompleteAddress}
+              >
+                {hasCompleteAddress ? 'Checkout' : 'Add Address'}
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </SidebarLayout>

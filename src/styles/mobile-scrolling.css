@@ -58,3 +58,44 @@
 .mobile-card-hover:active {
   transform: scale(0.98);
 }
+
+/* iOS Cart Animations */
+.cart-item-enter {
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cart-item-exit {
+  animation: slideOutToLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-20px); opacity: 0; }
+}
+
+/* Quantity button press feedback - iOS spring effect */
+.quantity-btn-press {
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quantity-btn-press:active {
+  transform: scale(0.88);
+}
+
+/* Bottom bar safe area for iOS home indicator */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+}
+
+/* iOS-style backdrop blur support */
+@supports (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px)) {
+  .backdrop-blur-xl {
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+}

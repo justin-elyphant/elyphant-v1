@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -6,34 +5,45 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsLayout from "@/components/settings/SettingsLayout";
-import GeneralSettings from "@/components/settings/GeneralSettings";
+import MyInfoSettings from "@/components/settings/MyInfoSettings";
+import MyAddressSettings from "@/components/settings/MyAddressSettings";
 import MySizesSettings from "@/components/settings/MySizesSettings";
+import MyEventsSettings from "@/components/settings/MyEventsSettings";
+import MyInterestsSettings from "@/components/settings/MyInterestsSettings";
+import MyGiftingSettings from "@/components/settings/MyGiftingSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import PrivacySecuritySettings from "@/components/settings/PrivacySecuritySettings";
+import PrivacySharingSettings from "@/components/settings/PrivacySharingSettings";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
-type SettingsTab = "general" | "sizes" | "notifications" | "privacy" | "";
+type SettingsTab = "info" | "address" | "sizes" | "events" | "interests" | "gifting" | "notifications" | "privacy" | "";
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as SettingsTab;
-  const sectionParam = searchParams.get('section'); // Legacy support from old Account page
+  const sectionParam = searchParams.get('section'); // Legacy support
   
   // Map legacy section parameters to current tab names
   const mapSectionToTab = (section: string | null): SettingsTab | null => {
     switch (section) {
-      case 'profile': return 'general';
+      case 'profile': return 'info';
+      case 'basic': return 'info';
+      case 'general': return 'info';
+      case 'address': return 'address';
       case 'sizes': return 'sizes';
+      case 'dates': return 'events';
+      case 'events': return 'events';
+      case 'interests': return 'interests';
+      case 'gifting': return 'gifting';
       case 'notifications': return 'notifications';  
       case 'privacy': return 'privacy';
-      case 'billing': return 'general'; // billing info is in general settings
+      case 'billing': return 'info';
       default: return null;
     }
   };
   
-// Empty string means show card navigation, otherwise show specific tab
+  // Empty string means show card navigation
   const initialTab = tabParam || mapSectionToTab(sectionParam) || "";
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const { profile, loading, error, refetchProfile } = useProfile();
@@ -42,13 +52,10 @@ const Settings = () => {
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const [forceRefreshCount, setForceRefreshCount] = useState(0);
 
-  console.log("Settings page - loading:", loading, "profile:", profile, "user:", user, "error:", error);
-
-  // Force profile refresh when navigating to settings to ensure fresh data
+  // Force profile refresh when navigating to settings
   useEffect(() => {
     const forceRefreshProfileOnNavigation = async () => {
       if (user) {
-        // Refresh auth session for new signups to ensure clean state
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
@@ -59,12 +66,11 @@ const Settings = () => {
         }
         
         if (refetchProfile) {
-          console.log("🔄 Settings page: Force refreshing profile data on navigation");
           try {
             await refetchProfile();
             setForceRefreshCount(prev => prev + 1);
           } catch (error) {
-            console.error("❌ Error force refreshing profile on settings navigation:", error);
+            console.error("❌ Error force refreshing profile:", error);
           }
         }
       }
@@ -81,12 +87,11 @@ const Settings = () => {
     }
   }, [user, loading, navigate]);
 
-  // Detect stuck state: authenticated but no profile (partial deletion scenario)
+  // Detect stuck state
   useEffect(() => {
     if (user && !loading && !profile && !error) {
       console.error("⚠️ Stuck state detected: User authenticated but profile is null");
       toast.error("Your profile could not be found. Please sign in again.");
-      // Sign out to clear the stuck state
       supabase.auth.signOut().then(() => {
         navigate("/");
       });
@@ -99,14 +104,13 @@ const Settings = () => {
       const timeout = setTimeout(() => {
         console.warn("Settings page loading timeout reached");
         setHasTimedOut(true);
-      }, 10000); // 10 second timeout
+      }, 10000);
 
       return () => clearTimeout(timeout);
     }
   }, [loading, hasTimedOut]);
 
-  // Show error state only if there's no profile data AND (error or timeout)
-  // This allows Settings to render with existing data even if a background update failed
+  // Show error state
   if (!profile && (error || hasTimedOut)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
@@ -133,30 +137,41 @@ const Settings = () => {
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Loading your settings...</p>
-        <p className="text-xs text-muted-foreground">Force refresh count: {forceRefreshCount}</p>
       </div>
     );
   }
 
   const tabs = [
-    { id: "general", label: "My Profile" },
+    { id: "info", label: "My Info" },
+    { id: "address", label: "My Address" },
     { id: "sizes", label: "My Sizes" },
+    { id: "events", label: "My Events" },
+    { id: "interests", label: "My Interests" },
+    { id: "gifting", label: "My Gifting" },
     { id: "notifications", label: "My Notifications" },
-    { id: "privacy", label: "My Privacy & Security" },
+    { id: "privacy", label: "Privacy & Sharing" },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "general":
-        return <GeneralSettings key={`general-${forceRefreshCount}`} />;
+      case "info":
+        return <MyInfoSettings key={`info-${forceRefreshCount}`} />;
+      case "address":
+        return <MyAddressSettings key={`address-${forceRefreshCount}`} />;
       case "sizes":
         return <MySizesSettings />;
+      case "events":
+        return <MyEventsSettings key={`events-${forceRefreshCount}`} />;
+      case "interests":
+        return <MyInterestsSettings key={`interests-${forceRefreshCount}`} />;
+      case "gifting":
+        return <MyGiftingSettings key={`gifting-${forceRefreshCount}`} />;
       case "notifications":
         return <NotificationSettings />;
       case "privacy":
-        return <PrivacySecuritySettings />;
+        return <PrivacySharingSettings />;
       case "":
-        return null; // Card navigation is shown by SettingsLayout
+        return null; // Card navigation shown by SettingsLayout
       default:
         return null;
     }

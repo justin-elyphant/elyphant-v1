@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Ruler, Bell, Shield, ChevronRight } from "lucide-react";
+import { User, MapPin, Ruler, Calendar, Heart, Gift, Bell, Shield, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -12,16 +12,40 @@ interface SettingsSection {
 
 const settingsSections: SettingsSection[] = [
   {
-    id: "general",
+    id: "info",
     icon: User,
-    title: "My Profile",
+    title: "My Info",
     description: "Name, email, and profile picture"
+  },
+  {
+    id: "address",
+    icon: MapPin,
+    title: "My Address",
+    description: "Shipping address and verification"
   },
   {
     id: "sizes",
     icon: Ruler,
     title: "My Sizes",
     description: "Clothing and shoe sizes for gift recommendations"
+  },
+  {
+    id: "events",
+    icon: Calendar,
+    title: "My Events",
+    description: "Important dates like birthdays and anniversaries"
+  },
+  {
+    id: "interests",
+    icon: Heart,
+    title: "My Interests",
+    description: "Interests for personalized gift recommendations"
+  },
+  {
+    id: "gifting",
+    icon: Gift,
+    title: "My Gifting",
+    description: "Gift preferences and wishlist settings"
   },
   {
     id: "notifications",
@@ -32,8 +56,8 @@ const settingsSections: SettingsSection[] = [
   {
     id: "privacy",
     icon: Shield,
-    title: "Privacy & Security",
-    description: "Password, data sharing, and account"
+    title: "Privacy & Sharing",
+    description: "Data visibility, security, and account settings"
   }
 ];
 

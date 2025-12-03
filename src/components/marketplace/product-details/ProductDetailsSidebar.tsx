@@ -203,6 +203,10 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         open={showScheduleGiftModal}
         onOpenChange={setShowScheduleGiftModal}
         product={product}
+        hasVariations={hasVariations}
+        getEffectiveProductId={getEffectiveProductId}
+        getVariationDisplayText={getVariationDisplayText}
+        isVariationComplete={isVariationComplete}
       />
     </>
   );

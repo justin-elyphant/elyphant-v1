@@ -336,27 +336,8 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           className="mb-2"
         />
 
-        {/* Bottom Section: Wishlist Action */}
-        <div className="flex items-center justify-between pt-1 mt-auto">
-          {/* Price Section - Bottom Left */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              {hasDiscount() ? (
-                <>
-                  <span className="font-bold text-lg text-gray-900">
-                    {formatPrice(getSalePrice() || 0)}
-                  </span>
-                  <span className="text-sm text-gray-500 line-through">
-                    {getProductPrice()}
-                  </span>
-                </>
-              ) : (
-                <span className="font-bold text-lg text-gray-900">
-                  {getProductPrice()}
-                </span>
-              )}
-            </div>
-          </div>
+        {/* Bottom Section: Action Buttons */}
+        <div className="flex items-center justify-end pt-1 mt-auto">
 
           {/* Action Buttons - Bottom Right - Context Aware */}
           <div className="flex items-center gap-1 relative z-30">

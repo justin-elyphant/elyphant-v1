@@ -921,6 +921,30 @@ serve(async (req) => {
         console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products (${minPrice ? `$${minPrice}` : 'no min'} to ${maxPrice ? `$${maxPrice}` : 'no max'})`);
       }
       
+      // Universal relevance filter - removes products that don't match any search terms
+      // This prevents Zinc's OR-logic from returning irrelevant products (e.g., "dal" soup for "dallas cowboys")
+      if (query && filteredResults.length > 0) {
+        const searchTerms = query.toLowerCase()
+          .split(/\s+/)
+          .filter(term => term.length >= 3); // Only meaningful terms (3+ chars)
+        
+        if (searchTerms.length > 0) {
+          const beforeCount = filteredResults.length;
+          filteredResults = filteredResults.filter((product: any) => {
+            const title = (product.title || '').toLowerCase();
+            const category = (product.category || '').toLowerCase();
+            const brand = (product.brand || '').toLowerCase();
+            
+            // Keep product if ANY search term appears in title, category, or brand
+            return searchTerms.some(term => 
+              title.includes(term) || category.includes(term) || brand.includes(term)
+            );
+          });
+          
+          console.log(`🎯 Relevance filter: ${beforeCount} → ${filteredResults.length} products (query: "${query}")`);
+        }
+      }
+      
       // Process best seller data for each product
       if (filteredResults && Array.isArray(filteredResults)) {
         filteredResults = filteredResults.map((product: any) => {

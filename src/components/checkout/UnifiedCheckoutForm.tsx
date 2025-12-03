@@ -613,7 +613,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 hidden lg:block">
                   <p className="text-sm text-muted-foreground">
                     Click the button below to proceed to secure checkout.
                   </p>

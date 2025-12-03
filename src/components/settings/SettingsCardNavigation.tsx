@@ -63,7 +63,7 @@ const SettingsCardNavigation: React.FC<SettingsCardNavigationProps> = ({
   onSelectSection
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Account Settings</h1>

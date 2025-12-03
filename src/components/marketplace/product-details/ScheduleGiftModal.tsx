@@ -15,23 +15,33 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useAuth } from "@/contexts/auth";
 import SimpleRecipientSelector, { SelectedRecipient } from "./SimpleRecipientSelector";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
+import { RecipientAssignment } from "@/types/recipient";
 
 interface ScheduleGiftModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product;
+  // Variant props from parent
+  hasVariations?: boolean;
+  getEffectiveProductId?: () => string;
+  getVariationDisplayText?: () => string;
+  isVariationComplete?: () => boolean;
 }
 
 const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({ 
   open, 
   onOpenChange, 
-  product 
+  product,
+  hasVariations = false,
+  getEffectiveProductId,
+  getVariationDisplayText,
+  isVariationComplete
 }) => {
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [giftMessage, setGiftMessage] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
   const [isInviting, setIsInviting] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, assignItemToRecipient } = useCart();
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { user } = useAuth();
@@ -81,49 +91,48 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
   };
   
   const handleSchedule = () => {
+    // Validate variation selection first
+    if (hasVariations && isVariationComplete && !isVariationComplete()) {
+      toast.error("Please select all product options", {
+        description: "Choose size, color, and other options before scheduling"
+      });
+      return;
+    }
+    
     if (!scheduledDate) {
       toast.error("Please select a delivery date");
       return;
     }
     
-    // Build recipient assignment based on selection
-    let recipientAssignment: any = {
-      scheduledDeliveryDate: scheduledDate.toISOString()
+    // Get effective product ID (selected variant or base product)
+    const effectiveProductId = getEffectiveProductId ? getEffectiveProductId() : String(product.product_id || product.id);
+    const variationText = getVariationDisplayText ? getVariationDisplayText() : undefined;
+    
+    // Build variant-aware cart product
+    const cartProduct = {
+      ...product,
+      product_id: effectiveProductId,
+      variationText: variationText || undefined
     };
     
-    if (giftMessage) {
-      recipientAssignment.giftMessage = giftMessage;
-    }
+    // Step 1: Add to cart with variant info
+    addToCart(cartProduct);
     
-    if (selectedRecipient) {
-      if (selectedRecipient.type === 'self') {
-        recipientAssignment = {
-          ...recipientAssignment,
-          connectionId: 'self',
-          connectionName: userName,
-          shippingAddress: selectedRecipient.shippingAddress
-        };
-      } else if (selectedRecipient.type === 'connection' && selectedRecipient.connectionId) {
-        recipientAssignment = {
-          ...recipientAssignment,
-          connectionId: selectedRecipient.connectionId,
-          connectionName: selectedRecipient.connectionName,
-          shippingAddress: selectedRecipient.shippingAddress
-        };
-      }
-      // For 'later' type, we just keep the date and message
-    }
-    
-    // Add to cart with scheduled delivery metadata
-    addToCart({
-      ...product,
-      deliveryGroup: {
+    // Step 2: Assign recipient AFTER adding to cart (correct pattern)
+    if (selectedRecipient && selectedRecipient.type !== 'later') {
+      const recipientAssignment: RecipientAssignment = {
+        connectionId: selectedRecipient.type === 'self' ? 'self' : (selectedRecipient.connectionId || ''),
+        connectionName: selectedRecipient.type === 'self' ? userName : (selectedRecipient.connectionName || ''),
+        deliveryGroupId: `gift_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         scheduledDeliveryDate: scheduledDate.toISOString(),
-        connectionId: selectedRecipient?.connectionId,
-        connectionName: selectedRecipient?.connectionName
-      },
-      recipientAssignment
-    } as any);
+        giftMessage: giftMessage || undefined,
+        shippingAddress: selectedRecipient.shippingAddress,
+        address_verified: selectedRecipient.addressVerified
+      };
+      
+      // Assign recipient to the cart item
+      assignItemToRecipient(effectiveProductId, recipientAssignment);
+    }
     
     // Build success message
     const recipientText = selectedRecipient?.type === 'self' 
@@ -132,8 +141,10 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
         ? `to ${selectedRecipient.connectionName}`
         : '';
     
+    const variantInfo = variationText ? ` (${variationText})` : '';
+    
     toast.success("Gift scheduled!", {
-      description: `Will be delivered ${recipientText} on ${format(scheduledDate, 'PPP')}`.trim(),
+      description: `Will be delivered ${recipientText} on ${format(scheduledDate, 'PPP')}${variantInfo}`.trim(),
       action: {
         label: "View Cart",
         onClick: () => navigate("/cart")

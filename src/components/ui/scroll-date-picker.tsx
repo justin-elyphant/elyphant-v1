@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Picker from 'react-mobile-picker';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,8 @@ export function ScrollDatePicker({ value, onChange, minDate = new Date(), classN
     day: String(initialDate.getDate()),
     year: String(initialDate.getFullYear())
   });
+  
+  const debounceRef = useRef<NodeJS.Timeout>();
 
   // Generate days based on selected month/year
   const getDaysInMonth = (month: string, year: string) => {
@@ -42,25 +44,36 @@ export function ScrollDatePicker({ value, onChange, minDate = new Date(), classN
     }
   }, [pickerValue.month, pickerValue.year, days.length]);
 
-  // Update parent when selection changes
+  // Debounced update to parent when selection changes
   useEffect(() => {
-    const monthIndex = MONTHS.indexOf(pickerValue.month);
-    const day = Math.min(parseInt(pickerValue.day), days.length);
-    const newDate = new Date(
-      parseInt(pickerValue.year),
-      monthIndex,
-      day
-    );
-    
-    // Only update if date is valid and different
-    if (!isNaN(newDate.getTime())) {
-      onChange(newDate);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
-  }, [pickerValue.month, pickerValue.day, pickerValue.year]);
+    
+    debounceRef.current = setTimeout(() => {
+      const monthIndex = MONTHS.indexOf(pickerValue.month);
+      const day = Math.min(parseInt(pickerValue.day), days.length);
+      const newDate = new Date(
+        parseInt(pickerValue.year),
+        monthIndex,
+        day
+      );
+      
+      if (!isNaN(newDate.getTime())) {
+        onChange(newDate);
+      }
+    }, 150); // 150ms debounce for smoother feel
+    
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [pickerValue.month, pickerValue.day, pickerValue.year, days.length, onChange]);
 
-  const handleChange = (newValue: Record<string, string>) => {
+  const handleChange = useCallback((newValue: Record<string, string>) => {
     setPickerValue(newValue);
-  };
+  }, []);
 
   return (
     <div className={cn("scroll-date-picker", className)}>

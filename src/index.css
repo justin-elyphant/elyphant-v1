@@ -783,6 +783,7 @@ body {
 /* Scroll Date Picker Styling */
 .scroll-date-picker {
   --picker-item-height: 44px;
+  touch-action: pan-y;
 }
 
 .scroll-date-picker .picker-container {
@@ -810,6 +811,13 @@ body {
   flex: 1;
 }
 
+/* Slow down the scroll animation */
+.scroll-date-picker .picker-scroller {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1) !important;
+}
+
 .scroll-date-picker .picker-item {
   display: flex;
   align-items: center;
@@ -817,7 +825,7 @@ body {
   height: var(--picker-item-height);
   font-size: 1rem;
   color: hsl(var(--muted-foreground));
-  transition: all 0.15s ease;
+  transition: all 0.25s ease-out;
 }
 
 .scroll-date-picker .picker-item-selected {

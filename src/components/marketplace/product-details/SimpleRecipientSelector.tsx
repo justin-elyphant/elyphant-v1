@@ -115,15 +115,16 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
 
   const handleSelectConnection = (connection: EnhancedConnection) => {
     // For pending invitations, use pending_shipping_address
-    const pendingAddress = connection.pending_shipping_address;
-    const shippingAddress = pendingAddress ? {
+    // For accepted connections, use profile_shipping_address
+    const rawAddress = connection.pending_shipping_address || connection.profile_shipping_address;
+    const shippingAddress = rawAddress ? {
       name: connection.profile_name || connection.pending_recipient_name || '',
-      address: pendingAddress.address_line1 || pendingAddress.street || '',
-      addressLine2: pendingAddress.address_line2 || '',
-      city: pendingAddress.city || '',
-      state: pendingAddress.state || '',
-      zipCode: pendingAddress.zip_code || pendingAddress.zipCode || '',
-      country: pendingAddress.country || 'US'
+      address: rawAddress.address_line1 || rawAddress.street || '',
+      addressLine2: rawAddress.address_line2 || rawAddress.line2 || '',
+      city: rawAddress.city || '',
+      state: rawAddress.state || '',
+      zipCode: rawAddress.zip_code || rawAddress.zipCode || '',
+      country: rawAddress.country || 'US'
     } : undefined;
 
     onChange({
@@ -131,8 +132,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       connectionId: connection.display_user_id || connection.connected_user_id || connection.id,
       connectionName: connection.profile_name || connection.pending_recipient_name || 'Recipient',
       shippingAddress,
-      // Address verification status not available on EnhancedConnection, will be looked up at checkout
-      addressVerified: undefined
+      addressVerified: !!rawAddress
     });
     setOpen(false);
     setSearchQuery("");
@@ -140,7 +140,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
 
   // Check if connection has address info
   const hasAddress = (connection: EnhancedConnection) => {
-    return !!connection.pending_shipping_address;
+    return !!(connection.pending_shipping_address || connection.profile_shipping_address);
   };
 
   const handleInviteSubmit = () => {

@@ -22,6 +22,7 @@ export interface EnhancedConnection {
   profile_image?: string;
   profile_bio?: string;
   profile_username?: string;
+  profile_shipping_address?: any; // For accepted connections
   // Helper fields
   display_user_id?: string;
   is_pending_invitation?: boolean;
@@ -80,7 +81,7 @@ export const useEnhancedConnections = () => {
             if (canView) {
               const { data: profileData } = await supabase
                 .from('profiles')
-                .select('id, name, email, profile_image, bio, username, interests, important_dates')
+                .select('id, name, email, profile_image, bio, username, interests, important_dates, shipping_address')
                 .eq('id', targetUserId)
                 .single();
               
@@ -118,6 +119,7 @@ export const useEnhancedConnections = () => {
           profile_image: profile?.profile_image || '/placeholder.svg',
           profile_bio: profile?.bio || '',
           profile_username: fallbackUsername,
+          profile_shipping_address: profile?.shipping_address,
           display_user_id: targetUserId,
           is_pending_invitation: conn.status === 'pending_invitation'
         };

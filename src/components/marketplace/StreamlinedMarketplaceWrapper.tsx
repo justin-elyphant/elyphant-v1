@@ -3,7 +3,6 @@ import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
-import MarketplaceQuickFilters from "./MarketplaceQuickFilters";
 import { ProgressiveAirbnbStyleCategorySections } from "./ProgressiveAirbnbStyleCategorySections";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -38,8 +37,10 @@ import VariationTestPage from "./VariationTestPage";
 import QuickVariationTest from "./QuickVariationTest";
 import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
 import SubCategoryTabs from "./SubCategoryTabs";
-import DesktopFilterSidebar from "./filters/DesktopFilterSidebar";
+import DynamicDesktopFilterSidebar from "./filters/DynamicDesktopFilterSidebar";
 import FilterSortRow from "./filters/FilterSortRow";
+import LululemonMobileFilters from "./filters/LululemonMobileFilters";
+import DynamicMobileFilterDrawer from "./filters/DynamicMobileFilterDrawer";
 
 // Add test mode flag - set to true to show variation test page
 const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
@@ -510,8 +511,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return (
       <div className="container mx-auto px-4 py-6 pt-safe-top pb-safe">
           <MarketplaceHeader />
-          <div className="lg:hidden">
-            <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+          <div className="lg:hidden py-3">
+            <Skeleton className="h-11 w-full rounded-full" />
           </div>
           
           {/* Filter Pills */}
@@ -739,7 +740,9 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           <div className="hidden lg:flex gap-8 items-start">
             {/* Left: Filter Sidebar */}
             {showSearchInfo && (
-              <DesktopFilterSidebar
+              <DynamicDesktopFilterSidebar
+                searchTerm={urlSearchTerm || ''}
+                products={displayProducts}
                 productCount={filteredPaginatedProducts.length}
                 activeFilters={activeFilters}
                 onFilterChange={(newFilters) => {
@@ -844,9 +847,24 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             </div>
           </div>
           
-          {/* Mobile: Original layout with quick filters and drawer */}
+          {/* Mobile: Lululemon-style filters with dynamic drawer */}
           <div className="lg:hidden">
-            <MarketplaceQuickFilters onMoreFilters={() => setShowFiltersDrawer(true)} />
+            <LululemonMobileFilters
+              searchTerm={urlSearchTerm || ''}
+              products={displayProducts}
+              activeFilters={activeFilters}
+              onFilterChange={(newFilters) => {
+                setActiveFilters(newFilters);
+                if (urlSearchTerm) {
+                  const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+                  const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
+                  if (hasChanges) {
+                    setTimeout(() => triggerEnhancedSearch(newFilters), 100);
+                  }
+                }
+              }}
+              onOpenFullFilters={() => setShowFiltersDrawer(true)}
+            />
             
             {/* Filter Pills */}
             <FilterPills
@@ -970,14 +988,23 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} onAddToCart={handleAddToCart} />
       )}
       
-      {/* Advanced Filters Drawer */}
-      <AdvancedFiltersDrawer
-        open={showFiltersDrawer}
+      {/* Dynamic Mobile Filter Drawer */}
+      <DynamicMobileFilterDrawer
+        searchTerm={urlSearchTerm || ''}
+        products={displayProducts}
+        activeFilters={activeFilters}
+        onFilterChange={(newFilters) => {
+          setActiveFilters(newFilters);
+          if (urlSearchTerm) {
+            const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+            const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
+            if (hasChanges) {
+              setTimeout(() => triggerEnhancedSearch(newFilters), 100);
+            }
+          }
+        }}
+        isOpen={showFiltersDrawer}
         onOpenChange={setShowFiltersDrawer}
-        filters={activeFilters}
-        onFiltersChange={setActiveFilters}
-        categories={[]} // You can extract categories from products if needed
-        products={displayProducts} // Pass ALL products for comprehensive smart detection
       />
       
       {/* Variation Test Mode - for development */}

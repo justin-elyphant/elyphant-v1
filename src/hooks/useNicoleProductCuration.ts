@@ -20,8 +20,8 @@ export const useNicoleProductCuration = () => {
       if (options?.category && CategorySearchService.isSupportedCategory(options.category)) {
         console.log(`[Nicole] Using enhanced category search for: ${options.category}`);
         try {
-          results = await CategorySearchService.searchCategory(options.category, keywords, {
-            maxResults: 24,
+        results = await CategorySearchService.searchCategory(options.category, keywords, {
+            limit: 24,
             minPrice: options.priceMin,
             maxPrice: options.priceMax
           });

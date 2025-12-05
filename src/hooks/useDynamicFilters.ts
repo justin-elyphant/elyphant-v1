@@ -21,25 +21,51 @@ export interface DynamicFilterOption {
 }
 
 export interface DynamicFilterState {
+  priceRange: [number, number];
+  selectedCategories: string[];
+  selectedBrands: string[];
+  selectedDemographics: string[];
+  selectedOccasions: string[];
+  selectedAttributes: Record<string, string[]>;
+  freeShipping: boolean;
+  sortBy: string;
   [key: string]: any;
 }
 
 export interface DynamicFilterOptions {
-  key: string;
-  options: DynamicFilterOption[];
+  categories: string[];
+  brands: string[];
+  attributes: Record<string, string[]>;
+  priceRanges?: { min: number; max: number; label: string }[];
 }
 
 export interface SearchContext {
   query: string;
   category?: string;
-  filters: DynamicFilterState;
+  filters?: DynamicFilterState;
+  gender?: string;
+  ageGroup?: string;
+  occasion?: string;
+  isGiftContext?: boolean;
+  productCategory?: string;
 }
 
 // Alias for backward compatibility
 export type DynamicFiltersState = DynamicFilterState;
 
-export const useDynamicFilters = (products: any[] = []) => {
-  const [filters, setFilters] = useState<DynamicFilterState>({});
+const defaultFilterState: DynamicFilterState = {
+  priceRange: [0, 1000],
+  selectedCategories: [],
+  selectedBrands: [],
+  selectedDemographics: [],
+  selectedOccasions: [],
+  selectedAttributes: {},
+  freeShipping: false,
+  sortBy: "relevance"
+};
+
+export const useDynamicFilters = (products: any[] = [], searchQuery: string = "") => {
+  const [filters, setFilters] = useState<DynamicFilterState>({ ...defaultFilterState });
   
   // Generate dynamic filters based on products
   const dynamicFilters = useMemo((): DynamicFilter[] => {
@@ -97,13 +123,56 @@ export const useDynamicFilters = (products: any[] = []) => {
     
     return result;
   }, [products]);
+
+  // Extract filter options from products
+  const filterOptions: DynamicFilterOptions = useMemo(() => {
+    const categories = new Set<string>();
+    const brands = new Set<string>();
+    const attributes: Record<string, Set<string>> = {};
+
+    products.forEach(product => {
+      if (product.category) categories.add(product.category);
+      if (product.brand) brands.add(product.brand);
+    });
+
+    return {
+      categories: Array.from(categories),
+      brands: Array.from(brands),
+      attributes: Object.fromEntries(
+        Object.entries(attributes).map(([k, v]) => [k, Array.from(v)])
+      ),
+      priceRanges: [
+        { min: 0, max: 25, label: "Under $25" },
+        { min: 25, max: 50, label: "$25 - $50" },
+        { min: 50, max: 100, label: "$50 - $100" },
+        { min: 100, max: 1000, label: "$100+" }
+      ]
+    };
+  }, [products]);
+
+  // Detect search context from query
+  const searchContext: SearchContext = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return {
+      query: searchQuery,
+      gender: query.includes("men") ? "men" : query.includes("women") ? "women" : undefined,
+      ageGroup: query.includes("kids") ? "kids" : query.includes("teen") ? "teen" : undefined,
+      occasion: query.includes("birthday") ? "birthday" : query.includes("christmas") ? "christmas" : undefined,
+      isGiftContext: query.includes("gift"),
+      productCategory: filterOptions.categories[0]
+    };
+  }, [searchQuery, filterOptions.categories]);
   
   const updateFilter = useCallback((key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  const updateFilters = useCallback((updates: Partial<DynamicFilterState>) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+  }, []);
   
   const clearFilters = useCallback(() => {
-    setFilters({});
+    setFilters({ ...defaultFilterState });
   }, []);
   
   const clearFilter = useCallback((key: string) => {
@@ -115,20 +184,35 @@ export const useDynamicFilters = (products: any[] = []) => {
   }, []);
   
   // Generate filter options for specific key
-  const getFilterOptions = useCallback((key: string): DynamicFilterOptions | null => {
+  const getFilterOptions = useCallback((key: string) => {
     const filter = dynamicFilters.find(f => f.key === key);
     if (!filter) return null;
     return { key, options: filter.options || [] };
   }, [dynamicFilters]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) count++;
+    count += filters.selectedCategories.length;
+    count += filters.selectedBrands.length;
+    count += filters.selectedDemographics.length;
+    count += filters.selectedOccasions.length;
+    if (filters.freeShipping) count++;
+    return count;
+  }, [filters]);
   
   return {
     filters,
+    filterOptions,
+    searchContext,
     dynamicFilters,
     updateFilter,
+    updateFilters,
     clearFilters,
     clearFilter,
     setFilters,
-    hasActiveFilters: Object.keys(filters).length > 0,
+    hasActiveFilters: activeFilterCount > 0,
+    activeFilterCount,
     getFilterOptions,
   };
 };

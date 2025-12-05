@@ -142,14 +142,7 @@ export const handleSearch = async (
             minPrice,
             maxPrice,
             maxResults: 16,
-            // CRITICAL: Pass filters that edge function expects
-            filters: {
-              min_price: minPrice,
-              max_price: maxPrice,
-              minPrice: minPrice,
-              maxPrice: maxPrice
-            }
-          });
+          } as any);
           
           if (searchResults && searchResults.length > 0) {
             console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);

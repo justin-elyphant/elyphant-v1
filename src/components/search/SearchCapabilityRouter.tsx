@@ -7,11 +7,6 @@ import { Product } from "@/types/product";
  * 
  * This component provides a gradual migration path from legacy search components
  * to the new unified search system while preserving all existing functionality.
- * 
- * Usage:
- * 1. Wrap your existing search component with this router
- * 2. Use the provided search capabilities instead of legacy hooks
- * 3. Remove this wrapper once fully migrated to useUnifiedSearch directly
  */
 
 interface SearchCapabilityRouterProps {
@@ -53,58 +48,47 @@ export const SearchCapabilityRouter: React.FC<SearchCapabilityRouterProps> = ({
   maxResults = 20,
   autoSearch = false
 }) => {
-  const {
-    query,
-    results,
-    isLoading,
-    error,
-    searchHistory,
-    search,
-    searchProducts,
-    setQuery,
-    clearSearch,
-    cacheStats
-  } = useUnifiedSearch({
+  const unifiedSearch = useUnifiedSearch({
     defaultQuery,
     maxResults,
     autoSearch
   });
 
   // Legacy compatibility wrapper for searchZincProducts
-  const searchZincProducts = async (searchTerm: string, searchChanged: boolean): Promise<Product[]> => {
+  const searchZincProducts = async (searchTerm: string, _searchChanged: boolean): Promise<Product[]> => {
     console.warn('searchZincProducts called via SearchCapabilityRouter. Please migrate to searchProducts() method.');
-    return await searchProducts(searchTerm);
+    return await unifiedSearch.searchProducts(searchTerm);
   };
 
   // Enhanced search method that returns unified results
-  const enhancedSearch = async (query: string, options: any = {}) => {
-    await search(query, options);
+  const enhancedSearch = async (query: string, _options: any = {}): Promise<void> => {
+    await unifiedSearch.search(query);
   };
 
   const capabilities: SearchCapabilities = {
     // State
-    query,
-    isLoading,
-    error,
+    query: unifiedSearch.query,
+    isLoading: unifiedSearch.isLoading,
+    error: unifiedSearch.error,
     
     // Results  
-    friends: results.friends,
-    products: results.products,
-    brands: results.brands,
-    totalResults: results.total,
+    friends: unifiedSearch.results.friends || [],
+    products: unifiedSearch.results.products || [],
+    brands: unifiedSearch.results.brands || [],
+    totalResults: unifiedSearch.results.total || 0,
     
     // Actions
     search: enhancedSearch,
-    searchProducts,
-    setQuery,
-    clearSearch,
+    searchProducts: unifiedSearch.searchProducts,
+    setQuery: unifiedSearch.setQuery,
+    clearSearch: unifiedSearch.clearSearch,
     
     // Legacy compatibility
     searchZincProducts,
     
     // Utilities
-    searchHistory,
-    cacheStats
+    searchHistory: unifiedSearch.searchHistory || [],
+    cacheStats: unifiedSearch.cacheStats || {}
   };
 
   return <>{children(capabilities)}</>;

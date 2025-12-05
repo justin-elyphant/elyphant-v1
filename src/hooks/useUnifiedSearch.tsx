@@ -3,40 +3,121 @@
  * @deprecated Use useMarketplace instead
  */
 
-import { useMarketplace } from "./useMarketplace";
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
+import { productCatalogService } from "@/services/ProductCatalogService";
+import { Product } from "@/types/product";
 
-export const useUnifiedSearch = () => {
-  const marketplace = useMarketplace();
-  
-  const searchProducts = useCallback((query: string) => {
-    marketplace.search(query);
-  }, [marketplace]);
-  
+interface UseUnifiedSearchOptions {
+  debounceMs?: number;
+  defaultQuery?: string;
+  maxResults?: number;
+  autoSearch?: boolean;
+}
+
+interface SearchCallOptions {
+  maxResults?: number;
+  includeFriends?: boolean;
+  includeProducts?: boolean;
+  includeBrands?: boolean;
+  currentUserId?: string;
+  [key: string]: any;
+}
+
+export const useUnifiedSearch = (_options: UseUnifiedSearchOptions = {}) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  const searchProducts = useCallback(async (query: string, _options?: SearchCallOptions): Promise<Product[]> => {
+    if (!query.trim()) {
+      setProducts([]);
+      return [];
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await productCatalogService.searchProducts(query);
+      const results = response.products || [];
+      setProducts(results);
+      setSearchTerm(query);
+      
+      // Add to search history
+      setSearchHistory(prev => {
+        const filtered = prev.filter(h => h !== query);
+        return [query, ...filtered].slice(0, 10);
+      });
+      
+      return results;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Search failed";
+      setError(errorMsg);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Accepts optional second argument for backward compatibility
+  const search = useCallback(async (term: string, _options?: SearchCallOptions): Promise<void> => {
+    await searchProducts(term, _options);
+  }, [searchProducts]);
+
+  const setQuery = useCallback((query: string) => {
+    setSearchTerm(query);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setProducts([]);
+    setSearchTerm("");
+    setError(null);
+  }, []);
+
+  const cacheStats = {
+    hits: 0,
+    misses: 0,
+    size: 0,
+    cacheSize: 0,
+    activeRequests: 0
+  };
+
   return {
     // Primary interface
-    searchResults: marketplace.products,
-    results: marketplace.products,
+    searchResults: products,
+    results: {
+      products,
+      friends: [],
+      brands: [],
+      total: products.length
+    },
     searchProducts,
-    products: marketplace.products,
+    products,
     
     // Loading states
-    isSearching: marketplace.isLoading,
-    isLoading: marketplace.isLoading,
+    isSearching: isLoading,
+    isLoading,
     
     // Error handling
-    searchError: marketplace.error,
-    error: marketplace.error,
+    searchError: error,
+    error,
     
     // Search state
-    searchTerm: marketplace.urlState.query,
-    query: marketplace.urlState.query,
+    searchTerm,
+    query: searchTerm,
     
     // Actions
-    executeSearch: marketplace.search,
-    search: marketplace.search,
-    clearResults: marketplace.clearSearch,
-    clearSearch: marketplace.clearSearch,
+    executeSearch: search,
+    search,
+    clearResults: clearSearch,
+    clearSearch,
+    
+    // Additional properties expected by consumers
+    searchHistory,
+    setQuery,
+    cacheStats,
   };
 };
 

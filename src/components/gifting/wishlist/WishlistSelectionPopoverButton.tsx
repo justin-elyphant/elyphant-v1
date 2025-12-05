@@ -17,19 +17,26 @@ interface WishlistSelectionPopoverButtonProps {
   };
   triggerClassName?: string;
   variant?: "default" | "icon";
+  onAdded?: (() => void) | null;
+  isWishlisted?: boolean;
+  showText?: boolean;
 }
 
 const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonProps> = ({
   product,
   triggerClassName,
-  variant = "default"
+  variant = "default",
+  onAdded,
+  isWishlisted: isWishlistedProp,
+  showText = false
 }) => {
   const isMobile = useIsMobile();
   const { wishlists, addToWishlist } = useWishlist();
   const { wishlistedProducts } = useUnifiedWishlistSystem();
   const [open, setOpen] = React.useState(false);
 
-  const isWishlisted = wishlistedProducts.has(product.id);
+  // Use prop if provided, otherwise check from hook (using includes for array)
+  const isWishlisted = isWishlistedProp ?? wishlistedProducts.includes(product.id);
 
   const handleAddToWishlist = async (wishlistId: string) => {
     try {
@@ -43,6 +50,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
       });
       toast.success(`Added to wishlist!`);
       setOpen(false);
+      onAdded?.();
     } catch (error) {
       toast.error("Failed to add to wishlist");
     }
@@ -57,7 +65,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
           className={triggerClassName}
         >
           <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
-          {variant !== "icon" && <span className="ml-1">Save</span>}
+          {(variant !== "icon" || showText) && <span className="ml-1">Save</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2" align="end">

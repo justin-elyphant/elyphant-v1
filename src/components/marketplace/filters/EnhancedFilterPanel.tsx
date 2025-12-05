@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Star } from "lucide-react";
-import { DynamicFilterState, DynamicFilterOptions } from "@/hooks/useDynamicFilters";
+import { DynamicFilterState, DynamicFilterOptions } from "@/types/filters";
 import { Product } from "@/types/product";
 
 interface EnhancedFilterPanelProps {

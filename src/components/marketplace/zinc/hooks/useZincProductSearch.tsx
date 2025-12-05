@@ -4,7 +4,7 @@ import { useProducts } from "@/contexts/ProductContext";
 import { findMatchingProducts } from "../utils/findMatchingProducts";
 import { toast } from "sonner";
 import { normalizeProduct } from "@/contexts/ProductContext";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 export const useZincProductSearch = () => {
   const { products, setProducts } = useProducts();
@@ -17,7 +17,6 @@ export const useZincProductSearch = () => {
   
   const marketplaceProducts = products.filter(p => p.vendor === "Elyphant" || p.vendor === "Amazon via Zinc");
 
-  // Load default products when component mounts (no search term)
   useEffect(() => {
     if (!hasLoadedDefaults && !searchTerm && marketplaceProducts.length === 0) {
       loadDefaultProducts();
@@ -33,11 +32,13 @@ export const useZincProductSearch = () => {
     console.log('Loading default marketplace products...');
     
     try {
-      const response = await enhancedZincApiService.getDefaultProducts(12);
+      const response = await productCatalogService.searchProducts('', { 
+        limit: 12,
+        bestSellingCategory: true 
+      });
       
-      if (response.results && response.results.length > 0) {
-        // Convert Enhanced Zinc API response to Product format
-        const formattedProducts = response.results.map((product: any, index: number) => {
+      if (response.products && response.products.length > 0) {
+        const formattedProducts = response.products.map((product: any, index: number) => {
           return normalizeProduct({
             product_id: product.product_id || `default-${index}`,
             id: product.product_id || `default-${index}`,
@@ -53,13 +54,11 @@ export const useZincProductSearch = () => {
           });
         });
         
-        // Update products
         setProducts(prevProducts => [...prevProducts, ...formattedProducts]);
         setHasLoadedDefaults(true);
         
         console.log(`Loaded ${formattedProducts.length} default products`);
       } else {
-        // Fallback to mock data if API returns no results
         console.log('No results from default products API, using fallback...');
         loadFallbackProducts();
       }
@@ -73,7 +72,6 @@ export const useZincProductSearch = () => {
   };
 
   const loadFallbackProducts = () => {
-    // Use mock data as fallback for default products
     const fallbackProducts = findMatchingProducts("best gifts");
     const formattedFallback = fallbackProducts.map((product, index) => {
       return normalizeProduct({
@@ -100,21 +98,18 @@ export const useZincProductSearch = () => {
     
     searchInProgressRef.current = true;
     setIsLoading(true);
-    setError(null); // Reset error state
+    setError(null);
     setSearchTerm(term);
     console.log(`ZincProductsTab: Submitting search for "${term}"`);
     
     try {
-      // Check for special cases first
       const isSpecialCase = term.toLowerCase().includes('padres') && 
           (term.toLowerCase().includes('hat') || term.toLowerCase().includes('cap'));
       
       if (isSpecialCase) {
         console.log('Using special case handling for Padres hat search in ZincProductsTab');
-        // Generate mock products for this special case
         const specialCaseProducts = findMatchingProducts(term);
         
-        // Convert to Product format and add to state
         const formattedProducts = specialCaseProducts.map((product, index) => {
           return normalizeProduct({
             product_id: `2000-${index}`,
@@ -125,25 +120,21 @@ export const useZincProductSearch = () => {
             category: product.category || "Sports Merchandise",
             image: product.image || "https://images.unsplash.com/photo-1590075865003-e48b276c4579?w=500&h=500&fit=crop",
             vendor: "Amazon via Zinc",
-            description: product.description || "Official San Diego Padres baseball cap. Show your team spirit with this authentic MLB merchandise.",
+            description: product.description || "Official San Diego Padres baseball cap.",
             rating: product.rating || 4.5,
             reviewCount: product.review_count || 120
           });
         });
         
-        // Update products
         setProducts(prevProducts => {
-          // Remove existing Padres products
           const filtered = prevProducts.filter(p => 
             !(p.name?.toLowerCase().includes('padres') && p.name.toLowerCase().includes('hat'))
           );
           return [...filtered, ...formattedProducts];
         });
         
-        // Search completed silently - no toast needed
         console.log(`Found ${formattedProducts.length} products matching "${term}"`);
       } else {
-        // Use the regular search for non-special cases
         await handleRegularSearch(term);
       }
     } catch (err) {
@@ -154,10 +145,8 @@ export const useZincProductSearch = () => {
         description: "There was an error processing your search. Using mock data instead."
       });
       
-      // Fall back to mock data
       const mockProducts = findMatchingProducts(term);
       if (mockProducts.length > 0) {
-        // Convert to Product format
         const formattedMockProducts = mockProducts.map((product, index) => {
           return normalizeProduct({
             product_id: `3000-${index}`,
@@ -174,7 +163,6 @@ export const useZincProductSearch = () => {
           });
         });
         
-        // Update products
         setProducts(prevProducts => {
           return [...prevProducts, ...formattedMockProducts];
         });
@@ -186,12 +174,9 @@ export const useZincProductSearch = () => {
   };
 
   const handleRegularSearch = async (term: string) => {
-    // This function would handle the regular search flow, calling the API
-    // For simplicity, we'll just use the findMatchingProducts function
     const results = findMatchingProducts(term);
     
     if (results.length > 0) {
-      // Convert to Product format
       const formattedProducts = results.map((product, index) => {
         return normalizeProduct({
           product_id: `4000-${index}`,
@@ -208,12 +193,10 @@ export const useZincProductSearch = () => {
         });
       });
       
-      // Update products
       setProducts(prevProducts => {
         return [...prevProducts, ...formattedProducts];
       });
       
-      // Search completed silently - no toast needed
       console.log(`Found ${formattedProducts.length} products matching "${term}"`);
     } else {
       setError("No products found");
@@ -225,7 +208,7 @@ export const useZincProductSearch = () => {
 
   const syncProducts = async () => {
     setIsLoading(true);
-    setError(null); // Reset error state
+    setError(null);
     try {
       toast.success("Products Synced", {
         description: "Your product catalog has been updated."

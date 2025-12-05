@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
 import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
 
 
@@ -49,13 +49,13 @@ const ShoppingPanel = ({
       
       setIsTrendingLoading(true);
       try {
-        // Use searchBestSellingCategories for diverse product selection
-        const response = await enhancedZincApiService.searchBestSellingCategories(12); // Get more to filter
+        // Use productCatalogService for diverse product selection
+        const response = await productCatalogService.searchProducts('', { bestSellingCategory: true, limit: 12 });
         
-        if (!response.error && response.results) {
+        if (!response.error && response.products) {
           // Deduplicate products by brand to ensure diversity
           const seenBrands = new Set<string>();
-          const diverseProducts = response.results.filter((product: any) => {
+          const diverseProducts = response.products.filter((product: any) => {
             const brand = (product.brand || '').toLowerCase();
             // Skip if we already have this brand and we have enough products
             if (seenBrands.has(brand) && seenBrands.size >= 6) {

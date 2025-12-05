@@ -8,7 +8,7 @@ import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { debouncedToastSuccess, debouncedToastError, debouncedToastInfo } from "@/utils/toastDeduplication";
 
 interface MarketplaceSearchContextType {

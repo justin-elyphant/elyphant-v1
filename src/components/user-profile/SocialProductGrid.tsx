@@ -14,7 +14,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import WishlistItemManagementDialog from "./WishlistItemManagementDialog";
 import ResponsiveProductGrid from "./ResponsiveProductGrid";
 import DesktopProfileWrapper from "./DesktopProfileWrapper";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 interface SocialProductGridProps {
   profile: any;

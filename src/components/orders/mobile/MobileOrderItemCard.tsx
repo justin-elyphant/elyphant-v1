@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Star } from "lucide-react";
 import { getProductDetail } from "@/api/product";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 interface MobileOrderItemCardProps {
   item: any;

@@ -3,7 +3,7 @@
  * Implements intelligent caching and category-aware API strategies
  */
 
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { detectCategoryFromSearch } from "@/components/marketplace/utils/smartFilterDetection";
 import { extractAdvancedSizes } from "@/utils/advancedSizeDetection";
 

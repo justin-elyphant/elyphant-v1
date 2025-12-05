@@ -4,10 +4,9 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { useSmartSearch } from "@/components/marketplace/hooks/useSmartSearch";
 import { SmartSearchIndicator } from "@/components/marketplace/SmartSearchIndicator";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -26,16 +25,20 @@ export const SmartSearchTest: React.FC = () => {
     showSizeIndicators: true
   });
 
-  const testDirectZincCall = async () => {
+  const testDirectApiCall = async () => {
     setLoading(true);
-    console.log("🧪 Testing direct enhanced Zinc API call with 'levis jeans'");
+    console.log("🧪 Testing direct ProductCatalogService call with 'levis jeans'");
     
     try {
-      const response = await enhancedZincApiService.searchProducts("levis jeans", 1, 20);
-      console.log("🧪 Direct Zinc API response:", response);
-      setTestResults(response);
-    } catch (error) {
-      console.error("🧪 Direct Zinc API error:", error);
+      const response = await productCatalogService.searchProducts("levis jeans", { limit: 20 });
+      console.log("🧪 Direct API response:", response);
+      setTestResults({
+        results: response.products,
+        error: response.error,
+        cached: false
+      });
+    } catch (error: any) {
+      console.error("🧪 Direct API error:", error);
       setTestResults({ error: error.message });
     } finally {
       setLoading(false);
@@ -48,8 +51,7 @@ export const SmartSearchTest: React.FC = () => {
   };
 
   useEffect(() => {
-    // Auto-test on mount
-    testDirectZincCall();
+    testDirectApiCall();
   }, []);
 
   return (
@@ -59,11 +61,11 @@ export const SmartSearchTest: React.FC = () => {
       <div className="space-y-2 mb-4">
         <Button 
           size="sm" 
-          onClick={testDirectZincCall} 
+          onClick={testDirectApiCall} 
           disabled={loading}
           className="w-full text-xs"
         >
-          Test Direct Zinc API
+          Test Direct API
         </Button>
         
         <Button 
@@ -76,7 +78,6 @@ export const SmartSearchTest: React.FC = () => {
         </Button>
       </div>
 
-      {/* Smart Search Results */}
       {searchResult && (
         <div className="mb-4">
           <h4 className="font-medium text-xs mb-1">Smart Search Results:</h4>
@@ -107,7 +108,6 @@ export const SmartSearchTest: React.FC = () => {
         </div>
       )}
 
-      {/* Direct API Results */}
       {testResults && (
         <div>
           <h4 className="font-medium text-xs mb-1">Direct API Results:</h4>

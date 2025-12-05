@@ -58,6 +58,7 @@ export interface ProductDetail {
   main_image: string;
   product_description: string;
   feature_bullets: string[];
+  product_details: string[];
   stars?: number;
   review_count?: number;
   all_variants?: any[];

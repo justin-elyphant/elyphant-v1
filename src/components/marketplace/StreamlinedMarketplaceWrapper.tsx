@@ -24,7 +24,7 @@ import { batchDOMUpdates } from "@/utils/performanceOptimizations";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteractions";
 import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
-import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
+
 import { Sparkles } from "lucide-react";
 import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
@@ -216,8 +216,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       if (searchTerm) {
         console.log('🎯 Marketplace search update received:', { searchTerm, nicoleContext });
         
-        // Track search for background prefetching
-        backgroundPrefetchingService.trackSearch(searchTerm, 'nicole');
         
         // Start performance timer
         startTimer('nicole-search');

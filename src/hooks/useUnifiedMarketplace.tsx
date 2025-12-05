@@ -7,19 +7,20 @@
  * @deprecated Use useMarketplace instead
  */
 
-import { useMarketplace, type UseMarketplaceOptions } from "./useMarketplace";
+import { useMarketplace } from "./useMarketplace";
 import { useSearchParams } from "react-router-dom";
 
 interface UseUnifiedMarketplaceOptions {
   autoLoadOnMount?: boolean;
   defaultSearchTerm?: string;
+  initialQuery?: string;
 }
 
 export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}) => {
   const [searchParams] = useSearchParams();
   const marketplace = useMarketplace({
-    autoFetch: options.autoLoadOnMount ?? true,
-    initialQuery: options.defaultSearchTerm,
+    autoLoadOnMount: options.autoLoadOnMount ?? true,
+    defaultLimit: 20,
   });
 
   // Map urlState to legacy return format for backward compatibility
@@ -56,9 +57,11 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
     search: marketplace.search,
     clearSearch: marketplace.clearSearch,
     refresh: () => marketplace.search(urlSearchTerm),
-    getProductDetails: async (productId: string) => null, // Now handled by ProductCatalogService
+    getProductDetails: async (_productId: string) => null, // Now handled by ProductCatalogService
     
     // Utilities
     cacheStats: marketplace.cacheStats
   };
 };
+
+export default useUnifiedMarketplace;

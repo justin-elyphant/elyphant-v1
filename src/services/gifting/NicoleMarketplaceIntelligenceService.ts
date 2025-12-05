@@ -512,7 +512,7 @@ class NicoleMarketplaceIntelligenceService {
       
       const searchQuery = this.generateSearchQuery(context);
       const products = await CategorySearchService.searchCategory(category, searchQuery, {
-        maxResults: 10,
+        limit: 10,
         minPrice: Array.isArray(context.budget) ? context.budget[0] : context.budget?.min,
         maxPrice: Array.isArray(context.budget) ? context.budget[1] : context.budget?.max
       });
@@ -520,13 +520,9 @@ class NicoleMarketplaceIntelligenceService {
       return products.map(product => ({
         product,
         reasoning: `Enhanced category match for ${category}`,
-        confidence_score: 0.75, // High confidence for enhanced category matches
-        source: 'enhanced-category' as const,
-        match_factors: {
-          category_match: true,
-          price_match: true,
-          context_relevance: 0.8
-        }
+        confidence_score: 0.75,
+        source: 'ai_curated' as const,
+        match_factors: ['category_match', 'price_match', 'context_relevance']
       }));
     } catch (error) {
       console.error('Enhanced category search error:', error);

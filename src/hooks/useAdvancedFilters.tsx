@@ -10,7 +10,7 @@ export type SortByOption = 'relevance' | 'price-low' | 'price-high' | 'rating' |
 export type AvailabilityOption = 'all' | 'in-stock' | 'pre-order';
 
 export interface FilterState {
-  priceRange: [number, number];
+  priceRange: { min: number; max: number };
   categories: string[];
   brands: string[];
   rating: number | null;
@@ -26,7 +26,7 @@ export interface FilterConfig {
 }
 
 export interface AdvancedFilters {
-  priceRange?: [number, number];
+  priceRange?: { min: number; max: number };
   brands?: string[];
   categories?: string[];
   rating?: number;
@@ -36,7 +36,7 @@ export interface AdvancedFilters {
 }
 
 const defaultFilterState: FilterState = {
-  priceRange: [0, 500],
+  priceRange: { min: 0, max: 1000 },
   categories: [],
   brands: [],
   rating: null,
@@ -63,7 +63,7 @@ export const useAdvancedFilters = (products: any[] = [], initialFilters: Partial
     return products.filter(product => {
       // Price filter
       const price = product.price || 0;
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
+      if (price < filters.priceRange.min || price > filters.priceRange.max) return false;
       
       // Category filter
       if (filters.categories.length > 0) {
@@ -106,7 +106,7 @@ export const useAdvancedFilters = (products: any[] = [], initialFilters: Partial
     if (filters.categories.length > 0) count++;
     if (filters.brands.length > 0) count++;
     if (filters.rating !== null) count++;
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 500) count++;
+    if (filters.priceRange.min > 0 || filters.priceRange.max < 1000) count++;
     return count;
   }, [filters]);
   

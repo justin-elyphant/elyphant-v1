@@ -1,267 +1,136 @@
+/**
+ * useDynamicFilters - Compatibility stub
+ * @deprecated Use useSmartFilters instead
+ */
 
-import { useState, useEffect, useMemo } from "react";
-import { Product } from "@/types/product";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { analyzeSearchContext, generateDynamicFilters, SearchContext, DynamicFilterOptions } from "@/services/marketplace/searchAnalysisService";
+import { useState, useCallback, useMemo } from "react";
 
-// Re-export types for external use
-export type { SearchContext, DynamicFilterOptions } from "@/services/marketplace/searchAnalysisService";
-
-export interface DynamicFilterState {
-  priceRange: [number, number];
-  selectedBrands: string[];
-  selectedCategories: string[];
-  selectedAttributes: Record<string, string[]>;
-  selectedOccasions: string[];
-  selectedDemographics: string[];
-  rating: number | null;
-  freeShipping: boolean;
-  favoritesOnly: boolean;
-  sortBy: string;
+// Exported types for backward compatibility
+export interface DynamicFilter {
+  key: string;
+  label: string;
+  type: 'checkbox' | 'range' | 'select';
+  options?: DynamicFilterOption[];
+  value?: any;
 }
 
-// Helper function to ensure boolean conversion
-const convertToBoolean = (value: any): boolean => {
-  if (typeof value === 'string') {
-    return value === 'true';
-  }
-  return Boolean(value);
-};
+export interface DynamicFilterOption {
+  value: string;
+  label: string;
+  count?: number;
+}
 
-export const useDynamicFilters = (products: Product[], searchTerm: string = "") => {
-  const isMobile = useIsMobile();
+export interface DynamicFilterState {
+  [key: string]: any;
+}
+
+export interface DynamicFilterOptions {
+  key: string;
+  options: DynamicFilterOption[];
+}
+
+export interface SearchContext {
+  query: string;
+  category?: string;
+  filters: DynamicFilterState;
+}
+
+// Alias for backward compatibility
+export type DynamicFiltersState = DynamicFilterState;
+
+export const useDynamicFilters = (products: any[] = []) => {
+  const [filters, setFilters] = useState<DynamicFilterState>({});
   
-  // Analyze search context
-  const searchContext = useMemo(() => {
-    return analyzeSearchContext(searchTerm);
-  }, [searchTerm]);
-  
-  // Generate dynamic filter options
-  const filterOptions = useMemo(() => {
-    return generateDynamicFilters(products, searchContext);
-  }, [products, searchContext]);
-  
-  // Auto-apply smart defaults based on search context
-  const smartDefaults = useMemo(() => {
-    const defaults: Partial<DynamicFilterState> = {};
+  // Generate dynamic filters based on products
+  const dynamicFilters = useMemo((): DynamicFilter[] => {
+    if (!products.length) return [];
     
-    // Auto-select gender if detected
-    if (searchContext.gender && !searchContext.isGiftContext) {
-      defaults.selectedDemographics = [searchContext.gender];
-    }
+    const brands = new Map<string, number>();
+    const categories = new Map<string, number>();
+    const colors = new Map<string, number>();
+    const sizes = new Map<string, number>();
     
-    // Auto-select age group for direct searches
-    if (searchContext.ageGroup && searchTerm.toLowerCase().includes(searchContext.ageGroup)) {
-      defaults.selectedDemographics = [...(defaults.selectedDemographics || []), searchContext.ageGroup];
-    }
+    products.forEach(p => {
+      if (p.brand) brands.set(p.brand, (brands.get(p.brand) || 0) + 1);
+      if (p.category) categories.set(p.category, (categories.get(p.category) || 0) + 1);
+      if (p.color) colors.set(p.color, (colors.get(p.color) || 0) + 1);
+      if (p.size) sizes.set(p.size, (sizes.get(p.size) || 0) + 1);
+    });
     
-    // Auto-select product category if strongly indicated
-    if (searchContext.productCategory && searchTerm.toLowerCase().includes(searchContext.productCategory.toLowerCase())) {
-      defaults.selectedCategories = [searchContext.productCategory];
-    }
+    const result: DynamicFilter[] = [];
     
-    return defaults;
-  }, [searchContext, searchTerm]);
-  
-  // Initialize filter state with smart defaults
-  const [filters, setFilters] = useState<DynamicFilterState>({
-    priceRange: [0, 1000],
-    selectedBrands: [],
-    selectedCategories: [],
-    selectedAttributes: {},
-    selectedOccasions: [],
-    selectedDemographics: [],
-    rating: null,
-    freeShipping: false,
-    favoritesOnly: false,
-    sortBy: "relevance"
-  });
-  
-  // Apply smart defaults when search context changes
-  useEffect(() => {
-    if (Object.keys(smartDefaults).length > 0) {
-      setFilters(prev => ({
-        ...prev,
-        ...smartDefaults
-      }));
-    }
-  }, [smartDefaults]);
-  
-  // Update price range when products change
-  useEffect(() => {
-    if (filterOptions.priceRanges.length > 0) {
-      const maxPrice = Math.max(...filterOptions.priceRanges.map(r => r.max === Infinity ? 1000 : r.max));
-      setFilters(prev => ({
-        ...prev,
-        priceRange: [0, maxPrice]
-      }));
-    }
-  }, [filterOptions.priceRanges]);
-  
-  // Apply filters to products
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-    
-    // Apply brand filters
-    if (filters.selectedBrands.length > 0) {
-      result = result.filter(product => 
-        product.brand && filters.selectedBrands.includes(product.brand)
-      );
-    }
-    
-    // Apply category filters
-    if (filters.selectedCategories.length > 0) {
-      result = result.filter(product => 
-        product.category && filters.selectedCategories.includes(product.category)
-      );
-    }
-    
-    // Apply price range filter
-    result = result.filter(product => 
-      product.price >= filters.priceRange[0] && 
-      product.price <= filters.priceRange[1]
-    );
-    
-    // Apply rating filter
-    if (filters.rating) {
-      result = result.filter(product => {
-        const productRating = product.rating || 0;
-        return productRating >= filters.rating!;
+    if (brands.size > 0) {
+      result.push({
+        key: 'brand',
+        label: 'Brand',
+        type: 'checkbox',
+        options: Array.from(brands).map(([value, count]) => ({ value, label: value, count }))
       });
     }
     
-    // Apply free shipping filter
-    if (filters.freeShipping) {
-      result = result.filter(product => (product as any).free_shipping === true);
+    if (categories.size > 0) {
+      result.push({
+        key: 'category',
+        label: 'Category', 
+        type: 'checkbox',
+        options: Array.from(categories).map(([value, count]) => ({ value, label: value, count }))
+      });
     }
     
-    // Apply favorites filter
-    if (filters.favoritesOnly) {
-      // This would need integration with favorites system
-      console.log('Favorites filter applied but not implemented');
+    if (colors.size > 0) {
+      result.push({
+        key: 'color',
+        label: 'Color',
+        type: 'checkbox',
+        options: Array.from(colors).map(([value, count]) => ({ value, label: value, count }))
+      });
     }
     
-    // Apply sorting
-    switch (filters.sortBy) {
-      case "price-asc":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case "rating":
-        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-      case "newest":
-        // Sort by ID as proxy for newest
-        result.sort((a, b) => {
-          const idA = Number(a.id) || 0;
-          const idB = Number(b.id) || 0;
-          return idB - idA;
-        });
-        break;
-      case "popularity":
-        result.sort((a, b) => {
-          const reviewsA = a.reviewCount || 0;
-          const reviewsB = b.reviewCount || 0;
-          return reviewsB - reviewsA;
-        });
-        break;
+    if (sizes.size > 0) {
+      result.push({
+        key: 'size',
+        label: 'Size',
+        type: 'checkbox',
+        options: Array.from(sizes).map(([value, count]) => ({ value, label: value, count }))
+      });
     }
     
     return result;
-  }, [products, filters]);
+  }, [products]);
   
-  const updateFilter = <K extends keyof DynamicFilterState>(
-    filterType: K, 
-    value: DynamicFilterState[K]
-  ) => {
+  const updateFilter = useCallback((key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+  
+  const clearFilters = useCallback(() => {
+    setFilters({});
+  }, []);
+  
+  const clearFilter = useCallback((key: string) => {
     setFilters(prev => {
-      const newFilters = { ...prev };
-      
-      // Ensure boolean types for specific properties
-      if (filterType === 'freeShipping' || filterType === 'favoritesOnly') {
-        newFilters[filterType] = convertToBoolean(value) as DynamicFilterState[K];
-      } else {
-        newFilters[filterType] = value;
-      }
-      
-      return newFilters;
+      const next = { ...prev };
+      delete next[key];
+      return next;
     });
-  };
+  }, []);
   
-  // Apply multiple filters at once (for smart suggestions)
-  const applyFilters = (newFilters: Partial<DynamicFilterState>) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters
-    }));
-  };
-  
-  // Remove specific filter value
-  const removeFilter = <K extends keyof DynamicFilterState>(
-    filterType: K,
-    value?: any
-  ) => {
-    if (value !== undefined) {
-      updateFilter(filterType, value);
-    } else {
-      // Reset to default value
-      const defaultValues: Record<string, any> = {
-        priceRange: [0, 1000],
-        selectedBrands: [],
-        selectedCategories: [],
-        selectedAttributes: {},
-        selectedOccasions: [],
-        selectedDemographics: [],
-        rating: null,
-        freeShipping: false,
-        favoritesOnly: false,
-        sortBy: "relevance"
-      };
-      updateFilter(filterType, defaultValues[filterType] as DynamicFilterState[K]);
-    }
-  };
-  
-  const resetFilters = () => {
-    const maxPrice = filterOptions.priceRanges.length > 0 
-      ? Math.max(...filterOptions.priceRanges.map(r => r.max === Infinity ? 1000 : r.max))
-      : 1000;
-      
-    setFilters({
-      priceRange: [0, maxPrice],
-      selectedBrands: [],
-      selectedCategories: [],
-      selectedAttributes: {},
-      selectedOccasions: [],
-      selectedDemographics: [],
-      rating: null,
-      freeShipping: false,
-      favoritesOnly: false,
-      sortBy: "relevance"
-    });
-  };
-  
-  // Check if filters should be prioritized based on search context
-  const shouldShowBrandFilters = filterOptions.brands.length > 1;
-  const shouldShowDemographicFilters = searchContext.gender || searchContext.ageGroup || searchContext.isGiftContext;
-  const shouldShowOccasionFilters = searchContext.occasion || searchContext.isGiftContext;
-  const shouldShowAttributeFilters = Object.keys(filterOptions.attributes).length > 0;
+  // Generate filter options for specific key
+  const getFilterOptions = useCallback((key: string): DynamicFilterOptions | null => {
+    const filter = dynamicFilters.find(f => f.key === key);
+    if (!filter) return null;
+    return { key, options: filter.options || [] };
+  }, [dynamicFilters]);
   
   return {
     filters,
-    filteredProducts,
-    filterOptions,
-    searchContext,
+    dynamicFilters,
     updateFilter,
-    applyFilters,
-    removeFilter,
-    resetFilters,
-    isMobile,
-    // UI guidance flags
-    shouldShowBrandFilters,
-    shouldShowDemographicFilters,
-    shouldShowOccasionFilters,
-    shouldShowAttributeFilters
+    clearFilters,
+    clearFilter,
+    setFilters,
+    hasActiveFilters: Object.keys(filters).length > 0,
+    getFilterOptions,
   };
 };
+
+export default useDynamicFilters;

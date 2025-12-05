@@ -1,67 +1,48 @@
 /**
- * Enhanced category search hook with brand diversity
+ * useEnhancedCategorySearch - Compatibility stub
+ * @deprecated Use useMarketplace with category option instead
  */
 
-import { useState, useCallback } from 'react';
-import { searchCategoryWithDiversity, CategorySearchOptions, CategorySearchResult } from '@/components/marketplace/zinc/utils/search/enhancedCategorySearch';
-import { ZincProduct } from '@/components/marketplace/zinc/types';
-import { toast } from 'sonner';
+import { useState, useCallback } from "react";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 export const useEnhancedCategorySearch = () => {
+  const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastSearchResult, setLastSearchResult] = useState<CategorySearchResult | null>(null);
-
-  const searchCategoryProducts = useCallback(async (
-    category: string,
-    searchTerm: string,
-    options?: Partial<CategorySearchOptions>
-  ): Promise<ZincProduct[]> => {
+  const [error, setError] = useState<string | null>(null);
+  
+  const searchCategory = useCallback(async (category: string, query: string = '', options: any = {}) => {
     setIsLoading(true);
+    setError(null);
     
-    const searchOptions: CategorySearchOptions = {
-      enableBrandDiversity: true,
-      maxProductsPerBrand: 3,
-      useMultipleSearchPasses: true,
-      enableTrendingSearch: true,
-      targetResultCount: 50,
-      ...options
-    };
-
     try {
-      console.log(`Enhanced category search: ${category} with term "${searchTerm}"`);
-      
-      const result = await searchCategoryWithDiversity(category, searchTerm, searchOptions);
-      setLastSearchResult(result);
-      
-      // Show success toast with diversity info
-      if (result.products.length > 0) {
-        const brandCount = Object.keys(result.brandDistribution).length;
-        // Search completed silently - no toast needed
-        console.log(`Found ${result.products.length} products from ${brandCount} brands`);
-      } else {
-        toast.error("No Results", {
-          description: `No products found for ${category}`,
-          duration: 3000
-        });
-      }
-      
-      return result.products;
-      
-    } catch (error) {
-      console.error('Enhanced category search error:', error);
-      toast.error("Search Error", {
-        description: "Error searching for category products. Please try again.",
-        duration: 4000
+      const response = await productCatalogService.searchProducts(query, {
+        category,
+        page: options.page || 1,
+        limit: options.limit || 20,
+        filters: {
+          minPrice: options.minPrice,
+          maxPrice: options.maxPrice,
+        }
       });
+      
+      setResults(response.products);
+      return response.products;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Search failed';
+      setError(errorMessage);
       return [];
     } finally {
       setIsLoading(false);
     }
   }, []);
-
+  
   return {
-    searchCategoryProducts,
+    results,
     isLoading,
-    lastSearchResult
+    error,
+    searchCategory,
   };
 };
+
+export default useEnhancedCategorySearch;

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, Heart, Cake, GraduationCap, Baby, ArrowRight } from "lucide-react";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 import { useToast } from "@/hooks/use-toast";
 import {
   Carousel,
@@ -83,27 +82,12 @@ const FeaturedOccasions: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleOccasionClick = async (occasion: { id: string; searchTerm: string; name: string }) => {
-    try {
-      // Check if this occasion category is supported by the enhanced system
-      if (CategorySearchService.isSupportedCategory(occasion.id)) {
-        console.log(`[FeaturedOccasions] Using enhanced search for occasion category: ${occasion.id}`);
-        
-        // Navigate with category parameter to leverage enhanced caching and search
-        navigate(`/marketplace?category=${occasion.id}`, { 
-          state: { fromOccasion: true, occasionType: occasion.id }
-        });
-      } else {
-        // Fallback to original search term approach
-        console.log(`[FeaturedOccasions] Using fallback search for: ${occasion.id}`);
-        navigate(`/marketplace?search=${encodeURIComponent(occasion.searchTerm)}`, { 
-          state: { fromHome: true }
-        });
-      }
-    } catch (error) {
-      console.error(`[FeaturedOccasions] Navigation error for ${occasion.id}:`, error);
-      toast.error("Unable to navigate to occasion category. Please try again.");
-    }
+  const handleOccasionClick = (occasion: { id: string; searchTerm: string; name: string }) => {
+    // Navigate with category parameter - ProductCatalogService handles all categories
+    console.log(`[FeaturedOccasions] Navigating to occasion: ${occasion.id}`);
+    navigate(`/marketplace?category=${occasion.id}`, { 
+      state: { fromOccasion: true, occasionType: occasion.id }
+    });
   };
 
   return (

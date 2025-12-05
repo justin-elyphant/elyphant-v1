@@ -54,7 +54,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { createOrder, CreateOrderData, Order, getOrderById, getUserOrders, updateOrderStatus } from "@/services/orderService";
 import { stripeClientManager } from "./StripeClientManager";
 import { paymentAnalyticsService, enhancedPaymentErrorHandler } from "./PaymentAnalytics";
@@ -740,8 +740,8 @@ class UnifiedPaymentService {
         productId = productOrId;
         console.log(`[CART DEBUG] Adding product ${productId} to cart`);
         
-        // CRITICAL: Use UnifiedMarketplaceService for product details
-        const rawProduct = await unifiedMarketplaceService.getProductDetails(productId);
+        // CRITICAL: Use ProductCatalogService for product details
+        const rawProduct = await productCatalogService.getProductDetail(productId);
         console.log(`[CART DEBUG] Raw product from service:`, rawProduct);
         
         if (!rawProduct) {

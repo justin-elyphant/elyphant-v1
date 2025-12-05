@@ -3,7 +3,7 @@
  * Implements unified protective measures for Zinc API, Marketplace and Auto-Gifting
  */
 
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { toast } from "sonner";
 
 interface AutoGiftingRateLimit {
@@ -80,7 +80,11 @@ class ProtectedAutoGiftingService {
         console.log(`🛡️ Protected search with budget constraint: max $${budget}`);
       }
       
-      const results = await unifiedMarketplaceService.searchProducts(query, searchOptions);
+      const response = await productCatalogService.searchProducts(query, {
+        limit: maxResults,
+        filters: { maxPrice: budget }
+      });
+      const results = response.products;
       
       // Phase 4: Track usage and update limits
       await this.trackApiUsage(userId);

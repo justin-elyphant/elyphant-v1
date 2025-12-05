@@ -34,9 +34,8 @@
  */
 
 import { Product } from "@/types/product";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { supabase } from "@/integrations/supabase/client";
-import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 
 export interface NicoleProductContext {
   recipient_id?: string;
@@ -430,9 +429,10 @@ class NicoleMarketplaceIntelligenceService {
       // Search each interest separately to ensure diversity
       for (const interest of interests) {
         try {
-          const products = await unifiedMarketplaceService.searchProducts(interest, {
-            maxResults: 20
+          const response = await productCatalogService.searchProducts(interest, {
+            limit: 20
           });
+          const products = response.products;
 
           const interestRecommendations = products.map(product => ({
             product,
@@ -511,13 +511,16 @@ class NicoleMarketplaceIntelligenceService {
       
       
       const searchQuery = this.generateSearchQuery(context);
-      const products = await CategorySearchService.searchCategory(category, searchQuery, {
+      const response = await productCatalogService.searchProducts(searchQuery, {
+        category,
         limit: 10,
-        minPrice: Array.isArray(context.budget) ? context.budget[0] : context.budget?.min,
-        maxPrice: Array.isArray(context.budget) ? context.budget[1] : context.budget?.max
+        filters: {
+          minPrice: Array.isArray(context.budget) ? context.budget[0] : context.budget?.min,
+          maxPrice: Array.isArray(context.budget) ? context.budget[1] : context.budget?.max
+        }
       });
 
-      return products.map(product => ({
+      return response.products.map(product => ({
         product,
         reasoning: `Enhanced category match for ${category}`,
         confidence_score: 0.75,
@@ -662,11 +665,11 @@ class NicoleMarketplaceIntelligenceService {
   async getMarketplaceProducts(context: NicoleProductContext): Promise<NicoleProductRecommendation[]> {
     try {
       const searchQuery = this.generateSearchQuery(context);
-      const products = await unifiedMarketplaceService.searchProducts(searchQuery, {
-        maxResults: 16
+      const response = await productCatalogService.searchProducts(searchQuery, {
+        limit: 16
       });
 
-      return products.map(product => ({
+      return response.products.map(product => ({
         product,
         reasoning: `Marketplace search match for "${searchQuery}"`,
         confidence_score: 0.5,

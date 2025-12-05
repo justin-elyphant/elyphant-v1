@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { protectedAutoGiftingService } from '@/services/protected-auto-gifting-service';
-import { unifiedMarketplaceService } from '@/services/marketplace/UnifiedMarketplaceService';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { 

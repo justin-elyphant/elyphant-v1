@@ -6,7 +6,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { searchCache } from '../../services/cache/searchCache';
-import { unifiedMarketplaceService } from '@/services/marketplace/UnifiedMarketplaceService';
 import { smartMockDataService } from '../../services/search/smartMockData';
 
 const SearchOptimizationMonitor = () => {

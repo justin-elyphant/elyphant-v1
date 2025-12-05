@@ -1,6 +1,6 @@
 
 import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { Product } from "@/types/product";
 import { FriendSearchResult } from "./friendSearchService";
 
@@ -142,14 +142,12 @@ export const unifiedSearch = async (
   // Skip product search if query looks like a person name
   if (includeProducts && query.length >= 1 && !isLikelyPersonName(query)) {
     try {
-      console.log('🔍 [unifiedSearch] Searching products via UnifiedMarketplaceService...');
-      const productResults = await unifiedMarketplaceService.searchProducts(query, {
-        maxResults: Math.floor(maxResults / 3),
+      console.log('🔍 [unifiedSearch] Searching products via ProductCatalogService...');
+      const response = await productCatalogService.searchProducts(query, {
+        limit: Math.floor(maxResults / 3),
         luxuryCategories: options.luxuryCategories,
-        personId: options.personId,
-        occasionType: options.occasionType
       });
-      results.products = productResults;
+      results.products = response.products as Product[];
       console.log(`🔍 [unifiedSearch] Product search completed: ${results.products.length} results`);
     } catch (error) {
       console.error('🔍 [unifiedSearch] Error searching products:', error);

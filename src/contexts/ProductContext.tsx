@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { standardizeProduct } from "@/components/marketplace/product-item/productUtils";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 // Product type definition (matches existing type in ProductGallery)
 export type Product = {
@@ -107,13 +107,13 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log(`[ProductContext] Loading products for keyword: "${keyword}"`);
       
-      // Use the unified marketplace service
-      const results = await unifiedMarketplaceService.searchProducts(keyword, {
-        maxResults: 20
+      // Use the ProductCatalogService
+      const response = await productCatalogService.searchProducts(keyword, {
+        limit: 20
       });
       
-      setProducts(results);
-      console.log(`[ProductContext] Loaded ${results.length} products`);
+      setProducts(response.products);
+      console.log(`[ProductContext] Loaded ${response.products.length} products`);
     } catch (err) {
       console.error("Error loading products:", err);
       setProducts([]);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, Target, Bot, TrendingUp, ShoppingBag, ExternalLink, Trash2 } from "lucide-react";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
@@ -58,7 +58,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   const { handleWishlistToggle, wishlistedProducts } = useWishlist();
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
-  const { searchProducts } = useUnifiedSearch({ maxResults: 8 });
+  const { executeSearch } = useMarketplace();
 
   // Fetch wishlist items directly from database
   useEffect(() => {
@@ -203,7 +203,8 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
       // Search for each interest separately to ensure diverse results
       for (const interest of interests.slice(0, 3)) {
         try {
-          const results = await searchProducts(interest);
+          const response = await executeSearch(interest);
+          const results = response.products || [];
           
           // Take top 2-3 products from each interest for diversity
           const productsPerInterest = Math.ceil(8 / Math.min(interests.length, 3));

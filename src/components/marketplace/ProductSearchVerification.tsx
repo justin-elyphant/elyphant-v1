@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProductSearchDebugger } from '@/utils/productSearchDebugger';
 import { TestProductSearch } from '@/services/testProductSearch';
-import { useUnifiedMarketplace } from '@/hooks/useUnifiedMarketplace';
+import { useMarketplace } from '@/hooks/useMarketplace';
 
 export const ProductSearchVerification: React.FC = () => {
   const [verificationStatus, setVerificationStatus] = useState<{
@@ -16,7 +16,7 @@ export const ProductSearchVerification: React.FC = () => {
     details?: any;
   }>({ status: 'idle', message: 'Click to verify product search functionality' });
 
-  const { search, products, isLoading, error } = useUnifiedMarketplace({ autoLoadOnMount: false });
+  const { search, products, isLoading, error } = useMarketplace({ autoLoadOnMount: false });
 
   const runVerification = async () => {
     setVerificationStatus({ status: 'testing', message: 'Running verification tests...' });

@@ -8,7 +8,7 @@ import { Search, Sparkles, X, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { useAuth } from "@/contexts/auth";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -64,16 +64,33 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     isSupported: isVoiceSupported
   } = useSpeechRecognition();
   
-  // Unified search
-  const { 
-    search: performUnifiedSearch, 
-    results: unifiedResults,
-    isLoading: searchLoading,
-    setQuery: setSearchQuery
-  } = useUnifiedSearch({ 
-    maxResults: 15,
-    debounceMs: 300 
+  // Search state and results
+  const [searchResults, setSearchResults] = useState<{ friends: FriendSearchResult[]; products: Product[]; brands: string[] }>({
+    friends: [],
+    products: [],
+    brands: []
   });
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const performProductSearch = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setSearchResults({ friends: [], products: [], brands: [] });
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const response = await productCatalogService.searchProducts(searchTerm, { limit: 15 });
+      setSearchResults({
+        friends: [],
+        products: response.products || [],
+        brands: []
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -114,16 +131,10 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    setSearchQuery(newQuery);
     
     if (!isNicoleMode && newQuery.trim().length >= 1) {
       setShowSuggestions(true);
-      performUnifiedSearch(newQuery, {
-        currentUserId: user?.id,
-        includeFriends: true,
-        includeProducts: true,
-        includeBrands: true
-      });
+      performProductSearch(newQuery);
     } else {
       setShowSuggestions(false);
     }
@@ -163,7 +174,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   // Handle selections
   const handleRecentSearchSelect = (searchTerm: string) => {
     setQuery(searchTerm);
-    setSearchQuery(searchTerm);
     setShowSuggestions(false);
     addSearch(searchTerm);
     
@@ -218,9 +228,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   useEffect(() => {
     if (transcript && transcript.trim()) {
       setQuery(transcript);
-      setSearchQuery(transcript);
+      performProductSearch(transcript);
     }
-  }, [transcript, setSearchQuery]);
+  }, [transcript, performProductSearch]);
 
   // Handle voice errors
   useEffect(() => {
@@ -354,7 +364,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 size="sm"
                 onClick={() => {
                   setQuery("");
-                  setSearchQuery("");
+                  setSearchResults({ friends: [], products: [], brands: [] });
                   inputRef.current?.focus();
                 }}
                 className="h-8 w-8 p-0 hover:bg-gray-100"
@@ -383,9 +393,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
         >
           {query.trim() ? (
             <UnifiedSearchSuggestions
-              friends={unifiedResults.friends}
-              products={unifiedResults.products}
-              brands={unifiedResults.brands}
+              friends={searchResults.friends}
+              products={searchResults.products}
+              brands={searchResults.brands}
               isVisible={showSuggestions}
               onFriendSelect={handleFriendSelect}
               onProductSelect={handleProductSelect}

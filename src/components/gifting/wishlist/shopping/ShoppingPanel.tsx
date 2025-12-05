@@ -10,7 +10,7 @@ import { useProducts } from "@/contexts/ProductContext";
 import { Product } from "@/contexts/ProductContext";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { toast } from "sonner";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { productCatalogService } from "@/services/ProductCatalogService";
@@ -36,7 +36,7 @@ const ShoppingPanel = ({
   const [searchQuery, setSearchQuery] = useState("");
   const { products } = useProducts();
   const { addToWishlist, isAdding } = useWishlist();
-  const { search, isLoading: isSearching, results } = useUnifiedSearch();
+  const { executeSearch, isLoading: isSearching, products: searchResults } = useMarketplace();
   
   const [hasSearched, setHasSearched] = useState(false);
   const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
@@ -96,7 +96,7 @@ const ShoppingPanel = ({
     if (!searchQuery.trim()) return;
     
     setHasSearched(true);
-    await search(searchQuery);
+    await executeSearch(searchQuery);
   };
 
   const handleProductClick = (product: Product) => {
@@ -140,7 +140,7 @@ const ShoppingPanel = ({
     }
   };
 
-  const displayProducts = hasSearched ? (results.products || []) : products.slice(0, 20);
+  const displayProducts = hasSearched ? searchResults : products.slice(0, 20);
 
   const content = (
     <div className="flex flex-col h-full">

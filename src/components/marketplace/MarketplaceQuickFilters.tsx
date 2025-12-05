@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MapPin, Tag, DollarSign, Filter, ChevronDown, Grid3X3 } from "lucide-react";
-import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { useNavigate } from "react-router-dom";
 import { getFeaturedCategories } from "@/constants/categories";
 
@@ -19,7 +19,7 @@ interface MarketplaceQuickFiltersProps {
 
 const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps = {}) => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const { search } = useUnifiedMarketplace();
+  const { search } = useMarketplace();
   const navigate = useNavigate();
 
   const quickFilters = [

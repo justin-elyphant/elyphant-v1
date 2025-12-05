@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import MainLayout from "@/components/layout/MainLayout";
 import SEOWrapper from "@/components/seo/SEOWrapper";
 import { supabase } from "@/integrations/supabase/client";

@@ -10,7 +10,7 @@ import CompactProfileHeader from "./CompactProfileHeader";
 import MobileWishlistCard from "./MobileWishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import { useProducts, Product } from "@/contexts/ProductContext";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
@@ -37,7 +37,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
   
   // Product search
   const { products, isLoading: productsLoading } = useProducts();
-  const { searchProducts, isLoading: searchLoading } = useUnifiedSearch({ debounceMs: 300 });
+  const { executeSearch, isLoading: searchLoading } = useMarketplace();
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Detect search intent: product search vs wishlist filter
@@ -66,8 +66,8 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
     
     // If it looks like a product search, fetch results
     if (value.trim() && !wishlists.some(w => w.title.toLowerCase().includes(value.toLowerCase()))) {
-      const results = await searchProducts(value);
-      setSearchResults(results);
+      const response = await executeSearch(value);
+      setSearchResults(response.products || []);
       setActiveTab("shop"); // Auto-switch to shop tab
     } else {
       setSearchResults([]);

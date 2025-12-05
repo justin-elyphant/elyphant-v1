@@ -5,15 +5,16 @@
  * The database (products table) is now the single source of truth for caching.
  */
 
-import { CategorySearchRegistry, type CategorySearchOptions } from '../categoryRegistry/CategorySearchRegistry';
 import { productCatalogService } from '../ProductCatalogService';
 
-export interface CachedCategorySearchOptions extends CategorySearchOptions {
+export interface CachedCategorySearchOptions {
   skipCache?: boolean;
   warmCache?: boolean;
   limit?: number;
   minPrice?: number;
   maxPrice?: number;
+  maxResults?: number;
+  page?: number;
 }
 
 /**

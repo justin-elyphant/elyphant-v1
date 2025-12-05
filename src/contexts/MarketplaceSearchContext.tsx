@@ -3,13 +3,24 @@
  * Single source of truth for all marketplace search operations
  */
 
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback, ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { useProducts } from "@/contexts/ProductContext";
+import { useProducts, Product } from "@/contexts/ProductContext";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
-import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
 import { productCatalogService } from "@/services/ProductCatalogService";
 import { debouncedToastSuccess, debouncedToastError, debouncedToastInfo } from "@/utils/toastDeduplication";
+import { FilterState, SortByOption, AvailabilityOption } from "@/types/filters";
+
+// Default filter state
+const defaultFilters: FilterState = {
+  priceRange: { min: 0, max: 1000 },
+  categories: [],
+  brands: [],
+  rating: null,
+  sortBy: 'relevance',
+  availability: 'all',
+  minRating: 0
+};
 
 interface MarketplaceSearchContextType {
   // Search state
@@ -21,11 +32,11 @@ interface MarketplaceSearchContextType {
   setSearchTerm: (term: string) => void;
   
   // Filter state
-  filters: any;
-  filteredProducts: any[];
+  filters: FilterState;
+  filteredProducts: Product[];
   availableCategories: string[];
   activeFilterCount: number;
-  updateFilters: (updates: any) => void;
+  updateFilters: (updates: Partial<FilterState>) => void;
   clearFilters: () => void;
   
   // Actions
@@ -49,6 +60,7 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
   const { products, setProducts } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const searchRequestRef = useRef<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
   const isSearchingRef = useRef(false);
@@ -74,15 +86,75 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
     delay: 300 
   });
 
-  // Use advanced filters
-  const {
-    filters,
-    filteredProducts,
-    availableCategories,
-    activeFilterCount,
-    updateFilters,
-    clearFilters
-  } = useAdvancedFilters(products);
+  // Inline filter logic (replaces useAdvancedFilters)
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    products.forEach(product => {
+      if (product.category) categories.add(product.category);
+    });
+    return Array.from(categories);
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+    
+    // Price filter
+    result = result.filter(product => {
+      const price = product.price || 0;
+      return price >= filters.priceRange.min && price <= filters.priceRange.max;
+    });
+    
+    // Category filter
+    if (filters.categories.length > 0) {
+      result = result.filter(product => 
+        product.category && filters.categories.includes(product.category)
+      );
+    }
+    
+    // Brand filter
+    if (filters.brands.length > 0) {
+      result = result.filter(product => 
+        product.brand && filters.brands.includes(product.brand)
+      );
+    }
+    
+    // Rating filter
+    if (filters.minRating && filters.minRating > 0) {
+      result = result.filter(product => 
+        (product.rating || 0) >= filters.minRating!
+      );
+    }
+    
+    // Sort
+    if (filters.sortBy === 'price-low') {
+      result.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (filters.sortBy === 'price-high') {
+      result.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (filters.sortBy === 'rating') {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+    
+    return result;
+  }, [products, filters]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.priceRange.min > 0 || filters.priceRange.max < 1000) count++;
+    count += filters.categories.length;
+    count += filters.brands.length;
+    if (filters.minRating && filters.minRating > 0) count++;
+    if (filters.sortBy !== 'relevance') count++;
+    if (filters.availability !== 'all') count++;
+    return count;
+  }, [filters]);
+
+  const updateFilters = useCallback((updates: Partial<FilterState>) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters(defaultFilters);
+  }, []);
 
   // Update search term when URL changes
   useEffect(() => {

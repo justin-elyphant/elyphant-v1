@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Filter, X, Star } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FilterState, SortByOption, AvailabilityOption } from "@/hooks/useAdvancedFilters";
+import { FilterState, SortByOption, AvailabilityOption } from "@/types/filters";
 
 interface AdvancedFilterDrawerProps {
   filters: FilterState;

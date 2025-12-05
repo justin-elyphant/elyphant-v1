@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Filter, X, Sparkles } from "lucide-react";
-import { DynamicFilterState, DynamicFilterOptions } from "@/hooks/useDynamicFilters";
+import { DynamicFilterState, DynamicFilterOptions } from "@/types/filters";
 import { EnhancedFilterPanel } from "./EnhancedFilterPanel";
 import { SmartFilterSuggestions } from "./SmartFilterSuggestions";
 import { Product } from "@/types/product";

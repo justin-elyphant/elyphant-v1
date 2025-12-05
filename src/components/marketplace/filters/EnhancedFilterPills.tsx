@@ -2,7 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { DynamicFilterState } from "@/hooks/useDynamicFilters";
+import { DynamicFilterState } from "@/types/filters";
 
 interface EnhancedFilterPillsProps {
   filters: DynamicFilterState;

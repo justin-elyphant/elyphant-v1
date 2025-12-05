@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp } from "lucide-react";
-import { SearchContext, DynamicFilterState } from "@/hooks/useDynamicFilters";
+import { SearchContext, DynamicFilterState } from "@/types/filters";
 
 interface SmartFilterSuggestionsProps {
   searchContext: SearchContext;

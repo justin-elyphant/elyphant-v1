@@ -1,8 +1,8 @@
 /**
- * Category Registry Module - Simplified
+ * Category Registry Module - Compatibility stub
  * 
- * This module provides backward compatibility for category search.
- * All functionality is now consolidated in ProductCatalogService.
+ * @deprecated Use ProductCatalogService directly instead
+ * This module exists only for backward compatibility and will be removed.
  */
 
 import { productCatalogService } from '../ProductCatalogService';
@@ -23,14 +23,11 @@ export const CATEGORY_SEARCH_REGISTRY: Record<string, any> = {};
 
 export const getCategorySearchQuery = (category: string): string => category;
 
-export const isCategorySupported = (category: string): boolean => {
-  // All categories are now supported through ProductCatalogService
-  return true;
-};
+export const isCategorySupported = (_category: string): boolean => true;
 
-// Stub for CategorySearchRegistry
+// Stub for CategorySearchRegistry - use ProductCatalogService instead
 export const CategorySearchRegistry = {
-  isSupportedCategory: (category: string) => true,
+  isSupportedCategory: () => true,
   getSearchAnalytics: () => ({ hits: 0, misses: 0, hitRate: '0%' }),
   searchCategory: async (category: string, query: string, options: CategorySearchOptions = {}) => {
     const result = await productCatalogService.searchProducts(query, {
@@ -46,9 +43,9 @@ export const CategorySearchRegistry = {
   }
 };
 
-// Stub for CategorySearchService
+// Stub for CategorySearchService - use ProductCatalogService instead
 export const CategorySearchService = {
-  isSupportedCategory: (category: string) => true,
+  isSupportedCategory: () => true,
   searchCategory: async (category: string, query: string, options: CategorySearchOptions = {}) => {
     const result = await productCatalogService.searchProducts(query, {
       category,

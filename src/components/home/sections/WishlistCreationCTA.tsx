@@ -6,7 +6,7 @@ import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carouse
 
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { useAuth } from "@/contexts/auth";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
@@ -50,11 +50,10 @@ const WishlistCreationCTA = () => {
         // Fetch products from all categories in parallel
         const categoryPromises = categorySearches.map(async (category) => {
           try {
-            const results = await unifiedMarketplaceService.searchProducts(category.query, {
-              maxResults: category.maxResults,
-              silent: true // Prevent toasts for background loading
+            const response = await productCatalogService.searchProducts(category.query, {
+              limit: category.maxResults
             });
-            return results.map(product => ({ ...product, categoryBadge: category.name }));
+            return response.products.map(product => ({ ...product, categoryBadge: category.name }));
           } catch (error) {
             console.error(`Error fetching ${category.name} products:`, error);
             return [];
@@ -76,11 +75,10 @@ const WishlistCreationCTA = () => {
         
         if (shuffledProducts.length === 0) {
           // Ultimate fallback if all categories fail
-          const fallbackResults = await unifiedMarketplaceService.searchProducts("trending", {
-            maxResults: 12,
-            silent: true // Prevent toasts for background loading
+          const fallbackResponse = await productCatalogService.searchProducts("trending", {
+            limit: 12
           });
-          setProducts(fallbackResults);
+          setProducts(fallbackResponse.products);
         } else {
           setProducts(shuffledProducts);
         }
@@ -88,11 +86,10 @@ const WishlistCreationCTA = () => {
         console.error("Error fetching diverse products:", error);
         // Final fallback
         try {
-          const fallbackResults = await unifiedMarketplaceService.searchProducts("best selling", {
-            maxResults: 12,
-            silent: true // Prevent toasts for background loading
+          const fallbackResponse = await productCatalogService.searchProducts("best selling", {
+            limit: 12
           });
-          setProducts(fallbackResults);
+          setProducts(fallbackResponse.products);
         } catch (fallbackError) {
           console.error("Error with fallback search:", fallbackError);
         }

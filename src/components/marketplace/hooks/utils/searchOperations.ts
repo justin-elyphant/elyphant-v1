@@ -2,7 +2,7 @@ import { Product } from "@/types/product";
 import { searchMockProducts } from "../../services/mockProductService";
 import { addMockImagesToProducts } from "./productImageUtils";
 import { toast } from "sonner";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { UnifiedNicoleContext } from "@/services/ai/unified/types";
 import { searchMultipleInterests } from "../../zinc/utils/searchUtils";
 
@@ -127,9 +127,9 @@ export const handleSearch = async (
         }
       }
       
-      // Use UnifiedMarketplaceService for real search with Nicole context support
+      // Use ProductCatalogService for real search with Nicole context support
       if (enhancedNicoleContext) {
-        console.log('🎯 SearchOperations: Using UnifiedMarketplaceService with Nicole context:', enhancedNicoleContext);
+        console.log('🎯 SearchOperations: Using ProductCatalogService with Nicole context:', enhancedNicoleContext);
         try {
           // Extract price range from Nicole context budget array
           const minPrice = enhancedNicoleContext.budget ? enhancedNicoleContext.budget[0] : undefined;
@@ -137,23 +137,18 @@ export const handleSearch = async (
           
           console.log('🎯 SearchOperations: Extracted price range:', { minPrice, maxPrice });
           
-          const searchResults = await unifiedMarketplaceService.searchProducts(term, {
-            nicoleContext: enhancedNicoleContext,
-            minPrice,
-            maxPrice,
-            maxResults: 16,
-          } as any);
+          const response = await productCatalogService.searchProducts(term, {
+            limit: 16,
+            filters: { minPrice, maxPrice }
+          });
           
-          if (searchResults && searchResults.length > 0) {
-            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
-            setProducts(searchResults);
-            
-            // Silently show products with price filtering - no toast needed
-            console.log(`🎯 SearchOperations: Found ${searchResults.length} products with price filtering`);
+          if (response.products && response.products.length > 0) {
+            console.log(`🎯 SearchOperations: Found ${response.products.length} products with price filtering`);
+            setProducts(response.products);
             return;
           }
         } catch (error) {
-          console.error('🎯 SearchOperations: UnifiedMarketplaceService error:', error);
+          console.error('🎯 SearchOperations: ProductCatalogService error:', error);
           // Fall back to mock results
         }
       }

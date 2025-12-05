@@ -256,10 +256,10 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
   const getTrendingProducts = async (): Promise<ProductWithSource[]> => {
     try {
-      // Use the dedicated best-selling categories endpoint for real Amazon trending products
-      const response = await enhancedZincApiService.searchBestSellingCategories(4);
+      // Use productCatalogService for trending products
+      const response = await productCatalogService.searchProducts('trending gifts', { limit: 8 });
       
-      return (response.results || []).map(product => ({
+      return (response.products || []).map(product => ({
         ...product,
         product_id: product.product_id || product.id,
         title: product.title || product.name,

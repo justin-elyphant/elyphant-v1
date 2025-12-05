@@ -137,7 +137,7 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
     try {
       console.log(`[MarketplaceSearchContext] Enhanced search for: "${query}" (page ${page})`);
       
-      const searchResult = await enhancedZincApiService.searchProducts(query, page, 50);
+      const searchResult = await productCatalogService.searchProducts(query, { limit: 50, page });
       
       // Check if this search is still current
       if (searchRequestRef.current !== searchId || abortControllerRef.current?.signal.aborted) {
@@ -145,13 +145,9 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
         return;
       }
       
-      if (searchResult.error && !searchResult.cached) {
-        throw new Error(searchResult.error);
-      }
-      
-      if (searchResult.results && searchResult.results.length > 0) {
+      if (searchResult.products && searchResult.products.length > 0) {
         // Convert to Product format and update context
-        const normalizedProducts = searchResult.results.map(result => ({
+        const normalizedProducts = searchResult.products.map(result => ({
           id: result.product_id,
           product_id: result.product_id,
           name: result.title,
@@ -178,10 +174,7 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
         
         // Only show success toast for new searches, not page changes
         if (page === 1) {
-          const description = searchResult.cached 
-            ? `Found ${searchResult.results.length} cached results for "${query}"`
-            : `Found ${searchResult.results.length} results for "${query}"`;
-          console.log(`Search completed: ${description}`);
+          console.log(`Search completed: Found ${searchResult.products.length} results for "${query}"`);
         }
       } else if (page === 1) {
         debouncedToastInfo("No results found", {
@@ -232,15 +225,11 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
     try {
       console.log('[MarketplaceSearchContext] Loading default marketplace products...');
       
-      const defaultResult = await enhancedZincApiService.getDefaultProducts(50);
+      const defaultResult = await productCatalogService.searchProducts('popular gifts', { limit: 50 });
       
-      if (defaultResult.error && !defaultResult.cached) {
-        throw new Error(defaultResult.error);
-      }
-      
-      if (defaultResult.results && defaultResult.results.length > 0) {
+      if (defaultResult.products && defaultResult.products.length > 0) {
         // Convert to Product format and update context
-        const normalizedProducts = defaultResult.results.map(result => ({
+        const normalizedProducts = defaultResult.products.map(result => ({
           id: result.product_id,
           product_id: result.product_id,
           name: result.title,
@@ -258,9 +247,6 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
         
         // Update products context with default products
         setProducts(normalizedProducts);
-        
-        // Silently load marketplace - no toast needed for normal operation
-        console.log(`[MarketplaceSearchContext] Loaded default products: ${normalizedProducts.length}`);
       } else {
         console.log("No default products found");
       }
@@ -283,7 +269,6 @@ export const MarketplaceSearchProvider: React.FC<MarketplaceSearchProviderProps>
   };
 
   const clearCache = () => {
-    enhancedZincApiService.clearCache();
     debouncedToastSuccess("Search cache cleared");
     lastSearchIdRef.current = ""; // Reset to allow fresh search
     // Force refresh after clearing cache

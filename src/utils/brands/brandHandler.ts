@@ -51,12 +51,12 @@ export const handleBrandProducts = async (
     });
     
     // Race the API call against the timeout
-    const zincResponse = await Promise.race([
-      enhancedZincApiService.searchBrandCategories(brandName, MIN_PRODUCTS_COUNT),
+    const response = await Promise.race([
+      productCatalogService.searchProducts(brandName, { limit: MIN_PRODUCTS_COUNT }),
       timeoutPromise
     ]);
     
-    const zincResults = zincResponse.results || [];
+    const zincResults = response.products || [];
     
     if (zincResults && zincResults.length > 0) {
       console.log(`Found ${zincResults.length} products for ${brandName} from Zinc API`);

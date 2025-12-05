@@ -43,7 +43,7 @@ export const resolveOrderItemImage = async (item: any): Promise<ImageResolutionR
   // Try product detail API
   if (productId) {
     try {
-      const detail = await getProductDetail(productId as string);
+      const detail = await getProductDetail(productId as string, 'amazon');
       const dImg = detail?.image || detail?.images?.[0];
       if (dImg && !isPlaceholder(dImg)) {
         const result: ImageResolutionResult = { imageUrl: dImg, source: 'product_detail' };

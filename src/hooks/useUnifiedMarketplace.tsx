@@ -268,7 +268,7 @@ export const useUnifiedMarketplace = (options: UseUnifiedMarketplaceOptions = {}
       console.log('[useUnifiedMarketplace] Loading default products');
       executeSearch("", { maxResults: 20, silent: true });
     }
-  }, [luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, bestSellingCategory, electronicsCategory, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
+  }, [category, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, bestSellingCategory, electronicsCategory, brandCategories, urlSearchTerm, personId, occasionType, searchParams, executeSearch, autoLoadOnMount]);
 
   /**
    * Public search function for manual searches

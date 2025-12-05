@@ -2,7 +2,7 @@
  * Product Search Debugger Utility
  * Comprehensive debugging and monitoring for product search functionality
  */
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 export class ProductSearchDebugger {
   /**
@@ -20,35 +20,35 @@ export class ProductSearchDebugger {
       // Test 1: Basic API connectivity
       console.log('[ProductSearchDebugger] Testing basic API connectivity...');
       const startTime = Date.now();
-      const basicSearch = await enhancedZincApiService.searchProducts("test", 1, 1);
+      const basicSearch = await productCatalogService.searchProducts("test", { limit: 1 });
       const basicSearchTime = Date.now() - startTime;
       
       details.basicSearch = {
         duration: basicSearchTime,
-        hasResults: basicSearch.results && basicSearch.results.length > 0,
+        hasResults: basicSearch.products && basicSearch.products.length > 0,
         hasError: !!basicSearch.error,
         error: basicSearch.error
       };
 
       if (basicSearch.error) {
         issues.push(`Basic search failed: ${basicSearch.error}`);
-      } else if (!basicSearch.results || basicSearch.results.length === 0) {
+      } else if (!basicSearch.products || basicSearch.products.length === 0) {
         issues.push('Basic search returned no results');
       }
 
       // Test 2: Category searches
       console.log('[ProductSearchDebugger] Testing category searches...');
       const categoryTests = [
-        { name: 'luxury', fn: () => enhancedZincApiService.searchLuxuryCategories(3) },
-        { name: 'giftsForHer', fn: () => enhancedZincApiService.searchGiftsForHerCategories(3) },
-        { name: 'giftsForHim', fn: () => enhancedZincApiService.searchGiftsForHimCategories(3) }
+        { name: 'luxury', options: { luxuryCategories: true, limit: 3 } },
+        { name: 'giftsForHer', options: { giftsForHer: true, limit: 3 } },
+        { name: 'giftsForHim', options: { giftsForHim: true, limit: 3 } }
       ];
 
       for (const test of categoryTests) {
         try {
-          const result = await test.fn();
+          const result = await productCatalogService.searchProducts('', test.options);
           details[test.name] = {
-            hasResults: result.results && result.results.length > 0,
+            hasResults: result.products && result.products.length > 0,
             hasError: !!result.error,
             error: result.error
           };
@@ -99,7 +99,7 @@ export class ProductSearchDebugger {
   }> {
     try {
       const startTime = Date.now();
-      const result = await enhancedZincApiService.searchProducts("health check", 1, 1);
+      const result = await productCatalogService.searchProducts("health check", { limit: 1 });
       const responseTime = Date.now() - startTime;
 
       return {
@@ -134,12 +134,12 @@ export class ProductSearchDebugger {
       debugInfo.timestamp = new Date().toISOString();
       
       const startTime = Date.now();
-      const response = await enhancedZincApiService.searchProducts(query, 1, 10);
+      const response = await productCatalogService.searchProducts(query, { limit: 10 });
       const duration = Date.now() - startTime;
       
       debugInfo.duration = duration;
       debugInfo.hasError = !!response.error;
-      debugInfo.resultCount = response.results?.length || 0;
+      debugInfo.resultCount = response.products?.length || 0;
       
       if (response.error) {
         debugInfo.error = response.error;
@@ -151,7 +151,7 @@ export class ProductSearchDebugger {
         };
       }
       
-      debugInfo.sampleResults = response.results?.slice(0, 3).map(p => ({
+      debugInfo.sampleResults = response.products?.slice(0, 3).map(p => ({
         title: p.title,
         price: p.price,
         hasImage: !!p.image
@@ -159,7 +159,7 @@ export class ProductSearchDebugger {
       
       return {
         success: true,
-        results: response.results || [],
+        results: response.products || [],
         debugInfo
       };
       

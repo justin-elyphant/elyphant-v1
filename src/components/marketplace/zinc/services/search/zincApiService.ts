@@ -1,34 +1,34 @@
 
 /**
- * Service for making Zinc API calls via Supabase Edge Functions
- * Updated to use the working Enhanced Zinc API System
+ * Service for making product API calls via ProductCatalogService
  */
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { toast } from "sonner";
 
 // Track whether we've shown the API error toast already
 let hasShownApiErrorToast = false;
 
 /**
- * Call the Enhanced Zinc API System instead of the legacy zinc-search endpoint
+ * Search products via ProductCatalogService
  */
 export const searchZincApi = async (
   query: string,
   maxResults: string
 ): Promise<any[] | null> => {
   try {
-    console.log(`Making API call via Enhanced Zinc API System for query: "${query}", max results: ${maxResults}`);
+    console.log(`Searching products for query: "${query}", max results: ${maxResults}`);
     
-    // Use the working Enhanced Zinc API System
-    const response = await enhancedZincApiService.searchProducts(query, 1, parseInt(maxResults));
+    const response = await productCatalogService.searchProducts(query, { 
+      limit: parseInt(maxResults) 
+    });
 
-    if (response.error && !response.cached) {
-      console.error('Enhanced Zinc API error:', response.error);
+    if (response.error) {
+      console.error('Product search error:', response.error);
       
       if (!hasShownApiErrorToast) {
         hasShownApiErrorToast = true;
         toast.error('API Error', {
-          description: 'Error calling Zinc API. Please check your API configuration.',
+          description: 'Error searching products. Please try again.',
           duration: 5000,
         });
         
@@ -40,16 +40,16 @@ export const searchZincApi = async (
       return null;
     }
 
-    console.log('Enhanced Zinc API response:', response);
+    console.log('Product search response:', response);
     
-    if (response.results && response.results.length > 0) {
-      console.log(`Found ${response.results.length} results from Enhanced Zinc API for "${query}"`);
+    if (response.products && response.products.length > 0) {
+      console.log(`Found ${response.products.length} results for "${query}"`);
       
       // Reset the error toast flag on successful response
       hasShownApiErrorToast = false;
       
       // Transform to expected format
-      return response.results.map((product: any) => ({
+      return response.products.map((product: any) => ({
         product_id: product.product_id,
         title: product.title,
         price: product.price,
@@ -67,11 +67,11 @@ export const searchZincApi = async (
       }));
     }
     
-    console.log(`No results found from Enhanced Zinc API for "${query}"`);
+    console.log(`No results found for "${query}"`);
     return null;
     
   } catch (error) {
-    console.error(`Error calling Enhanced Zinc API: ${error}`);
+    console.error(`Error searching products: ${error}`);
     
     if (!hasShownApiErrorToast) {
       hasShownApiErrorToast = true;

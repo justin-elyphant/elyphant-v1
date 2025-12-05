@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useProducts } from "@/contexts/ProductContext";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { useAdvancedFilters } from "@/hooks/useAdvancedFilters";
-import { enhancedZincApiService, ZincSearchResponse } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { toast } from "sonner";
 
 export const useEnhancedMarketplaceSearch = (currentPage: number) => {
@@ -60,27 +60,22 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     }
 
     if (debouncedSearchTerm) {
-      // Perform search when there's a search term
       performSearch(debouncedSearchTerm, currentPage);
     } else {
-      // Load default products when there's no search term
       loadDefaultProducts();
     }
   }, [debouncedSearchTerm, currentPage]);
 
   const performSearch = async (query: string, page: number) => {
-    // Prevent concurrent searches
     if (isSearchingRef.current) {
       console.log('Search already in progress, skipping');
       return;
     }
 
-    // Cancel previous request if still running
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
     const searchId = `${query}-${page}-${Date.now()}`;
     searchRequestRef.current = searchId;
@@ -92,27 +87,22 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     try {
       console.log(`Enhanced search for: "${query}" (page ${page})`);
       
-      const searchResult = await enhancedZincApiService.searchProducts(query, page, 50);
+      const searchResult = await productCatalogService.searchProducts(query, { 
+        page, 
+        limit: 50 
+      });
       
-      // Check if this search is still current
       if (searchRequestRef.current !== searchId || abortControllerRef.current?.signal.aborted) {
         console.log('Search cancelled or superseded');
         return;
       }
       
-      if (searchResult.error && !searchResult.cached) {
+      if (searchResult.error) {
         throw new Error(searchResult.error);
       }
       
-      if (searchResult.results && searchResult.results.length > 0) {
-        // Debug: Log actual prices from API
-        console.log('🔍 Frontend price debugging - First 3 results from API:');
-        searchResult.results.slice(0, 3).forEach((result, index) => {
-          console.log(`Result ${index + 1}: "${result.title}" - API Price: ${result.price} (type: ${typeof result.price})`);
-        });
-
-        // Convert to Product format and update context
-        const normalizedProducts = searchResult.results.map(result => ({
+      if (searchResult.products && searchResult.products.length > 0) {
+        const normalizedProducts = searchResult.products.map(result => ({
           id: result.product_id,
           product_id: result.product_id,
           name: result.title,
@@ -127,9 +117,7 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         }));
 
         console.log("Normalized products: ", normalizedProducts.length);
-        console.log('🔍 Frontend normalized prices - First 3 products:', normalizedProducts.slice(0, 3).map(p => `"${p.title}" - Price: ${p.price}`));
         
-        // Update products context
         setProducts(prev => {
           const nonZincProducts = prev.filter(p => 
             p.vendor !== "Amazon via Zinc" && 
@@ -138,12 +126,8 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
           return [...nonZincProducts, ...normalizedProducts];
         });
         
-        // Silently complete search - no toast needed for normal operation
         if (page === 1) {
-          const description = searchResult.cached 
-            ? `Found ${searchResult.results.length} cached results for "${query}"`
-            : `Found ${searchResult.results.length} results for "${query}"`;
-          console.log(`Search completed: ${description}`);
+          console.log(`Search completed: Found ${searchResult.products.length} results for "${query}"`);
         }
       } else if (page === 1) {
         toast.info("No results found", {
@@ -152,7 +136,6 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
       }
       
     } catch (err) {
-      // Only show error if this search is still current
       if (searchRequestRef.current === searchId && !abortControllerRef.current?.signal.aborted) {
         const errorMessage = err instanceof Error ? err.message : "Search failed";
         setError(errorMessage);
@@ -166,7 +149,6 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         });
       }
     } finally {
-      // Only update loading state if this search is still current
       if (searchRequestRef.current === searchId) {
         setIsLoading(false);
         isSearchingRef.current = false;
@@ -193,15 +175,17 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     try {
       console.log('Loading default marketplace products...');
       
-      const defaultResult = await enhancedZincApiService.getDefaultProducts(50);
+      const defaultResult = await productCatalogService.searchProducts('', { 
+        limit: 50,
+        bestSellingCategory: true 
+      });
       
-      if (defaultResult.error && !defaultResult.cached) {
+      if (defaultResult.error) {
         throw new Error(defaultResult.error);
       }
       
-      if (defaultResult.results && defaultResult.results.length > 0) {
-        // Convert to Product format and update context
-        const normalizedProducts = defaultResult.results.map(result => ({
+      if (defaultResult.products && defaultResult.products.length > 0) {
+        const normalizedProducts = defaultResult.products.map(result => ({
           id: result.product_id,
           product_id: result.product_id,
           name: result.title,
@@ -216,12 +200,7 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
         }));
 
         console.log("Loaded default products: ", normalizedProducts.length);
-        
-        // Update products context with default products
         setProducts(normalizedProducts);
-        
-        // Silently load marketplace - no toast needed for normal operation
-        console.log(`Marketplace loaded with ${normalizedProducts.length} featured products`);
       } else {
         console.log("No default products found");
       }
@@ -244,9 +223,8 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
   };
 
   const clearCache = () => {
-    enhancedZincApiService.clearCache();
-    toast.success("Search cache cleared");
-    // Force refresh after clearing cache
+    // Database is the cache now - just refresh
+    toast.success("Refreshing products...");
     if (debouncedSearchTerm) {
       performSearch(debouncedSearchTerm, currentPage);
     } else {
@@ -254,7 +232,6 @@ export const useEnhancedMarketplaceSearch = (currentPage: number) => {
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {

@@ -3,9 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Product } from "@/types/product";
 import { CategorySection } from "./CategorySection";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { getFeaturedCategories } from "@/constants/categories";
-import { toast } from "sonner";
 
 interface AirbnbStyleCategorySectionsProps {
   className?: string;
@@ -18,7 +17,6 @@ interface CategoryData {
   error: string | null;
 }
 
-// Get featured categories from the constants (same as homepage)
 const FEATURED_CATEGORIES = getFeaturedCategories();
 
 const CATEGORIES = FEATURED_CATEGORIES.map(category => ({
@@ -28,46 +26,33 @@ const CATEGORIES = FEATURED_CATEGORIES.map(category => ({
   searchTerm: category.searchTerm
 }));
 
-export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = ({ className, onProductClick }) => {
+export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsProps> = ({ 
+  className, 
+  onProductClick
+}) => {
   const navigate = useNavigate();
   const [categoryData, setCategoryData] = useState<Record<string, CategoryData>>({});
 
-  // Load category data on mount
   useEffect(() => {
     const loadCategoryData = async () => {
-      console.log('Loading category data from Zinc API...');
-      
-      // Initialize loading state for all categories
       const initialData: Record<string, CategoryData> = {};
       CATEGORIES.forEach(category => {
-        initialData[category.key] = {
-          products: [],
-          isLoading: true,
-          error: null
-        };
+        initialData[category.key] = { products: [], isLoading: true, error: null };
       });
       setCategoryData(initialData);
 
-      // Load each category independently
       const categoryPromises = CATEGORIES.map(async (category) => {
         try {
-          console.log(`Loading products for category: ${category.key}`);
-          const response = await enhancedZincApiService.searchBestSellingByCategory(category.key, 10);
+          const response = await productCatalogService.searchProducts(category.searchTerm, { 
+            category: category.key, 
+            limit: 10 
+          });
           
           if (response.error) {
-            console.error(`Error loading ${category.key} products:`, response.error);
-            return {
-              key: category.key,
-              data: {
-                products: [],
-                isLoading: false,
-                error: response.error
-              }
-            };
+            return { key: category.key, data: { products: [], isLoading: false, error: response.error } };
           }
 
-          // Convert Zinc results to Product format
-          const products: Product[] = response.results.map((result: any) => ({
+          const products: Product[] = (response.products || []).map((result: any) => ({
             product_id: result.product_id || result.id,
             title: result.title || result.name,
             price: result.price || 0,
@@ -77,37 +62,15 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
             rating: result.rating || result.stars || 0,
             reviewCount: result.reviewCount || result.num_reviews || 0,
             description: result.description || result.product_description || '',
-            brand: result.brand || '',
-            isBestSeller: result.isBestSeller || true,
-            bestSellerType: result.bestSellerType || null,
-            badgeText: result.badgeText || null,
-            best_seller_rank: result.best_seller_rank || null
+            brand: result.brand || ''
           }));
 
-          console.log(`Loaded ${products.length} products for ${category.key}`);
-
-          return {
-            key: category.key,
-            data: {
-              products,
-              isLoading: false,
-              error: null
-            }
-          };
+          return { key: category.key, data: { products, isLoading: false, error: null } };
         } catch (error) {
-          console.error(`Error loading ${category.key} products:`, error);
-          return {
-            key: category.key,
-            data: {
-              products: [],
-              isLoading: false,
-              error: error instanceof Error ? error.message : 'Failed to load products'
-            }
-          };
+          return { key: category.key, data: { products: [], isLoading: false, error: error instanceof Error ? error.message : 'Failed' } };
         }
       });
 
-      // Update category data as each category loads
       const results = await Promise.allSettled(categoryPromises);
       const updatedData: Record<string, CategoryData> = {};
       
@@ -115,12 +78,7 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
         if (result.status === 'fulfilled') {
           updatedData[result.value.key] = result.value.data;
         } else {
-          const categoryKey = CATEGORIES[index].key;
-          updatedData[categoryKey] = {
-            products: [],
-            isLoading: false,
-            error: 'Failed to load category data'
-          };
+          updatedData[CATEGORIES[index].key] = { products: [], isLoading: false, error: 'Failed' };
         }
       });
 
@@ -130,72 +88,24 @@ export const AirbnbStyleCategorySections: React.FC<AirbnbStyleCategorySectionsPr
     loadCategoryData();
   }, []);
 
-  // Handle "See All" button clicks
   const handleSeeAll = (categoryKey: string) => {
-    console.log(`See All clicked for category: ${categoryKey}`);
-    
-    // Find the category data to get the search term
-    const categoryData = CATEGORIES.find(cat => cat.key === categoryKey);
-    const searchQuery = categoryData?.searchTerm || enhancedZincApiService.getCategorySearchQuery(categoryKey);
-    
-    // Navigate to marketplace with category search (same as homepage behavior)
-    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&category=${categoryKey}&diversity=true`, {
-      state: { from: 'marketplace-categories' }
-    });
+    const categoryDataItem = CATEGORIES.find(cat => cat.key === categoryKey);
+    const searchQuery = categoryDataItem?.searchTerm || categoryKey;
+    navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}&category=${categoryKey}`, { state: { from: 'marketplace-categories' } });
   };
 
-  // Handle individual product clicks
   const handleProductClick = (product: Product) => {
-    console.log(`Product clicked: ${product.title}`);
-    // Open product details in the StreamlinedMarketplaceWrapper's dialog instead of navigating
-    if (onProductClick) {
-      onProductClick(product);
-    }
+    if (onProductClick) onProductClick(product);
   };
-
-  if (Object.keys(categoryData).length === 0) {
-    return (
-      <div className={`space-y-8 ${className}`}>
-        {CATEGORIES.map(category => (
-          <div key={category.key} className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="flex gap-4 overflow-hidden">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-48 h-64 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className={`space-y-8 ${className}`}>
       {CATEGORIES.map((category, index) => {
         const data = categoryData[category.key];
-        
         if (!data) return null;
 
-        // Determine if this category should have a background (every other one)
-        const hasBackground = index % 2 === 1;
-
-        // Show error state if there's an error and no products
-        if (data.error && data.products.length === 0) {
-          return (
-            <div key={category.key} className={`border rounded-lg p-6 ${hasBackground ? 'bg-muted/30' : 'bg-red-50'}`}>
-              <h3 className="text-lg font-semibold text-red-900 mb-2">{category.title}</h3>
-              <p className="text-red-700">Failed to load products for this category</p>
-            </div>
-          );
-        }
-
         return (
-          <div 
-            key={category.key} 
-            className={hasBackground ? 'bg-muted/30 py-8 px-4 rounded-lg' : 'py-4'}
-          >
+          <div key={category.key} className={index % 2 === 1 ? 'bg-muted/30 py-8 px-4 rounded-lg' : 'py-4'}>
             <CategorySection
               title={category.title}
               subtitle={category.subtitle}

@@ -5,7 +5,7 @@ import { ZincProduct } from "@/components/marketplace/zinc/types";
 import { convertZincProductToProduct } from "@/components/marketplace/zinc/utils/productConverter";
 import { getAppleFallbackProducts } from "./fallbackProducts";
 import { generateDescription } from "@/components/marketplace/zinc/utils/productDescriptionUtils";
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 // Minimum number of products to return for a brand
 const MIN_PRODUCTS_COUNT = 75;

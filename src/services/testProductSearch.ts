@@ -2,8 +2,7 @@
  * Test Product Search Service
  * Utility to verify product search functionality and troubleshoot issues
  */
-import { enhancedZincApiService } from "@/services/enhancedZincApiService";
-import { unifiedMarketplaceService } from "@/services/marketplace/UnifiedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 export class TestProductSearch {
   /**
@@ -14,15 +13,15 @@ export class TestProductSearch {
     
     try {
       const startTime = Date.now();
-      const response = await enhancedZincApiService.searchProducts(query, 1, 5);
+      const response = await productCatalogService.searchProducts(query, { limit: 5 });
       const duration = Date.now() - startTime;
       
       console.log(`[TestProductSearch] Search completed in ${duration}ms`);
       console.log(`[TestProductSearch] Results:`, {
-        count: response.results?.length || 0,
+        count: response.products?.length || 0,
         hasError: !!response.error,
         error: response.error,
-        sampleProduct: response.results?.[0]?.title
+        sampleProduct: response.products?.[0]?.title
       });
       
       if (response.error) {
@@ -45,21 +44,21 @@ export class TestProductSearch {
     console.log(`[TestProductSearch] Testing category searches...`);
     
     const tests = [
-      { name: "Luxury Categories", fn: () => enhancedZincApiService.searchLuxuryCategories(5) },
-      { name: "Gifts for Her", fn: () => enhancedZincApiService.searchGiftsForHerCategories(5) },
-      { name: "Gifts for Him", fn: () => enhancedZincApiService.searchGiftsForHimCategories(5) },
-      { name: "Gifts Under $50", fn: () => enhancedZincApiService.searchGiftsUnder50Categories(5) },
-      { name: "Brand Categories (Apple)", fn: () => enhancedZincApiService.searchBrandCategories("Apple", 5) }
+      { name: "Luxury Categories", options: { luxuryCategories: true, limit: 5 } },
+      { name: "Gifts for Her", options: { giftsForHer: true, limit: 5 } },
+      { name: "Gifts for Him", options: { giftsForHim: true, limit: 5 } },
+      { name: "Gifts Under $50", options: { giftsUnder50: true, limit: 5 } },
+      { name: "Brand Categories (Apple)", query: "Apple", options: { limit: 5 } }
     ];
     
     for (const test of tests) {
       try {
         console.log(`[TestProductSearch] Testing ${test.name}...`);
         const startTime = Date.now();
-        const response = await test.fn();
+        const response = await productCatalogService.searchProducts(test.query || '', test.options);
         const duration = Date.now() - startTime;
         
-        console.log(`[TestProductSearch] ${test.name} completed in ${duration}ms: ${response.results?.length || 0} results`);
+        console.log(`[TestProductSearch] ${test.name} completed in ${duration}ms: ${response.products?.length || 0} results`);
         
         if (response.error) {
           console.error(`[TestProductSearch] ❌ ${test.name} failed: ${response.error}`);
@@ -80,15 +79,15 @@ export class TestProductSearch {
     
     try {
       const startTime = Date.now();
-      const products = await unifiedMarketplaceService.searchProducts("tech gadgets", { maxResults: 5 });
+      const response = await productCatalogService.searchProducts("tech gadgets", { limit: 5 });
       const duration = Date.now() - startTime;
       
       console.log(`[TestProductSearch] Unified marketplace search completed in ${duration}ms`);
-      console.log(`[TestProductSearch] Products found: ${products.length}`);
+      console.log(`[TestProductSearch] Products found: ${response.products.length}`);
       
-      if (products.length > 0) {
+      if (response.products.length > 0) {
         console.log(`[TestProductSearch] ✅ Unified marketplace successful`);
-        console.log(`[TestProductSearch] Sample product:`, products[0].title);
+        console.log(`[TestProductSearch] Sample product:`, response.products[0].title);
       } else {
         console.error(`[TestProductSearch] ❌ Unified marketplace returned no products`);
       }

@@ -95,7 +95,7 @@ export const NicolePriceFilterTest: React.FC = () => {
           <p><strong>✅ Fixed - Expected behavior:</strong></p>
           <p>• Nicole search now includes minPrice/maxPrice in URL</p>
           <p>• Should filter products to ${minPrice}-${maxPrice} range</p>
-          <p>• Should use UnifiedMarketplaceService with Nicole context</p>
+          <p>• Should use ProductCatalogService with Nicole context</p>
           <p>• Check console for "🎯 Nicole Navigation with context" logs</p>
         </div>
       </CardContent>

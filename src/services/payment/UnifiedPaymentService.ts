@@ -35,14 +35,14 @@
  * - PCI compliance built-in (Stripe hosts payment UI)
  * 
  * ⚠️  CRITICAL ARCHITECTURE BOUNDARIES:
- * - MUST call UnifiedMarketplaceService for product operations
+ * - MUST call ProductCatalogService for product operations
  * - MUST route Amazon orders through process-order-v2 Edge Function
  * - MUST use Stripe Checkout Sessions (NO Payment Intents)
  * - MUST separate customer Stripe payments from business Amazon payments
  * - Cart cleanup is localStorage-only (legacy tables removed)
  * 
  * 🔗 SYSTEM INTEGRATION:
- * - UnifiedMarketplaceService: Product search, details, normalization
+ * - ProductCatalogService: Product search, details, normalization
  * - process-order-v2: Zinc API order submission
  * - stripe-webhook-v2: Order creation from Checkout Sessions
  * - create-checkout-session: Single payment entry point

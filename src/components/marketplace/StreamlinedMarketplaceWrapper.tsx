@@ -15,7 +15,7 @@ import { productCatalogService } from "@/services/ProductCatalogService";
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import BrandHeroSection from "./BrandHeroSection";
 import CategoryHeroSection from "./CategoryHeroSection";
-import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
+// useOptimizedProducts removed - using server-side pagination
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { getCategoryByValue } from "@/constants/categories";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
@@ -182,24 +182,32 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     }
   }, [searchParams]);
 
-  // Use optimized products hook for pagination and loading
-  const {
-    products: paginatedProducts,
-    isLoading: isPaginationLoading,
-    hasMore,
-    loadMore,
-    refresh: refreshPagination,
-    totalCount
-  } = useOptimizedProducts({
-    initialProducts: displayProducts || [],
-    pageSize: 20,
-    onLoadMore: handleLoadMore,
-    hasMoreFromServer: personalizedProducts.length === 0,
-  });
+  // Server-side pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  const isPaginationLoading = false; // Server handles loading via isLoading
+  
+  // Calculate pagination from displayProducts (server returns sorted products)
+  const paginatedProducts = useMemo(() => {
+    return displayProducts?.slice(0, currentPage * pageSize) || [];
+  }, [displayProducts, currentPage, pageSize]);
+  
+  const hasMore = displayProducts ? paginatedProducts.length < displayProducts.length : false;
+  const totalCount = displayProducts?.length || marketplaceTotalCount || 0;
+  
+  const loadMore = useCallback(() => {
+    if (hasMore) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasMore]);
+
+  const refreshPagination = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted
-  const filteredPaginatedProducts = paginatedProducts || [];
+  const filteredPaginatedProducts = paginatedProducts;
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {

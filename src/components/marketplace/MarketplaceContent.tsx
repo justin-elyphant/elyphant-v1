@@ -9,7 +9,8 @@ import AdvancedFilterDrawer from "./filters/AdvancedFilterDrawer";
 import MobileMarketplaceLayout from "./mobile/MobileMarketplaceLayout";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
-import { useMarketplaceSearch } from "@/contexts/MarketplaceSearchContext";
+import { useSmartFilters } from "@/hooks/useSmartFilters";
+import { SortByOption } from "@/types/filters";
 
 interface MarketplaceContentProps {
   searchTerm: string;
@@ -17,40 +18,45 @@ interface MarketplaceContentProps {
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
   onRefresh?: () => void;
+  products: Product[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 const MarketplaceContent = ({
-  searchTerm: externalSearchTerm,
+  searchTerm,
   onProductView,
   showFilters,
   setShowFilters,
   onRefresh,
+  products,
+  isLoading,
+  error,
 }: MarketplaceContentProps) => {
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<SortByOption>('relevance');
   
-  // Use the unified marketplace search context
-  const {
-    filteredProducts,
-    availableCategories,
-    activeFilterCount,
-    updateFilters,
-    clearFilters,
-    filters,
-    isSearching,
-    isLoading,
-    error,
-    handleRetrySearch
-  } = useMarketplaceSearch();
+  // Use smart filters for UI state (server does actual filtering)
+  const { filters, detectedCategory, hasFilters } = useSmartFilters(searchTerm, products);
+  
+  // Calculate available categories from products
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    products.forEach(product => {
+      if (product.category) categories.add(product.category);
+    });
+    return Array.from(categories);
+  }, [products]);
 
   // Use mobile layout for mobile devices
   if (isMobile) {
     return (
       <MobileMarketplaceLayout
-        products={filteredProducts}
+        products={products}
         isLoading={isLoading}
-        searchTerm={externalSearchTerm}
+        searchTerm={searchTerm}
         onProductView={onProductView}
         error={error}
         onRefresh={onRefresh}
@@ -58,7 +64,6 @@ const MarketplaceContent = ({
     );
   }
 
-  // Desktop layout continues as before
   // Error state
   if (error) {
     return (
@@ -74,12 +79,6 @@ const MarketplaceContent = ({
                 Try Again
               </Button>
             )}
-            {error && (
-              <Button onClick={handleRetrySearch} variant="outline" size="touch">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Search
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -93,7 +92,7 @@ const MarketplaceContent = ({
         <div className="mb-space-loose">
           <div className="h-12 surface-secondary rounded animate-pulse mb-space-standard" />
         </div>
-        <ProductSkeleton count={isMobile ? 6 : 12} viewMode={viewMode} />
+        <ProductSkeleton count={12} viewMode={viewMode} />
       </div>
     );
   }
@@ -105,11 +104,22 @@ const MarketplaceContent = ({
         {/* Desktop Filters Sidebar */}
         {showFilters && (
           <AdvancedFilterDrawer
-            filters={filters}
+            filters={{ 
+              sortBy,
+              priceRange: { min: 0, max: 1000 },
+              categories: [],
+              brands: [],
+              rating: null,
+              availability: 'all' as const
+            }}
             availableCategories={availableCategories}
-            activeFilterCount={activeFilterCount}
-            onUpdateFilters={updateFilters}
-            onClearFilters={clearFilters}
+            activeFilterCount={hasFilters ? 1 : 0}
+            onUpdateFilters={(updates) => {
+              if (updates.sortBy) {
+                setSortBy(updates.sortBy as SortByOption);
+              }
+            }}
+            onClearFilters={() => setSortBy('relevance')}
           />
         )}
 
@@ -120,9 +130,9 @@ const MarketplaceContent = ({
             <MarketplaceToolbar
               viewMode={viewMode}
               setViewMode={setViewMode}
-              sortOption={filters.sortBy}
-              setSortOption={(sortBy) => updateFilters({ sortBy: sortBy as any })}
-              totalItems={filteredProducts.length}
+              sortOption={sortBy}
+              setSortOption={(option: string) => setSortBy(option as SortByOption)}
+              totalItems={products.length}
               showFilters={showFilters}
               setShowFilters={setShowFilters}
               isMobile={isMobile}
@@ -131,31 +141,12 @@ const MarketplaceContent = ({
             />
           </div>
 
-          {/* Active Filters Display */}
-          {activeFilterCount > 0 && (
-            <div className="mb-space-standard surface-secondary p-3 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-body-sm text-muted-foreground">
-                  {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} applied
-                </span>
-                <Button
-                  variant="ghost"
-                  size="touch"
-                  onClick={clearFilters}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Clear all
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Product Grid */}
           <div className="relative">
             <ProductGrid
-              products={filteredProducts}
+              products={products}
               viewMode={viewMode}
-              sortOption={filters.sortBy}
+              sortOption={sortBy}
               onProductView={onProductView}
             />
           </div>

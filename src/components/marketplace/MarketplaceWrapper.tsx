@@ -6,18 +6,13 @@ import IntegratedSearchSection from "./IntegratedSearchSection";
 import SubtleCountdownBanner from "./SubtleCountdownBanner";
 import ResultsSummaryBar from "./ResultsSummaryBar";
 import MarketplaceErrorBoundary from "./error/ErrorBoundary";
-// TEMPORARILY DISABLED: NicoleMarketplaceWidget - Re-enable when technical issues are resolved
-// import NicoleMarketplaceWidget from "@/components/ai/marketplace/NicoleMarketplaceWidget";
 import ConnectionIntegration from "./integration/ConnectionIntegration";
 import EventsAwareHeader from "./integration/EventsAwareHeader";
-import LoadingFallback from "@/components/common/LoadingFallback";
-import { useRetry } from "@/hooks/common/useRetry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useAuth } from "@/contexts/auth";
-import { useProducts } from "@/contexts/ProductContext";
-import { MarketplaceSearchProvider } from "@/contexts/MarketplaceSearchContext";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { toast } from "sonner";
 import { FullWidthSection } from "@/components/layout/FullWidthSection";
 
@@ -29,6 +24,9 @@ const MarketplaceWrapper = () => {
   const { addSearch } = useUserSearchHistory();
   const { user } = useAuth();
 
+  // Use the unified marketplace hook
+  const { products, isLoading, error, refetch } = useMarketplace();
+
   // Check if this is a fresh navigation from home page or Nicole
   const isFromHomePage = location.state?.fromHome || false;
   const isFromNicole = location.state?.fromNicole || false;
@@ -36,19 +34,6 @@ const MarketplaceWrapper = () => {
   // Initialize showFilters state - always default to false
   const [showFilters, setShowFilters] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Use Enhanced Zinc API System for product management
-  const { products } = useProducts();
-  
-  // Enhanced retry mechanism for failed operations
-  const { execute: executeWithRetry, isRetrying } = useRetry({
-    maxRetries: 3,
-    retryDelay: 1000,
-    exponentialBackoff: true
-  });
-
-  // TEMPORARILY DISABLED: Nicole widget state - Re-enable when technical issues are resolved
-  // const [isNicoleOpen, setIsNicoleOpen] = useState(false);
 
   const searchTerm = searchParams.get("search") || "";
   const categoryParam = searchParams.get("category");
@@ -61,7 +46,6 @@ const MarketplaceWrapper = () => {
   // Clear the fromHome state after initial load to allow normal behavior
   useEffect(() => {
     if (isFromHomePage || isFromNicole) {
-      // Replace the current history entry to remove the fromHome/fromNicole state
       window.history.replaceState({}, '', window.location.pathname + window.location.search);
     }
   }, [isFromHomePage, isFromNicole]);
@@ -84,13 +68,9 @@ const MarketplaceWrapper = () => {
   // Only show filters when there are active search parameters AND user manually interacts
   useEffect(() => {
     const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam || brandCategoriesParam);
-    
-    // Never auto-show filters - only show when user explicitly requests them
-    // Reset to false when there are no search parameters
     if (!hasActiveSearch) {
       setShowFilters(false);
     }
-    // Note: Removed auto-show logic for desktop with active search parameters
   }, [searchTerm, categoryParam, brandParam, brandCategoriesParam, isMobile, isInitialLoad]);
 
   // Clean up conflicting URL parameters and dismiss lingering toasts
@@ -98,14 +78,13 @@ const MarketplaceWrapper = () => {
     const params = new URLSearchParams(searchParams);
     let shouldUpdate = false;
 
-    // If both search and category exist, prioritize search and clear category
     if (searchTerm && categoryParam) {
       console.log('Detected conflicting search and category params, prioritizing search');
       params.delete("category");
       shouldUpdate = true;
     }
 
-    // Enhanced toast cleanup - dismiss any brand or category related toasts
+    // Enhanced toast cleanup
     const allBrands = ["Apple", "Nike", "Lululemon", "Made In", "Stanley", "Lego"];
     allBrands.forEach(brand => {
       toast.dismiss(`brand-loading-${brand}`);
@@ -124,7 +103,6 @@ const MarketplaceWrapper = () => {
 
   // Enhanced toast dismissal for search scenarios
   useEffect(() => {
-    // Enhanced toast dismissal for all specific scenarios
     if (categoryParam && !searchTerm) {
       toast.dismiss(`category-search-${categoryParam}`);
     }
@@ -132,7 +110,6 @@ const MarketplaceWrapper = () => {
       toast.dismiss(`brand-loading-${brandParam}`);
     }
     if (searchTerm) {
-      // Dismiss any search-related toasts
       toast.dismiss("search-loading");
       toast.dismiss("search-error");
     }
@@ -144,7 +121,7 @@ const MarketplaceWrapper = () => {
 
   const hasActiveSearch = Boolean(searchTerm || categoryParam || brandParam);
 
-  // Auto-scroll to results on search/filter changes (but not on initial load from external navigation)
+  // Auto-scroll to results on search/filter changes
   useEffect(() => {
     if (hasActiveSearch && resultsRef.current && !isInitialLoad) {
       const currentSearchKey = `${searchTerm}|${categoryParam}|${brandParam}`;
@@ -157,11 +134,10 @@ const MarketplaceWrapper = () => {
     }
   }, [searchTerm, categoryParam, brandParam, hasActiveSearch, isInitialLoad]);
 
-  // Add to search history (only for actual searches, not category selections)
+  // Add to search history
   useEffect(() => {
     if (searchTerm && searchTerm.trim()) {
       const isFromOccasion = location.state?.fromOccasion || false;
-      
       if (!isFromOccasion) {
         addSearch(searchTerm.trim(), false);
       }
@@ -169,54 +145,38 @@ const MarketplaceWrapper = () => {
   }, [searchTerm, addSearch, location.state]);
 
   const handleRecentSearchClick = (term: string) => {
-    // Dismiss all toasts before new search
     toast.dismiss();
-    
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", term);
-    // Clear category when doing a search
     newParams.delete("category");
     setSearchParams(newParams, { replace: true });
   };
 
   const handleRefresh = async () => {
-    // Enhanced refresh with retry mechanism - soft navigation to reset state
-    window.location.href = window.location.pathname + window.location.search;
+    await refetch();
   };
 
-  // Enhanced: Handle connection selection for gifting context
+  // Handle connection selection for gifting context
   const handleConnectionSelect = (connectionId: string, name: string) => {
     console.log('Selected connection for gifting:', { connectionId, name });
-    
-    // Set search context for the selected person
     const newParams = new URLSearchParams(searchParams);
     newParams.set("search", `gifts for ${name}`);
     newParams.delete("category");
     setSearchParams(newParams, { replace: true });
-    
     toast.success(`Finding gifts for ${name}`, {
       description: "Searching for personalized recommendations"
     });
   };
 
-  // TEMPORARILY DISABLED: Nicole search suggestion handler - Re-enable when technical issues are resolved
-  // const handleNicoleSearchSuggestion = (query: string) => {
-  //   const newParams = new URLSearchParams(searchParams);
-  //   newParams.set("search", query);
-  //   newParams.delete("category");
-  //   setSearchParams(newParams, { replace: true });
-  // };
-
   return (
     <MarketplaceErrorBoundary>
-      <MarketplaceSearchProvider currentPage={1}>
-        <div className="min-h-screen bg-gray-50">
-        {/* Search and Categories - full width for better mobile experience */}
+      <div className="min-h-screen bg-gray-50">
+        {/* Search and Categories */}
         <FullWidthSection>
           <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />
         </FullWidthSection>
 
-        {/* Enhanced: Events-Aware Header - Show upcoming events for gift opportunities */}
+        {/* Events-Aware Header */}
         {user && (
           <FullWidthSection className="py-2">
             <div className="max-w-6xl mx-auto">
@@ -228,7 +188,7 @@ const MarketplaceWrapper = () => {
           </FullWidthSection>
         )}
 
-        {/* Enhanced: Connection Integration - Show when user is authenticated and no active search */}
+        {/* Connection Integration */}
         {user && !hasActiveSearch && (
           <FullWidthSection className="py-2">
             <div className="max-w-4xl mx-auto">
@@ -246,7 +206,7 @@ const MarketplaceWrapper = () => {
         {/* Results Summary Bar */}
         <ResultsSummaryBar totalItems={products.length} searchTerm={searchTerm} />
 
-        {/* Main Content - full bleed layout */}
+        {/* Main Content */}
         <FullWidthSection className={isMobile ? "pb-20 lg:pb-12" : "pb-12"} padding="none">
           <div ref={resultsRef}>
             <MarketplaceContent
@@ -255,25 +215,13 @@ const MarketplaceWrapper = () => {
               showFilters={showFilters}
               setShowFilters={setShowFilters}
               onRefresh={handleRefresh}
+              products={products}
+              isLoading={isLoading}
+              error={error || null}
             />
           </div>
         </FullWidthSection>
-
-        {/* TEMPORARILY DISABLED: Nicole Marketplace Widget - Re-enable when technical issues are resolved */}
-        {/* To re-enable, uncomment the following block and restore the associated state and handlers above:
-        {(searchTerm && products.length > 0) && (
-          <NicoleMarketplaceWidget 
-            isOpen={isNicoleOpen}
-            onClose={() => setIsNicoleOpen(false)}
-            onSearchSuggestion={handleNicoleSearchSuggestion}
-            searchQuery={searchTerm}
-            totalResults={products.length}
-            isFromNicole={isFromNicole}
-          />
-        )}
-        */}
-        </div>
-      </MarketplaceSearchProvider>
+      </div>
     </MarketplaceErrorBoundary>
   );
 };

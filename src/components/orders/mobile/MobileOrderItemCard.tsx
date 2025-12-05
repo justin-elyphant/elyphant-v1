@@ -71,26 +71,26 @@ const MobileOrderItemCard = ({
         console.warn("[MobileOrderItemCard] getProductDetail failed", e);
       }
 
-      // 2) Product detail via enhanced service (edge)
+      // 2) Product detail via ProductCatalogService
       try {
         if (productId) {
-          const detail = await enhancedZincApiService.getProductDetails(productId);
-          const dImg = detail?.image || detail?.main_image || detail?.images?.[0];
+          const detail = await productCatalogService.getProductDetail(productId);
+          const dImg = detail?.main_image || detail?.images?.[0];
           if (!cancelled && dImg && !isPlaceholder(dImg)) {
-            console.log("[MobileOrderItemCard] got image from enhanced getProductDetails", dImg);
+            console.log("[MobileOrderItemCard] got image from ProductCatalogService", dImg);
             setImageSrc(dImg);
             setImageError(false);
             return;
           }
         }
       } catch (e) {
-        console.warn("[MobileOrderItemCard] enhanced getProductDetails failed", e);
+        console.warn("[MobileOrderItemCard] ProductCatalogService failed", e);
       }
 
       // 3) Title search
       try {
-        const res = await enhancedZincApiService.searchProducts(productName, 1, 12);
-        const p = res?.results?.[0];
+        const res = await productCatalogService.searchProducts(productName, { limit: 1 });
+        const p = res?.products?.[0];
         const sImg = p?.image || p?.main_image || p?.images?.[0];
         if (!cancelled && sImg && !isPlaceholder(sImg)) {
           console.log("[MobileOrderItemCard] got image from title search", sImg);
@@ -106,8 +106,8 @@ const MobileOrderItemCard = ({
       try {
         const firstWord = String(productName).split(' ')[0];
         if (firstWord && firstWord.length > 2) {
-          const res = await enhancedZincApiService.searchBrandCategories(firstWord, 1);
-          const p = res?.results?.[0];
+          const res = await productCatalogService.searchProducts(firstWord, { limit: 1 });
+          const p = res?.products?.[0];
           const bImg = p?.image || p?.main_image || p?.images?.[0];
           if (!cancelled && bImg) {
             console.log("[MobileOrderItemCard] got image from brand search", bImg);

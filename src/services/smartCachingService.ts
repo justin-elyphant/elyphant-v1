@@ -113,9 +113,9 @@ class SmartCachingService {
       }
     }
 
-    // Fallback to regular enhanced search
-    const response = await enhancedZincApiService.searchProducts(query, 1, maxResults, filters);
-    const results = response.results || [];
+    // Fallback to regular search via ProductCatalogService
+    const response = await productCatalogService.searchProducts(query, { limit: maxResults, ...filters });
+    const results = response.products || [];
 
     // Cache results with size analysis
     const sizeAnalysis = this.analyzeSizeRepresentation(results);
@@ -159,16 +159,14 @@ class SmartCachingService {
 
     for (const strategy of sizeStrategies) {
       try {
-        const response = await enhancedZincApiService.searchProducts(
+        const response = await productCatalogService.searchProducts(
           strategy.query, 
-          1, 
-          strategy.maxResults, 
-          { ...filters, ...strategy.filters }
+          { limit: strategy.maxResults, ...filters, ...strategy.filters }
         );
 
-        if (response.results && response.results.length > 0) {
+        if (response.products && response.products.length > 0) {
           // Deduplicate results
-          response.results.forEach(product => {
+          response.products.forEach(product => {
             if (!seenProducts.has(product.product_id)) {
               allResults.push(product);
               seenProducts.add(product.product_id);
@@ -258,14 +256,13 @@ class SmartCachingService {
         
         if (!this.sizeAwareCache.has(cacheKey)) {
           try {
-            const response = await enhancedZincApiService.searchProducts(
+            const response = await productCatalogService.searchProducts(
               `${method} size ${size}`, 
-              1, 
-              20
+              { limit: 20 }
             );
             
-            if (response.results && response.results.length > 0) {
-              this.sizeAwareCache.set(cacheKey, response.results);
+            if (response.products && response.products.length > 0) {
+              this.sizeAwareCache.set(cacheKey, response.products);
               console.log(`Pre-cached: ${method} size ${size}`);
             }
           } catch (error) {

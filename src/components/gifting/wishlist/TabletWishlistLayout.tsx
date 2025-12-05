@@ -19,7 +19,7 @@ import CreateWishlistCard from "./CreateWishlistCard";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import { useProducts } from "@/contexts/ProductContext";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 
 type ViewMode = "grid" | "list";
 type SortOption = "recent" | "name" | "items" | "updated";
@@ -45,7 +45,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
 
   // Product search
   const { products, isLoading: productsLoading } = useProducts();
-  const { searchProducts, isLoading: searchLoading } = useUnifiedSearch({ debounceMs: 300 });
+  const { executeSearch, isLoading: searchLoading } = useMarketplace();
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isProductSearch, setIsProductSearch] = useState(false);
 
@@ -108,8 +108,8 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
     
     if (value.trim() && !matchesWishlist) {
       setIsProductSearch(true);
-      const results = await searchProducts(value);
-      setSearchResults(results);
+      const response = await executeSearch(value);
+      setSearchResults(response.products || []);
     } else {
       setIsProductSearch(false);
       setSearchResults([]);

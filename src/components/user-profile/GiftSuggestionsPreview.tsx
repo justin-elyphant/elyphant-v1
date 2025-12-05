@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Sparkles, Heart } from "lucide-react";
 import { useEnhancedGiftRecommendations } from "@/hooks/useEnhancedGiftRecommendations";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { useNavigate } from "react-router-dom";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import { Product } from "@/types/product";
@@ -25,7 +25,7 @@ const GiftSuggestionsPreview = ({
   wishlistItems = []
 }: GiftSuggestionsPreviewProps) => {
   const navigate = useNavigate();
-  const { searchProducts } = useUnifiedSearch({ maxResults: 12 });
+  const { executeSearch } = useMarketplace();
   const [products, setProducts] = useState<Product[]>([]);
   const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,8 +111,8 @@ const GiftSuggestionsPreview = ({
         const mainInterests = interests.slice(0, 2); // Reduce to make room for wishlist items
         for (const interest of mainInterests) {
           try {
-            const interestProducts = await searchProducts(interest, { maxResults: 3 });
-            allProducts.push(...interestProducts);
+            const response = await executeSearch(interest);
+            allProducts.push(...(response.products || []).slice(0, 3));
           } catch (error) {
             console.log(`Failed to fetch products for ${interest}:`, error);
           }
@@ -136,7 +136,7 @@ const GiftSuggestionsPreview = ({
     if (interests.length > 0) {
       fetchProductsFromMultipleSources();
     }
-  }, [interests, searchProducts]);
+  }, [interests, executeSearch]);
 
   // Still generate AI recommendations for fallback
   useEffect(() => {

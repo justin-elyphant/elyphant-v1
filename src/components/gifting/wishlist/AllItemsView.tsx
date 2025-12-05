@@ -8,7 +8,7 @@ import EnhancedWishlistCard from "./EnhancedWishlistCard";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { useWishlist } from "../hooks/useWishlist";
 import { useProducts } from "@/contexts/ProductContext";
-import { useUnifiedSearch } from "@/hooks/useUnifiedSearch";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import CreateWishlistDialog from "./CreateWishlistDialog";
@@ -64,9 +64,9 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
   
   // Live Zinc API search hook
   const { 
-    searchProducts, 
+    executeSearch, 
     isLoading: searchLoading 
-  } = useUnifiedSearch({ debounceMs: 300 });
+  } = useMarketplace();
 
   // Sync URL parameters with inline wishlist state
   useEffect(() => {
@@ -80,19 +80,19 @@ const AllItemsView = ({ wishlists, onCreateWishlist }: AllItemsViewProps) => {
 
   // Execute live product search when query changes
   useEffect(() => {
-    const performSearch = async () => {
+    const performSearchCall = async () => {
       if (searchQuery.trim()) {
         console.log(`🔍 Searching live Zinc API for: "${searchQuery}"`);
-        const results = await searchProducts(searchQuery);
-        setLiveSearchResults(results);
-        console.log(`✅ Found ${results.length} live products`);
+        const response = await executeSearch(searchQuery);
+        setLiveSearchResults(response.products || []);
+        console.log(`✅ Found ${(response.products || []).length} live products`);
       } else {
         setLiveSearchResults([]);
       }
     };
     
-    performSearch();
-  }, [searchQuery, searchProducts]);
+    performSearchCall();
+  }, [searchQuery, executeSearch]);
 
   // Auto-switch view mode based on search/filter activity and URL view parameter
   useEffect(() => {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
-import { useUnifiedMarketplace } from "@/hooks/useUnifiedMarketplace";
+import { useMarketplace } from "@/hooks/useMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
 import { ProgressiveAirbnbStyleCategorySections } from "./ProgressiveAirbnbStyleCategorySections";
@@ -10,13 +10,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import { optimizedMarketplaceService } from "@/services/marketplace/OptimizedMarketplaceService";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 import MarketplaceHeroBanner from "./MarketplaceHeroBanner";
 import BrandHeroSection from "./BrandHeroSection";
 import CategoryHeroSection from "./CategoryHeroSection";
 import { useOptimizedProducts } from "./hooks/useOptimizedProducts";
-import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { getCategoryByValue } from "@/constants/categories";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
@@ -26,7 +25,6 @@ import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteractions";
 import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
 import { backgroundPrefetchingService } from "@/services/marketplace/BackgroundPrefetchingService";
-import { CategorySearchService } from "@/services/categoryRegistry/CategorySearchService";
 import { Sparkles } from "lucide-react";
 import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
@@ -52,16 +50,25 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     products,
     isLoading,
     error,
-    searchTerm,
-    urlSearchTerm,
-    luxuryCategories,
-    giftsForHer,
-    giftsForHim,
-    giftsUnder50,
-    brandCategories,
-    personId,
-    occasionType,
-  } = useUnifiedMarketplace();
+    urlState,
+    cacheStats,
+    totalCount: marketplaceTotalCount,
+  } = useMarketplace();
+
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Derive legacy category flags from urlState and searchParams for backward compatibility
+  const urlSearchTerm = urlState.query;
+  const searchTerm = urlState.query;
+  const luxuryCategories = urlState.category === 'luxury' || searchParams.get('luxuryCategories') === 'true';
+  const giftsForHer = urlState.category === 'gifts-for-her' || searchParams.get('giftsForHer') === 'true';
+  const giftsForHim = urlState.category === 'gifts-for-him' || searchParams.get('giftsForHim') === 'true';
+  const giftsUnder50 = urlState.category === 'gifts-under-50' || searchParams.get('giftsUnder50') === 'true';
+  const brandCategories = urlState.category?.startsWith('brand-') ? urlState.category.replace('brand-', '') : searchParams.get('brandCategories');
+  const personId = searchParams.get('personId');
+  const occasionType = searchParams.get('occasionType');
 
   // Check for personalized products from session storage
   const [personalizedProducts, setPersonalizedProducts] = useState<any[]>([]);
@@ -91,12 +98,9 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const displayProducts = personalizedProducts.length > 0 ? personalizedProducts : products;
   
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
   const { addToCart } = useCart();
   
   // Secondary filter row state
@@ -132,68 +136,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return !!(categoryParam || urlSearchTerm || luxuryCategories || giftsForHer || giftsForHim || giftsUnder50 || brandCategories || personId || occasionType);
   }, [searchParams, urlSearchTerm, luxuryCategories, giftsForHer, giftsForHim, giftsUnder50, brandCategories, personId, occasionType]);
 
-  // Server-side load more function - MOVED BEFORE useOptimizedProducts
+  // Server-side load more function - simplified using ProductCatalogService
   const handleLoadMore = useCallback(async (page: number): Promise<any[]> => {
     try {
-      console.log(`handleLoadMore called for page ${page}`);
-      console.log('URL params:', {
-        giftsForHer: searchParams.get('giftsForHer'),
-        giftsForHim: searchParams.get('giftsForHim'),
-        giftsUnder50: searchParams.get('giftsUnder50'),
-        luxuryCategories: searchParams.get('luxuryCategories'),
-        brandCategories: searchParams.get('brandCategories'),
-        search: searchParams.get('search')
-      });
-      
-  // Handle category-based searches through CategorySearchService
-      const category = searchParams.get('category');
-      const categoryParams = {
-        ...(searchParams.get('giftsForHer') && { giftsForHer: true }),
-        ...(searchParams.get('giftsForHim') && { giftsForHim: true }),
-        ...(searchParams.get('giftsUnder50') && { giftsUnder50: true }),
-        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
-        ...(searchParams.get('brandCategories') && { brandCategories: true, query: searchParams.get('brandCategories') }),
-        ...(searchParams.get('category') === 'best-selling' && { bestSelling: true })
-      };
-      
-      // Check if this is a supported category in the new registry system
-      if (category && CategorySearchService.isSupportedCategory(category)) {
-        console.log(`Using CategorySearchService for category: ${category}`);
-        
-        const searchOptions = {
-          page,
-          limit: 20,
-          minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
-          maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
-        };
-        
-        const result = await CategorySearchService.searchCategory(category, '', searchOptions);
-        console.log('CategorySearchService result:', result?.length || 0);
-        return result || [];
-      }
-      
-      if (Object.keys(categoryParams).length > 0) {
-        const categoryType = Object.keys(categoryParams)[0];
-        console.log(`Making ${categoryType} request with page:`, page);
-        
-        const response = await supabase.functions.invoke('get-products', {
-          body: { 
-            ...categoryParams,
-            page,
-            limit: 20
-          }
-        });
-        
-        console.log('Edge function response:', response);
-        
-        if (response.error) {
-          console.error('Edge function error:', response.error);
-          throw new Error(response.error.message);
-        }
-        
-        console.log('Returning products:', response.data?.results?.length || 0);
-        return response.data?.results || [];
-      }
+      console.log(`[handleLoadMore] Loading page ${page}`);
       
       // Get Nicole context from session storage for budget filtering
       let nicoleContext;
@@ -201,43 +147,36 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         const storedContext = sessionStorage.getItem('nicole-search-context');
         if (storedContext) {
           nicoleContext = JSON.parse(storedContext);
-          console.log('💰 Retrieved Nicole context for search:', nicoleContext);
         }
       } catch (error) {
-        console.warn('Failed to parse Nicole context from session storage:', error);
+        console.warn('Failed to parse Nicole context:', error);
       }
+
+      // Build search options from URL params
+      const category = searchParams.get('category');
+      const searchQuery = searchParams.get('search') || searchParams.get('brandCategories') || '';
       
-      // Also read explicit min/max price from URL
-      const urlMinPrice = searchParams.get('minPrice');
-      const urlMaxPrice = searchParams.get('maxPrice');
-      const minPrice = urlMinPrice ? Number(urlMinPrice) : undefined;
-      const maxPrice = urlMaxPrice ? Number(urlMaxPrice) : undefined;
-      
-      // For other search types, use optimized marketplace service with filter context
-      const searchOptions = {
+      const result = await productCatalogService.searchProducts(searchQuery, {
+        category: category || undefined,
         page,
         limit: 20,
-        ...(searchParams.get('luxuryCategories') && { luxuryCategories: true }),
-        ...(searchParams.get('brandCategories') && { brandCategories: true }),
-        ...(searchParams.get('personId') && { personId: searchParams.get('personId') }),
-        ...(searchParams.get('occasionType') && { occasionType: searchParams.get('occasionType') }),
-        ...(nicoleContext && { nicoleContext }), // Pass Nicole context for budget filtering
-        ...(minPrice !== undefined ? { minPrice } : {}),
-        ...(maxPrice !== undefined ? { maxPrice } : {}),
-        // Enhanced filter support from URL params
-        ...(searchParams.get('waist') && { waist: searchParams.get('waist')?.split(',') }),
-        ...(searchParams.get('inseam') && { inseam: searchParams.get('inseam')?.split(',') }),
-        ...(searchParams.get('size') && { size: searchParams.get('size')?.split(',') }),
-        ...(searchParams.get('brand') && { brand: searchParams.get('brand')?.split(',') }),
-        ...(searchParams.get('color') && { color: searchParams.get('color')?.split(',') }),
-        ...(searchParams.get('gender') && { gender: searchParams.get('gender')?.split(',') }),
-      };
+        filters: {
+          minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
+          maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
+          brands: searchParams.get('brand')?.split(','),
+          gender: searchParams.get('gender')?.split(','),
+          size: searchParams.get('size')?.split(','),
+        },
+        // Legacy flag support
+        luxuryCategories: searchParams.get('luxuryCategories') === 'true',
+        giftsForHer: searchParams.get('giftsForHer') === 'true',
+        giftsForHim: searchParams.get('giftsForHim') === 'true',
+        giftsUnder50: searchParams.get('giftsUnder50') === 'true',
+        bestSellingCategory: searchParams.get('category') === 'best-selling',
+      });
       
-      const searchTerm = searchParams.get('brandCategories') || searchParams.get('search') || '';
-      console.log('🔍 Optimized searching with enhanced options:', searchOptions);
-      const result = await optimizedMarketplaceService.searchProducts(searchTerm, searchOptions);
-      
-      return result || [];
+      console.log(`[handleLoadMore] Loaded ${result.products?.length || 0} products`);
+      return result.products || [];
     } catch (error) {
       console.error('Failed to load more products:', error);
       throw error;
@@ -469,10 +408,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     const giftsUnder50Param = searchParams.get('giftsUnder50') === 'true';
     const luxuryCategoriesParam = searchParams.get('luxuryCategories') === 'true';
     
-    // Check for lifestyle categories
+    // Check for lifestyle categories (simplified - any category not in the excluded list)
     const categoryParam = searchParams.get('category');
-    const isLifestyleCategory = categoryParam && CategorySearchService.isSupportedCategory(categoryParam) && 
-      !['best-selling', 'electronics', 'luxury', 'gifts-for-her', 'gifts-for-him', 'gifts-under-50', 'brand-categories'].includes(categoryParam);
+    const excludedCategories = ['best-selling', 'electronics', 'luxury', 'gifts-for-her', 'gifts-for-him', 'gifts-under-50', 'brand-categories'];
+    const isLifestyleCategory = categoryParam && !excludedCategories.includes(categoryParam);
     
     // Determine if we should hide the hero banner
     const shouldHide = isFromHome && (categoryParam || giftsForHerParam || giftsForHimParam || giftsUnder50Param || luxuryCategoriesParam) ||

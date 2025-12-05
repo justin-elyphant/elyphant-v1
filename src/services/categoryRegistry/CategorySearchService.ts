@@ -1,56 +1,36 @@
 /**
- * Phase 1: Category Search Service
- * 
- * This service acts as the primary interface for the Category Search Registry
- * and will be used by UnifiedMarketplaceService to route category searches.
- * 
- * It maintains all existing protective measures while providing a clean
- * abstraction for category-based searches.
+ * CategorySearchService - Compatibility stub
+ * @deprecated Use ProductCatalogService instead
  */
 
-import { CategorySearchRegistry, type CategorySearchOptions } from './CategorySearchRegistry';
+import { productCatalogService } from '../ProductCatalogService';
 
-export class CategorySearchService {
-  /**
-   * Execute a category search with full error handling and fallbacks
-   */
-  static async searchCategory(
-    category: string,
-    searchTerm: string = '',
-    options: CategorySearchOptions = {}
-  ) {
-    console.log(`[CategorySearchService] Routing category search: ${category}`);
-    
-    try {
-      const result = await CategorySearchRegistry.executeSearch(category, searchTerm, options);
-      
-      // Transform response to maintain compatibility with existing code
-      if (result && 'results' in result) {
-        return result.results;
-      }
-      
-      return result;
-      
-    } catch (error) {
-      console.error(`[CategorySearchService] Category search failed for: ${category}`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if a category is supported by the registry
-   */
-  static isSupportedCategory(category: string): boolean {
-    return CategorySearchRegistry.isCategorySupported(category);
-  }
-
-  /**
-   * Get performance analytics for monitoring
-   */
-  static getAnalytics() {
-    return CategorySearchRegistry.getSearchAnalytics();
-  }
+export interface CategorySearchOptions {
+  limit?: number;
+  page?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  silent?: boolean;
 }
 
-// Export for easy integration
+export const CategorySearchService = {
+  isSupportedCategory: (category: string): boolean => {
+    // All categories supported through ProductCatalogService
+    return true;
+  },
+  
+  searchCategory: async (category: string, query: string = '', options: CategorySearchOptions = {}): Promise<any[]> => {
+    const result = await productCatalogService.searchProducts(query, {
+      category,
+      page: options.page || 1,
+      limit: options.limit || 20,
+      filters: {
+        minPrice: options.minPrice,
+        maxPrice: options.maxPrice,
+      }
+    });
+    return result.products;
+  }
+};
+
 export default CategorySearchService;

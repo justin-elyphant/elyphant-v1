@@ -80,7 +80,7 @@ export interface ZincOrderRequest {
 // ============================================================================
 
 export interface ServiceIntegrationStatus {
-  unifiedMarketplaceService: 'connected' | 'disconnected' | 'error';
+  productCatalogService: 'connected' | 'disconnected' | 'error';
   enhancedZincApiSystem: 'connected' | 'disconnected' | 'error';
   stripeApi: 'connected' | 'disconnected' | 'error';
   supabaseDatabase: 'connected' | 'disconnected' | 'error';

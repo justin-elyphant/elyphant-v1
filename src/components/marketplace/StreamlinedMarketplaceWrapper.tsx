@@ -506,8 +506,16 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Use virtualized grid for large product lists - MOVED BEFORE EARLY RETURNS
   const shouldUseVirtualization = paginatedProducts.length > 50;
 
+  // Determine if we should show loading state
+  // Show loading when: explicitly loading OR we have search/category params but no products yet
+  const shouldShowLoading = isLoading || (
+    showSearchInfo && 
+    paginatedProducts.length === 0 && 
+    !error
+  );
+
   // Show loading skeleton
-  if (isLoading) {
+  if (shouldShowLoading) {
     return (
       <div className="container mx-auto px-4 py-6 pt-safe-top pb-safe">
           <MarketplaceHeader />

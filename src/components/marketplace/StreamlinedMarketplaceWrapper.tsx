@@ -30,7 +30,6 @@ import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
-import { useFilteredProducts } from "./hooks/useFilteredProducts";
 import VariationTestPage from "./VariationTestPage";
 import QuickVariationTest from "./QuickVariationTest";
 import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
@@ -183,7 +182,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     }
   }, [searchParams]);
 
-  // Use optimized products hook for pagination and loading - MOVED BEFORE EARLY RETURNS
+  // Use optimized products hook for pagination and loading
   const {
     products: paginatedProducts,
     isLoading: isPaginationLoading,
@@ -195,12 +194,12 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     initialProducts: displayProducts || [],
     pageSize: 20,
     onLoadMore: handleLoadMore,
-    hasMoreFromServer: personalizedProducts.length === 0, // Don't try to load more for personalized products
+    hasMoreFromServer: personalizedProducts.length === 0,
   });
 
-  // Apply active filters to paginated products before display
-  const sortOption = (activeFilters && activeFilters.sortBy) ? activeFilters.sortBy : 'relevance';
-  const filteredPaginatedProducts = useFilteredProducts(paginatedProducts || [], activeFilters || {}, sortOption);
+  // Server-side sorting is now handled by get-products edge function
+  // No client-side re-sorting needed - products arrive pre-sorted
+  const filteredPaginatedProducts = paginatedProducts || [];
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {

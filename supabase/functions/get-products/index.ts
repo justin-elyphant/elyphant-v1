@@ -729,7 +729,10 @@ serve(async (req) => {
       max: filters.max_price || filters.maxPrice
     };
     
-    console.log('Price filter extracted:', priceFilter);
+    // Extract sortBy from filters (server-side sorting)
+    const sortBy = filters.sortBy || 'popularity';
+    
+    console.log('Price filter extracted:', priceFilter, 'SortBy:', sortBy);
     
     // Track search trend for Nicole AI (async, non-blocking)
     if (query) {
@@ -1005,8 +1008,18 @@ serve(async (req) => {
       // Enrich with cached data (ratings, reviews, images)
       const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, filteredResults);
       
-      // Sort by popularity (cached products with good data first)
-      const sortedProducts = sortByPopularity(enrichedProducts);
+      // Server-side sorting based on sortBy parameter
+      let sortedProducts = [...enrichedProducts];
+      if (sortBy === 'price-low') {
+        sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+      } else if (sortBy === 'price-high') {
+        sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+      } else if (sortBy === 'rating') {
+        sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
+      } else {
+        // Default: popularity (cached products with good data first)
+        sortedProducts = sortByPopularity(enrichedProducts);
+      }
 
       return new Response(JSON.stringify({
         products: sortedProducts, // Changed from 'results' to 'products' for consistency

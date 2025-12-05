@@ -8,7 +8,7 @@ This document provides comprehensive guidance for coordinating between all unifi
 ## 🎯 UNIFIED SYSTEMS OVERVIEW
 
 ### Currently Implemented Unified Systems:
-1. **UnifiedMarketplaceService** - Product search, caching, normalization
+1. **ProductCatalogService** - Database-first product search with organic growth caching
 2. **Enhanced Zinc API System** - Amazon order processing via Edge Functions  
 3. **UnifiedPaymentService** - Cart management and payment orchestration
 4. **UnifiedMessagingService** - Direct messaging, group chat, presence, typing indicators
@@ -28,18 +28,18 @@ This document provides comprehensive guidance for coordinating between all unifi
 ├─────────────────────────────────────────────────────────────┤
 │  CartContext → UnifiedPaymentService                       │
 │  Checkout → UnifiedPaymentService                          │
-│  Marketplace → UnifiedMarketplaceService                   │
+│  Marketplace → useMarketplace → ProductCatalogService      │
 ├─────────────────────────────────────────────────────────────┤
 │                   UNIFIED SERVICES LAYER                   │
 │                                                             │
-│  UnifiedPaymentService ──────→ UnifiedMarketplaceService   │
+│  UnifiedPaymentService ──────→ ProductCatalogService       │
 │         │                              │                   │
 │         │                              ▼                   │
-│         ▼                    Enhanced Zinc API System      │
+│         ▼                    get-products Edge Function    │
 │  process-zinc-order                    │                   │
 │    Edge Function                       ▼                   │
-│         │                        Zinc API                  │
-│         ▼                     (Amazon Business)            │
+│         │                    Zinc API (Product Search)     │
+│         ▼                                                  │
 │  Amazon Business Orders                                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -53,7 +53,7 @@ This document provides comprehensive guidance for coordinating between all unifi
 ### Rule Set 1: Service Boundaries (NON-NEGOTIABLE)
 ```typescript
 // ✅ CORRECT: Always follow service hierarchy
-const product = await unifiedMarketplaceService.getProductDetails(id);
+const products = await productCatalogService.searchProducts(query, options);
 const paymentIntent = await unifiedPaymentService.createPaymentIntent(amount);
 const zincOrder = await supabase.functions.invoke('process-zinc-order', data);
 
@@ -67,7 +67,7 @@ const zincOrder = await fetch('https://api.zinc.io/orders', data);
 // ✅ CORRECT: Proper data flow
 UnifiedPaymentService
   .addToCart(productId) 
-  .calls(unifiedMarketplaceService.getProductDetails(productId))
+  .calls(productCatalogService.getProductDetails(productId))
   .validateProduct()
   .updateCart()
 
@@ -96,7 +96,7 @@ Business Fulfillment: Direct Stripe customer charges
 ```
 Need to add cart feature?
 ├── Does it involve products?
-│   ├── YES → Must call UnifiedMarketplaceService
+│   ├── YES → Must call ProductCatalogService
 │   └── NO → Can use UnifiedPaymentService directly
 ├── Does it involve Amazon orders?
 │   ├── YES → Must route through process-zinc-order Edge Function
@@ -111,7 +111,7 @@ Need to add cart feature?
 Payment issue reported?
 ├── Check service integration chain first
 │   ├── UnifiedPaymentService logs
-│   ├── UnifiedMarketplaceService cache status
+│   ├── ProductCatalogService (database-first, no client cache)
 │   └── Enhanced Zinc API Edge Function logs
 ├── Verify protection boundaries not violated
 │   ├── No direct API calls?
@@ -126,9 +126,9 @@ Payment issue reported?
 ### Decision Tree 3: Adding New Product Features
 ```
 Need new product functionality?
-├── Check if UnifiedMarketplaceService supports it
+├── Check if ProductCatalogService supports it
 │   ├── YES → Use existing service methods
-│   ├── NO → Add to UnifiedMarketplaceService (don't bypass)
+│   ├── NO → Add to ProductCatalogService (don't bypass)
 │   └── UNSURE → Check service documentation
 ├── Will it affect cart/payment?
 │   ├── YES → Coordinate with UnifiedPaymentService
@@ -148,7 +148,7 @@ Need new product functionality?
 - Build-time validation of service integration
 
 ### Enforcement Level 2: Code Review Checklist
-- [ ] All product operations go through UnifiedMarketplaceService
+- [ ] All product operations go through ProductCatalogService
 - [ ] All Amazon orders use process-zinc-order Edge Function
 - [ ] Customer/business payment separation maintained
 - [ ] No service hierarchy bypassing
@@ -184,13 +184,18 @@ Need new product functionality?
    - Cross-system integration safeguards
    - Violation detection and prevention
 
-5. **UNIFIED_SYSTEMS_COORDINATION.md** (this document)
+5. **MARKETPLACE_CONSOLIDATION_COMPLETE.md**
+   - Phase 2 consolidation summary
+   - New architecture (ProductCatalogService, useMarketplace, useSmartFilters)
+   - Migration notes from legacy services
+
+6. **UNIFIED_SYSTEMS_COORDINATION.md** (this document)
    - Cross-system coordination rules
    - Developer decision trees
    - Integration hierarchy enforcement
 
 ### Shared Protection Rules:
-- **Never bypass UnifiedMarketplaceService** for product operations
+- **Never bypass ProductCatalogService** for product operations
 - **Never bypass UnifiedPaymentService** for payment operations  
 - **Never bypass UnifiedMessagingService** for messaging operations
 - **Always use Edge Functions** for external API calls
@@ -205,6 +210,7 @@ Need new product functionality?
 ### For New Developers:
 1. **Read Protection Documents** in this order:
    - UNIFIED_SYSTEMS_COORDINATION.md (this document)
+   - MARKETPLACE_CONSOLIDATION_COMPLETE.md
    - UNIFIED_PAYMENT_PROTECTION_MEASURES.md
    - ZINC_API_PROTECTION_MEASURES.md
 
@@ -221,10 +227,9 @@ Need new product functionality?
 
 ### For Existing Developers:
 1. **Migration Guidelines**:
-   - Follow the 5-week implementation plan
-   - Preserve existing functionality
-   - Maintain protection boundaries
-   - Test integration thoroughly
+   - All marketplace code now uses ProductCatalogService (not UnifiedMarketplaceService)
+   - useMarketplace hook replaces legacy hooks
+   - Database-first architecture eliminates client-side caches
 
 ---
 
@@ -261,7 +266,7 @@ Need new product functionality?
 
 ---
 
-## ✅ WEEK 3 IMPLEMENTATION STATUS
+## ✅ CURRENT IMPLEMENTATION STATUS
 
 ### COMPLETED COORDINATION:
 - ✅ **Service Integration Hierarchy**: Documented and enforced including messaging
@@ -270,9 +275,10 @@ Need new product functionality?
 - ✅ **Cross-System Rules**: Established and documented for all service interactions
 - ✅ **Enforcement Procedures**: Multi-level protection implemented with automation
 - ✅ **Cross-System Security Coordination**: Master protection matrix created
+- ✅ **Phase 2 Marketplace Consolidation**: 72% code reduction (~4,300 → ~1,200 lines)
 
 ### PROTECTION VERIFICATION:
-- ✅ **UnifiedMarketplaceService Integration**: Properly called by payment and messaging services
+- ✅ **ProductCatalogService Integration**: Database-first, no client-side caching
 - ✅ **Enhanced Zinc API Boundaries**: Respected by payment orchestration
 - ✅ **Dual Payment Architecture**: Customer/business separation maintained
 - ✅ **Messaging System Integration**: Proper service boundaries with payment/marketplace
@@ -281,4 +287,4 @@ Need new product functionality?
 
 ---
 
-*Last Updated: 2025-01-23 (Week 3 Implementation Complete)*
+*Last Updated: 2025-12-05 (Phase 2.7 Documentation Synchronization)*

@@ -10,17 +10,17 @@ This document provides decision trees to help developers navigate the unified sy
 ```
 Need to implement a feature?
 ├── 🛒 Involves products/catalog?
-│   ├── Search/Browse → UnifiedMarketplaceService
-│   ├── Product Details → UnifiedMarketplaceService  
-│   ├── Add to Cart → UnifiedPaymentService (calls Marketplace)
-│   └── Product Management → UnifiedMarketplaceService
+│   ├── Search/Browse → ProductCatalogService (via useMarketplace hook)
+│   ├── Product Details → ProductCatalogService.getProductDetails()
+│   ├── Add to Cart → UnifiedPaymentService (calls ProductCatalogService)
+│   └── Product Management → ProductCatalogService
 ├── 💳 Involves payments/orders?
 │   ├── Customer Payment → UnifiedPaymentService
 │   ├── Cart Management → UnifiedPaymentService
 │   ├── Order Creation → UnifiedPaymentService + orderService
 │   └── Amazon Fulfillment → process-zinc-order Edge Function
 ├── 🏪 Involves Amazon Business?
-│   ├── Product Search → Enhanced Zinc API (via Marketplace)
+│   ├── Product Search → ProductCatalogService (routes to get-products Edge Function)
 │   ├── Order Processing → process-zinc-order Edge Function
 │   └── Business Credentials → Edge Functions ONLY
 └── 🤖 Involves AI/Chat?
@@ -34,20 +34,24 @@ Need to implement a feature?
 ```
 Working with products?
 ├── 🔍 Search Products
-│   ├── General Search → unifiedMarketplaceService.searchProducts(query, options)
-│   ├── Amazon Specific → unifiedMarketplaceService.searchProducts() (handles Zinc internally)
-│   └── Paginated Search → unifiedMarketplaceService.searchProducts(query, { page, maxResults })
+│   ├── General Search → productCatalogService.searchProducts(query, options)
+│   ├── With URL State → useMarketplace hook (manages URL params automatically)
+│   └── Paginated Search → productCatalogService.searchProducts(query, { limit, offset })
 ├── 📄 Product Details
-│   ├── By ID → unifiedMarketplaceService.getProductDetails(productId)
-│   ├── Cache Stats → unifiedMarketplaceService.getCacheStats()
-│   └── Enhanced Details → Service handles enhancement automatically
+│   ├── By ID → productCatalogService.getProductDetails(productId)
+│   ├── Cache → Database-first (products table), no client-side cache
+│   └── Enhanced Details → get-product-detail Edge Function (Zinc API fallback)
 ├── 🏷️ Product Categories
-│   ├── Search by Category → unifiedMarketplaceService.searchProducts(query, { filters })
-│   └── Category Filtering → Use search options with category filters
+│   ├── Search by Category → productCatalogService.searchProducts(query, { category })
+│   └── Category Filtering → Handled server-side in get-products Edge Function
+├── 🔧 Dynamic Filters
+│   ├── Generate Filters → useSmartFilters(searchTerm, products)
+│   └── Apply Filters → URL state via useMarketplace hook
 └── ❌ NEVER DO
     ├── Direct Zinc API calls from frontend
-    ├── Bypass marketplace service for any product operations
-    └── Create parallel product fetching systems
+    ├── Create client-side product caches
+    ├── Bypass ProductCatalogService for any product operations
+    └── Use legacy services (UnifiedMarketplaceService, CategorySearchService)
 ```
 
 ---
@@ -58,7 +62,7 @@ Working with products?
 Working with cart/payments?
 ├── 🛒 Cart Operations
 │   ├── Add Item → unifiedPaymentService.addToCart(productId, quantity)
-│   │   └── (Internally calls UnifiedMarketplaceService for validation)
+│   │   └── (Internally calls ProductCatalogService for validation)
 │   ├── Remove Item → unifiedPaymentService.removeFromCart(productId)
 │   ├── Update Quantity → unifiedPaymentService.updateQuantity(productId, qty)
 │   └── Clear Cart → unifiedPaymentService.clearCart()
@@ -74,7 +78,7 @@ Working with cart/payments?
 └── ❌ NEVER DO
     ├── Direct Stripe API calls from components
     ├── Mix customer and business payment methods
-    ├── Bypass UnifiedMarketplaceService for product validation
+    ├── Bypass ProductCatalogService for product validation
     └── Access business payment methods directly
 ```
 
@@ -85,10 +89,10 @@ Working with cart/payments?
 ```
 Working with Amazon Business?
 ├── 🔍 Product Search
-│   ├── Search Amazon Products → UnifiedMarketplaceService
-│   │   └── (Service internally uses Enhanced Zinc API)
+│   ├── Search Amazon Products → ProductCatalogService
+│   │   └── (Service internally uses get-products Edge Function → Zinc API)
 │   ├── Best Seller Detection → Handled automatically
-│   └── Product Enhancement → Automatic in marketplace service
+│   └── Product Enhancement → Automatic in get-product-detail Edge Function
 ├── 📦 Order Processing
 │   ├── Amazon Order → process-zinc-order Edge Function ONLY
 │   ├── Order Status → Via Edge Function
@@ -113,13 +117,13 @@ Working with Amazon Business?
 Something not working?
 ├── 🔍 Identify the System
 │   ├── Cart/Payment Issue → Check UnifiedPaymentService logs
-│   ├── Product Issue → Check UnifiedMarketplaceService cache
+│   ├── Product Issue → Check ProductCatalogService (database-first, no cache issues)
 │   ├── Amazon Issue → Check process-zinc-order Edge Function logs
 │   └── UI Issue → Check component error boundaries
 ├── 🔄 Check Service Integration
-│   ├── UnifiedPaymentService → UnifiedMarketplaceService calls working?
+│   ├── UnifiedPaymentService → ProductCatalogService calls working?
 │   ├── Amazon orders → process-zinc-order calls working?
-│   ├── Product validation → Marketplace service responding?
+│   ├── Product validation → ProductCatalogService responding?
 │   └── Authentication → User session valid?
 ├── 📊 Verify Protection Boundaries
 │   ├── No direct API calls being made?
@@ -170,7 +174,7 @@ Adding a new feature?
 // ✅ CORRECT PATTERN
 const handleAddToCart = async (productId: string, quantity: number) => {
   try {
-    // UnifiedPaymentService will call UnifiedMarketplaceService internally
+    // UnifiedPaymentService will call ProductCatalogService internally
     await unifiedPaymentService.addToCart(productId, quantity);
   } catch (error) {
     console.error('Failed to add to cart:', error);
@@ -193,14 +197,24 @@ const processAmazonOrder = async (orderId: string) => {
 };
 ```
 
-### Pattern 3: Product Search with Validation
+### Pattern 3: Product Search with URL State
 ```typescript
-// ✅ CORRECT PATTERN
+// ✅ CORRECT PATTERN - Using useMarketplace hook
+const { products, isLoading, executeSearch } = useMarketplace();
+
+// Search is automatically synced with URL params
+const handleSearch = (query: string) => {
+  executeSearch({ searchTerm: query });
+};
+```
+
+### Pattern 4: Direct Product Search (No URL State)
+```typescript
+// ✅ CORRECT PATTERN - Using ProductCatalogService directly
 const searchProducts = async (query: string, options = {}) => {
   try {
-    // UnifiedMarketplaceService handles Zinc integration internally
-    const products = await unifiedMarketplaceService.searchProducts(query, options);
-    return products; // Already normalized and enhanced
+    const result = await productCatalogService.searchProducts(query, options);
+    return result.products; // Already normalized from database/Zinc
   } catch (error) {
     console.error('Search failed:', error);
   }
@@ -213,7 +227,7 @@ const searchProducts = async (query: string, options = {}) => {
 
 ### ❌ Anti-Pattern 1: Bypassing Services
 ```typescript
-// WRONG - Bypassing UnifiedMarketplaceService
+// WRONG - Bypassing ProductCatalogService
 const product = await fetch('/api/products/' + productId);
 
 // WRONG - Direct Zinc API calls
@@ -223,21 +237,36 @@ const order = await fetch('https://api.zinc.io/orders', { ... });
 localStorage.setItem('cart', JSON.stringify(items));
 ```
 
-### ❌ Anti-Pattern 2: Mixed Payment Architecture
+### ❌ Anti-Pattern 2: Using Legacy Services
+```typescript
+// WRONG - Legacy service (DELETED)
+import { unifiedMarketplaceService } from '@/services/marketplace/UnifiedMarketplaceService';
+
+// WRONG - Legacy service (DELETED)
+import { categorySearchService } from '@/services/marketplace/CategorySearchService';
+
+// ✅ CORRECT - Use consolidated service
+import { productCatalogService } from '@/services/ProductCatalogService';
+```
+
+### ❌ Anti-Pattern 3: Mixed Payment Architecture
 ```typescript
 // WRONG - Mixing customer and business payments
 const customerPayment = await stripe.charges.create({ ... });
 const businessPayment = await zinc.orders.create({ ... });
 ```
 
-### ❌ Anti-Pattern 3: Service Hierarchy Violations
+### ❌ Anti-Pattern 4: Client-Side Caching
 ```typescript
-// WRONG - Component directly calling multiple services
-const component = () => {
-  const products = await unifiedMarketplaceService.search();
-  const cart = await unifiedPaymentService.getCart();
-  const order = await zinc.processOrder(); // VIOLATION!
+// WRONG - Creating client-side product cache
+const productCache = new Map();
+const getProduct = async (id) => {
+  if (productCache.has(id)) return productCache.get(id);
+  // ...
 };
+
+// ✅ CORRECT - Database is the cache (products table)
+const product = await productCatalogService.getProductDetails(id);
 ```
 
 ---
@@ -246,6 +275,7 @@ const component = () => {
 
 ### Internal Documentation:
 - **Service Coordination**: UNIFIED_SYSTEMS_COORDINATION.md
+- **Marketplace Architecture**: MARKETPLACE_CONSOLIDATION_COMPLETE.md
 - **Payment Protection**: UNIFIED_PAYMENT_PROTECTION_MEASURES.md  
 - **Zinc Protection**: ZINC_API_PROTECTION_MEASURES.md
 
@@ -256,4 +286,4 @@ const component = () => {
 
 ---
 
-*Quick Reference Version: 2025-01-23 (Week 3 Implementation)*
+*Quick Reference Version: 2025-12-05 (Phase 2.7 Documentation Update)*

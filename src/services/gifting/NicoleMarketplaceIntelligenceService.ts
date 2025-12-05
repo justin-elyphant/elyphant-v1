@@ -12,24 +12,25 @@
  * - Marketplace conversational interface via AIEnhancedSearchBar
  * - Agent memory for improved curation over time
  * 
- * Phase 3.5: Enhanced Category Search Integration
- * - Integrated with CategorySearchService for optimized performance
- * - Leverages enhanced caching and search routing
+ * Architecture: Database-First Product Catalog (Phase 2 Consolidation)
+ * - Uses ProductCatalogService for all product operations
+ * - Database (products table) is the cache layer
+ * - Zinc API fallback via Edge Functions
  * 
  * ⚠️ CRITICAL FEATURES:
  * - Intelligent product filtering based on recipient data
  * - Hierarchical gift selection (Wishlist → Interests → AI → Demographic)
  * - Conversation context preservation for better recommendations
- * - Integration with existing UnifiedMarketplaceService
+ * - Integration with ProductCatalogService (consolidated marketplace service)
  * 
  * 🔗 SYSTEM INTEGRATION:
- * - useUnifiedSearch hook for marketplace queries
- * - unifiedMarketplaceService for product operations
+ * - ProductCatalogService for marketplace queries
+ * - useMarketplace hook for URL-driven state (UI layer)
  * - AIEnhancedSearchBar for conversational interface
  * - Auto-gifting rules and recipient data
  * - Gift recommendation and intelligence systems
  * 
- * Last update: 2025-01-28 (MVP Auto-Gifting Implementation)
+ * Last update: 2025-12-05 (Phase 2.7 Documentation Sync)
  * ========================================================================
  */
 

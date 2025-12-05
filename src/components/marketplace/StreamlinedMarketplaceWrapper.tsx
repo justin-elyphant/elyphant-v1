@@ -772,6 +772,19 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                 />
               )}
               
+              {/* Products Grid - Loading State */}
+              {isLoading && filteredPaginatedProducts.length === 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="space-y-3">
+                      <Skeleton className="aspect-square rounded-lg" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               {/* Products Grid */}
               {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
                 <>
@@ -906,6 +919,19 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                 }
               }}
             />
+            
+            {/* Mobile Products Grid - Loading State */}
+            {isLoading && filteredPaginatedProducts.length === 0 && (
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="aspect-square rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Mobile Products Grid */}
             {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (

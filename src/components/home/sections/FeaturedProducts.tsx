@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { searchProducts } from "@/components/marketplace/zinc/services/search/productSearchServiceImpl";
+import { productCatalogService } from "@/services/ProductCatalogService";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,12 +26,13 @@ const FeaturedProducts = ({
         setError(null);
         console.log(`Loading featured products with search term: ${searchTerm}`);
         
-        // Request more products to ensure good selection
-        const fetchedProducts = await searchProducts(searchTerm, maxProducts.toString());
+        const response = await productCatalogService.searchProducts(searchTerm, {
+          limit: maxProducts
+        });
         
-        if (fetchedProducts && fetchedProducts.length > 0) {
-          setProducts(fetchedProducts);
-          console.log(`Loaded ${fetchedProducts.length} featured products for "${searchTerm}"`);
+        if (response.products && response.products.length > 0) {
+          setProducts(response.products);
+          console.log(`Loaded ${response.products.length} featured products for "${searchTerm}"`);
         } else {
           console.log(`No products found for search term: ${searchTerm}`);
           setError(`No products found for "${searchTerm}"`);

@@ -50,27 +50,30 @@ const TrustBadges: React.FC<TrustBadgesProps> = memo(({
   product,
   size = "sm",
   className,
-  maxBadges = 2
+  maxBadges = 1 // Default to 1 for cleaner display
 }) => {
   const badges: Array<{
     type: string;
     label: string;
     icon: React.ReactNode;
+    priority: number; // Higher = more important
     variant: "amazon_choice" | "best_seller" | "popular" | "trending" | "verified";
   }> = [];
 
-  // Check for Amazon's Choice
+  // Build badges with priority (higher = more important)
+  // Amazon's Choice - Priority 4 (highest)
   if ((product as any).bestSellerType === 'amazon_choice' || 
       (product as any).badgeText?.toLowerCase().includes('choice')) {
     badges.push({
       type: 'amazon_choice',
       label: "Amazon's Choice",
       icon: <Award className={cn(size === "sm" ? "w-3 h-3" : "w-4 h-4")} />,
+      priority: 4,
       variant: 'amazon_choice'
     });
   }
 
-  // Check for Best Seller
+  // Best Seller - Priority 3
   if ((product as any).isBestSeller || 
       (product as any).bestSellerType === 'best_seller' ||
       (product as any).badgeText?.toLowerCase().includes('best seller')) {
@@ -78,33 +81,40 @@ const TrustBadges: React.FC<TrustBadgesProps> = memo(({
       type: 'best_seller',
       label: "Best Seller",
       icon: <Flame className={cn(size === "sm" ? "w-3 h-3" : "w-4 h-4")} />,
+      priority: 3,
       variant: 'best_seller'
     });
   }
 
-  // Check for Popular (high view count or popularity score)
-  const viewCount = (product as any).view_count || 0;
-  const popularityScore = (product as any).popularity_score || 0;
-  
-  if ((popularityScore > 80 || viewCount > 30) && badges.length < maxBadges) {
-    badges.push({
-      type: 'popular',
-      label: "Popular",
-      icon: <TrendingUp className={cn(size === "sm" ? "w-3 h-3" : "w-4 h-4")} />,
-      variant: 'popular'
-    });
-  }
-
-  // Check for high rating
+  // Top Rated - Priority 2
   const rating = product.stars || product.rating || (product as any).metadata?.stars || 0;
-  if (rating >= 4.5 && badges.length < maxBadges) {
+  if (rating >= 4.5) {
     badges.push({
       type: 'top_rated',
       label: "Top Rated",
       icon: <Star className={cn(size === "sm" ? "w-3 h-3" : "w-4 h-4")} />,
+      priority: 2,
       variant: 'verified'
     });
   }
+
+  // Popular - Priority 1 (lowest, skip if we have higher priority badges)
+  const viewCount = (product as any).view_count || 0;
+  const popularityScore = (product as any).popularity_score || 0;
+  const hasBestSellerBadge = badges.some(b => b.type === 'best_seller' || b.type === 'amazon_choice');
+  
+  if ((popularityScore > 80 || viewCount > 30) && !hasBestSellerBadge) {
+    badges.push({
+      type: 'popular',
+      label: "Popular",
+      icon: <TrendingUp className={cn(size === "sm" ? "w-3 h-3" : "w-4 h-4")} />,
+      priority: 1,
+      variant: 'popular'
+    });
+  }
+
+  // Sort by priority (highest first) and take only maxBadges
+  const sortedBadges = badges.sort((a, b) => b.priority - a.priority).slice(0, maxBadges);
 
   // Get purchase indicator
   const purchaseIndicator = getPurchaseIndicator(product);
@@ -133,8 +143,8 @@ const TrustBadges: React.FC<TrustBadgesProps> = memo(({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {/* Trust Badges */}
-      {badges.slice(0, maxBadges).map((badge) => (
+      {/* Trust Badges - only show sorted highest priority badges */}
+      {sortedBadges.map((badge) => (
         <Badge
           key={badge.type}
           variant="outline"

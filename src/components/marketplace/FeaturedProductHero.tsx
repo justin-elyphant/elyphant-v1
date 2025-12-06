@@ -1,7 +1,7 @@
 
 import React, { memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, Calendar, Star, TrendingUp, Award } from "lucide-react";
+import { Heart, ShoppingCart, Calendar, Star, Award, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/product";
@@ -12,11 +12,22 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { getHighResAmazonImage } from "@/utils/amazonImageOptimizer";
 import { getDisplayTitle } from "@/utils/productTitleUtils";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
-import ProductRating from "@/components/shared/ProductRating";
-import TrustBadges from "./TrustBadges";
 import { motion } from "framer-motion";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { toast } from "sonner";
+
+// Format number to compact display (1500 -> "1.5K")
+const formatCompactNumber = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(num);
+};
+
+// Format review count
+const formatReviewCount = (count: number): string => {
+  if (count >= 1000) return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(count);
+};
 
 interface FeaturedProductHeroProps {
   product: Product;
@@ -163,9 +174,6 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
         )}>
           {/* Top Content */}
           <div>
-            {/* Trust Badges */}
-            <TrustBadges product={product} size="md" className="mb-3" />
-
             {/* Title */}
             <h2 className={cn(
               "font-semibold text-foreground mb-2 line-clamp-2",
@@ -174,13 +182,29 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
               {getProductTitle()}
             </h2>
 
-            {/* Rating */}
-            <ProductRating 
-              rating={getRating()}
-              reviewCount={getReviewCount()}
-              size="md"
-              className="mb-3"
-            />
+            {/* Rating with inline purchase indicator */}
+            {getRating() > 0 && (
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-medium text-foreground">
+                    {getRating()}
+                  </span>
+                </div>
+                {getReviewCount() > 0 && (
+                  <span className="text-muted-foreground text-sm">
+                    ({formatReviewCount(getReviewCount())} reviews)
+                  </span>
+                )}
+                {/* Inline purchase indicator */}
+                {((product as any).popularity_score > 50 || (product as any).view_count > 20) && (
+                  <span className="text-muted-foreground text-sm flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    {formatCompactNumber(Math.floor(((product as any).popularity_score || 0) + ((product as any).view_count || 0)) * 10)}+ bought recently
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Price */}
             <div className="flex items-baseline gap-2 mb-4">

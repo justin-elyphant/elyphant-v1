@@ -1,10 +1,11 @@
-
-import { searchProducts as searchProductsImpl } from "./services/productSearchService";
+/**
+ * Zinc service - simplified facade using ProductCatalogService
+ */
 import { convertZincProductToProduct } from "./utils/productConverter";
 import { Product } from "@/contexts/ProductContext";
 import { fetchProductDetails } from "./services/productDetailsService";
 import { ZincOrder, ZincProduct } from "./types";
-import { useProductValidation } from "./hooks/useProductValidation";
+import { productCatalogService } from "@/services/ProductCatalogService";
 
 /**
  * Search for products and convert them to our Product format
@@ -14,17 +15,19 @@ import { useProductValidation } from "./hooks/useProductValidation";
  */
 export const searchZincProducts = async (query: string, maxResults: string = "8"): Promise<Product[]> => {
   try {
-    const zincResults = await searchProductsImpl(query, maxResults);
+    const response = await productCatalogService.searchProducts(query, { 
+      limit: parseInt(maxResults, 10) 
+    });
     
-    if (!zincResults || zincResults.length === 0) {
-      console.log(`No Zinc results found for "${query}"`);
+    if (!response.products || response.products.length === 0) {
+      console.log(`No results found for "${query}"`);
       return [];
     }
     
     // Convert to our Product format
-    const products = zincResults.map(zincProduct => convertZincProductToProduct(zincProduct));
+    const products = response.products.map(zincProduct => convertZincProductToProduct(zincProduct));
     
-    console.log(`Converted ${products.length} Zinc products to our format for "${query}"`);
+    console.log(`Converted ${products.length} products for "${query}"`);
     return products;
   } catch (error) {
     console.error(`Error in searchZincProducts: ${error}`);
@@ -58,7 +61,7 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
         city: "Test City",
         state: "TS",
         country: "US",
-        phone_number: "555-1234" // Added required phone_number
+        phone_number: "555-1234"
       }
     };
     
@@ -70,24 +73,21 @@ export const testPurchase = async (productId: string): Promise<ZincOrder | null>
 };
 
 /**
- * Enhance a product with valid images using our validation hooks
- * @param product The product to enhance
- * @returns The enhanced product
- */
-export const enhanceProductWithImages = (product: ZincProduct): ZincProduct => {
-  // Use the validation logic directly from the utils
-  const { validateProductImages } = require("./services/search/productValidationUtils");
-  return validateProductImages(product, product.title || "");
-};
-
-/**
- * Search for products directly, using the implementation from productSearchService
+ * Search for products directly using ProductCatalogService
  * @param query Search query
  * @param maxResults Maximum results to return
  * @returns Promise with array of ZincProduct results
  */
 export const searchProducts = async (query: string, maxResults: string = "10"): Promise<ZincProduct[]> => {
-  return searchProductsImpl(query, maxResults);
+  try {
+    const response = await productCatalogService.searchProducts(query, { 
+      limit: parseInt(maxResults, 10) 
+    });
+    return response.products || [];
+  } catch (error) {
+    console.error(`Error in searchProducts: ${error}`);
+    return [];
+  }
 };
 
 // Re-export fetchProductDetails for direct access

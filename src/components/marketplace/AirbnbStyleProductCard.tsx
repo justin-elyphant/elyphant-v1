@@ -23,6 +23,7 @@ import ColorSwatches from "./ColorSwatches";
 import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";
 import ProductRating from "@/components/shared/ProductRating";
 import { getDisplayTitle } from "@/utils/productTitleUtils";
+import TrustBadges from "./TrustBadges";
 
 interface AirbnbStyleProductCardProps {
   product: Product;
@@ -324,6 +325,14 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             {vendorInfo.name} • {vendorInfo.location}
           </div>
         )}
+
+        {/* Trust Badges - Amazon Style */}
+        <TrustBadges 
+          product={product} 
+          size="sm" 
+          className="mb-1.5"
+          maxBadges={1}
+        />
 
         {/* Color Swatches - Lululemon Style */}
         <ColorSwatches 

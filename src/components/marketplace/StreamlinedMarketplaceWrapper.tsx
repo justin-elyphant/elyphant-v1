@@ -38,6 +38,7 @@ import DynamicDesktopFilterSidebar from "./filters/DynamicDesktopFilterSidebar";
 import FilterSortRow from "./filters/FilterSortRow";
 import LululemonMobileFilters from "./filters/LululemonMobileFilters";
 import DynamicMobileFilterDrawer from "./filters/DynamicMobileFilterDrawer";
+import FeaturedProductHero from "./FeaturedProductHero";
 
 // Add test mode flag - set to true to show variation test page
 const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
@@ -208,6 +209,31 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted
   const filteredPaginatedProducts = paginatedProducts;
+
+  // Determine if we should show a featured product hero
+  // Show for searches with high-quality first result (cached with good data, best seller, or high rating)
+  const { featuredProduct, gridProducts } = useMemo(() => {
+    if (!showSearchInfo || isPersonalizedActive || filteredPaginatedProducts.length === 0) {
+      return { featuredProduct: null, gridProducts: filteredPaginatedProducts };
+    }
+    
+    const firstProduct = filteredPaginatedProducts[0];
+    const shouldShowFeatured = 
+      (firstProduct as any).popularity_score > 50 ||
+      (firstProduct as any).isBestSeller ||
+      (firstProduct as any).bestSellerType ||
+      ((firstProduct.stars || firstProduct.rating || 0) >= 4 && (firstProduct as any).is_cached);
+    
+    if (shouldShowFeatured) {
+      // Skip first product in grid since it's shown as featured hero
+      return { 
+        featuredProduct: firstProduct, 
+        gridProducts: filteredPaginatedProducts.slice(1) 
+      };
+    }
+    
+    return { featuredProduct: null, gridProducts: filteredPaginatedProducts };
+  }, [showSearchInfo, isPersonalizedActive, filteredPaginatedProducts]);
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {
@@ -737,12 +763,20 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                 </div>
               )}
               
+              {/* Featured Product Hero - Show for brand/product searches with high-quality first result */}
+              {featuredProduct && (
+                <FeaturedProductHero 
+                  product={featuredProduct}
+                  searchTerm={urlSearchTerm || ''}
+                />
+              )}
+              
               {/* Products Grid */}
-              {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
+              {(showSearchInfo || !products.length || isPersonalizedActive) && gridProducts.length > 0 && (
                 <>
                   {shouldUseVirtualization ? (
                     <VirtualizedProductGrid
-                      products={filteredPaginatedProducts}
+                      products={gridProducts}
                       viewMode={viewMode}
                       onProductClick={handleProductClick}
                       onAddToCart={handleAddToCart}
@@ -754,7 +788,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                     />
                   ) : (
                     <OptimizedProductGrid
-                      products={filteredPaginatedProducts}
+                      products={gridProducts}
                       viewMode={viewMode}
                       onProductClick={handleProductClick}
                       onAddToCart={handleAddToCart}
@@ -885,12 +919,20 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               </div>
             )}
             
+            {/* Mobile Featured Product Hero */}
+            {featuredProduct && (
+              <FeaturedProductHero 
+                product={featuredProduct}
+                searchTerm={urlSearchTerm || ''}
+              />
+            )}
+            
             {/* Mobile Products Grid */}
-            {(showSearchInfo || !products.length || isPersonalizedActive) && filteredPaginatedProducts.length > 0 && (
+            {(showSearchInfo || !products.length || isPersonalizedActive) && gridProducts.length > 0 && (
               <>
                 {shouldUseVirtualization ? (
                   <VirtualizedProductGrid
-                    products={filteredPaginatedProducts}
+                    products={gridProducts}
                     viewMode={viewMode}
                     onProductClick={handleProductClick}
                     onAddToCart={handleAddToCart}
@@ -902,7 +944,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                   />
                 ) : (
                   <OptimizedProductGrid
-                    products={filteredPaginatedProducts}
+                    products={gridProducts}
                     viewMode={viewMode}
                     onProductClick={handleProductClick}
                     onAddToCart={handleAddToCart}

@@ -117,6 +117,129 @@ const enrichWithCachedData = async (supabase: any, products: any[]) => {
 };
 
 /**
+ * Cache search results in products table for future queries
+ * Uses background write to not block response - this is the key to Nicole's organic growth strategy
+ */
+const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: string) => {
+  if (!supabase || !products || products.length === 0) return;
+
+  try {
+    const productsToCache = products.map(p => ({
+      product_id: p.product_id || p.asin,
+      title: p.title,
+      price: typeof p.price === 'number' ? p.price : parseFloat(p.price) || null,
+      image_url: p.main_image || p.image || p.thumbnail,
+      retailer: 'amazon',
+      brand: p.brand || null,
+      category: p.category || p.categories?.[0] || null,
+      source_query: sourceQuery || null,
+      last_refreshed_at: new Date().toISOString(),
+      metadata: {
+        stars: p.stars || p.rating || null,
+        review_count: p.review_count || p.num_reviews || null,
+        main_image: p.main_image || p.image,
+        images: p.images || [p.main_image || p.image].filter(Boolean),
+        isBestSeller: p.isBestSeller || false,
+        bestSellerType: p.bestSellerType || null,
+        badgeText: p.badgeText || null,
+        source: 'search_results',
+        cached_at: new Date().toISOString()
+      }
+    })).filter(p => p.product_id);
+
+    if (productsToCache.length === 0) return;
+
+    const { error } = await supabase
+      .from('products')
+      .upsert(productsToCache, { 
+        onConflict: 'product_id',
+        ignoreDuplicates: false 
+      });
+
+    if (error) {
+      console.error('❌ Failed to cache search results:', error.message);
+    } else {
+      console.log(`✅ Cached ${productsToCache.length} search result products for query: "${sourceQuery || 'category'}"`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Search result caching failed:', error);
+  }
+};
+
+/**
+ * Check if we have enough cached products for a query (cache-first lookup)
+ * Returns cached products if sufficient, null otherwise
+ */
+const getCachedProductsForQuery = async (supabase: any, query: string, limit: number) => {
+  if (!supabase || !query || query.length < 2) return null;
+
+  try {
+    const normalizedQuery = query.toLowerCase().trim();
+    const searchTerms = normalizedQuery.split(/\s+/).filter(t => t.length >= 3);
+    
+    if (searchTerms.length === 0) return null;
+
+    // Try to find products matching the query
+    // Use ilike for flexible matching
+    let queryBuilder = supabase
+      .from('products')
+      .select('*')
+      .not('metadata', 'is', null);
+
+    // Build OR condition for search terms matching title
+    const orConditions = searchTerms.map(term => `title.ilike.%${term}%`).join(',');
+    
+    const { data: cachedProducts, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(orConditions)
+      .order('view_count', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('❌ Cache lookup failed:', error.message);
+      return null;
+    }
+
+    // Only return cache if we have at least 80% of requested products
+    const threshold = Math.ceil(limit * 0.8);
+    if (cachedProducts && cachedProducts.length >= threshold) {
+      console.log(`✅ Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
+      
+      // Transform cached products to match Zinc response format
+      return cachedProducts.map((p: any) => ({
+        product_id: p.product_id,
+        asin: p.product_id,
+        title: p.title,
+        price: p.price,
+        image: p.image_url,
+        main_image: p.metadata?.main_image || p.image_url,
+        images: p.metadata?.images || [p.image_url],
+        brand: p.brand,
+        category: p.category,
+        stars: p.metadata?.stars,
+        rating: p.metadata?.stars,
+        review_count: p.metadata?.review_count,
+        num_reviews: p.metadata?.review_count,
+        isBestSeller: p.metadata?.isBestSeller || false,
+        bestSellerType: p.metadata?.bestSellerType,
+        badgeText: p.metadata?.badgeText,
+        is_cached: true,
+        view_count: p.view_count || 0,
+        popularity_score: calculatePopularityScore(p, p.metadata || {}),
+        from_cache: true // Flag to indicate this came from DB cache
+      }));
+    }
+
+    console.log(`⏳ Cache MISS: Only ${cachedProducts?.length || 0} products for "${query}" (need ${threshold})`);
+    return null;
+  } catch (error) {
+    console.warn('⚠️ Cache lookup error:', error);
+    return null;
+  }
+};
+
+/**
  * Calculate popularity score for smart sorting
  * Higher scores = cached products with good data float to top
  */
@@ -761,6 +884,9 @@ serve(async (req) => {
         console.log('Processing luxury category batch request with price filter:', priceFilter);
         const luxuryData = await searchLuxuryCategories(api_key, page, priceFilter);
         
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, luxuryData.results, 'luxury'));
+        
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, luxuryData.results);
         const sortedProducts = sortByPopularity(enrichedProducts);
@@ -780,6 +906,9 @@ serve(async (req) => {
       if (giftsForHer) {
         console.log('Processing gifts for her category batch request with price filter:', priceFilter);
         const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
+        
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsForHerData.results, 'gifts_for_her'));
         
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHerData.results);
@@ -801,6 +930,9 @@ serve(async (req) => {
         console.log('Processing electronics category batch request with price filter:', priceFilter);
         const electronicsData = await searchElectronicsCategories(api_key, page, limit, priceFilter);
         
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, electronicsData.results, 'electronics'));
+        
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, electronicsData.results);
         const sortedProducts = sortByPopularity(enrichedProducts);
@@ -820,6 +952,9 @@ serve(async (req) => {
       if (effectiveBestSelling) {
         console.log('Processing best selling category batch request with price filter:', priceFilter);
         const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
+        
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, bestSellingData.results, 'best_selling'));
         
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, bestSellingData.results);
@@ -841,6 +976,9 @@ serve(async (req) => {
         console.log('Processing gifts for him category batch request with price filter:', priceFilter);
         const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit, priceFilter);
         
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsForHimData.results, 'gifts_for_him'));
+        
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHimData.results);
         const sortedProducts = sortByPopularity(enrichedProducts);
@@ -860,6 +998,9 @@ serve(async (req) => {
       if (giftsUnder50) {
         console.log('Processing gifts under $50 category batch request with price filter:', priceFilter);
         const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit, priceFilter);
+        
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsUnder50Data.results, 'gifts_under_50'));
         
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsUnder50Data.results);
@@ -881,6 +1022,9 @@ serve(async (req) => {
         console.log(`Processing brand categories request for: ${query} with price filter:`, priceFilter);
         const brandData = await searchBrandCategories(api_key, query, page, limit, priceFilter);
         
+        // Cache results in background for future queries (Nicole organic growth)
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, brandData.results, query));
+        
         // Enrich with cached data
         const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, brandData.results);
         const sortedProducts = sortByPopularity(enrichedProducts);
@@ -895,6 +1039,41 @@ serve(async (req) => {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
+      
+      // CACHE-FIRST LOOKUP: Check if we have enough cached products for this query
+      // This is the key to Nicole's organic growth strategy - subsequent identical queries cost $0
+      const cachedResults = await getCachedProductsForQuery(supabase, query, limit);
+      
+      if (cachedResults && cachedResults.length > 0) {
+        console.log(`🎯 Returning ${cachedResults.length} cached products for "${query}" - Zinc API call SKIPPED ($0.00)`);
+        
+        // Apply sorting to cached results
+        let sortedProducts = [...cachedResults];
+        if (sortBy === 'price-low') {
+          sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+        } else if (sortBy === 'price-high') {
+          sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+        } else if (sortBy === 'rating') {
+          sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
+        } else {
+          sortedProducts = sortByPopularity(cachedResults);
+        }
+        
+        return new Response(JSON.stringify({
+          products: sortedProducts,
+          results: sortedProducts,
+          total: sortedProducts.length,
+          originalTotal: sortedProducts.length,
+          fromCache: true,
+          cacheStats: { hits: sortedProducts.length, misses: 0 }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Cache miss - proceed with Zinc API call
+      console.log(`⏳ Cache miss for "${query}" - calling Zinc API ($0.01)`);
       
       // Enhanced single search logic with price filtering support
       let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`;
@@ -1020,6 +1199,10 @@ serve(async (req) => {
           console.log(`Product ${index + 1}: "${product.title}" - Final Price: $${product.price} (type: ${typeof product.price})`);
         });
       }
+
+      // Cache search results in background for future queries (Nicole organic growth)
+      // This ensures the same query from any user will hit cache next time
+      EdgeRuntime.waitUntil(cacheSearchResults(supabase, filteredResults, query));
 
       // Enrich with cached data (ratings, reviews, images)
       const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, filteredResults);

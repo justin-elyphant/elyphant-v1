@@ -723,6 +723,22 @@ serve(async (req) => {
     
     const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, electronics = false, brandCategories = false, filters = {}} = await req.json();
     
+    // Check if this is a "default" load with no specific query or category flags
+    const hasNoSearchIntent = !query && 
+                              !luxuryCategories && 
+                              !giftsForHer && 
+                              !giftsForHim && 
+                              !giftsUnder50 && 
+                              !electronics && 
+                              !brandCategories;
+    
+    // If no search intent, default to best selling products
+    const effectiveBestSelling = bestSelling || hasNoSearchIntent;
+    
+    if (hasNoSearchIntent) {
+      console.log('📦 No search intent detected, defaulting to best selling products');
+    }
+    
     // Extract price filters from filters object
     const priceFilter = {
       min: filters.min_price || filters.minPrice,
@@ -800,8 +816,8 @@ serve(async (req) => {
         });
       }
       
-      // Handle best selling category batch search
-      if (bestSelling) {
+      // Handle best selling category batch search (or default when no search intent)
+      if (effectiveBestSelling) {
         console.log('Processing best selling category batch request with price filter:', priceFilter);
         const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
         

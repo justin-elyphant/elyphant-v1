@@ -132,7 +132,6 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
       retailer: 'amazon',
       brand: p.brand || null,
       category: p.category || p.categories?.[0] || null,
-      source_query: sourceQuery || null,
       last_refreshed_at: new Date().toISOString(),
       metadata: {
         stars: p.stars || p.rating || null,
@@ -143,6 +142,7 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
         bestSellerType: p.bestSellerType || null,
         badgeText: p.badgeText || null,
         source: 'search_results',
+        source_query: sourceQuery || null,
         cached_at: new Date().toISOString()
       }
     })).filter(p => p.product_id);

@@ -1143,6 +1143,62 @@ serve(async (req) => {
         }
       }
       
+      // UNSUPPORTED PRODUCT FILTER: Remove products Zinc can't fulfill
+      // Blocks: digital products, gift cards, Prime Pantry, Amazon Fresh
+      if (filteredResults && filteredResults.length > 0) {
+        const beforeUnsupportedFilter = filteredResults.length;
+        let blockedCount = 0;
+        
+        filteredResults = filteredResults.filter((product: any) => {
+          // Check Zinc boolean flags
+          if (product.digital === true) {
+            blockedCount++;
+            console.log(`🚫 Blocked digital product: "${product.title}"`);
+            return false;
+          }
+          if (product.fresh === true) {
+            blockedCount++;
+            console.log(`🚫 Blocked Amazon Fresh product: "${product.title}"`);
+            return false;
+          }
+          if (product.pantry === true) {
+            blockedCount++;
+            console.log(`🚫 Blocked Prime Pantry product: "${product.title}"`);
+            return false;
+          }
+          
+          const title = (product.title || '').toLowerCase();
+          const category = (product.category || product.categories?.[0] || '').toLowerCase();
+          
+          // Block gift cards
+          if (/gift\s*card|e-?gift|egift/i.test(title)) {
+            blockedCount++;
+            console.log(`🚫 Blocked gift card: "${product.title}"`);
+            return false;
+          }
+          
+          // Block digital downloads/codes
+          if (/kindle\s*edition|\[ebook\]|digital\s*(download|code)|online\s*game\s*code|pc\s*download/i.test(title)) {
+            blockedCount++;
+            console.log(`🚫 Blocked digital product: "${product.title}"`);
+            return false;
+          }
+          
+          // Block by category patterns
+          if (/kindle\s*store|digital\s*music|digital\s*video/i.test(category)) {
+            blockedCount++;
+            console.log(`🚫 Blocked digital category: "${product.title}" (${category})`);
+            return false;
+          }
+          
+          return true;
+        });
+        
+        if (blockedCount > 0) {
+          console.log(`🎯 Unsupported product filter: ${beforeUnsupportedFilter} → ${filteredResults.length} products (blocked ${blockedCount})`);
+        }
+      }
+
       // Process best seller data for each product
       if (filteredResults && Array.isArray(filteredResults)) {
         filteredResults = filteredResults.map((product: any) => {

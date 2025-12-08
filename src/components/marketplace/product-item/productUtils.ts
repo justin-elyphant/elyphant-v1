@@ -116,8 +116,9 @@ export const getProductImages = (product: Product): string[] => {
 export const standardizeProduct = (product: any): any => {
   if (!product) return {};
   
-    // ENHANCED: Smart price conversion with Zinc metadata preservation
-    let normalizedPrice = 19.99;
+  // ENHANCED: Smart price conversion with Zinc metadata preservation
+    // CRITICAL: Don't mask pricing errors with fake fallback price
+    let normalizedPrice = 0;
     if (product.price) {
       const rawPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price);
       
@@ -144,7 +145,7 @@ export const standardizeProduct = (product: any): any => {
           }
         }
       } else {
-        normalizedPrice = 19.99; // fallback
+        normalizedPrice = 0; // Don't mask with fake price - let validation catch this
       }
     }
   

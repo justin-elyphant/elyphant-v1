@@ -56,7 +56,10 @@ serve(async (req) => {
     let transactions: any[] = [];
     if (transactionsResponse.ok) {
       const transactionsData = await transactionsResponse.json();
-      transactions = transactionsData.transactions || transactionsData || [];
+      // Handle both array and object with transactions property
+      transactions = Array.isArray(transactionsData) 
+        ? transactionsData 
+        : (transactionsData.transactions || []);
       console.log('[manage-zma-accounts] Transactions count:', transactions.length);
     } else {
       console.warn('[manage-zma-accounts] Could not fetch transactions:', transactionsResponse.status);
@@ -130,7 +133,7 @@ serve(async (req) => {
         available_funds: availableFunds,
         pending_charges: pendingCharges,
         last_checked_at: now,
-        recent_transactions: transactions.slice(0, 10),
+        recent_transactions: Array.isArray(transactions) ? transactions.slice(0, 10) : [],
         raw_balance_data: balanceData,
       }),
       { 

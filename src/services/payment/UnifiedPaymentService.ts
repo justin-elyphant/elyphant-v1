@@ -767,6 +767,31 @@ class UnifiedPaymentService {
           });
           throw new Error('Cannot add product with zero or missing price to cart');
         }
+        
+        // UNSUPPORTED PRODUCT FILTER: Block products Zinc can't fulfill (defense in depth)
+        if (product.digital === true || product.fresh === true || product.pantry === true) {
+          console.error(`[CART ERROR] Cannot add unsupported product type:`, {
+            productId,
+            digital: product.digital,
+            fresh: product.fresh,
+            pantry: product.pantry,
+            title: product.title
+          });
+          toast.error('Product not available', {
+            description: 'This product type cannot be purchased through our platform.'
+          });
+          throw new Error('Cannot add unsupported product type to cart');
+        }
+        
+        // Block gift cards by title pattern
+        const title = (product.title || '').toLowerCase();
+        if (/gift\s*card|e-?gift|egift/i.test(title)) {
+          console.error(`[CART ERROR] Gift cards not supported:`, { productId, title: product.title });
+          toast.error('Gift cards not available', {
+            description: 'Gift cards cannot be purchased through our platform.'
+          });
+          throw new Error('Gift cards are not supported');
+        }
       } else {
         // We received a full Product object (with variations)
         // CRITICAL: Standardize it to ensure images and other fields are correct
@@ -792,6 +817,31 @@ class UnifiedPaymentService {
             description: 'Unable to add this product. Please try again later or search for it again.'
           });
           throw new Error('Cannot add product with zero or missing price to cart');
+        }
+        
+        // UNSUPPORTED PRODUCT FILTER: Block products Zinc can't fulfill (defense in depth)
+        if ((product as any).digital === true || (product as any).fresh === true || (product as any).pantry === true) {
+          console.error(`[CART ERROR] Cannot add unsupported product type:`, {
+            productId,
+            digital: (product as any).digital,
+            fresh: (product as any).fresh,
+            pantry: (product as any).pantry,
+            title: product.title
+          });
+          toast.error('Product not available', {
+            description: 'This product type cannot be purchased through our platform.'
+          });
+          throw new Error('Cannot add unsupported product type to cart');
+        }
+        
+        // Block gift cards by title pattern
+        const titleCheck = (product.title || '').toLowerCase();
+        if (/gift\s*card|e-?gift|egift/i.test(titleCheck)) {
+          console.error(`[CART ERROR] Gift cards not supported:`, { productId, title: product.title });
+          toast.error('Gift cards not available', {
+            description: 'Gift cards cannot be purchased through our platform.'
+          });
+          throw new Error('Gift cards are not supported');
         }
       }
 

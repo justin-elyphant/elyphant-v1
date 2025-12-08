@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings, Terminal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -24,7 +24,7 @@ import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 const UserButton = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isEmployee } = useAuth();
   const { profile } = useProfile();
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
   const { unreadCount: notificationsCount } = useNotifications();
@@ -184,6 +184,16 @@ const UserButton = () => {
             <span className="font-medium">Account Settings</span>
           </DropdownMenuItem>
           
+          {isEmployee && (
+            <DropdownMenuItem 
+              className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+              onClick={() => navigate("/trunkline")}
+            >
+              <Terminal className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Trunkline</span>
+            </DropdownMenuItem>
+          )}
+          
           <DropdownMenuSeparator className="my-1 bg-border" />
           
           <DropdownMenuItem 
@@ -297,6 +307,20 @@ const UserButton = () => {
             {sectionIndex < sections.length - 1 && <DropdownMenuSeparator />}
           </div>
         ))}
+        
+        {/* Trunkline - Employee Only */}
+        {isEmployee && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className={navigationStyles.dropdownItem}
+              onClick={() => navigate("/trunkline")}
+            >
+              <Terminal className={navigationStyles.dropdownIcon} />
+              <span className={navigationStyles.dropdownLabel}>Trunkline</span>
+            </DropdownMenuItem>
+          </>
+        )}
         
         <DropdownMenuSeparator />
         

@@ -101,6 +101,9 @@ verify_jwt = false
 [functions.delete-user-account]
 verify_jwt = true
 
+[functions.manage-zma-accounts]
+verify_jwt = true
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

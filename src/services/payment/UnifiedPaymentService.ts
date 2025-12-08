@@ -753,6 +753,20 @@ class UnifiedPaymentService {
         console.log(`[CART DEBUG] Standardized product:`, product);
         console.log(`[CART DEBUG] Price conversion: ${rawProduct.price} -> ${product.price}`);
         console.log(`[CART DEBUG] Zinc metadata: productSource=${product.productSource}, isZincApiProduct=${product.isZincApiProduct}`);
+        
+        // CRITICAL: Reject products with zero/missing price to prevent pricing bugs
+        if (!product.price || product.price <= 0) {
+          console.error(`[CART ERROR] Cannot add product with zero/missing price:`, {
+            productId,
+            rawPrice: rawProduct.price,
+            normalizedPrice: product.price,
+            title: product.title
+          });
+          toast.error('Product price unavailable', {
+            description: 'Unable to add this product. Please try again later or search for it again.'
+          });
+          throw new Error('Cannot add product with zero or missing price to cart');
+        }
       } else {
         // We received a full Product object (with variations)
         // CRITICAL: Standardize it to ensure images and other fields are correct
@@ -766,6 +780,19 @@ class UnifiedPaymentService {
           variationText: (product as any).variationText,
           selectedVariations: (product as any).selectedVariations
         });
+        
+        // CRITICAL: Reject products with zero/missing price to prevent pricing bugs
+        if (!product.price || product.price <= 0) {
+          console.error(`[CART ERROR] Cannot add product object with zero/missing price:`, {
+            productId,
+            price: product.price,
+            title: product.title
+          });
+          toast.error('Product price unavailable', {
+            description: 'Unable to add this product. Please try again later or search for it again.'
+          });
+          throw new Error('Cannot add product with zero or missing price to cart');
+        }
       }
 
       const existingItemIndex = this.cartItems.findIndex(

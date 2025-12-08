@@ -17,7 +17,8 @@ import {
   TrendingUp,
   TestTube,
   Mail,
-  Zap
+  Zap,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
@@ -102,6 +103,11 @@ const settingsItems = [
     title: "Payment Methods",
     url: "/trunkline/business-payments",
     icon: CreditCard,
+  },
+  {
+    title: "ZMA Funding",
+    url: "/trunkline/funding",
+    icon: Wallet,
   },
   {
     title: "Vendors",

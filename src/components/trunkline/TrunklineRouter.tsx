@@ -16,9 +16,8 @@ import TrunklineScaling from "@/pages/trunkline/TrunklineScaling";
 import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCenter";
 import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
-// Legacy component removed - email orchestrator testing moved to process-email-queue
-// import EmailOrchestratorTester from "@/pages/trunkline/EmailOrchestratorTester";
 import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
+import FridayTransferDashboard from "@/components/trunkline/funding/FridayTransferDashboard";
 
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
@@ -77,6 +76,8 @@ export const TrunklineRouter: React.FC = () => {
       }
       case '/auto-gift-testing':
         return <AutoGiftTestingTab />;
+      case '/funding':
+        return <FridayTransferDashboard />;
       default:
         return <OverviewTab />;
     }

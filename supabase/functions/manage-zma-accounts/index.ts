@@ -13,16 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    const ZINC_API_TOKEN = Deno.env.get('ZINC_API_TOKEN');
-    if (!ZINC_API_TOKEN) {
-      throw new Error('ZINC_API_TOKEN not configured');
+    const ZINC_API_KEY = Deno.env.get('ZINC_API_KEY');
+    if (!ZINC_API_KEY) {
+      throw new Error('ZINC_API_KEY not configured');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const authHeader = btoa(`${ZINC_API_TOKEN}:`);
+    const authHeader = btoa(`${ZINC_API_KEY}:`);
 
     // Fetch balance from Zinc API
     console.log('[manage-zma-accounts] Fetching ZMA balance from Zinc...');

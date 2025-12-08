@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Percent, PiggyBank } from "lucide-react";
+import { Package, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Percent, PiggyBank, Crown, Handshake } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
 
@@ -259,6 +259,48 @@ export default function OverviewTab() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Future Revenue Streams */}
+      <Card className="border-dashed border-2">
+        <CardHeader>
+          <CardTitle className="text-muted-foreground">Future Revenue Streams</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Subscription Revenue */}
+            <div className="p-4 rounded-lg bg-muted/30 border border-dashed">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Crown className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Subscription Revenue</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Recurring revenue from Elyphant Pro/Premium memberships
+              </p>
+            </div>
+
+            {/* Retailer Commissions */}
+            <div className="p-4 rounded-lg bg-muted/30 border border-dashed">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center">
+                  <Handshake className="h-5 w-5 text-sky-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Retailer Commissions</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">Coming Soon</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Earned commissions from brand partnerships
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card>

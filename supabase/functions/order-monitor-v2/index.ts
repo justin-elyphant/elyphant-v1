@@ -149,6 +149,40 @@ serve(async (req) => {
           
           console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
           results.updated.push(order.id);
+          
+          // Queue shipped email (mirrors zinc-webhook behavior)
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, name')
+              .eq('id', order.user_id)
+              .single();
+
+            const shippingAddr = order.shipping_address as any;
+            const toEmail = shippingAddr?.email || profile?.email;
+            const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+
+            if (toEmail) {
+              await supabase.from('email_queue').insert({
+                recipient_email: toEmail,
+                recipient_name: recipientName,
+                event_type: 'order_shipped',
+                template_variables: {
+                  order_number: order.order_number,
+                  customer_name: recipientName,
+                  tracking_number: trackingNumber || null,
+                  tracking_url: trackingUrl || null,
+                  estimated_delivery: estimatedDelivery || null,
+                },
+                priority: 'normal',
+                scheduled_for: new Date().toISOString(),
+                status: 'pending',
+              });
+              console.log(`📧 Queued shipped email for order ${order.id} to ${toEmail}`);
+            }
+          } catch (emailErr) {
+            console.error('⚠️ Failed to queue shipped email:', emailErr);
+          }
         } 
         else if (zincData.code === 'delivered') {
           updates.status = 'delivered';

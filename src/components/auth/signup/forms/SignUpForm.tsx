@@ -76,7 +76,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         </Alert>
       )}
       
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pb-4">
         <InputField
           form={form}
           name="name"

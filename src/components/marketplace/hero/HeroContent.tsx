@@ -1,10 +1,11 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 interface Event {
   name: string;
@@ -35,6 +36,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 
   // Navigate to the marketplace with a search for the event name
   const handleShopNowClick = () => {
+    triggerHapticFeedback('light');
     if (targetEvent && targetEvent.name) {
       // Use encodeURIComponent for safe URL
       navigate(`/marketplace?search=${encodeURIComponent(targetEvent.name + " gift")}`);
@@ -71,10 +73,18 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
       )}
       
       <div className="flex space-x-4 justify-center md:justify-start">
-        <Button className="bg-white text-purple-700 hover:bg-gray-100 shadow-lg" onClick={handleShopNowClick}>
-          <Gift className="mr-2 h-4 w-4" />
-          {getShopNowText()}
-        </Button>
+        <motion.div
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <Button 
+            className="bg-white text-purple-700 hover:bg-gray-100 shadow-lg min-h-[48px] touch-manipulation" 
+            onClick={handleShopNowClick}
+          >
+            <Gift className="mr-2 h-4 w-4" />
+            {getShopNowText()}
+          </Button>
+        </motion.div>
       </div>
     </div>
   );

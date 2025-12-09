@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Heart, TrendingUp, ArrowRight } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,6 +14,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { toast } from "sonner";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 // Enhanced Product type with category badge
 type ProductWithCategory = Product & { categoryBadge?: string };
@@ -102,14 +102,17 @@ const WishlistCreationCTA = () => {
   }, []);
 
   const handleSignUpClick = () => {
+    triggerHapticFeedback('light');
     setShowSignUpDialog(true);
   };
 
   const handleViewWishlists = () => {
+    triggerHapticFeedback('light');
     navigate("/profile?tab=wishlists");
   };
 
   const handleProductWishlistClick = async (product: ProductWithCategory) => {
+    triggerHapticFeedback('success');
     if (!user) {
       setShowSignUpDialog(true);
       return;
@@ -127,6 +130,7 @@ const WishlistCreationCTA = () => {
 
   // Add to cart handler for product cards
   const handleAddToCart = async (product: Product) => {
+    triggerHapticFeedback('success');
     console.log('WishlistCreationCTA - Add to cart:', product);
     try {
       await addToCart(product, 1);
@@ -139,6 +143,7 @@ const WishlistCreationCTA = () => {
 
   // Handle product click to view details
   const handleProductClick = (product: ProductWithCategory) => {
+    triggerHapticFeedback('light');
     const productId = product.product_id || product.id;
     if (!productId) return;
 
@@ -165,7 +170,7 @@ const WishlistCreationCTA = () => {
     <FullBleedSection 
       background="bg-gradient-to-r from-background via-muted/30 to-background"
       height="auto"
-      className="py-16 sm:py-20"
+      className="py-16 sm:py-20 pb-safe"
     >
       {/* Header Section */}
       <div className="text-center space-y-6 mb-12">
@@ -221,7 +226,12 @@ const WishlistCreationCTA = () => {
             <div className="block md:hidden">
               <div className="grid grid-cols-2 gap-4 px-4 -mx-4">
                 {products.slice(0, 6).map((product) => (
-                  <div key={product.product_id || product.id} className="relative h-full min-h-[400px]">
+                  <motion.div 
+                    key={product.product_id || product.id} 
+                    className="relative h-full min-h-[400px] touch-manipulation"
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
                     {product.categoryBadge && (
                       <div className="absolute top-2 left-2 z-10 bg-primary/95 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium shadow-sm">
                         {product.categoryBadge}
@@ -239,7 +249,7 @@ const WishlistCreationCTA = () => {
                         hideTopRightAction={true}
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -248,9 +258,12 @@ const WishlistCreationCTA = () => {
             <div className="hidden md:block">
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-6">
                 {products.slice(0, 12).map((product) => (
-                  <div 
+                  <motion.div 
                     key={product.product_id || product.id} 
-                    className="relative transition-transform duration-200 hover:scale-105 h-80"
+                    className="relative h-80 touch-manipulation"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
                     {product.categoryBadge && (
                       <div className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-xs px-2 py-1 rounded-md font-medium">
@@ -267,7 +280,7 @@ const WishlistCreationCTA = () => {
                       context="wishlist"
                       hideTopRightAction={true}
                     />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -295,8 +308,11 @@ const WishlistCreationCTA = () => {
             <>
               <Button 
                 size="lg" 
-                className="gap-2"
-                onClick={() => window.scrollTo({ top: window.scrollY - 400, behavior: 'smooth' })}
+                className="gap-2 min-h-[48px] touch-manipulation"
+                onClick={() => {
+                  triggerHapticFeedback('light');
+                  window.scrollTo({ top: window.scrollY - 400, behavior: 'smooth' });
+                }}
               >
                 <Heart className="h-4 w-4" />
                 Add to My Wishlist
@@ -304,7 +320,7 @@ const WishlistCreationCTA = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="gap-2"
+                className="gap-2 min-h-[48px] touch-manipulation"
                 onClick={handleViewWishlists}
               >
                 View My Wishlists
@@ -315,7 +331,7 @@ const WishlistCreationCTA = () => {
             <>
               <Button 
                 size="lg" 
-                className="gap-2"
+                className="gap-2 min-h-[48px] touch-manipulation"
                 onClick={handleSignUpClick}
               >
                 <Heart className="h-4 w-4" />
@@ -324,7 +340,7 @@ const WishlistCreationCTA = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="gap-2"
+                className="gap-2 min-h-[48px] touch-manipulation"
                 onClick={handleSignUpClick}
               >
                 Learn More

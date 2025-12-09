@@ -11,6 +11,8 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback } from "@/utils/haptics";
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -44,6 +46,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ preFilledEmail }) => {
       });
 
       if (error) {
+        triggerHapticFeedback('error');
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password", {
             description: "Please check your credentials and try again."
@@ -56,6 +59,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ preFilledEmail }) => {
         return;
       }
 
+      triggerHapticFeedback('success');
       toast.success("Welcome back!");
       const redirectPath = searchParams.get('redirect') || '/';
       navigate(redirectPath, { replace: true });
@@ -99,23 +103,37 @@ const SignInForm: React.FC<SignInFormProps> = ({ preFilledEmail }) => {
           )}
         </div>
         
-        <Button type="submit" size="touch" className="w-full touch-target-44" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing In...
-            </>
-          ) : (
-            "Sign In"
-          )}
-        </Button>
+        <motion.div
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        >
+          <Button 
+            type="submit" 
+            size="touch" 
+            className="w-full touch-target-44 touch-manipulation" 
+            disabled={isLoading}
+            onClick={() => triggerHapticFeedback('medium')}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+        </motion.div>
         
         <div className="text-center">
           <Button 
             variant="link" 
             size="touch" 
-            className="text-body-sm text-muted-foreground p-0 touch-target-44"
-            onClick={() => navigate("/forgot-password")}
+            className="text-body-sm text-muted-foreground p-0 touch-target-44 touch-manipulation"
+            onClick={() => {
+              triggerHapticFeedback('light');
+              navigate("/forgot-password");
+            }}
           >
             Forgot your password?
           </Button>

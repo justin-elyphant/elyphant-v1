@@ -3,6 +3,8 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsCardNavigation from "./SettingsCardNavigation";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SettingsTab {
   id: string;
@@ -26,11 +28,13 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
   const showCardNavigation = !activeTab || activeTab === "";
 
   const handleBackToNavigation = () => {
+    triggerHapticFeedback('light');
     onTabChange("");
     window.scrollTo(0, 0);
   };
 
   const handleTabChange = (tab: string) => {
+    triggerHapticFeedback('selection');
     onTabChange(tab);
     window.scrollTo(0, 0);
   };
@@ -50,26 +54,28 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
         <div className="space-y-6">
           {/* Back button and section title */}
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBackToNavigation}
-              className="h-10 w-10 -ml-2"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
+            <motion.div whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBackToNavigation}
+                className="h-11 w-11 -ml-2 min-h-[44px] min-w-[44px]"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            </motion.div>
             <h1 className="text-xl font-semibold">{getActiveTabLabel()}</h1>
           </div>
 
           {/* Desktop horizontal tabs (hidden on mobile/tablet) */}
           <div className="hidden lg:block">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="mb-6 w-full max-w-lg">
+              <TabsList className="mb-6 w-full max-w-lg min-h-[44px]">
                 {tabs.map((tab) => (
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="flex-1 text-xs"
+                    className="flex-1 text-xs min-h-[40px]"
                   >
                     {tab.label}
                   </TabsTrigger>
@@ -79,9 +85,18 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
           </div>
 
           {/* Content area */}
-          <div className="bg-background rounded-lg">
-            {children}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-background rounded-lg"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       )}
     </div>

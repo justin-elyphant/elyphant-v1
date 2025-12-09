@@ -12,11 +12,12 @@ import useTargetEvent from "@/components/marketplace/hero/useTargetEvent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
-// Legacy modal removed - using Nicole unified interface
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import { toast } from "sonner";
 import { HolidayHeroText } from "./HolidayHeroText";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 import heroChristmasImage from "@/assets/christmas-hero.jpg";
 
 const Hero = () => {
@@ -96,31 +97,37 @@ const Hero = () => {
               an important celebration again. Our platform handles everything from selection to delivery.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleStartGifting();
-                }}
-                aria-label="Start Gifting with Nicole AI"
-              >
-                <Gift className="mr-2 h-5 w-5" />
-                Start Gifting
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg touch-target-48 touch-manipulation tap-feedback no-select gpu-accelerated ios-modal-backdrop"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleCreateWishlist();
-                }}
-                aria-label="Create Wishlist"
-              >
-                <Gift className="mr-2 h-5 w-5" />
-                Create Wishlist
-              </Button>
+              <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                <Button
+                  size="lg"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-0 text-lg px-8 py-4 shadow-lg min-h-[48px] touch-manipulation no-select gpu-accelerated"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    triggerHapticFeedback('selection');
+                    handleStartGifting();
+                  }}
+                  aria-label="Start Gifting with Nicole AI"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  Start Gifting
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-2 border-white/90 text-white hover:bg-white/15 hover:text-white text-lg px-8 py-4 bg-black/20 backdrop-blur-sm shadow-lg min-h-[48px] touch-manipulation no-select gpu-accelerated ios-modal-backdrop"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    triggerHapticFeedback('selection');
+                    handleCreateWishlist();
+                  }}
+                  aria-label="Create Wishlist"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  Create Wishlist
+                </Button>
+              </motion.div>
             </div>
           </div>
         </ResponsiveContainer>

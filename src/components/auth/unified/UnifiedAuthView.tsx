@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SignInForm from "./SignInForm";
 import SignUpForm from "./SignUpForm";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface UnifiedAuthViewProps {
@@ -48,43 +48,39 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
               </TabsTrigger>
             </TabsList>
             
-            <AnimatePresence mode="wait">
-              <TabsContent value="signin" key="signin">
-                <motion.div 
-                  className="space-y-unified"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                >
-                  <div className="text-center mb-space-loose">
-                    <h2 className="text-heading-2 text-foreground">Welcome Back</h2>
-                    <p className="text-body-sm text-muted-foreground mt-space-minimal">
-                      {preFilledEmail ? 'Sign in with your new password' : 'Sign in to your account'}
-                    </p>
-                  </div>
-                  <SignInForm preFilledEmail={preFilledEmail} />
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="signup" key="signup">
-                <motion.div 
-                  className="space-y-unified"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                >
-                  <div className="text-center mb-space-loose">
-                    <h2 className="text-heading-2 text-foreground">Create Account</h2>
-                    <p className="text-body-sm text-muted-foreground mt-space-minimal">
-                      {invitationData ? `${invitationData.senderName} invited you to connect!` : 'Join thousands of thoughtful gift-givers'}
-                    </p>
-                  </div>
-                  <SignUpForm invitationData={invitationData} />
-                </motion.div>
-              </TabsContent>
-            </AnimatePresence>
+            <TabsContent value="signin">
+              <motion.div 
+                className="space-y-unified"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="text-center mb-space-loose">
+                  <h2 className="text-heading-2 text-foreground">Welcome Back</h2>
+                  <p className="text-body-sm text-muted-foreground mt-space-minimal">
+                    {preFilledEmail ? 'Sign in with your new password' : 'Sign in to your account'}
+                  </p>
+                </div>
+                <SignInForm preFilledEmail={preFilledEmail} />
+              </motion.div>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <motion.div 
+                className="space-y-unified"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="text-center mb-space-loose">
+                  <h2 className="text-heading-2 text-foreground">Create Account</h2>
+                  <p className="text-body-sm text-muted-foreground mt-space-minimal">
+                    {invitationData ? `${invitationData.senderName} invited you to connect!` : 'Join thousands of thoughtful gift-givers'}
+                  </p>
+                </div>
+                <SignUpForm invitationData={invitationData} />
+              </motion.div>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

@@ -5391,17 +5391,6 @@ export type Database = {
       get_security_recommendations: { Args: never; Returns: Json }
       get_upcoming_auto_gift_events:
         | {
-            Args: { days_ahead?: number; user_filter?: string }
-            Returns: {
-              date_type: string
-              event_date: string
-              event_id: string
-              event_type: string
-              rule_id: string
-              user_id: string
-            }[]
-          }
-        | {
             Args: { days_ahead?: number }
             Returns: {
               budget_limit: number
@@ -5410,6 +5399,17 @@ export type Database = {
               event_type: string
               notification_days: number[]
               recipient_id: string
+              rule_id: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: { days_ahead?: number; user_filter?: string }
+            Returns: {
+              date_type: string
+              event_date: string
+              event_id: string
+              event_type: string
               rule_id: string
               user_id: string
             }[]

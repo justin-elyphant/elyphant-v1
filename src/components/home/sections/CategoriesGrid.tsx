@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import { useToast } from "@/hooks/use-toast";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 interface PersonType {
   id: string;
@@ -16,8 +17,6 @@ interface PersonType {
 
 const PersonTypeCarousel = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
   
   const personTypes: PersonType[] = [
     {
@@ -65,8 +64,16 @@ const PersonTypeCarousel = () => {
   ];
   
   const handlePersonTypeClick = (personType: PersonType) => {
-    // Navigate with category parameter - ProductCatalogService handles all categories
+    triggerHapticFeedback('medium');
     console.log(`[CategoriesGrid] Navigating to lifestyle category: ${personType.id}`);
+    navigate(`/marketplace?category=${personType.id}`, { 
+      state: { fromLifestyle: true, lifestyleType: personType.id }
+    });
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, personType: PersonType) => {
+    e.stopPropagation();
+    triggerHapticFeedback('light');
     navigate(`/marketplace?category=${personType.id}`, { 
       state: { fromLifestyle: true, lifestyleType: personType.id }
     });
@@ -76,7 +83,7 @@ const PersonTypeCarousel = () => {
     <FullBleedSection 
       background="bg-gradient-to-br from-purple-50 to-pink-50" 
       height="auto"
-      className="py-16"
+      className="py-16 pb-safe"
     >
       <ResponsiveContainer>
         {/* Clean Page Title */}
@@ -92,10 +99,12 @@ const PersonTypeCarousel = () => {
         {/* Grid layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {personTypes.map((personType) => (
-            <div
+            <motion.div
               key={personType.id}
-              className="group relative overflow-hidden bg-white cursor-pointer h-80 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
+              className="group relative overflow-hidden bg-white cursor-pointer h-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 touch-manipulation"
               onClick={() => handlePersonTypeClick(personType)}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               {/* Image Container */}
               <div className="relative h-full overflow-hidden">
@@ -118,14 +127,15 @@ const PersonTypeCarousel = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 min-h-[44px] touch-manipulation"
+                    onClick={(e) => handleButtonClick(e, personType)}
                   >
                     Shop Now
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                   </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </ResponsiveContainer>

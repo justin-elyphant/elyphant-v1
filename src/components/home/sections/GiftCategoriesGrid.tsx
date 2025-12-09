@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 const giftCategories = [
   {
@@ -45,7 +47,14 @@ const GiftCategoriesGrid: React.FC = () => {
   const isMobile = useIsMobile();
 
   const handleCategoryClick = (category: typeof giftCategories[0]) => {
+    triggerHapticFeedback('medium');
     console.log(`[GiftCategoriesGrid] Navigating to: ${category.title} -> ${category.navigationUrl}`);
+    navigate(category.navigationUrl, { state: { fromHome: true } });
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, category: typeof giftCategories[0]) => {
+    e.stopPropagation();
+    triggerHapticFeedback('light');
     navigate(category.navigationUrl, { state: { fromHome: true } });
   };
 
@@ -69,10 +78,13 @@ const GiftCategoriesGrid: React.FC = () => {
       <div className="px-4 md:px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 max-w-7xl mx-auto">
           {giftCategories.map((category) => (
-            <div
+            <motion.div
               key={category.id}
-              className="group relative overflow-hidden rounded-xl cursor-pointer aspect-[4/5] touch-target-48 touch-manipulation"
+              className="group relative overflow-hidden rounded-xl cursor-pointer aspect-[4/5] touch-manipulation"
               onClick={() => handleCategoryClick(category)}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              style={{ minHeight: '44px', minWidth: '44px' }}
             >
               {/* Image Container */}
               <div className="relative h-full overflow-hidden">
@@ -95,14 +107,15 @@ const GiftCategoriesGrid: React.FC = () => {
                   <Button
                     variant="secondary"
                     size={isMobile ? "sm" : "default"}
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 transition-all duration-200 text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 min-h-[44px] touch-manipulation"
+                    onClick={(e) => handleButtonClick(e, category)}
                   >
                     Shop Now
                     <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

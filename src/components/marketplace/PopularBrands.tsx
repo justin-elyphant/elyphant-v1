@@ -1,5 +1,7 @@
-
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 interface Brand {
   id: string;
@@ -9,6 +11,8 @@ interface Brand {
 }
 
 const PopularBrands = () => {
+  const navigate = useNavigate();
+  
   const brands: Brand[] = [
     {
       id: "apple",
@@ -54,6 +58,11 @@ const PopularBrands = () => {
     }
   ];
 
+  const handleBrandClick = (brand: Brand) => {
+    triggerHapticFeedback('light');
+    navigate(`/marketplace?search=${encodeURIComponent(brand.searchTerm)}`);
+  };
+
   return (
     <div className="space-y-6 mb-12">
       <h2 className="text-2xl font-semibold tracking-tight">Popular Brands</h2>
@@ -61,16 +70,20 @@ const PopularBrands = () => {
       {/* Grid layout for mobile-first approach */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
         {brands.map((brand) => (
-          <div 
+          <motion.div 
             key={brand.id} 
-            className="aspect-[2/1] bg-white rounded-lg flex items-center justify-center shadow-sm border px-3 hover:shadow-md transition-shadow cursor-pointer touch-target-48 touch-manipulation"
+            className="aspect-[2/1] bg-white rounded-lg flex items-center justify-center shadow-sm border px-3 cursor-pointer min-h-[48px] touch-manipulation"
+            onClick={() => handleBrandClick(brand)}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
             <img 
               src={brand.logo} 
               alt={brand.name} 
               className="max-h-8 max-w-full object-contain"
             />
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

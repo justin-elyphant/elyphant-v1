@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import InputField from "../fields/InputField";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 // Simplified schema without captcha
 const signUpSchema = z.object({
@@ -101,20 +103,26 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           Icon={Lock}
         />
         
-        <Button 
-          type="submit" 
-          className="w-full bg-purple-600 hover:bg-purple-700"
-          disabled={isSubmitting}
+        <motion.div
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create account"
-          )}
-        </Button>
+          <Button 
+            type="submit" 
+            className="w-full min-h-[44px] bg-purple-600 hover:bg-purple-700 touch-manipulation"
+            disabled={isSubmitting}
+            onClick={() => triggerHapticFeedback('medium')}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
+        </motion.div>
       </form>
     </Form>
   );

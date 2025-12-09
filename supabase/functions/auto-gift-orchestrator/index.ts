@@ -35,10 +35,10 @@ serve(async (req) => {
 
     const { data: upcomingRules, error: rulesError } = await supabase
       .from('auto_gifting_rules')
-      .select('*, connections(*)')
+      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(*)')
       .eq('is_active', true)
-      .lte('next_trigger_date', sevenDaysFromNow.toISOString().split('T')[0])
-      .order('next_trigger_date', { ascending: true });
+      .lte('scheduled_date', sevenDaysFromNow.toISOString().split('T')[0])
+      .order('scheduled_date', { ascending: true });
 
     if (rulesError) {
       throw rulesError;
@@ -57,8 +57,9 @@ serve(async (req) => {
       try {
         console.log(`🎁 Processing auto-gift rule: ${rule.id}`);
 
-        const eventDate = new Date(rule.next_trigger_date);
+        const eventDate = new Date(rule.scheduled_date);
         const daysUntil = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const recipientName = rule.recipient?.name || rule.recipient?.email || 'Recipient';
 
         // ============================================
         // 7 days before: Send notification (approval required)
@@ -69,13 +70,13 @@ serve(async (req) => {
           await supabase.from('notifications').insert({
             user_id: rule.user_id,
             type: 'auto_gift_upcoming',
-            title: `Auto-gift reminder: ${rule.connections?.name}'s ${rule.occasion_type}`,
-            message: `Your auto-gift for ${rule.connections?.name} is scheduled for ${eventDate.toLocaleDateString()}. Budget: $${rule.budget_limit}`,
+            title: `Auto-gift reminder: ${recipientName}'s ${rule.date_type}`,
+            message: `Your auto-gift for ${recipientName} is scheduled for ${eventDate.toLocaleDateString()}. Budget: $${rule.budget_limit}`,
             data: {
               rule_id: rule.id,
-              recipient_name: rule.connections?.name,
-              occasion: rule.occasion_type,
-              date: rule.next_trigger_date,
+              recipient_name: recipientName,
+              occasion: rule.date_type,
+              date: rule.scheduled_date,
               budget: rule.budget_limit,
             },
             action_required: true,
@@ -88,7 +89,7 @@ serve(async (req) => {
         // ============================================
         // PAYMENT_CAPTURE_LEAD_DAYS before: Create checkout session (capture payment)
         // ============================================
-        if (daysUntil === PAYMENT_CAPTURE_LEAD_DAYS && rule.approval_status === 'approved') {
+        if (daysUntil === PAYMENT_CAPTURE_LEAD_DAYS) {
           console.log(`💳 Creating checkout session ${PAYMENT_CAPTURE_LEAD_DAYS} days before event...`);
 
           // Get saved payment method
@@ -106,7 +107,7 @@ serve(async (req) => {
           const { data: giftItems } = await supabase
             .from('wishlist_items')
             .select('*, products(*)')
-            .eq('connection_id', rule.connection_id)
+            .eq('user_id', rule.recipient_id)
             .lte('price', rule.budget_limit)
             .order('priority', { ascending: false })
             .limit(1);
@@ -117,11 +118,11 @@ serve(async (req) => {
 
           const gift = giftItems[0];
           
-          // Get recipient's shipping address
-          const { data: connection } = await supabase
-            .from('connections')
+          // Get recipient's shipping address from profiles
+          const { data: recipientProfile } = await supabase
+            .from('profiles')
             .select('shipping_address')
-            .eq('id', rule.connection_id)
+            .eq('id', rule.recipient_id)
             .single();
 
           console.log('💳 Creating checkout session for auto-gift with saved payment method...');
@@ -140,20 +141,20 @@ serve(async (req) => {
                 }],
                 deliveryGroups: [{
                   recipient: {
-                    name: rule.connections?.name || 'Recipient',
-                    email: rule.connections?.email,
-                    address: connection?.shipping_address,
+                    name: recipientName,
+                    email: rule.recipient?.email,
+                    address: recipientProfile?.shipping_address,
                   },
                   items: [{
                     product_id: gift.product_id,
                     quantity: 1,
                   }],
                 }],
-                scheduledDeliveryDate: rule.next_trigger_date,
+                scheduledDeliveryDate: rule.scheduled_date,
                 isAutoGift: true,
                 autoGiftRuleId: rule.id,
                 giftOptions: {
-                  message: rule.gift_message || `Happy ${rule.occasion_type}!`,
+                  message: rule.gift_message || `Happy ${rule.date_type}!`,
                   isGift: true,
                   giftWrap: true,
                 },
@@ -170,9 +171,9 @@ serve(async (req) => {
                   user_id: rule.user_id,
                   is_auto_gift: 'true',
                   auto_gift_rule_id: rule.id,
-                  occasion: rule.occasion_type,
-                  recipient_name: rule.connections?.name,
-                  scheduled_for_zinc_submission: rule.next_trigger_date,
+                  occasion: rule.date_type,
+                  recipient_name: recipientName,
+                  scheduled_for_zinc_submission: rule.scheduled_date,
                 },
               },
             }
@@ -196,9 +197,9 @@ serve(async (req) => {
                 event_data: {
                   checkout_session_id: checkoutData.sessionId,
                   amount: gift.products.price,
-                  recipient: rule.connections?.name,
+                  recipient: recipientName,
                   payment_captured_at: new Date().toISOString(),
-                  scheduled_zinc_submission: rule.next_trigger_date,
+                  scheduled_zinc_submission: rule.scheduled_date,
                 },
                 metadata: {
                   flow_type: 'two_stage_processing',
@@ -221,7 +222,7 @@ serve(async (req) => {
             .from('automated_gift_executions')
             .select('order_id, status')
             .eq('rule_id', rule.id)
-            .eq('execution_date', rule.next_trigger_date)
+            .eq('execution_date', rule.scheduled_date)
             .single();
 
           if (execution?.order_id && execution.status === 'processing') {
@@ -229,13 +230,11 @@ serve(async (req) => {
             results.submitted.push(rule.id);
           }
 
-          // Update rule for next execution
+          // Update rule timestamp
           await supabase
             .from('auto_gifting_rules')
             .update({
-              last_executed_at: new Date().toISOString(),
-              execution_count: (rule.execution_count || 0) + 1,
-              approval_status: null,
+              updated_at: new Date().toISOString(),
             })
             .eq('id', rule.id);
         }
@@ -252,7 +251,7 @@ serve(async (req) => {
           user_id: rule.user_id,
           type: 'auto_gift_failed',
           title: 'Auto-gift failed',
-          message: `Failed to process auto-gift for ${rule.connections?.name}: ${error.message}`,
+          message: `Failed to process auto-gift for ${recipientName}: ${error.message}`,
           data: {
             rule_id: rule.id,
             error: error.message,

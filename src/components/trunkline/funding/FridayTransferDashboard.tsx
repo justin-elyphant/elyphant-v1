@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Wallet, AlertTriangle, CheckCircle2, Calendar } from "lucide-react";
+import { RefreshCw, Wallet, AlertTriangle, CheckCircle2, Calendar, Clock, CreditCard, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ZMABalanceCard } from "./ZMABalanceCard";
 import { TransferCalculator } from "./TransferCalculator";
 import { TransferHistory } from "./TransferHistory";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 
 interface ZMABalanceData {
   balance: number;
@@ -17,18 +17,24 @@ interface ZMABalanceData {
   recent_transactions: any[];
 }
 
-interface PendingOrdersData {
-  count: number;
-  total_value: number;
+interface OrderPipelineData {
+  scheduled: { count: number; total_value: number };
+  paymentConfirmed: { count: number; total_value: number };
+  processing: { count: number; total_value: number };
 }
 
 export default function FridayTransferDashboard() {
   const [balanceData, setBalanceData] = useState<ZMABalanceData | null>(null);
-  const [pendingOrders, setPendingOrders] = useState<PendingOrdersData>({ count: 0, total_value: 0 });
+  const [pipeline, setPipeline] = useState<OrderPipelineData>({
+    scheduled: { count: 0, total_value: 0 },
+    paymentConfirmed: { count: 0, total_value: 0 },
+    processing: { count: 0, total_value: 0 },
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const BUFFER_AMOUNT = 500;
+  const PAYMENT_CAPTURE_LEAD_DAYS = 4;
 
   const fetchZMABalance = async () => {
     setIsLoading(true);
@@ -48,22 +54,43 @@ export default function FridayTransferDashboard() {
     }
   };
 
-  const fetchPendingOrders = async () => {
+  const fetchOrderPipeline = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch scheduled orders (payment not yet captured)
+      const { data: scheduledOrders } = await supabase
         .from('orders')
         .select('id, total_amount')
-        .in('status', ['processing', 'payment_confirmed', 'pending']);
+        .eq('status', 'scheduled')
+        .eq('payment_status', 'authorized');
 
-      if (error) throw error;
+      // Fetch payment_confirmed orders (awaiting Stripe payout)
+      const { data: confirmedOrders } = await supabase
+        .from('orders')
+        .select('id, total_amount')
+        .eq('status', 'payment_confirmed');
 
-      const totalValue = data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
-      setPendingOrders({
-        count: data?.length || 0,
-        total_value: totalValue,
+      // Fetch processing orders (submitted to Zinc)
+      const { data: processingOrders } = await supabase
+        .from('orders')
+        .select('id, total_amount')
+        .eq('status', 'processing');
+
+      setPipeline({
+        scheduled: {
+          count: scheduledOrders?.length || 0,
+          total_value: scheduledOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0,
+        },
+        paymentConfirmed: {
+          count: confirmedOrders?.length || 0,
+          total_value: confirmedOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0,
+        },
+        processing: {
+          count: processingOrders?.length || 0,
+          total_value: processingOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0,
+        },
       });
     } catch (error) {
-      console.error('Error fetching pending orders:', error);
+      console.error('Error fetching order pipeline:', error);
     }
   };
 
@@ -91,22 +118,29 @@ export default function FridayTransferDashboard() {
 
   useEffect(() => {
     fetchCachedBalance();
-    fetchPendingOrders();
+    fetchOrderPipeline();
   }, []);
+
+  // Total pending ZMA requirement = payment_confirmed + processing orders
+  const pendingZMARequirement = pipeline.paymentConfirmed.total_value + pipeline.processing.total_value;
+  const totalPendingCount = pipeline.paymentConfirmed.count + pipeline.processing.count;
 
   const recommendedTransfer = Math.max(
     0,
-    (pendingOrders.total_value + BUFFER_AMOUNT) - (balanceData?.balance || 0)
+    (pendingZMARequirement + BUFFER_AMOUNT) - (balanceData?.balance || 0)
   );
 
-  const balanceStatus = (balanceData?.balance || 0) >= (pendingOrders.total_value + 200)
+  const balanceStatus = (balanceData?.balance || 0) >= (pendingZMARequirement + 200)
     ? 'sufficient'
-    : (balanceData?.balance || 0) >= pendingOrders.total_value
+    : (balanceData?.balance || 0) >= pendingZMARequirement
     ? 'low'
     : 'critical';
 
   const today = new Date();
   const isFriday = today.getDay() === 5;
+
+  // Expected Stripe payout date (2 business days from payment capture)
+  const expectedPayoutDate = addDays(today, 2);
 
   return (
     <div className="space-y-6">
@@ -118,7 +152,7 @@ export default function FridayTransferDashboard() {
             Friday Transfer Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage ZMA funding for order fulfillment
+            Two-stage order processing with {PAYMENT_CAPTURE_LEAD_DAYS}-day payment lead time
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -129,12 +163,12 @@ export default function FridayTransferDashboard() {
             </div>
           )}
           <Button
-            onClick={fetchZMABalance}
+            onClick={() => { fetchZMABalance(); fetchOrderPipeline(); }}
             disabled={isLoading}
             variant="outline"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh Balance
+            Refresh
           </Button>
         </div>
       </div>
@@ -146,11 +180,80 @@ export default function FridayTransferDashboard() {
           <div>
             <p className="font-medium text-destructive">Low ZMA Balance Alert</p>
             <p className="text-sm text-muted-foreground">
-              Current balance (${balanceData?.balance?.toFixed(2) || '0.00'}) is below pending orders value (${pendingOrders.total_value.toFixed(2)}). Transfer funds immediately.
+              Current balance (${balanceData?.balance?.toFixed(2) || '0.00'}) is below pending orders value (${pendingZMARequirement.toFixed(2)}). Transfer funds immediately.
             </p>
           </div>
         </div>
       )}
+
+      {/* Two-Stage Pipeline Visualization */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Order Processing Pipeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Stage 1: Scheduled (awaiting payment capture) */}
+            <div className="p-4 rounded-lg border border-border bg-muted/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Scheduled</span>
+              </div>
+              <div className="text-2xl font-bold">{pipeline.scheduled.count}</div>
+              <p className="text-sm text-muted-foreground">
+                ${pipeline.scheduled.total_value.toFixed(2)} awaiting capture
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Payment held, captured {PAYMENT_CAPTURE_LEAD_DAYS} days before delivery
+              </p>
+            </div>
+
+            {/* Stage 2: Payment Confirmed (awaiting Stripe payout) */}
+            <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Payment Confirmed</span>
+              </div>
+              <div className="text-2xl font-bold text-primary">{pipeline.paymentConfirmed.count}</div>
+              <p className="text-sm text-muted-foreground">
+                ${pipeline.paymentConfirmed.total_value.toFixed(2)} captured
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Stripe payout ~{format(expectedPayoutDate, 'MMM d')}
+              </p>
+            </div>
+
+            {/* Stage 3: Processing (submitted to Zinc) */}
+            <div className="p-4 rounded-lg border border-green-500/30 bg-green-500/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Truck className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-600">Processing</span>
+              </div>
+              <div className="text-2xl font-bold text-green-600">{pipeline.processing.count}</div>
+              <p className="text-sm text-muted-foreground">
+                ${pipeline.processing.total_value.toFixed(2)} with Zinc
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Submitted to Zinc, ZMA funds used
+              </p>
+            </div>
+          </div>
+
+          {/* Flow arrows on desktop */}
+          <div className="hidden md:flex justify-center items-center gap-2 mt-4 text-muted-foreground text-sm">
+            <span>Scheduled</span>
+            <span>→</span>
+            <span className="text-primary">Payment Captured ({PAYMENT_CAPTURE_LEAD_DAYS} days early)</span>
+            <span>→</span>
+            <span>Stripe Payout (~2 days)</span>
+            <span>→</span>
+            <span className="text-green-600">Zinc Submission</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -164,13 +267,16 @@ export default function FridayTransferDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Orders
+              Pending ZMA Requirement
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingOrders.count}</div>
+            <div className="text-2xl font-bold">{totalPendingCount}</div>
             <p className="text-sm text-muted-foreground">
-              Total: ${pendingOrders.total_value.toFixed(2)}
+              Total: ${pendingZMARequirement.toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              payment_confirmed + processing
             </p>
           </CardContent>
         </Card>
@@ -194,7 +300,7 @@ export default function FridayTransferDashboard() {
 
       {/* Transfer Calculator */}
       <TransferCalculator
-        pendingOrdersValue={pendingOrders.total_value}
+        pendingOrdersValue={pendingZMARequirement}
         bufferAmount={BUFFER_AMOUNT}
         currentBalance={balanceData?.balance || 0}
         recommendedTransfer={recommendedTransfer}
@@ -209,11 +315,15 @@ export default function FridayTransferDashboard() {
           <div className="space-y-3">
             <ChecklistItem
               checked={balanceData !== null && lastRefresh !== null}
-              label="Check current ZMA balance (click Refresh Balance)"
+              label="Check current ZMA balance (click Refresh)"
             />
             <ChecklistItem
-              checked={pendingOrders.count > 0 || pendingOrders.total_value === 0}
-              label="Review pending orders value"
+              checked={pipeline.paymentConfirmed.count >= 0}
+              label="Review payment_confirmed orders (awaiting Stripe payout)"
+            />
+            <ChecklistItem
+              checked={pipeline.processing.count >= 0}
+              label="Review processing orders (ZMA funds committed)"
             />
             <ChecklistItem
               checked={false}

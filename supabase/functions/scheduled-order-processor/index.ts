@@ -7,13 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Payment capture lead time in days - captures payment this many days before delivery
+const PAYMENT_CAPTURE_LEAD_DAYS = 4;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('📅 Processing scheduled orders...');
+    console.log('📅 Running scheduled order processor (two-stage)...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -25,51 +28,110 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     );
 
-    // Find orders scheduled for today or earlier
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     
-    const { data: scheduledOrders, error: fetchError } = await supabase
+    // Calculate the capture date (4 days from now)
+    const captureDate = new Date(today);
+    captureDate.setDate(captureDate.getDate() + PAYMENT_CAPTURE_LEAD_DAYS);
+    const captureDateStr = captureDate.toISOString().split('T')[0];
+
+    const results = {
+      captured: [] as string[],
+      submitted: [] as string[],
+      failed: [] as { orderId: string; error: string; stage: string }[],
+    };
+
+    // ============================================
+    // STAGE 1: Capture payments for orders due in 4 days
+    // ============================================
+    console.log(`💳 Stage 1: Capturing payments for orders with delivery <= ${captureDateStr}`);
+
+    const { data: ordersToCapture, error: captureQueryError } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'scheduled')
-      .lte('scheduled_delivery_date', today)
+      .eq('payment_status', 'authorized')
+      .lte('scheduled_delivery_date', captureDateStr)
       .order('scheduled_delivery_date', { ascending: true });
 
-    if (fetchError) {
-      throw fetchError;
+    if (captureQueryError) {
+      console.error('❌ Error querying orders to capture:', captureQueryError);
+      throw captureQueryError;
     }
 
-    console.log(`📦 Found ${scheduledOrders?.length || 0} orders to process`);
+    console.log(`📦 Found ${ordersToCapture?.length || 0} orders to capture payment`);
 
-    const results = {
-      processed: [] as string[],
-      failed: [] as { orderId: string; error: string }[],
-    };
-
-    for (const order of scheduledOrders || []) {
+    for (const order of ordersToCapture || []) {
       try {
-        console.log(`⏰ Processing scheduled order: ${order.id}`);
+        console.log(`💳 Capturing payment for order: ${order.id} (delivery: ${order.scheduled_delivery_date})`);
 
-        // If payment was held (manual capture), capture it now
-        if (order.payment_status === 'authorized') {
-          console.log('💳 Capturing held payment...');
-          
-          const paymentIntent = await stripe.paymentIntents.capture(
-            order.payment_intent_id
-          );
-
-          if (paymentIntent.status !== 'succeeded') {
-            throw new Error(`Payment capture failed: ${paymentIntent.status}`);
-          }
-
-          // Update payment status
-          await supabase
-            .from('orders')
-            .update({ payment_status: 'paid' })
-            .eq('id', order.id);
-
-          console.log('✅ Payment captured successfully');
+        if (!order.payment_intent_id) {
+          throw new Error('No payment_intent_id found for order');
         }
+
+        // Capture the held payment
+        const paymentIntent = await stripe.paymentIntents.capture(order.payment_intent_id);
+
+        if (paymentIntent.status !== 'succeeded') {
+          throw new Error(`Payment capture failed: ${paymentIntent.status}`);
+        }
+
+        // Update order to payment_confirmed status
+        await supabase
+          .from('orders')
+          .update({
+            status: 'payment_confirmed',
+            payment_status: 'paid',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', order.id);
+
+        results.captured.push(order.id);
+        console.log(`✅ Payment captured for order ${order.id}`);
+
+      } catch (error: any) {
+        console.error(`❌ Failed to capture payment for order ${order.id}:`, error);
+        results.failed.push({
+          orderId: order.id,
+          error: error.message,
+          stage: 'capture',
+        });
+
+        // Mark order as failed
+        await supabase
+          .from('orders')
+          .update({
+            status: 'failed',
+            notes: `Payment capture failed: ${error.message}`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', order.id);
+      }
+    }
+
+    // ============================================
+    // STAGE 2: Submit to Zinc for orders due today
+    // ============================================
+    console.log(`🚀 Stage 2: Submitting orders with delivery <= ${todayStr} to Zinc`);
+
+    const { data: ordersToSubmit, error: submitQueryError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'payment_confirmed')
+      .lte('scheduled_delivery_date', todayStr)
+      .order('scheduled_delivery_date', { ascending: true });
+
+    if (submitQueryError) {
+      console.error('❌ Error querying orders to submit:', submitQueryError);
+      throw submitQueryError;
+    }
+
+    console.log(`📦 Found ${ordersToSubmit?.length || 0} orders to submit to Zinc`);
+
+    for (const order of ordersToSubmit || []) {
+      try {
+        console.log(`🚀 Submitting order ${order.id} to Zinc`);
 
         // Invoke process-order-v2
         const { data, error: processError } = await supabase.functions.invoke('process-order-v2', {
@@ -80,14 +142,15 @@ serve(async (req) => {
           throw processError;
         }
 
-        results.processed.push(order.id);
-        console.log(`✅ Order ${order.id} processed successfully`);
+        results.submitted.push(order.id);
+        console.log(`✅ Order ${order.id} submitted to Zinc successfully`);
 
       } catch (error: any) {
-        console.error(`❌ Failed to process order ${order.id}:`, error);
+        console.error(`❌ Failed to submit order ${order.id}:`, error);
         results.failed.push({
           orderId: order.id,
           error: error.message,
+          stage: 'submit',
         });
 
         // Update order status to failed
@@ -95,7 +158,7 @@ serve(async (req) => {
           .from('orders')
           .update({
             status: 'failed',
-            notes: `Scheduled processing failed: ${error.message}`,
+            notes: `Zinc submission failed: ${error.message}`,
             updated_at: new Date().toISOString(),
           })
           .eq('id', order.id);
@@ -107,9 +170,15 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        processed: results.processed.length,
+        captured: results.captured.length,
+        submitted: results.submitted.length,
         failed: results.failed.length,
         details: results,
+        config: {
+          paymentCaptureLeadDays: PAYMENT_CAPTURE_LEAD_DAYS,
+          todayDate: todayStr,
+          captureThresholdDate: captureDateStr,
+        },
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

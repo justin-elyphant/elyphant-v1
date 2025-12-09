@@ -23,6 +23,8 @@ import { ArrowRight, ArrowLeft, Check, Plus, Gift, X, Sparkles } from "lucide-re
 import { COMMON_INTERESTS } from "@/constants/commonInterests";
 import { useOnboardingCompletion } from "@/hooks/onboarding/useOnboardingCompletion";
 import { AddressValidationResult, unifiedLocationService } from "@/services/location/UnifiedLocationService";
+import { motion, AnimatePresence } from "framer-motion";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 type OnboardingStep = 'profile' | 'interests' | 'connections';
 
@@ -78,6 +80,13 @@ interface PendingConnection {
   gift_message?: string;
   created_at: string;
 }
+
+// Animation variants for step transitions
+const stepVariants = {
+  enter: { opacity: 0, x: 20 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 }
+};
 
 const UnifiedOnboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -183,6 +192,8 @@ const UnifiedOnboarding: React.FC = () => {
       return;
     }
 
+    triggerHapticFeedback('selection');
+
     if (!file.name) {
       console.log('Removing profile image');
       form.setValue('profile_image', null);
@@ -214,6 +225,7 @@ const UnifiedOnboarding: React.FC = () => {
 
       form.setValue('profile_image', publicUrl);
       setProfileImageUrl(publicUrl);
+      triggerHapticFeedback('success');
       toast.success('Profile photo uploaded successfully!');
     } catch (error) {
       console.error('Error uploading profile image:', error);
@@ -245,13 +257,11 @@ const UnifiedOnboarding: React.FC = () => {
     const formData = form.getValues();
     const address = formData.address;
     
-    // Check if address is complete
     if (!address.street || !address.city || !address.state || !address.zipCode) {
       toast.error("Please complete all required address fields");
       return false;
     }
     
-    // If already verified, we're good
     if (isAddressVerified && addressVerificationData) {
       console.log("✅ Address already verified");
       return true;
@@ -260,7 +270,6 @@ const UnifiedOnboarding: React.FC = () => {
     console.log("🔍 Triggering address verification before save...");
     toast.info("Verifying your address...");
     
-    // Prepare standardized address before try block so it's accessible in catch
     const standardizedAddress = {
       street: address.street,
       city: address.city,
@@ -273,7 +282,6 @@ const UnifiedOnboarding: React.FC = () => {
     try {
       const validation = await unifiedLocationService.validateAddressForDelivery(standardizedAddress);
       
-      // Determine verification data based on validation result
       const verifyData = {
         address: standardizedAddress,
         confidence: validation.isValid 
@@ -293,13 +301,12 @@ const UnifiedOnboarding: React.FC = () => {
       
       setIsAddressVerified(true);
       setAddressVerificationData(verifyData);
-      return true; // Allow signup to proceed
+      return true;
       
     } catch (error) {
       console.error("❌ Address verification error:", error);
       toast.warning("Couldn't verify address automatically. Proceeding with manual confirmation.");
       
-      // Set as verified with user_confirmed method even on error
       const verifyData = {
         address: standardizedAddress,
         confidence: 'low' as const,
@@ -308,30 +315,33 @@ const UnifiedOnboarding: React.FC = () => {
       
       setIsAddressVerified(true);
       setAddressVerificationData(verifyData);
-      return true; // Don't block signup flow
+      return true;
     }
   };
 
   const handleProfileStepComplete = async () => {
-    // Validate form first
+    triggerHapticFeedback('selection');
+    
     const isValid = await form.trigger();
     if (!isValid) {
+      triggerHapticFeedback('error');
       toast.error("Please fix the form errors before continuing");
       return;
     }
     
-    // Ensure address is verified before proceeding
     const addressVerified = await ensureAddressVerified();
     if (!addressVerified) {
-      return; // Don't proceed if verification fails
+      return;
     }
     
     console.log('✅ Profile step validated and address verified, moving to interests');
+    triggerHapticFeedback('success');
     setCurrentStep('interests');
   };
 
   // Step 2: Interests handlers
   const toggleInterest = (interest: string) => {
+    triggerHapticFeedback('selection');
     setSelectedInterests(prev => 
       prev.includes(interest)
         ? prev.filter(i => i !== interest)
@@ -348,6 +358,7 @@ const UnifiedOnboarding: React.FC = () => {
   const addCustomInterest = () => {
     const trimmedInterest = newInterest.trim();
     if (trimmedInterest && !isDuplicateInterest(trimmedInterest)) {
+      triggerHapticFeedback('success');
       setSelectedInterests(prev => [...prev, trimmedInterest]);
       setNewInterest("");
       toast.success(`Added "${trimmedInterest}" to your interests!`);
@@ -362,18 +373,28 @@ const UnifiedOnboarding: React.FC = () => {
   };
 
   const handleInterestsStepComplete = () => {
+    triggerHapticFeedback('selection');
     console.log('✅ Interests step completed');
-    // Check if there are pending connections
     if (pendingConnections.length > 0) {
       setCurrentStep('connections');
     } else {
-      // No pending connections, complete onboarding
       handleFinalSubmit();
     }
   };
 
+  const handleBackToProfile = () => {
+    triggerHapticFeedback('light');
+    setCurrentStep('profile');
+  };
+
+  const handleBackToInterests = () => {
+    triggerHapticFeedback('light');
+    setCurrentStep('interests');
+  };
+
   // Step 3: Connections handlers
   const handleAcceptConnection = async (connectionId: string) => {
+    triggerHapticFeedback('success');
     setProcessingIds(prev => new Set(prev).add(connectionId));
     
     try {
@@ -404,6 +425,7 @@ const UnifiedOnboarding: React.FC = () => {
       setPendingConnections(prev => prev.filter(c => c.id !== connectionId));
     } catch (error) {
       console.error('Error accepting connection:', error);
+      triggerHapticFeedback('error');
       toast.error('Failed to accept connection');
     } finally {
       setProcessingIds(prev => {
@@ -415,6 +437,7 @@ const UnifiedOnboarding: React.FC = () => {
   };
 
   const handleDeclineConnection = async (connectionId: string) => {
+    triggerHapticFeedback('warning');
     setProcessingIds(prev => new Set(prev).add(connectionId));
     
     try {
@@ -429,6 +452,7 @@ const UnifiedOnboarding: React.FC = () => {
       setPendingConnections(prev => prev.filter(c => c.id !== connectionId));
     } catch (error) {
       console.error('Error declining connection:', error);
+      triggerHapticFeedback('error');
       toast.error('Failed to decline connection');
     } finally {
       setProcessingIds(prev => {
@@ -446,19 +470,17 @@ const UnifiedOnboarding: React.FC = () => {
       return;
     }
 
+    triggerHapticFeedback('medium');
     setIsSubmitting(true);
     try {
       const formData = form.getValues();
 
-      // Use existing name from auth metadata with fallbacks
       const firstName = user.user_metadata?.first_name || user.user_metadata?.name?.split(' ')[0] || 'User';
       const lastName = user.user_metadata?.last_name || user.user_metadata?.name?.split(' ').slice(1).join(' ') || 'Name';
       const fullName = user.user_metadata?.name || `${firstName} ${lastName}`.trim();
       
-      // Generate username from email if not provided
       const username = user.user_metadata?.username || user.email?.split('@')[0] || `user${Date.now()}`;
 
-      // Construct complete profile data - ONE SAVE OPERATION
       const completeProfileData = {
         first_name: firstName,
         last_name: lastName,
@@ -466,7 +488,7 @@ const UnifiedOnboarding: React.FC = () => {
         email: user.email,
         username: username,
         profile_image: formData.profile_image,
-        dob: formData.date_of_birth, // Send Date object - useProfileUpdate will normalize to MM-DD
+        dob: formData.date_of_birth,
         shipping_address: {
           address_line1: formData.address.street,
           address_line2: formData.address.line2 || "",
@@ -477,8 +499,6 @@ const UnifiedOnboarding: React.FC = () => {
           street: formData.address.street,
           zipCode: formData.address.zipCode
         },
-        // Only include verification fields if verification ACTUALLY succeeded with valid data
-        // This prevents constraint violations from invalid verification states
         ...(isAddressVerified && addressVerificationData?.method && 
             (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed') 
           ? (() => {
@@ -515,10 +535,8 @@ const UnifiedOnboarding: React.FC = () => {
           (addressVerificationData.method === 'automatic' || addressVerificationData.method === 'user_confirmed'))
       });
       
-      // ONE ProfileContext.updateProfile call with ALL data (skip legacy mapping to prevent 400 errors)
       await updateProfile(completeProfileData as any, { skipLegacyMapping: true });
       
-      // POST-SAVE VERIFICATION: Query database to confirm data actually persisted
       await new Promise(resolve => setTimeout(resolve, 800));
       
       const { data: verifyProfile, error: verifyError } = await supabase
@@ -534,7 +552,6 @@ const UnifiedOnboarding: React.FC = () => {
         throw new Error("Profile data failed to persist to database");
       }
       
-      // Type-safe interests check (Json can be array or other types)
       const interestsArray = Array.isArray(verifyProfile.interests) ? verifyProfile.interests : [];
       
       if (!verifyProfile.dob || !verifyProfile.shipping_address || interestsArray.length === 0) {
@@ -547,12 +564,11 @@ const UnifiedOnboarding: React.FC = () => {
         throw new Error("Critical profile fields missing after save");
       }
       
+      triggerHapticFeedback('success');
       toast.success("Profile saved!");
       
-      // Clear localStorage flags and refetch profile data
       await handleOnboardingComplete();
 
-      // Welcome email functionality removed - email queue will handle welcome messages
       try {
         console.log('✅ Profile interests saved for user:', user.id);
       } catch (emailError) {
@@ -563,9 +579,8 @@ const UnifiedOnboarding: React.FC = () => {
         description: isAddressVerified ? "Your address has been verified for delivery" : "You can verify your address later in settings"
       });
 
-      // Smart routing based on signup context
       const signupContext = localStorage.getItem("signupContext");
-      let destination = "/"; // Default for existing users
+      let destination = "/";
       
       if (signupContext === "gift_recipient") {
         destination = "/wishlists";
@@ -575,24 +590,22 @@ const UnifiedOnboarding: React.FC = () => {
       
       console.log(`🎯 Routing ${signupContext || 'existing user'} to ${destination}`);
       
-      // Clean up signup flags
       localStorage.removeItem("newSignUp");
       localStorage.removeItem("profileCompletionState");
       localStorage.removeItem("signupContext");
       
-      // Before navigation, ensure profile update propagates
       await new Promise(resolve => setTimeout(resolve, 500));
       
       navigate(destination, { replace: true });
     } catch (error) {
       console.error('Error completing onboarding:', error);
+      triggerHapticFeedback('error');
       toast.error('Failed to complete profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Progress calculation
   const getProgress = () => {
     switch (currentStep) {
       case 'profile': return 33;
@@ -614,7 +627,7 @@ const UnifiedOnboarding: React.FC = () => {
   const userName = user?.user_metadata?.name || '';
 
   return (
-    <Card className="w-full">
+    <Card className="w-full pb-safe">
       <CardContent className="p-6">
         {/* Progress indicator */}
         <div className="mb-6">
@@ -625,340 +638,411 @@ const UnifiedOnboarding: React.FC = () => {
           <Progress value={getProgress()} className="h-2" />
         </div>
 
-        {/* Step 1: Profile Setup */}
-        {currentStep === 'profile' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-2">Complete Your Profile</h2>
-              <p className="text-sm text-muted-foreground">
-                Add your photo, birthday, and shipping address to get started
-              </p>
-            </div>
+        <AnimatePresence mode="wait">
+          {/* Step 1: Profile Setup */}
+          {currentStep === 'profile' && (
+            <motion.div
+              key="profile"
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-6"
+            >
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">Complete Your Profile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Add your photo, birthday, and shipping address to get started
+                </p>
+              </div>
 
-            {/* Profile Photo */}
-            <div className="flex flex-col items-center space-y-4">
-              <ProfileBubble
-                imageUrl={profileImageUrl}
-                userName={userName}
-                onImageSelect={handleImageSelect}
-                size="lg"
-              />
-              <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
-            </div>
-
-            <Form {...form}>
-              <div className="space-y-6">
-                {/* Birthday */}
-                <FormField
-                  control={form.control}
-                  name="date_of_birth"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>When's your birthday?</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                          disabled={(date) => 
-                            date > new Date() || 
-                            date < new Date(new Date().getFullYear() - 120, 0, 1)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              {/* Profile Photo */}
+              <div className="flex flex-col items-center space-y-4">
+                <ProfileBubble
+                  imageUrl={profileImageUrl}
+                  userName={userName}
+                  onImageSelect={handleImageSelect}
+                  size="lg"
                 />
+                <p className="text-sm text-muted-foreground">Click to add a profile photo</p>
+              </div>
 
-                {/* Address */}
-                <div className="space-y-4">
-                  <FormLabel className="text-base font-medium">Your Shipping Address</FormLabel>
-                  <AddressAutocomplete
-                    value={form.watch('address.street')}
-                    onChange={(value) => form.setValue('address.street', value)}
-                    onAddressSelect={handleAddressSelect}
-                  />
-
+              <Form {...form}>
+                <div className="space-y-6">
+                  {/* Birthday */}
                   <FormField
                     control={form.control}
-                    name="address.line2"
+                    name="date_of_birth"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Apartment, suite, etc. (optional)</FormLabel>
+                      <FormItem className="flex flex-col">
+                        <FormLabel>When's your birthday?</FormLabel>
                         <FormControl>
-                          <Input placeholder="Apt, suite, unit, etc." {...field} />
+                          <DatePicker
+                            date={field.value}
+                            setDate={field.onChange}
+                            disabled={(date) => 
+                              date > new Date() || 
+                              date < new Date(new Date().getFullYear() - 120, 0, 1)
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Address */}
+                  <div className="space-y-4">
+                    <FormLabel className="text-base font-medium">Your Shipping Address</FormLabel>
+                    <AddressAutocomplete
+                      value={form.watch('address.street')}
+                      onChange={(value) => form.setValue('address.street', value)}
+                      onAddressSelect={handleAddressSelect}
+                    />
+
                     <FormField
                       control={form.control}
-                      name="address.city"
+                      name="address.line2"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>City</FormLabel>
+                          <FormLabel>Apartment, suite, etc. (optional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="San Francisco" {...field} />
+                            <Input placeholder="Apt, suite, unit, etc." {...field} className="min-h-[44px]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="address.state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="California" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="address.city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="San Francisco" {...field} className="min-h-[44px]" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="address.state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                              <Input placeholder="California" {...field} className="min-h-[44px]" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="address.zipCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ZIP Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="94103" {...field} className="min-h-[44px]" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Inline Address Verification */}
+                    <InlineAddressVerification
+                      address={form.watch('address')}
+                      onVerificationChange={handleVerificationChange}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="address.zipCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ZIP Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="94103" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Inline Address Verification */}
-                  <InlineAddressVerification
-                    address={form.watch('address')}
-                    onVerificationChange={handleVerificationChange}
-                  />
+                  <motion.div whileTap={{ scale: 0.97 }}>
+                    <Button 
+                      type="button"
+                      onClick={handleProfileStepComplete}
+                      className="w-full min-h-[44px]"
+                    >
+                      Continue to Interests
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </motion.div>
                 </div>
+              </Form>
+            </motion.div>
+          )}
 
-                <Button 
-                  type="button"
-                  onClick={handleProfileStepComplete}
-                  className="w-full"
-                >
-                  Continue to Interests
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+          {/* Step 2: Interests Selection */}
+          {currentStep === 'interests' && (
+            <motion.div
+              key="interests"
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-6"
+            >
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">Quick Setup</h2>
+                <p className="text-sm text-muted-foreground">
+                  Pick a few interests to get better gift recommendations
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You can always add more later in settings
+                </p>
               </div>
-            </Form>
-          </div>
-        )}
 
-        {/* Step 2: Interests Selection */}
-        {currentStep === 'interests' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-2">Quick Setup</h2>
-              <p className="text-sm text-muted-foreground">
-                Pick a few interests to get better gift recommendations
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                You can always add more later in settings
-              </p>
-            </div>
+              {/* Interest Selection Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {QUICK_INTERESTS.map((interest, index) => {
+                  const isSelected = selectedInterests.includes(interest);
+                  return (
+                    <motion.div
+                      key={interest}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        type="button"
+                        variant={isSelected ? "default" : "outline"}
+                        className={`
+                          h-auto min-h-[44px] py-3 px-4 w-full relative
+                          ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'hover:border-primary/50'}
+                        `}
+                        onClick={() => toggleInterest(interest)}
+                      >
+                        <span className="text-center">
+                          {interest}
+                        </span>
+                        {isSelected && (
+                          <Check className="h-4 w-4 absolute top-2 right-2" />
+                        )}
+                      </Button>
+                    </motion.div>
+                  );
+                })}
+              </div>
 
-            {/* Interest Selection Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {QUICK_INTERESTS.map((interest) => {
-                const isSelected = selectedInterests.includes(interest);
-                return (
+              {/* Custom Interest Input */}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <SmartInput
+                      value={newInterest}
+                      onChange={setNewInterest}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Add a new interest (brands, hobbies, etc.)"
+                      suggestions={COMMON_INTERESTS}
+                      showSpellingSuggestions={true}
+                      className="w-full min-h-[44px]"
+                    />
+                  </div>
+                  <motion.div whileTap={{ scale: 0.95 }}>
+                    <Button
+                      type="button"
+                      onClick={addCustomInterest}
+                      disabled={!newInterest.trim() || isDuplicateInterest(newInterest.trim())}
+                      size="sm"
+                      className="px-3 min-h-[44px]"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Selected interests count */}
+              {selectedInterests.length > 0 && (
+                <motion.div 
+                  className="flex justify-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Badge variant="secondary" className="text-sm">
+                    {selectedInterests.length} interest{selectedInterests.length !== 1 ? 's' : ''} selected
+                  </Badge>
+                </motion.div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <motion.div className="flex-1" whileTap={{ scale: 0.97 }}>
                   <Button
-                    key={interest}
                     type="button"
-                    variant={isSelected ? "default" : "outline"}
-                    className={`
-                      h-auto py-3 px-4 relative transition-all duration-200
-                      ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'hover:border-primary/50'}
-                    `}
-                    onClick={() => toggleInterest(interest)}
+                    variant="outline"
+                    onClick={handleBackToProfile}
+                    className="w-full min-h-[44px]"
                   >
-                    <span className="text-center">
-                      {interest}
-                    </span>
-                    {isSelected && (
-                      <Check className="h-4 w-4 absolute top-2 right-2" />
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                </motion.div>
+                <motion.div className="flex-1" whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="button"
+                    onClick={handleInterestsStepComplete}
+                    className="w-full min-h-[44px]"
+                  >
+                    {pendingConnections.length > 0 ? 'Continue' : 'Complete Setup'}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Pending Connections */}
+          {currentStep === 'connections' && (
+            <motion.div
+              key="connections"
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-6"
+            >
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  <h2 className="text-2xl font-semibold">Connection Requests</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Accept or decline connection requests from people who want to connect with you
+                </p>
+              </div>
+
+              {loadingConnections ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  {pendingConnections.map((connection, index) => (
+                    <motion.div
+                      key={connection.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1, type: "spring", stiffness: 300, damping: 25 }}
+                    >
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={connection.sender_avatar} />
+                              <AvatarFallback>
+                                {connection.sender_name?.charAt(0) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold">{connection.sender_name}</h4>
+                                {connection.has_pending_gift && (
+                                  <Badge variant="secondary" className="gap-1">
+                                    <Sparkles className="h-3 w-3" />
+                                    Includes Gift
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {connection.sender_username}
+                              </p>
+                              
+                              {connection.has_pending_gift && connection.gift_message && (
+                                <div className="bg-muted/50 rounded-md p-3 mb-3">
+                                  <p className="text-sm italic">"{connection.gift_message}"</p>
+                                  {connection.gift_occasion && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      For: {connection.gift_occasion}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              
+                              <div className="flex gap-2">
+                                <motion.div className="flex-1" whileTap={{ scale: 0.95 }}>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAcceptConnection(connection.id)}
+                                    disabled={processingIds.has(connection.id)}
+                                    className="w-full min-h-[44px]"
+                                  >
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Accept
+                                  </Button>
+                                </motion.div>
+                                <motion.div whileTap={{ scale: 0.95 }}>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeclineConnection(connection.id)}
+                                    disabled={processingIds.has(connection.id)}
+                                    className="min-h-[44px]"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </motion.div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <motion.div className="flex-1" whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBackToInterests}
+                    className="w-full min-h-[44px]"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                </motion.div>
+                <motion.div className="flex-1" whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    disabled={isSubmitting}
+                    className="w-full min-h-[44px]"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Complete Setup
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
                     )}
                   </Button>
-                );
-              })}
-            </div>
-
-            {/* Custom Interest Input */}
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <SmartInput
-                    value={newInterest}
-                    onChange={setNewInterest}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Add a new interest (brands, hobbies, etc.)"
-                    suggestions={COMMON_INTERESTS}
-                    showSpellingSuggestions={true}
-                    className="w-full"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  onClick={addCustomInterest}
-                  disabled={!newInterest.trim() || isDuplicateInterest(newInterest.trim())}
-                  size="sm"
-                  className="px-3"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                </motion.div>
               </div>
-            </div>
-
-            {/* Selected interests count */}
-            {selectedInterests.length > 0 && (
-              <div className="flex justify-center">
-                <Badge variant="secondary" className="text-sm">
-                  {selectedInterests.length} interest{selectedInterests.length !== 1 ? 's' : ''} selected
-                </Badge>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCurrentStep('profile')}
-                className="flex-1"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button
-                type="button"
-                onClick={handleInterestsStepComplete}
-                className="flex-1"
-              >
-                {pendingConnections.length > 0 ? 'Continue' : 'Complete Setup'}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Pending Connections */}
-        {currentStep === 'connections' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Gift className="h-5 w-5 text-primary" />
-                <h2 className="text-2xl font-semibold">Connection Requests</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Accept or decline connection requests from people who want to connect with you
-              </p>
-            </div>
-
-            {loadingConnections ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {pendingConnections.map((connection) => (
-                  <Card key={connection.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={connection.sender_avatar} />
-                          <AvatarFallback>
-                            {connection.sender_name?.charAt(0) || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold">{connection.sender_name}</h4>
-                            {connection.has_pending_gift && (
-                              <Badge variant="secondary" className="gap-1">
-                                <Sparkles className="h-3 w-3" />
-                                Includes Gift
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {connection.sender_username}
-                          </p>
-                          
-                          {connection.has_pending_gift && connection.gift_message && (
-                            <div className="bg-muted/50 rounded-md p-3 mb-3">
-                              <p className="text-sm italic">"{connection.gift_message}"</p>
-                              {connection.gift_occasion && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  For: {connection.gift_occasion}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleAcceptConnection(connection.id)}
-                              disabled={processingIds.has(connection.id)}
-                              className="flex-1"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeclineConnection(connection.id)}
-                              disabled={processingIds.has(connection.id)}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Decline
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCurrentStep('interests')}
-                className="flex-1"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button
-                type="button"
-                onClick={handleFinalSubmit}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                {isSubmitting ? 'Saving...' : 'Get Started'}
-              </Button>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </CardContent>
     </Card>
   );

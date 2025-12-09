@@ -1,14 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import Stripe from 'https://esm.sh/stripe@14.21.0';
+import { 
+  PAYMENT_LEAD_TIME_CONFIG, 
+  isReadyForCapture, 
+  isReadyForSubmission 
+} from '../shared/paymentLeadTime.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Payment capture lead time in days - captures payment this many days before delivery
-const PAYMENT_CAPTURE_LEAD_DAYS = 4;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,6 +19,7 @@ serve(async (req) => {
 
   try {
     console.log('📅 Running scheduled order processor (two-stage)...');
+    console.log(`⚙️ Config: Capture ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before delivery`);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -31,10 +34,10 @@ serve(async (req) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // Calculate the capture date (4 days from now)
-    const captureDate = new Date(today);
-    captureDate.setDate(captureDate.getDate() + PAYMENT_CAPTURE_LEAD_DAYS);
-    const captureDateStr = captureDate.toISOString().split('T')[0];
+    // Calculate the capture threshold date
+    const captureThresholdDate = new Date(today);
+    captureThresholdDate.setDate(captureThresholdDate.getDate() + PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS);
+    const captureThresholdStr = captureThresholdDate.toISOString().split('T')[0];
 
     const results = {
       captured: [] as string[],
@@ -43,16 +46,16 @@ serve(async (req) => {
     };
 
     // ============================================
-    // STAGE 1: Capture payments for orders due in 4 days
+    // STAGE 1: Capture payments for orders within lead time
     // ============================================
-    console.log(`💳 Stage 1: Capturing payments for orders with delivery <= ${captureDateStr}`);
+    console.log(`💳 Stage 1: Capturing payments for orders with delivery <= ${captureThresholdStr}`);
 
     const { data: ordersToCapture, error: captureQueryError } = await supabase
       .from('orders')
       .select('*')
       .eq('status', 'scheduled')
       .eq('payment_status', 'authorized')
-      .lte('scheduled_delivery_date', captureDateStr)
+      .lte('scheduled_delivery_date', captureThresholdStr)
       .order('scheduled_delivery_date', { ascending: true });
 
     if (captureQueryError) {
@@ -64,6 +67,13 @@ serve(async (req) => {
 
     for (const order of ordersToCapture || []) {
       try {
+        const deliveryDate = new Date(order.scheduled_delivery_date);
+        
+        if (!isReadyForCapture(deliveryDate, today)) {
+          console.log(`⏳ Order ${order.id} not ready for capture yet`);
+          continue;
+        }
+
         console.log(`💳 Capturing payment for order: ${order.id} (delivery: ${order.scheduled_delivery_date})`);
 
         if (!order.payment_intent_id) {
@@ -81,7 +91,7 @@ serve(async (req) => {
         await supabase
           .from('orders')
           .update({
-            status: 'payment_confirmed',
+            status: PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS,
             payment_status: 'paid',
             updated_at: new Date().toISOString(),
           })
@@ -118,7 +128,7 @@ serve(async (req) => {
     const { data: ordersToSubmit, error: submitQueryError } = await supabase
       .from('orders')
       .select('*')
-      .eq('status', 'payment_confirmed')
+      .eq('status', PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS)
       .lte('scheduled_delivery_date', todayStr)
       .order('scheduled_delivery_date', { ascending: true });
 
@@ -131,6 +141,13 @@ serve(async (req) => {
 
     for (const order of ordersToSubmit || []) {
       try {
+        const deliveryDate = new Date(order.scheduled_delivery_date);
+        
+        if (!isReadyForSubmission(deliveryDate, today)) {
+          console.log(`⏳ Order ${order.id} not ready for Zinc submission yet`);
+          continue;
+        }
+
         console.log(`🚀 Submitting order ${order.id} to Zinc`);
 
         // Invoke process-order-v2
@@ -175,9 +192,10 @@ serve(async (req) => {
         failed: results.failed.length,
         details: results,
         config: {
-          paymentCaptureLeadDays: PAYMENT_CAPTURE_LEAD_DAYS,
+          paymentCaptureLeadDays: PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS,
+          capturedStatus: PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS,
           todayDate: todayStr,
-          captureThresholdDate: captureDateStr,
+          captureThresholdDate: captureThresholdStr,
         },
       }),
       { 

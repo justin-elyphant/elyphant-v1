@@ -8,6 +8,7 @@ import { ZMABalanceCard } from "./ZMABalanceCard";
 import { TransferCalculator } from "./TransferCalculator";
 import { TransferHistory } from "./TransferHistory";
 import { format, addDays } from "date-fns";
+import { PAYMENT_LEAD_TIME } from "@/lib/constants/paymentLeadTime";
 
 interface ZMABalanceData {
   balance: number;
@@ -32,9 +33,6 @@ export default function FridayTransferDashboard() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-
-  const BUFFER_AMOUNT = 500;
-  const PAYMENT_CAPTURE_LEAD_DAYS = 4;
 
   const fetchZMABalance = async () => {
     setIsLoading(true);
@@ -67,7 +65,7 @@ export default function FridayTransferDashboard() {
       const { data: confirmedOrders } = await supabase
         .from('orders')
         .select('id, total_amount')
-        .eq('status', 'payment_confirmed');
+        .eq('status', PAYMENT_LEAD_TIME.PAYMENT_CONFIRMED_STATUS);
 
       // Fetch processing orders (submitted to Zinc)
       const { data: processingOrders } = await supabase
@@ -127,7 +125,7 @@ export default function FridayTransferDashboard() {
 
   const recommendedTransfer = Math.max(
     0,
-    (pendingZMARequirement + BUFFER_AMOUNT) - (balanceData?.balance || 0)
+    (pendingZMARequirement + PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT) - (balanceData?.balance || 0)
   );
 
   const balanceStatus = (balanceData?.balance || 0) >= (pendingZMARequirement + 200)
@@ -139,8 +137,8 @@ export default function FridayTransferDashboard() {
   const today = new Date();
   const isFriday = today.getDay() === 5;
 
-  // Expected Stripe payout date (2 business days from payment capture)
-  const expectedPayoutDate = addDays(today, 2);
+  // Expected Stripe payout date
+  const expectedPayoutDate = addDays(today, PAYMENT_LEAD_TIME.STRIPE_PAYOUT_DAYS);
 
   return (
     <div className="space-y-6">
@@ -152,7 +150,7 @@ export default function FridayTransferDashboard() {
             Friday Transfer Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
-            Two-stage order processing with {PAYMENT_CAPTURE_LEAD_DAYS}-day payment lead time
+            Two-stage order processing with {PAYMENT_LEAD_TIME.CAPTURE_LEAD_DAYS}-day payment lead time
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -207,7 +205,7 @@ export default function FridayTransferDashboard() {
                 ${pipeline.scheduled.total_value.toFixed(2)} awaiting capture
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Payment held, captured {PAYMENT_CAPTURE_LEAD_DAYS} days before delivery
+                Payment held, captured {PAYMENT_LEAD_TIME.CAPTURE_LEAD_DAYS} days before delivery
               </p>
             </div>
 
@@ -246,9 +244,9 @@ export default function FridayTransferDashboard() {
           <div className="hidden md:flex justify-center items-center gap-2 mt-4 text-muted-foreground text-sm">
             <span>Scheduled</span>
             <span>→</span>
-            <span className="text-primary">Payment Captured ({PAYMENT_CAPTURE_LEAD_DAYS} days early)</span>
+            <span className="text-primary">Payment Captured ({PAYMENT_LEAD_TIME.CAPTURE_LEAD_DAYS} days early)</span>
             <span>→</span>
-            <span>Stripe Payout (~2 days)</span>
+            <span>Stripe Payout (~{PAYMENT_LEAD_TIME.STRIPE_PAYOUT_DAYS} days)</span>
             <span>→</span>
             <span className="text-green-600">Zinc Submission</span>
           </div>
@@ -276,7 +274,7 @@ export default function FridayTransferDashboard() {
               Total: ${pendingZMARequirement.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              payment_confirmed + processing
+              {PAYMENT_LEAD_TIME.PAYMENT_CONFIRMED_STATUS} + processing
             </p>
           </CardContent>
         </Card>
@@ -292,7 +290,7 @@ export default function FridayTransferDashboard() {
               ${recommendedTransfer.toFixed(2)}
             </div>
             <p className="text-sm text-muted-foreground">
-              {recommendedTransfer > 0 ? 'To maintain $500 buffer' : 'Balance is sufficient'}
+              {recommendedTransfer > 0 ? `To maintain $${PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT} buffer` : 'Balance is sufficient'}
             </p>
           </CardContent>
         </Card>
@@ -301,7 +299,7 @@ export default function FridayTransferDashboard() {
       {/* Transfer Calculator */}
       <TransferCalculator
         pendingOrdersValue={pendingZMARequirement}
-        bufferAmount={BUFFER_AMOUNT}
+        bufferAmount={PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT}
         currentBalance={balanceData?.balance || 0}
         recommendedTransfer={recommendedTransfer}
       />
@@ -319,7 +317,7 @@ export default function FridayTransferDashboard() {
             />
             <ChecklistItem
               checked={pipeline.paymentConfirmed.count >= 0}
-              label="Review payment_confirmed orders (awaiting Stripe payout)"
+              label={`Review ${PAYMENT_LEAD_TIME.PAYMENT_CONFIRMED_STATUS} orders (awaiting Stripe payout)`}
             />
             <ChecklistItem
               checked={pipeline.processing.count >= 0}

@@ -7,13 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Payment capture lead time - start checkout this many days before event
+const PAYMENT_CAPTURE_LEAD_DAYS = 4;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('🎁 Running auto-gift orchestrator...');
+    console.log('🎁 Running auto-gift orchestrator (two-stage)...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -25,7 +28,8 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     );
 
-    // Find auto-gifting rules with upcoming events (7 days or less)
+    // Find auto-gifting rules with upcoming events
+    // 7 days for notification, PAYMENT_CAPTURE_LEAD_DAYS for payment capture
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
@@ -44,8 +48,9 @@ serve(async (req) => {
 
     const results = {
       notified: [] as string[],
-      processed: [] as string[],
-      failed: [] as { ruleId: string; error: string }[],
+      checkoutCreated: [] as string[],
+      submitted: [] as string[],
+      failed: [] as { ruleId: string; error: string; stage: string }[],
     };
 
     for (const rule of upcomingRules || []) {
@@ -55,11 +60,12 @@ serve(async (req) => {
         const eventDate = new Date(rule.next_trigger_date);
         const daysUntil = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
-        // If 7 days before, send notification (approval required)
+        // ============================================
+        // 7 days before: Send notification (approval required)
+        // ============================================
         if (daysUntil === 7) {
           console.log('📬 Sending 7-day notification...');
           
-          // Create notification
           await supabase.from('notifications').insert({
             user_id: rule.user_id,
             type: 'auto_gift_upcoming',
@@ -79,9 +85,11 @@ serve(async (req) => {
           results.notified.push(rule.id);
         }
 
-        // If event is today or approval was given, process the gift
-        if (daysUntil <= 0 || rule.approval_status === 'approved') {
-          console.log('🚀 Processing auto-gift payment...');
+        // ============================================
+        // PAYMENT_CAPTURE_LEAD_DAYS before: Create checkout session (capture payment)
+        // ============================================
+        if (daysUntil === PAYMENT_CAPTURE_LEAD_DAYS && rule.approval_status === 'approved') {
+          console.log(`💳 Creating checkout session ${PAYMENT_CAPTURE_LEAD_DAYS} days before event...`);
 
           // Get saved payment method
           const { data: paymentMethod } = await supabase
@@ -118,7 +126,7 @@ serve(async (req) => {
 
           console.log('💳 Creating checkout session for auto-gift with saved payment method...');
           
-          // Create checkout session for auto-gift (will auto-confirm with saved payment method)
+          // Create checkout session - payment captured now, fulfillment on event date
           const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
             'create-checkout-session',
             {
@@ -150,7 +158,7 @@ serve(async (req) => {
                   giftWrap: true,
                 },
                 paymentMethod: paymentMethod.stripe_payment_method_id,
-                confirm: true, // Auto-confirm with saved payment method (no redirect needed)
+                confirm: true,
                 pricingBreakdown: {
                   subtotal: gift.products.price,
                   shippingCost: 0,
@@ -164,6 +172,7 @@ serve(async (req) => {
                   auto_gift_rule_id: rule.id,
                   occasion: rule.occasion_type,
                   recipient_name: rule.connections?.name,
+                  scheduled_for_zinc_submission: rule.next_trigger_date,
                 },
               },
             }
@@ -176,7 +185,7 @@ serve(async (req) => {
 
           console.log('✅ Checkout session created:', checkoutData?.sessionId);
 
-          // Store the checkout session ID for tracking
+          // Log the checkout session
           if (checkoutData?.sessionId) {
             await supabase
               .from('auto_gift_event_logs')
@@ -188,26 +197,47 @@ serve(async (req) => {
                   checkout_session_id: checkoutData.sessionId,
                   amount: gift.products.price,
                   recipient: rule.connections?.name,
+                  payment_captured_at: new Date().toISOString(),
+                  scheduled_zinc_submission: rule.next_trigger_date,
                 },
                 metadata: {
-                  flow_type: 'checkout_sessions',
-                  auto_confirmed: true,
+                  flow_type: 'two_stage_processing',
+                  lead_days: PAYMENT_CAPTURE_LEAD_DAYS,
                 },
               });
           }
 
-          // Update rule
+          results.checkoutCreated.push(rule.id);
+        }
+
+        // ============================================
+        // Event day: Submit to Zinc (orders are in payment_confirmed status)
+        // Note: This is handled by scheduled-order-processor for unified logic
+        // But we track completion here
+        // ============================================
+        if (daysUntil <= 0) {
+          // Check if order was already submitted
+          const { data: execution } = await supabase
+            .from('automated_gift_executions')
+            .select('order_id, status')
+            .eq('rule_id', rule.id)
+            .eq('execution_date', rule.next_trigger_date)
+            .single();
+
+          if (execution?.order_id && execution.status === 'processing') {
+            console.log(`✅ Auto-gift order already submitted for rule ${rule.id}`);
+            results.submitted.push(rule.id);
+          }
+
+          // Update rule for next execution
           await supabase
             .from('auto_gifting_rules')
             .update({
               last_executed_at: new Date().toISOString(),
               execution_count: (rule.execution_count || 0) + 1,
-              approval_status: null, // Reset for next time
+              approval_status: null,
             })
             .eq('id', rule.id);
-
-          results.processed.push(rule.id);
-          console.log(`✅ Auto-gift processed for rule ${rule.id}`);
         }
 
       } catch (error: any) {
@@ -215,9 +245,9 @@ serve(async (req) => {
         results.failed.push({
           ruleId: rule.id,
           error: error.message,
+          stage: 'processing',
         });
 
-        // Send failure notification
         await supabase.from('notifications').insert({
           user_id: rule.user_id,
           type: 'auto_gift_failed',
@@ -237,9 +267,13 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         notified: results.notified.length,
-        processed: results.processed.length,
+        checkoutCreated: results.checkoutCreated.length,
+        submitted: results.submitted.length,
         failed: results.failed.length,
         details: results,
+        config: {
+          paymentCaptureLeadDays: PAYMENT_CAPTURE_LEAD_DAYS,
+        },
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

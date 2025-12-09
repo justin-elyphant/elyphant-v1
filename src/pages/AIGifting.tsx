@@ -13,6 +13,8 @@ import ActiveRulesSection from "@/components/gifting/events/automated-tab/Active
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import HowItWorksModal from "@/components/gifting/auto-gift/HowItWorksModal";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 const AIGifting = () => {
   const { user } = useAuth();
@@ -53,21 +55,31 @@ const AIGifting = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={() => setSetupDialogOpen(true)}
-                  className="bg-white text-purple-700 hover:bg-white/90 h-11 font-semibold"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {rules.length === 0 ? "Schedule Your First Gift" : "Schedule Another Gift"}
-                </Button>
-                <Button 
-                  onClick={() => setHowItWorksOpen(true)}
-                  variant="ghost" 
-                  className="text-white hover:bg-white/10 h-11"
-                >
-                  How It Works
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={() => {
+                      triggerHapticFeedback('selection');
+                      setSetupDialogOpen(true);
+                    }}
+                    className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {rules.length === 0 ? "Schedule Your First Gift" : "Schedule Another Gift"}
+                  </Button>
+                </motion.div>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={() => {
+                      triggerHapticFeedback('light');
+                      setHowItWorksOpen(true);
+                    }}
+                    variant="ghost" 
+                    className="text-white hover:bg-white/10 min-h-[44px]"
+                  >
+                    How It Works
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </motion.div>
               </div>
             </CardContent>
           </Card>
@@ -129,41 +141,59 @@ const AIGifting = () => {
 
         {/* Benefits Grid */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="bg-background border">
-            <CardContent className="p-6">
-              <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                <Calendar className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Recurring Events</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Set up once for birthdays and anniversaries. We'll send the perfect gift every year, automatically.
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <Card className="bg-background border h-full">
+              <CardContent className="p-6">
+                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
+                  <Calendar className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Recurring Events</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Set up once for birthdays and anniversaries. We'll send the perfect gift every year, automatically.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="bg-background border">
-            <CardContent className="p-6">
-              <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                <Heart className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Wishlist-Powered</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Our AI prioritizes items from their wishlist, ensuring they get exactly what they want.
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <Card className="bg-background border h-full">
+              <CardContent className="p-6">
+                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
+                  <Heart className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Wishlist-Powered</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Our AI prioritizes items from their wishlist, ensuring they get exactly what they want.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card className="bg-background border">
-            <CardContent className="p-6">
-              <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                <Brain className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Smart Budget Control</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Set spending limits and let our AI find the perfect gift within your budget range.
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <Card className="bg-background border h-full">
+              <CardContent className="p-6">
+                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
+                  <Brain className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Smart Budget Control</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Set spending limits and let our AI find the perfect gift within your budget range.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Active Rules Section */}
@@ -199,7 +229,9 @@ const AIGifting = () => {
               <Switch 
                 id="save-preferences" 
                 defaultChecked 
+                className="min-h-[44px] min-w-[44px]"
                 onCheckedChange={(checked) => {
+                  triggerHapticFeedback('selection');
                   toast.success(checked ? "Search preferences enabled" : "Search preferences disabled");
                 }}
               />
@@ -212,7 +244,9 @@ const AIGifting = () => {
               <Switch 
                 id="smart-suggestions" 
                 defaultChecked 
+                className="min-h-[44px] min-w-[44px]"
                 onCheckedChange={(checked) => {
+                  triggerHapticFeedback('selection');
                   toast.success(checked ? "Smart suggestions enabled" : "Smart suggestions disabled");
                 }}
               />

@@ -28,6 +28,8 @@ import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMet
 import MultiEventSelector, { SelectedEvent } from "@/components/gifting/events/add-dialog/MultiEventSelector";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import AddressVerificationWarning from "./AddressVerificationWarning";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -182,12 +184,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
+      triggerHapticFeedback('selection');
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
+      triggerHapticFeedback('light');
       setCurrentStep(currentStep - 1);
     }
   };
@@ -839,42 +843,51 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
             
             <div className="flex gap-2">
               {currentStep > 0 && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleBack}
-                  className="min-h-[44px] marketplace-touch-target"
-                >
-                  Back
-                </Button>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBack}
+                    className="min-h-[44px] min-w-[44px]"
+                  >
+                    Back
+                  </Button>
+                </motion.div>
               )}
               
               {currentStep < steps.length - 1 ? (
-                <Button 
-                  onClick={handleNext} 
-                  className="min-h-[44px] marketplace-touch-target"
-                  disabled={
-                    (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
-                    (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
-                  }
-                >
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={handleNext} 
+                    className="min-h-[44px]"
+                    disabled={
+                      (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
+                      (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
+                    }
+                  >
+                    Next
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
               ) : (
-                <Button 
-                  onClick={handleSubmit} 
-                  className="min-h-[44px] marketplace-touch-target"
-                  disabled={
-                    isLoading || 
-                    !formData.recipientId || 
-                    formData.selectedEvents.length === 0 ||
-                    !formData.selectedPaymentMethodId ||
-                    formData.budgetLimit < 5
-                  }
-                >
-                  {isLoading ? "Scheduling..." : "Schedule AI Gift"}
-                  <CheckCircle className="ml-2 h-4 w-4" />
-                </Button>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={() => {
+                      triggerHapticFeedback('success');
+                      handleSubmit();
+                    }} 
+                    className="min-h-[44px]"
+                    disabled={
+                      isLoading || 
+                      !formData.recipientId || 
+                      formData.selectedEvents.length === 0 ||
+                      !formData.selectedPaymentMethodId ||
+                      formData.budgetLimit < 5
+                    }
+                  >
+                    {isLoading ? "Scheduling..." : "Schedule AI Gift"}
+                    <CheckCircle className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
               )}
             </div>
           </div>

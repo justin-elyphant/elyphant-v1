@@ -2,6 +2,8 @@ import React from "react";
 import { User, MapPin, Ruler, Calendar, Heart, Bell, Shield, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { motion } from "framer-motion";
 
 interface SettingsSection {
   id: string;
@@ -74,33 +76,43 @@ const SettingsCardNavigation: React.FC<SettingsCardNavigationProps> = ({
 
       {/* Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {settingsSections.map((section) => {
+        {settingsSections.map((section, index) => {
           const Icon = section.icon;
           return (
-            <Card
+            <motion.div
               key={section.id}
-              className={cn(
-                "cursor-pointer transition-all duration-200",
-                "hover:shadow-md hover:border-foreground/20",
-                "active:scale-[0.98]"
-              )}
-              onClick={() => onSelectSection(section.id)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <CardContent className="pt-6 pb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 p-2 rounded-lg bg-muted">
-                      <Icon className="h-5 w-5 text-foreground" />
+              <Card
+                className={cn(
+                  "cursor-pointer transition-all duration-200",
+                  "hover:shadow-md hover:border-foreground/20",
+                  "min-h-[44px]"
+                )}
+                onClick={() => {
+                  triggerHapticFeedback('selection');
+                  onSelectSection(section.id);
+                }}
+              >
+                <CardContent className="pt-6 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 p-2 rounded-lg bg-muted">
+                        <Icon className="h-5 w-5 text-foreground" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-medium">{section.title}</h3>
+                        <p className="text-sm text-muted-foreground">{section.description}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="text-base font-medium">{section.title}</h3>
-                      <p className="text-sm text-muted-foreground">{section.description}</p>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
       </div>

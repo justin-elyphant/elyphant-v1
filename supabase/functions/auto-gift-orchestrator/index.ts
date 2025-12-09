@@ -1,14 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import Stripe from 'https://esm.sh/stripe@14.21.0';
+import { 
+  PAYMENT_LEAD_TIME_CONFIG, 
+  getDaysUntil 
+} from '../shared/paymentLeadTime.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Payment capture lead time - start checkout this many days before event
-const PAYMENT_CAPTURE_LEAD_DAYS = 4;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,6 +18,7 @@ serve(async (req) => {
 
   try {
     console.log('🎁 Running auto-gift orchestrator (two-stage)...');
+    console.log(`⚙️ Config: Payment capture ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before event`);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -29,15 +31,18 @@ serve(async (req) => {
     );
 
     // Find auto-gifting rules with upcoming events
-    // 7 days for notification, PAYMENT_CAPTURE_LEAD_DAYS for payment capture
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const lookAheadDays = Math.max(
+      PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS,
+      PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS
+    );
+    const lookAheadDate = new Date();
+    lookAheadDate.setDate(lookAheadDate.getDate() + lookAheadDays);
 
     const { data: upcomingRules, error: rulesError } = await supabase
       .from('auto_gifting_rules')
       .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(*)')
       .eq('is_active', true)
-      .lte('scheduled_date', sevenDaysFromNow.toISOString().split('T')[0])
+      .lte('scheduled_date', lookAheadDate.toISOString().split('T')[0])
       .order('scheduled_date', { ascending: true });
 
     if (rulesError) {
@@ -54,18 +59,20 @@ serve(async (req) => {
     };
 
     for (const rule of upcomingRules || []) {
+      let recipientName = 'Recipient';
+      
       try {
         console.log(`🎁 Processing auto-gift rule: ${rule.id}`);
 
         const eventDate = new Date(rule.scheduled_date);
-        const daysUntil = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        const recipientName = rule.recipient?.name || rule.recipient?.email || 'Recipient';
+        const daysUntil = getDaysUntil(eventDate);
+        recipientName = rule.recipient?.name || rule.recipient?.email || 'Recipient';
 
         // ============================================
-        // 7 days before: Send notification (approval required)
+        // NOTIFICATION_LEAD_DAYS before: Send notification (approval required)
         // ============================================
-        if (daysUntil === 7) {
-          console.log('📬 Sending 7-day notification...');
+        if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS) {
+          console.log(`📬 Sending ${PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS}-day notification...`);
           
           await supabase.from('notifications').insert({
             user_id: rule.user_id,
@@ -87,10 +94,10 @@ serve(async (req) => {
         }
 
         // ============================================
-        // PAYMENT_CAPTURE_LEAD_DAYS before: Create checkout session (capture payment)
+        // CAPTURE_LEAD_DAYS before: Create checkout session (capture payment)
         // ============================================
-        if (daysUntil === PAYMENT_CAPTURE_LEAD_DAYS) {
-          console.log(`💳 Creating checkout session ${PAYMENT_CAPTURE_LEAD_DAYS} days before event...`);
+        if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS) {
+          console.log(`💳 Creating checkout session ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before event...`);
 
           // Get saved payment method
           const { data: paymentMethod } = await supabase
@@ -203,7 +210,8 @@ serve(async (req) => {
                 },
                 metadata: {
                   flow_type: 'two_stage_processing',
-                  lead_days: PAYMENT_CAPTURE_LEAD_DAYS,
+                  lead_days: PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS,
+                  captured_status: PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS,
                 },
               });
           }
@@ -212,9 +220,7 @@ serve(async (req) => {
         }
 
         // ============================================
-        // Event day: Submit to Zinc (orders are in payment_confirmed status)
-        // Note: This is handled by scheduled-order-processor for unified logic
-        // But we track completion here
+        // Event day: Track completion (Zinc submission handled by scheduled-order-processor)
         // ============================================
         if (daysUntil <= 0) {
           // Check if order was already submitted
@@ -271,7 +277,9 @@ serve(async (req) => {
         failed: results.failed.length,
         details: results,
         config: {
-          paymentCaptureLeadDays: PAYMENT_CAPTURE_LEAD_DAYS,
+          notificationLeadDays: PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS,
+          paymentCaptureLeadDays: PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS,
+          capturedStatus: PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS,
         },
       }),
       { 

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,6 @@ import SignInForm from "./SignInForm";
 import SignUpForm from "./SignUpForm";
 import { motion } from "framer-motion";
 import { triggerHapticFeedback } from "@/utils/haptics";
-
 interface UnifiedAuthViewProps {
   initialMode?: "signin" | "signup";
   preFilledEmail?: string;
@@ -17,27 +15,29 @@ interface UnifiedAuthViewProps {
     senderName: string;
   } | null;
 }
-
-const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({ 
-  initialMode = "signup", 
+const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
+  initialMode = "signup",
   preFilledEmail,
-  invitationData 
+  invitationData
 }) => {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">(initialMode);
-
   const handleTabChange = (value: string) => {
     triggerHapticFeedback('selection');
     setActiveTab(value as "signin" | "signup");
   };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-    >
-      <Card className="w-full card-unified">
-        <CardContent className="touch-padding-lg pb-safe">
+  return <motion.div initial={{
+    opacity: 0,
+    y: 10
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    type: "spring",
+    stiffness: 400,
+    damping: 30
+  }}>
+      <Card className="w-full card-unified py-[5px]">
+        <CardContent className="touch-padding-lg pb-safe py-[10px]">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-space-loose">
               <TabsTrigger value="signin" className="text-body font-medium touch-target-44 touch-manipulation">
@@ -49,12 +49,13 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
             </TabsList>
             
             <TabsContent value="signin">
-              <motion.div 
-                className="space-y-unified"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
+              <motion.div className="space-y-unified" initial={{
+              opacity: 0
+            }} animate={{
+              opacity: 1
+            }} transition={{
+              duration: 0.2
+            }}>
                 <div className="text-center mb-space-loose">
                   <h2 className="text-heading-2 text-foreground">Welcome Back</h2>
                   <p className="text-body-sm text-muted-foreground mt-space-minimal">
@@ -66,12 +67,13 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
             </TabsContent>
             
             <TabsContent value="signup">
-              <motion.div 
-                className="space-y-unified"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
+              <motion.div className="space-y-unified" initial={{
+              opacity: 0
+            }} animate={{
+              opacity: 1
+            }} transition={{
+              duration: 0.2
+            }}>
                 <div className="text-center mb-space-loose">
                   <h2 className="text-heading-2 text-foreground">Create Account</h2>
                   <p className="text-body-sm text-muted-foreground mt-space-minimal">
@@ -84,8 +86,6 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
           </Tabs>
         </CardContent>
       </Card>
-    </motion.div>
-  );
+    </motion.div>;
 };
-
 export default UnifiedAuthView;

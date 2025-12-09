@@ -77,8 +77,6 @@ const ProductDetailsPage = lazy(() => import("./pages/ProductDetails"));
 const Trunkline = lazy(() => import("./pages/Trunkline"));
 const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 
-const TestZMAOrder = lazy(() => import("./pages/TestZMAOrder"));
-const TestRetryFunction = lazy(() => import("./pages/TestRetryFunction"));
 const WishlistAdd = lazy(() => import("./pages/WishlistAdd"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
@@ -272,9 +270,6 @@ function AppContent() {
            <Route path="/address/provide/:requestId" element={<AddressProviderPage />} />
           
           
-          {/* ZMA Testing Routes */}
-          <Route path="/test-zma-order" element={<TestZMAOrder />} />
-          <Route path="/test-retry-function" element={<TestRetryFunction />} />
           <Route path="/wishlist/add" element={<WishlistAdd />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           

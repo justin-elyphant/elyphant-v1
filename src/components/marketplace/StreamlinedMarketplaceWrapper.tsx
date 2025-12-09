@@ -30,8 +30,6 @@ import ProductGrid from "./product-grid/ProductGrid";
 import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
-import VariationTestPage from "./VariationTestPage";
-import QuickVariationTest from "./QuickVariationTest";
 import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";
 import SubCategoryTabs from "./SubCategoryTabs";
 import DynamicDesktopFilterSidebar from "./filters/DynamicDesktopFilterSidebar";
@@ -39,9 +37,6 @@ import FilterSortRow from "./filters/FilterSortRow";
 import LululemonMobileFilters from "./filters/LululemonMobileFilters";
 import DynamicMobileFilterDrawer from "./filters/DynamicMobileFilterDrawer";
 import FeaturedProductHero from "./FeaturedProductHero";
-
-// Add test mode flag - set to true to show variation test page
-const SHOW_VARIATION_TEST = false; // Set to true to show variation test page
 
 
 
@@ -1027,10 +1022,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         onOpenChange={setShowFiltersDrawer}
       />
       
-      {/* Variation Test Mode - for development */}
-      {SHOW_VARIATION_TEST && (
-        <VariationTestPage />
-      )}
       
     </div>
   );

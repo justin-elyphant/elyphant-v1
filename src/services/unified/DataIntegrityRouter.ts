@@ -5,7 +5,6 @@ import { toast } from "sonner";
 
 // Legacy service imports for gradual migration
 import { useDataConsistency } from "@/hooks/common/dataConsistency";
-import { useProfileValidation } from "@/hooks/profile/useProfileValidation";
 import { validateProfileStep } from "@/components/profile-setup/utils/sharedValidation";
 
 export interface DataIntegrityOptions {

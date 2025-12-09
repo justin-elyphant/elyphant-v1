@@ -1,7 +1,6 @@
 import { z, ZodSchema } from "zod";
 import { toast } from "sonner";
 import { formSchema } from "@/hooks/settings/settingsFormSchema";
-import { profileValidationSchema } from "@/hooks/profile/useProfileValidation";
 import { ValidationRule } from "@/hooks/common/dataConsistency/types";
 import { 
   createProfileCompletenessRule,
@@ -44,7 +43,21 @@ export class UnifiedDataValidationService {
   private initializeSchemas(): void {
     // Register all validation schemas
     this.validationSchemas.set('settings', formSchema);
-    this.validationSchemas.set('profile', profileValidationSchema);
+    
+    // Profile validation schema (consolidated from deprecated useProfileValidation)
+    const profileSchema = z.object({
+      name: z.string().min(2, "Name must be at least 2 characters"),
+      email: z.string().email("Valid email is required"),
+      birth_year: z.number().min(1900).max(new Date().getFullYear()).optional(),
+      shipping_address: z.object({
+        address_line1: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zip_code: z.string().optional(),
+        country: z.string().optional()
+      }).optional()
+    });
+    this.validationSchemas.set('profile', profileSchema);
     
     // Step-specific schemas for profile setup
     this.validationSchemas.set('profile-basic', z.object({

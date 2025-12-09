@@ -5,12 +5,15 @@ export enum SUPABASE_FUNCTIONS {
   GET_PRODUCT_DETAIL = "get-product-detail",
   GET_SHIPPING_QUOTE = "get-shipping-quote",
   
-  // Core V2 payment & order functions
+  // Core V2 payment & order functions (Two-Stage Processing)
   CREATE_CHECKOUT_SESSION = "create-checkout-session",
   STRIPE_WEBHOOK_V2 = "stripe-webhook-v2",
   PROCESS_ORDER_V2 = "process-order-v2",
-  SCHEDULED_ORDER_PROCESSOR = "scheduled-order-processor",
-  AUTO_GIFT_ORCHESTRATOR = "auto-gift-orchestrator",
+  
+  // Two-stage order processing functions
+  SCHEDULED_ORDER_PROCESSOR = "scheduled-order-processor",  // Handles scheduled orders
+  AUTO_GIFT_ORCHESTRATOR = "auto-gift-orchestrator",        // Handles auto-gift rules
+  
   ORDER_MONITOR_V2 = "order-monitor-v2",
   RECONCILE_CHECKOUT_SESSION = "reconcile-checkout-session",
   

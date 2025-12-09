@@ -37,7 +37,7 @@ const UnifiedAuthView: React.FC<UnifiedAuthViewProps> = ({
     damping: 30
   }}>
       <Card className="w-full card-unified py-[5px]">
-        <CardContent className="touch-padding-lg pb-safe py-[10px]">
+        <CardContent className="touch-padding-lg pb-safe py-[15px]">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-space-loose">
               <TabsTrigger value="signin" className="text-body font-medium touch-target-44 touch-manipulation">

@@ -90,31 +90,28 @@ const RecentOrderWidget = () => {
 
   const itemCount = order.line_items?.items?.length || 0;
   const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+  
+  // Show last 4 characters of order number for cleaner mobile display
+  const shortOrderNumber = order.order_number?.slice(-4) || order.order_number;
 
   return (
     <div>
       <DashboardSectionHeader 
         title="Recent purchase" 
         viewAllLink="/orders" 
-        viewAllText="View all purchases"
+        viewAllText="View all"
       />
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="space-y-1">
-              <p className="font-medium">Order #{order.order_number}</p>
-              <p className="text-sm text-muted-foreground">Status: {statusText}</p>
-              <p className="text-sm text-muted-foreground">Total Item(s): {itemCount}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 flex-1 min-w-0">
+              <p className="font-medium">Order #{shortOrderNumber}</p>
+              <p className="text-sm text-muted-foreground">{statusText} • {itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
+              <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/orders/${order.id}`}>View Details</Link>
+            <Button variant="outline" size="sm" className="min-h-[44px] shrink-0" asChild>
+              <Link to={`/orders/${order.id}`}>Details</Link>
             </Button>
-          </div>
-          <div className="pt-3 border-t border-border">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Order ID: {order.order_number}</span>
-              <span>Date: {new Date(order.created_at).toLocaleDateString()}</span>
-            </div>
           </div>
         </CardContent>
       </Card>

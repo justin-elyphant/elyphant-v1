@@ -197,15 +197,13 @@ const AIGifting = () => {
         </div>
 
         {/* Active Rules Section */}
-        <div className="pb-8">
-          <ActiveRulesSection 
-            rules={rules} 
-            onEditRule={(rule) => {
-              setEditingRule(rule);
-              setSetupDialogOpen(true);
-            }}
-          />
-        </div>
+        <ActiveRulesSection 
+          rules={rules} 
+          onEditRule={(rule) => {
+            setEditingRule(rule);
+            setSetupDialogOpen(true);
+          }}
+        />
 
         {/* AI Settings Section */}
         <Card className="bg-background">

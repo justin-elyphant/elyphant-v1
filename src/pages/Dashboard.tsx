@@ -124,7 +124,7 @@ const Dashboard = () => {
             className="mobile-content-spacing safe-area-bottom"
           >
             {/* Mobile Account Header - Optimized */}
-            <div className="mb-4 px-2">
+            <div className="mb-4 px-2 pt-4">
               <div className="flex flex-col gap-2 mb-3">
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-foreground mb-1 line-clamp-1">

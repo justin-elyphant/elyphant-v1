@@ -28,8 +28,10 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
   if (isOwnProfile && user) {
     return (
       <div className="min-h-screen w-full bg-background flex flex-col pb-safe">
-        <UnifiedShopperHeader mode="main" />
-        <main className="flex-1 w-full pb-20 lg:pb-8" style={{ width: '100%', maxWidth: 'none' }}>
+        <div className="sticky top-0 z-50">
+          <UnifiedShopperHeader mode="main" />
+        </div>
+        <main className="flex-1 w-full pb-20 lg:pb-8 relative z-0" style={{ width: '100%', maxWidth: 'none' }}>
           {children}
         </main>
         <Footer />
@@ -40,8 +42,10 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
   // Public/connection profile layout with main header
   return (
     <div className="min-h-screen w-full bg-background flex flex-col pb-safe" style={{ width: '100vw', maxWidth: '100vw' }}>
-      <UnifiedShopperHeader mode="main" />
-      <main className="flex-1 w-full pb-20 lg:pb-8" style={{ width: '100%', maxWidth: 'none' }}>
+      <div className="sticky top-0 z-50">
+        <UnifiedShopperHeader mode="main" />
+      </div>
+      <main className="flex-1 w-full pb-20 lg:pb-8 relative z-0" style={{ width: '100%', maxWidth: 'none' }}>
         {children}
       </main>
       <Footer />

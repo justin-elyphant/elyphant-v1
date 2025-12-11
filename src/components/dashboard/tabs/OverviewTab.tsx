@@ -15,7 +15,7 @@ const OverviewTab = () => {
 
       {/* Profile Section - Two Column Grid */}
       <div>
-        <DashboardSectionHeader title="Profile" viewAllLink="/settings" viewAllText="View profile" />
+        <DashboardSectionHeader title="Profile" viewAllLink="/profile" viewAllText="View profile" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ShippingAddressWidget />
           <PaymentMethodWidget />

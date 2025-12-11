@@ -38,7 +38,7 @@ const AIGifting = () => {
   return (
     <SidebarLayout>
       <div className="min-h-screen bg-muted pb-safe">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8 space-y-8">
         {/* Hero Section */}
         <div className="grid lg:grid-cols-2 gap-6 pt-4">
           {/* Left Side - Gradient Hero Card */}

@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "@/contexts/auth";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
 
 interface UnifiedProfileLayoutProps {
@@ -11,8 +12,8 @@ interface UnifiedProfileLayoutProps {
  * UNIFIED PROFILE LAYOUT
  * 
  * Single layout component that handles all profile types:
- * - Own profile: Shows sidebar navigation for authenticated users
- * - Public/Connection profiles: Shows standard header/footer layout
+ * - Own profile: Shows main header + content
+ * - Public/Connection profiles: Shows main header + content
  * 
  * Eliminates layout switching complexity and ensures consistent full-width behavior
  * iOS Capacitor compliant with safe area padding
@@ -23,10 +24,11 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Own profile layout (no main header or sidebar on profile to avoid overlay)
+  // Own profile layout with main header
   if (isOwnProfile && user) {
     return (
       <div className="min-h-screen w-full bg-background flex flex-col pb-safe">
+        <UnifiedShopperHeader mode="main" />
         <main className="flex-1 w-full pb-20 lg:pb-8" style={{ width: '100%', maxWidth: 'none' }}>
           {children}
         </main>
@@ -35,9 +37,10 @@ const UnifiedProfileLayout: React.FC<UnifiedProfileLayoutProps> = ({
     );
   }
 
-  // Public/connection profile layout (no main header - profile has its own header)
+  // Public/connection profile layout with main header
   return (
     <div className="min-h-screen w-full bg-background flex flex-col pb-safe" style={{ width: '100vw', maxWidth: '100vw' }}>
+      <UnifiedShopperHeader mode="main" />
       <main className="flex-1 w-full pb-20 lg:pb-8" style={{ width: '100%', maxWidth: 'none' }}>
         {children}
       </main>

@@ -27,7 +27,7 @@ const ConnectionsWidget = () => {
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <Users className="h-5 w-5 text-muted-foreground" />
             <div>
@@ -40,7 +40,7 @@ const ConnectionsWidget = () => {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="w-full sm:w-auto min-h-[44px]">
             <Link to="/connections">Manage Connections</Link>
           </Button>
         </div>

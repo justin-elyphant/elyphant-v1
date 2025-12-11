@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { format, addYears, isWithinInterval } from "date-fns";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 interface InlineWishlistViewerProps {
   wishlist: Wishlist;
@@ -134,6 +136,7 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
   }, [isConnected, profileOwner.id]);
 
   const handleAddToCart = (item: WishlistItem) => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     addToCart({
       id: item.product_id,
       name: item.title || item.name || 'Product',
@@ -141,16 +144,19 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
       image: item.image_url || undefined
     } as any);
 
+    triggerHapticFeedback('success');
     toast.success("Added to cart", {
       description: `${item.title || item.name} from ${profileOwner.name}'s wishlist`
     });
   };
 
   const handleViewProduct = (productId: string) => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     navigate(`/product/${productId}`);
   };
 
   const handleSetupAutoGift = (type: 'auto' | 'scheduled') => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     const initialData = {
       recipientId: profileOwner.id,
       recipientName: profileOwner.name,
@@ -205,14 +211,19 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
               {wishlist.items?.length || 0} items • {profileOwner.name}'s wishlist
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="flex-shrink-0"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <motion.div whileTap={{ scale: 0.9 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                triggerHapticFeedback('light');
+                onClose();
+              }}
+              className="flex-shrink-0 min-h-[44px] min-w-[44px]"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </motion.div>
         </div>
 
         {/* Connection Context Banner */}
@@ -232,13 +243,16 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
                   )}
                 </div>
               </div>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => handleSetupAutoGift('auto')}
-              >
-                Send {profileOwner.name.split(' ')[0]} a Gift
-              </Button>
+              <motion.div whileTap={{ scale: 0.97 }}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleSetupAutoGift('auto')}
+                  className="min-h-[44px]"
+                >
+                  Send {profileOwner.name.split(' ')[0]} a Gift
+                </Button>
+              </motion.div>
             </div>
           </div>
         )}
@@ -259,24 +273,28 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSetupAutoGift('scheduled')}
-                  className="whitespace-nowrap"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule a Gift
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleSetupAutoGift('auto')}
-                  className="whitespace-nowrap"
-                >
-                  <Gift className="h-4 w-4 mr-2" />
-                  Set Up Auto-Gift
-                </Button>
+                <motion.div whileTap={{ scale: 0.97 }}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSetupAutoGift('scheduled')}
+                    className="whitespace-nowrap min-h-[44px]"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule a Gift
+                  </Button>
+                </motion.div>
+                <motion.div whileTap={{ scale: 0.97 }}>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleSetupAutoGift('auto')}
+                    className="whitespace-nowrap min-h-[44px]"
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    Set Up Auto-Gift
+                  </Button>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -299,17 +317,19 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
                   </div>
                 )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 rounded-full shadow-lg"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(item);
-                    }}
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                  </Button>
+                  <motion.div whileTap={{ scale: 0.9 }}>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(item);
+                      }}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
               <div className="p-3 space-y-2">
@@ -322,24 +342,28 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
                   </p>
                 )}
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleViewProduct(item.product_id)}
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleAddToCart(item)}
-                  >
-                    <ShoppingCart className="h-3 w-3 mr-1" />
-                    Add
-                  </Button>
+                  <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full min-h-[44px]"
+                      onClick={() => handleViewProduct(item.product_id)}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                  </motion.div>
+                  <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full min-h-[44px]"
+                      onClick={() => handleAddToCart(item)}
+                    >
+                      <ShoppingCart className="h-3 w-3 mr-1" />
+                      Add
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             </Card>

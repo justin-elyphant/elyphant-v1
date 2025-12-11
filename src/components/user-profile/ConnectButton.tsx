@@ -4,6 +4,8 @@ import { useDirectConnect } from "@/hooks/useDirectConnect";
 import { useConnectionRequestDebugger } from "@/hooks/useConnectionRequestDebugger";
 import { UserPlus, UserMinus, Clock, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 interface ConnectButtonProps {
   targetUserId: string;
@@ -46,6 +48,8 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
   }, [targetUserId, connectState, loading]);
 
   const handleClick = async () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    
     console.log('🔘 [ConnectButton] Button clicked:', { 
       targetUserId, 
       isConnected: connectState.isConnected, 
@@ -59,9 +63,11 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
     
     if (connectState.isConnected) {
       console.log('🔘 [ConnectButton] Removing connection');
+      triggerHapticFeedback('warning');
       removeConnection();
     } else if (!connectState.isPending) {
       console.log('🔘 [ConnectButton] Sending connection request');
+      triggerHapticFeedback('success');
       sendConnectionRequest();
     } else {
       console.log('🔘 [ConnectButton] Request already pending, no action taken');
@@ -117,18 +123,21 @@ const ConnectButton: React.FC<ConnectButtonProps> = ({
   };
 
   return (
-    <Button
-      onClick={handleClick}
-      disabled={loading || connectState.isPending}
-      variant={getButtonVariant()}
-      size={size}
-      className={cn(
-        connectState.isConnected && "hover:bg-destructive hover:text-destructive-foreground",
-        className
-      )}
-    >
-      {getButtonContent()}
-    </Button>
+    <motion.div whileTap={{ scale: 0.97 }}>
+      <Button
+        onClick={handleClick}
+        disabled={loading || connectState.isPending}
+        variant={getButtonVariant()}
+        size={size}
+        className={cn(
+          "min-h-[44px]",
+          connectState.isConnected && "hover:bg-destructive hover:text-destructive-foreground",
+          className
+        )}
+      >
+        {getButtonContent()}
+      </Button>
+    </motion.div>
   );
 };
 

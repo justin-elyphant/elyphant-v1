@@ -1,6 +1,8 @@
 import React from "react";
 import { Globe, Lock } from "lucide-react";
 import { Wishlist } from "@/types/profile";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 interface InstagramWishlistCardProps {
   wishlist: Wishlist;
@@ -14,11 +16,17 @@ const InstagramWishlistCard: React.FC<InstagramWishlistCardProps> = ({
   onClick
 }) => {
   const coverImage = wishlist.cover_image || wishlist.items[0]?.image_url;
+
+  const handleClick = () => {
+    triggerHapticFeedback(HapticPatterns.cardTap);
+    onClick();
+  };
   
   return (
-    <div
-      onClick={onClick}
-      className="flex flex-col items-center cursor-pointer group flex-shrink-0"
+    <motion.div
+      onClick={handleClick}
+      className="flex flex-col items-center cursor-pointer group flex-shrink-0 min-w-[96px] min-h-[44px]"
+      whileTap={{ scale: 0.97 }}
     >
       {/* Circular Image Container with Gradient Ring */}
       <div className="relative w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32">
@@ -58,7 +66,7 @@ const InstagramWishlistCard: React.FC<InstagramWishlistCardProps> = ({
           {wishlist.title}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

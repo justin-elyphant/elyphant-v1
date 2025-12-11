@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import WishlistPriceRange from "./WishlistPriceRange";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 interface InstagramWishlistGridProps {
   profileId: string;
@@ -102,6 +104,11 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
       onWishlistsLoaded(wishlists);
     }
   }, [wishlists, loading, onWishlistsLoaded]);
+
+  const handleManageClick = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    navigate('/wishlists');
+  };
   
   if (loading) {
     return (
@@ -135,13 +142,16 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
           {isOwnProfile ? "My Wishlists" : `${displayName}'s Wishlists`}
         </h2>
         {isOwnProfile && !isPreviewMode && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/wishlists')}
-          >
-            Manage
-          </Button>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManageClick}
+              className="min-h-[44px]"
+            >
+              Manage
+            </Button>
+          </motion.div>
         )}
       </div>
       {/* Price Range Summary for Visitors */}

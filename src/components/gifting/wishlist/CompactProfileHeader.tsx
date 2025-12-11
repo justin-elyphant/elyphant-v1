@@ -8,6 +8,8 @@ import { Plus, Heart } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 interface CompactProfileHeaderProps {
   wishlists: Wishlist[];
@@ -81,6 +83,11 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     fetchPurchaseData();
   }, [wishlists]);
 
+  const handleCreateWishlist = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    onCreateWishlist();
+  };
+
   return (
     <div className={cn("bg-background border-b border-border", className)}>
       {/* Main Profile Row */}
@@ -103,13 +110,15 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           </p>
         </div>
 
-        {/* Create Button - Gradient FAB */}
-        <Button 
-          onClick={onCreateWishlist}
-          className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 shadow-lg flex-shrink-0"
-        >
-          <Plus className="h-5 w-5 text-white" />
-        </Button>
+        {/* Create Button - Gradient FAB with iOS compliance */}
+        <motion.div whileTap={{ scale: 0.95 }}>
+          <Button 
+            onClick={handleCreateWishlist}
+            className="h-11 w-11 min-h-[44px] min-w-[44px] p-0 rounded-full bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 shadow-lg flex-shrink-0"
+          >
+            <Plus className="h-5 w-5 text-white" />
+          </Button>
+        </motion.div>
       </div>
 
       {/* Gift Tracker Progress (optional slim bar) */}

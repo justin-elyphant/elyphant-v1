@@ -220,36 +220,38 @@ const AIGifting = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="save-preferences" className="text-sm font-medium">Save search preferences</Label>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="save-preferences" className="text-sm font-medium cursor-pointer">Save search preferences</Label>
                 <p className="text-xs text-muted-foreground">Allow AI to remember your gift search patterns</p>
               </div>
-              <Switch 
-                id="save-preferences" 
-                defaultChecked 
-                className="min-h-[44px] min-w-[44px]"
-                onCheckedChange={(checked) => {
-                  triggerHapticFeedback('selection');
-                  toast.success(checked ? "Search preferences enabled" : "Search preferences disabled");
-                }}
-              />
+              <div className="flex items-center justify-center min-w-[44px] min-h-[44px]">
+                <Switch 
+                  id="save-preferences" 
+                  defaultChecked 
+                  onCheckedChange={(checked) => {
+                    triggerHapticFeedback('selection');
+                    toast.success(checked ? "Search preferences enabled" : "Search preferences disabled");
+                  }}
+                />
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="smart-suggestions" className="text-sm font-medium">Smart suggestions</Label>
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="smart-suggestions" className="text-sm font-medium cursor-pointer">Smart suggestions</Label>
                 <p className="text-xs text-muted-foreground">Get personalized gift recommendations based on your history</p>
               </div>
-              <Switch 
-                id="smart-suggestions" 
-                defaultChecked 
-                className="min-h-[44px] min-w-[44px]"
-                onCheckedChange={(checked) => {
-                  triggerHapticFeedback('selection');
-                  toast.success(checked ? "Smart suggestions enabled" : "Smart suggestions disabled");
-                }}
-              />
+              <div className="flex items-center justify-center min-w-[44px] min-h-[44px]">
+                <Switch 
+                  id="smart-suggestions" 
+                  defaultChecked 
+                  onCheckedChange={(checked) => {
+                    triggerHapticFeedback('selection');
+                    toast.success(checked ? "Smart suggestions enabled" : "Smart suggestions disabled");
+                  }}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

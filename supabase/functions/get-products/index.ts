@@ -242,9 +242,35 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
 /**
  * Calculate popularity score for smart sorting
  * Higher scores = cached products with good data float to top
+ * 
+ * Score breakdown (max ~210 points):
+ * - Best Seller badges: up to 60 points
+ * - View count: up to 50 points
+ * - Has ratings: 50 points
+ * - High ratings (4+ stars): up to 25 points
+ * - Review count: up to 25 points
  */
 const calculatePopularityScore = (cached: any, metadata: any) => {
   let score = 0;
+  
+  // Best Seller badge bonuses (highest priority - Amazon's curated signals)
+  const bestSellerType = metadata.bestSellerType || metadata.badge_text || '';
+  const isBestSeller = metadata.isBestSeller || false;
+  
+  if (bestSellerType) {
+    const badgeLower = bestSellerType.toLowerCase();
+    if (badgeLower.includes("amazon's choice") || badgeLower.includes("amazons choice")) {
+      score += 60; // Amazon's Choice = highest trust signal
+    } else if (badgeLower.includes("best seller") || isBestSeller) {
+      score += 50; // Best Seller
+    } else if (badgeLower.includes("top rated") || badgeLower.includes("highly rated")) {
+      score += 40; // Top Rated / Highly Rated
+    } else if (badgeLower.includes("popular")) {
+      score += 30; // Popular
+    }
+  } else if (isBestSeller) {
+    score += 50; // Fallback if isBestSeller flag is set without type
+  }
   
   // View count contributes to popularity (max 50 points)
   score += Math.min(50, (cached.view_count || 0) * 2);

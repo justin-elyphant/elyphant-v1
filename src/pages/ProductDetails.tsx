@@ -240,7 +240,7 @@ const ProductDetailsPage: React.FC = () => {
       </div>
       
       {/* 60/40 Split Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 pb-24 lg:pb-8">
         <div className="grid grid-cols-12 gap-8">
           {/* LEFT 60%: Images */}
           <div className="col-span-12 lg:col-span-7">

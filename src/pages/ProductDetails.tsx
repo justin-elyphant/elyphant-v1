@@ -133,12 +133,22 @@ const ProductDetailsPage: React.FC = () => {
           toast.error('Product details not available');
         }
       } else {
+        // Merge data: use API data but fallback to navigation state for missing fields (like reviews)
+        const apiData = data as any;
+        const navProduct = product as any;
         const enhancedProduct = {
           ...data,
           product_id: productId,
           isZincApiProduct: false, // FIXED: Zinc Detail API returns dollars, not cents
           skipCentsDetection: true, // Prevent cart from converting price
-          retailer: retailer || 'amazon'
+          retailer: retailer || 'amazon',
+          // Preserve review data from navigation state if API doesn't return it
+          // This is critical for products where search returns reviews but detail API returns null
+          stars: apiData.stars ?? apiData.rating ?? navProduct?.stars ?? navProduct?.rating ?? 0,
+          rating: apiData.stars ?? apiData.rating ?? navProduct?.stars ?? navProduct?.rating ?? 0,
+          review_count: apiData.review_count ?? apiData.num_reviews ?? navProduct?.review_count ?? navProduct?.num_reviews ?? navProduct?.reviewCount ?? 0,
+          reviewCount: apiData.review_count ?? apiData.num_reviews ?? navProduct?.review_count ?? navProduct?.num_reviews ?? navProduct?.reviewCount ?? 0,
+          num_reviews: apiData.review_count ?? apiData.num_reviews ?? navProduct?.review_count ?? navProduct?.num_reviews ?? navProduct?.reviewCount ?? 0
         };
         setProductDetail(enhancedProduct);
         setCurrentImages(getProductImages(enhancedProduct));

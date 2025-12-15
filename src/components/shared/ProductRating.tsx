@@ -18,10 +18,12 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   className = "",
   showParentheses = false
 }) => {
-  // Only show rating when we have MEANINGFUL cached data (both rating > 0 AND review count > 0)
-  // This ensures non-cached products show clean cards without sloppy placeholder ratings
   const numericReviewCount = typeof reviewCount === 'string' ? parseInt(reviewCount, 10) : reviewCount;
-  if (!rating || rating <= 0 || !numericReviewCount || numericReviewCount <= 0) return null;
+  const hasValidRating = rating && rating > 0;
+  const hasValidReviewCount = numericReviewCount && numericReviewCount > 0;
+  
+  // Show nothing if we have no meaningful data at all
+  if (!hasValidRating && !hasValidReviewCount) return null;
   
   // Set the star size based on the size prop
   const getStarSize = () => {
@@ -44,34 +46,37 @@ const ProductRating: React.FC<ProductRatingProps> = ({
   const starSize = getStarSize();
   const textSize = getTextSize();
   
-  // Convert reviewCount to string if it's a valid value
-  const reviewCountStr = (reviewCount !== undefined && reviewCount !== null) ? String(reviewCount) : undefined;
-  
   // Format review count for display (e.g., 2100 -> 2.1K)
-  const formatReviewCount = (count: number | string): string => {
-    const numCount = typeof count === 'string' ? parseInt(count, 10) : count;
-    if (isNaN(numCount)) return '';
-    if (numCount >= 1000) {
-      return `${(numCount / 1000).toFixed(1)}K`;
+  const formatReviewCount = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
     }
-    return numCount.toString();
+    return count.toString();
   };
   
-  const formattedReviewCount = reviewCountStr ? formatReviewCount(reviewCountStr) : '';
+  const formattedReviewCount = hasValidReviewCount ? formatReviewCount(numericReviewCount) : '';
   
+  // If we only have review count (no stars), show just the review count text
+  if (!hasValidRating && hasValidReviewCount) {
+    return (
+      <div className={cn("flex items-center gap-1", className)}>
+        <span className={cn("text-muted-foreground", textSize)}>
+          {formattedReviewCount} reviews
+        </span>
+      </div>
+    );
+  }
+  
+  // Show full stars + review count when rating is available
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => {
-          // Calculate fill percentage for each star (0-100%)
           const fillPercent = Math.min(100, Math.max(0, (rating - i) * 100));
           
           return (
             <div key={i} className="relative inline-block">
-              {/* Background (empty) star */}
               <Star className={cn(starSize, "text-gray-300 fill-gray-300")} />
-              
-              {/* Foreground (filled) star with partial clip */}
               {fillPercent > 0 && (
                 <div 
                   className="absolute inset-0 overflow-hidden"

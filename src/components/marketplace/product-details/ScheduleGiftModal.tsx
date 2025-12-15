@@ -167,7 +167,7 @@ const ScheduleGiftModal: React.FC<ScheduleGiftModalProps> = ({
       onOpenChange(isOpen);
       if (!isOpen) resetForm();
     }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md pb-safe">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-foreground">
             Schedule Gift Delivery

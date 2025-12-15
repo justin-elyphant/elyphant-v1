@@ -254,8 +254,10 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
   let score = 0;
   
   // Best Seller badge bonuses (highest priority - Amazon's curated signals)
-  const bestSellerType = metadata.bestSellerType || metadata.badge_text || '';
-  const isBestSeller = metadata.isBestSeller || false;
+  // Handle both camelCase and snake_case field names for compatibility
+  const bestSellerType = metadata.bestSellerType || metadata.best_seller_type || 
+                         metadata.badgeText || metadata.badge_text || '';
+  const isBestSeller = metadata.isBestSeller || metadata.is_best_seller || false;
   
   if (bestSellerType) {
     const badgeLower = bestSellerType.toLowerCase();

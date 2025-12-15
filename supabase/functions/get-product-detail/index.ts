@@ -124,8 +124,14 @@ serve(async (req) => {
           ? (now.getTime() - lastRefreshed.getTime()) / (1000 * 60 * 60 * 24)
           : 999;
         
-        if (daysSinceRefresh < CACHE_FRESHNESS_DAYS) {
-          console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old`);
+        // Check if cached data has COMPLETE product details (not just search result stub)
+        const hasCompleteData = Boolean(
+          cachedProduct.metadata?.product_description || 
+          (cachedProduct.metadata?.feature_bullets && cachedProduct.metadata.feature_bullets.length > 0)
+        );
+        
+        if (daysSinceRefresh < CACHE_FRESHNESS_DAYS && hasCompleteData) {
+          console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old, complete data`);
           
           // Background update view count (non-blocking)
           EdgeRuntime.waitUntil(
@@ -151,6 +157,8 @@ serve(async (req) => {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders }
           });
+        } else if (!hasCompleteData) {
+          console.log(`[Cache INCOMPLETE] Product ${product_id} - Missing product details, fetching from Zinc API...`);
         } else {
           console.log(`[Cache STALE] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old, refreshing...`);
         }

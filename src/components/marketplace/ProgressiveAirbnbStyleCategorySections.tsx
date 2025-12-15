@@ -117,7 +117,7 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
           reviewCount: result.reviewCount || result.num_reviews || 0,
           description: result.description || result.product_description || '',
           brand: result.brand || '',
-          isBestSeller: result.isBestSeller || true,
+          isBestSeller: result.isBestSeller ?? false,
           bestSellerType: result.bestSellerType || null,
           badgeText: result.badgeText || null,
           best_seller_rank: result.best_seller_rank || null

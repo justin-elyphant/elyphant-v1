@@ -259,6 +259,14 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
                          metadata.badgeText || metadata.badge_text || '';
   const isBestSeller = metadata.isBestSeller || metadata.is_best_seller || false;
   
+  // Check raw num_sales field from Zinc API (critical for high-volume products)
+  const numSales = metadata.num_sales || cached.num_sales || 0;
+  if (numSales > 1000) {
+    score += 50; // Best seller bonus for high sales volume
+  } else if (numSales > 500) {
+    score += 30; // Popular bonus for moderate sales
+  }
+  
   if (bestSellerType) {
     const badgeLower = bestSellerType.toLowerCase();
     if (badgeLower.includes("amazon's choice") || badgeLower.includes("amazons choice")) {
@@ -912,11 +920,17 @@ serve(async (req) => {
         console.log('Processing luxury category batch request with price filter:', priceFilter);
         const luxuryData = await searchLuxuryCategories(api_key, page, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = luxuryData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, luxuryData.results, 'luxury'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'luxury'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, luxuryData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -935,11 +949,17 @@ serve(async (req) => {
         console.log('Processing gifts for her category batch request with price filter:', priceFilter);
         const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = giftsForHerData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsForHerData.results, 'gifts_for_her'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_for_her'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHerData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -958,11 +978,17 @@ serve(async (req) => {
         console.log('Processing electronics category batch request with price filter:', priceFilter);
         const electronicsData = await searchElectronicsCategories(api_key, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = electronicsData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, electronicsData.results, 'electronics'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'electronics'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, electronicsData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -981,11 +1007,17 @@ serve(async (req) => {
         console.log('Processing best selling category batch request with price filter:', priceFilter);
         const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = bestSellingData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, bestSellingData.results, 'best_selling'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'best_selling'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, bestSellingData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -1004,11 +1036,17 @@ serve(async (req) => {
         console.log('Processing gifts for him category batch request with price filter:', priceFilter);
         const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = giftsForHimData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsForHimData.results, 'gifts_for_him'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_for_him'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsForHimData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -1027,11 +1065,17 @@ serve(async (req) => {
         console.log('Processing gifts under $50 category batch request with price filter:', priceFilter);
         const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = giftsUnder50Data.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, giftsUnder50Data.results, 'gifts_under_50'));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_under_50'));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, giftsUnder50Data.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({
@@ -1050,11 +1094,17 @@ serve(async (req) => {
         console.log(`Processing brand categories request for: ${query} with price filter:`, priceFilter);
         const brandData = await searchBrandCategories(api_key, query, page, limit, priceFilter);
         
+        // Process best seller data BEFORE caching
+        const processedResults = brandData.results.map((product: any) => {
+          const bestSellerData = processBestSellerData(product);
+          return { ...product, ...bestSellerData };
+        });
+        
         // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, brandData.results, query));
+        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, query));
         
         // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, brandData.results);
+        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
         const sortedProducts = sortByPopularity(enrichedProducts);
         
         return new Response(JSON.stringify({

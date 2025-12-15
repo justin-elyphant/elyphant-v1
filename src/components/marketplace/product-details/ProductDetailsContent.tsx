@@ -9,8 +9,16 @@ interface ProductDetailsContentProps {
 
 const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({ product }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const description = product.product_description || product.description || "";
-  const features = product.feature_bullets || product.product_details || [];
+  
+  // Check both top-level and metadata for description and features
+  const description = product.product_description || 
+                      product.metadata?.product_description || 
+                      product.description || 
+                      "";
+  const features = product.feature_bullets || 
+                   product.metadata?.feature_bullets || 
+                   product.product_details || 
+                   [];
   
   // PHASE 5: Sanitize HTML description with DOMPurify
   const sanitizedDescription = description ? DOMPurify.sanitize(description) : "";
@@ -19,8 +27,16 @@ const ProductDetailsContent: React.FC<ProductDetailsContentProps> = ({ product }
     ? sanitizedDescription.substring(0, 300) + "..." 
     : sanitizedDescription;
   
+  const hasContent = description || (features && features.length > 0) || product.brand;
+  
   return (
     <div className="space-y-4 py-3">
+      {!hasContent && (
+        <p className="text-sm text-muted-foreground">
+          No additional product details available.
+        </p>
+      )}
+      
       {description && (
         <div>
           <div 

@@ -246,6 +246,11 @@ serve(async (req) => {
         variant_specifics: Array.isArray(data.variant_specifics) ? data.variant_specifics : [],
         // Variation detection flag for gradual rollout
         hasVariations: Boolean(data.all_variants && Array.isArray(data.all_variants) && data.all_variants.length > 0),
+        // PRESERVE cached review data for frontend response
+        // Zinc confirmed: Search and Detail APIs "source data differently"
+        stars: data.stars ?? cachedProduct?.metadata?.stars ?? null,
+        review_count: data.review_count || data.num_reviews || cachedProduct?.metadata?.review_count || null,
+        num_reviews: data.review_count || data.num_reviews || cachedProduct?.metadata?.review_count || null,
         // Legacy retailer field
         retailer: retailer || data.retailer
       };

@@ -253,6 +253,12 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
 const calculatePopularityScore = (cached: any, metadata: any) => {
   let score = 0;
   
+  // BASELINE BONUS: Cached products get priority positioning
+  // Ensures viewed/cached products rank above fresh non-cached results
+  if (cached.view_count !== undefined || cached.product_id) {
+    score += 20;
+  }
+  
   // Best Seller badge bonuses (highest priority - Amazon's curated signals)
   // Handle both camelCase and snake_case field names for compatibility
   const bestSellerType = metadata.bestSellerType || metadata.best_seller_type || 
@@ -285,18 +291,25 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
   // View count contributes to popularity (max 50 points)
   score += Math.min(50, (cached.view_count || 0) * 2);
   
-  // Having ratings is valuable (50 points)
-  if (metadata.stars && metadata.review_count) {
-    score += 50;
+  // TIERED RATINGS BONUS: Give partial credit for incomplete data
+  const hasStars = metadata.stars && metadata.stars > 0;
+  const hasReviews = metadata.review_count && metadata.review_count > 0;
+  
+  if (hasStars && hasReviews) {
+    score += 50;  // Full bonus for complete data
+  } else if (hasReviews) {
+    score += 30;  // Partial bonus for reviews without stars (like LAIKOU moisturizer)
+  } else if (hasStars) {
+    score += 25;  // Partial bonus for stars without reviews
   }
   
   // High ratings boost score (up to 25 points)
-  if (metadata.stars && metadata.stars >= 4) {
+  if (hasStars && metadata.stars >= 4) {
     score += (metadata.stars - 3) * 25;
   }
   
   // More reviews = more trusted (up to 25 points)
-  if (metadata.review_count) {
+  if (hasReviews) {
     score += Math.min(25, Math.log10(metadata.review_count + 1) * 10);
   }
   

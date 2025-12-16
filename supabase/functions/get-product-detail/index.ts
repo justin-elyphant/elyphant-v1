@@ -273,8 +273,9 @@ serve(async (req) => {
         view_count: (cachedProduct?.view_count || 0) + 1,
         metadata: {
           // Store ALL rating/review data in metadata JSONB
-          stars: enhancedData.stars,
-          review_count: enhancedData.review_count || enhancedData.num_reviews,
+          // PRESERVE cached review data if Zinc API returns null (search results may have had reviews)
+          stars: enhancedData.stars ?? cachedProduct?.metadata?.stars ?? null,
+          review_count: enhancedData.review_count || enhancedData.num_reviews || cachedProduct?.metadata?.review_count || null,
           // Store complete image arrays
           main_image: enhancedData.main_image,
           images: enhancedData.images,

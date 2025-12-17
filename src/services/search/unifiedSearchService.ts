@@ -145,7 +145,7 @@ export const unifiedSearch = async (
       console.log('🔍 [unifiedSearch] Searching products via ProductCatalogService...');
       const response = await productCatalogService.searchProducts(query, {
         limit: Math.floor(maxResults / 3),
-        luxuryCategories: options.luxuryCategories,
+        category: options.luxuryCategories ? 'luxury' : undefined,
       });
       results.products = response.products as Product[];
       console.log(`🔍 [unifiedSearch] Product search completed: ${results.products.length} results`);

@@ -26,13 +26,6 @@ export interface SearchOptions {
   filters?: SearchFilters;
   page?: number;
   limit?: number;
-  // Legacy flag support during migration
-  luxuryCategories?: boolean;
-  giftsForHer?: boolean;
-  giftsForHim?: boolean;
-  giftsUnder50?: boolean;
-  bestSellingCategory?: boolean;
-  electronicsCategory?: boolean;
 }
 
 export interface SearchResponse {
@@ -84,30 +77,9 @@ class ProductCatalogServiceClass {
         },
       };
 
-      // Map category to appropriate server-side handler
+      // Map category to server-side handler
       if (options.category) {
         requestBody.category = options.category;
-      }
-
-      // Legacy flag support - convert to category parameter
-      if (options.luxuryCategories) {
-        requestBody.luxuryCategories = true;
-      }
-      if (options.giftsForHer) {
-        requestBody.giftsForHer = true;
-      }
-      if (options.giftsForHim) {
-        requestBody.giftsForHim = true;
-      }
-      if (options.giftsUnder50) {
-        requestBody.giftsUnder50 = true;
-        requestBody.filters.maxPrice = 50;
-      }
-      if (options.bestSellingCategory) {
-        requestBody.bestSellingCategory = true;
-      }
-      if (options.electronicsCategory) {
-        requestBody.electronicsCategory = true;
       }
 
       // Add price filters

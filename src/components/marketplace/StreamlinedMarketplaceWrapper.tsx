@@ -162,12 +162,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
           gender: searchParams.get('gender')?.split(','),
           size: searchParams.get('size')?.split(','),
         },
-        // Legacy flag support
-        luxuryCategories: searchParams.get('luxuryCategories') === 'true',
-        giftsForHer: searchParams.get('giftsForHer') === 'true',
-        giftsForHim: searchParams.get('giftsForHim') === 'true',
-        giftsUnder50: searchParams.get('giftsUnder50') === 'true',
-        bestSellingCategory: searchParams.get('category') === 'best-selling',
       });
       
       console.log(`[handleLoadMore] Loaded ${result.products?.length || 0} products`);

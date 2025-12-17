@@ -87,6 +87,8 @@ const enrichWithCachedData = async (supabase: any, products: any[]) => {
           // Enrich with cached rating data
           stars: metadata.stars || product.stars,
           review_count: metadata.review_count || product.review_count,
+          // Enrich with real Zinc sales data
+          num_sales: metadata.num_sales || product.num_sales || null,
           // Enrich with cached images if available
           images: metadata.images || product.images,
           main_image: metadata.main_image || product.main_image || product.image,
@@ -136,6 +138,7 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
       metadata: {
         stars: p.stars || p.rating || null,
         review_count: p.review_count || p.num_reviews || null,
+        num_sales: p.num_sales || null, // Real Zinc sales data for purchase indicator
         main_image: p.main_image || p.image,
         images: p.images || [p.main_image || p.image].filter(Boolean),
         isBestSeller: p.isBestSeller || false,
@@ -221,6 +224,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
         rating: p.metadata?.stars,
         review_count: p.metadata?.review_count,
         num_reviews: p.metadata?.review_count,
+        num_sales: p.metadata?.num_sales || null, // Real Zinc sales data
         isBestSeller: p.metadata?.isBestSeller || false,
         bestSellerType: p.metadata?.bestSellerType,
         badgeText: p.metadata?.badgeText,

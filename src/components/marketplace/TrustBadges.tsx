@@ -27,19 +27,28 @@ const formatCompactNumber = (num: number): string => {
 };
 
 /**
- * Calculate purchase indicator text based on popularity
+ * Calculate purchase indicator text based on REAL Zinc num_sales data
+ * Falls back to view_count for products without sales data
  */
 const getPurchaseIndicator = (product: Product): string | null => {
-  const viewCount = (product as any).view_count || 0;
-  const popularityScore = (product as any).popularity_score || 0;
+  // Use REAL num_sales from Zinc API (not simulated)
+  const numSales = (product as any).num_sales || 
+                   (product as any).metadata?.num_sales || 0;
   
-  // High popularity = simulate high purchase volume
-  if (popularityScore > 100 || viewCount > 50) {
-    const estimatedPurchases = Math.floor((popularityScore + viewCount) * 10);
-    return `${formatCompactNumber(estimatedPurchases)}+ bought recently`;
+  // Display real sales data when available
+  if (numSales >= 10000) {
+    return `${formatCompactNumber(numSales)}+ bought`;
+  }
+  if (numSales >= 1000) {
+    return `${formatCompactNumber(numSales)}+ bought recently`;
+  }
+  if (numSales >= 100) {
+    return "Popular choice";
   }
   
-  if (popularityScore > 50 || viewCount > 20) {
+  // Fallback: Only show for high-engagement cached products without num_sales
+  const viewCount = (product as any).view_count || 0;
+  if (viewCount > 50) {
     return "Popular choice";
   }
   

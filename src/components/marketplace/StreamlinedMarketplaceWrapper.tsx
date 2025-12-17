@@ -22,7 +22,7 @@ import OptimizedProductGrid from "./components/OptimizedProductGrid";
 import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
 import { batchDOMUpdates } from "@/utils/performanceOptimizations";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
-import { useOptimizedTouchInteractions } from "@/hooks/useOptimizedTouchInteractions";
+// useOptimizedTouchInteractions removed - was blocking iOS native scrolling
 import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersectionObserver";
 
 import { Sparkles } from "lucide-react";
@@ -113,11 +113,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Container ref for touch and intersection optimization
   const containerRef = React.useRef<HTMLDivElement>(null);
   
-  // Optimized touch interactions for mobile
-  const { gesture, isInteracting } = useOptimizedTouchInteractions(containerRef, {
-    preventDefaultScroll: true,
-    tapDelay: 200
-  });
+  // Touch interactions hook removed - was blocking iOS native scrolling with pointer-events-none
   
   // Intersection observer for lazy loading optimization
   const { isVisible, ref: intersectionRef } = useOptimizedIntersectionObserver({
@@ -541,7 +537,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         containerRef.current = el;
         intersectionRef(el);
       }}
-      className={`container mx-auto px-4 py-6 pt-safe-top pb-safe ${isInteracting ? 'pointer-events-none' : ''} ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
+      className={`container mx-auto px-4 py-6 pt-safe-top pb-safe ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
       {/* Conditional Hero Section - Hide if personalized or there's an active search */}
       {!isPersonalizedActive && !urlSearchTerm && (

@@ -8,6 +8,104 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// ============================================================================
+// PHASE 1: CATEGORY REGISTRY - Single source of truth for all category configs
+// Replaces 6 separate category handler functions (~200 lines removed)
+// ============================================================================
+const CATEGORY_REGISTRY: Record<string, {
+  name: string;
+  queries: string[];
+  priceMax?: number;
+  priceMin?: number;
+}> = {
+  'luxury': {
+    name: 'Luxury Items',
+    queries: [
+      "top designer bags for women",
+      "top designer sunglasses", 
+      "luxury watches",
+      "designer jewelry"
+    ]
+  },
+  'gifts-for-her': {
+    name: 'Gifts for Her',
+    queries: [
+      "skincare essentials for women",
+      "cozy sweaters and cardigans", 
+      "candles and home fragrance",
+      "books and reading accessories",
+      "yoga and fitness accessories",
+      "coffee and tea gifts"
+    ]
+  },
+  'gifts-for-him': {
+    name: 'Gifts for Him',
+    queries: [
+      "tech gadgets for men",
+      "grooming essentials",
+      "fitness and sports gear",
+      "watches and accessories", 
+      "tools and gadgets",
+      "gaming accessories"
+    ]
+  },
+  'gifts-under-50': {
+    name: 'Gifts Under $50',
+    queries: [
+      "best gifts under 50",
+      "popular products under 50",
+      "bluetooth earbuds under 50",
+      "phone accessories under 50", 
+      "kitchen gadgets under 50",
+      "skincare sets under 50",
+      "jewelry gifts under 50",
+      "home decor items under 50",
+      "tech accessories under 50",
+      "books under 50",
+      "coffee accessories under 50",
+      "fitness accessories under 50"
+    ],
+    priceMax: 50,
+    priceMin: 1
+  },
+  'electronics': {
+    name: 'Electronics & Gadgets',
+    queries: [
+      "smartphones phones mobile devices apple samsung",
+      "laptops computers macbook dell hp",
+      "headphones earbuds airpods bose sony",
+      "smart home devices alexa google nest",
+      "gaming consoles playstation xbox nintendo",
+      "cameras photography canon nikon sony",
+      "tablets ipad android surface",
+      "smart watches apple watch garmin fitbit"
+    ]
+  },
+  'best-selling': {
+    name: 'Best Sellers',
+    queries: [
+      "best selling electronics gadgets",
+      "best selling home kitchen essentials", 
+      "best selling fashion clothing",
+      "best selling books bestsellers",
+      "best selling beauty products",
+      "best selling fitness equipment",
+      "best selling toys games",
+      "popular trending items"
+    ]
+  }
+};
+
+// Legacy flag to category mapping (backward compatibility during migration)
+const LEGACY_FLAG_TO_CATEGORY: Record<string, string> = {
+  'luxuryCategories': 'luxury',
+  'giftsForHer': 'gifts-for-her',
+  'giftsForHim': 'gifts-for-him',
+  'giftsUnder50': 'gifts-under-50',
+  'electronics': 'electronics',
+  'bestSelling': 'best-selling'
+};
+
 // Initialize Supabase client for cache operations
 const getSupabaseClient = () => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -138,7 +236,7 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
       metadata: {
         stars: p.stars || p.rating || null,
         review_count: p.review_count || p.num_reviews || null,
-        num_sales: p.num_sales || null, // Real Zinc sales data for purchase indicator
+        num_sales: p.num_sales || null,
         main_image: p.main_image || p.image,
         images: p.images || [p.main_image || p.image].filter(Boolean),
         isBestSeller: p.isBestSeller || false,
@@ -182,13 +280,6 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
     
     if (searchTerms.length === 0) return null;
 
-    // Try to find products matching the query
-    // Use ilike for flexible matching
-    let queryBuilder = supabase
-      .from('products')
-      .select('*')
-      .not('metadata', 'is', null);
-
     // Build OR condition for search terms matching title
     const orConditions = searchTerms.map(term => `title.ilike.%${term}%`).join(',');
     
@@ -224,14 +315,14 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
         rating: p.metadata?.stars,
         review_count: p.metadata?.review_count,
         num_reviews: p.metadata?.review_count,
-        num_sales: p.metadata?.num_sales || null, // Real Zinc sales data
+        num_sales: p.metadata?.num_sales || null,
         isBestSeller: p.metadata?.isBestSeller || false,
         bestSellerType: p.metadata?.bestSellerType,
         badgeText: p.metadata?.badgeText,
         is_cached: true,
         view_count: p.view_count || 0,
         popularity_score: calculatePopularityScore(p, p.metadata || {}),
-        from_cache: true // Flag to indicate this came from DB cache
+        from_cache: true
       }));
     }
 
@@ -245,74 +336,61 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
 
 /**
  * Calculate popularity score for smart sorting
- * Higher scores = cached products with good data float to top
- * 
- * Score breakdown (max ~210 points):
- * - Best Seller badges: up to 60 points
- * - View count: up to 50 points
- * - Has ratings: 50 points
- * - High ratings (4+ stars): up to 25 points
- * - Review count: up to 25 points
  */
 const calculatePopularityScore = (cached: any, metadata: any) => {
   let score = 0;
   
-  // BASELINE BONUS: Cached products get priority positioning
-  // Ensures viewed/cached products rank above fresh non-cached results
+  // Baseline bonus for cached products
   if (cached.view_count !== undefined || cached.product_id) {
     score += 20;
   }
   
-  // Best Seller badge bonuses (highest priority - Amazon's curated signals)
-  // Handle both camelCase and snake_case field names for compatibility
+  // Best Seller badge bonuses
   const bestSellerType = metadata.bestSellerType || metadata.best_seller_type || 
                          metadata.badgeText || metadata.badge_text || '';
   const isBestSeller = metadata.isBestSeller || metadata.is_best_seller || false;
   
-  // Check raw num_sales field from Zinc API (critical for high-volume products)
   const numSales = metadata.num_sales || cached.num_sales || 0;
   if (numSales > 1000) {
-    score += 50; // Best seller bonus for high sales volume
+    score += 50;
   } else if (numSales > 500) {
-    score += 30; // Popular bonus for moderate sales
+    score += 30;
   }
   
   if (bestSellerType) {
     const badgeLower = bestSellerType.toLowerCase();
     if (badgeLower.includes("amazon's choice") || badgeLower.includes("amazons choice")) {
-      score += 60; // Amazon's Choice = highest trust signal
+      score += 60;
     } else if (badgeLower.includes("best seller") || isBestSeller) {
-      score += 50; // Best Seller
+      score += 50;
     } else if (badgeLower.includes("top rated") || badgeLower.includes("highly rated")) {
-      score += 40; // Top Rated / Highly Rated
+      score += 40;
     } else if (badgeLower.includes("popular")) {
-      score += 30; // Popular
+      score += 30;
     }
   } else if (isBestSeller) {
-    score += 50; // Fallback if isBestSeller flag is set without type
+    score += 50;
   }
   
   // View count contributes to popularity (max 50 points)
   score += Math.min(50, (cached.view_count || 0) * 2);
   
-  // TIERED RATINGS BONUS: Give partial credit for incomplete data
+  // Tiered ratings bonus
   const hasStars = metadata.stars && metadata.stars > 0;
   const hasReviews = metadata.review_count && metadata.review_count > 0;
   
   if (hasStars && hasReviews) {
-    score += 50;  // Full bonus for complete data
+    score += 50;
   } else if (hasReviews) {
-    score += 30;  // Partial bonus for reviews without stars (like LAIKOU moisturizer)
+    score += 30;
   } else if (hasStars) {
-    score += 25;  // Partial bonus for stars without reviews
+    score += 25;
   }
   
-  // High ratings boost score (up to 25 points)
   if (hasStars && metadata.stars >= 4) {
     score += (metadata.stars - 3) * 25;
   }
   
-  // More reviews = more trusted (up to 25 points)
   if (hasReviews) {
     score += Math.min(25, Math.log10(metadata.review_count + 1) * 10);
   }
@@ -321,11 +399,10 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
 };
 
 /**
- * Sort products by popularity score (cached products with data first)
+ * Sort products by popularity score
  */
 const sortByPopularity = (products: any[]) => {
   return [...products].sort((a, b) => {
-    // Sort by popularity score descending
     return (b.popularity_score || 0) - (a.popularity_score || 0);
   });
 };
@@ -339,7 +416,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
   try {
     const normalizedQuery = query.toLowerCase().trim();
     
-    // Upsert to search_trends table
     const { error } = await supabase
       .from('search_trends')
       .upsert(
@@ -355,7 +431,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
       );
 
     if (error) {
-      // If upsert fails, try increment approach
       const { data: existing } = await supabase
         .from('search_trends')
         .select('id, search_count')
@@ -383,7 +458,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
     
     console.log(`📊 Tracked search trend: "${normalizedQuery}"`);
   } catch (error) {
-    // Don't fail the request if trend tracking fails
     console.warn('⚠️ Search trend tracking failed:', error);
   }
 };
@@ -394,22 +468,15 @@ const processBestSellerData = (product: any) => {
   let bestSellerType = null;
   let badgeText = null;
 
-  // Check for Amazon's Choice badge
-  if (product.is_amazon_choice || 
-      product.amazon_choice || 
-      product.choice_badge ||
+  if (product.is_amazon_choice || product.amazon_choice || product.choice_badge ||
       (product.badges && product.badges.some((badge: any) => 
-        badge?.toLowerCase().includes('choice') || 
-        badge?.toLowerCase().includes('amazon')))) {
+        badge?.toLowerCase().includes('choice') || badge?.toLowerCase().includes('amazon')))) {
     isBestSeller = true;
     bestSellerType = 'amazon_choice';
     badgeText = "Amazon's Choice";
   }
 
-  // Check for Best Seller rank/badge
-  if (product.is_best_seller ||
-      product.best_seller ||
-      product.bestseller ||
+  if (product.is_best_seller || product.best_seller || product.bestseller ||
       (product.badges && product.badges.some((badge: any) => 
         badge?.toLowerCase().includes('best') && badge?.toLowerCase().includes('seller'))) ||
       (product.best_seller_rank && product.best_seller_rank <= 100)) {
@@ -418,14 +485,12 @@ const processBestSellerData = (product: any) => {
     badgeText = badgeText || 'Best Seller';
   }
 
-  // Check for high sales volume indicators
   if (product.num_sales && product.num_sales > 1000) {
     isBestSeller = true;
     bestSellerType = bestSellerType || 'popular';
     badgeText = badgeText || 'Popular';
   }
 
-  // Check for badge text in various fields
   if (product.badge_text) {
     const badgeTextLower = product.badge_text.toLowerCase();
     if (badgeTextLower.includes('choice') || badgeTextLower.includes('best') || badgeTextLower.includes('seller')) {
@@ -435,65 +500,62 @@ const processBestSellerData = (product: any) => {
     }
   }
 
+  return { isBestSeller, bestSellerType, badgeText };
+};
+
+// ============================================================================
+// PHASE 2: UNIFIED RESPONSE HANDLER
+// Replaces 6 duplicate processing blocks (~150 lines removed)
+// ============================================================================
+
+/**
+ * Unified processor for all category and search results
+ * Handles: best seller processing, caching, enrichment, sorting, and response formatting
+ */
+const processAndReturnResults = async (
+  supabase: any,
+  rawResults: any[],
+  sourceQuery: string,
+  sortBy: string = 'popularity',
+  additionalData: Record<string, any> = {}
+) => {
+  // 1. Process best seller data for each product
+  const processedResults = rawResults.map((product: any) => {
+    const bestSellerData = processBestSellerData(product);
+    return { ...product, ...bestSellerData };
+  });
+  
+  // 2. Cache results in background for future queries (Nicole organic growth)
+  EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, sourceQuery));
+  
+  // 3. Enrich with cached data (ratings, reviews, images)
+  const { products: enrichedProducts, cacheHits, cacheMisses } = 
+    await enrichWithCachedData(supabase, processedResults);
+  
+  // 4. Apply sorting based on sortBy parameter
+  let sortedProducts = [...enrichedProducts];
+  if (sortBy === 'price-low') {
+    sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+  } else if (sortBy === 'price-high') {
+    sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+  } else if (sortBy === 'rating') {
+    sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
+  } else {
+    sortedProducts = sortByPopularity(enrichedProducts);
+  }
+  
   return {
-    isBestSeller,
-    bestSellerType,
-    badgeText
+    products: sortedProducts,
+    results: sortedProducts, // Backward compatibility
+    cacheStats: { hits: cacheHits, misses: cacheMisses },
+    ...additionalData
   };
 };
 
-// Luxury category search handler  
-const searchLuxuryCategories = async (api_key: string, page: number = 1, priceFilter?: { min?: number; max?: number }) => {
-  console.log('Starting luxury category batch search with price filter:', priceFilter);
-  
-  const luxuryCategories = [
-    "top designer bags for women",
-    "top designer sunglasses", 
-    "luxury watches",
-    "designer jewelry"
-  ];
-  
-  return searchCategoryBatch(api_key, luxuryCategories, "luxury items", page, 16, priceFilter);
-};
+// ============================================================================
+// SHARED CATEGORY BATCH SEARCH UTILITY
+// ============================================================================
 
-// Best selling category search handler  
-const searchBestSellingCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
-  console.log('Starting best selling category batch search with price filter:', priceFilter);
-  
-  const bestSellingCategories = [
-    "best selling electronics gadgets",
-    "best selling home kitchen essentials", 
-    "best selling fashion clothing",
-    "best selling books bestsellers",
-    "best selling beauty products",
-    "best selling fitness equipment",
-    "best selling toys games",
-    "popular trending items"
-  ];
-  
-  return searchCategoryBatch(api_key, bestSellingCategories, "best selling products", page, limit, priceFilter);
-};
-
-// Electronics category search handler  
-const searchElectronicsCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
-  console.log('Starting electronics category batch search with price filter:', priceFilter);
-  
-  const electronicsCategories = [
-    "smartphones phones mobile devices apple samsung",
-    "laptops computers macbook dell hp",
-    "headphones earbuds airpods bose sony",
-    "smart home devices alexa google nest",
-    "gaming consoles playstation xbox nintendo",
-    "cameras photography canon nikon sony",
-    "tablets ipad android surface",
-    "smart watches apple watch garmin fitbit"
-  ];
-  
-  return searchCategoryBatch(api_key, electronicsCategories, "electronics gadgets", page, limit, priceFilter);
-};
-
-// Gifts for Her category search handler with pagination support
-// Shared category batch search utility
 const searchCategoryBatch = async (
   api_key: string, 
   categories: string[], 
@@ -508,14 +570,11 @@ const searchCategoryBatch = async (
   
   const promises = categories.map(async (category, index) => {
     try {
-      const actualPage = page + Math.floor(index / 3); // Stagger pages across categories
+      const actualPage = page + Math.floor(index / 3);
       
-      // Build URL with proper parameters
       let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(category)}&page=${actualPage}&retailer=amazon`;
       
-      // Try different parameter formats for price filtering
       if (priceFilter?.max) {
-        // Try both parameter formats that Zinc might accept
         searchUrl += `&max_price=${priceFilter.max}&price_max=${priceFilter.max}`;
       }
       if (priceFilter?.min) {
@@ -523,7 +582,6 @@ const searchCategoryBatch = async (
       }
       
       console.log(`Searching ${batchName} category: ${category} (page ${actualPage})`);
-      console.log(`Search URL: ${searchUrl}`);
       
       const response = await fetch(searchUrl, {
         method: 'GET',
@@ -533,27 +591,22 @@ const searchCategoryBatch = async (
       });
       
       const data = await response.json();
-      console.log(`API Response for ${category}:`, JSON.stringify(data, null, 2));
       
       if (data.results && Array.isArray(data.results)) {
         const startIndex = page === 1 ? 0 : (page - 1) * 2;
         const endIndex = startIndex + productsPerCategory;
         let categoryResults = data.results.slice(startIndex, endIndex);
         
-        // Additional price filtering for budget categories - try multiple price field formats
+        // Price filtering
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
-            // Zinc API returns prices in cents - extract price value
             let price = 0;
             if (product.price) {
               if (typeof product.price === 'string') {
-                // Handle string prices like "$19.99" or "1999"
                 const cleanPrice = product.price.replace(/[$,]/g, '');
                 const numPrice = parseFloat(cleanPrice);
-                // If the number is greater than 100, assume it's in cents
                 price = numPrice > 100 ? numPrice / 100 : numPrice;
               } else if (typeof product.price === 'number') {
-                // If the number is greater than 100, assume it's in cents
                 price = product.price > 100 ? product.price / 100 : product.price;
               }
             } else if (product.price_amount) {
@@ -564,10 +617,7 @@ const searchCategoryBatch = async (
             
             const isUnderBudget = price > 0 && price <= priceFilter.max!;
             const meetsMinimum = !priceFilter.min || price >= priceFilter.min;
-            const passesFilter = isUnderBudget && meetsMinimum;
-            
-            console.log(`Product: ${product.title}, Original Price: ${product.price}, Converted Price: ${price}, Max: ${priceFilter.max}, Min: ${priceFilter.min || 'none'}, Passes Filter: ${passesFilter}`);
-            return passesFilter;
+            return isUnderBudget && meetsMinimum;
           });
         }
         
@@ -578,15 +628,9 @@ const searchCategoryBatch = async (
           let normalizedPrice = product.price;
           if (typeof product.price === 'number' && product.price > 100) {
             normalizedPrice = product.price / 100;
-            console.log(`🔄 Category price conversion: "${product.title}" - Original: ${product.price} cents → Converted: $${normalizedPrice}`);
           } else if (typeof product.price === 'string') {
             const numericPrice = parseFloat(product.price.replace(/[$,]/g, ''));
-            if (numericPrice > 100) {
-              normalizedPrice = numericPrice / 100;
-              console.log(`🔄 Category price conversion (string): "${product.title}" - Original: ${product.price} → Converted: $${normalizedPrice}`);
-            } else {
-              normalizedPrice = numericPrice;
-            }
+            normalizedPrice = numericPrice > 100 ? numericPrice / 100 : numericPrice;
           }
           
           return {
@@ -594,7 +638,6 @@ const searchCategoryBatch = async (
             ...bestSellerData,
             categorySource: category,
             price: normalizedPrice,
-            // Preserve all image-related fields
             image: product.image,
             main_image: product.main_image, 
             images: product.images,
@@ -604,7 +647,6 @@ const searchCategoryBatch = async (
           };
         });
         
-        console.log(`Found ${processedResults.length} products for category: ${category}`);
         return processedResults;
       }
       
@@ -630,8 +672,8 @@ const searchCategoryBatch = async (
     console.log(`${batchName} category search complete: ${paginatedResults.length} products returned (page ${page})`);
     
     return {
-      products: paginatedResults, // Changed from 'results' to 'products' for consistency
-      results: paginatedResults,  // Keep 'results' for backward compatibility  
+      products: paginatedResults,
+      results: paginatedResults,
       total: paginatedResults.length,
       hasMore: allResults.length > limit || page <= 5,
       currentPage: page,
@@ -644,64 +686,8 @@ const searchCategoryBatch = async (
   }
 };
 
-// Gifts for Her category search handler
-const searchGiftsForHerCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
-  const giftsForHerCategories = [
-    "skincare essentials for women",
-    "cozy sweaters and cardigans", 
-    "candles and home fragrance",
-    "books and reading accessories",
-    "yoga and fitness accessories",
-    "coffee and tea gifts"
-  ];
-  
-  return searchCategoryBatch(api_key, giftsForHerCategories, "gifts for her", page, limit, priceFilter);
-};
-
-// Gifts for Him category search handler
-const searchGiftsForHimCategories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
-  const giftsForHimCategories = [
-    "tech gadgets for men",
-    "grooming essentials",
-    "fitness and sports gear",
-    "watches and accessories", 
-    "tools and gadgets",
-    "gaming accessories"
-  ];
-  
-  return searchCategoryBatch(api_key, giftsForHimCategories, "gifts for him", page, limit, priceFilter);
-};
-
-// Gifts Under $50 category search handler
-const searchGiftsUnder50Categories = async (api_key: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
-  const giftsUnder50Categories = [
-    "best gifts under 50", // More generic, higher chance of results
-    "popular products under 50", // Another generic category
-    "bluetooth earbuds under 50",
-    "phone accessories under 50", 
-    "kitchen gadgets under 50", // Changed from "utensils" to "gadgets"
-    "skincare sets under 50", // Changed from "products" to "sets"
-    "jewelry gifts under 50", // Made more specific
-    "home decor items under 50", // Made more specific
-    "tech accessories under 50", // Added new category
-    "books under 50", // Added simple category
-    "coffee accessories under 50", // Added specific category
-    "fitness accessories under 50" // Added another category
-  ];
-  
-  // Combine provided price filter with default $50 max
-  const combinedFilter = {
-    max: Math.min(priceFilter?.max || 50, 50), // Never exceed $50 for this category
-    min: priceFilter?.min || 1 // Set minimum to $1 to avoid very cheap items
-  };
-  
-  console.log(`Starting gifts under $50 search with filter:`, combinedFilter);
-  
-  return searchCategoryBatch(api_key, giftsUnder50Categories, "gifts under $50", page, limit, combinedFilter);
-};
-
 // Brand category mappings for multi-category brand searches
-const BRAND_CATEGORY_MAPPINGS = {
+const BRAND_CATEGORY_MAPPINGS: Record<string, string[]> = {
   apple: [
     "apple macbook laptop computers",
     "apple iphone smartphones",
@@ -767,25 +753,30 @@ const BRAND_CATEGORY_MAPPINGS = {
 };
 
 // Brand categories search handler with brand filtering
-const searchBrandCategories = async (api_key: string, brandName: string, page: number = 1, limit: number = 20, priceFilter?: { min?: number; max?: number }) => {
+const searchBrandCategories = async (
+  api_key: string, 
+  brandName: string, 
+  page: number = 1, 
+  limit: number = 20, 
+  priceFilter?: { min?: number; max?: number }
+) => {
   console.log(`Starting brand category search for: ${brandName}`);
   
   const brandKey = brandName.toLowerCase().replace(/\s+/g, '');
-  const categories = BRAND_CATEGORY_MAPPINGS[brandKey as keyof typeof BRAND_CATEGORY_MAPPINGS];
+  const categories = BRAND_CATEGORY_MAPPINGS[brandKey];
   
   if (!categories) {
     console.log(`No category mapping found for brand: ${brandName}, using fallback search`);
-    // Fallback to single brand search
     try {
-      const response = await fetch(`https://api.zinc.io/v1/search?query=${encodeURIComponent(brandName)}&page=${page}&retailer=amazon`, {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${api_key}:`)
+      const response = await fetch(
+        `https://api.zinc.io/v1/search?query=${encodeURIComponent(brandName)}&page=${page}&retailer=amazon`, 
+        {
+          method: 'GET',
+          headers: { 'Authorization': 'Basic ' + btoa(`${api_key}:`) }
         }
-      });
+      );
       const data = await response.json();
       
-      // Filter results by brand
       let filteredResults = data.results || [];
       if (filteredResults.length > 0) {
         filteredResults = filteredResults.filter((product: any) => {
@@ -793,45 +784,27 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
           const targetBrand = brandName.toLowerCase();
           return productBrand.includes(targetBrand) || targetBrand.includes(productBrand);
         });
-        console.log(`Filtered fallback search: ${filteredResults.length} products match brand ${brandName}`);
       }
       
-      return {
-        products: filteredResults, // Changed from 'results' to 'products' for consistency
-        results: filteredResults,  // Keep 'results' for backward compatibility
-        total: filteredResults.length
-      };
+      return { products: filteredResults, results: filteredResults, total: filteredResults.length };
     } catch (error) {
       console.error(`Fallback search failed for ${brandName}:`, error);
       return { results: [], total: 0 };
     }
   }
   
-  // Use category batch search and then filter by brand
   const categoryResults = await searchCategoryBatch(api_key, categories, `${brandName} products`, page, limit, priceFilter);
   
-  // Filter results to only include products from the specified brand
   if (categoryResults.results && categoryResults.results.length > 0) {
     const filteredResults = categoryResults.results.filter((product: any) => {
       const productBrand = (product.brand || '').toLowerCase().trim();
       const targetBrand = brandName.toLowerCase().trim();
-      
-      // More flexible brand matching
-      const isMatch = productBrand === targetBrand || 
-                     productBrand.includes(targetBrand) || 
-                     targetBrand.includes(productBrand);
-      
-      console.log(`Checking product: "${product.title}" | Product brand: "${product.brand}" | Target: "${brandName}" | Match: ${isMatch}`);
-      
-      return isMatch;
+      return productBrand === targetBrand || productBrand.includes(targetBrand) || targetBrand.includes(productBrand);
     });
     
     console.log(`Brand filtering complete: ${filteredResults.length} of ${categoryResults.results.length} products match brand "${brandName}"`);
     
-    // If no results after filtering, try a fallback search with brand name included
     if (filteredResults.length === 0) {
-      console.log(`No products found after filtering, trying fallback search with brand name included`);
-      
       try {
         const fallbackCategories = categories.map(cat => `${brandName.toLowerCase()} ${cat}`);
         const fallbackResults = await searchCategoryBatch(api_key, fallbackCategories, `${brandName} fallback`, page, limit, priceFilter);
@@ -843,36 +816,30 @@ const searchBrandCategories = async (api_key: string, brandName: string, page: n
             return productBrand === targetBrand || productBrand.includes(targetBrand);
           });
           
-          console.log(`Fallback search returned ${fallbackFiltered.length} products for ${brandName}`);
-          
-          return {
-            ...categoryResults,
-            results: fallbackFiltered,
-            total: fallbackFiltered.length
-          };
+          return { ...categoryResults, results: fallbackFiltered, total: fallbackFiltered.length };
         }
       } catch (error) {
         console.error(`Fallback search failed:`, error);
       }
     }
     
-    return {
-      ...categoryResults,
-      results: filteredResults,
-      total: filteredResults.length
-    };
+    return { ...categoryResults, results: filteredResults, total: filteredResults.length };
   }
   
   return categoryResults;
 };
+
+// ============================================================================
+// MAIN REQUEST HANDLER
+// ============================================================================
 
 serve(async (req) => {
   const {method} = req;
   if (method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+  
   if (method === 'POST') {
-    // Get API key from environment (unified approach)
     const api_key = getZincApiKey();
     
     if (!api_key) {
@@ -885,46 +852,65 @@ serve(async (req) => {
           total: 0,
           needsConfiguration: true
         }),
-        { 
-          status: 503, // Service Unavailable (not 500 Internal Server Error)
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
+        { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
     
     console.log('✅ Using Zinc API key from environment');
     
-    // Initialize Supabase client for cache operations
     const supabase = getSupabaseClient();
     
-    const {query, retailer = "amazon", page = 1, limit = 20, luxuryCategories = false, giftsForHer = false, giftsForHim = false, giftsUnder50 = false, bestSelling = false, electronics = false, brandCategories = false, filters = {}} = await req.json();
+    // Parse request body - support both new category param and legacy boolean flags
+    const requestBody = await req.json();
+    const {
+      query,
+      retailer = "amazon",
+      page = 1,
+      limit = 20,
+      category: requestedCategory, // NEW: single category parameter
+      // Legacy boolean flags (backward compatibility)
+      luxuryCategories = false,
+      giftsForHer = false,
+      giftsForHim = false,
+      giftsUnder50 = false,
+      bestSelling = false,
+      electronics = false,
+      brandCategories = false,
+      filters = {}
+    } = requestBody;
     
-    // Check if this is a "default" load with no specific query or category flags
-    const hasNoSearchIntent = !query && 
-                              !luxuryCategories && 
-                              !giftsForHer && 
-                              !giftsForHim && 
-                              !giftsUnder50 && 
-                              !electronics && 
-                              !brandCategories;
+    // Determine active category from new param OR legacy flags
+    let activeCategory: string | null = requestedCategory || null;
     
-    // If no search intent, default to best selling products
-    const effectiveBestSelling = bestSelling || hasNoSearchIntent;
+    if (!activeCategory) {
+      // Check legacy boolean flags
+      for (const [legacyFlag, categoryKey] of Object.entries(LEGACY_FLAG_TO_CATEGORY)) {
+        if (requestBody[legacyFlag]) {
+          activeCategory = categoryKey;
+          console.log(`📦 Legacy flag "${legacyFlag}" mapped to category "${categoryKey}"`);
+          break;
+        }
+      }
+    }
     
+    // Check if this is a "default" load with no specific query or category
+    const hasNoSearchIntent = !query && !activeCategory && !brandCategories;
+    
+    // Default to best selling when no search intent
     if (hasNoSearchIntent) {
+      activeCategory = 'best-selling';
       console.log('📦 No search intent detected, defaulting to best selling products');
     }
     
-    // Extract price filters from filters object
+    // Extract price filters
     const priceFilter = {
       min: filters.min_price || filters.minPrice,
       max: filters.max_price || filters.maxPrice
     };
     
-    // Extract sortBy from filters (server-side sorting)
     const sortBy = filters.sortBy || 'popularity';
     
-    console.log('Price filter extracted:', priceFilter, 'SortBy:', sortBy);
+    console.log(`Request: category="${activeCategory}", query="${query}", priceFilter:`, priceFilter);
     
     // Track search trend for Nicole AI (async, non-blocking)
     if (query) {
@@ -932,175 +918,46 @@ serve(async (req) => {
     }
     
     try {
-      // Handle luxury category batch search
-      if (luxuryCategories) {
-        console.log('Processing luxury category batch request with price filter:', priceFilter);
-        const luxuryData = await searchLuxuryCategories(api_key, page, priceFilter);
+      // ====================================================================
+      // UNIFIED CATEGORY HANDLER - Replaces 6 separate if-blocks
+      // ====================================================================
+      if (activeCategory && CATEGORY_REGISTRY[activeCategory]) {
+        const categoryConfig = CATEGORY_REGISTRY[activeCategory];
+        console.log(`Processing category "${activeCategory}" (${categoryConfig.name})`);
         
-        // Process best seller data BEFORE caching
-        const processedResults = luxuryData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
+        // Merge category-specific price limits with request filters
+        const effectivePriceFilter = {
+          min: priceFilter.min || categoryConfig.priceMin,
+          max: categoryConfig.priceMax 
+            ? Math.min(priceFilter.max || categoryConfig.priceMax, categoryConfig.priceMax)
+            : priceFilter.max
+        };
         
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'luxury'));
+        // Execute batch search using category queries
+        const categoryData = await searchCategoryBatch(
+          api_key, 
+          categoryConfig.queries, 
+          categoryConfig.name, 
+          page, 
+          limit, 
+          effectivePriceFilter
+        );
         
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
+        // Use unified processor for caching, enrichment, and sorting
+        const response = await processAndReturnResults(
+          supabase,
+          categoryData.results,
+          activeCategory,
+          sortBy,
+          {
+            total: categoryData.total,
+            hasMore: categoryData.hasMore,
+            currentPage: categoryData.currentPage,
+            categoryBatch: true
+          }
+        );
         
-        return new Response(JSON.stringify({
-          ...luxuryData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Handle gifts for her category batch search
-      if (giftsForHer) {
-        console.log('Processing gifts for her category batch request with price filter:', priceFilter);
-        const giftsForHerData = await searchGiftsForHerCategories(api_key, page, limit, priceFilter);
-        
-        // Process best seller data BEFORE caching
-        const processedResults = giftsForHerData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
-        
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_for_her'));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...giftsForHerData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Handle electronics category batch search
-      if (electronics) {
-        console.log('Processing electronics category batch request with price filter:', priceFilter);
-        const electronicsData = await searchElectronicsCategories(api_key, page, limit, priceFilter);
-        
-        // Process best seller data BEFORE caching
-        const processedResults = electronicsData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
-        
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'electronics'));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...electronicsData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Handle best selling category batch search (or default when no search intent)
-      if (effectiveBestSelling) {
-        console.log('Processing best selling category batch request with price filter:', priceFilter);
-        const bestSellingData = await searchBestSellingCategories(api_key, page, limit, priceFilter);
-        
-        // Process best seller data BEFORE caching
-        const processedResults = bestSellingData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
-        
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'best_selling'));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...bestSellingData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Handle gifts for him category batch search
-      if (giftsForHim) {
-        console.log('Processing gifts for him category batch request with price filter:', priceFilter);
-        const giftsForHimData = await searchGiftsForHimCategories(api_key, page, limit, priceFilter);
-        
-        // Process best seller data BEFORE caching
-        const processedResults = giftsForHimData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
-        
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_for_him'));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...giftsForHimData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Handle gifts under $50 category batch search
-      if (giftsUnder50) {
-        console.log('Processing gifts under $50 category batch request with price filter:', priceFilter);
-        const giftsUnder50Data = await searchGiftsUnder50Categories(api_key, page, limit, priceFilter);
-        
-        // Process best seller data BEFORE caching
-        const processedResults = giftsUnder50Data.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
-        
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, 'gifts_under_50'));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...giftsUnder50Data,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
+        return new Response(JSON.stringify(response), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
@@ -1108,41 +965,33 @@ serve(async (req) => {
       
       // Handle brand categories search
       if (brandCategories && query) {
-        console.log(`Processing brand categories request for: ${query} with price filter:`, priceFilter);
+        console.log(`Processing brand categories request for: ${query}`);
         const brandData = await searchBrandCategories(api_key, query, page, limit, priceFilter);
         
-        // Process best seller data BEFORE caching
-        const processedResults = brandData.results.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return { ...product, ...bestSellerData };
-        });
+        const response = await processAndReturnResults(
+          supabase,
+          brandData.results,
+          query,
+          sortBy,
+          { total: brandData.total }
+        );
         
-        // Cache results in background for future queries (Nicole organic growth)
-        EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, query));
-        
-        // Enrich with cached data
-        const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, processedResults);
-        const sortedProducts = sortByPopularity(enrichedProducts);
-        
-        return new Response(JSON.stringify({
-          ...brandData,
-          products: sortedProducts,
-          results: sortedProducts,
-          cacheStats: { hits: cacheHits, misses: cacheMisses }
-        }), {
+        return new Response(JSON.stringify(response), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
       
-      // CACHE-FIRST LOOKUP: Check if we have enough cached products for this query
-      // This is the key to Nicole's organic growth strategy - subsequent identical queries cost $0
+      // ====================================================================
+      // REGULAR SEARCH HANDLER
+      // ====================================================================
+      
+      // CACHE-FIRST LOOKUP
       const cachedResults = await getCachedProductsForQuery(supabase, query, limit);
       
       if (cachedResults && cachedResults.length > 0) {
         console.log(`🎯 Returning ${cachedResults.length} cached products for "${query}" - Zinc API call SKIPPED ($0.00)`);
         
-        // Apply sorting to cached results
         let sortedProducts = [...cachedResults];
         if (sortBy === 'price-low') {
           sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -1170,37 +1019,31 @@ serve(async (req) => {
       // Cache miss - proceed with Zinc API call
       console.log(`⏳ Cache miss for "${query}" - calling Zinc API ($0.01)`);
       
-      // Enhanced single search logic with price filtering support
       let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`;
       
-      // Add price filters to the URL if provided
-      if (filters?.min_price) {
-        searchUrl += `&min_price=${filters.min_price}`;
-      }
-      if (filters?.max_price) {
-        searchUrl += `&max_price=${filters.max_price}`;
-      }
+      if (filters?.min_price) searchUrl += `&min_price=${filters.min_price}`;
+      if (filters?.max_price) searchUrl += `&max_price=${filters.max_price}`;
       
-      console.log('🎯 Zinc API URL with price filters:', searchUrl);
+      console.log('🎯 Zinc API URL:', searchUrl);
       
       const response = await fetch(searchUrl, {
         method: 'GET',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${api_key}:`)
-        }
+        headers: { 'Authorization': 'Basic ' + btoa(`${api_key}:`) }
       });
   
       const data = await response.json();
       
-      // Apply post-search price filtering if Zinc API didn't handle it properly
+      // Apply post-search filters
       let filteredResults = data.results || [];
+      
+      // Price filtering
       if ((filters?.min_price || filters?.max_price) && filteredResults.length > 0) {
         const minPrice = filters.min_price;
         const maxPrice = filters.max_price;
         
         filteredResults = filteredResults.filter(product => {
           const price = product.price;
-          if (!price) return true; // Keep products without price info
+          if (!price) return true;
           
           const priceInDollars = typeof price === 'number' ? price : parseFloat(price) || 0;
           
@@ -1211,15 +1054,14 @@ serve(async (req) => {
           return passesFilter;
         });
         
-        console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products (${minPrice ? `$${minPrice}` : 'no min'} to ${maxPrice ? `$${maxPrice}` : 'no max'})`);
+        console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products`);
       }
       
-      // Universal relevance filter - removes products that don't match any search terms
-      // This prevents Zinc's OR-logic from returning irrelevant products (e.g., "dal" soup for "dallas cowboys")
+      // Universal relevance filter
       if (query && filteredResults.length > 0) {
         const searchTerms = query.toLowerCase()
           .split(/\s+/)
-          .filter(term => term.length >= 3); // Only meaningful terms (3+ chars)
+          .filter(term => term.length >= 3);
         
         if (searchTerms.length > 0) {
           const beforeCount = filteredResults.length;
@@ -1228,61 +1070,41 @@ serve(async (req) => {
             const category = (product.category || '').toLowerCase();
             const brand = (product.brand || '').toLowerCase();
             
-            // Keep product if ANY search term appears in title, category, or brand
             return searchTerms.some(term => 
               title.includes(term) || category.includes(term) || brand.includes(term)
             );
           });
           
-          console.log(`🎯 Relevance filter: ${beforeCount} → ${filteredResults.length} products (query: "${query}")`);
+          console.log(`🎯 Relevance filter: ${beforeCount} → ${filteredResults.length} products`);
         }
       }
       
-      // UNSUPPORTED PRODUCT FILTER: Remove products Zinc can't fulfill
-      // Blocks: digital products, gift cards, Prime Pantry, Amazon Fresh
+      // Unsupported product filter
       if (filteredResults && filteredResults.length > 0) {
         const beforeUnsupportedFilter = filteredResults.length;
         let blockedCount = 0;
         
         filteredResults = filteredResults.filter((product: any) => {
-          // Check Zinc boolean flags
-          if (product.digital === true) {
+          if (product.digital === true || product.fresh === true || product.pantry === true) {
             blockedCount++;
-            console.log(`🚫 Blocked digital product: "${product.title}"`);
-            return false;
-          }
-          if (product.fresh === true) {
-            blockedCount++;
-            console.log(`🚫 Blocked Amazon Fresh product: "${product.title}"`);
-            return false;
-          }
-          if (product.pantry === true) {
-            blockedCount++;
-            console.log(`🚫 Blocked Prime Pantry product: "${product.title}"`);
             return false;
           }
           
           const title = (product.title || '').toLowerCase();
           const category = (product.category || product.categories?.[0] || '').toLowerCase();
           
-          // Block gift cards
           if (/gift\s*card|e-?gift|egift/i.test(title)) {
             blockedCount++;
-            console.log(`🚫 Blocked gift card: "${product.title}"`);
             return false;
           }
           
-          // Block digital downloads/codes
           if (/kindle\s*edition|\[ebook\]|digital\s*(download|code)|online\s*game\s*code|pc\s*download/i.test(title)) {
             blockedCount++;
-            console.log(`🚫 Blocked digital product: "${product.title}"`);
             return false;
           }
           
-          // Block by category patterns
           if (/kindle\s*store|digital\s*music|digital\s*video/i.test(category)) {
             blockedCount++;
-            console.log(`🚫 Blocked digital category: "${product.title}" (${category})`);
             return false;
           }
           
@@ -1294,18 +1116,7 @@ serve(async (req) => {
         }
       }
 
-      // Process best seller data for each product
-      if (filteredResults && Array.isArray(filteredResults)) {
-        filteredResults = filteredResults.map((product: any) => {
-          const bestSellerData = processBestSellerData(product);
-          return {
-            ...product,
-            ...bestSellerData
-          };
-        });
-      }
-  
-      // Process and normalize prices (Zinc API returns prices in cents)
+      // Normalize prices
       if (filteredResults && Array.isArray(filteredResults)) {
         filteredResults = filteredResults.map((product: any) => {
           const pickFirst = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== '' && !(typeof v === 'number' && isNaN(v)));
@@ -1332,7 +1143,6 @@ serve(async (req) => {
           return {
             ...product,
             price: normalizedPrice,
-            // Preserve all image-related fields
             image: product.image,
             main_image: product.main_image,
             images: product.images,
@@ -1343,45 +1153,24 @@ serve(async (req) => {
         });
       }
 
-      // Log price debugging info for first few products after conversion
-      if (filteredResults && filteredResults.length > 0) {
-        console.log('🔍 Price debugging after conversion - First 3 products:');
-        filteredResults.slice(0, 3).forEach((product: any, index: number) => {
-          console.log(`Product ${index + 1}: "${product.title}" - Final Price: $${product.price} (type: ${typeof product.price})`);
-        });
-      }
+      // Use unified processor for regular search results
+      const searchResponse = await processAndReturnResults(
+        supabase,
+        filteredResults,
+        query,
+        sortBy,
+        {
+          total: filteredResults.length,
+          originalTotal: data.total || 0,
+          priceFiltered: !!(filters?.min_price || filters?.max_price)
+        }
+      );
 
-      // Cache search results in background for future queries (Nicole organic growth)
-      // This ensures the same query from any user will hit cache next time
-      EdgeRuntime.waitUntil(cacheSearchResults(supabase, filteredResults, query));
-
-      // Enrich with cached data (ratings, reviews, images)
-      const { products: enrichedProducts, cacheHits, cacheMisses } = await enrichWithCachedData(supabase, filteredResults);
-      
-      // Server-side sorting based on sortBy parameter
-      let sortedProducts = [...enrichedProducts];
-      if (sortBy === 'price-low') {
-        sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
-      } else if (sortBy === 'price-high') {
-        sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
-      } else if (sortBy === 'rating') {
-        sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
-      } else {
-        // Default: popularity (cached products with good data first)
-        sortedProducts = sortByPopularity(enrichedProducts);
-      }
-
-      return new Response(JSON.stringify({
-        products: sortedProducts, // Changed from 'results' to 'products' for consistency
-        results: sortedProducts,  // Keep 'results' for backward compatibility
-        total: sortedProducts.length,
-        originalTotal: data.total || 0,
-        priceFiltered: (filters?.min_price || filters?.max_price) ? true : false,
-        cacheStats: { hits: cacheHits, misses: cacheMisses }
-      }), {
+      return new Response(JSON.stringify(searchResponse), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+      
     } catch(error) {
       console.error('Error in get-products function:', error);
       return new Response(
@@ -1389,14 +1178,16 @@ serve(async (req) => {
           success: false, 
           error: 'Product search failed',
           message: error.message || 'Internal server error',
-          products: [], // Ensure empty products array for consistent response format
-          results: []   // Keep results for backward compatibility
+          products: [],
+          results: []
         }), 
-        { 
-          status: 500, 
-          headers: { "Content-Type": "application/json", ...corsHeaders }
-        }
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
   }
-})
+  
+  return new Response(
+    JSON.stringify({ error: 'Method not allowed' }), 
+    { status: 405, headers: { "Content-Type": "application/json", ...corsHeaders } }
+  );
+});

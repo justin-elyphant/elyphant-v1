@@ -9,7 +9,7 @@ const CategoryLinks: React.FC = () => {
     { label: "Beauty", path: "/marketplace?category=beauty" },
     { label: "Electronics", path: "/marketplace?category=electronics" },
     { label: "Fashion", path: "/marketplace?category=fashion" },
-    { label: "Gifts Under $50", path: "/marketplace?giftsUnder50=true" },
+    { label: "Gifts Under $50", path: "/marketplace?category=gifts-under-50" },
     { label: "Wedding", path: "/marketplace?category=wedding" },
     { label: "Baby", path: "/marketplace?category=baby" },
     { label: "Shop All", path: "/marketplace" },
@@ -19,12 +19,11 @@ const CategoryLinks: React.FC = () => {
     if (path === "/marketplace") {
       return location.pathname === "/marketplace" && !location.search;
     }
-    // Handle special giftsUnder50 param
-    if (path.includes("giftsUnder50=true")) {
-      return location.pathname === "/marketplace" && location.search.includes("giftsUnder50=true");
+    const categoryMatch = path.match(/category=([^&]+)/);
+    if (categoryMatch) {
+      return location.pathname === "/marketplace" && location.search.includes(`category=${categoryMatch[1]}`);
     }
-    // Handle standard category params
-    return location.pathname === "/marketplace" && location.search.includes(path.split("=")[1]);
+    return false;
   };
 
   return (

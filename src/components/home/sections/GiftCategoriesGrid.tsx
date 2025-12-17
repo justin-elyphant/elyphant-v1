@@ -14,7 +14,7 @@ const giftCategories = [
     description: "Thoughtful gifts she'll love",
     image: "/lovable-uploads/5f6e5bfc-2084-47e5-b28d-5fea068c2b93.png",
     searchTerm: "gifts for her categories",
-    navigationUrl: "/marketplace?giftsForHer=true"
+    navigationUrl: "/marketplace?category=gifts-for-her"
   },
   {
     id: "gifts-for-him",
@@ -22,7 +22,7 @@ const giftCategories = [
     description: "Perfect gifts for the special man",
     image: "/lovable-uploads/19ec9b7e-120d-40e6-a4f2-2a411add14fb.png",
     searchTerm: "gifts for him categories",
-    navigationUrl: "/marketplace?giftsForHim=true"
+    navigationUrl: "/marketplace?category=gifts-for-him"
   },
   {
     id: "gifts-under-50",
@@ -30,7 +30,7 @@ const giftCategories = [
     description: "Amazing gifts that won't break the bank",
     image: "/lovable-uploads/9c28137d-7145-44ee-a958-177f61bb637a.png",
     searchTerm: "gifts under $50 categories",
-    navigationUrl: "/marketplace?giftsUnder50=true"
+    navigationUrl: "/marketplace?category=gifts-under-50"
   },
   {
     id: "luxury-gifts",
@@ -38,7 +38,7 @@ const giftCategories = [
     description: "Premium gifts for special occasions",
     image: "/lovable-uploads/89069d91-bc3d-4c97-ac4d-70be943ed556.png",
     searchTerm: "luxury categories",
-    navigationUrl: "/marketplace?luxuryCategories=true"
+    navigationUrl: "/marketplace?category=luxury"
   }
 ];
 

@@ -6,7 +6,7 @@ const TabletCategoryLinks: React.FC = () => {
   const location = useLocation();
   
   const categories = [
-    { label: "Gifts Under $50", path: "/marketplace?giftsUnder50=true" },
+    { label: "Gifts Under $50", path: "/marketplace?category=gifts-under-50" },
     { label: "Wedding", path: "/marketplace?category=wedding" },
     { label: "Baby", path: "/marketplace?category=baby" },
     { label: "Shop All", path: "/marketplace" },
@@ -16,10 +16,11 @@ const TabletCategoryLinks: React.FC = () => {
     if (path === "/marketplace") {
       return location.pathname === "/marketplace" && !location.search;
     }
-    if (path.includes("giftsUnder50=true")) {
-      return location.pathname === "/marketplace" && location.search.includes("giftsUnder50=true");
+    const categoryMatch = path.match(/category=([^&]+)/);
+    if (categoryMatch) {
+      return location.pathname === "/marketplace" && location.search.includes(`category=${categoryMatch[1]}`);
     }
-    return location.pathname === "/marketplace" && location.search.includes(path.split("=")[1]);
+    return false;
   };
 
   return (

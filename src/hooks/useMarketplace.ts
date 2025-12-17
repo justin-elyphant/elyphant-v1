@@ -3,13 +3,6 @@
  * 
  * Architecture: All filter state lives in URL, server handles ALL filtering/sorting
  * NO complex client-side routing or special case handlers
- * 
- * This replaces:
- * - useUnifiedMarketplace.tsx (411 lines)
- * - useEnhancedCategorySearch.tsx (67 lines)
- * - useZincSearch.tsx (129 lines)
- * - useOptimizedSearch.ts (~200 lines)
- * - useUnifiedSearch.tsx (253 lines)
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
@@ -29,13 +22,6 @@ export interface MarketplaceState {
   maxPrice: number | null;
   sortBy: string;
   brands: string[];
-  // Legacy flag support during migration
-  luxuryCategories: boolean;
-  giftsForHer: boolean;
-  giftsForHim: boolean;
-  giftsUnder50: boolean;
-  bestSellingCategory: boolean;
-  electronicsCategory: boolean;
 }
 
 /**
@@ -49,13 +35,6 @@ const extractStateFromURL = (searchParams: URLSearchParams): MarketplaceState =>
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : null,
     sortBy: searchParams.get('sortBy') || 'popularity',
     brands: searchParams.get('brands')?.split(',').filter(Boolean) || [],
-    // Legacy flags
-    luxuryCategories: searchParams.get('luxury') === 'true',
-    giftsForHer: searchParams.get('giftsForHer') === 'true',
-    giftsForHim: searchParams.get('giftsForHim') === 'true',
-    giftsUnder50: searchParams.get('giftsUnder50') === 'true',
-    bestSellingCategory: searchParams.get('bestSelling') === 'true',
-    electronicsCategory: searchParams.get('electronics') === 'true',
   };
 };
 
@@ -86,14 +65,6 @@ const stateToSearchOptions = (state: MarketplaceState, limit: number): SearchOpt
     options.filters!.brands = state.brands;
   }
 
-  // Legacy flag support
-  options.luxuryCategories = state.luxuryCategories;
-  options.giftsForHer = state.giftsForHer;
-  options.giftsForHim = state.giftsForHim;
-  options.giftsUnder50 = state.giftsUnder50;
-  options.bestSellingCategory = state.bestSellingCategory;
-  options.electronicsCategory = state.electronicsCategory;
-
   return options;
 };
 
@@ -107,15 +78,12 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
   // Extract state from URL - single source of truth
   const urlState = useMemo(() => extractStateFromURL(searchParams), [searchParams]);
 
-  // Determine if we should fetch (have query, category, or legacy flags)
+  // Determine if we should fetch (have query or category)
   const shouldFetch = useMemo(() => {
     const hasQuery = urlState.query.length > 0;
     const hasCategory = urlState.category !== null;
-    const hasLegacyFlags = urlState.luxuryCategories || urlState.giftsForHer || 
-                          urlState.giftsForHim || urlState.giftsUnder50 || 
-                          urlState.bestSellingCategory || urlState.electronicsCategory;
     
-    return hasQuery || hasCategory || hasLegacyFlags || autoLoadOnMount;
+    return hasQuery || hasCategory || autoLoadOnMount;
   }, [urlState, autoLoadOnMount]);
 
   // Generate query key for React Query caching
@@ -161,13 +129,8 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
       params.delete('search');
     }
     
-    // Clear category flags when doing a new search
-    params.delete('luxury');
-    params.delete('giftsForHer');
-    params.delete('giftsForHim');
-    params.delete('giftsUnder50');
-    params.delete('bestSelling');
-    params.delete('electronics');
+    // Clear category when doing a new search
+    params.delete('category');
     
     setSearchParams(params);
   }, [searchParams, setSearchParams]);

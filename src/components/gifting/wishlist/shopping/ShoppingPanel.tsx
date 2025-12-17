@@ -50,7 +50,7 @@ const ShoppingPanel = ({
       setIsTrendingLoading(true);
       try {
         // Use productCatalogService for diverse product selection
-        const response = await productCatalogService.searchProducts('', { bestSellingCategory: true, limit: 12 });
+        const response = await productCatalogService.searchProducts('', { category: 'best-selling', limit: 12 });
         
         if (!response.error && response.products) {
           // Deduplicate products by brand to ensure diversity

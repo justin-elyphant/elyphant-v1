@@ -2,180 +2,16 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
+// Import from shared modules
+import { CATEGORY_REGISTRY, LEGACY_FLAG_TO_CATEGORY, BRAND_CATEGORY_MAPPINGS } from '../shared/categoryRegistry.ts';
+import { applyBrandAwareFilter, parseSearchQuery, COMMON_BRANDS } from '../shared/brandAwareFilter.ts';
+import { filterUnsupportedProducts } from '../shared/unsupportedProductFilter.ts';
+import { generateFacetsFromResults } from '../shared/facetGenerator.ts';
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-};
-
-// ============================================================================
-// PHASE 1: CATEGORY REGISTRY - Single source of truth for all category configs
-// Replaces 6 separate category handler functions (~200 lines removed)
-// ============================================================================
-const CATEGORY_REGISTRY: Record<string, {
-  name: string;
-  queries: string[];
-  priceMax?: number;
-  priceMin?: number;
-}> = {
-  'luxury': {
-    name: 'Luxury Items',
-    queries: [
-      "top designer bags for women",
-      "top designer sunglasses", 
-      "luxury watches",
-      "designer jewelry"
-    ]
-  },
-  'gifts-for-her': {
-    name: 'Gifts for Her',
-    queries: [
-      "skincare essentials for women",
-      "cozy sweaters and cardigans", 
-      "candles and home fragrance",
-      "books and reading accessories",
-      "yoga and fitness accessories",
-      "coffee and tea gifts"
-    ]
-  },
-  'gifts-for-him': {
-    name: 'Gifts for Him',
-    queries: [
-      "tech gadgets for men",
-      "grooming essentials",
-      "fitness and sports gear",
-      "watches and accessories", 
-      "tools and gadgets",
-      "gaming accessories"
-    ]
-  },
-  'gifts-under-50': {
-    name: 'Gifts Under $50',
-    queries: [
-      "best gifts under 50",
-      "popular products under 50",
-      "bluetooth earbuds under 50",
-      "phone accessories under 50", 
-      "kitchen gadgets under 50",
-      "skincare sets under 50",
-      "jewelry gifts under 50",
-      "home decor items under 50",
-      "tech accessories under 50",
-      "books under 50",
-      "coffee accessories under 50",
-      "fitness accessories under 50"
-    ],
-    priceMax: 50,
-    priceMin: 1
-  },
-  'electronics': {
-    name: 'Electronics & Gadgets',
-    queries: [
-      "smartphones phones mobile devices apple samsung",
-      "laptops computers macbook dell hp",
-      "headphones earbuds airpods bose sony",
-      "smart home devices alexa google nest",
-      "gaming consoles playstation xbox nintendo",
-      "cameras photography canon nikon sony",
-      "tablets ipad android surface",
-      "smart watches apple watch garmin fitbit"
-    ]
-  },
-  'best-selling': {
-    name: 'Best Sellers',
-    queries: [
-      "best selling electronics gadgets",
-      "best selling home kitchen essentials", 
-      "best selling fashion clothing",
-      "best selling books bestsellers",
-      "best selling beauty products",
-      "best selling fitness equipment",
-      "best selling toys games",
-      "popular trending items"
-    ]
-  }
-};
-
-// ============================================================================
-// BRAND-AWARE RELEVANCE FILTER - Reusable function for cache-hit and cache-miss
-// ============================================================================
-const COMMON_BRANDS = ['sony', 'apple', 'samsung', 'bose', 'nike', 'adidas', 'lg', 'microsoft', 'google', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'canon', 'nikon', 'fuji', 'panasonic', 'jbl', 'beats', 'logitech', 'razer', 'corsair', 'anker', 'belkin', 'nintendo', 'playstation', 'xbox'];
-
-const applyBrandAwareFilter = (products: any[], query: string): any[] => {
-  if (!query || !products || products.length === 0) return products;
-  
-  const searchTerms = query.toLowerCase()
-    .split(/\s+/)
-    .filter(term => term.length >= 3);
-  
-  if (searchTerms.length === 0) return products;
-  
-  const searchBrands = searchTerms.filter(term => COMMON_BRANDS.includes(term));
-  const hasBrandSearch = searchBrands.length > 0;
-  
-  // Calculate relevance score for each product
-  const calculateRelevanceScore = (product: any): number => {
-    let score = 0;
-    const title = (product.title || '').toLowerCase();
-    const brand = (product.brand || '').toLowerCase();
-    const category = (product.category || '').toLowerCase();
-    
-    for (const term of searchTerms) {
-      // Brand match = highest priority (100 points)
-      if (brand.includes(term)) score += 100;
-      // Title match = good (50 points)
-      if (title.includes(term)) score += 50;
-      // Category match = decent (20 points)
-      if (category.includes(term)) score += 20;
-    }
-    
-    // Bonus for matching ALL search terms
-    const allMatch = searchTerms.every(t => 
-      title.includes(t) || brand.includes(t) || category.includes(t)
-    );
-    if (allMatch) score += 200;
-    
-    // If searching for a specific brand, penalize products that don't match it
-    if (hasBrandSearch) {
-      const productBrandMatchesSearch = searchBrands.some(searchBrand => 
-        brand.includes(searchBrand) || title.includes(searchBrand)
-      );
-      if (!productBrandMatchesSearch) {
-        score -= 150; // Heavy penalty for brand mismatch
-      }
-    }
-    
-    return score;
-  };
-  
-  // Score all products
-  const scoredResults = products.map((product: any) => ({
-    product,
-    relevanceScore: calculateRelevanceScore(product)
-  }));
-  
-  // Filter out low-relevance products
-  const minScore = hasBrandSearch ? 100 : 50;
-  const relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
-  
-  // Sort by relevance score (highest first)
-  relevantResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
-  
-  const filteredProducts = relevantResults.map(r => r.product);
-  
-  console.log(`🎯 Brand-aware filter: ${products.length} → ${filteredProducts.length} products (brand search: ${hasBrandSearch}, brands: ${searchBrands.join(',')})`);
-  
-  return filteredProducts;
-};
-
-// Legacy flag to category mapping (backward compatibility during migration)
-const LEGACY_FLAG_TO_CATEGORY: Record<string, string> = {
-  'luxuryCategories': 'luxury',
-  'giftsForHer': 'gifts-for-her',
-  'giftsForHim': 'gifts-for-him',
-  'giftsUnder50': 'gifts-under-50',
-  'electronics': 'electronics',
-  'bestSelling': 'best-selling'
 };
 
 // Initialize Supabase client for cache operations
@@ -192,7 +28,7 @@ const getSupabaseClient = () => {
 };
 
 /**
- * Get Zinc API key from environment variables (unified approach)
+ * Get Zinc API key from environment variables
  */
 const getZincApiKey = () => {
   const apiKey = Deno.env.get('ZINC_API_KEY');
@@ -204,423 +40,6 @@ const getZincApiKey = () => {
   
   console.log('✅ Zinc API key loaded from environment');
   return apiKey;
-};
-
-/**
- * Enrich search results with cached product data (ratings, reviews, images)
- * This is the core of our cache-first strategy for cost savings
- */
-const enrichWithCachedData = async (supabase: any, products: any[]) => {
-  if (!supabase || !products || products.length === 0) {
-    return { products, cacheHits: 0, cacheMisses: products?.length || 0 };
-  }
-
-  const productIds = products.map(p => p.product_id || p.asin).filter(Boolean);
-  
-  if (productIds.length === 0) {
-    return { products, cacheHits: 0, cacheMisses: products.length };
-  }
-
-  try {
-    console.log(`🔍 Checking cache for ${productIds.length} products...`);
-    
-    const { data: cachedProducts, error } = await supabase
-      .from('products')
-      .select('product_id, metadata, view_count, last_refreshed_at')
-      .in('product_id', productIds);
-
-    if (error) {
-      console.error('❌ Cache query failed:', error.message);
-      return { products, cacheHits: 0, cacheMisses: products.length };
-    }
-
-    // Create lookup map for fast access
-    const cacheMap = new Map();
-    (cachedProducts || []).forEach((cached: any) => {
-      cacheMap.set(cached.product_id, cached);
-    });
-
-    let cacheHits = 0;
-    let cacheMisses = 0;
-
-    // Enrich products with cached data
-    const enrichedProducts = products.map(product => {
-      const productId = product.product_id || product.asin;
-      const cached = cacheMap.get(productId);
-
-      if (cached && cached.metadata) {
-        cacheHits++;
-        const metadata = cached.metadata;
-        
-        return {
-          ...product,
-          // Enrich with cached rating data
-          stars: metadata.stars || product.stars,
-          review_count: metadata.review_count || product.review_count,
-          // Enrich with real Zinc sales data
-          num_sales: metadata.num_sales || product.num_sales || null,
-          // Enrich with cached images if available
-          images: metadata.images || product.images,
-          main_image: metadata.main_image || product.main_image || product.image,
-          // Add cache metadata for smart sorting
-          is_cached: true,
-          view_count: cached.view_count || 0,
-          // Calculate popularity score for sorting
-          popularity_score: calculatePopularityScore(cached, metadata)
-        };
-      } else {
-        cacheMisses++;
-        return {
-          ...product,
-          is_cached: false,
-          view_count: 0,
-          popularity_score: 0
-        };
-      }
-    });
-
-    console.log(`✅ Cache enrichment: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / products.length * 100)}% hit rate)`);
-    
-    return { products: enrichedProducts, cacheHits, cacheMisses };
-  } catch (error) {
-    console.error('❌ Cache enrichment error:', error);
-    return { products, cacheHits: 0, cacheMisses: products.length };
-  }
-};
-
-/**
- * Cache search results in products table for future queries
- * Uses background write to not block response - this is the key to Nicole's organic growth strategy
- */
-const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: string) => {
-  if (!supabase || !products || products.length === 0) return;
-
-  try {
-    const productsToCache = products.map(p => ({
-      product_id: p.product_id || p.asin,
-      title: p.title,
-      price: typeof p.price === 'number' ? p.price : parseFloat(p.price) || null,
-      image_url: p.main_image || p.image || p.thumbnail,
-      retailer: 'amazon',
-      brand: p.brand || null,
-      category: p.category || p.categories?.[0] || null,
-      last_refreshed_at: new Date().toISOString(),
-      metadata: {
-        stars: p.stars || p.rating || null,
-        review_count: p.review_count || p.num_reviews || null,
-        num_sales: p.num_sales || null,
-        main_image: p.main_image || p.image,
-        images: p.images || [p.main_image || p.image].filter(Boolean),
-        isBestSeller: p.isBestSeller || false,
-        bestSellerType: p.bestSellerType || null,
-        badgeText: p.badgeText || null,
-        source: 'search_results',
-        source_query: sourceQuery || null,
-        cached_at: new Date().toISOString()
-      }
-    })).filter(p => p.product_id);
-
-    if (productsToCache.length === 0) return;
-
-    const { error } = await supabase
-      .from('products')
-      .upsert(productsToCache, { 
-        onConflict: 'product_id',
-        ignoreDuplicates: false 
-      });
-
-    if (error) {
-      console.error('❌ Failed to cache search results:', error.message);
-    } else {
-      console.log(`✅ Cached ${productsToCache.length} search result products for query: "${sourceQuery || 'category'}"`);
-    }
-  } catch (error) {
-    console.warn('⚠️ Search result caching failed:', error);
-  }
-};
-
-/**
- * Check if we have enough cached products for a query (cache-first lookup)
- * Includes fuzzy matching with pg_trgm for typo tolerance (Phase 2)
- * Returns cached products if sufficient, null otherwise
- */
-const getCachedProductsForQuery = async (supabase: any, query: string, limit: number) => {
-  if (!supabase || !query || query.length < 2) return null;
-
-  try {
-    const normalizedQuery = query.toLowerCase().trim();
-    const searchTerms = normalizedQuery.split(/\s+/).filter(t => t.length >= 3);
-    
-    if (searchTerms.length === 0) return null;
-
-    // Build OR condition for search terms matching title
-    const orConditions = searchTerms.map(term => `title.ilike.%${term}%`).join(',');
-    
-    const { data: cachedProducts, error } = await supabase
-      .from('products')
-      .select('*')
-      .or(orConditions)
-      .order('view_count', { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('❌ Cache lookup failed:', error.message);
-      return null;
-    }
-
-    // Only return cache if we have at least 80% of requested products
-    const threshold = Math.ceil(limit * 0.8);
-    if (cachedProducts && cachedProducts.length >= threshold) {
-      console.log(`✅ Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
-      
-      // Transform cached products to match Zinc response format
-      return {
-        products: cachedProducts.map((p: any) => transformCachedProduct(p)),
-        fuzzyMatched: false,
-        suggestedCorrection: null
-      };
-    }
-
-    // PHASE 2: Try fuzzy matching if exact match fails
-    if (cachedProducts && cachedProducts.length < threshold) {
-      console.log(`🔍 Trying fuzzy search for "${query}"...`);
-      
-      const { data: fuzzyResults, error: fuzzyError } = await supabase
-        .rpc('fuzzy_product_search', { 
-          search_query: normalizedQuery, 
-          similarity_threshold: 0.3,
-          result_limit: limit 
-        });
-
-      if (!fuzzyError && fuzzyResults && fuzzyResults.length >= threshold) {
-        console.log(`✅ Fuzzy MATCH: Found ${fuzzyResults.length} products for "${query}"`);
-        
-        // Get the most similar title for "Did you mean?" suggestion
-        const suggestedCorrection = fuzzyResults[0]?.title 
-          ? extractCorrectionFromTitle(fuzzyResults[0].title, query)
-          : null;
-        
-        return {
-          products: fuzzyResults.map((p: any) => transformCachedProduct(p)),
-          fuzzyMatched: true,
-          suggestedCorrection
-        };
-      }
-    }
-
-    console.log(`⏳ Cache MISS: Only ${cachedProducts?.length || 0} products for "${query}" (need ${threshold})`);
-    return null;
-  } catch (error) {
-    console.warn('⚠️ Cache lookup error:', error);
-    return null;
-  }
-};
-
-/**
- * Transform cached product to standard format
- */
-const transformCachedProduct = (p: any) => ({
-  product_id: p.product_id,
-  asin: p.product_id,
-  title: p.title,
-  price: p.price,
-  image: p.image_url,
-  main_image: p.metadata?.main_image || p.image_url,
-  images: p.metadata?.images || [p.image_url],
-  brand: p.brand,
-  category: p.category,
-  stars: p.metadata?.stars,
-  rating: p.metadata?.stars,
-  review_count: p.metadata?.review_count,
-  num_reviews: p.metadata?.review_count,
-  num_sales: p.metadata?.num_sales || null,
-  isBestSeller: p.metadata?.isBestSeller || false,
-  bestSellerType: p.metadata?.bestSellerType,
-  badgeText: p.metadata?.badgeText,
-  is_cached: true,
-  view_count: p.view_count || 0,
-  popularity_score: calculatePopularityScore(p, p.metadata || {}),
-  from_cache: true
-});
-
-/**
- * Extract a clean correction suggestion from a product title
- */
-const extractCorrectionFromTitle = (title: string, originalQuery: string) => {
-  const words = title.toLowerCase().split(/\s+/).slice(0, 3);
-  const queryWords = originalQuery.toLowerCase().split(/\s+/);
-  
-  // Find the word that's most similar to what user typed
-  for (const queryWord of queryWords) {
-    for (const titleWord of words) {
-      if (titleWord.length > 3 && 
-          titleWord !== queryWord && 
-          (titleWord.includes(queryWord.substring(0, 3)) || queryWord.includes(titleWord.substring(0, 3)))) {
-        return words.join(' ');
-      }
-    }
-  }
-  return null;
-};
-
-/**
- * PHASE 3: Get fallback products for zero results
- */
-const getZeroResultFallbacks = async (supabase: any, query: string, limit: number = 8) => {
-  if (!supabase) return { suggestedQueries: [], fallbackProducts: [] };
-
-  try {
-    // Get similar trending queries
-    const { data: similarQueries } = await supabase
-      .from('search_trends')
-      .select('search_query, search_count')
-      .order('search_count', { ascending: false })
-      .limit(5);
-
-    // Get best-selling products as fallback
-    const { data: fallbackProducts } = await supabase
-      .from('products')
-      .select('product_id, title, price, image_url, brand, metadata, view_count')
-      .order('view_count', { ascending: false, nullsFirst: false })
-      .limit(limit);
-
-    // Log zero-result query for Nicole AI analysis
-    if (query) {
-      await supabase.from('search_trends').upsert({
-        search_query: query.toLowerCase().trim(),
-        search_count: 1,
-        last_searched_at: new Date().toISOString(),
-        zero_results: true
-      }, { onConflict: 'search_query' });
-    }
-
-    return {
-      suggestedQueries: (similarQueries || []).map((q: any) => q.search_query),
-      fallbackProducts: (fallbackProducts || []).map((p: any) => transformCachedProduct(p))
-    };
-  } catch (error) {
-    console.warn('⚠️ Zero-result fallback error:', error);
-    return { suggestedQueries: [], fallbackProducts: [] };
-  }
-};
-
-/**
- * PHASE 4: Generate facets from search results
- */
-const generateFacetsFromResults = (products: any[]) => {
-  if (!products || products.length === 0) {
-    return null;
-  }
-
-  // Brand facets
-  const brandCounts: Record<string, number> = {};
-  products.forEach(p => {
-    const brand = p.brand?.trim();
-    if (brand) {
-      brandCounts[brand] = (brandCounts[brand] || 0) + 1;
-    }
-  });
-
-  const brands = Object.entries(brandCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
-
-  // Price range facets
-  const priceRanges = [
-    { label: 'Under $25', min: 0, max: 25, count: 0 },
-    { label: '$25 - $50', min: 25, max: 50, count: 0 },
-    { label: '$50 - $100', min: 50, max: 100, count: 0 },
-    { label: '$100 - $200', min: 100, max: 200, count: 0 },
-    { label: 'Over $200', min: 200, max: Infinity, count: 0 }
-  ];
-
-  products.forEach(p => {
-    const price = p.price || 0;
-    for (const range of priceRanges) {
-      if (price >= range.min && price < range.max) {
-        range.count++;
-        break;
-      }
-    }
-  });
-
-  // Category facets
-  const categoryCounts: Record<string, number> = {};
-  products.forEach(p => {
-    const category = p.category?.trim() || p.categories?.[0]?.trim();
-    if (category) {
-      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    }
-  });
-
-  const categories = Object.entries(categoryCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
-
-  return {
-    brands,
-    priceRanges: priceRanges.filter(r => r.count > 0),
-    categories
-  };
-};
-
-/**
- * PHASE 5: Apply personalized ranking boost
- */
-const applyPersonalizedRanking = async (
-  supabase: any, 
-  products: any[], 
-  userId?: string
-) => {
-  if (!supabase || !userId || !products || products.length === 0) {
-    return products;
-  }
-
-  try {
-    // Fetch user profile with size preferences
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('metadata')
-      .eq('id', userId)
-      .single();
-
-    if (!profile?.metadata?.sizes) {
-      return products;
-    }
-
-    const userSizes = profile.metadata.sizes;
-    console.log(`🎯 Applying personalization for user ${userId}:`, userSizes);
-
-    // Apply ranking boost for products matching user preferences
-    return products.map(product => {
-      let personalizedBoost = 0;
-      const title = (product.title || '').toLowerCase();
-
-      // Size matching for clothing
-      if (userSizes.tops && title.includes('shirt') || title.includes('top') || title.includes('jacket')) {
-        if (title.includes(userSizes.tops.toLowerCase())) {
-          personalizedBoost += 20;
-        }
-      }
-
-      if (userSizes.shoes && (title.includes('shoe') || title.includes('sneaker'))) {
-        if (title.includes(userSizes.shoes)) {
-          personalizedBoost += 20;
-        }
-      }
-
-      return {
-        ...product,
-        popularity_score: (product.popularity_score || 0) + personalizedBoost,
-        personalized: personalizedBoost > 0
-      };
-    }).sort((a, b) => (b.popularity_score || 0) - (a.popularity_score || 0));
-  } catch (error) {
-    console.warn('⚠️ Personalization error:', error);
-    return products;
-  }
 };
 
 /**
@@ -688,6 +107,336 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
 };
 
 /**
+ * Enrich search results with cached product data (ratings, reviews, images)
+ */
+const enrichWithCachedData = async (supabase: any, products: any[]) => {
+  if (!supabase || !products || products.length === 0) {
+    return { products, cacheHits: 0, cacheMisses: products?.length || 0 };
+  }
+
+  const productIds = products.map(p => p.product_id || p.asin).filter(Boolean);
+  
+  if (productIds.length === 0) {
+    return { products, cacheHits: 0, cacheMisses: products.length };
+  }
+
+  try {
+    console.log(`🔍 Checking cache for ${productIds.length} products...`);
+    
+    const { data: cachedProducts, error } = await supabase
+      .from('products')
+      .select('product_id, metadata, view_count, last_refreshed_at')
+      .in('product_id', productIds);
+
+    if (error) {
+      console.error('❌ Cache query failed:', error.message);
+      return { products, cacheHits: 0, cacheMisses: products.length };
+    }
+
+    const cacheMap = new Map();
+    (cachedProducts || []).forEach((cached: any) => {
+      cacheMap.set(cached.product_id, cached);
+    });
+
+    let cacheHits = 0;
+    let cacheMisses = 0;
+
+    const enrichedProducts = products.map(product => {
+      const productId = product.product_id || product.asin;
+      const cached = cacheMap.get(productId);
+
+      if (cached && cached.metadata) {
+        cacheHits++;
+        const metadata = cached.metadata;
+        
+        return {
+          ...product,
+          stars: metadata.stars || product.stars,
+          review_count: metadata.review_count || product.review_count,
+          num_sales: metadata.num_sales || product.num_sales || null,
+          images: metadata.images || product.images,
+          main_image: metadata.main_image || product.main_image || product.image,
+          is_cached: true,
+          view_count: cached.view_count || 0,
+          popularity_score: calculatePopularityScore(cached, metadata)
+        };
+      } else {
+        cacheMisses++;
+        return {
+          ...product,
+          is_cached: false,
+          view_count: 0,
+          popularity_score: 0
+        };
+      }
+    });
+
+    console.log(`✅ Cache enrichment: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / products.length * 100)}% hit rate)`);
+    
+    return { products: enrichedProducts, cacheHits, cacheMisses };
+  } catch (error) {
+    console.error('❌ Cache enrichment error:', error);
+    return { products, cacheHits: 0, cacheMisses: products.length };
+  }
+};
+
+/**
+ * Cache search results in products table for future queries
+ */
+const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: string) => {
+  if (!supabase || !products || products.length === 0) return;
+
+  try {
+    const productsToCache = products.map(p => ({
+      product_id: p.product_id || p.asin,
+      title: p.title,
+      price: typeof p.price === 'number' ? p.price : parseFloat(p.price) || null,
+      image_url: p.main_image || p.image || p.thumbnail,
+      retailer: 'amazon',
+      brand: p.brand || null,
+      category: p.category || p.categories?.[0] || null,
+      last_refreshed_at: new Date().toISOString(),
+      metadata: {
+        stars: p.stars || p.rating || null,
+        review_count: p.review_count || p.num_reviews || null,
+        num_sales: p.num_sales || null,
+        main_image: p.main_image || p.image,
+        images: p.images || [p.main_image || p.image].filter(Boolean),
+        isBestSeller: p.isBestSeller || false,
+        bestSellerType: p.bestSellerType || null,
+        badgeText: p.badgeText || null,
+        source: 'search_results',
+        source_query: sourceQuery || null,
+        cached_at: new Date().toISOString()
+      }
+    })).filter(p => p.product_id);
+
+    if (productsToCache.length === 0) return;
+
+    const { error } = await supabase
+      .from('products')
+      .upsert(productsToCache, { 
+        onConflict: 'product_id',
+        ignoreDuplicates: false 
+      });
+
+    if (error) {
+      console.error('❌ Failed to cache search results:', error.message);
+    } else {
+      console.log(`✅ Cached ${productsToCache.length} search result products for query: "${sourceQuery || 'category'}"`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Search result caching failed:', error);
+  }
+};
+
+/**
+ * Transform cached product to standard format
+ */
+const transformCachedProduct = (p: any) => ({
+  product_id: p.product_id,
+  asin: p.product_id,
+  title: p.title,
+  price: p.price,
+  image: p.image_url,
+  main_image: p.metadata?.main_image || p.image_url,
+  images: p.metadata?.images || [p.image_url],
+  brand: p.brand,
+  category: p.category,
+  stars: p.metadata?.stars,
+  rating: p.metadata?.stars,
+  review_count: p.metadata?.review_count,
+  num_reviews: p.metadata?.review_count,
+  num_sales: p.metadata?.num_sales || null,
+  isBestSeller: p.metadata?.isBestSeller || false,
+  bestSellerType: p.metadata?.bestSellerType,
+  badgeText: p.metadata?.badgeText,
+  is_cached: true,
+  view_count: p.view_count || 0,
+  popularity_score: calculatePopularityScore(p, p.metadata || {}),
+  from_cache: true
+});
+
+/**
+ * Check if we have enough cached products for a query (cache-first lookup)
+ */
+const getCachedProductsForQuery = async (supabase: any, query: string, limit: number) => {
+  if (!supabase || !query || query.length < 2) return null;
+
+  try {
+    const normalizedQuery = query.toLowerCase().trim();
+    const searchTerms = normalizedQuery.split(/\s+/).filter(t => t.length >= 3);
+    
+    if (searchTerms.length === 0) return null;
+
+    const orConditions = searchTerms.map(term => `title.ilike.%${term}%`).join(',');
+    
+    const { data: cachedProducts, error } = await supabase
+      .from('products')
+      .select('*')
+      .or(orConditions)
+      .order('view_count', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('❌ Cache lookup failed:', error.message);
+      return null;
+    }
+
+    const threshold = Math.ceil(limit * 0.8);
+    if (cachedProducts && cachedProducts.length >= threshold) {
+      console.log(`✅ Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
+      
+      return {
+        products: cachedProducts.map((p: any) => transformCachedProduct(p)),
+        fuzzyMatched: false,
+        suggestedCorrection: null
+      };
+    }
+
+    // Try fuzzy matching if exact match fails
+    if (cachedProducts && cachedProducts.length < threshold) {
+      console.log(`🔍 Trying fuzzy search for "${query}"...`);
+      
+      const { data: fuzzyResults, error: fuzzyError } = await supabase
+        .rpc('fuzzy_product_search', { 
+          search_query: normalizedQuery, 
+          similarity_threshold: 0.3,
+          result_limit: limit 
+        });
+
+      if (!fuzzyError && fuzzyResults && fuzzyResults.length >= threshold) {
+        console.log(`✅ Fuzzy MATCH: Found ${fuzzyResults.length} products for "${query}"`);
+        
+        const suggestedCorrection = fuzzyResults[0]?.title 
+          ? extractCorrectionFromTitle(fuzzyResults[0].title, query)
+          : null;
+        
+        return {
+          products: fuzzyResults.map((p: any) => transformCachedProduct(p)),
+          fuzzyMatched: true,
+          suggestedCorrection
+        };
+      }
+    }
+
+    console.log(`⏳ Cache MISS: Only ${cachedProducts?.length || 0} products for "${query}" (need ${threshold})`);
+    return null;
+  } catch (error) {
+    console.warn('⚠️ Cache lookup error:', error);
+    return null;
+  }
+};
+
+const extractCorrectionFromTitle = (title: string, originalQuery: string) => {
+  const words = title.toLowerCase().split(/\s+/).slice(0, 3);
+  const queryWords = originalQuery.toLowerCase().split(/\s+/);
+  
+  for (const queryWord of queryWords) {
+    for (const titleWord of words) {
+      if (titleWord.length > 3 && 
+          titleWord !== queryWord && 
+          (titleWord.includes(queryWord.substring(0, 3)) || queryWord.includes(titleWord.substring(0, 3)))) {
+        return words.join(' ');
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * Get fallback products for zero results
+ */
+const getZeroResultFallbacks = async (supabase: any, query: string, limit: number = 8) => {
+  if (!supabase) return { suggestedQueries: [], fallbackProducts: [] };
+
+  try {
+    const { data: similarQueries } = await supabase
+      .from('search_trends')
+      .select('search_query, search_count')
+      .order('search_count', { ascending: false })
+      .limit(5);
+
+    const { data: fallbackProducts } = await supabase
+      .from('products')
+      .select('product_id, title, price, image_url, brand, metadata, view_count')
+      .order('view_count', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (query) {
+      await supabase.from('search_trends').upsert({
+        search_query: query.toLowerCase().trim(),
+        search_count: 1,
+        last_searched_at: new Date().toISOString(),
+        zero_results: true
+      }, { onConflict: 'search_query' });
+    }
+
+    return {
+      suggestedQueries: (similarQueries || []).map((q: any) => q.search_query),
+      fallbackProducts: (fallbackProducts || []).map((p: any) => transformCachedProduct(p))
+    };
+  } catch (error) {
+    console.warn('⚠️ Zero-result fallback error:', error);
+    return { suggestedQueries: [], fallbackProducts: [] };
+  }
+};
+
+/**
+ * Apply personalized ranking boost
+ */
+const applyPersonalizedRanking = async (
+  supabase: any, 
+  products: any[], 
+  userId?: string
+) => {
+  if (!supabase || !userId || !products || products.length === 0) {
+    return products;
+  }
+
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('metadata')
+      .eq('id', userId)
+      .single();
+
+    if (!profile?.metadata?.sizes) {
+      return products;
+    }
+
+    const userSizes = profile.metadata.sizes;
+    console.log(`🎯 Applying personalization for user ${userId}:`, userSizes);
+
+    return products.map(product => {
+      let personalizedBoost = 0;
+      const title = (product.title || '').toLowerCase();
+
+      if (userSizes.tops && title.includes('shirt') || title.includes('top') || title.includes('jacket')) {
+        if (title.includes(userSizes.tops.toLowerCase())) {
+          personalizedBoost += 20;
+        }
+      }
+
+      if (userSizes.shoes && (title.includes('shoe') || title.includes('sneaker'))) {
+        if (title.includes(userSizes.shoes)) {
+          personalizedBoost += 20;
+        }
+      }
+
+      return {
+        ...product,
+        popularity_score: (product.popularity_score || 0) + personalizedBoost,
+        personalized: personalizedBoost > 0
+      };
+    }).sort((a, b) => (b.popularity_score || 0) - (a.popularity_score || 0));
+  } catch (error) {
+    console.warn('⚠️ Personalization error:', error);
+    return products;
+  }
+};
+
+/**
  * Sort products by popularity score
  */
 const sortByPopularity = (products: any[]) => {
@@ -698,7 +447,6 @@ const sortByPopularity = (products: any[]) => {
 
 /**
  * Track search query for Nicole AI trending analysis
- * Uses select-then-increment pattern to properly count repeat searches
  */
 const trackSearchTrend = async (supabase: any, query: string) => {
   if (!supabase || !query || query.length < 2) return;
@@ -706,7 +454,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
   try {
     const normalizedQuery = query.toLowerCase().trim();
     
-    // Check if query already exists
     const { data: existing } = await supabase
       .from('search_trends')
       .select('id, search_count')
@@ -714,7 +461,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
       .single();
 
     if (existing) {
-      // Increment existing count
       await supabase
         .from('search_trends')
         .update({ 
@@ -725,7 +471,6 @@ const trackSearchTrend = async (supabase: any, query: string) => {
       
       console.log(`📊 Search trend incremented: "${normalizedQuery}" → ${existing.search_count + 1}`);
     } else {
-      // Insert new trend
       await supabase
         .from('search_trends')
         .insert({ 
@@ -782,14 +527,8 @@ const processBestSellerData = (product: any) => {
   return { isBestSeller, bestSellerType, badgeText };
 };
 
-// ============================================================================
-// PHASE 2: UNIFIED RESPONSE HANDLER
-// Replaces 6 duplicate processing blocks (~150 lines removed)
-// ============================================================================
-
 /**
  * Unified processor for all category and search results
- * Handles: best seller processing, caching, enrichment, sorting, and response formatting
  */
 const processAndReturnResults = async (
   supabase: any,
@@ -798,20 +537,16 @@ const processAndReturnResults = async (
   sortBy: string = 'popularity',
   additionalData: Record<string, any> = {}
 ) => {
-  // 1. Process best seller data for each product
   const processedResults = rawResults.map((product: any) => {
     const bestSellerData = processBestSellerData(product);
     return { ...product, ...bestSellerData };
   });
   
-  // 2. Cache results in background for future queries (Nicole organic growth)
   EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, sourceQuery));
   
-  // 3. Enrich with cached data (ratings, reviews, images)
   const { products: enrichedProducts, cacheHits, cacheMisses } = 
     await enrichWithCachedData(supabase, processedResults);
   
-  // 4. Apply sorting based on sortBy parameter
   let sortedProducts = [...enrichedProducts];
   if (sortBy === 'price-low') {
     sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -825,16 +560,15 @@ const processAndReturnResults = async (
   
   return {
     products: sortedProducts,
-    results: sortedProducts, // Backward compatibility
+    results: sortedProducts,
     cacheStats: { hits: cacheHits, misses: cacheMisses },
     ...additionalData
   };
 };
 
-// ============================================================================
-// SHARED CATEGORY BATCH SEARCH UTILITY
-// ============================================================================
-
+/**
+ * Shared category batch search utility
+ */
 const searchCategoryBatch = async (
   api_key: string, 
   categories: string[], 
@@ -876,7 +610,6 @@ const searchCategoryBatch = async (
         const endIndex = startIndex + productsPerCategory;
         let categoryResults = data.results.slice(startIndex, endIndex);
         
-        // Price filtering
         if (priceFilter?.max) {
           categoryResults = categoryResults.filter((product: any) => {
             let price = 0;
@@ -903,7 +636,6 @@ const searchCategoryBatch = async (
         const processedResults = categoryResults.map((product: any) => {
           const bestSellerData = processBestSellerData(product);
           
-          // Normalize price from cents to dollars
           let normalizedPrice = product.price;
           if (typeof product.price === 'number' && product.price > 100) {
             normalizedPrice = product.price / 100;
@@ -940,7 +672,6 @@ const searchCategoryBatch = async (
     const categoryResults = await Promise.all(promises);
     const allResults = categoryResults.flat();
     
-    // Shuffle to prevent category clustering
     for (let i = allResults.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allResults[i], allResults[j]] = [allResults[j], allResults[i]];
@@ -963,72 +694,6 @@ const searchCategoryBatch = async (
     console.error(`Error in ${batchName} category batch search:`, error);
     throw error;
   }
-};
-
-// Brand category mappings for multi-category brand searches
-const BRAND_CATEGORY_MAPPINGS: Record<string, string[]> = {
-  apple: [
-    "apple macbook laptop computers",
-    "apple iphone smartphones",
-    "apple ipad tablets", 
-    "apple watch smartwatch",
-    "apple airpods earbuds headphones",
-    "apple mac desktop computers"
-  ],
-  nike: [
-    "nike running shoes",
-    "nike athletic clothing apparel",
-    "nike basketball shoes",
-    "nike workout gear",
-    "nike sports accessories"
-  ],
-  samsung: [
-    "samsung galaxy phones",
-    "samsung tablets",
-    "samsung smartwatch",
-    "samsung earbuds",
-    "samsung laptops",
-    "samsung televisions TVs"
-  ],
-  sony: [
-    "sony headphones",
-    "sony cameras", 
-    "sony playstation gaming",
-    "sony speakers",
-    "sony televisions TVs",
-    "sony electronics"
-  ],
-  adidas: [
-    "adidas running shoes",
-    "adidas athletic clothing",
-    "adidas soccer cleats",
-    "adidas workout gear",
-    "adidas sports accessories"
-  ],
-  athleisure: [
-    "yoga pants leggings",
-    "athletic workout tops",
-    "sports bras women",
-    "activewear shorts",
-    "yoga accessories",
-    "athletic clothing",
-    "workout gear",
-    "athleisure wear"
-  ],
-  madein: [
-    "made in cookware pots pans",
-    "made in kitchen knives",
-    "made in bakeware",
-    "made in kitchen accessories",
-    "made in carbon steel pans"
-  ],
-  lego: [
-    "lego building sets",
-    "lego architecture",
-    "lego creator sets",
-    "lego technic",
-    "lego minifigures"
-  ]
 };
 
 // Brand categories search handler with brand filtering
@@ -1108,6 +773,47 @@ const searchBrandCategories = async (
   return categoryResults;
 };
 
+/**
+ * Normalize prices from Zinc API response
+ */
+const normalizePrices = (products: any[]) => {
+  if (!products || !Array.isArray(products)) return products;
+  
+  return products.map((product: any) => {
+    const pickFirst = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== '' && !(typeof v === 'number' && isNaN(v)));
+    let priceCandidate: any = pickFirst(
+      product.price,
+      product.price_cents,
+      product.offer_price_cents,
+      product.sale_price_cents,
+      product.list_price_cents,
+      product.current_price,
+      product.list_price,
+      product.price_string,
+      product.deal_price_cents
+    );
+
+    let normalizedPrice = 0;
+    if (typeof priceCandidate === 'number') {
+      normalizedPrice = priceCandidate > 100 ? priceCandidate / 100 : priceCandidate;
+    } else if (typeof priceCandidate === 'string') {
+      const num = parseFloat(priceCandidate.replace(/[$,]/g, ''));
+      normalizedPrice = isNaN(num) ? 0 : (num > 100 ? num / 100 : num);
+    }
+
+    return {
+      ...product,
+      price: normalizedPrice,
+      image: product.image,
+      main_image: product.main_image,
+      images: product.images,
+      additional_images: product.additional_images,
+      thumbnail: product.thumbnail,
+      image_url: product.image_url
+    };
+  });
+};
+
 // ============================================================================
 // MAIN REQUEST HANDLER
 // ============================================================================
@@ -1139,15 +845,13 @@ serve(async (req) => {
     
     const supabase = getSupabaseClient();
     
-    // Parse request body - support both new category param and legacy boolean flags
     const requestBody = await req.json();
     const {
       query,
       retailer = "amazon",
       page = 1,
       limit = 20,
-      category: requestedCategory, // NEW: single category parameter
-      // Legacy boolean flags (backward compatibility)
+      category: requestedCategory,
       luxuryCategories = false,
       giftsForHer = false,
       giftsForHim = false,
@@ -1158,11 +862,9 @@ serve(async (req) => {
       filters = {}
     } = requestBody;
     
-    // Determine active category from new param OR legacy flags
     let activeCategory: string | null = requestedCategory || null;
     
     if (!activeCategory) {
-      // Check legacy boolean flags
       for (const [legacyFlag, categoryKey] of Object.entries(LEGACY_FLAG_TO_CATEGORY)) {
         if (requestBody[legacyFlag]) {
           activeCategory = categoryKey;
@@ -1172,16 +874,13 @@ serve(async (req) => {
       }
     }
     
-    // Check if this is a "default" load with no specific query or category
     const hasNoSearchIntent = !query && !activeCategory && !brandCategories;
     
-    // Default to best selling when no search intent
     if (hasNoSearchIntent) {
       activeCategory = 'best-selling';
       console.log('📦 No search intent detected, defaulting to best selling products');
     }
     
-    // Extract price filters
     const priceFilter = {
       min: filters.min_price || filters.minPrice,
       max: filters.max_price || filters.maxPrice
@@ -1191,20 +890,16 @@ serve(async (req) => {
     
     console.log(`Request: category="${activeCategory}", query="${query}", priceFilter:`, priceFilter);
     
-    // Track search trend for Nicole AI (async, non-blocking)
     if (query) {
       trackSearchTrend(supabase, query);
     }
     
     try {
-      // ====================================================================
-      // UNIFIED CATEGORY HANDLER - Replaces 6 separate if-blocks
-      // ====================================================================
+      // UNIFIED CATEGORY HANDLER
       if (activeCategory && CATEGORY_REGISTRY[activeCategory]) {
         const categoryConfig = CATEGORY_REGISTRY[activeCategory];
         console.log(`Processing category "${activeCategory}" (${categoryConfig.name})`);
         
-        // Merge category-specific price limits with request filters
         const effectivePriceFilter = {
           min: priceFilter.min || categoryConfig.priceMin,
           max: categoryConfig.priceMax 
@@ -1212,7 +907,6 @@ serve(async (req) => {
             : priceFilter.max
         };
         
-        // Execute batch search using category queries
         const categoryData = await searchCategoryBatch(
           api_key, 
           categoryConfig.queries, 
@@ -1222,7 +916,6 @@ serve(async (req) => {
           effectivePriceFilter
         );
         
-        // Use unified processor for caching, enrichment, and sorting
         const response = await processAndReturnResults(
           supabase,
           categoryData.results,
@@ -1262,76 +955,64 @@ serve(async (req) => {
       }
       
       // ====================================================================
-      // REGULAR SEARCH HANDLER (with Phases 2-5 enhancements)
+      // REGULAR SEARCH HANDLER
       // ====================================================================
       
-      // Extract user_id for personalization (Phase 5)
       const userId = requestBody.user_id;
       
-      // CACHE-FIRST LOOKUP (with fuzzy matching - Phase 2)
+      // CACHE-FIRST LOOKUP
       const cacheResult = await getCachedProductsForQuery(supabase, query, limit);
       
       if (cacheResult && cacheResult.products && cacheResult.products.length > 0) {
-        console.log(`🎯 Cache hit: ${cacheResult.products.length} products for "${query}" - Zinc API call SKIPPED ($0.00)`);
+        console.log(`🎯 Cache hit: ${cacheResult.products.length} products for "${query}"`);
         
         // Apply brand-aware relevance filter to cached results
         let sortedProducts = applyBrandAwareFilter([...cacheResult.products], query);
         
-        // If brand filter removed all products, return empty (no irrelevant results)
+        // ============================================================
+        // FIX: If brand filter removed all products, FALL THROUGH to Zinc API
+        // instead of returning empty results
+        // ============================================================
         if (sortedProducts.length === 0) {
-          console.log(`🎯 Brand filter removed all cached products - returning empty results for "${query}"`);
+          console.log(`🎯 Brand filter removed all ${cacheResult.products.length} cached products for "${query}" - falling back to Zinc API`);
+          // DON'T return empty - continue to Zinc API call below
+        } else {
+          // We have relevant cached products, apply sorting and return
+          if (sortBy === 'price-low') {
+            sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+          } else if (sortBy === 'price-high') {
+            sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+          } else if (sortBy === 'rating') {
+            sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
+          } else {
+            sortedProducts = sortByPopularity(sortedProducts);
+          }
+          
+          if (userId) {
+            sortedProducts = await applyPersonalizedRanking(supabase, sortedProducts, userId);
+          }
+          
+          const facets = generateFacetsFromResults(sortedProducts);
+          
           return new Response(JSON.stringify({
-            products: [],
-            results: [],
-            total: 0,
-            originalTotal: cacheResult.products.length,
+            products: sortedProducts,
+            results: sortedProducts,
+            total: sortedProducts.length,
+            originalTotal: sortedProducts.length,
             fromCache: true,
-            brandFilterApplied: true,
-            cacheStats: { hits: 0, misses: 0 },
-            facets: {}
+            fuzzyMatched: cacheResult.fuzzyMatched || false,
+            suggestedCorrection: cacheResult.suggestedCorrection,
+            cacheStats: { hits: sortedProducts.length, misses: 0 },
+            facets
           }), {
             status: 200,
             headers: { "Content-Type": "application/json", ...corsHeaders },
           });
         }
-        
-        // Apply additional sorting if requested
-        if (sortBy === 'price-low') {
-          sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
-        } else if (sortBy === 'price-high') {
-          sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
-        } else if (sortBy === 'rating') {
-          sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
-        } else {
-          sortedProducts = sortByPopularity(cacheResult.products);
-        }
-        
-        // Apply personalization if user_id provided (Phase 5)
-        if (userId) {
-          sortedProducts = await applyPersonalizedRanking(supabase, sortedProducts, userId);
-        }
-        
-        // Generate facets from results (Phase 4)
-        const facets = generateFacetsFromResults(sortedProducts);
-        
-        return new Response(JSON.stringify({
-          products: sortedProducts,
-          results: sortedProducts,
-          total: sortedProducts.length,
-          originalTotal: sortedProducts.length,
-          fromCache: true,
-          fuzzyMatched: cacheResult.fuzzyMatched || false,
-          suggestedCorrection: cacheResult.suggestedCorrection,
-          cacheStats: { hits: sortedProducts.length, misses: 0 },
-          facets
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
       }
       
-      // Cache miss - proceed with Zinc API call
-      console.log(`⏳ Cache miss for "${query}" - calling Zinc API ($0.01)`);
+      // Cache miss OR brand filter removed all results - call Zinc API
+      console.log(`⏳ Calling Zinc API for "${query}" ($0.01)`);
       
       let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`;
       
@@ -1347,7 +1028,6 @@ serve(async (req) => {
   
       const data = await response.json();
       
-      // Apply post-search filters
       let filteredResults = data.results || [];
       
       // Price filtering
@@ -1371,151 +1051,23 @@ serve(async (req) => {
         console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products`);
       }
       
-      // Brand-aware relevance filter with scoring
+      // Apply brand-aware filter using shared module (NO DUPLICATE CODE)
       if (query && filteredResults.length > 0) {
-        const searchTerms = query.toLowerCase()
-          .split(/\s+/)
-          .filter(term => term.length >= 3);
-        
-        if (searchTerms.length > 0) {
-          const beforeCount = filteredResults.length;
-          
-          // Common brand names for detection
-          const commonBrands = ['sony', 'apple', 'samsung', 'bose', 'nike', 'adidas', 'lg', 'microsoft', 'google', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'canon', 'nikon', 'fuji', 'panasonic', 'jbl', 'beats', 'logitech', 'razer', 'corsair', 'anker', 'belkin'];
-          const searchBrands = searchTerms.filter(term => commonBrands.includes(term));
-          const hasBrandSearch = searchBrands.length > 0;
-          
-          // Calculate relevance score for each product
-          const calculateRelevanceScore = (product: any): number => {
-            let score = 0;
-            const title = (product.title || '').toLowerCase();
-            const brand = (product.brand || '').toLowerCase();
-            const category = (product.category || '').toLowerCase();
-            
-            for (const term of searchTerms) {
-              // Brand match = highest priority (100 points)
-              if (brand.includes(term)) score += 100;
-              // Title match = good (50 points)
-              if (title.includes(term)) score += 50;
-              // Category match = decent (20 points)
-              if (category.includes(term)) score += 20;
-            }
-            
-            // Bonus for matching ALL search terms
-            const allMatch = searchTerms.every(t => 
-              title.includes(t) || brand.includes(t) || category.includes(t)
-            );
-            if (allMatch) score += 200;
-            
-            // If searching for a specific brand, penalize products that don't match it
-            if (hasBrandSearch) {
-              const productBrandMatchesSearch = searchBrands.some(searchBrand => 
-                brand.includes(searchBrand) || title.includes(searchBrand)
-              );
-              if (!productBrandMatchesSearch) {
-                score -= 150; // Heavy penalty for brand mismatch
-              }
-            }
-            
-            return score;
-          };
-          
-          // Score all products
-          const scoredResults = filteredResults.map((product: any) => ({
-            product,
-            relevanceScore: calculateRelevanceScore(product)
-          }));
-          
-          // Filter out low-relevance products (score < 50)
-          // For brand searches, require higher threshold
-          const minScore = hasBrandSearch ? 100 : 50;
-          const relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
-          
-          // Sort by relevance score (highest first)
-          relevantResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
-          
-          // Extract products from scored results
-          filteredResults = relevantResults.map(r => r.product);
-          
-          console.log(`🎯 Brand-aware relevance filter: ${beforeCount} → ${filteredResults.length} products (brand search: ${hasBrandSearch}, brands: ${searchBrands.join(',')})`);
-        }
+        const beforeCount = filteredResults.length;
+        filteredResults = applyBrandAwareFilter(filteredResults, query);
+        console.log(`🎯 Brand-aware filter applied: ${beforeCount} → ${filteredResults.length} products`);
       }
       
-      // Unsupported product filter
+      // Apply unsupported product filter using shared module
       if (filteredResults && filteredResults.length > 0) {
-        const beforeUnsupportedFilter = filteredResults.length;
-        let blockedCount = 0;
-        
-        filteredResults = filteredResults.filter((product: any) => {
-          if (product.digital === true || product.fresh === true || product.pantry === true) {
-            blockedCount++;
-            return false;
-          }
-          
-          const title = (product.title || '').toLowerCase();
-          const category = (product.category || product.categories?.[0] || '').toLowerCase();
-          
-          if (/gift\s*card|e-?gift|egift/i.test(title)) {
-            blockedCount++;
-            return false;
-          }
-          
-          if (/kindle\s*edition|\[ebook\]|digital\s*(download|code)|online\s*game\s*code|pc\s*download/i.test(title)) {
-            blockedCount++;
-            return false;
-          }
-          
-          if (/kindle\s*store|digital\s*music|digital\s*video/i.test(category)) {
-            blockedCount++;
-            return false;
-          }
-          
-          return true;
-        });
-        
-        if (blockedCount > 0) {
-          console.log(`🎯 Unsupported product filter: ${beforeUnsupportedFilter} → ${filteredResults.length} products (blocked ${blockedCount})`);
-        }
+        const { filteredProducts, blockedCount } = filterUnsupportedProducts(filteredResults);
+        filteredResults = filteredProducts;
       }
 
       // Normalize prices
-      if (filteredResults && Array.isArray(filteredResults)) {
-        filteredResults = filteredResults.map((product: any) => {
-          const pickFirst = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== '' && !(typeof v === 'number' && isNaN(v)));
-          let priceCandidate: any = pickFirst(
-            product.price,
-            product.price_cents,
-            product.offer_price_cents,
-            product.sale_price_cents,
-            product.list_price_cents,
-            product.current_price,
-            product.list_price,
-            product.price_string,
-            product.deal_price_cents
-          );
+      filteredResults = normalizePrices(filteredResults);
 
-          let normalizedPrice = 0;
-          if (typeof priceCandidate === 'number') {
-            normalizedPrice = priceCandidate > 100 ? priceCandidate / 100 : priceCandidate;
-          } else if (typeof priceCandidate === 'string') {
-            const num = parseFloat(priceCandidate.replace(/[$,]/g, ''));
-            normalizedPrice = isNaN(num) ? 0 : (num > 100 ? num / 100 : num);
-          }
-
-          return {
-            ...product,
-            price: normalizedPrice,
-            image: product.image,
-            main_image: product.main_image,
-            images: product.images,
-            additional_images: product.additional_images,
-            thumbnail: product.thumbnail,
-            image_url: product.image_url
-          };
-        });
-      }
-
-      // PHASE 3: Handle zero results with fallbacks
+      // Handle zero results with fallbacks
       if (!filteredResults || filteredResults.length === 0) {
         console.log(`⚠️ Zero results for "${query}" - fetching fallbacks`);
         const fallbacks = await getZeroResultFallbacks(supabase, query, 8);
@@ -1547,10 +1099,10 @@ serve(async (req) => {
         }
       );
 
-      // Add facets to response (Phase 4)
+      // Add facets to response
       const facets = generateFacetsFromResults(searchResponse.products || filteredResults);
       
-      // Apply personalization if user_id provided (Phase 5)
+      // Apply personalization if user_id provided
       let finalProducts = searchResponse.products;
       if (userId && finalProducts.length > 0) {
         finalProducts = await applyPersonalizedRanking(supabase, finalProducts, userId);

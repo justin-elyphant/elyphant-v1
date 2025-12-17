@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ProductCardImageSection from "./ProductCardImageSection";
-import ProductStatusBadges from "./ProductStatusBadges";
+import TrustBadges from "@/components/marketplace/TrustBadges";
 import WishlistButton from "./WishlistButton";
 import ProductPriceSection from "./ProductPriceSection";
 import ProductRatingSection from "./ProductRatingSection";
@@ -94,14 +94,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="aspect-square relative overflow-hidden">
         <ProductCardImageSection product={product} productName={getProductName()} />
 
-        {/* Enhanced Status Badges with best seller data */}
-        <ProductStatusBadges
-          isBestSeller={isBestSeller()}
-          isNewArrival={isNewArrival()}
-          isRecentlyViewed={isRecentlyViewed()}
-          bestSellerType={product.bestSellerType}
-          badgeText={product.badgeText}
-        />
+        {/* Trust Badges - Consolidated component */}
+        <div className="absolute top-2 left-2 z-20">
+          <TrustBadges product={product} size="sm" maxBadges={1} />
+        </div>
 
         {/* Always popover-based wishlist - no more 1-click */}
         <div

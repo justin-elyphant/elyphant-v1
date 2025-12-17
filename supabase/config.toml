@@ -101,6 +101,9 @@ verify_jwt = false
 [functions.seed-product-catalog]
 verify_jwt = false
 
+[functions.nicole-weekly-curator]
+verify_jwt = false
+
 [functions.delete-user-account]
 verify_jwt = true
 
@@ -150,3 +153,8 @@ schedule = "0 10 * * *"
 [[crons.validate_payment_methods]]
 function_name = "validate-payment-methods"
 schedule = "0 8 * * *"
+
+# Nicole Weekly Curator - refresh trending products (Sundays 3 AM)
+[[crons.nicole_weekly_curator]]
+function_name = "nicole-weekly-curator"
+schedule = "0 3 * * 0"

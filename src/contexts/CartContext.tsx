@@ -26,6 +26,7 @@ import { Product } from '@/types/product';
 import { RecipientAssignment, DeliveryGroup } from '@/types/recipient';
 import { useAuth } from '@/contexts/auth';
 import { useUnifiedCart } from '@/hooks/useUnifiedPayment';
+import { triggerHapticFeedback } from '@/utils/haptics';
 
 // Keep exact same interface for zero UI disruption
 export interface CartItem {
@@ -130,18 +131,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = async (product: Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => {
     await serviceAddToCart(product, quantity, wishlistMetadata);
+    triggerHapticFeedback('success'); // Native haptic on add to cart
   };
 
   const removeFromCart = (productId: string) => {
     serviceRemoveFromCart(productId);
+    triggerHapticFeedback('warning'); // Native haptic on remove
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
     serviceUpdateQuantity(productId, quantity);
+    triggerHapticFeedback('light'); // Subtle haptic on quantity change
   };
 
   const clearCart = () => {
     serviceClearCart();
+    triggerHapticFeedback('warning'); // Native haptic on clear
   };
 
   const getItemCount = () => {

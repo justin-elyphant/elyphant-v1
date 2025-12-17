@@ -1278,7 +1278,7 @@ serve(async (req) => {
         console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products`);
       }
       
-      // Universal relevance filter
+      // Brand-aware relevance filter with scoring
       if (query && filteredResults.length > 0) {
         const searchTerms = query.toLowerCase()
           .split(/\s+/)
@@ -1286,17 +1286,65 @@ serve(async (req) => {
         
         if (searchTerms.length > 0) {
           const beforeCount = filteredResults.length;
-          filteredResults = filteredResults.filter((product: any) => {
-            const title = (product.title || '').toLowerCase();
-            const category = (product.category || '').toLowerCase();
-            const brand = (product.brand || '').toLowerCase();
-            
-            return searchTerms.some(term => 
-              title.includes(term) || category.includes(term) || brand.includes(term)
-            );
-          });
           
-          console.log(`🎯 Relevance filter: ${beforeCount} → ${filteredResults.length} products`);
+          // Common brand names for detection
+          const commonBrands = ['sony', 'apple', 'samsung', 'bose', 'nike', 'adidas', 'lg', 'microsoft', 'google', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'canon', 'nikon', 'fuji', 'panasonic', 'jbl', 'beats', 'logitech', 'razer', 'corsair', 'anker', 'belkin'];
+          const searchBrands = searchTerms.filter(term => commonBrands.includes(term));
+          const hasBrandSearch = searchBrands.length > 0;
+          
+          // Calculate relevance score for each product
+          const calculateRelevanceScore = (product: any): number => {
+            let score = 0;
+            const title = (product.title || '').toLowerCase();
+            const brand = (product.brand || '').toLowerCase();
+            const category = (product.category || '').toLowerCase();
+            
+            for (const term of searchTerms) {
+              // Brand match = highest priority (100 points)
+              if (brand.includes(term)) score += 100;
+              // Title match = good (50 points)
+              if (title.includes(term)) score += 50;
+              // Category match = decent (20 points)
+              if (category.includes(term)) score += 20;
+            }
+            
+            // Bonus for matching ALL search terms
+            const allMatch = searchTerms.every(t => 
+              title.includes(t) || brand.includes(t) || category.includes(t)
+            );
+            if (allMatch) score += 200;
+            
+            // If searching for a specific brand, penalize products that don't match it
+            if (hasBrandSearch) {
+              const productBrandMatchesSearch = searchBrands.some(searchBrand => 
+                brand.includes(searchBrand) || title.includes(searchBrand)
+              );
+              if (!productBrandMatchesSearch) {
+                score -= 150; // Heavy penalty for brand mismatch
+              }
+            }
+            
+            return score;
+          };
+          
+          // Score all products
+          const scoredResults = filteredResults.map((product: any) => ({
+            product,
+            relevanceScore: calculateRelevanceScore(product)
+          }));
+          
+          // Filter out low-relevance products (score < 50)
+          // For brand searches, require higher threshold
+          const minScore = hasBrandSearch ? 100 : 50;
+          const relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
+          
+          // Sort by relevance score (highest first)
+          relevantResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+          
+          // Extract products from scored results
+          filteredResults = relevantResults.map(r => r.product);
+          
+          console.log(`🎯 Brand-aware relevance filter: ${beforeCount} → ${filteredResults.length} products (brand search: ${hasBrandSearch}, brands: ${searchBrands.join(',')})`);
         }
       }
       

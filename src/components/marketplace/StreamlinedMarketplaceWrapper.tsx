@@ -197,12 +197,35 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // Determine if we should show a featured product hero
   // Show for searches with high-quality first result (cached with good data, best seller, or high rating)
+  // Also validate brand match for brand-specific searches
   const { featuredProduct, gridProducts } = useMemo(() => {
     if (!showSearchInfo || isPersonalizedActive || filteredPaginatedProducts.length === 0) {
       return { featuredProduct: null, gridProducts: filteredPaginatedProducts };
     }
     
     const firstProduct = filteredPaginatedProducts[0];
+    
+    // Check if search contains a brand name
+    const commonBrands = ['sony', 'apple', 'samsung', 'bose', 'nike', 'adidas', 'lg', 'microsoft', 'google', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'canon', 'nikon', 'fuji', 'panasonic', 'jbl', 'beats', 'logitech', 'razer', 'corsair', 'anker', 'belkin'];
+    const searchTerms = (urlSearchTerm || '').toLowerCase().split(/\s+/);
+    const searchBrands = searchTerms.filter(term => commonBrands.includes(term));
+    const hasBrandSearch = searchBrands.length > 0;
+    
+    // If searching for a specific brand, validate the featured product matches
+    if (hasBrandSearch) {
+      const productBrand = (firstProduct.brand || '').toLowerCase();
+      const productTitle = (firstProduct.title || firstProduct.name || '').toLowerCase();
+      const brandMatches = searchBrands.some(searchBrand => 
+        productBrand.includes(searchBrand) || productTitle.includes(searchBrand)
+      );
+      
+      // Don't show featured hero if brand doesn't match
+      if (!brandMatches) {
+        console.log(`🎯 Featured hero skipped: brand mismatch (search: ${searchBrands.join(',')}, product: ${productBrand})`);
+        return { featuredProduct: null, gridProducts: filteredPaginatedProducts };
+      }
+    }
+    
     const shouldShowFeatured = 
       (firstProduct as any).popularity_score > 50 ||
       (firstProduct as any).isBestSeller ||
@@ -218,7 +241,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     }
     
     return { featuredProduct: null, gridProducts: filteredPaginatedProducts };
-  }, [showSearchInfo, isPersonalizedActive, filteredPaginatedProducts]);
+  }, [showSearchInfo, isPersonalizedActive, filteredPaginatedProducts, urlSearchTerm]);
 
   // Listen for Nicole search events and trigger marketplace search
   useEffect(() => {

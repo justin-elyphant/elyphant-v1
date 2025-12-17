@@ -431,12 +431,13 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                         price: product.price,
                         brand: product.brand || "",
                       }}
+                      variant="icon"
                       triggerClassName={cn(
                         "flex items-center justify-center rounded-full transition-all shadow-sm shrink-0",
                         isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9",
                         isWishlisted 
-                          ? "bg-gray-900 text-white hover:bg-gray-800" 
-                          : "bg-gray-900 text-white hover:bg-gray-800"
+                          ? "bg-white/90 text-foreground hover:bg-white" 
+                          : "bg-white/90 text-muted-foreground hover:bg-white hover:text-foreground"
                       )}
                       onAdded={handleWishlistAdded}
                       isWishlisted={isWishlisted}
@@ -449,7 +450,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                       handleWishlistClick();
                     }}
                     className={cn(
-                      "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-all shadow-sm shrink-0",
+                      "flex items-center justify-center bg-white/90 text-muted-foreground rounded-full hover:bg-white hover:text-foreground transition-all shadow-sm shrink-0",
                       isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
                     )}
                     aria-label="Add to wishlist"

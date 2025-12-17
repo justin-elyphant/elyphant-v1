@@ -47,6 +47,9 @@ verify_jwt = false
 [functions.get-product-detail]
 verify_jwt = false
 
+[functions.search-suggestions]
+verify_jwt = false
+
 [functions.get-shipping-quote]
 verify_jwt = false
 

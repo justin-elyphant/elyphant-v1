@@ -133,12 +133,19 @@ serve(async (req) => {
         if (daysSinceRefresh < CACHE_FRESHNESS_DAYS && hasCompleteData) {
           console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old, complete data`);
           
-          // Background update view count (non-blocking)
+          // Background update view count and updated_at (non-blocking)
           EdgeRuntime.waitUntil(
             supabase
               .from('products')
-              .update({ view_count: (cachedProduct.view_count || 0) + 1 })
+              .update({ 
+                view_count: (cachedProduct.view_count || 0) + 1,
+                updated_at: new Date().toISOString()
+              })
               .eq('product_id', product_id)
+              .then(({ error }) => {
+                if (error) console.error('[Cache HIT] View count update failed:', error);
+                else console.log(`[Cache HIT] View count incremented to ${(cachedProduct.view_count || 0) + 1}`);
+              })
           );
           
           // Return cached data with metadata fields extracted
@@ -247,8 +254,9 @@ serve(async (req) => {
         // Variation detection flag for gradual rollout
         hasVariations: Boolean(data.all_variants && Array.isArray(data.all_variants) && data.all_variants.length > 0),
         // PRESERVE cached review data for frontend response
-        // Zinc confirmed: Search and Detail APIs "source data differently"
-        stars: data.stars ?? cachedProduct?.metadata?.stars ?? null,
+        // Zinc confirmed: Search API returns reviews, Detail API often returns null
+        // Use explicit null check (not ??) since Zinc returns null, not undefined
+        stars: (data.stars !== null && data.stars !== undefined) ? data.stars : (cachedProduct?.metadata?.stars || null),
         review_count: data.review_count || data.num_reviews || cachedProduct?.metadata?.review_count || null,
         num_reviews: data.review_count || data.num_reviews || cachedProduct?.metadata?.review_count || null,
         // Legacy retailer field
@@ -279,7 +287,8 @@ serve(async (req) => {
         metadata: {
           // Store ALL rating/review data in metadata JSONB
           // PRESERVE cached review data if Zinc API returns null (search results may have had reviews)
-          stars: enhancedData.stars ?? cachedProduct?.metadata?.stars ?? null,
+          // Use explicit null check since Zinc returns null, not undefined
+          stars: (enhancedData.stars !== null && enhancedData.stars !== undefined) ? enhancedData.stars : (cachedProduct?.metadata?.stars || null),
           review_count: enhancedData.review_count || enhancedData.num_reviews || cachedProduct?.metadata?.review_count || null,
           // Store complete image arrays
           main_image: enhancedData.main_image,

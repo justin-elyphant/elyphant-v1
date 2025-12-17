@@ -125,9 +125,12 @@ serve(async (req) => {
           : 999;
         
         // Check if cached data has COMPLETE product details (not just search result stub)
+        // Zinc API may return product_details OR product_description OR feature_bullets
         const hasCompleteData = Boolean(
           cachedProduct.metadata?.product_description || 
-          (cachedProduct.metadata?.feature_bullets && cachedProduct.metadata.feature_bullets.length > 0)
+          (cachedProduct.metadata?.feature_bullets && cachedProduct.metadata.feature_bullets.length > 0) ||
+          (cachedProduct.metadata?.product_details && cachedProduct.metadata.product_details.length > 0) ||
+          (cachedProduct.metadata?.images && cachedProduct.metadata.images.length > 0)
         );
         
         if (daysSinceRefresh < CACHE_FRESHNESS_DAYS && hasCompleteData) {

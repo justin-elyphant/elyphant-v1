@@ -970,12 +970,22 @@ serve(async (req) => {
         let sortedProducts = applyBrandAwareFilter([...cacheResult.products], query);
         
         // ============================================================
-        // FIX: If brand filter removed all products, FALL THROUGH to Zinc API
-        // instead of returning empty results
+        // SMART THRESHOLD: Fall back to Zinc API when:
+        // 1. Brand filter removed ALL products, OR
+        // 2. Brand-specific search returns sparse results (< 8 products)
+        // This accelerates organic catalog growth for brand searches
         // ============================================================
-        if (sortedProducts.length === 0) {
-          console.log(`🎯 Brand filter removed all ${cacheResult.products.length} cached products for "${query}" - falling back to Zinc API`);
-          // DON'T return empty - continue to Zinc API call below
+        const MIN_BRAND_RESULTS_THRESHOLD = 8;
+        const { hasBrandSearch } = parseSearchQuery(query);
+        const isSparseResults = hasBrandSearch && sortedProducts.length > 0 && sortedProducts.length < MIN_BRAND_RESULTS_THRESHOLD;
+        
+        if (sortedProducts.length === 0 || isSparseResults) {
+          if (isSparseResults) {
+            console.log(`🎯 Brand search "${query}" has only ${sortedProducts.length} results (threshold: ${MIN_BRAND_RESULTS_THRESHOLD}) - supplementing with Zinc API`);
+          } else {
+            console.log(`🎯 Brand filter removed all ${cacheResult.products.length} cached products for "${query}" - falling back to Zinc API`);
+          }
+          // DON'T return sparse/empty - continue to Zinc API call below
         } else {
           // We have relevant cached products, apply sorting and return
           if (sortBy === 'price-low') {

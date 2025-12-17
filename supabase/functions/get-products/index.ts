@@ -626,6 +626,7 @@ const sortByPopularity = (products: any[]) => {
 
 /**
  * Track search query for Nicole AI trending analysis
+ * Uses select-then-increment pattern to properly count repeat searches
  */
 const trackSearchTrend = async (supabase: any, query: string) => {
   if (!supabase || !query || query.length < 2) return;
@@ -633,47 +634,36 @@ const trackSearchTrend = async (supabase: any, query: string) => {
   try {
     const normalizedQuery = query.toLowerCase().trim();
     
-    const { error } = await supabase
+    // Check if query already exists
+    const { data: existing } = await supabase
       .from('search_trends')
-      .upsert(
-        { 
+      .select('id, search_count')
+      .eq('search_query', normalizedQuery)
+      .single();
+
+    if (existing) {
+      // Increment existing count
+      await supabase
+        .from('search_trends')
+        .update({ 
+          search_count: (existing.search_count || 0) + 1,
+          last_searched_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      
+      console.log(`📊 Search trend incremented: "${normalizedQuery}" → ${existing.search_count + 1}`);
+    } else {
+      // Insert new trend
+      await supabase
+        .from('search_trends')
+        .insert({ 
           search_query: normalizedQuery,
           search_count: 1,
           last_searched_at: new Date().toISOString()
-        },
-        { 
-          onConflict: 'search_query',
-          ignoreDuplicates: false 
-        }
-      );
-
-    if (error) {
-      const { data: existing } = await supabase
-        .from('search_trends')
-        .select('id, search_count')
-        .eq('search_query', normalizedQuery)
-        .single();
-
-      if (existing) {
-        await supabase
-          .from('search_trends')
-          .update({ 
-            search_count: (existing.search_count || 0) + 1,
-            last_searched_at: new Date().toISOString()
-          })
-          .eq('id', existing.id);
-      } else {
-        await supabase
-          .from('search_trends')
-          .insert({ 
-            search_query: normalizedQuery,
-            search_count: 1,
-            last_searched_at: new Date().toISOString()
-          });
-      }
+        });
+      
+      console.log(`📊 New search trend tracked: "${normalizedQuery}"`);
     }
-    
-    console.log(`📊 Tracked search trend: "${normalizedQuery}"`);
   } catch (error) {
     console.warn('⚠️ Search trend tracking failed:', error);
   }

@@ -17,7 +17,6 @@ import { useProductDataSync } from "@/hooks/useProductDataSync";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMinBreakpoint } from "@/hooks/use-breakpoint";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import ProductStatusBadges from "@/components/gifting/ProductStatusBadges";
 import OptimizedImage from "./ui/OptimizedImage";
 import ColorSwatches from "./ColorSwatches";
 import { getHighResAmazonImage, getAmazonImageSrcSet } from "@/utils/amazonImageOptimizer";

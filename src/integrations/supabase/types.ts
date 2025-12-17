@@ -3871,6 +3871,7 @@ export type Database = {
           last_searched_at: string | null
           search_count: number | null
           search_query: string
+          zero_results: boolean | null
         }
         Insert: {
           conversion_count?: number | null
@@ -3879,6 +3880,7 @@ export type Database = {
           last_searched_at?: string | null
           search_count?: number | null
           search_query: string
+          zero_results?: boolean | null
         }
         Update: {
           conversion_count?: number | null
@@ -3887,6 +3889,7 @@ export type Database = {
           last_searched_at?: string | null
           search_count?: number | null
           search_query?: string
+          zero_results?: boolean | null
         }
         Relationships: []
       }
@@ -5321,6 +5324,24 @@ export type Database = {
       detect_abandoned_carts: { Args: never; Returns: undefined }
       emergency_security_verification: { Args: never; Returns: Json }
       fix_function_security_warnings: { Args: never; Returns: string }
+      fuzzy_product_search: {
+        Args: {
+          result_limit?: number
+          search_query: string
+          similarity_threshold?: number
+        }
+        Returns: {
+          brand: string
+          category: string
+          image_url: string
+          metadata: Json
+          price: number
+          product_id: string
+          similarity_score: number
+          title: string
+          view_count: number
+        }[]
+      }
       generate_address_collection_token: { Args: never; Returns: string }
       generate_invitation_token: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }

@@ -22,6 +22,12 @@ interface LululemonMobileFiltersProps {
   activeFilters: Record<string, any>;
   onFilterChange: (filters: Record<string, any>) => void;
   onOpenFullFilters: () => void;
+  // Phase 4: Server-side facets
+  serverFacets?: {
+    brands?: Array<{ name: string; count: number }>;
+    priceRanges?: Array<{ label: string; min: number; max: number; count: number }>;
+    categories?: Array<{ name: string; count: number }>;
+  };
 }
 
 const LululemonMobileFilters: React.FC<LululemonMobileFiltersProps> = ({
@@ -30,9 +36,21 @@ const LululemonMobileFilters: React.FC<LululemonMobileFiltersProps> = ({
   activeFilters,
   onFilterChange,
   onOpenFullFilters,
+  serverFacets
 }) => {
   const { quickFilters, detectedCategory } = useSmartFilters(searchTerm, products);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  
+  // Enhance brand filter with server facets if available
+  const enhancedQuickFilters = quickFilters.map(filter => {
+    if (filter.key === 'brand' && serverFacets?.brands && serverFacets.brands.length > 0) {
+      return {
+        ...filter,
+        options: serverFacets.brands.map(b => ({ value: b.name, label: `${b.name} (${b.count})` }))
+      };
+    }
+    return filter;
+  });
 
   const getActiveFilterCount = () => {
     let count = 0;
@@ -125,8 +143,8 @@ const LululemonMobileFilters: React.FC<LululemonMobileFiltersProps> = ({
         )}
       </Button>
 
-      {/* Dynamic Filter Pills */}
-      {quickFilters.map((filter) => (
+      {/* Dynamic Filter Pills - using enhanced filters */}
+      {enhancedQuickFilters.map((filter) => (
         <Popover
           key={filter.key}
           open={openPopover === filter.key}

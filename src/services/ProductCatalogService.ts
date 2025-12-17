@@ -38,8 +38,16 @@ export interface SearchResponse {
   };
   facets?: {
     brands?: Array<{ name: string; count: number }>;
-    priceRanges?: Array<{ label: string; count: number }>;
+    priceRanges?: Array<{ label: string; min: number; max: number; count: number }>;
+    categories?: Array<{ name: string; count: number }>;
   };
+  // Phase 2: Typo tolerance
+  fuzzyMatched?: boolean;
+  suggestedCorrection?: string;
+  // Phase 3: Zero results
+  zeroResults?: boolean;
+  suggestedQueries?: string[];
+  fallbackProducts?: any[];
   error?: string;
 }
 
@@ -111,13 +119,20 @@ class ProductCatalogServiceClass {
       
       return {
         products,
-        totalCount: data?.totalCount || products.length,
+        totalCount: data?.totalCount || data?.total || products.length,
         cacheStats: data?.cacheStats || { 
           hits: data?.cacheHits || 0, 
           misses: data?.cacheMisses || 0,
           hitRate: data?.cacheHitRate || '0%'
         },
-        facets: data?.facets
+        facets: data?.facets,
+        // Phase 2: Typo tolerance
+        fuzzyMatched: data?.fuzzyMatched,
+        suggestedCorrection: data?.suggestedCorrection,
+        // Phase 3: Zero results
+        zeroResults: data?.zeroResults || (products.length === 0),
+        suggestedQueries: data?.suggestedQueries,
+        fallbackProducts: data?.fallbackProducts
       };
 
     } catch (error) {

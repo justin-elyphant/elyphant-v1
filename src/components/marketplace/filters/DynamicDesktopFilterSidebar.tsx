@@ -21,6 +21,12 @@ interface DynamicDesktopFilterSidebarProps {
   activeFilters: Record<string, any>;
   onFilterChange: (filters: Record<string, any>) => void;
   className?: string;
+  // Phase 4: Server-side facets
+  serverFacets?: {
+    brands?: Array<{ name: string; count: number }>;
+    priceRanges?: Array<{ label: string; min: number; max: number; count: number }>;
+    categories?: Array<{ name: string; count: number }>;
+  };
 }
 
 const DynamicDesktopFilterSidebar: React.FC<DynamicDesktopFilterSidebarProps> = ({
@@ -29,9 +35,17 @@ const DynamicDesktopFilterSidebar: React.FC<DynamicDesktopFilterSidebarProps> = 
   productCount,
   activeFilters,
   onFilterChange,
-  className
+  className,
+  serverFacets
 }) => {
   const { filters, detectedCategory } = useSmartFilters(searchTerm, products);
+  
+  // Merge server facets with local filters - prefer server data when available
+  const brandOptions = serverFacets?.brands?.map(b => ({ 
+    value: b.name, 
+    label: b.name,
+    count: b.count 
+  })) || filters.brand?.options || [];
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     price: true,
     rating: true,

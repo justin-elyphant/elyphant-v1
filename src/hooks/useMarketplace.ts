@@ -195,6 +195,15 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
     cacheStats: data?.cacheStats,
     facets: data?.facets,
     
+    // Phase 2: Typo tolerance
+    fuzzyMatched: data?.fuzzyMatched,
+    suggestedCorrection: data?.suggestedCorrection,
+    
+    // Phase 3: Zero results handling
+    zeroResults: data?.zeroResults,
+    suggestedQueries: data?.suggestedQueries,
+    fallbackProducts: data?.fallbackProducts,
+    
     // Actions
     search,
     updateFilters,

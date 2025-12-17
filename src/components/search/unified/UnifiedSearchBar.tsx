@@ -3,25 +3,20 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, Sparkles, X, Bot } from "lucide-react";
+import { Search, X, TrendingUp, Package } from "lucide-react";
 import { toast } from "sonner";
-import { IOSSwitch } from "@/components/ui/ios-switch";
 import { useSearchMode } from "@/hooks/useSearchMode";
-import { productCatalogService } from "@/services/ProductCatalogService";
+import { useSearchSuggestionsLive } from "@/hooks/useSearchSuggestionsLive";
 import { useAuth } from "@/contexts/auth";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
-import VoiceInputButton from "../VoiceInputButton";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import UnifiedSearchSuggestions from "../UnifiedSearchSuggestions";
 import RecentSearches from "../RecentSearches";
 import { useNicoleDropdown } from "../nicole/NicoleDropdownContext";
 import { NicoleSearchDropdown } from "../nicole/NicoleSearchDropdown";
-// Lazy load modal for better performance
+import { Card } from "@/components/ui/card";
+import { formatPrice } from "@/lib/utils";
 const SimpleNicolePopup = lazy(() => import("@/components/ai/SimpleNicolePopup"));
-import { FriendSearchResult } from "@/services/search/friendSearchService";
-import { Product } from "@/types/product";
 
 interface UnifiedSearchBarProps {
   onNavigateToResults?: (searchQuery: string, nicoleContext?: any) => void;
@@ -53,7 +48,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     closeAll
   } = useNicoleDropdown();
   
-  // Voice recognition
   const {
     isListening,
     transcript,
@@ -64,38 +58,16 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     isSupported: isVoiceSupported
   } = useSpeechRecognition();
   
-  // Search state and results
-  const [searchResults, setSearchResults] = useState<{ friends: FriendSearchResult[]; products: Product[]; brands: string[] }>({
-    friends: [],
-    products: [],
-    brands: []
-  });
-  const [searchLoading, setSearchLoading] = useState(false);
-
-  const performProductSearch = useCallback(async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setSearchResults({ friends: [], products: [], brands: [] });
-      return;
-    }
-    setSearchLoading(true);
-    try {
-      const response = await productCatalogService.searchProducts(searchTerm, { limit: 15 });
-      setSearchResults({
-        friends: [],
-        products: response.products || [],
-        brands: []
-      });
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, []);
+  // Phase 1: Use lightweight suggestions hook
+  const { 
+    suggestions: liveSuggestions, 
+    trending, 
+    products: suggestedProducts,
+    isLoading: suggestionsLoading 
+  } = useSearchSuggestionsLive(query, 300);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Portal refs for dropdown positioning - using createPortal to bypass any CSS clipping/overflow issues
   const barRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const [portalPos, setPortalPos] = useState<{ left: number; top: number; width: number }>({ left: 0, top: 0, width: 0 });
@@ -104,21 +76,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     const el = barRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const top = Math.round(rect.bottom + 8); // small gap under the bar
+    const top = Math.round(rect.bottom + 8);
     setPortalPos({ left: Math.round(rect.left), top, width: Math.round(rect.width) });
   }, []);
-
-  // Handle mode toggle
-  const handleModeToggle = (checked: boolean) => {
-    setMode(checked ? "nicole" : "search");
-    setShowSuggestions(false);
-    
-    if (checked) {
-      openDropdown();
-    } else {
-      closeAll();
-    }
-  };
 
   // Open Nicole when mode changes
   useEffect(() => {
@@ -127,16 +87,11 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   }, [isNicoleMode, isDropdownOpen, isModalOpen, openDropdown]);
 
-  // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    
-    if (!isNicoleMode && newQuery.trim().length >= 1) {
+    if (!isNicoleMode) {
       setShowSuggestions(true);
-      performProductSearch(newQuery);
-    } else {
-      setShowSuggestions(false);
     }
   };
 
@@ -149,15 +104,12 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
 
   const handleInputBlur = () => {
     setInputFocused(false);
-    // Don't close on blur - let click-outside handler manage closing
-    // This prevents race conditions with selection clicks
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       addSearch(query.trim());
-      
       if (isNicoleMode) {
         openDropdown();
       } else {
@@ -171,12 +123,10 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   };
 
-  // Handle selections
   const handleRecentSearchSelect = (searchTerm: string) => {
     setQuery(searchTerm);
     setShowSuggestions(false);
     addSearch(searchTerm);
-    
     if (onNavigateToResults) {
       onNavigateToResults(searchTerm);
     } else {
@@ -184,55 +134,26 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   };
 
-  const handleFriendSelect = (friend: FriendSearchResult) => {
-    const profilePath = friend.username || friend.id;
+  const handleSuggestionClick = (text: string) => {
+    setQuery(text);
     setShowSuggestions(false);
-    addSearch(friend.name);
-    navigate(`/profile/${profilePath}`);
+    addSearch(text);
+    navigate(`/marketplace?search=${encodeURIComponent(text)}`);
   };
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSuggestionClick = (productId: string, title: string) => {
     setShowSuggestions(false);
-    addSearch(product.title);
-    navigate(`/marketplace?search=${encodeURIComponent(product.title)}`);
+    addSearch(title);
+    navigate(`/product/${productId}`);
   };
 
-  const handleBrandSelect = (brand: string) => {
-    setShowSuggestions(false);
-    addSearch(brand);
-    navigate(`/marketplace?search=${encodeURIComponent(brand)}`);
-  };
-
-  const handleSendFriendRequest = async (friendId: string, friendName: string) => {
-    toast.success(`Friend request sent to ${friendName}!`);
-  };
-
-  // Voice input
-  const handleVoiceInput = () => {
-    if (!isVoiceSupported) {
-      toast.error("Voice not supported", {
-        description: "Your browser doesn't support voice input"
-      });
-      return;
-    }
-
-    if (isListening) {
-      stopListening();
-    } else {
-      resetTranscript();
-      startListening();
-    }
-  };
-
-  // Handle voice transcript
+  // Voice transcript
   useEffect(() => {
     if (transcript && transcript.trim()) {
       setQuery(transcript);
-      performProductSearch(transcript);
     }
-  }, [transcript, performProductSearch]);
+  }, [transcript]);
 
-  // Handle voice errors
   useEffect(() => {
     if (voiceError) {
       toast.error("Voice recognition error", {
@@ -242,12 +163,12 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   }, [voiceError, resetTranscript]);
 
-  // Click outside detection (account for portal)
+  // Click outside detection
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (portalRef.current && portalRef.current.contains(target)) {
-        return; // clicks inside the portal shouldn't close it
+        return;
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setShowSuggestions(false);
@@ -260,7 +181,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     };
   }, []);
 
-  // Keep portal positioned with the input bar
+  // Keep portal positioned
   useEffect(() => {
     if (!showSuggestions || isNicoleMode) return;
     updatePortalPos();
@@ -286,7 +207,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       
       if (nicoleContext) {
         marketplaceUrl.searchParams.set('source', 'nicole');
-        
         if (nicoleContext.budget) {
           const budget = nicoleContext.budget;
           if (Array.isArray(budget) && budget.length === 2) {
@@ -294,36 +214,22 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             if (typeof min === 'number') marketplaceUrl.searchParams.set('minPrice', String(min));
             if (typeof max === 'number') marketplaceUrl.searchParams.set('maxPrice', String(max));
           } else if (typeof budget === 'object' && budget !== null) {
-            if (budget.minPrice !== undefined) {
-              marketplaceUrl.searchParams.set('minPrice', String(budget.minPrice));
-            }
-            if (budget.maxPrice !== undefined) {
-              marketplaceUrl.searchParams.set('maxPrice', String(budget.maxPrice));
-            }
+            if (budget.minPrice !== undefined) marketplaceUrl.searchParams.set('minPrice', String(budget.minPrice));
+            if (budget.maxPrice !== undefined) marketplaceUrl.searchParams.set('maxPrice', String(budget.maxPrice));
           }
         }
-        
-        if (nicoleContext.recipient) {
-          marketplaceUrl.searchParams.set('recipient', nicoleContext.recipient);
-        }
-        if (nicoleContext.occasion) {
-          marketplaceUrl.searchParams.set('occasion', nicoleContext.occasion);
-        }
+        if (nicoleContext.recipient) marketplaceUrl.searchParams.set('recipient', nicoleContext.recipient);
+        if (nicoleContext.occasion) marketplaceUrl.searchParams.set('occasion', nicoleContext.occasion);
       }
       
       navigate(marketplaceUrl.pathname + marketplaceUrl.search);
     }
-    
-    setTimeout(() => {
-      closeAll();
-    }, 100);
+    setTimeout(() => closeAll(), 100);
   };
 
   const handleNicoleClose = () => {
     closeAll();
     setMode("search");
-    
-    // Clean up URL
     const url = new URL(window.location.href);
     if (url.searchParams.get('mode') === 'nicole') {
       url.searchParams.delete('mode');
@@ -331,11 +237,120 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
   };
 
+  // Render suggestions dropdown content
+  const renderSuggestionsContent = () => {
+    // If no query, show recent searches or trending
+    if (!query.trim()) {
+      if (recentSearches.length > 0) {
+        return (
+          <RecentSearches
+            searches={recentSearches}
+            onSearchSelect={handleRecentSearchSelect}
+          />
+        );
+      }
+      // Show trending if no recent searches
+      if (trending.length > 0) {
+        return (
+          <Card className="bg-background border shadow-lg rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2 px-2">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Trending Searches</span>
+            </div>
+            <div className="space-y-1">
+              {trending.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(item.text)}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm min-h-[44px] flex items-center"
+                >
+                  {item.text}
+                </button>
+              ))}
+            </div>
+          </Card>
+        );
+      }
+      return null;
+    }
+
+    // Show live suggestions for query
+    const hasSuggestions = liveSuggestions.length > 0 || suggestedProducts.length > 0;
+    
+    if (!hasSuggestions && !suggestionsLoading) {
+      return null;
+    }
+
+    return (
+      <Card className="bg-background border shadow-lg rounded-xl p-3 max-h-[400px] overflow-y-auto">
+        {/* Text Suggestions */}
+        {liveSuggestions.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2 px-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase">Suggestions</span>
+            </div>
+            <div className="space-y-1">
+              {liveSuggestions.slice(0, 5).map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(suggestion.text)}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm min-h-[44px] flex items-center gap-2"
+                >
+                  {suggestion.type === 'trending' && <TrendingUp className="h-3 w-3 text-orange-500" />}
+                  <span>{suggestion.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Product Suggestions */}
+        {suggestedProducts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2 px-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase">Products</span>
+            </div>
+            <div className="space-y-1">
+              {suggestedProducts.slice(0, 4).map((product, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleProductSuggestionClick(product.id, product.title)}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] flex items-center gap-3"
+                >
+                  {product.image && (
+                    <img 
+                      src={product.image} 
+                      alt={product.title}
+                      className="w-10 h-10 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{product.title}</p>
+                    {product.price > 0 && (
+                      <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {suggestionsLoading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+          </div>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       <form onSubmit={handleSearch} className="relative">
         <div ref={barRef} className="relative flex items-center transition-all duration-300 bg-white border border-gray-300 rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600">
-          {/* Search icon - consistent across all breakpoints */}
           <div className={`absolute z-10 ${mobile ? 'left-3' : 'left-4'}`}>
             <Search className={`text-gray-400 ${mobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           </div>
@@ -349,9 +364,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             className={`transition-all duration-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-500 ${
-              mobile 
-                ? 'text-base h-11 pl-12 pr-12' 
-                : 'h-11 text-sm pl-12 pr-12'
+              mobile ? 'text-base h-11 pl-12 pr-12' : 'h-11 text-sm pl-12 pr-12'
             }`}
             style={{ fontSize: mobile ? '16px' : '14px' }}
           />
@@ -364,7 +377,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 size="sm"
                 onClick={() => {
                   setQuery("");
-                  setSearchResults({ friends: [], products: [], brands: [] });
                   inputRef.current?.focus();
                 }}
                 className="h-8 w-8 p-0 hover:bg-gray-100"
@@ -384,31 +396,14 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
         />
       )}
 
-      {/* Search Suggestions */}
+      {/* Search Suggestions Portal */}
       {!isNicoleMode && showSuggestions && createPortal(
         <div
           ref={portalRef}
           style={{ position: 'fixed', left: portalPos.left, top: portalPos.top, width: portalPos.width, zIndex: 10000 }}
           className="pointer-events-auto"
         >
-          {query.trim() ? (
-            <UnifiedSearchSuggestions
-              friends={searchResults.friends}
-              products={searchResults.products}
-              brands={searchResults.brands}
-              isVisible={showSuggestions}
-              onFriendSelect={handleFriendSelect}
-              onProductSelect={handleProductSelect}
-              onBrandSelect={handleBrandSelect}
-              onSendFriendRequest={handleSendFriendRequest}
-              mobile={mobile}
-            />
-          ) : (
-            <RecentSearches
-              searches={recentSearches}
-              onSearchSelect={handleRecentSearchSelect}
-            />
-          )}
+          {renderSuggestionsContent()}
         </div>,
         document.body
       )}

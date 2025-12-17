@@ -11,6 +11,7 @@ import ProductPriceAndRating from "./ProductPriceAndRating";
 import MySizesSelector from "./MySizesSelector";
 import VariationSelector from "./VariationSelector";
 import ProductDetailsContent from "./ProductDetailsContent";
+import TrustBadges from "@/components/marketplace/TrustBadges";
 
 import ScheduleGiftModal from "./ScheduleGiftModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
@@ -133,6 +134,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
               {product.brand}
             </p>
           )}
+          
+          {/* Trust Badges - Carried over from product cards */}
+          <TrustBadges 
+            product={product} 
+            size="md"
+            className="mt-3"
+            maxBadges={2}
+          />
         </div>
         
         {/* Price & Rating */}

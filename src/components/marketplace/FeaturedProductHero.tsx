@@ -196,13 +196,19 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
                     ({formatReviewCount(getReviewCount())} reviews)
                   </span>
                 )}
-                {/* Inline purchase indicator */}
-                {((product as any).popularity_score > 50 || (product as any).view_count > 20) && (
-                  <span className="text-muted-foreground text-sm flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3 text-green-500" />
-                    {formatCompactNumber(Math.floor(((product as any).popularity_score || 0) + ((product as any).view_count || 0)) * 10)}+ bought recently
-                  </span>
-                )}
+                {/* Inline purchase indicator - uses real num_sales data only */}
+                {(() => {
+                  const numSales = product.num_sales || (product as any).metadata?.num_sales || 0;
+                  if (numSales > 0) {
+                    return (
+                      <span className="text-muted-foreground text-sm flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        {formatCompactNumber(numSales)}+ bought recently
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             )}
 

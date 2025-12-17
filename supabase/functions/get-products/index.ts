@@ -269,6 +269,7 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
 
 /**
  * Check if we have enough cached products for a query (cache-first lookup)
+ * Includes fuzzy matching with pg_trgm for typo tolerance (Phase 2)
  * Returns cached products if sufficient, null otherwise
  */
 const getCachedProductsForQuery = async (supabase: any, query: string, limit: number) => {
@@ -301,29 +302,38 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       console.log(`✅ Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
       
       // Transform cached products to match Zinc response format
-      return cachedProducts.map((p: any) => ({
-        product_id: p.product_id,
-        asin: p.product_id,
-        title: p.title,
-        price: p.price,
-        image: p.image_url,
-        main_image: p.metadata?.main_image || p.image_url,
-        images: p.metadata?.images || [p.image_url],
-        brand: p.brand,
-        category: p.category,
-        stars: p.metadata?.stars,
-        rating: p.metadata?.stars,
-        review_count: p.metadata?.review_count,
-        num_reviews: p.metadata?.review_count,
-        num_sales: p.metadata?.num_sales || null,
-        isBestSeller: p.metadata?.isBestSeller || false,
-        bestSellerType: p.metadata?.bestSellerType,
-        badgeText: p.metadata?.badgeText,
-        is_cached: true,
-        view_count: p.view_count || 0,
-        popularity_score: calculatePopularityScore(p, p.metadata || {}),
-        from_cache: true
-      }));
+      return {
+        products: cachedProducts.map((p: any) => transformCachedProduct(p)),
+        fuzzyMatched: false,
+        suggestedCorrection: null
+      };
+    }
+
+    // PHASE 2: Try fuzzy matching if exact match fails
+    if (cachedProducts && cachedProducts.length < threshold) {
+      console.log(`🔍 Trying fuzzy search for "${query}"...`);
+      
+      const { data: fuzzyResults, error: fuzzyError } = await supabase
+        .rpc('fuzzy_product_search', { 
+          search_query: normalizedQuery, 
+          similarity_threshold: 0.3,
+          result_limit: limit 
+        });
+
+      if (!fuzzyError && fuzzyResults && fuzzyResults.length >= threshold) {
+        console.log(`✅ Fuzzy MATCH: Found ${fuzzyResults.length} products for "${query}"`);
+        
+        // Get the most similar title for "Did you mean?" suggestion
+        const suggestedCorrection = fuzzyResults[0]?.title 
+          ? extractCorrectionFromTitle(fuzzyResults[0].title, query)
+          : null;
+        
+        return {
+          products: fuzzyResults.map((p: any) => transformCachedProduct(p)),
+          fuzzyMatched: true,
+          suggestedCorrection
+        };
+      }
     }
 
     console.log(`⏳ Cache MISS: Only ${cachedProducts?.length || 0} products for "${query}" (need ${threshold})`);
@@ -331,6 +341,213 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
   } catch (error) {
     console.warn('⚠️ Cache lookup error:', error);
     return null;
+  }
+};
+
+/**
+ * Transform cached product to standard format
+ */
+const transformCachedProduct = (p: any) => ({
+  product_id: p.product_id,
+  asin: p.product_id,
+  title: p.title,
+  price: p.price,
+  image: p.image_url,
+  main_image: p.metadata?.main_image || p.image_url,
+  images: p.metadata?.images || [p.image_url],
+  brand: p.brand,
+  category: p.category,
+  stars: p.metadata?.stars,
+  rating: p.metadata?.stars,
+  review_count: p.metadata?.review_count,
+  num_reviews: p.metadata?.review_count,
+  num_sales: p.metadata?.num_sales || null,
+  isBestSeller: p.metadata?.isBestSeller || false,
+  bestSellerType: p.metadata?.bestSellerType,
+  badgeText: p.metadata?.badgeText,
+  is_cached: true,
+  view_count: p.view_count || 0,
+  popularity_score: calculatePopularityScore(p, p.metadata || {}),
+  from_cache: true
+});
+
+/**
+ * Extract a clean correction suggestion from a product title
+ */
+const extractCorrectionFromTitle = (title: string, originalQuery: string) => {
+  const words = title.toLowerCase().split(/\s+/).slice(0, 3);
+  const queryWords = originalQuery.toLowerCase().split(/\s+/);
+  
+  // Find the word that's most similar to what user typed
+  for (const queryWord of queryWords) {
+    for (const titleWord of words) {
+      if (titleWord.length > 3 && 
+          titleWord !== queryWord && 
+          (titleWord.includes(queryWord.substring(0, 3)) || queryWord.includes(titleWord.substring(0, 3)))) {
+        return words.join(' ');
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * PHASE 3: Get fallback products for zero results
+ */
+const getZeroResultFallbacks = async (supabase: any, query: string, limit: number = 8) => {
+  if (!supabase) return { suggestedQueries: [], fallbackProducts: [] };
+
+  try {
+    // Get similar trending queries
+    const { data: similarQueries } = await supabase
+      .from('search_trends')
+      .select('search_query, search_count')
+      .order('search_count', { ascending: false })
+      .limit(5);
+
+    // Get best-selling products as fallback
+    const { data: fallbackProducts } = await supabase
+      .from('products')
+      .select('product_id, title, price, image_url, brand, metadata, view_count')
+      .order('view_count', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    // Log zero-result query for Nicole AI analysis
+    if (query) {
+      await supabase.from('search_trends').upsert({
+        search_query: query.toLowerCase().trim(),
+        search_count: 1,
+        last_searched_at: new Date().toISOString(),
+        zero_results: true
+      }, { onConflict: 'search_query' });
+    }
+
+    return {
+      suggestedQueries: (similarQueries || []).map((q: any) => q.search_query),
+      fallbackProducts: (fallbackProducts || []).map((p: any) => transformCachedProduct(p))
+    };
+  } catch (error) {
+    console.warn('⚠️ Zero-result fallback error:', error);
+    return { suggestedQueries: [], fallbackProducts: [] };
+  }
+};
+
+/**
+ * PHASE 4: Generate facets from search results
+ */
+const generateFacetsFromResults = (products: any[]) => {
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  // Brand facets
+  const brandCounts: Record<string, number> = {};
+  products.forEach(p => {
+    const brand = p.brand?.trim();
+    if (brand) {
+      brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+    }
+  });
+
+  const brands = Object.entries(brandCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  // Price range facets
+  const priceRanges = [
+    { label: 'Under $25', min: 0, max: 25, count: 0 },
+    { label: '$25 - $50', min: 25, max: 50, count: 0 },
+    { label: '$50 - $100', min: 50, max: 100, count: 0 },
+    { label: '$100 - $200', min: 100, max: 200, count: 0 },
+    { label: 'Over $200', min: 200, max: Infinity, count: 0 }
+  ];
+
+  products.forEach(p => {
+    const price = p.price || 0;
+    for (const range of priceRanges) {
+      if (price >= range.min && price < range.max) {
+        range.count++;
+        break;
+      }
+    }
+  });
+
+  // Category facets
+  const categoryCounts: Record<string, number> = {};
+  products.forEach(p => {
+    const category = p.category?.trim() || p.categories?.[0]?.trim();
+    if (category) {
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    }
+  });
+
+  const categories = Object.entries(categoryCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  return {
+    brands,
+    priceRanges: priceRanges.filter(r => r.count > 0),
+    categories
+  };
+};
+
+/**
+ * PHASE 5: Apply personalized ranking boost
+ */
+const applyPersonalizedRanking = async (
+  supabase: any, 
+  products: any[], 
+  userId?: string
+) => {
+  if (!supabase || !userId || !products || products.length === 0) {
+    return products;
+  }
+
+  try {
+    // Fetch user profile with size preferences
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('metadata')
+      .eq('id', userId)
+      .single();
+
+    if (!profile?.metadata?.sizes) {
+      return products;
+    }
+
+    const userSizes = profile.metadata.sizes;
+    console.log(`🎯 Applying personalization for user ${userId}:`, userSizes);
+
+    // Apply ranking boost for products matching user preferences
+    return products.map(product => {
+      let personalizedBoost = 0;
+      const title = (product.title || '').toLowerCase();
+
+      // Size matching for clothing
+      if (userSizes.tops && title.includes('shirt') || title.includes('top') || title.includes('jacket')) {
+        if (title.includes(userSizes.tops.toLowerCase())) {
+          personalizedBoost += 20;
+        }
+      }
+
+      if (userSizes.shoes && (title.includes('shoe') || title.includes('sneaker'))) {
+        if (title.includes(userSizes.shoes)) {
+          personalizedBoost += 20;
+        }
+      }
+
+      return {
+        ...product,
+        popularity_score: (product.popularity_score || 0) + personalizedBoost,
+        personalized: personalizedBoost > 0
+      };
+    }).sort((a, b) => (b.popularity_score || 0) - (a.popularity_score || 0));
+  } catch (error) {
+    console.warn('⚠️ Personalization error:', error);
+    return products;
   }
 };
 
@@ -983,16 +1200,19 @@ serve(async (req) => {
       }
       
       // ====================================================================
-      // REGULAR SEARCH HANDLER
+      // REGULAR SEARCH HANDLER (with Phases 2-5 enhancements)
       // ====================================================================
       
-      // CACHE-FIRST LOOKUP
-      const cachedResults = await getCachedProductsForQuery(supabase, query, limit);
+      // Extract user_id for personalization (Phase 5)
+      const userId = requestBody.user_id;
       
-      if (cachedResults && cachedResults.length > 0) {
-        console.log(`🎯 Returning ${cachedResults.length} cached products for "${query}" - Zinc API call SKIPPED ($0.00)`);
+      // CACHE-FIRST LOOKUP (with fuzzy matching - Phase 2)
+      const cacheResult = await getCachedProductsForQuery(supabase, query, limit);
+      
+      if (cacheResult && cacheResult.products && cacheResult.products.length > 0) {
+        console.log(`🎯 Returning ${cacheResult.products.length} cached products for "${query}" - Zinc API call SKIPPED ($0.00)`);
         
-        let sortedProducts = [...cachedResults];
+        let sortedProducts = [...cacheResult.products];
         if (sortBy === 'price-low') {
           sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
         } else if (sortBy === 'price-high') {
@@ -1000,8 +1220,16 @@ serve(async (req) => {
         } else if (sortBy === 'rating') {
           sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
         } else {
-          sortedProducts = sortByPopularity(cachedResults);
+          sortedProducts = sortByPopularity(cacheResult.products);
         }
+        
+        // Apply personalization if user_id provided (Phase 5)
+        if (userId) {
+          sortedProducts = await applyPersonalizedRanking(supabase, sortedProducts, userId);
+        }
+        
+        // Generate facets from results (Phase 4)
+        const facets = generateFacetsFromResults(sortedProducts);
         
         return new Response(JSON.stringify({
           products: sortedProducts,
@@ -1009,7 +1237,10 @@ serve(async (req) => {
           total: sortedProducts.length,
           originalTotal: sortedProducts.length,
           fromCache: true,
-          cacheStats: { hits: sortedProducts.length, misses: 0 }
+          fuzzyMatched: cacheResult.fuzzyMatched || false,
+          suggestedCorrection: cacheResult.suggestedCorrection,
+          cacheStats: { hits: sortedProducts.length, misses: 0 },
+          facets
         }), {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -1153,6 +1384,25 @@ serve(async (req) => {
         });
       }
 
+      // PHASE 3: Handle zero results with fallbacks
+      if (!filteredResults || filteredResults.length === 0) {
+        console.log(`⚠️ Zero results for "${query}" - fetching fallbacks`);
+        const fallbacks = await getZeroResultFallbacks(supabase, query, 8);
+        
+        return new Response(JSON.stringify({
+          products: [],
+          results: [],
+          total: 0,
+          zeroResults: true,
+          suggestedQueries: fallbacks.suggestedQueries,
+          fallbackProducts: fallbacks.fallbackProducts,
+          cacheStats: { hits: 0, misses: 1 }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       // Use unified processor for regular search results
       const searchResponse = await processAndReturnResults(
         supabase,
@@ -1166,7 +1416,21 @@ serve(async (req) => {
         }
       );
 
-      return new Response(JSON.stringify(searchResponse), {
+      // Add facets to response (Phase 4)
+      const facets = generateFacetsFromResults(searchResponse.products || filteredResults);
+      
+      // Apply personalization if user_id provided (Phase 5)
+      let finalProducts = searchResponse.products;
+      if (userId && finalProducts.length > 0) {
+        finalProducts = await applyPersonalizedRanking(supabase, finalProducts, userId);
+      }
+
+      return new Response(JSON.stringify({
+        ...searchResponse,
+        products: finalProducts,
+        results: finalProducts,
+        facets
+      }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });

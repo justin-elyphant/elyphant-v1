@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface ZincWebhookPayload {
-  type: 'request_succeeded' | 'request_failed' | 'tracking_obtained' | 'tracking_updated' | 'status_updated' | 'case_updated';
+  type: 'request_succeeded' | 'request_failed' | 'tracking_obtained' | 'tracking_updated' | 'status_updated' | 'case_updated' | 'order.cancelled';
   request_id: string;
   order_id?: string;
   merchant_order_id?: string;
@@ -17,7 +17,17 @@ interface ZincWebhookPayload {
     tracking_url?: string;
   };
   status?: string;
-  case_details?: any;
+  case_details?: {
+    type?: string;
+    message?: string;
+    refund_amount?: number;
+  };
+  status_updates?: Array<{
+    type: string;
+    data?: {
+      reason?: string;
+    };
+  }>;
   error?: {
     code: string;
     message: string;
@@ -27,6 +37,7 @@ interface ZincWebhookPayload {
     order_id: string;
     order_number: string;
     user_id: string;
+    cancellation_source?: string;
   };
 }
 
@@ -171,6 +182,11 @@ serve(async (req) => {
       case 'case_updated':
         console.log('📋 Case update received (return/cancellation)');
         await handleCaseUpdate(supabase, internalOrderId, payload);
+        break;
+
+      case 'order.cancelled':
+        console.log('🚫 Order cancelled by retailer');
+        await handleOrderCancelled(supabase, internalOrderId, payload);
         break;
 
       default:
@@ -416,6 +432,32 @@ async function handleStatusUpdate(supabase: any, orderId: string, payload: ZincW
 }
 
 async function handleCaseUpdate(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+  const caseType = payload.case_details?.type;
+  console.log(`📋 Case type: ${caseType}`);
+
+  // Handle refund cases - create pending refund request for admin approval
+  if (caseType === 'case.refund.full' || caseType === 'case.refund.partial') {
+    console.log(`💰 ZMA refund detected: ${caseType}`);
+    await createPendingRefund(supabase, orderId, payload, caseType === 'case.refund.partial' ? 'partial' : 'full');
+    return;
+  }
+
+  // Handle forced cancellation - order was cancelled, ZMA refund may follow
+  if (caseType === 'case.opened.cancel.forced_cancellation') {
+    console.log('🚫 Forced cancellation case - ZMA refund expected');
+    await supabase.from('orders').update({
+      status: 'cancelled',
+      updated_at: new Date().toISOString(),
+      notes: {
+        case_details: payload.case_details,
+        case_updated_at: new Date().toISOString(),
+        awaiting_zma_refund: true,
+      },
+    }).eq('id', orderId);
+    return;
+  }
+
+  // Default: mark as requires_attention for manual review
   const { error } = await supabase
     .from('orders')
     .update({
@@ -433,6 +475,140 @@ async function handleCaseUpdate(supabase: any, orderId: string, payload: ZincWeb
   } else {
     console.log(`✅ Case update recorded for order ${orderId}`);
   }
+}
+
+async function handleOrderCancelled(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+  const cancellationReason = payload.status_updates?.find(u => u.type === 'order.cancelled')?.data?.reason;
+  console.log(`🚫 Order cancelled, reason: ${cancellationReason}`);
+
+  // Get current order notes
+  const { data: order } = await supabase
+    .from('orders')
+    .select('notes')
+    .eq('id', orderId)
+    .single();
+
+  const currentNotes = order?.notes || {};
+
+  const { error } = await supabase
+    .from('orders')
+    .update({
+      status: 'cancelled',
+      updated_at: new Date().toISOString(),
+      notes: {
+        ...currentNotes,
+        cancellation_reason: cancellationReason,
+        cancelled_at: new Date().toISOString(),
+        awaiting_zma_refund: cancellationReason === 'payment',
+      },
+    })
+    .eq('id', orderId);
+
+  if (error) {
+    console.error('❌ Failed to update cancelled order:', error);
+  } else {
+    console.log(`✅ Order ${orderId} marked as cancelled`);
+  }
+}
+
+async function createPendingRefund(supabase: any, orderId: string, payload: ZincWebhookPayload, refundType: 'full' | 'partial') {
+  // Get order details
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select('id, order_number, total_amount, payment_intent_id, user_id, customer_email, shipping_address, notes')
+    .eq('id', orderId)
+    .single();
+
+  if (orderError || !order) {
+    console.error('❌ Failed to fetch order for refund:', orderError);
+    return;
+  }
+
+  // Calculate refund amount
+  const refundAmount = payload.case_details?.refund_amount || (refundType === 'full' ? order.total_amount : 0);
+  
+  if (!refundAmount || refundAmount <= 0) {
+    console.error('❌ Invalid refund amount:', refundAmount);
+    return;
+  }
+
+  // Check for existing pending refund request
+  const { data: existingRefund } = await supabase
+    .from('refund_requests')
+    .select('id')
+    .eq('order_id', orderId)
+    .eq('status', 'pending')
+    .maybeSingle();
+
+  if (existingRefund) {
+    console.log('⚠️ Pending refund already exists for order:', orderId);
+    return;
+  }
+
+  // Create pending refund request
+  const { error: refundError } = await supabase
+    .from('refund_requests')
+    .insert({
+      order_id: orderId,
+      amount: refundAmount,
+      reason: `ZMA refunded by Zinc: ${payload.case_details?.message || refundType + ' refund'}`,
+      status: 'pending',
+      refund_type: refundType,
+      metadata: {
+        zinc_case_type: payload.case_details?.type,
+        zinc_request_id: payload.request_id,
+        original_payment_intent: order.payment_intent_id,
+      },
+    });
+
+  if (refundError) {
+    console.error('❌ Failed to create refund request:', refundError);
+    return;
+  }
+
+  console.log(`✅ Pending refund request created for order ${orderId}: $${refundAmount}`);
+
+  // Update order status
+  await supabase.from('orders').update({
+    status: 'cancelled',
+    updated_at: new Date().toISOString(),
+    notes: {
+      ...order.notes,
+      zma_refunded: true,
+      zma_refund_amount: refundAmount,
+      pending_customer_refund: true,
+    },
+  }).eq('id', orderId);
+
+  // Get customer info for email
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, name')
+    .eq('id', order.user_id)
+    .single();
+
+  const customerEmail = order.shipping_address?.email || order.customer_email || profile?.email;
+  const customerName = order.shipping_address?.name || profile?.name || 'Customer';
+
+  // Queue admin approval email
+  await supabase.from('email_queue').insert({
+    recipient_email: 'justin@elyphant.com',
+    recipient_name: 'Justin',
+    event_type: 'refund_approval_required',
+    template_variables: {
+      order_number: order.order_number,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      refund_amount: refundAmount.toFixed(2),
+      refund_reason: payload.case_details?.message || 'ZMA refunded by retailer',
+      trunkline_url: 'https://elyphant.com/trunkline/refunds',
+    },
+    priority: 'high',
+    scheduled_for: new Date().toISOString(),
+    status: 'pending',
+  });
+
+  console.log(`📧 Admin approval email queued for refund on order ${order.order_number}`);
 }
 
 async function handleCancellationWebhook(supabase: any, orderId: string, payload: ZincWebhookPayload) {

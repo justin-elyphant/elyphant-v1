@@ -18,6 +18,7 @@ import EmailTemplatesManager from "@/components/trunkline/communications/EmailTe
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
 import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
 import FridayTransferDashboard from "@/components/trunkline/funding/FridayTransferDashboard";
+import TrunklineRefundsTab from "@/components/trunkline/TrunklineRefundsTab";
 
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
@@ -36,6 +37,8 @@ export const TrunklineRouter: React.FC = () => {
         return <TrunklineSupportTab />;
       case '/returns':
         return <ReturnTrackingTab />;
+      case '/refunds':
+        return <TrunklineRefundsTab />;
       case '/amazon':
         return <TrunklineAmazonTab />;
       case '/business-payments':

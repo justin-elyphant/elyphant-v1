@@ -18,7 +18,8 @@ import {
   TestTube,
   Mail,
   Zap,
-  Wallet
+  Wallet,
+  RotateCcw
 } from "lucide-react";
 import {
   Sidebar,
@@ -60,6 +61,12 @@ const navigationItems = [
     title: "Returns",
     url: "/trunkline/returns",
     icon: Package,
+    badge: null,
+  },
+  {
+    title: "Refunds",
+    url: "/trunkline/refunds",
+    icon: RotateCcw,
     badge: null,
   },
   {

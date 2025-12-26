@@ -37,6 +37,9 @@ verify_jwt = false
 [functions.cancel-zinc-order]
 verify_jwt = true
 
+[functions.process-stripe-refund]
+verify_jwt = true
+
 # ============================================
 # ESSENTIAL UTILITY FUNCTIONS
 # ============================================

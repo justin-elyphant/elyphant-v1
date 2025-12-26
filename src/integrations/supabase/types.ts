@@ -3769,9 +3769,11 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          metadata: Json | null
           order_id: string
           processed_at: string | null
           reason: string | null
+          refund_type: string | null
           status: string
           stripe_payment_intent_id: string | null
           stripe_refund_id: string | null
@@ -3782,9 +3784,11 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          metadata?: Json | null
           order_id: string
           processed_at?: string | null
           reason?: string | null
+          refund_type?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_refund_id?: string | null
@@ -3795,9 +3799,11 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          metadata?: Json | null
           order_id?: string
           processed_at?: string | null
           reason?: string | null
+          refund_type?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_refund_id?: string | null

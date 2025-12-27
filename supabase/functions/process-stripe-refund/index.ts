@@ -37,7 +37,6 @@ serve(async (req) => {
           order_number,
           payment_intent_id,
           user_id,
-          customer_email,
           shipping_address,
           total_amount
         )
@@ -159,7 +158,7 @@ serve(async (req) => {
       .eq('id', order.user_id)
       .single();
 
-    const customerEmail = order.shipping_address?.email || order.customer_email || profile?.email;
+    const customerEmail = order.shipping_address?.email || profile?.email;
     const customerName = order.shipping_address?.name || profile?.name || 'Customer';
 
     if (customerEmail) {

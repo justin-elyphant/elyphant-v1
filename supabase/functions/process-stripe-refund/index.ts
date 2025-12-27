@@ -103,6 +103,18 @@ serve(async (req) => {
 
     const refundAmountCents = Math.round(refundRequest.amount * 100);
 
+    // Check Stripe balance before processing refund
+    const balance = await stripe.balance.retrieve();
+    const availableUSD = balance.available.find(b => b.currency === 'usd')?.amount || 0;
+    const pendingUSD = balance.pending.find(b => b.currency === 'usd')?.amount || 0;
+    const willDebitBank = availableUSD < refundAmountCents;
+
+    console.log(`💰 Stripe Balance Check: Available $${(availableUSD / 100).toFixed(2)}, Pending $${(pendingUSD / 100).toFixed(2)}`);
+    
+    if (willDebitBank) {
+      console.log(`⚠️ Stripe balance ($${(availableUSD / 100).toFixed(2)}) insufficient for refund ($${refundRequest.amount.toFixed(2)}). Bank will be debited.`);
+    }
+
     console.log(`💳 Processing Stripe refund: $${refundRequest.amount} (${refundAmountCents} cents) for PI: ${order.payment_intent_id}`);
 
     const stripeRefund = await stripe.refunds.create({
@@ -114,6 +126,8 @@ serve(async (req) => {
         order_number: order.order_number,
         refund_request_id: refund_request_id,
         refund_reason: refundRequest.reason,
+        balance_at_refund: (availableUSD / 100).toFixed(2),
+        bank_debited: willDebitBank ? 'true' : 'false',
       },
     });
 
@@ -175,6 +189,11 @@ serve(async (req) => {
         message: 'Refund processed successfully',
         stripe_refund_id: stripeRefund.id,
         amount: refundRequest.amount,
+        balance_info: {
+          available_before: availableUSD / 100,
+          pending: pendingUSD / 100,
+          will_debit_bank: willDebitBank,
+        },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );

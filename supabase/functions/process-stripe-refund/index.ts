@@ -102,6 +102,36 @@ serve(async (req) => {
 
     const refundAmountCents = Math.round(refundRequest.amount * 100);
 
+    // Retrieve PaymentIntent and Charge to check already refunded amount
+    const paymentIntent = await stripe.paymentIntents.retrieve(order.payment_intent_id);
+    const chargeId = paymentIntent.latest_charge as string;
+    
+    if (!chargeId) {
+      console.error('❌ No charge found on PaymentIntent');
+      return new Response(
+        JSON.stringify({ error: 'No charge found on this payment' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const charge = await stripe.charges.retrieve(chargeId);
+    const amountCaptured = charge.amount_captured;
+    const amountAlreadyRefunded = charge.amount_refunded;
+    const remainingRefundable = amountCaptured - amountAlreadyRefunded;
+
+    console.log(`📊 Charge state: Captured $${(amountCaptured / 100).toFixed(2)}, Already refunded $${(amountAlreadyRefunded / 100).toFixed(2)}, Remaining $${(remainingRefundable / 100).toFixed(2)}`);
+
+    // Block over-refunds
+    if (refundAmountCents > remainingRefundable) {
+      const errorMsg = `Cannot refund $${refundRequest.amount.toFixed(2)}. Only $${(remainingRefundable / 100).toFixed(2)} remaining on this charge (already refunded: $${(amountAlreadyRefunded / 100).toFixed(2)})`;
+      console.error(`❌ ${errorMsg}`);
+      
+      return new Response(
+        JSON.stringify({ error: errorMsg }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     // Check Stripe balance before processing refund
     const balance = await stripe.balance.retrieve();
     const availableUSD = balance.available.find(b => b.currency === 'usd')?.amount || 0;
@@ -142,11 +172,17 @@ serve(async (req) => {
       })
       .eq('id', refund_request_id);
 
-    // Update order payment status
+    // Smart payment_status: check if fully refunded or partially refunded
+    const newTotalRefunded = amountAlreadyRefunded + refundAmountCents;
+    const isFullyRefunded = newTotalRefunded >= amountCaptured;
+    const newPaymentStatus = isFullyRefunded ? 'refunded' : 'partially_refunded';
+
+    console.log(`📋 Payment status update: ${newPaymentStatus} (total refunded: $${(newTotalRefunded / 100).toFixed(2)} of $${(amountCaptured / 100).toFixed(2)})`);
+
     await supabase
       .from('orders')
       .update({
-        payment_status: 'refunded',
+        payment_status: newPaymentStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', order.id);

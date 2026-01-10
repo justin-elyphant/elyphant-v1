@@ -24,7 +24,7 @@ interface OrderPipelineData {
   processing: { count: number; total_value: number };
 }
 
-export default function FridayTransferDashboard() {
+export default function MonthlyFundingDashboard() {
   const [balanceData, setBalanceData] = useState<ZMABalanceData | null>(null);
   const [pipeline, setPipeline] = useState<OrderPipelineData>({
     scheduled: { count: 0, total_value: 0 },

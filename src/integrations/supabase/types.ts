@@ -2955,7 +2955,10 @@ export type Database = {
           currency: string
           delivery_group_id: string | null
           estimated_delivery: string | null
+          expected_funding_date: string | null
           fulfilled_at: string | null
+          funding_hold_reason: string | null
+          funding_status: string | null
           gift_options: Json | null
           id: string
           is_auto_gift: boolean | null
@@ -2984,7 +2987,10 @@ export type Database = {
           currency?: string
           delivery_group_id?: string | null
           estimated_delivery?: string | null
+          expected_funding_date?: string | null
           fulfilled_at?: string | null
+          funding_hold_reason?: string | null
+          funding_status?: string | null
           gift_options?: Json | null
           id?: string
           is_auto_gift?: boolean | null
@@ -3013,7 +3019,10 @@ export type Database = {
           currency?: string
           delivery_group_id?: string | null
           estimated_delivery?: string | null
+          expected_funding_date?: string | null
           fulfilled_at?: string | null
+          funding_hold_reason?: string | null
+          funding_status?: string | null
           gift_options?: Json | null
           id?: string
           is_auto_gift?: boolean | null

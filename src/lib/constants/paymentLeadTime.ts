@@ -25,6 +25,18 @@ export const PAYMENT_LEAD_TIME = {
   
   /** ZMA buffer amount to maintain */
   ZMA_BUFFER_AMOUNT: 500,
+  
+  /** ZMA low balance warning threshold */
+  ZMA_LOW_BALANCE_THRESHOLD: 1000,
+  
+  /** ZMA critical balance threshold - orders may be blocked */
+  ZMA_CRITICAL_THRESHOLD: 500,
+  
+  /** Initial ZMA float for MVP */
+  ZMA_INITIAL_FLOAT: 5000,
+  
+  /** Day of month for recommended transfer (1st-5th window) */
+  MONTHLY_TRANSFER_DAY: 5,
 } as const;
 
 export type PaymentLeadTimeConfig = typeof PAYMENT_LEAD_TIME;

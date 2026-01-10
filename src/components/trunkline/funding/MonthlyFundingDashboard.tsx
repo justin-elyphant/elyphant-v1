@@ -135,7 +135,8 @@ export default function FridayTransferDashboard() {
     : 'critical';
 
   const today = new Date();
-  const isFriday = today.getDay() === 5;
+  const dayOfMonth = today.getDate();
+  const isTransferDay = dayOfMonth >= 1 && dayOfMonth <= 5; // First 5 days of month
 
   // Expected Stripe payout date
   const expectedPayoutDate = addDays(today, PAYMENT_LEAD_TIME.STRIPE_PAYOUT_DAYS);
@@ -147,17 +148,17 @@ export default function FridayTransferDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Wallet className="h-6 w-6" />
-            Friday Transfer Dashboard
+            ZMA Funding Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
-            Two-stage order processing with {PAYMENT_LEAD_TIME.CAPTURE_LEAD_DAYS}-day payment lead time
+            Monthly funding cycle with ${PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT} buffer
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {isFriday && (
+          {isTransferDay && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
               <Calendar className="h-4 w-4" />
-              It's Friday - Transfer Day!
+              Monthly Transfer Window (1st-5th)
             </div>
           )}
           <Button
@@ -304,10 +305,10 @@ export default function FridayTransferDashboard() {
         recommendedTransfer={recommendedTransfer}
       />
 
-      {/* Friday Checklist */}
+      {/* Monthly Funding Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Friday Transfer Checklist</CardTitle>
+          <CardTitle className="text-lg">Monthly Funding Checklist</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -317,19 +318,19 @@ export default function FridayTransferDashboard() {
             />
             <ChecklistItem
               checked={pipeline.paymentConfirmed.count >= 0}
-              label={`Review ${PAYMENT_LEAD_TIME.PAYMENT_CONFIRMED_STATUS} orders (awaiting Stripe payout)`}
+              label="Review Stripe revenue in Chase bank account"
             />
             <ChecklistItem
               checked={pipeline.processing.count >= 0}
-              label="Review processing orders (ZMA funds committed)"
+              label="Check pending orders requiring ZMA funds"
             />
             <ChecklistItem
               checked={false}
-              label="Calculate transfer amount needed"
+              label="Calculate monthly transfer amount needed"
             />
             <ChecklistItem
               checked={false}
-              label="Transfer via PayPal to Zinc"
+              label="Transfer via PayPal to Zinc (by 5th of month)"
             />
             <ChecklistItem
               checked={false}

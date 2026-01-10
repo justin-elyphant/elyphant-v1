@@ -17,7 +17,7 @@ import ProductionHardeningCenter from "@/pages/trunkline/ProductionHardeningCent
 import EmailTemplatesManager from "@/components/trunkline/communications/EmailTemplatesManager";
 import EmailAnalyticsDashboard from "@/components/trunkline/communications/EmailAnalyticsDashboard";
 import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
-import FridayTransferDashboard from "@/components/trunkline/funding/FridayTransferDashboard";
+import MonthlyFundingDashboard from "@/components/trunkline/funding/MonthlyFundingDashboard";
 import TrunklineRefundsTab from "@/components/trunkline/TrunklineRefundsTab";
 
 export const TrunklineRouter: React.FC = () => {
@@ -80,7 +80,7 @@ export const TrunklineRouter: React.FC = () => {
       case '/auto-gift-testing':
         return <AutoGiftTestingTab />;
       case '/funding':
-        return <FridayTransferDashboard />;
+        return <MonthlyFundingDashboard />;
       default:
         return <OverviewTab />;
     }

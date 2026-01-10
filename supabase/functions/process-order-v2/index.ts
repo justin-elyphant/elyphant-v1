@@ -282,6 +282,103 @@ serve(async (req) => {
     console.log('📦 Products:', zincRequest.products.length);
     console.log('📍 Shipping to:', `${zincRequest.shipping_address.city}, ${zincRequest.shipping_address.state}`);
 
+    // STEP 7.5: Pre-flight ZMA balance check
+    // This prevents order failures by checking if we have sufficient ZMA funds before submitting to Zinc
+    console.log('💰 Checking ZMA balance before Zinc submission...');
+    
+    const { data: zmaAccount, error: zmaError } = await supabase
+      .from('zma_accounts')
+      .select('account_balance, id')
+      .eq('is_default', true)
+      .single();
+
+    if (zmaError) {
+      console.log('⚠️ Could not fetch ZMA balance, proceeding with order:', zmaError.message);
+    }
+
+    const currentZmaBalance = zmaAccount?.account_balance || 0;
+    const estimatedCost = order.total_amount * 1.30; // 30% buffer for Zinc markup
+    const ZMA_SAFETY_MARGIN = 50; // $50 safety margin
+    const minRequiredBalance = estimatedCost + ZMA_SAFETY_MARGIN;
+
+    console.log(`📊 ZMA Balance: $${currentZmaBalance.toFixed(2)} | Required: $${minRequiredBalance.toFixed(2)}`);
+
+    if (zmaAccount && currentZmaBalance < minRequiredBalance) {
+      console.log(`⏳ ZMA balance insufficient: $${currentZmaBalance.toFixed(2)} < $${minRequiredBalance.toFixed(2)} required`);
+      
+      // Calculate expected funding date (next 5th of month or 5 days from now)
+      const now = new Date();
+      const expectedFundingDate = new Date(now);
+      if (now.getDate() <= 5) {
+        expectedFundingDate.setDate(5);
+      } else {
+        expectedFundingDate.setMonth(expectedFundingDate.getMonth() + 1);
+        expectedFundingDate.setDate(5);
+      }
+      
+      // Update order to awaiting_funds status
+      await supabase.from('orders').update({
+        status: 'awaiting_funds',
+        funding_status: 'awaiting_funds',
+        funding_hold_reason: `ZMA balance ($${currentZmaBalance.toFixed(2)}) insufficient for order ($${estimatedCost.toFixed(2)} needed with buffer)`,
+        expected_funding_date: expectedFundingDate.toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', orderId);
+
+      // Queue admin alert email
+      await supabase.from('email_queue').insert({
+        recipient_email: 'admin@elyphant.ai',
+        event_type: 'zma_low_balance_alert',
+        template_variables: {
+          current_balance: currentZmaBalance,
+          order_amount: estimatedCost,
+          order_id: orderId,
+          order_number: order.order_number,
+          required_amount: minRequiredBalance,
+        },
+        status: 'pending',
+        priority: 'high',
+      });
+
+      // Record alert if not recently sent
+      const { data: recentAlert } = await supabase
+        .from('zma_funding_alerts')
+        .select('id')
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+        .eq('alert_type', currentZmaBalance < 500 ? 'critical_balance' : 'low_balance')
+        .maybeSingle();
+
+      if (!recentAlert) {
+        await supabase.from('zma_funding_alerts').insert({
+          alert_type: currentZmaBalance < 500 ? 'critical_balance' : 'low_balance',
+          zma_current_balance: currentZmaBalance,
+          pending_orders_value: estimatedCost,
+          recommended_transfer_amount: minRequiredBalance - currentZmaBalance,
+          orders_count_waiting: 1,
+          email_sent: true,
+        });
+      }
+
+      console.log(`⚠️ Order ${orderId} held - awaiting ZMA funds`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          awaiting_funds: true,
+          message: 'Order held - insufficient ZMA balance',
+          zma_balance: currentZmaBalance,
+          required: minRequiredBalance,
+          expected_funding_date: expectedFundingDate.toISOString(),
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+
+    console.log(`✅ ZMA balance check passed: $${currentZmaBalance.toFixed(2)} > $${minRequiredBalance.toFixed(2)}`);
+
     // STEP 8: Submit to Zinc API
     const zincApiKey = Deno.env.get('ZINC_API_KEY');
     if (!zincApiKey) {

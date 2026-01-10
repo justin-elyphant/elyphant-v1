@@ -349,6 +349,65 @@ const connectionEstablishedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `You're now connected with ${props.connection_name}` });
 };
 
+// ZMA Low Balance Alert Template
+const zmaLowBalanceAlertTemplate = (props: any): string => {
+  const alertColor = props.is_critical ? '#dc2626' : '#f59e0b';
+  const alertBg = props.is_critical ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)';
+  const alertIcon = props.is_critical ? '🚨' : '⚠️';
+  
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">${alertIcon} ZMA Balance Alert</h2>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Your Zinc Managed Account balance requires attention.</p>
+    
+    <table style="background: ${alertBg}; border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%; border-left: 4px solid ${alertColor};">
+      <tr><td>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Current Balance</p>
+        <p style="margin: 0 0 20px 0; font-size: 32px; font-weight: 700; color: #1a1a1a;">$${props.current_balance?.toFixed(2) || '0.00'}</p>
+        
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Alert Threshold</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">$${props.threshold?.toFixed(2) || '1000.00'}</p>
+        
+        ${props.pending_orders_value ? `
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Pending Orders Value</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">$${props.pending_orders_value.toFixed(2)}</p>
+        ` : ''}
+        
+        ${props.orders_waiting > 0 ? `
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #dc2626; text-transform: uppercase; font-weight: 600;">Orders Waiting for Funds</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #dc2626;">${props.orders_waiting} orders on hold</p>
+        ` : ''}
+        
+        ${props.recommended_transfer > 0 ? `
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #059669; text-transform: uppercase; font-weight: 600;">Recommended Transfer</p>
+        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #059669;">$${props.recommended_transfer.toFixed(2)}</p>
+        ` : ''}
+      </td></tr>
+    </table>
+    
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">Action Required:</h3>
+    <ol style="margin: 0 0 30px 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
+      <li>Log into your Chase bank account</li>
+      <li>Transfer funds to Zinc via PayPal</li>
+      <li>Record the transfer in the Trunkline dashboard</li>
+      <li>Click "Retry Awaiting Orders" to process held orders</li>
+    </ol>
+    
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/trunkline/funding" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Funding Dashboard
+        </a>
+      </td></tr>
+    </table>
+  `;
+  
+  const preheader = props.is_critical 
+    ? `CRITICAL: ZMA balance is $${props.current_balance?.toFixed(2)} - orders may be blocked`
+    : `ZMA balance is $${props.current_balance?.toFixed(2)} - transfer recommended`;
+    
+  return baseEmailTemplate({ content, preheader });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -386,6 +445,13 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
       return {
         html: autoGiftApprovalTemplate(data),
         subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
+      };
+    case 'zma_low_balance_alert':
+      return {
+        html: zmaLowBalanceAlertTemplate(data),
+        subject: data.is_critical 
+          ? `🚨 CRITICAL: ZMA Balance Alert - Orders Blocked`
+          : `⚠️ ZMA Low Balance Alert - Transfer Recommended`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

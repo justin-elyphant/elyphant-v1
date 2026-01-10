@@ -44,6 +44,19 @@ verify_jwt = true
 verify_jwt = true
 
 # ============================================
+# ZMA FUNDING MANAGEMENT
+# ============================================
+
+[functions.manage-zma-accounts]
+verify_jwt = true
+
+[functions.retry-awaiting-funds-orders]
+verify_jwt = true
+
+[functions.zma-balance-monitor]
+verify_jwt = false
+
+# ============================================
 # ESSENTIAL UTILITY FUNCTIONS
 # ============================================
 
@@ -113,9 +126,6 @@ verify_jwt = false
 [functions.delete-user-account]
 verify_jwt = true
 
-[functions.manage-zma-accounts]
-verify_jwt = true
-
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================
@@ -134,6 +144,11 @@ schedule = "0 3 * * *"
 [[crons.order_monitor]]
 function_name = "order-monitor-v2"
 schedule = "*/15 * * * *"
+
+# ZMA Balance Monitor - checks balance and sends alerts (daily 9 AM)
+[[crons.zma_balance_monitor]]
+function_name = "zma-balance-monitor"
+schedule = "0 9 * * *"
 
 # Email queue processor (every minute)
 [[crons.process_email_queue]]

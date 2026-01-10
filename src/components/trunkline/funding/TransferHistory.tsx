@@ -89,7 +89,7 @@ export function TransferHistory({ onTransferRecorded }: TransferHistoryProps) {
           update_source: 'manual_transfer',
           previous_balance: currentBalance,
           new_balance: newBalance,
-          notes: formData.notes || `Friday transfer: $${transferAmount.toFixed(2)}`,
+          notes: formData.notes || `Monthly transfer: $${transferAmount.toFixed(2)}`,
           account_id: currentAccount?.id || null,
         } as any);
 
@@ -157,7 +157,7 @@ export function TransferHistory({ onTransferRecorded }: TransferHistoryProps) {
                 <Label htmlFor="notes">Notes (optional)</Label>
                 <Textarea
                   id="notes"
-                  placeholder="e.g., Friday transfer via PayPal"
+                  placeholder="e.g., Monthly transfer via PayPal"
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 />

@@ -40,6 +40,7 @@ const OrderStatusBadge = ({
     switch (status) {
       case 'submitted_to_zinc':
       case 'confirmed':
+      case 'awaiting_funds':  // Hide internal funding status from customers
         return 'processing';
       case 'retry_pending':
         return 'processing';

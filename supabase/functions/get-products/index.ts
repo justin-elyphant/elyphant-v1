@@ -259,6 +259,7 @@ const transformCachedProduct = (p: any) => ({
 
 /**
  * Check if we have enough cached products for a query (cache-first lookup)
+ * Uses AND-first strategy for multi-word queries, falling back to OR if needed
  */
 const getCachedProductsForQuery = async (supabase: any, query: string, limit: number) => {
   if (!supabase || !query || query.length < 2) return null;
@@ -269,6 +270,41 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
     
     if (searchTerms.length === 0) return null;
 
+    const threshold = Math.ceil(limit * 0.8);
+    
+    // Step 1: For multi-word queries, try AND logic first (products must contain ALL terms)
+    if (searchTerms.length >= 2) {
+      console.log(`🔍 AND-first search for "${query}" with terms: [${searchTerms.join(', ')}]`);
+      
+      // Build query with chained ilike filters for AND logic
+      let andQuery = supabase
+        .from('products')
+        .select('*');
+      
+      // Chain all search terms with AND logic
+      for (const term of searchTerms) {
+        andQuery = andQuery.ilike('title', `%${term}%`);
+      }
+      
+      const { data: andResults, error: andError } = await andQuery
+        .order('view_count', { ascending: false, nullsFirst: false })
+        .limit(limit);
+      
+      if (!andError && andResults && andResults.length >= Math.min(threshold, 5)) {
+        console.log(`✅ AND Cache HIT: Found ${andResults.length} products matching ALL terms for "${query}"`);
+        
+        return {
+          products: andResults.map((p: any) => transformCachedProduct(p)),
+          fuzzyMatched: false,
+          suggestedCorrection: null,
+          matchType: 'and'
+        };
+      }
+      
+      console.log(`⏳ AND search found only ${andResults?.length || 0} products, trying OR fallback...`);
+    }
+
+    // Step 2: Fall back to OR logic (products contain ANY term)
     const orConditions = searchTerms.map(term => `title.ilike.%${term}%`).join(',');
     
     const { data: cachedProducts, error } = await supabase
@@ -283,18 +319,18 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       return null;
     }
 
-    const threshold = Math.ceil(limit * 0.8);
     if (cachedProducts && cachedProducts.length >= threshold) {
-      console.log(`✅ Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
+      console.log(`✅ OR Cache HIT: Found ${cachedProducts.length} cached products for "${query}" (threshold: ${threshold})`);
       
       return {
         products: cachedProducts.map((p: any) => transformCachedProduct(p)),
         fuzzyMatched: false,
-        suggestedCorrection: null
+        suggestedCorrection: null,
+        matchType: 'or'
       };
     }
 
-    // Try fuzzy matching if exact match fails
+    // Step 3: Try fuzzy matching if exact match fails
     if (cachedProducts && cachedProducts.length < threshold) {
       console.log(`🔍 Trying fuzzy search for "${query}"...`);
       
@@ -315,7 +351,8 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
         return {
           products: fuzzyResults.map((p: any) => transformCachedProduct(p)),
           fuzzyMatched: true,
-          suggestedCorrection
+          suggestedCorrection,
+          matchType: 'fuzzy'
         };
       }
     }

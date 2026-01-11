@@ -90,8 +90,12 @@ export const applyBrandAwareFilter = (products: any[], query: string): any[] => 
   }));
   
   // Filter out low-relevance products
-  const minScore = hasBrandSearch ? 100 : 50;
+  // For multi-word non-brand searches, require higher score (products must match multiple terms)
+  const isMultiWordSearch = searchTerms.length >= 2;
+  const minScore = hasBrandSearch ? 100 : (isMultiWordSearch ? 150 : 50);
   const relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
+  
+  console.log(`🎯 Brand-aware filter: minScore=${minScore} (multi-word: ${isMultiWordSearch}, brand: ${hasBrandSearch})`);
   
   // Sort by relevance score (highest first)
   relevantResults.sort((a, b) => b.relevanceScore - a.relevanceScore);

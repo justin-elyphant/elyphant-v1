@@ -125,13 +125,28 @@ serve(async (req) => {
           : 999;
         
         // Check if cached data has COMPLETE product details (not just search result stub)
-        // Zinc API may return product_details OR product_description OR feature_bullets
-        const hasCompleteData = Boolean(
+        // Search results only have: title, price, 1 thumbnail image
+        // Detail API returns: product_description OR feature_bullets + multiple high-res images
+        const hasDescriptionData = Boolean(
           cachedProduct.metadata?.product_description || 
           (cachedProduct.metadata?.feature_bullets && cachedProduct.metadata.feature_bullets.length > 0) ||
-          (cachedProduct.metadata?.product_details && cachedProduct.metadata.product_details.length > 0) ||
-          (cachedProduct.metadata?.images && cachedProduct.metadata.images.length > 0)
+          (cachedProduct.metadata?.product_details && cachedProduct.metadata.product_details.length > 0)
         );
+        
+        // Search thumbnails are low-res (~320px), detail pages have 2+ high-res images
+        // Require 2+ images to distinguish from search result stub
+        const hasMultipleImages = cachedProduct.metadata?.images && cachedProduct.metadata.images.length >= 2;
+        
+        // FIXED: Require description/features data OR multiple detail images
+        // A single search thumbnail does NOT satisfy completeness
+        const hasCompleteData = hasDescriptionData || hasMultipleImages;
+        
+        if (!hasCompleteData) {
+          console.log(`[Cache INCOMPLETE] Product ${product_id} - description: ${!!cachedProduct.metadata?.product_description}, ` +
+            `feature_bullets: ${cachedProduct.metadata?.feature_bullets?.length || 0}, ` +
+            `product_details: ${cachedProduct.metadata?.product_details?.length || 0}, ` +
+            `images: ${cachedProduct.metadata?.images?.length || 0}`);
+        }
         
         if (daysSinceRefresh < CACHE_FRESHNESS_DAYS && hasCompleteData) {
           console.log(`[Cache HIT] Product ${product_id} - ${daysSinceRefresh.toFixed(1)} days old, complete data`);

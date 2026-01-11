@@ -3,49 +3,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 
 interface FilterSortRowProps {
-  activeTab: "all" | "near-you";
-  onTabChange: (tab: "all" | "near-you") => void;
   sortBy: string;
   onSortChange: (value: string) => void;
   className?: string;
 }
 
 const FilterSortRow: React.FC<FilterSortRowProps> = ({
-  activeTab,
-  onTabChange,
   sortBy,
   onSortChange,
   className
 }) => {
   return (
-    <div className={cn("flex items-center justify-between py-4 border-b border-border", className)}>
-      {/* Left: Tabs */}
-      <div className="flex items-center gap-6">
-        <button
-          onClick={() => onTabChange("all")}
-          className={cn(
-            "text-sm font-medium pb-1 border-b-2 transition-colors min-h-[44px] px-2",
-            activeTab === "all"
-              ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All Items
-        </button>
-        <button
-          onClick={() => onTabChange("near-you")}
-          className={cn(
-            "text-sm font-medium pb-1 border-b-2 transition-colors min-h-[44px] px-2",
-            activeTab === "near-you"
-              ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Available Near You
-        </button>
-      </div>
-
-      {/* Right: Sort Dropdown */}
+    <div className={cn("flex items-center justify-end py-4 border-b border-border", className)}>
+      {/* Sort Dropdown */}
       <Select value={sortBy} onValueChange={onSortChange}>
         <SelectTrigger className="w-[180px] bg-background border-border">
           <SelectValue placeholder="Sort by: Featured" />

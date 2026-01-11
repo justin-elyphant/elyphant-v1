@@ -98,8 +98,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
   const { addToCart } = useCart();
   
-  // Secondary filter row state
-  const [activeTab, setActiveTab] = useState<"all" | "near-you">("all");
   
   // Performance monitoring
   const { 
@@ -750,8 +748,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               {/* Secondary Filter Row */}
               {showSearchInfo && (
                 <FilterSortRow
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
                   sortBy={activeFilters?.sortBy || 'relevance'}
                   onSortChange={(value) => setActiveFilters({ ...activeFilters, sortBy: value })}
                   className="mb-6"

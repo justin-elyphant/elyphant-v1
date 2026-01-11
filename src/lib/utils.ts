@@ -97,7 +97,10 @@ export function formatPrice(
   }
   
   // Auto-detect if price is in cents (for Zinc API and legacy products)
-  if (shouldDetectCents && Number.isInteger(numPrice)) {
+  // FIXED: Use "effectively integer" check to handle DB float storage (e.g., 1699.00)
+  const isEffectivelyInteger = Number.isInteger(numPrice) || (numPrice % 1 === 0);
+  
+  if (shouldDetectCents && isEffectivelyInteger) {
     // For Zinc API products, detect cents more intelligently
     if (productSource === 'zinc_api') {
       // Zinc API prices are ALWAYS in cents, convert all integer values

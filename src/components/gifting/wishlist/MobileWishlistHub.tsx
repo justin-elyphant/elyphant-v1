@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Heart, ShoppingBag } from "lucide-react";
@@ -9,7 +9,8 @@ import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
 import MobileWishlistCard from "./MobileWishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
-import MobileWishlistIntroCard from "./MobileWishlistIntroCard";
+import WishlistHeroSection from "./WishlistHeroSection";
+import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
 import { useProducts, Product } from "@/contexts/ProductContext";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { useCart } from "@/contexts/CartContext";
@@ -35,21 +36,11 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
   const [activeTab, setActiveTab] = useState<TabMode>("wishlists");
   const [searchQuery, setSearchQuery] = useState("");
   const [recentSearches] = useState<string[]>(["Nike", "AirPods", "Lego", "Skincare"]);
-  const [showIntroCard, setShowIntroCard] = useState(false);
 
-  // Check if user has seen the intro card
-  useEffect(() => {
-    const dismissed = localStorage.getItem('wishlist_intro_dismissed');
-    // Show intro if user has < 3 wishlists and hasn't dismissed
-    if (!dismissed && wishlists.length < 3) {
-      setShowIntroCard(true);
-    }
-  }, [wishlists.length]);
-
-  const handleDismissIntro = () => {
-    localStorage.setItem('wishlist_intro_dismissed', 'true');
-    setShowIntroCard(false);
-  };
+  // Calculate total items for hero
+  const totalItems = useMemo(() => {
+    return wishlists.reduce((acc, w) => acc + (w.items?.length || 0), 0);
+  }, [wishlists]);
   
   // Product search
   const { products, isLoading: productsLoading } = useProducts();
@@ -211,13 +202,16 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
           {/* My Wishlists Tab */}
           {activeTab === "wishlists" && (
             <div className="space-y-4">
-              {/* Intro Card for new users */}
-              {showIntroCard && wishlists.length < 3 && (
-                <MobileWishlistIntroCard
-                  onDismiss={handleDismissIntro}
-                  onCreateWishlist={onCreateWishlist}
-                />
-              )}
+              {/* Hero Section - Always visible on mobile */}
+              <WishlistHeroSection
+                wishlistCount={wishlists.length}
+                totalItemCount={totalItems}
+                onCreateWishlist={onCreateWishlist}
+                variant="mobile"
+              />
+              
+              {/* Benefits Grid for new users */}
+              {wishlists.length < 3 && <WishlistBenefitsGrid className="mt-4" />}
 
               {/* Search results info */}
               {searchQuery && (

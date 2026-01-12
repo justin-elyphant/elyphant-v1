@@ -145,13 +145,12 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         className="sticky top-0 z-40"
       />
 
-      {/* Hero Section for Tablet */}
+      {/* Hero Section for Tablet - Full hero */}
       <div className="px-6 py-6 space-y-6">
         <WishlistHeroSection 
           wishlistCount={wishlists.length}
           totalItemCount={totalItems}
           onCreateWishlist={onCreateWishlist}
-          variant="compact"
         />
         
         {wishlists.length < 3 && <WishlistBenefitsGrid />}

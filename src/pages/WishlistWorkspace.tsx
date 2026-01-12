@@ -10,9 +10,11 @@ import WishlistWorkspaceHeader from "@/components/gifting/wishlist/workspace/Wis
 import WishlistSidebar from "@/components/gifting/wishlist/workspace/WishlistSidebar";
 import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
+import MobileWishlistActionBar from "@/components/gifting/wishlist/workspace/MobileWishlistActionBar";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 const WishlistWorkspace = () => {
   const { wishlistId } = useParams();
@@ -27,7 +29,11 @@ const WishlistWorkspace = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isShoppingPanelOpen, setIsShoppingPanelOpen] = useState(false);
   
-  const { removeFromWishlist, isRemoving } = useWishlist();
+  // Privacy toggle state
+  const [isPublic, setIsPublic] = useState(false);
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
+  
+  const { removeFromWishlist, isRemoving, updateWishlistSharing } = useWishlist();
   
   // Handle URL parameters for auto-opening shopping panel and category filtering
   useEffect(() => {
@@ -124,6 +130,7 @@ const WishlistWorkspace = () => {
         
         setWishlist(transformedWishlist);
         setOwnerProfile(ownerInfo);
+        setIsPublic(wishlistData.is_public);
         
       } catch (error) {
         console.error("Error fetching wishlist:", error);
@@ -168,6 +175,69 @@ const WishlistWorkspace = () => {
     });
   };
 
+  // Privacy toggle handler
+  const handlePrivacyToggle = async () => {
+    if (!wishlistId || isUpdatingPrivacy) return;
+    
+    const newIsPublic = !isPublic;
+    setIsUpdatingPrivacy(true);
+    
+    try {
+      // Optimistic update
+      setIsPublic(newIsPublic);
+      
+      const success = await updateWishlistSharing(wishlistId, newIsPublic);
+      
+      if (success) {
+        await triggerHapticFeedback('success');
+        toast.success(newIsPublic ? "Wishlist is now public" : "Wishlist is now private");
+        
+        // Update local wishlist state
+        setWishlist(prev => prev ? { ...prev, is_public: newIsPublic } : prev);
+      } else {
+        // Revert on failure
+        setIsPublic(!newIsPublic);
+        await triggerHapticFeedback('error');
+        toast.error("Failed to update privacy setting");
+      }
+    } catch (error) {
+      console.error("Error updating privacy:", error);
+      setIsPublic(!newIsPublic);
+      await triggerHapticFeedback('error');
+      toast.error("Failed to update privacy setting");
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
+  // Share handler with native share sheet
+  const handleShare = async () => {
+    if (!wishlist) return;
+    
+    await triggerHapticFeedback('light');
+    
+    const shareUrl = `${window.location.origin}/wishlist/${wishlistId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: wishlist.title,
+          text: `Check out my wishlist "${wishlist.title}" on Elyphant!`,
+          url: shareUrl
+        });
+        await triggerHapticFeedback('success');
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          await navigator.clipboard.writeText(shareUrl);
+          toast.success("Link copied to clipboard!");
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -194,7 +264,7 @@ const WishlistWorkspace = () => {
     : wishlist.items;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobile && isOwner && !isGuestPreview ? 'pb-24' : ''}`}>
       {/* Header */}
       <WishlistWorkspaceHeader
         wishlist={wishlist}
@@ -203,10 +273,14 @@ const WishlistWorkspace = () => {
         isGuestPreview={isGuestPreview}
         onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
         onAddItems={() => setIsShoppingPanelOpen(true)}
+        isPublic={isPublic}
+        isUpdatingPrivacy={isUpdatingPrivacy}
+        onPrivacyToggle={handlePrivacyToggle}
+        onShare={handleShare}
       />
 
       {/* Main Content - Full Width Babylist-style Layout */}
-      <div className="px-6 py-8 max-w-[1600px] mx-auto">
+      <div className="px-4 md:px-6 py-6 md:py-8 max-w-[1600px] mx-auto">
         <div className="flex gap-8">
           {/* Sidebar - Wider, Babylist-style */}
           {!isMobile && isOwner && !isGuestPreview && (
@@ -252,6 +326,18 @@ const WishlistWorkspace = () => {
           onClose={() => setIsShoppingPanelOpen(false)}
           wishlistId={wishlistId || ''}
           onProductAdded={handleProductAdded}
+        />
+      )}
+
+      {/* Mobile Action Bar - Fixed at bottom */}
+      {isMobile && isOwner && !isGuestPreview && (
+        <MobileWishlistActionBar
+          wishlist={wishlist}
+          isPublic={isPublic}
+          isUpdatingPrivacy={isUpdatingPrivacy}
+          onPrivacyToggle={handlePrivacyToggle}
+          onShare={handleShare}
+          onAddItems={() => setIsShoppingPanelOpen(true)}
         />
       )}
     </div>

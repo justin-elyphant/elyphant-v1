@@ -29,11 +29,10 @@ export const useMobileSwipe = (options: SwipeOptions = {}) => {
     setIsTracking(true);
   }, []);
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (preventDefaultTouch && isTracking) {
-      e.preventDefault();
-    }
-  }, [preventDefaultTouch, isTracking]);
+  const handleTouchMove = useCallback((_e: TouchEvent) => {
+    // NOTE: We no longer call e.preventDefault() here as it blocks native scrolling
+    // and causes screen freezes on iOS Safari. Passive listeners are now used.
+  }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!startPosition || !isTracking) return;
@@ -77,9 +76,10 @@ export const useMobileSwipe = (options: SwipeOptions = {}) => {
     const element = elementRef.current;
     if (!element) return;
 
-    element.addEventListener('touchstart', handleTouchStart, { passive: false });
-    element.addEventListener('touchmove', handleTouchMove, { passive: false });
-    element.addEventListener('touchend', handleTouchEnd, { passive: false });
+    // Use passive listeners to prevent blocking the browser's scroll thread
+    element.addEventListener('touchstart', handleTouchStart, { passive: true });
+    element.addEventListener('touchmove', handleTouchMove, { passive: true });
+    element.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);

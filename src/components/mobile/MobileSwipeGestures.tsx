@@ -122,6 +122,7 @@ const MobileSwipeGestures: React.FC<SwipeGesturesProps> = ({
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      style={{ touchAction: 'pan-y pinch-zoom' }} // Allow vertical scroll, prevent horizontal blocking
     >
       {children}
     </div>

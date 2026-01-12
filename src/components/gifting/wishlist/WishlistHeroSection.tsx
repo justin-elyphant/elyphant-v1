@@ -12,7 +12,7 @@ interface WishlistHeroSectionProps {
   totalItemCount: number;
   onCreateWishlist: () => void;
   onHowItWorks?: () => void;
-  variant?: 'full' | 'compact';
+  variant?: 'full' | 'mobile';
 }
 
 const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
@@ -26,61 +26,31 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
   const navigate = useNavigate();
 
   const springConfig = { type: "spring", stiffness: 300, damping: 25 };
+  
+  // Mobile variant - full content but optimized spacing
+  const isMobile = variant === 'mobile';
+  const padding = isMobile ? 'p-5' : 'p-8 lg:p-10';
+  const titleSize = isMobile ? 'text-2xl' : 'text-3xl lg:text-5xl';
+  const subtitleSize = isMobile ? 'text-sm' : 'text-lg';
 
-  // Compact variant for tablet
-  if (variant === 'compact') {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{ transform: 'translate3d(0,0,0)' }}
-      >
-        <Card className="relative overflow-hidden bg-gradient-to-br from-rose-500 via-rose-600 to-amber-500 border-0 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                <Badge className="bg-white/20 text-white border-0 mb-2 backdrop-blur-sm text-xs">
-                  YOUR LISTS
-                </Badge>
-                <h1 className="text-2xl font-bold mb-1">My Wishlists</h1>
-                <p className="text-sm text-white/90">
-                  {wishlistCount} {wishlistCount === 1 ? 'list' : 'lists'} · {totalItemCount} items
-                </p>
-              </div>
-              <Button 
-                onClick={onCreateWishlist}
-                className="bg-white text-rose-600 hover:bg-white/90 min-h-[44px] font-semibold shrink-0"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
-
-  // Full variant for desktop
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      className={isMobile ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}
       style={{ transform: 'translate3d(0,0,0)' }}
     >
-      {/* Gradient Hero Card */}
+      {/* Gradient Hero Card - Always full content */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-rose-500 via-rose-600 to-amber-500 border-0 text-white">
-        <CardContent className="p-8 lg:p-10">
-          <Badge className="bg-white/20 text-white border-0 mb-4 backdrop-blur-sm">
+        <CardContent className={padding}>
+          <Badge className="bg-white/20 text-white border-0 mb-3 lg:mb-4 backdrop-blur-sm text-xs">
             YOUR LISTS
           </Badge>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+          <h1 className={`${titleSize} font-bold mb-3 lg:mb-4 leading-tight`}>
             My Wishlists
           </h1>
-          <p className="text-lg text-white/90 mb-6 leading-relaxed">
+          <p className={`${subtitleSize} text-white/90 mb-4 lg:mb-6 leading-relaxed`}>
             Build your dream collections and share with friends and family. 
             The perfect way to never receive a gift you don't love.
           </p>
@@ -89,7 +59,7 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={onCreateWishlist}
-                className="bg-white text-rose-600 hover:bg-white/90 min-h-[44px] font-semibold"
+                className="bg-white text-rose-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {wishlistCount === 0 ? "Create Your First Wishlist" : "Create New Wishlist"}
@@ -99,7 +69,7 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
               <Button 
                 onClick={() => navigate('/marketplace')}
                 variant="ghost" 
-                className="text-white hover:bg-white/10 min-h-[44px]"
+                className="text-white hover:bg-white/10 min-h-[44px] w-full sm:w-auto"
               >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Browse Marketplace
@@ -107,62 +77,73 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
               </Button>
             </motion.div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Welcome Stats Card */}
-      <Card className="bg-background">
-        <CardContent className="p-8 lg:p-10">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">
-                Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
-              </h2>
-              <p className="text-muted-foreground">
-                You have <span className="font-semibold text-foreground">{wishlistCount}</span> wishlist{wishlistCount !== 1 ? 's' : ''} with <span className="font-semibold text-foreground">{totalItemCount}</span> total items
+          
+          {/* Stats on mobile - shown below CTAs */}
+          {isMobile && (
+            <div className="mt-4 pt-4 border-t border-white/20">
+              <p className="text-sm text-white/80">
+                <span className="font-semibold text-white">{wishlistCount}</span> {wishlistCount === 1 ? 'wishlist' : 'wishlists'} · <span className="font-semibold text-white">{totalItemCount}</span> items
               </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 rounded-lg bg-muted">
-                  <Share2 className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Share & Get What You Want</p>
-                  <p className="text-xs text-muted-foreground">
-                    Make lists public and share with friends for any occasion
-                  </p>
-                </div>
+      {/* Welcome Stats Card - Only shown on desktop (lg+) */}
+      {!isMobile && (
+        <Card className="bg-background hidden lg:block">
+          <CardContent className="p-8 lg:p-10">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">
+                  Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
+                </h2>
+                <p className="text-muted-foreground">
+                  You have <span className="font-semibold text-foreground">{wishlistCount}</span> wishlist{wishlistCount !== 1 ? 's' : ''} with <span className="font-semibold text-foreground">{totalItemCount}</span> total items
+                </p>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 rounded-lg bg-muted">
-                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 p-2 rounded-lg bg-muted">
+                    <Share2 className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Share & Get What You Want</p>
+                    <p className="text-xs text-muted-foreground">
+                      Make lists public and share with friends for any occasion
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Avoid Duplicate Gifts</p>
-                  <p className="text-xs text-muted-foreground">
-                    Friends see when items are purchased so no surprises are ruined
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-3">
-                <div className="mt-1 p-2 rounded-lg bg-muted">
-                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 p-2 rounded-lg bg-muted">
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Avoid Duplicate Gifts</p>
+                    <p className="text-xs text-muted-foreground">
+                      Friends see when items are purchased so no surprises are ruined
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Power AI Recommendations</p>
-                  <p className="text-xs text-muted-foreground">
-                    Your wishlists help our AI suggest perfect gifts for you
-                  </p>
+
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 p-2 rounded-lg bg-muted">
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Power AI Recommendations</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your wishlists help our AI suggest perfect gifts for you
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </motion.div>
   );
 };

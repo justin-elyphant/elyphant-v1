@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import MyWishlists from "@/components/gifting/MyWishlists";
@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import EditWishlistDialog from "@/components/gifting/wishlist/EditWishlistDialog";
+import WishlistHeroSection from "@/components/gifting/wishlist/WishlistHeroSection";
+import WishlistBenefitsGrid from "@/components/gifting/wishlist/WishlistBenefitsGrid";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +49,11 @@ const Wishlists = () => {
 
   // Get current wishlist for editing
   const currentWishlist = wishlists?.find(w => w.id === currentWishlistId) || null;
+
+  // Calculate total items across all wishlists
+  const totalItems = useMemo(() => {
+    return wishlists?.reduce((acc, w) => acc + (w.items?.length || 0), 0) || 0;
+  }, [wishlists]);
 
   // Handlers
   const handleCreateWishlist = async (values: { title: string; description?: string }) => {
@@ -178,6 +185,18 @@ const Wishlists = () => {
     <SidebarLayout>
       <ProductProvider>
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+          {/* Hero Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <WishlistHeroSection 
+              wishlistCount={wishlists?.length || 0}
+              totalItemCount={totalItems}
+              onCreateWishlist={() => setCreateDialogOpen(true)}
+            />
+            
+            {/* Benefits Grid - show for users with fewer wishlists */}
+            {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsContent value="wishlists" className="mt-0">
               <MyWishlists />

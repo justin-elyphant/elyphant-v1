@@ -18,6 +18,8 @@ import WishlistCard from "./WishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import ShoppingHeroSection from "./ShoppingHeroSection";
 import MarketplaceProductsSection from "./MarketplaceProductsSection";
+import WishlistHeroSection from "./WishlistHeroSection";
+import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
 import { useProducts } from "@/contexts/ProductContext";
 import { useMarketplace } from "@/hooks/useMarketplace";
 
@@ -56,6 +58,11 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
       if (w.category) categories.add(w.category);
     });
     return Array.from(categories);
+  }, [wishlists]);
+
+  // Calculate total items
+  const totalItems = useMemo(() => {
+    return wishlists.reduce((acc, w) => acc + (w.items?.length || 0), 0);
   }, [wishlists]);
 
   // Sort options
@@ -137,6 +144,18 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         showGiftTracker={true}
         className="sticky top-0 z-40"
       />
+
+      {/* Hero Section for Tablet */}
+      <div className="px-6 py-6 space-y-6">
+        <WishlistHeroSection 
+          wishlistCount={wishlists.length}
+          totalItemCount={totalItems}
+          onCreateWishlist={onCreateWishlist}
+          variant="compact"
+        />
+        
+        {wishlists.length < 3 && <WishlistBenefitsGrid />}
+      </div>
 
       {/* Search & Controls Bar */}
       <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">

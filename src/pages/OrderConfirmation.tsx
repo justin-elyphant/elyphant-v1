@@ -219,9 +219,10 @@ const OrderConfirmation = () => {
           clearCart();
           setHasCartBeenCleared(true);
         }
-        
-        setLoading(false);
       }
+      
+      // FIX: Always set loading to false after query completes (prevents stuck loading state)
+      setLoading(false);
     } catch (err: any) {
       console.error('Error fetching order:', err);
       setLoading(false);

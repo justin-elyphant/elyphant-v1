@@ -35,7 +35,15 @@ export const MobilePullToRefresh: React.FC<MobilePullToRefreshProps> = ({
     const distance = Math.max(0, currentY - startY);
     
     if (distance > 0) {
-      e.preventDefault();
+      // Only prevent default when we're actively pulling down with significant distance
+      // and the container is at scroll top. This prevents blocking normal scroll.
+      const isAtScrollTop = containerRef.current?.scrollTop === 0;
+      const isPullGesture = distance > 10 && isAtScrollTop;
+      
+      if (isPullGesture && e.cancelable) {
+        e.preventDefault();
+      }
+      
       setPullDistance(Math.min(distance * 0.5, threshold * 1.5));
       
       // Haptic feedback when reaching threshold

@@ -23,6 +23,7 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
   const [startY, setStartY] = useState<number | null>(null);
   const [currentX, setCurrentX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState<boolean | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -32,6 +33,7 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
     setStartX(touch.clientX);
     setStartY(touch.clientY);
     setIsDragging(true);
+    setIsHorizontalSwipe(null); // Reset direction detection
   }, [disabled]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
@@ -41,14 +43,29 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
     const deltaX = touch.clientX - startX;
     const deltaY = touch.clientY - startY;
     
-    // Only handle horizontal swipes (ignore vertical scrolling)
-    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+    // Detect direction only after a minimum threshold (10px) to avoid false positives
+    const MIN_DETECTION_THRESHOLD = 10;
+    
+    if (isHorizontalSwipe === null) {
+      // Haven't determined direction yet
+      if (Math.abs(deltaX) > MIN_DETECTION_THRESHOLD || Math.abs(deltaY) > MIN_DETECTION_THRESHOLD) {
+        // Lock in direction based on which axis has more movement
+        setIsHorizontalSwipe(Math.abs(deltaX) > Math.abs(deltaY));
+      }
+      return; // Don't move the card until direction is determined
+    }
+    
+    // If vertical swipe detected, let it scroll normally
+    if (!isHorizontalSwipe) {
       return;
     }
     
-    e.preventDefault(); // Prevent scrolling when swiping horizontally
+    // Only prevent default for confirmed horizontal swipes
+    if (e.cancelable) {
+      e.preventDefault();
+    }
     setCurrentX(deltaX);
-  }, [disabled, startX, startY]);
+  }, [disabled, startX, startY, isHorizontalSwipe]);
 
   const handleTouchEnd = useCallback(() => {
     if (disabled || startX === null) return;
@@ -68,6 +85,7 @@ export const SwipeableCard: React.FC<SwipeableCardProps> = ({
     setStartX(null);
     setStartY(null);
     setCurrentX(0);
+    setIsHorizontalSwipe(null);
   }, [disabled, startX, currentX, swipeThreshold, onSwipeLeft, onSwipeRight]);
 
   const transform = isDragging ? `translateX(${currentX * 0.3}px)` : 'translateX(0px)';

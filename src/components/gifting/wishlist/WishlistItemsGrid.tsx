@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Gift, Square, CheckSquare, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import BulkActionBar from "@/components/gifting/wishlist/BulkActionBar";
 import GiftSchedulingModal from "@/components/gifting/wishlist/GiftSchedulingModal";
 import CategorySection from "./workspace/CategorySection";
 import { WishlistItem } from "@/types/profile";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WishlistItemsGridProps {
   items: WishlistItem[];
@@ -24,6 +25,7 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner
   const [showSchedulingModal, setShowSchedulingModal] = useState(false);
   const [itemsToSchedule, setItemsToSchedule] = useState<WishlistItem[]>([]);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('grouped');
+  const isMobile = useIsMobile();
 
   // Group items by category/brand
   const groupedItems = useMemo(() => {
@@ -125,63 +127,114 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner
   return (
     <>
       {/* Header with View Toggle */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <h3 className="text-2xl font-bold">
-            {items.length} item{items.length > 1 ? 's' : ''}
-          </h3>
-          {isSelectionMode && (
-            <span className="text-sm text-muted-foreground">
-              ({selectedItems.size} selected)
-            </span>
-          )}
-        </div>
+      <div className={cn(
+        "flex justify-between items-center",
+        isMobile ? "mb-4" : "mb-8"
+      )}>
+        {/* Hide item count on mobile - already shown in header */}
+        {!isMobile && (
+          <div className="flex items-center gap-4">
+            <h3 className="text-2xl font-bold">
+              {items.length} item{items.length > 1 ? 's' : ''}
+            </h3>
+            {isSelectionMode && (
+              <span className="text-sm text-muted-foreground">
+                ({selectedItems.size} selected)
+              </span>
+            )}
+          </div>
+        )}
         
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
+        <div className={cn(
+          "flex items-center gap-2",
+          isMobile && "w-full justify-between"
+        )}>
+          {/* View Mode Toggle - Compact icon-only on mobile */}
           {items.length > 0 && !isSelectionMode && (
-            <div className="flex items-center gap-1 border border-border rounded-lg p-1">
-              <Button
-                variant={viewMode === 'grouped' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grouped')}
-                className="gap-2"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                By Category
-              </Button>
-              <Button
-                variant={viewMode === 'flat' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('flat')}
-                className="gap-2"
-              >
-                <List className="h-4 w-4" />
-                All Items
-              </Button>
-            </div>
+            isMobile ? (
+              <div className="flex items-center bg-muted rounded-lg p-0.5">
+                <button
+                  onClick={() => setViewMode('grouped')}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    viewMode === 'grouped' ? "bg-background shadow-sm" : ""
+                  )}
+                  aria-label="Group by category"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('flat')}
+                  className={cn(
+                    "p-2 rounded-md transition-all",
+                    viewMode === 'flat' ? "bg-background shadow-sm" : ""
+                  )}
+                  aria-label="Show all items"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 border border-border rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'grouped' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grouped')}
+                  className="gap-2"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  By Category
+                </Button>
+                <Button
+                  variant={viewMode === 'flat' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('flat')}
+                  className="gap-2"
+                >
+                  <List className="h-4 w-4" />
+                  All Items
+                </Button>
+              </div>
+            )
           )}
           
           {/* Selection Mode Toggle */}
           {isOwner && !isGuestPreview && items.length > 0 && (
-            <Button
-              variant={isSelectionMode ? "default" : "outline"}
-              size="sm"
-              onClick={() => isSelectionMode ? handleClearSelection() : handleEnterSelectionMode()}
-              className="gap-2"
-            >
-              {isSelectionMode ? (
-                <>
+            isMobile ? (
+              <button
+                onClick={() => isSelectionMode ? handleClearSelection() : handleEnterSelectionMode()}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  isSelectionMode ? "bg-primary text-primary-foreground" : "bg-muted"
+                )}
+                aria-label={isSelectionMode ? "Cancel selection" : "Select items"}
+              >
+                {isSelectionMode ? (
                   <CheckSquare className="h-4 w-4" />
-                  Cancel Selection
-                </>
-              ) : (
-                <>
+                ) : (
                   <Square className="h-4 w-4" />
-                  Select Items
-                </>
-              )}
-            </Button>
+                )}
+              </button>
+            ) : (
+              <Button
+                variant={isSelectionMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => isSelectionMode ? handleClearSelection() : handleEnterSelectionMode()}
+                className="gap-2"
+              >
+                {isSelectionMode ? (
+                  <>
+                    <CheckSquare className="h-4 w-4" />
+                    Cancel Selection
+                  </>
+                ) : (
+                  <>
+                    <Square className="h-4 w-4" />
+                    Select Items
+                  </>
+                )}
+              </Button>
+            )
           )}
         </div>
       </div>

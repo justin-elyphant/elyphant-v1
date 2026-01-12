@@ -40,7 +40,7 @@ const InlinePrivacyToggle = ({
       disabled={disabled || isUpdating}
       className={cn(
         "inline-flex items-center rounded-full font-medium transition-all duration-200",
-        "min-h-[44px] min-w-[44px] touch-manipulation",
+        "min-h-[38px] min-w-[38px] touch-manipulation",
         "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
         "active:scale-95",
         sizeClasses[size],

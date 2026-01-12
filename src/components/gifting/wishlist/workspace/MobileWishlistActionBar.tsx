@@ -45,37 +45,37 @@ const MobileWishlistActionBar = ({
         className
       )}
       style={{
-        // Position ABOVE the bottom navigation (nav is ~80px + safe area)
-        bottom: 'calc(80px + env(safe-area-inset-bottom))'
+        // Position ABOVE the bottom navigation (nav is ~56px + safe area)
+        bottom: 'calc(56px + env(safe-area-inset-bottom))'
       }}
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
         {/* Privacy Toggle */}
         <InlinePrivacyToggle
           isPublic={isPublic}
           onToggle={onPrivacyToggle}
           isUpdating={isUpdatingPrivacy}
-          size="md"
+          size="sm"
         />
 
         {/* Share Button */}
         <Button
           variant="outline"
-          size="lg"
+          size="default"
           onClick={handleShare}
-          className="min-h-[44px] min-w-[44px] gap-2 flex-1 max-w-[140px]"
+          className="min-h-[38px] min-w-[38px] gap-1.5 flex-1 max-w-[100px] text-sm"
         >
-          <Share2 className="h-5 w-5" />
+          <Share2 className="h-4 w-4" />
           Share
         </Button>
 
         {/* Add Items FAB */}
         <Button
-          size="lg"
+          size="default"
           onClick={handleAddItems}
-          className="min-h-[44px] gap-2 flex-1 font-semibold shadow-md"
+          className="min-h-[38px] gap-1.5 flex-1 font-semibold shadow-md text-sm"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           Add Items
         </Button>
       </div>

@@ -25,32 +25,32 @@ const MobileBottomNavigation: React.FC = () => {
       id: 'shop',
       label: 'Shop',
       href: '/marketplace',
-      icon: <ShoppingBag className="h-6 w-6" />
+      icon: <ShoppingBag className="h-5 w-5" />
     },
     {
       id: 'auto-gifts',
       label: 'AI Gifting',
       href: '/ai-gifting',
-      icon: <Gift className="h-6 w-6" />
+      icon: <Gift className="h-5 w-5" />
     },
     {
       id: 'wishlists',
       label: 'Wishlists',
       href: '/wishlists',
-      icon: <Heart className="h-6 w-6" />
+      icon: <Heart className="h-5 w-5" />
     },
     {
       id: 'messages',
       label: 'Messages',
       href: '/messages',
-      icon: <MessageSquare className="h-6 w-6" />,
+      icon: <MessageSquare className="h-5 w-5" />,
       badge: unreadMessagesCount
     },
     {
       id: 'account',
       label: 'Account',
       href: '/dashboard',
-      icon: <User className="h-6 w-6" />
+      icon: <User className="h-5 w-5" />
     }
   ];
 
@@ -100,7 +100,7 @@ const MobileBottomNavigation: React.FC = () => {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60]">
       {/* iOS-style rounded container with backdrop blur */}
       <div className="bg-white/80 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-floating">
-        <div className="flex items-center justify-around h-20 px-4 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-14 px-2 pb-[env(safe-area-inset-bottom)]">
           {tabs.map((tab) => {
             const isActive = isTabActive(tab);
             
@@ -119,7 +119,7 @@ const MobileBottomNavigation: React.FC = () => {
                 <div className="relative">
                   {React.cloneElement(tab.icon as React.ReactElement, {
                     className: cn(
-                      "h-6 w-6",
+                      "h-5 w-5",
                       isActive ? "text-white" : "text-muted-foreground"
                     )
                   })}

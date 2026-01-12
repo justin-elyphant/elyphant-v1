@@ -38,15 +38,15 @@ const MobileWishlistActionBar = ({
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50",
-        "bg-background/80 backdrop-blur-xl",
+        "fixed left-0 right-0 z-[70]",
+        "bg-background/95 backdrop-blur-xl",
         "border-t border-border/50",
         "shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]",
-        "safe-area-bottom",
         className
       )}
       style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)'
+        // Position ABOVE the bottom navigation (nav is ~80px + safe area)
+        bottom: 'calc(80px + env(safe-area-inset-bottom))'
       }}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">

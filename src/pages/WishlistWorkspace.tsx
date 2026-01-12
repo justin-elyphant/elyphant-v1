@@ -264,7 +264,7 @@ const WishlistWorkspace = () => {
     : wishlist.items;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobile && isOwner && !isGuestPreview ? 'pb-24' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobile && isOwner && !isGuestPreview ? 'pb-40' : ''}`}>
       {/* Header */}
       <WishlistWorkspaceHeader
         wishlist={wishlist}

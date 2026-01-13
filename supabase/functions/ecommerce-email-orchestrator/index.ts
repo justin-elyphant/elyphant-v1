@@ -408,9 +408,56 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader });
 };
 
+// Wishlist Shared Template
+const wishlistSharedTemplate = (props: any): string => {
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      ${props.sender_name} shared a wishlist with you! 🎁
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hi ${props.recipient_name}, check out what ${props.sender_name} wants you to see!
+    </p>
+    
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
+      <tr><td>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a1a;">
+          ${props.wishlist_title}
+        </p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666;">
+          ${props.item_count} items • $${props.total_value}
+        </p>
+      </td></tr>
+    </table>
+    
+    ${props.message ? `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #9333ea; border-radius: 0 8px 8px 0; padding: 16px; margin-bottom: 30px;">
+      <tr><td>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic;">
+          "${props.message}"
+        </p>
+      </td></tr>
+    </table>
+    ` : ''}
+    
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="${props.wishlist_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Wishlist
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `${props.sender_name} shared a wishlist with you` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
+    case 'wishlist_shared':
+      return {
+        html: wishlistSharedTemplate(data),
+        subject: `${data.sender_name || 'A friend'} shared a wishlist with you! 🎁`
+      };
     case 'order_confirmation':
       return {
         html: orderConfirmationTemplate(data),

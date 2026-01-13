@@ -173,9 +173,6 @@ const ProfileShareSheet = ({
               <p className="text-xs text-muted-foreground">
                 {wishlistCount} {wishlistCount === 1 ? 'wishlist' : 'wishlists'} • {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </p>
-              <p className="text-xs text-muted-foreground mt-1 truncate">
-                {profileUrl}
-              </p>
             </div>
           </motion.div>
 

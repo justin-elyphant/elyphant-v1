@@ -30,6 +30,47 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     );
 
+    // Helper: Calculate next birthday from DOB (YYYY-MM-DD or similar)
+    const calculateNextBirthday = (dob: string | null): string | null => {
+      if (!dob) return null;
+      try {
+        const dobDate = new Date(dob);
+        const month = dobDate.getMonth();
+        const day = dobDate.getDate();
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const thisYearBirthday = new Date(currentYear, month, day);
+        const birthdayToUse = thisYearBirthday >= now 
+          ? thisYearBirthday 
+          : new Date(currentYear + 1, month, day);
+        return birthdayToUse.toISOString().split('T')[0];
+      } catch {
+        return null;
+      }
+    };
+
+    // Helper: Calculate holiday date (simplified version)
+    const calculateHolidayDate = (holidayKey: string): string | null => {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      
+      const holidays: Record<string, { month: number; day: number }> = {
+        christmas: { month: 12, day: 25 },
+        valentine: { month: 2, day: 14 },
+        mothers_day: { month: 5, day: 12 }, // 2nd Sunday approximation
+        fathers_day: { month: 6, day: 16 }, // 3rd Sunday approximation
+      };
+      
+      const holiday = holidays[holidayKey];
+      if (!holiday) return null;
+      
+      const holidayDate = new Date(currentYear, holiday.month - 1, holiday.day);
+      if (holidayDate < now) {
+        holidayDate.setFullYear(currentYear + 1);
+      }
+      return holidayDate.toISOString().split('T')[0];
+    };
+
     // Find auto-gifting rules with upcoming events
     const lookAheadDays = Math.max(
       PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS,
@@ -37,28 +78,68 @@ serve(async (req) => {
     );
     const lookAheadDate = new Date();
     lookAheadDate.setDate(lookAheadDate.getDate() + lookAheadDays);
+    const lookAheadDateStr = lookAheadDate.toISOString().split('T')[0];
+    const nowStr = new Date().toISOString().split('T')[0];
 
+    // Primary query: Rules with scheduled_date populated
     const { data: upcomingRules, error: rulesError } = await supabase
       .from('auto_gifting_rules')
       .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(*)')
       .eq('is_active', true)
-      .lte('scheduled_date', lookAheadDate.toISOString().split('T')[0])
+      .lte('scheduled_date', lookAheadDateStr)
+      .gte('scheduled_date', nowStr)
       .order('scheduled_date', { ascending: true });
 
     if (rulesError) {
       throw rulesError;
     }
 
-    console.log(`🎯 Found ${upcomingRules?.length || 0} upcoming auto-gifts`);
+    // Fallback query: Rules with NULL scheduled_date (legacy/needs resolution)
+    const { data: unscheduledRules } = await supabase
+      .from('auto_gifting_rules')
+      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob)')
+      .eq('is_active', true)
+      .is('scheduled_date', null);
+
+    // Resolve dates for unscheduled rules and update them
+    const resolvedRules: any[] = [];
+    for (const rule of unscheduledRules || []) {
+      let resolvedDate: string | null = null;
+      
+      if (rule.date_type === 'birthday' && rule.recipient?.dob) {
+        resolvedDate = calculateNextBirthday(rule.recipient.dob);
+      } else if (['christmas', 'valentine', 'mothers_day', 'fathers_day'].includes(rule.date_type)) {
+        resolvedDate = calculateHolidayDate(rule.date_type);
+      }
+      
+      if (resolvedDate) {
+        // Update the rule with the resolved date for future runs
+        console.log(`📅 Resolving scheduled_date for rule ${rule.id}: ${resolvedDate}`);
+        await supabase
+          .from('auto_gifting_rules')
+          .update({ scheduled_date: resolvedDate })
+          .eq('id', rule.id);
+        
+        // Check if within look-ahead window
+        if (resolvedDate <= lookAheadDateStr && resolvedDate >= nowStr) {
+          resolvedRules.push({ ...rule, scheduled_date: resolvedDate });
+        }
+      }
+    }
+
+    // Combine primary and resolved rules
+    const allRules = [...(upcomingRules || []), ...resolvedRules];
+    console.log(`🎯 Found ${upcomingRules?.length || 0} upcoming + ${resolvedRules.length} resolved = ${allRules.length} total auto-gifts`);
 
     const results = {
       notified: [] as string[],
       checkoutCreated: [] as string[],
       submitted: [] as string[],
       failed: [] as { ruleId: string; error: string; stage: string }[],
+      resolved: resolvedRules.length,
     };
 
-    for (const rule of upcomingRules || []) {
+    for (const rule of allRules) {
       let recipientName = 'Recipient';
       
       try {
@@ -68,26 +149,22 @@ serve(async (req) => {
         const daysUntil = getDaysUntil(eventDate);
         recipientName = rule.recipient?.name || rule.recipient?.email || 'Recipient';
 
+
         // ============================================
         // NOTIFICATION_LEAD_DAYS before: Send notification (approval required)
         // ============================================
         if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS) {
           console.log(`📬 Sending ${PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS}-day notification...`);
           
-          await supabase.from('notifications').insert({
+          // Use auto_gift_notifications table (correct table name)
+          await supabase.from('auto_gift_notifications').insert({
             user_id: rule.user_id,
-            type: 'auto_gift_upcoming',
+            notification_type: 'auto_gift_upcoming',
             title: `Auto-gift reminder: ${recipientName}'s ${rule.date_type}`,
             message: `Your auto-gift for ${recipientName} is scheduled for ${eventDate.toLocaleDateString()}. Budget: $${rule.budget_limit}`,
-            data: {
-              rule_id: rule.id,
-              recipient_name: recipientName,
-              occasion: rule.date_type,
-              date: rule.scheduled_date,
-              budget: rule.budget_limit,
-            },
-            action_required: true,
-            action_type: 'approve_auto_gift',
+            is_read: false,
+            email_sent: false,
+            execution_id: null, // Will be linked when execution starts
           });
 
           results.notified.push(rule.id);
@@ -253,15 +330,15 @@ serve(async (req) => {
           stage: 'processing',
         });
 
-        await supabase.from('notifications').insert({
+        // Log failure notification using correct table
+        await supabase.from('auto_gift_notifications').insert({
           user_id: rule.user_id,
-          type: 'auto_gift_failed',
+          notification_type: 'auto_gift_failed',
           title: 'Auto-gift failed',
           message: `Failed to process auto-gift for ${recipientName}: ${error.message}`,
-          data: {
-            rule_id: rule.id,
-            error: error.message,
-          },
+          is_read: false,
+          email_sent: false,
+          execution_id: null,
         });
       }
     }

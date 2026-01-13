@@ -28,6 +28,7 @@ interface RecipientSearchComboboxProps {
     recipientId: string; 
     recipientName?: string;
     relationshipType?: string;
+    recipientDob?: string; // MM-DD format for birthday calculation
   }) => void;
   connections: EnhancedConnection[];
   pendingInvitations: EnhancedConnection[];
@@ -217,7 +218,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
     }
   };
 
-  const handleSelect = (recipientId: string, recipientName?: string, relationshipType?: string) => {
+  const handleSelect = async (recipientId: string, recipientName?: string, relationshipType?: string) => {
     // Check if this recipient has existing rules
     const existingRules = rules.filter(rule => {
       // Match by recipient_id or pending_recipient_email
@@ -230,6 +231,29 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       return false;
     });
 
+    // Fetch recipient's DOB from profiles for birthday calculation
+    let recipientDob: string | undefined;
+    if (recipientId && !recipientId.includes('@')) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('dob')
+          .eq('id', recipientId)
+          .single();
+        
+        if (profile?.dob) {
+          // Convert full DOB to MM-DD format for birthday calculation
+          const dobDate = new Date(profile.dob);
+          const month = String(dobDate.getMonth() + 1).padStart(2, '0');
+          const day = String(dobDate.getDate()).padStart(2, '0');
+          recipientDob = `${month}-${day}`;
+          console.log(`📅 Fetched recipient DOB: ${recipientDob}`);
+        }
+      } catch (error) {
+        console.warn('Could not fetch recipient DOB:', error);
+      }
+    }
+
     if (existingRules.length > 0 && onEditExistingRule) {
       // Show existing rules dialog
       setSelectedRecipientWithRules({
@@ -240,8 +264,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
       setExistingRulesDialogOpen(true);
       setOpen(false);
     } else {
-      // Proceed with normal selection
-      onChange({ recipientId, recipientName, relationshipType });
+      // Proceed with normal selection, including DOB
+      onChange({ recipientId, recipientName, relationshipType, recipientDob });
       setOpen(false);
       setSearchQuery("");
     }

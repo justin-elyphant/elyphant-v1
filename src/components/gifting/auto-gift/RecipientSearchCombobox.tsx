@@ -242,11 +242,17 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           .single();
         
         if (profile?.dob) {
-          // Convert full DOB to MM-DD format for birthday calculation
-          const dobDate = new Date(profile.dob);
-          const month = String(dobDate.getMonth() + 1).padStart(2, '0');
-          const day = String(dobDate.getDate()).padStart(2, '0');
-          recipientDob = `${month}-${day}`;
+          // Handle both MM-DD and full date formats
+          if (profile.dob.length === 5 && profile.dob.includes('-')) {
+            // Already in MM-DD format
+            recipientDob = profile.dob;
+          } else {
+            // Convert full DOB to MM-DD format for birthday calculation
+            const dobDate = new Date(profile.dob);
+            const month = String(dobDate.getMonth() + 1).padStart(2, '0');
+            const day = String(dobDate.getDate()).padStart(2, '0');
+            recipientDob = `${month}-${day}`;
+          }
           console.log(`📅 Fetched recipient DOB: ${recipientDob}`);
         }
       } catch (error) {

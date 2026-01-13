@@ -222,7 +222,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
 
               {/* Wishlists Grid */}
               {filteredWishlists.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {filteredWishlists.map((wishlist) => (
                     <MobileWishlistCard
                       key={wishlist.id}

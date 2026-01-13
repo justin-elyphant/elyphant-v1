@@ -465,10 +465,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden overflow-x-hidden">
         <div 
           ref={scrollContainerRef}
-          className="max-h-[calc(90vh-120px)] overflow-y-auto mobile-container ios-smooth-scroll pb-safe-bottom"
+          className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden w-full max-w-full mobile-container ios-smooth-scroll pb-safe-bottom"
         >
         <DialogHeader className="pb-0">
           <DialogTitle className="flex items-center gap-2">
@@ -497,7 +497,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsList>
 
           {/* Step 1: Recipient Selection */}
-          <TabsContent value="0" className="space-y-4 pb-32">
+          <TabsContent value="0" className="space-y-4 pb-32 overflow-x-hidden">
             {initialData?.recipientName && (
               <div className="p-3 bg-muted border border-border rounded-lg">
                 <div className="flex items-center gap-2 text-foreground">
@@ -626,7 +626,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsContent>
 
           {/* Step 2: Budget & Payment */}
-          <TabsContent value="1" className="space-y-4 pb-32">
+          <TabsContent value="1" className="space-y-4 pb-32 overflow-x-hidden">
             {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
               <div className="p-3 bg-muted border border-border rounded-lg">
                 <div className="flex items-center gap-2 text-foreground">
@@ -747,7 +747,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           </TabsContent>
 
           {/* Step 3: Notifications & Approval */}
-          <TabsContent value="2" className="space-y-4 pb-32">
+          <TabsContent value="2" className="space-y-4 pb-32 overflow-x-hidden">
             {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
               <div className="p-3 bg-muted border border-border rounded-lg">
                 <div className="flex items-center gap-2 text-foreground">
@@ -837,13 +837,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         </Tabs>
 
         {/* Navigation - Fixed at bottom with safe area */}
-        <div className="sticky bottom-0 bg-background border-t pt-4 pb-16 md:pb-4 px-6 mt-4" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap shrink-0">
+        <div className="sticky bottom-0 bg-background border-t pt-4 pb-16 md:pb-4 px-4 md:px-6 mt-4 overflow-x-hidden" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
+          {/* Mobile: Stack vertically, Desktop: horizontal */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            {/* Step indicator - full width on mobile, centered */}
+            <div className="text-sm text-muted-foreground text-center md:text-left whitespace-nowrap shrink-0">
               Step {currentStep + 1} of {steps.length}
             </div>
             
-            <div className="flex gap-2">
+            {/* Buttons - centered on mobile, right-aligned on desktop */}
+            <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto">
               {currentStep > 0 && (
                 <motion.div 
                   whileTap={isMobile ? undefined : { scale: 0.97 }} 
@@ -852,7 +855,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   <Button 
                     variant="outline" 
                     onClick={handleBack}
-                    className="min-h-[44px] min-w-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
+                    className="min-h-[44px] min-w-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
                   >
                     Back
                   </Button>
@@ -866,7 +869,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                 >
                   <Button 
                     onClick={handleNext} 
-                    className="min-h-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
+                    className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
                     disabled={
                       (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
                       (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
@@ -886,7 +889,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                       triggerHapticFeedback('success');
                       handleSubmit();
                     }} 
-                    className="min-h-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
+                    className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100 whitespace-nowrap"
                     disabled={
                       isLoading || 
                       !formData.recipientId || 

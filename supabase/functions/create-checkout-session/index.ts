@@ -72,23 +72,6 @@ serve(async (req) => {
       logStep("User authenticated", { userId: user.id, email: user.email });
     }
 
-    const { 
-      cartItems,
-      deliveryGroups,
-      scheduledDeliveryDate,
-      giftOptions,
-      isAutoGift,
-      autoGiftRuleId,
-      paymentMethod,
-      pricingBreakdown,
-      shippingInfo,
-      metadata: clientMetadata,
-      // NEW: Group gift parameters
-      isGroupGift = false,
-      groupGiftProjectId,
-      contributionAmount
-    } = await req.json();
-    
     // Check if this is a payment intent only request (for Apple Pay)
     const isPaymentIntentOnly = clientMetadata?.payment_intent_only === true;
 

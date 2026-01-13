@@ -183,12 +183,47 @@ const UnifiedPaymentMethodManager: React.FC<UnifiedPaymentMethodManagerProps> = 
     }
   };
 
-  const handleAddSuccess = () => {
-    fetchPaymentMethods();
-    if (mode === 'management') {
-      setActiveTab("saved");
+  const handleAddSuccess = async () => {
+    // Always switch back to saved tab after adding
+    setActiveTab("saved");
+    
+    // Fetch updated payment methods
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Map database fields to component interface
+      const mappedData = (data || []).map(method => ({
+        ...method,
+        payment_method_id: method.stripe_payment_method_id
+      }));
+      setPaymentMethods(mappedData);
+      
+      // Auto-select the most recently added payment method in selection mode
+      if (mode === 'selection' && mappedData.length > 0 && onSelectMethod) {
+        const newestMethod = mappedData[0]; // Already sorted by created_at desc
+        onSelectMethod(newestMethod);
+        toast.success(`Card ending in ${newestMethod.last_four} saved and selected`);
+      } else {
+        toast.success('Payment method added successfully');
+      }
+    } catch (err) {
+      console.error('Error fetching payment methods:', err);
+      toast.error('Card saved but failed to refresh list');
+    } finally {
+      setIsLoading(false);
     }
-    toast.success('Payment method added successfully');
   };
 
   const handleSelectMethod = (method: PaymentMethod) => {

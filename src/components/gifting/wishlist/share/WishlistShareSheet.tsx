@@ -148,7 +148,7 @@ const WishlistShareSheet = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="pb-[env(safe-area-inset-bottom)]">
+      <DrawerContent className="pb-[calc(env(safe-area-inset-bottom)+80px)]">
         <DrawerHeader className="text-center pb-2">
           <DrawerTitle className="text-lg font-semibold">Share Wishlist</DrawerTitle>
         </DrawerHeader>

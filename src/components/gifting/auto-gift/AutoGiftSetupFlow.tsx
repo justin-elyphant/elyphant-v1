@@ -839,7 +839,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         {/* Navigation - Fixed at bottom with safe area */}
         <div className="sticky bottom-0 bg-background border-t pt-4 pb-16 md:pb-4 px-6 mt-4" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap shrink-0 -ml-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap shrink-0">
               Step {currentStep + 1} of {steps.length}
             </div>
             

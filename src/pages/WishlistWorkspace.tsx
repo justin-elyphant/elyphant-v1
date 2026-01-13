@@ -334,9 +334,7 @@ const WishlistWorkspace = () => {
         <MobileWishlistActionBar
           wishlist={wishlist}
           isPublic={isPublic}
-          isUpdatingPrivacy={isUpdatingPrivacy}
           onPrivacyToggle={handlePrivacyToggle}
-          onShare={handleShare}
           onAddItems={() => setIsShoppingPanelOpen(true)}
         />
       )}

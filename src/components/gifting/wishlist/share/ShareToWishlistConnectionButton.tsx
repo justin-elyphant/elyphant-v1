@@ -42,10 +42,17 @@ const ShareToWishlistConnectionButton = ({
   const itemCount = wishlist.items?.length || 0;
   const totalValue = wishlist.items?.reduce((sum, item) => sum + (item.price || 0), 0) || 0;
 
-  const filteredConnections = connections.filter((conn) =>
-    conn.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conn.username?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Helper to get connection display info from nested connection_details
+  const getConnectionName = (conn: any) => 
+    conn.connection_details?.name || conn.connection_details?.username || "Friend";
+  const getConnectionUsername = (conn: any) => conn.connection_details?.username;
+  const getConnectionAvatar = (conn: any) => conn.connection_details?.profile_image;
+
+  const filteredConnections = connections.filter((conn) => {
+    const name = getConnectionName(conn).toLowerCase();
+    const username = (getConnectionUsername(conn) || "").toLowerCase();
+    return name.includes(searchTerm.toLowerCase()) || username.includes(searchTerm.toLowerCase());
+  });
 
   const handleOpenChange = (isOpen: boolean) => {
     triggerHapticFeedback('light');
@@ -161,7 +168,7 @@ const ShareToWishlistConnectionButton = ({
                           key={connection.id}
                           onClick={() => handleSelectConnection(
                             connection.id, 
-                            connection.display_name || connection.username || "Friend"
+                            getConnectionName(connection)
                           )}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-xl",
@@ -170,18 +177,18 @@ const ShareToWishlistConnectionButton = ({
                           )}
                         >
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={connection.avatar_url || ""} />
+                            <AvatarImage src={getConnectionAvatar(connection) || ""} />
                             <AvatarFallback>
-                              {connection.display_name?.[0] || connection.username?.[0] || "?"}
+                              {getConnectionName(connection)[0] || "?"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate">
-                              {connection.display_name || connection.username}
+                              {getConnectionName(connection)}
                             </p>
-                            {connection.username && connection.display_name && (
+                            {getConnectionUsername(connection) && (
                               <p className="text-xs text-muted-foreground truncate">
-                                @{connection.username}
+                                @{getConnectionUsername(connection)}
                               </p>
                             )}
                           </div>

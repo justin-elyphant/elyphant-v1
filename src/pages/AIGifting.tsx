@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,14 +16,35 @@ import HowItWorksModal from "@/components/gifting/auto-gift/HowItWorksModal";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
+import RuleApprovalDialog from "@/components/gifting/auto-gift/RuleApprovalDialog";
 
 const AIGifting = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { rules, loading } = useAutoGifting();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+  const [approvalRuleId, setApprovalRuleId] = useState<string | null>(null);
+  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
+
+  // Handle URL query parameters for email-based approvals
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const ruleId = searchParams.get('rule');
+
+    if ((action === 'approve' || action === 'reject') && ruleId) {
+      console.log(`🔗 Processing email approval link: action=${action}, rule=${ruleId}`);
+      setApprovalRuleId(ruleId);
+      setApprovalAction(action);
+      setApprovalDialogOpen(true);
+      
+      // Clear the query params to prevent re-triggering
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   if (loading) {
     return (
@@ -290,6 +312,19 @@ const AIGifting = () => {
       <HowItWorksModal
         open={howItWorksOpen}
         onOpenChange={setHowItWorksOpen}
+      />
+
+      {/* Rule Approval Dialog (for email link approvals) */}
+      <RuleApprovalDialog
+        open={approvalDialogOpen}
+        onOpenChange={(open) => {
+          setApprovalDialogOpen(open);
+          if (!open) {
+            setApprovalRuleId(null);
+          }
+        }}
+        ruleId={approvalRuleId}
+        initialAction={approvalAction}
       />
     </SidebarLayout>
   );

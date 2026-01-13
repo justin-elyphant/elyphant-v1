@@ -167,18 +167,90 @@ serve(async (req) => {
         if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS) {
           console.log(`📬 Sending ${PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS}-day notification...`);
           
-          // Use auto_gift_notifications table (correct table name)
+          // Step 1: Get wishlist items for suggested gifts
+          let suggestedProducts: any[] = [];
+          if (rule.recipient_id) {
+            const { data: wishlist } = await supabase
+              .from('wishlists')
+              .select('id')
+              .eq('user_id', rule.recipient_id)
+              .single();
+
+            if (wishlist?.id) {
+              const { data: wishlistItems } = await supabase
+                .from('wishlist_items')
+                .select('product_id, name, title, price, image_url')
+                .eq('wishlist_id', wishlist.id)
+                .lte('price', rule.budget_limit || 9999)
+                .order('price', { ascending: false })
+                .limit(3);
+
+              suggestedProducts = (wishlistItems || []).map(item => ({
+                product_id: item.product_id,
+                name: item.name || item.title || 'Gift Item',
+                title: item.name || item.title,
+                price: item.price,
+                image_url: item.image_url,
+              }));
+            }
+          }
+
+          console.log(`🎁 Found ${suggestedProducts.length} suggested products within budget`);
+
+          // Step 2: Create automated_gift_executions record
+          const { data: execution, error: execError } = await supabase
+            .from('automated_gift_executions')
+            .insert({
+              rule_id: rule.id,
+              user_id: rule.user_id,
+              execution_date: rule.scheduled_date,
+              status: 'pending_approval',
+              selected_products: suggestedProducts,
+              ai_agent_source: { agent: 'auto-gift-orchestrator', version: '2.0' },
+            })
+            .select()
+            .single();
+
+          if (execError) {
+            console.error('❌ Failed to create execution record:', execError);
+            throw execError;
+          }
+
+          console.log(`✅ Created execution record: ${execution.id}`);
+
+          // Step 3: Generate approval token for email links
+          const approvalToken = crypto.randomUUID();
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 7); // Token valid for 7 days
+
+          const { error: tokenError } = await supabase
+            .from('email_approval_tokens')
+            .insert({
+              execution_id: execution.id,
+              user_id: rule.user_id,
+              token: approvalToken,
+              email_sent_at: new Date().toISOString(),
+              expires_at: expiresAt.toISOString(),
+            });
+
+          if (tokenError) {
+            console.error('❌ Failed to create approval token:', tokenError);
+          }
+
+          console.log(`🔑 Created approval token: ${approvalToken}`);
+
+          // Step 4: Create notification with execution_id
           await supabase.from('auto_gift_notifications').insert({
             user_id: rule.user_id,
             notification_type: 'auto_gift_upcoming',
             title: `Auto-gift reminder: ${recipientName}'s ${rule.date_type}`,
             message: `Your auto-gift for ${recipientName} is scheduled for ${eventDate.toLocaleDateString()}. Budget: $${rule.budget_limit}`,
             is_read: false,
-            email_sent: true, // Mark as sent since we're triggering email now
-            execution_id: null, // Will be linked when execution starts
+            email_sent: true,
+            execution_id: execution.id,
           });
 
-          // Trigger email notification using existing auto_gift_approval template
+          // Step 5: Trigger email notification with token-based URLs
           const { data: userData } = await supabase
             .from('profiles')
             .select('email, name')
@@ -187,18 +259,24 @@ serve(async (req) => {
 
           if (userData?.email) {
             console.log(`📧 Triggering reminder email to ${userData.email}...`);
+            
+            // Use token-based URLs for email approval
+            const approveUrl = `https://elyphant.lovable.app/auto-gifts/approve/${approvalToken}`;
+            const rejectUrl = `https://elyphant.lovable.app/auto-gifts/approve/${approvalToken}?action=reject`;
+            
             await supabase.functions.invoke('ecommerce-email-orchestrator', {
               body: {
                 eventType: 'auto_gift_approval',
                 recipientEmail: userData.email,
                 data: {
-                  first_name: userData.name || 'there',
+                  first_name: userData.name?.split(' ')[0] || 'there',
                   recipient_name: recipientName,
                   occasion: rule.date_type.replace(/_/g, ' '),
                   execution_date: eventDate.toLocaleDateString(),
-                  suggested_gifts: [],
-                  approve_url: `https://elyphant.lovable.app/ai-gifting?action=approve&rule=${rule.id}`,
-                  reject_url: `https://elyphant.lovable.app/ai-gifting?action=reject&rule=${rule.id}`,
+                  suggested_gifts: suggestedProducts.slice(0, 3),
+                  approve_url: approveUrl,
+                  reject_url: rejectUrl,
+                  budget: rule.budget_limit,
                 }
               }
             });

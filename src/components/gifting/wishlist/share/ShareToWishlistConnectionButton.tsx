@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, Search, Users, Send, Heart, ArrowLeft } from "lucide-react";
 import { Wishlist } from "@/types/profile";
-import { useConnections } from "@/hooks/profile/useConnections";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
 import { toast } from "sonner";
 import { triggerHapticFeedback } from "@/utils/haptics";
@@ -32,7 +32,8 @@ const ShareToWishlistConnectionButton = ({
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
-  const { connections, loading: connectionsLoading } = useConnections();
+  // Use the adapter hook which provides enriched connection data with profile info
+  const { friends, loading: connectionsLoading } = useConnectionsAdapter();
   
   // Get messaging functionality for the selected connection
   const connectionId = selectedConnection?.id || "";
@@ -42,13 +43,12 @@ const ShareToWishlistConnectionButton = ({
   const itemCount = wishlist.items?.length || 0;
   const totalValue = wishlist.items?.reduce((sum, item) => sum + (item.price || 0), 0) || 0;
 
-  // Helper to get connection display info from nested connection_details
-  const getConnectionName = (conn: any) => 
-    conn.connection_details?.name || conn.connection_details?.username || "Friend";
-  const getConnectionUsername = (conn: any) => conn.connection_details?.username;
-  const getConnectionAvatar = (conn: any) => conn.connection_details?.profile_image;
+  // Helper to get connection display info - useConnectionsAdapter provides flat structure
+  const getConnectionName = (conn: any) => conn.name || conn.username || "Friend";
+  const getConnectionUsername = (conn: any) => conn.username;
+  const getConnectionAvatar = (conn: any) => conn.imageUrl;
 
-  const filteredConnections = connections.filter((conn) => {
+  const filteredConnections = friends.filter((conn) => {
     const name = getConnectionName(conn).toLowerCase();
     const username = (getConnectionUsername(conn) || "").toLowerCase();
     return name.includes(searchTerm.toLowerCase()) || username.includes(searchTerm.toLowerCase());

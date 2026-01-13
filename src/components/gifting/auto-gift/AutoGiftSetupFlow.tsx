@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { RecipientSearchCombobox } from "./RecipientSearchCombobox";
 import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
+import { calculateHolidayDate, isKnownHoliday } from "@/constants/holidayDates";
 import SmartHolidayInfo from "./SmartHolidayInfo";
 import { DatePicker } from "@/components/ui/date-picker";
 import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
@@ -77,6 +78,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     recipientId: recipientId || "",
     recipientName: undefined as string | undefined,
     relationshipType: undefined as string | undefined,
+    recipientDob: undefined as string | undefined, // MM-DD format for birthday calculation
     selectedEvents: [] as SelectedEvent[],
     eventType: eventType || "", // Keep for backward compatibility
     specificHoliday: "",
@@ -89,6 +91,20 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     giftMessage: "",
     selectedPaymentMethodId: ""
   });
+
+  // Helper to calculate next birthday from MM-DD format
+  const calculateNextBirthday = (dobMMDD: string | undefined): string | null => {
+    if (!dobMMDD || dobMMDD.length < 5) return null;
+    const [month, day] = dobMMDD.split('-').map(Number);
+    if (!month || !day) return null;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const thisYearBirthday = new Date(currentYear, month - 1, day);
+    const birthdayToUse = thisYearBirthday >= now 
+      ? thisYearBirthday 
+      : new Date(currentYear + 1, month - 1, day);
+    return birthdayToUse.toISOString().split('T')[0];
+  };
 
   const steps: SetupStep[] = [
     {
@@ -353,34 +369,53 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         }
       }
       
-      // Create rule data for each selected event
-      const rulesToCreate = formData.selectedEvents.map(event => ({
-        user_id: "", // Will be set by service
-        recipient_id: actualRecipientId,
-        pending_recipient_email: pendingEmail,
-        date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
-        scheduled_date: event.eventType === "other" && event.customDate 
-          ? event.customDate.toISOString().split('T')[0] 
-          : null,
-        event_id: normalizedEventId,
-        is_active: true,
-        budget_limit: formData.budgetLimit,
-        notification_preferences: {
-          enabled: formData.emailNotifications,
-          days_before: formData.notificationDays,
-          email: formData.emailNotifications,
-          push: false,
-        },
-        gift_selection_criteria: {
-          source: "both" as const,
-          max_price: formData.budgetLimit,
-          min_price: Math.max(1, formData.budgetLimit * 0.1),
-          categories: [],
-          exclude_items: [],
-        },
-        payment_method_id: formData.selectedPaymentMethodId,
-        gift_message: formData.giftMessage,
-      }));
+      // Create rule data for each selected event with proper scheduled_date calculation
+      const rulesToCreate = formData.selectedEvents.map(event => {
+        let scheduledDate: string | null = null;
+        
+        // Calculate scheduled_date based on event type
+        if (event.eventType === "other" && event.customDate) {
+          scheduledDate = event.customDate.toISOString().split('T')[0];
+        } else if (event.eventType === "birthday") {
+          // Use recipient's DOB to calculate next birthday
+          scheduledDate = calculateNextBirthday(formData.recipientDob);
+          console.log(`📅 Birthday scheduled_date calculated: ${scheduledDate} from DOB: ${formData.recipientDob}`);
+        } else if (event.eventType === "holiday" && event.specificHoliday) {
+          // Use holiday date calculator
+          scheduledDate = calculateHolidayDate(event.specificHoliday);
+          console.log(`📅 Holiday scheduled_date calculated: ${scheduledDate} for ${event.specificHoliday}`);
+        } else if (isKnownHoliday(event.eventType)) {
+          // date_type is a known holiday (e.g., "christmas", "valentine")
+          scheduledDate = calculateHolidayDate(event.eventType);
+          console.log(`📅 Known holiday scheduled_date: ${scheduledDate} for ${event.eventType}`);
+        }
+        
+        return {
+          user_id: "", // Will be set by service
+          recipient_id: actualRecipientId,
+          pending_recipient_email: pendingEmail,
+          date_type: event.eventType === "holiday" ? event.specificHoliday! : event.eventType,
+          scheduled_date: scheduledDate,
+          event_id: normalizedEventId,
+          is_active: true,
+          budget_limit: formData.budgetLimit,
+          notification_preferences: {
+            enabled: formData.emailNotifications,
+            days_before: formData.notificationDays,
+            email: formData.emailNotifications,
+            push: false,
+          },
+          gift_selection_criteria: {
+            source: "both" as const,
+            max_price: formData.budgetLimit,
+            min_price: Math.max(1, formData.budgetLimit * 0.1),
+            categories: [],
+            exclude_items: [],
+          },
+          payment_method_id: formData.selectedPaymentMethodId,
+          gift_message: formData.giftMessage,
+        };
+      });
 
       // Phase 3: Batch rule creation with enhanced feedback
       if (ruleId) {
@@ -538,12 +573,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   </Label>
                    <RecipientSearchCombobox
                     value={formData.recipientId}
-                    onChange={({ recipientId, recipientName, relationshipType }) => 
+                    onChange={({ recipientId, recipientName, relationshipType, recipientDob }) => 
                       setFormData(prev => ({ 
                         ...prev, 
                         recipientId,
                         recipientName,
-                        relationshipType: relationshipType || prev.relationshipType
+                        relationshipType: relationshipType || prev.relationshipType,
+                        recipientDob: recipientDob || prev.recipientDob
                       }))
                     }
                     connections={connections}

@@ -4,12 +4,13 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Heart } from "lucide-react";
+import { Plus, Heart, Share2 } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
+import ProfileShareSheet from "@/components/user-profile/ProfileShareSheet";
 
 interface CompactProfileHeaderProps {
   wishlists: Wishlist[];
@@ -28,7 +29,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   const { profile } = useProfile();
   const [purchasedCount, setPurchasedCount] = useState(0);
   const [percentPurchased, setPercentPurchased] = useState(0);
-
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
   // Get user display name
   const getUserName = () => {
     if (profile?.first_name) {
@@ -88,6 +89,14 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     onCreateWishlist();
   };
 
+  const handleShare = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    setShareSheetOpen(true);
+  };
+
+  // Generate profile URL for sharing
+  const profileUrl = `${window.location.origin}/profile/${profile?.username ? `@${profile.username}` : user?.id}`;
+
   return (
     <div className={cn("bg-background border-b border-border", className)}>
       {/* Main Profile Row */}
@@ -110,16 +119,41 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           </p>
         </div>
 
-        {/* Create Button - Gradient FAB with iOS compliance */}
-        <motion.div whileTap={{ scale: 0.95 }}>
-          <Button 
-            onClick={handleCreateWishlist}
-            className="h-11 w-11 min-h-[44px] min-w-[44px] p-0 rounded-full bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 shadow-lg flex-shrink-0"
-          >
-            <Plus className="h-5 w-5 text-white" />
-          </Button>
-        </motion.div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Share Button */}
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Button 
+              variant="outline"
+              onClick={handleShare}
+              className="h-11 w-11 min-h-[44px] min-w-[44px] p-0 rounded-full"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </motion.div>
+
+          {/* Create Button - Gradient FAB with iOS compliance */}
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={handleCreateWishlist}
+              className="h-11 w-11 min-h-[44px] min-w-[44px] p-0 rounded-full bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 shadow-lg"
+            >
+              <Plus className="h-5 w-5 text-white" />
+            </Button>
+          </motion.div>
+        </div>
       </div>
+
+      {/* Profile Share Sheet */}
+      <ProfileShareSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        profileName={userName}
+        profileUrl={profileUrl}
+        avatarUrl={avatarUrl}
+        wishlistCount={stats.totalWishlists}
+        itemCount={stats.totalItems}
+      />
 
       {/* Gift Tracker Progress (optional slim bar) */}
       {showGiftTracker && stats.totalItems > 0 && (

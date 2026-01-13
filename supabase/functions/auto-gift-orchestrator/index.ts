@@ -30,13 +30,24 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     );
 
-    // Helper: Calculate next birthday from DOB (YYYY-MM-DD or similar)
+    // Helper: Calculate next birthday from DOB (supports YYYY-MM-DD, MM-DD, or full ISO)
     const calculateNextBirthday = (dob: string | null): string | null => {
       if (!dob) return null;
       try {
-        const dobDate = new Date(dob);
-        const month = dobDate.getMonth();
-        const day = dobDate.getDate();
+        let month: number, day: number;
+        
+        // Handle MM-DD format (e.g., "11-26")
+        if (dob.length === 5 && dob.includes('-')) {
+          const parts = dob.split('-').map(Number);
+          month = parts[0] - 1; // JS months are 0-indexed
+          day = parts[1];
+        } else {
+          // Handle full date format (YYYY-MM-DD or ISO)
+          const dobDate = new Date(dob);
+          month = dobDate.getMonth();
+          day = dobDate.getDate();
+        }
+        
         const now = new Date();
         const currentYear = now.getFullYear();
         const thisYearBirthday = new Date(currentYear, month, day);
@@ -188,13 +199,24 @@ serve(async (req) => {
           }
 
           // Get gift suggestions or wishlist items
-          const { data: giftItems } = await supabase
-            .from('wishlist_items')
-            .select('*, products(*)')
+          // First get the recipient's wishlist, then query items
+          const { data: wishlist } = await supabase
+            .from('wishlists')
+            .select('id')
             .eq('user_id', rule.recipient_id)
-            .lte('price', rule.budget_limit)
-            .order('priority', { ascending: false })
-            .limit(1);
+            .single();
+
+          let giftItems: any[] = [];
+          if (wishlist?.id) {
+            const { data: items } = await supabase
+              .from('wishlist_items')
+              .select('*, products:product_id(*)')
+              .eq('wishlist_id', wishlist.id)
+              .lte('price', rule.budget_limit || 9999)
+              .order('priority', { ascending: false })
+              .limit(1);
+            giftItems = items || [];
+          }
 
           if (!giftItems || giftItems.length === 0) {
             throw new Error('No suitable gifts found within budget');

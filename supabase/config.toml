@@ -19,6 +19,9 @@ verify_jwt = false
 [functions.auto-gift-orchestrator]
 verify_jwt = false
 
+[functions.approve-auto-gift]
+verify_jwt = false
+
 [functions.order-monitor-v2]
 verify_jwt = false
 

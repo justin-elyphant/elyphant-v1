@@ -24,8 +24,7 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
+    
     // Create Supabase client
     const supabaseService = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -33,12 +32,45 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseService.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    // Check if this is a service-role call (from auto-gift-orchestrator)
+    const isServiceRole = authHeader?.includes(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || '');
+    
+    // Parse body early to check for auto-gift orchestrator calls
+    const requestBody = await req.json();
+    const { 
+      cartItems,
+      deliveryGroups,
+      scheduledDeliveryDate,
+      giftOptions,
+      isAutoGift,
+      autoGiftRuleId,
+      paymentMethod,
+      pricingBreakdown,
+      shippingInfo,
+      metadata: clientMetadata,
+      isGroupGift = false,
+      groupGiftProjectId,
+      contributionAmount
+    } = requestBody;
+
+    // Handle authentication - allow service role for auto-gift orchestrator
+    let user: { id: string; email: string };
+    if (isServiceRole && isAutoGift) {
+      // Auto-gift orchestrator passes user_id in metadata
+      const userId = clientMetadata?.user_id;
+      const userEmail = clientMetadata?.user_email || 'auto-gift@system';
+      if (!userId) throw new Error("user_id required in metadata for auto-gift orchestrator");
+      user = { id: userId, email: userEmail };
+      logStep("Auto-gift orchestrator authenticated", { userId: user.id });
+    } else {
+      if (!authHeader) throw new Error("No authorization header provided");
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabaseService.auth.getUser(token);
+      if (userError) throw new Error(`Authentication error: ${userError.message}`);
+      if (!userData.user?.email) throw new Error("User not authenticated");
+      user = { id: userData.user.id, email: userData.user.email };
+      logStep("User authenticated", { userId: user.id, email: user.email });
+    }
 
     const { 
       cartItems,

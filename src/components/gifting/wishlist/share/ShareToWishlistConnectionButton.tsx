@@ -12,6 +12,8 @@ import { MessageCircle, Search, Users, Send, Heart, ArrowLeft } from "lucide-rea
 import { Wishlist } from "@/types/profile";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { useDirectMessaging } from "@/hooks/useUnifiedMessaging";
+import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ const ShareToWishlistConnectionButton = ({
 
   // Use the adapter hook which provides enriched connection data with profile info
   const { friends, loading: connectionsLoading } = useConnectionsAdapter();
+  const { user } = useAuth();
   
   // Get messaging functionality for the selected connection
   const connectionId = selectedConnection?.id || "";
@@ -90,6 +93,45 @@ const ShareToWishlistConnectionButton = ({
         messageType: 'product_share',
         wishlistLinkId: wishlist.id,
       });
+
+      // Send email notification to recipient
+      try {
+        // Fetch recipient's email and profile info
+        const { data: recipientProfile } = await supabase
+          .from('profiles')
+          .select('email, first_name, name')
+          .eq('id', selectedConnection.id)
+          .single();
+
+        // Fetch sender's profile info
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('first_name, name')
+          .eq('id', user?.id)
+          .single();
+
+        if (recipientProfile?.email) {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'wishlist_shared',
+              recipientEmail: recipientProfile.email,
+              data: {
+                sender_name: senderProfile?.first_name || senderProfile?.name || 'A friend',
+                recipient_name: recipientProfile?.first_name || recipientProfile?.name || 'there',
+                wishlist_title: wishlist.title,
+                item_count: itemCount,
+                total_value: totalValue.toFixed(2),
+                message: message || null,
+                wishlist_url: shareUrl
+              }
+            }
+          });
+          console.log('📧 Wishlist shared email sent to', recipientProfile.email);
+        }
+      } catch (emailError) {
+        // Don't fail the whole operation if email fails
+        console.error('Failed to send wishlist share email:', emailError);
+      }
 
       toast.success("Wishlist shared!");
       setOpen(false);

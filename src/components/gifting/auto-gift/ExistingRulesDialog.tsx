@@ -32,7 +32,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto ios-smooth-scroll modal-scroll-container">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-x-hidden overflow-y-auto ios-smooth-scroll modal-scroll-container">
         <DialogHeader>
           <DialogTitle>AI Gifting for {recipientName}</DialogTitle>
           <DialogDescription>

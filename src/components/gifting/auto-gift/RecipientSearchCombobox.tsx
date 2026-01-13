@@ -56,7 +56,6 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const inputRef = useRef<HTMLInputElement>(null);
-  const popoverContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [existingRulesDialogOpen, setExistingRulesDialogOpen] = useState(false);
   const [selectedRecipientWithRules, setSelectedRecipientWithRules] = useState<{
@@ -592,31 +591,29 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </DrawerContent>
         </Drawer>
       ) : (
-        <Popover open={open} onOpenChange={setOpen} modal={false}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between"
+              className="w-full justify-between pointer-events-auto"
             >
               <span className="truncate">{selectedName}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <div ref={popoverContainerRef} />
           <PopoverContent 
-            className="max-w-[440px] w-[440px] p-0 z-[10000] pointer-events-auto bg-background/95 backdrop-blur-xl shadow-md border"
+            className="max-w-[440px] w-[440px] p-0 z-[10000] pointer-events-auto bg-background border shadow-xl"
             align="start"
             side="bottom"
             sideOffset={8}
-            avoidCollisions={false}
-            container={popoverContainerRef.current ?? undefined}
-            onOpenAutoFocus={(e)=>{
+            avoidCollisions={true}
+            onOpenAutoFocus={(e) => {
               e.preventDefault();
-              setTimeout(()=>{
+              setTimeout(() => {
                 inputRef.current?.focus();
-              },0)
+              }, 0);
             }}
           >
             <RecipientSelectorContent />

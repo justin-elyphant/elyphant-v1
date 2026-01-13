@@ -156,8 +156,8 @@ const ShareToWishlistConnectionButton = ({
                     />
                   </div>
 
-                  {/* Connection List */}
-                  <div className="max-h-[40vh] overflow-y-auto space-y-1">
+                  {/* Connection List - extra bottom padding for mobile nav */}
+                  <div className="max-h-[40vh] overflow-y-auto space-y-1 pb-20">
                     {connectionsLoading ? (
                       <div className="py-8 text-center text-muted-foreground">
                         Loading connections...

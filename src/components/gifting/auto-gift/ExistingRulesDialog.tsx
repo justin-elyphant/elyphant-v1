@@ -32,7 +32,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto ios-smooth-scroll modal-scroll-container">
         <DialogHeader>
           <DialogTitle>AI Gifting for {recipientName}</DialogTitle>
           <DialogDescription>
@@ -46,7 +46,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Existing Rules</p>
             {rules.map((rule) => (
-              <Card key={rule.id} className="bg-muted border-border">
+              <Card key={rule.id} className="bg-muted border-border touch-manipulation mobile-card-hover">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 space-y-2">
@@ -74,7 +74,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
                         onEditRule(rule);
                         onOpenChange(false);
                       }}
-                      className="min-h-[44px]"
+                      className="min-h-[44px] touch-manipulation active:scale-[0.97] transition-transform duration-75"
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit
@@ -92,7 +92,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
                 onCreateNew();
                 onOpenChange(false);
               }}
-              className="w-full min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:opacity-90"
+              className="w-full min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 text-white hover:opacity-90 touch-manipulation active:scale-[0.97] active:opacity-95 transition-all duration-75"
             >
               <Plus className="h-4 w-4 mr-2" />
               Schedule Another Gift for {recipientName}

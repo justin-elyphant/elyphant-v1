@@ -174,9 +174,33 @@ serve(async (req) => {
             title: `Auto-gift reminder: ${recipientName}'s ${rule.date_type}`,
             message: `Your auto-gift for ${recipientName} is scheduled for ${eventDate.toLocaleDateString()}. Budget: $${rule.budget_limit}`,
             is_read: false,
-            email_sent: false,
+            email_sent: true, // Mark as sent since we're triggering email now
             execution_id: null, // Will be linked when execution starts
           });
+
+          // Trigger email notification using existing auto_gift_approval template
+          const { data: userData } = await supabase
+            .from('profiles')
+            .select('email, name')
+            .eq('id', rule.user_id)
+            .single();
+
+          if (userData?.email) {
+            console.log(`📧 Triggering reminder email to ${userData.email}...`);
+            await supabase.functions.invoke('ecommerce-email-orchestrator', {
+              body: {
+                eventType: 'auto_gift_approval',
+                recipientEmail: userData.email,
+                data: {
+                  recipient_name: userData.name || 'there',
+                  occasion: rule.date_type.replace(/_/g, ' '),
+                  event_date: eventDate.toLocaleDateString(),
+                  budget_limit: rule.budget_limit || 50,
+                  manage_url: 'https://elyphant.lovable.app/ai-gifting',
+                }
+              }
+            });
+          }
 
           results.notified.push(rule.id);
         }
@@ -208,12 +232,14 @@ serve(async (req) => {
 
           let giftItems: any[] = [];
           if (wishlist?.id) {
+            // Query wishlist items directly - no join to products table needed
+            // wishlist_items has name, price, image_url stored directly
             const { data: items } = await supabase
               .from('wishlist_items')
-              .select('*, products:product_id(*)')
+              .select('*')
               .eq('wishlist_id', wishlist.id)
               .lte('price', rule.budget_limit || 9999)
-              .order('priority', { ascending: false })
+              .order('price', { ascending: false })  // Use price instead of non-existent priority
               .limit(1);
             giftItems = items || [];
           }
@@ -223,6 +249,10 @@ serve(async (req) => {
           }
 
           const gift = giftItems[0];
+          // Use wishlist_item fields directly (name/title, price, image_url)
+          const giftName = gift.name || gift.title || 'Gift Item';
+          const giftPrice = gift.price;
+          const giftImage = gift.image_url;
           
           // Get recipient's shipping address from profiles
           const { data: recipientProfile } = await supabase
@@ -231,7 +261,7 @@ serve(async (req) => {
             .eq('id', rule.recipient_id)
             .single();
 
-          console.log('💳 Creating checkout session for auto-gift with saved payment method...');
+          console.log(`💳 Creating checkout session for: ${giftName} at $${giftPrice}...`);
           
           // Create checkout session - payment captured now, fulfillment on event date
           const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
@@ -240,10 +270,10 @@ serve(async (req) => {
               body: {
                 cartItems: [{
                   product_id: gift.product_id,
-                  product_name: gift.products.name,
+                  product_name: giftName,
                   quantity: 1,
-                  price: gift.products.price,
-                  image_url: gift.products.image,
+                  price: giftPrice,
+                  image_url: giftImage,
                 }],
                 deliveryGroups: [{
                   recipient: {
@@ -267,11 +297,11 @@ serve(async (req) => {
                 paymentMethod: paymentMethod.stripe_payment_method_id,
                 confirm: true,
                 pricingBreakdown: {
-                  subtotal: gift.products.price,
+                  subtotal: giftPrice,
                   shippingCost: 0,
                   giftingFee: 0,
                   taxAmount: 0,
-                  total: gift.products.price,
+                  total: giftPrice,
                 },
                 metadata: {
                   user_id: rule.user_id,
@@ -302,7 +332,8 @@ serve(async (req) => {
                 event_type: 'checkout_session_created',
                 event_data: {
                   checkout_session_id: checkoutData.sessionId,
-                  amount: gift.products.price,
+                  amount: giftPrice,
+                  gift_name: giftName,
                   recipient: recipientName,
                   payment_captured_at: new Date().toISOString(),
                   scheduled_zinc_submission: rule.scheduled_date,

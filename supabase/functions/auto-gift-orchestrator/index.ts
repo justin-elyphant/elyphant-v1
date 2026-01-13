@@ -192,11 +192,13 @@ serve(async (req) => {
                 eventType: 'auto_gift_approval',
                 recipientEmail: userData.email,
                 data: {
-                  recipient_name: userData.name || 'there',
+                  first_name: userData.name || 'there',
+                  recipient_name: recipientName,
                   occasion: rule.date_type.replace(/_/g, ' '),
-                  event_date: eventDate.toLocaleDateString(),
-                  budget_limit: rule.budget_limit || 50,
-                  manage_url: 'https://elyphant.lovable.app/ai-gifting',
+                  execution_date: eventDate.toLocaleDateString(),
+                  suggested_gifts: [],
+                  approve_url: `https://elyphant.lovable.app/ai-gifting?action=approve&rule=${rule.id}`,
+                  reject_url: `https://elyphant.lovable.app/ai-gifting?action=reject&rule=${rule.id}`,
                 }
               }
             });

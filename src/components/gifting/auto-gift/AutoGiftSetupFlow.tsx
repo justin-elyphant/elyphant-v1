@@ -30,6 +30,7 @@ import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementSe
 import AddressVerificationWarning from "./AddressVerificationWarning";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -67,6 +68,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const userSizes = (profile as any)?.metadata?.sizes || null;
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
   
   // Ref for the scrollable container
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -843,11 +845,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
             
             <div className="flex gap-2">
               {currentStep > 0 && (
-                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                <motion.div 
+                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
                   <Button 
                     variant="outline" 
                     onClick={handleBack}
-                    className="min-h-[44px] min-w-[44px]"
+                    className="min-h-[44px] min-w-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
                   >
                     Back
                   </Button>
@@ -855,10 +860,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
               )}
               
               {currentStep < steps.length - 1 ? (
-                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                <motion.div 
+                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
                   <Button 
                     onClick={handleNext} 
-                    className="min-h-[44px]"
+                    className="min-h-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
                     disabled={
                       (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
                       (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
@@ -869,13 +877,16 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                   </Button>
                 </motion.div>
               ) : (
-                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                <motion.div 
+                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
                   <Button 
                     onClick={() => {
                       triggerHapticFeedback('success');
                       handleSubmit();
                     }} 
-                    className="min-h-[44px]"
+                    className="min-h-[44px] touch-manipulation active:scale-[0.97] md:active:scale-100"
                     disabled={
                       isLoading || 
                       !formData.recipientId || 

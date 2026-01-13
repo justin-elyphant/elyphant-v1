@@ -104,6 +104,8 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
     }
 
     setIsSearching(true);
+    // Use longer debounce on mobile to reduce UI thread blocking
+    const debounceTime = isMobile ? 500 : 300;
     searchTimeoutRef.current = setTimeout(async () => {
       try {
         console.log('[RecipientSearchCombobox] performing search for:', searchQuery);
@@ -113,40 +115,49 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         let filteredResults = results.filter(r => !existingUserIds.has(r.id));
         console.log('[RecipientSearchCombobox] raw results:', results.length, 'filtered:', filteredResults.length);
 
-        // Safety check: verify connection status directly from DB to avoid stale status in search service
+        setSearchResults(filteredResults);
+
+        // Defer secondary status verification to idle time (iOS Capacitor optimization)
         if (user?.id && filteredResults.length > 0) {
-          try {
-            const ids = filteredResults.map(r => r.id).join(',');
-            const { data: connRows, error: connErr } = await supabase
-              .from('user_connections')
-              .select('user_id, connected_user_id, status')
-              .or(`and(user_id.eq.${user.id},connected_user_id.in.(${ids})),and(user_id.in.(${ids}),connected_user_id.eq.${user.id})`);
-            
-            if (!connErr && connRows) {
-              filteredResults = filteredResults.map(r => {
-                const rows = connRows.filter(row => row.user_id === user.id ? row.connected_user_id === r.id : row.user_id === r.id);
-                const hasAccepted = rows.some(row => row.status === 'accepted');
-                const hasPending = rows.some(row => row.status === 'pending');
-                return hasAccepted
-                  ? { ...r, connectionStatus: 'connected' }
-                  : hasPending
-                  ? { ...r, connectionStatus: 'pending' }
-                  : r;
-              });
+          const verifyStatus = async () => {
+            try {
+              const ids = filteredResults.map(r => r.id).join(',');
+              const { data: connRows, error: connErr } = await supabase
+                .from('user_connections')
+                .select('user_id, connected_user_id, status')
+                .or(`and(user_id.eq.${user.id},connected_user_id.in.(${ids})),and(user_id.in.(${ids}),connected_user_id.eq.${user.id})`);
+              
+              if (!connErr && connRows) {
+                setSearchResults(prev => prev.map(r => {
+                  const rows = connRows.filter(row => row.user_id === user.id ? row.connected_user_id === r.id : row.user_id === r.id);
+                  const hasAccepted = rows.some(row => row.status === 'accepted');
+                  const hasPending = rows.some(row => row.status === 'pending');
+                  return hasAccepted
+                    ? { ...r, connectionStatus: 'connected' }
+                    : hasPending
+                    ? { ...r, connectionStatus: 'pending' }
+                    : r;
+                }));
+              }
+            } catch (statusErr) {
+              console.warn('[RecipientSearchCombobox] status verification error:', statusErr);
             }
-          } catch (statusErr) {
-            console.warn('[RecipientSearchCombobox] status verification error:', statusErr);
+          };
+          
+          // Use requestIdleCallback if available, otherwise setTimeout
+          if ('requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(verifyStatus);
+          } else {
+            setTimeout(verifyStatus, 100);
           }
         }
-
-        setSearchResults(filteredResults);
       } catch (error) {
         console.error('Search error:', error);
         toast.error("Error searching for users");
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, debounceTime);
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -316,7 +327,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
         </button>
       </div>
 
-        <div className="max-h-[280px] overflow-y-auto pb-24">
+        <div className="max-h-[50vh] overflow-y-auto ios-smooth-scroll scrollbar-hide pb-24">
           {/* Your Connections Section */}
           {filteredConnections.length > 0 && (
             <div className="p-2">
@@ -337,12 +348,12 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
                       connection.relationship_type || undefined
                     )}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px]",
+                      "w-full flex items-center gap-3 rounded-sm px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation active:scale-[0.98] transition-transform duration-75",
                       isSelected && "bg-accent"
                     )}
                   >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={connection.profile_image} />
+                    <AvatarImage src={connection.profile_image} loading="lazy" />
                     <AvatarFallback>
                       {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
                     </AvatarFallback>
@@ -565,7 +576,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between min-h-[44px]"
+              className="w-full justify-between min-h-[44px] touch-manipulation active:scale-[0.98] transition-transform duration-75"
             >
               <span className="truncate">{selectedName}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -575,7 +586,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
             <VisuallyHidden>
               <DrawerTitle>Select a Recipient</DrawerTitle>
             </VisuallyHidden>
-            <div className="w-full overflow-hidden">
+            <div className="w-full max-h-[calc(85vh-60px)] overflow-y-auto ios-smooth-scroll overscroll-contain touch-pan-y">
               <RecipientSelectorContent />
             </div>
           </DrawerContent>

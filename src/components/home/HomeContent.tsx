@@ -7,6 +7,7 @@ import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
 import PersonTypeCarousel from "./sections/CategoriesGrid";
 import WishlistCreationCTA from "./sections/WishlistCreationCTA";
+import ConnectionsCTA from "./sections/ConnectionsCTA";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
@@ -85,6 +86,9 @@ const HomeContent = () => {
       
       {/* Category grid section */}
       <GiftCategoriesGrid />
+      
+      {/* Connections CTA - Build your network */}
+      <ConnectionsCTA />
       
       {/* Product discovery and wishlist CTA section */}
       <WishlistCreationCTA />

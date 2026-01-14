@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Users, UserPlus, Clock, AlertCircle } from "lucide-react";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
@@ -13,6 +14,9 @@ import { toast } from "sonner";
 import { Connection } from "@/types/connections";
 import ConnectionDetailPanel from "@/components/connections/ConnectionDetailPanel";
 import MobileConnectionDetail from "@/components/connections/MobileConnectionDetail";
+import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EnhancedConnectionSearch from "@/components/connections/EnhancedConnectionSearch";
 
 // Lazy load heavy components
 const FriendsTabContent = lazy(() => import("@/components/connections/FriendsTabContent"));
@@ -62,11 +66,13 @@ const ConnectionsLoading = () => (
 const Connections = () => {
   console.log('🚀 [Connections] Page component loaded!');
   const { user } = useAuth();
+  const { profile } = useProfile();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
+  const [showFindFriendsDialog, setShowFindFriendsDialog] = useState(false);
   
   console.log('📱 [Connections] Mobile detection:', { 
     isMobile, 
@@ -198,31 +204,16 @@ const Connections = () => {
         <div className={selectedConnection ? 'col-span-5' : 'w-full'}>
           <Suspense fallback={<ConnectionsLoading />}>
             <div className="space-y-6">
-              {/* Basic header fallback */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="w-full sm:w-auto">
-                  <h1 className="text-2xl font-bold mb-2">Connections</h1>
-                  <p className="text-muted-foreground">
-                    Manage your friends and connections
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" size="sm">
-                    <Users className="h-4 w-4 mr-2" />
-                    Find Friends
-                  </Button>
-                </div>
-              </div>
-
-              {/* Privacy Settings Integration - Simplified */}
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>Your privacy settings control who can connect with you</span>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Connections Hero Section */}
+              <ConnectionsHeroSection
+                friendsCount={safeFriends.length}
+                pendingCount={safePending.length}
+                userName={profile?.name?.split(' ')[0]}
+                onFindFriends={() => setShowFindFriendsDialog(true)}
+                onImportContacts={() => {
+                  toast.info("Contact import coming soon!");
+                }}
+              />
 
               {/* Main Content Tabs */}
               <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -316,6 +307,16 @@ const Connections = () => {
           </div>
         )}
       </div>
+
+      {/* Find Friends Dialog */}
+      <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Find New Connections</DialogTitle>
+          </DialogHeader>
+          <EnhancedConnectionSearch />
+        </DialogContent>
+      </Dialog>
     </SidebarLayout>
   );
 };

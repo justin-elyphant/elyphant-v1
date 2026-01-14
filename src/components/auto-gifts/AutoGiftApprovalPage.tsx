@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ interface ApprovalData {
 
 const AutoGiftApprovalPage = () => {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [approvalData, setApprovalData] = useState<ApprovalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,11 +29,23 @@ const AutoGiftApprovalPage = () => {
   const [processing, setProcessing] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
+  // Check for action parameter from email links
+  const actionParam = searchParams.get('action');
+
   useEffect(() => {
     if (token) {
       loadApprovalData();
     }
   }, [token]);
+
+  // Auto-scroll to rejection section if action=reject in URL
+  useEffect(() => {
+    if (actionParam === 'reject' && approvalData && !loading) {
+      setTimeout(() => {
+        document.getElementById('reject-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [actionParam, approvalData, loading]);
 
   const loadApprovalData = async () => {
     try {
@@ -106,14 +119,34 @@ const AutoGiftApprovalPage = () => {
         throw error;
       }
 
-      toast.success("Auto-gift approved! Order is being processed.");
-      navigate('/dashboard?tab=auto-gifts', { 
-        state: { message: 'Auto-gift approved successfully!' }
-      });
+      // Check if off-session payment was used (no redirect needed)
+      if (data?.paymentMethod === 'off_session') {
+        const formattedDate = data.scheduledDate 
+          ? new Date(data.scheduledDate).toLocaleDateString('en-US', { 
+              month: 'long', day: 'numeric', year: 'numeric' 
+            })
+          : 'soon';
+        
+        toast.success(`Approved! Your gift will be sent ${formattedDate}`);
+        navigate('/dashboard?tab=orders', { 
+          state: { message: `Auto-gift approved! Order #${data.orderNumber} created.` }
+        });
+        return;
+      }
 
-    } catch (error) {
+      // Fallback: Redirect to Stripe Checkout
+      if (data?.checkoutUrl) {
+        toast.success("Redirecting to complete payment...");
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      // If we get here without a checkout URL or off-session success, something went wrong
+      toast.error("Could not process payment. Please try again.");
+
+    } catch (error: any) {
       console.error('Error approving auto-gift:', error);
-      toast.error("Failed to approve auto-gift");
+      toast.error(error.message || "Failed to approve auto-gift");
     } finally {
       setProcessing(false);
     }
@@ -313,7 +346,7 @@ const AutoGiftApprovalPage = () => {
             </CardFooter>
           </Card>
 
-          <Card>
+          <Card id="reject-section">
             <CardHeader>
               <CardTitle className="text-red-600">Reject Selection</CardTitle>
               <CardDescription>

@@ -3090,6 +3090,7 @@ export type Database = {
           id: string
           is_default: boolean
           last_four: string
+          stripe_customer_id: string | null
           stripe_payment_method_id: string
           updated_at: string
           user_id: string
@@ -3102,6 +3103,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           last_four: string
+          stripe_customer_id?: string | null
           stripe_payment_method_id: string
           updated_at?: string
           user_id: string
@@ -3114,6 +3116,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           last_four?: string
+          stripe_customer_id?: string | null
           stripe_payment_method_id?: string
           updated_at?: string
           user_id?: string

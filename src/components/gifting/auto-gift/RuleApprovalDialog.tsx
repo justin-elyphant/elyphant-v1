@@ -186,6 +186,27 @@ const RuleApprovalDialog: React.FC<RuleApprovalDialogProps> = ({
         throw new Error(error.message);
       }
 
+      // Check if off-session payment was used (no redirect needed)
+      if (data?.paymentMethod === 'off_session') {
+        const formattedDate = data.scheduledDate 
+          ? new Date(data.scheduledDate).toLocaleDateString('en-US', { 
+              month: 'long', day: 'numeric', year: 'numeric' 
+            })
+          : 'soon';
+        
+        toast.success(`Approved! Your gift will be sent ${formattedDate}`);
+        onOpenChange(false);
+        return;
+      }
+
+      // Fallback: Redirect to Stripe Checkout
+      if (data?.checkoutUrl) {
+        toast.success("Redirecting to complete payment...");
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      // If we get here, assume success (legacy behavior)
       toast.success("Auto-gift approved! Order is being processed.");
       onOpenChange(false);
 

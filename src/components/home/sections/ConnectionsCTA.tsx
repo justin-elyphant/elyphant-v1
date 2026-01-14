@@ -67,13 +67,13 @@ const ConnectionsCTA = () => {
             className="space-y-6"
             style={{ transform: 'translate3d(0,0,0)' }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium">
               <Users className="h-4 w-4" />
               <span>Build Your Circle</span>
             </div>
             
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-              <span className="bg-gradient-to-r from-teal-500 to-emerald-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-violet-600 to-sky-500 bg-clip-text text-transparent">
                 Know When
               </span>
               {" "}to Gift
@@ -97,7 +97,7 @@ const ConnectionsCTA = () => {
                 <Button 
                   onClick={handleFindFriends}
                   size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
+                  className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Find Friends
@@ -136,7 +136,7 @@ const ConnectionsCTA = () => {
                 className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors touch-manipulation"
                 style={{ transform: 'translate3d(0,0,0)' }}
               >
-                <div className="p-3 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 text-white flex-shrink-0">
+                <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 text-white flex-shrink-0">
                   <benefit.icon className="h-5 w-5" />
                 </div>
                 <div>

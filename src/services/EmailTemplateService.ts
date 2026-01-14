@@ -1,4 +1,4 @@
-import { UnifiedGiftExecution } from '@/services/UnifiedGiftAutomationService';
+import { UnifiedGiftExecution } from '@/services/UnifiedGiftManagementService';
 
 export interface EmailTemplateData {
   recipientEmail: string;

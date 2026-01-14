@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AddEventForm } from "./AddEventForm";
 import { EventFormData } from "./types";
 import { eventsService, transformExtendedEventToDatabase } from "@/services/eventsService";
-import { unifiedGiftAutomationService } from "@/services/UnifiedGiftAutomationService";
+import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { supabase } from "@/integrations/supabase/client";
 import { useEvents } from "../context/EventsContext";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
@@ -64,7 +64,7 @@ const AddEventDialog = ({ open, onOpenChange }: AddEventDialogProps) => {
           .single();
 
         if (connection) {
-          await unifiedGiftAutomationService.createRule({
+          await unifiedGiftManagementService.createRule({
             user_id: (await supabase.auth.getUser()).data.user!.id,
             recipient_id: connection.connected_user_id,
             date_type: data.eventType,

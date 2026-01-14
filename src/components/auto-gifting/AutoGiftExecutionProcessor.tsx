@@ -16,12 +16,12 @@
  * ========================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Clock, Play, RefreshCw } from 'lucide-react';
-import { useAutoGiftExecutionProcessor } from '@/hooks/useAutoGiftExecutionProcessor';
+import { unifiedOrderProcessingService, ProcessExecutionResult } from '@/services/gifting/UnifiedOrderProcessingService';
 import { useNicoleExecutions } from '@/hooks/useNicoleExecutions';
 import { toast } from 'sonner';
 
@@ -36,16 +36,40 @@ const AutoGiftExecutionProcessor: React.FC<AutoGiftExecutionProcessorProps> = ({
 }) => {
   const [stuckExecutions, setStuckExecutions] = useState<any[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<string | null>(null);
-  
-  const {
-    processing,
-    results,
-    error,
-    processExecution,
-    processAllStuckExecutions,
-    getStuckExecutions,
-    clearResults
-  } = useAutoGiftExecutionProcessor();
+  const [processing, setProcessing] = useState(false);
+  const [results, setResults] = useState<ProcessExecutionResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const getStuckExecutions = useCallback(async () => {
+    return await unifiedOrderProcessingService.getStuckExecutions();
+  }, []);
+
+  const processExecution = useCallback(async (executionId: string): Promise<ProcessExecutionResult> => {
+    setProcessing(true);
+    try {
+      const result = await unifiedOrderProcessingService.processStuckExecution(executionId);
+      setResults(prev => [...prev, result]);
+      return result;
+    } finally {
+      setProcessing(false);
+    }
+  }, []);
+
+  const processAllStuckExecutions = useCallback(async (): Promise<ProcessExecutionResult[]> => {
+    setProcessing(true);
+    try {
+      const results = await unifiedOrderProcessingService.processAllStuckExecutions();
+      setResults(results);
+      return results;
+    } finally {
+      setProcessing(false);
+    }
+  }, []);
+
+  const clearResults = useCallback(() => {
+    setResults([]);
+    setError(null);
+  }, []);
 
   const { executions, loading: executionsLoading, fetchExecutions } = useNicoleExecutions();
 

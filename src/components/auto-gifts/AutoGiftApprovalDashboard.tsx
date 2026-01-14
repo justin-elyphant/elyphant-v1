@@ -16,7 +16,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useAutoGiftExecution } from '@/hooks/useAutoGiftExecution';
-import { UnifiedGiftExecution } from '@/services/UnifiedGiftAutomationService';
+import { UnifiedGiftExecution } from '@/services/UnifiedGiftManagementService';
 import EmailApprovalPanel from './EmailApprovalPanel';
 import EmailPreviewPanel from './EmailPreviewPanel';
 import { EnhancedNotificationService } from '@/services/EnhancedNotificationService';

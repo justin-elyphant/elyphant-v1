@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
-import { unifiedGiftAutomationService, UnifiedGiftExecution as AutoGiftExecution } from "@/services/UnifiedGiftAutomationService";
+import { unifiedGiftManagementService, UnifiedGiftExecution as AutoGiftExecution } from "@/services/UnifiedGiftManagementService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,7 +16,7 @@ export const useAutoGiftExecution = () => {
 
     try {
       setLoading(true);
-      const userExecutions = await unifiedGiftAutomationService.getUserExecutions(user.id);
+      const userExecutions = await unifiedGiftManagementService.getUserExecutions(user.id);
       setExecutions(userExecutions);
     } catch (error) {
       console.error("Error loading auto-gift executions:", error);
@@ -76,7 +76,7 @@ export const useAutoGiftExecution = () => {
 
   const approveExecution = async (executionId: string, selectedProductIds: string[]) => {
     try {
-      await unifiedGiftAutomationService.approveExecution(executionId, selectedProductIds);
+      await unifiedGiftManagementService.approveExecution(executionId, selectedProductIds);
       toast.success("Auto-gift approved for processing");
       await loadExecutions(); // Refresh the list
     } catch (error) {

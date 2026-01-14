@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Bell, Mail, Smartphone } from "lucide-react";
-import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftManagementService";
 
 interface NotificationSettingsSectionProps {
   settings: UnifiedGiftSettings | null;

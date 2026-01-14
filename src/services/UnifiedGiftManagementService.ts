@@ -102,7 +102,7 @@ export interface UnifiedGiftExecution {
   event_id: string;
   user_id: string;
   execution_date: Date;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'address_required' | 'pending_address';
   selected_products?: any[];
   total_amount?: number;
   order_id?: string;
@@ -112,6 +112,12 @@ export interface UnifiedGiftExecution {
   created_at: Date;
   updated_at: Date;
   selection_tier?: 'wishlist' | 'preferences' | 'metadata' | 'ai_guess';
+  address_metadata?: {
+    source?: 'user_verified' | 'giver_provided' | 'missing';
+    is_verified?: boolean;
+    needs_confirmation?: boolean;
+    connection_id?: string;
+  };
   auto_gifting_rules?: any;
   user_special_dates?: any;
 }

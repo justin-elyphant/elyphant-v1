@@ -19,6 +19,7 @@ import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet"
 import { RelationshipType } from "@/types/connections";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
 import "@/styles/connections-mobile.css";
 
 export const MobileConnectionsPage = () => {
@@ -152,6 +153,16 @@ export const MobileConnectionsPage = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Mobile Header */}
       <MobileConnectionsHeader />
+      
+      {/* Mobile Hero Section */}
+      <div className="px-4 pt-4">
+        <ConnectionsHeroSection
+          friendsCount={safeFriends.length}
+          pendingCount={safePending.length}
+          onFindFriends={() => setShowAddConnectionSheet(true)}
+          isMobile={true}
+        />
+      </div>
       
       {/* Search Bar */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">

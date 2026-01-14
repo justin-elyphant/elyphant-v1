@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Gift, Sparkles, List, Package } from "lucide-react";
-import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftManagementService";
 
 interface DefaultGiftSourceSectionProps {
   settings: UnifiedGiftSettings | null;

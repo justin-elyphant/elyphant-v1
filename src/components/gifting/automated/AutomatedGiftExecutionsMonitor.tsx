@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Play, CreditCard, RotateCcw } from "lucide-react";
-import { unifiedGiftAutomationService, UnifiedGiftExecution } from "@/services/UnifiedGiftAutomationService";
+import { unifiedGiftManagementService, UnifiedGiftExecution } from "@/services/UnifiedGiftManagementService";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useAutoGiftPaymentRetry } from "@/hooks/useAutoGiftPaymentRetry";
+import { useAutoGiftTrigger } from "@/hooks/useAutoGiftTrigger";
 
 const AutomatedGiftExecutionsMonitor = () => {
   const { user } = useAuth();
   const { retryPayment, isRetrying } = useAutoGiftPaymentRetry();
+  const { triggerAutoGiftProcessing, triggering } = useAutoGiftTrigger();
   const [executions, setExecutions] = useState<UnifiedGiftExecution[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -23,7 +25,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
     try {
       setRefreshing(true);
-      const data = await unifiedGiftAutomationService.getUserExecutions(user.id);
+      const data = await unifiedGiftManagementService.getUserExecutions(user.id);
       setExecutions(data);
     } catch (error) {
       console.error('Error loading automated gift executions:', error);
@@ -40,7 +42,7 @@ const AutomatedGiftExecutionsMonitor = () => {
 
   const handleApprove = async (executionId: string) => {
     try {
-      await unifiedGiftAutomationService.approveExecution(executionId, []);
+      await unifiedGiftManagementService.approveExecution(executionId, []);
       toast.success('Automated gift approved and processing started');
       await loadExecutions();
     } catch (error) {
@@ -62,12 +64,11 @@ const AutomatedGiftExecutionsMonitor = () => {
 
   const handleTriggerProcessor = async () => {
     try {
-      await unifiedGiftAutomationService.processPendingExecutions(user.id);
-      toast.success('Automated gift processor triggered');
+      await triggerAutoGiftProcessing();
       await loadExecutions();
     } catch (error) {
       console.error('Error triggering processor:', error);
-      toast.error('Failed to trigger automated gift processor');
+      // Toast already handled by the hook
     }
   };
 

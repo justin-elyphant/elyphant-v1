@@ -1,6 +1,6 @@
 import { useNotifications } from '@/contexts/notifications/NotificationsContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UnifiedGiftExecution } from '@/services/UnifiedGiftAutomationService';
+import { UnifiedGiftExecution } from '@/services/UnifiedGiftManagementService';
 import { EmailTemplateService } from './EmailTemplateService';
 
 export class EnhancedNotificationService {

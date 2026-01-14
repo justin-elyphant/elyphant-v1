@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DollarSign, TrendingUp, Calendar, PiggyBank } from "lucide-react";
-import { UnifiedGiftSettings } from "@/services/UnifiedGiftAutomationService";
+import { UnifiedGiftSettings } from "@/services/UnifiedGiftManagementService";
 
 interface BudgetTrackingSectionProps {
   settings: UnifiedGiftSettings | null;

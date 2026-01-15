@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, UserPlus, ArrowLeft, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { searchFriends, sendConnectionRequest, FriendSearchResult } from "@/services/search/friendSearchService";
+import { searchFriends, FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
+import { sendConnectionRequest } from "@/services/connections/connectionService";
 import { useGiftAdvisorBot } from "../hooks/useGiftAdvisorBot";
 
 type FriendSearchStepProps = ReturnType<typeof useGiftAdvisorBot>;

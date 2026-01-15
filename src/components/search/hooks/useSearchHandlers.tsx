@@ -1,7 +1,7 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 interface SearchHandlersProps {

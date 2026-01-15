@@ -1,9 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserPlus, Mail } from "lucide-react";
 import { EmailContactsButton } from "@/components/connections/EmailContactsButton";
+import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
+import EnhancedConnectionSearch from "@/components/connections/EnhancedConnectionSearch";
 
 interface OnboardingConnectionsProps {
   onNext: () => void;
@@ -11,6 +14,9 @@ interface OnboardingConnectionsProps {
 }
 
 const OnboardingConnections: React.FC<OnboardingConnectionsProps> = ({ onNext, onSkip }) => {
+  const [showInviteSheet, setShowInviteSheet] = useState(false);
+  const [showFindFriendsDialog, setShowFindFriendsDialog] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -37,11 +43,11 @@ const OnboardingConnections: React.FC<OnboardingConnectionsProps> = ({ onNext, o
           <CardHeader>
             <CardTitle>Invite Friends</CardTitle>
             <CardDescription>
-              Invite friends to join you on Gift Giver.
+              Invite friends to join you on Elyphant.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => setShowInviteSheet(true)}>
               <Mail className="mr-2 h-4 w-4" />
               Send Invitations
             </Button>
@@ -56,7 +62,7 @@ const OnboardingConnections: React.FC<OnboardingConnectionsProps> = ({ onNext, o
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => setShowFindFriendsDialog(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Find Friends
             </Button>
@@ -72,6 +78,22 @@ const OnboardingConnections: React.FC<OnboardingConnectionsProps> = ({ onNext, o
           Continue
         </Button>
       </div>
+
+      {/* Invite Sheet */}
+      <AddConnectionSheet
+        isOpen={showInviteSheet}
+        onClose={() => setShowInviteSheet(false)}
+      />
+
+      {/* Find Friends Dialog */}
+      <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Find Friends</DialogTitle>
+          </DialogHeader>
+          <EnhancedConnectionSearch />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -92,13 +92,13 @@ const InviteFriendModal = ({ open, onOpenChange, trigger }: InviteFriendModalPro
       const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'connection_invitation',
-          customData: {
-            recipientEmail: formData.email,
-            recipientName: fullName,
-            senderName: 'You',
-            relationship: formData.relationshipType,
-            customMessage: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`,
-            invitationType: 'manual_connection'
+          recipientEmail: formData.email,
+          data: {
+            sender_name: 'You',
+            recipient_name: fullName,
+            recipient_email: formData.email,
+            invitation_url: 'https://elyphant.ai/auth',
+            custom_message: formData.customMessage || `Hi ${formData.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`
           }
         }
       });

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { searchFriends, FriendSearchResult, sendConnectionRequest } from "@/services/search/friendSearchService";
+import { searchFriends, FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
+import { sendConnectionRequest } from "@/services/connections/connectionService";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UseFriendSearchResult {

@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { searchFriends, sendConnectionRequest, FriendSearchResult } from "@/services/search/friendSearchService";
+import { searchFriends, FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
+import { sendConnectionRequest } from "@/services/connections/connectionService";
 
 const EnhancedConnectionSearch = () => {
   const { user } = useAuth();

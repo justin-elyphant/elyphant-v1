@@ -207,6 +207,9 @@ const Wishlists = () => {
             </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Shared dialogs for desktop */}
+        <WishlistDialogs />
       </ProductProvider>
     </SidebarLayout>
   );

@@ -20,6 +20,8 @@ import { RelationshipType } from "@/types/connections";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EnhancedConnectionSearch from "@/components/connections/EnhancedConnectionSearch";
 import "@/styles/connections-mobile.css";
 
 export const MobileConnectionsPage = () => {
@@ -36,6 +38,7 @@ export const MobileConnectionsPage = () => {
     const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
     const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
     const [showAddConnectionSheet, setShowAddConnectionSheet] = useState(false);
+    const [showFindFriendsDialog, setShowFindFriendsDialog] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     
     console.log('📱 [MobileConnectionsPage] State initialized:', { activeTab, searchTerm });
@@ -159,7 +162,8 @@ export const MobileConnectionsPage = () => {
         <ConnectionsHeroSection
           friendsCount={safeFriends.length}
           pendingCount={safePending.length}
-          onFindFriends={() => setShowAddConnectionSheet(true)}
+          onFindFriends={() => setShowFindFriendsDialog(true)}
+          onInviteNew={() => setShowAddConnectionSheet(true)}
           isMobile={true}
         />
       </div>
@@ -367,6 +371,16 @@ export const MobileConnectionsPage = () => {
           triggerHapticFeedback('success');
         }}
       />
+
+      {/* Find Friends Dialog */}
+      <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Find New Connections</DialogTitle>
+          </DialogHeader>
+          <EnhancedConnectionSearch />
+        </DialogContent>
+      </Dialog>
     </div>
   );
   } catch (error) {

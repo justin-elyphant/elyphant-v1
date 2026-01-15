@@ -121,11 +121,20 @@ const InviteNewFriendStep = ({
     relationship?: string;
     invitationId?: string;
   }) => {
-    // Call orchestrator to send personalized invitation email
+    // Call orchestrator to send personalized invitation email with standardized payload
     const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
         eventType: 'gift_invitation',
-        customData: invitationData
+        recipientEmail: invitationData.recipientEmail,
+        data: {
+          sender_name: invitationData.giftorName,
+          recipient_name: invitationData.recipientName,
+          recipient_email: invitationData.recipientEmail,
+          invitation_url: 'https://elyphant.ai/auth',
+          occasion: invitationData.occasion || null,
+          event_date: invitationData.eventDate || null,
+          relationship_type: invitationData.relationship || 'friend'
+        }
       }
     });
 

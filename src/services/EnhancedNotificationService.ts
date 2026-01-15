@@ -130,7 +130,7 @@ export class EnhancedNotificationService {
       await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'auto_gift_approval',
-          customData: {
+          data: {
             executionId,
             hoursRemaining,
             tokenId: tokenData.id

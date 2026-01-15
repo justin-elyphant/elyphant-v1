@@ -140,7 +140,7 @@ const AddressProviderPage: React.FC = () => {
       await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request_completed',
-          customData: {
+          data: {
             requester_id: request.requester_id,
             recipient_email: request.recipient_email,
             recipient_name: address.full_name || address.name

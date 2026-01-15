@@ -258,11 +258,13 @@ export const sendConnectionNudge = async (connectionId: string, customMessage?: 
     }
 
     // Manual nudge reminder (separate from automated connection invitations)
+    const recipientEmail = connection.recipient_profile?.email || `${connection.recipient_profile?.username}@example.com`;
     const { error: sendError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
         eventType: 'nudge_reminder',
-        customData: {
-          recipientEmail: connection.recipient_profile?.email || `${connection.recipient_profile?.username}@example.com`,
+        recipientEmail,
+        data: {
+          recipientEmail,
           recipientName: connection.recipient_profile?.name || 'User',
           senderName: 'Friend',
           customMessage,

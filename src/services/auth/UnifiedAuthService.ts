@@ -224,7 +224,8 @@ class UnifiedAuthService {
             await supabase.functions.invoke('ecommerce-email-orchestrator', {
               body: { 
                 eventType: 'password_changed',
-                customData: { email: lastResetEmail }
+                recipientEmail: lastResetEmail,
+                data: { email: lastResetEmail }
               }
             });
           } catch (notificationError) {

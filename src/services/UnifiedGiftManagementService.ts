@@ -1952,7 +1952,8 @@ class UnifiedGiftManagementService {
           const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: 'connection_invitation',
-              customData: {
+              recipientEmail: sanitizedEmail,
+              data: {
                 sender_name: senderName,
                 recipient_email: sanitizedEmail,
                 recipient_name: sanitizedName,

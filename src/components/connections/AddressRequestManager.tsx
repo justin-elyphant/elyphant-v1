@@ -178,7 +178,8 @@ const AddressRequestManager: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request',
-          customData: {
+          recipientEmail: selectedConnection.email || '',
+          data: {
             recipientId: selectedConnection.connected_user_id,
             recipientEmail: selectedConnection.email || '',
             recipientName: selectedConnection.name,
@@ -211,7 +212,8 @@ const AddressRequestManager: React.FC = () => {
       await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request',
-          customData: {
+          recipientEmail: request.recipient_email,
+          data: {
             recipientEmail: request.recipient_email,
             recipientName: request.recipient_name || 'User',
             requesterName: request.requester_name,

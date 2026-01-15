@@ -67,7 +67,8 @@ const NudgeModal: React.FC<NudgeModalProps> = ({
       const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'nudge_reminder',
-          customData: {
+          recipientEmail: connection.recipientEmail,
+          data: {
             recipientEmail: connection.recipientEmail,
             recipientName: connection.name,
             senderName: userProfile?.name || userProfile?.first_name || 'Your friend',

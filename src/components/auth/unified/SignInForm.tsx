@@ -63,7 +63,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
       }
 
       // Check for stored invitation token and link connection for existing users
-      const storedToken = sessionStorage.getItem('pending_invitation_token');
+      const storedToken = sessionStorage.getItem('elyphant_invitation_token');
       if (storedToken && signInData?.user) {
         console.log('🔗 Existing user sign-in: Processing stored invitation token');
         try {
@@ -86,7 +86,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
         } catch (linkError) {
           console.error('❌ Error linking invitation:', linkError);
         } finally {
-          sessionStorage.removeItem('pending_invitation_token');
+          sessionStorage.removeItem('elyphant_invitation_token');
         }
       }
 

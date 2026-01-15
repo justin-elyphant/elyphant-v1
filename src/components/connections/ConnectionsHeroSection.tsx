@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, UserPlus, Gift, Calendar, Sparkles, ArrowRight, Heart } from "lucide-react";
+import { Search, Mail, Gift, Calendar, Sparkles, ArrowRight } from "lucide-react";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
@@ -12,7 +12,7 @@ interface ConnectionsHeroSectionProps {
   pendingCount: number;
   userName?: string;
   onFindFriends: () => void;
-  onImportContacts?: () => void;
+  onInviteNew?: () => void;
   isMobile?: boolean;
 }
 
@@ -21,7 +21,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
   pendingCount,
   userName,
   onFindFriends,
-  onImportContacts,
+  onInviteNew,
   isMobile = false
 }) => {
   const { profile } = useProfile();
@@ -38,9 +38,9 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
     onFindFriends();
   };
 
-  const handleImportContacts = () => {
+  const handleInviteNew = () => {
     triggerHapticFeedback('light');
-    onImportContacts?.();
+    onInviteNew?.();
   };
 
   return (
@@ -71,19 +71,19 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
                 onClick={handleFindFriends}
                 className="bg-white text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
               >
-                <UserPlus className="h-4 w-4 mr-2" />
+                <Search className="h-4 w-4 mr-2" />
                 Find Friends
               </Button>
             </motion.div>
-            {onImportContacts && (
+            {onInviteNew && (
               <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
                 <Button 
-                  onClick={handleImportContacts}
+                  onClick={handleInviteNew}
                   variant="ghost" 
                   className="text-white hover:bg-white/10 min-h-[44px] w-full sm:w-auto touch-manipulation"
                 >
-                  <Users className="h-4 w-4 mr-2" />
-                  Import Contacts
+                  <Mail className="h-4 w-4 mr-2" />
+                  Invite New
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </motion.div>

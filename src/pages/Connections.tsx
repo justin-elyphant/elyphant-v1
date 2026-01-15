@@ -17,6 +17,7 @@ import MobileConnectionDetail from "@/components/connections/MobileConnectionDet
 import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EnhancedConnectionSearch from "@/components/connections/EnhancedConnectionSearch";
+import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
 
 // Lazy load heavy components
 const FriendsTabContent = lazy(() => import("@/components/connections/FriendsTabContent"));
@@ -73,6 +74,7 @@ const Connections = () => {
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [showFindFriendsDialog, setShowFindFriendsDialog] = useState(false);
+  const [showInviteSheet, setShowInviteSheet] = useState(false);
   
   console.log('📱 [Connections] Mobile detection:', { 
     isMobile, 
@@ -210,9 +212,7 @@ const Connections = () => {
                 pendingCount={safePending.length}
                 userName={profile?.name?.split(' ')[0]}
                 onFindFriends={() => setShowFindFriendsDialog(true)}
-                onImportContacts={() => {
-                  toast.info("Contact import coming soon!");
-                }}
+                onInviteNew={() => setShowInviteSheet(true)}
               />
 
               {/* Main Content Tabs */}
@@ -317,6 +317,15 @@ const Connections = () => {
           <EnhancedConnectionSearch />
         </DialogContent>
       </Dialog>
+
+      {/* Invite New Connection Sheet */}
+      <AddConnectionSheet
+        isOpen={showInviteSheet}
+        onClose={() => setShowInviteSheet(false)}
+        onConnectionAdded={() => {
+          toast.success("Invitation sent!");
+        }}
+      />
     </SidebarLayout>
   );
 };

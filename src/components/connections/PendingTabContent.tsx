@@ -174,6 +174,11 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                             {connection.connectionDate && (
                               <p className="text-xs text-gray-500 mt-1">
                                 Sent {new Date(connection.connectionDate).toLocaleDateString()}
+                                {(connection as any).invitation_reminder_count > 0 && (
+                                  <span className="ml-1 text-amber-600">
+                                    ({(connection as any).invitation_reminder_count} reminder{(connection as any).invitation_reminder_count > 1 ? 's' : ''} sent)
+                                  </span>
+                                )}
                               </p>
                             )}
                           </div>

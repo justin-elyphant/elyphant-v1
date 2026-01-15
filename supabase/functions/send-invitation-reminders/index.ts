@@ -30,6 +30,7 @@ serve(async (req) => {
       .select(`
         id,
         user_id,
+        invitation_token,
         pending_recipient_email,
         pending_recipient_name,
         invitation_sent_at,
@@ -83,7 +84,7 @@ serve(async (req) => {
             data: {
               sender_name: senderName,
               recipient_name: invitation.pending_recipient_name,
-              invitation_url: `https://elyphant.ai/auth?invite=${invitation.id}`,
+              invitation_url: `https://elyphant.ai/auth?invite=${invitation.invitation_token}`,
               is_reminder: true,
               reminder_number: reminderCount + 1
             }

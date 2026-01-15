@@ -42,6 +42,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
     try {
       setIsLoading(true);
       const {
+        data: signInData,
         error
       } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -60,6 +61,35 @@ const SignInForm: React.FC<SignInFormProps> = ({
         }
         return;
       }
+
+      // Check for stored invitation token and link connection for existing users
+      const storedToken = sessionStorage.getItem('pending_invitation_token');
+      if (storedToken && signInData?.user) {
+        console.log('🔗 Existing user sign-in: Processing stored invitation token');
+        try {
+          const { data: rpcResult, error: rpcError } = await supabase.rpc(
+            'accept_invitation_by_token' as any,
+            {
+              p_token: storedToken,
+              p_user_id: signInData.user.id
+            }
+          );
+          
+          if (rpcError) {
+            console.error('❌ Failed to link invitation on sign-in:', rpcError);
+          } else if (rpcResult?.success) {
+            console.log('✅ Successfully linked connection for existing user');
+            toast.success("Connection linked!", {
+              description: `You're now connected with ${rpcResult.sender_name || 'your friend'}!`
+            });
+          }
+        } catch (linkError) {
+          console.error('❌ Error linking invitation:', linkError);
+        } finally {
+          sessionStorage.removeItem('pending_invitation_token');
+        }
+      }
+
       triggerHapticFeedback('success');
       toast.success("Welcome back!");
       const redirectPath = searchParams.get('redirect') || '/';

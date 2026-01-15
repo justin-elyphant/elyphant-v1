@@ -25,7 +25,7 @@ import { UnifiedRecipient, unifiedRecipientService } from '@/services/unifiedRec
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
 import { StandardizedAddress } from '@/services/googlePlacesService';
 import { toast } from 'sonner';
-import { searchFriends, FriendSearchResult } from '@/services/search/friendSearchService';
+import { searchFriends, FriendSearchResult } from '@/services/search/privacyAwareFriendSearch';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import AddressRequestDialog from './AddressRequestDialog';
@@ -292,13 +292,13 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'connection_invitation',
-          customData: {
+          recipientEmail: searchResult.email,
+          data: {
             sender_name: user?.user_metadata?.name || user?.email || 'Someone',
-            sender_email: user?.email,
             recipient_name: searchResult.name,
             recipient_email: searchResult.email,
-            message: 'I\'d like to send you a gift and connect on Elyphant!',
-            connection_id: connectionData.id
+            invitation_url: 'https://elyphant.ai/auth',
+            custom_message: "I'd like to send you a gift and connect on Elyphant!"
           }
         }
       });

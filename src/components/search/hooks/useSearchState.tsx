@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
 import { ZincProduct } from "@/components/marketplace/zinc/types";
 
 export const useSearchState = () => {

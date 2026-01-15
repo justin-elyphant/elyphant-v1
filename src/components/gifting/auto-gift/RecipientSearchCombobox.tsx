@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { EnhancedConnection } from "@/hooks/profile/useEnhancedConnections";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
-import { searchFriends, FriendSearchResult } from "@/services/search/friendSearchService";
+import { searchFriends, FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import NewRecipientForm from "@/components/shared/NewRecipientForm";

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { User, Package, Building2, Globe, Users, Lock } from "lucide-react";
-import { FriendSearchResult } from "@/services/search/friendSearchService";
+import { FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
 import { Product } from "@/types/product";
 import FriendResultCard from "./results/FriendResultCard";
 

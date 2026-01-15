@@ -1,8 +1,7 @@
 
-import { searchFriendsWithPrivacy, FilteredProfile } from "./privacyAwareFriendSearch";
+import { searchFriendsWithPrivacy, FilteredProfile, FriendSearchResult } from "./privacyAwareFriendSearch";
 import { productCatalogService } from "@/services/ProductCatalogService";
 import { Product } from "@/types/product";
-import { FriendSearchResult } from "./friendSearchService";
 
 export interface UnifiedSearchResults {
   friends: FriendSearchResult[];

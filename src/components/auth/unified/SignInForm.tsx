@@ -77,10 +77,10 @@ const SignInForm: React.FC<SignInFormProps> = ({
           
           if (rpcError) {
             console.error('❌ Failed to link invitation on sign-in:', rpcError);
-          } else if (rpcResult?.success) {
+          } else if (rpcResult?.linked) {
             console.log('✅ Successfully linked connection for existing user');
             toast.success("Connection linked!", {
-              description: `You're now connected with ${rpcResult.sender_name || 'your friend'}!`
+              description: "You're now connected with your friend!"
             });
           }
         } catch (linkError) {

@@ -297,7 +297,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
             sender_name: user?.user_metadata?.name || user?.email || 'Someone',
             recipient_name: searchResult.name,
             recipient_email: searchResult.email,
-            invitation_url: 'https://elyphant.ai/auth',
+            invitation_url: `https://elyphant.ai/auth?invite=${connectionData.invitation_token}`,
             custom_message: "I'd like to send you a gift and connect on Elyphant!"
           }
         }

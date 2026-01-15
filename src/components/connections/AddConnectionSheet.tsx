@@ -77,12 +77,13 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
       const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'connection_invitation',
-          customData: {
-            recipientEmail: inviteForm.email,
-            recipientName: inviteForm.name,
-            senderName: user.user_metadata?.name || user.email || 'Someone',
-            relationship: inviteForm.relationship,
-            invitationType: 'connection'
+          recipientEmail: inviteForm.email,
+          data: {
+            sender_name: user.user_metadata?.name || user.email || 'Someone',
+            recipient_name: inviteForm.name,
+            recipient_email: inviteForm.email,
+            invitation_url: `https://elyphant.ai/auth`,
+            custom_message: `I'd like to connect with you on Elyphant!`
           }
         }
       });

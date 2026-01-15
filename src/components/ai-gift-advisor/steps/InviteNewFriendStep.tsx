@@ -49,12 +49,16 @@ const InviteNewFriendStep = ({
     setIsLoading(true);
     
     try {
-      // Create pending recipient
+      // Create pending recipient - returns full row including invitation_token
       const pendingConnection = await unifiedRecipientService.createPendingRecipient({
         name: formData.name,
         email: formData.email,
         relationship_type: formData.relationship
       });
+
+      // Extract invitation token from the created connection
+      const invitationToken = pendingConnection?.invitation_token;
+      console.log('[InviteNewFriendStep] Created pending connection with token:', invitationToken);
 
       // Track invitation analytics
       const invitationId = await trackInvitationSent({
@@ -81,7 +85,7 @@ const InviteNewFriendStep = ({
         setBudget({ min: Math.round(suggestedBudget * 0.7), max: suggestedBudget });
       }
 
-      // Send invitation email
+      // Send invitation email with proper invite token URL
       const emailResult = await sendInvitationEmail({
         recipientEmail: formData.email,
         recipientName: formData.name,
@@ -89,7 +93,9 @@ const InviteNewFriendStep = ({
         occasion: formData.occasion,
         eventDate: formData.eventDate,
         relationship: formData.relationship,
-        invitationId: invitationId // Pass invitation ID for tracking
+        invitationId: invitationId,
+        invitationToken: invitationToken, // Pass the token for URL generation
+        hasPendingGift: true // This is from AI Gift Advisor, so there's a pending gift
       });
 
       toast.success(`Invitation sent to ${formData.name}! Auto-gifting will activate when they join.`);
@@ -120,7 +126,16 @@ const InviteNewFriendStep = ({
     eventDate?: string;
     relationship?: string;
     invitationId?: string;
+    invitationToken?: string;
+    hasPendingGift?: boolean;
   }) => {
+    // Build invitation URL with token for automatic connection linking
+    const invitationUrl = invitationData.invitationToken 
+      ? `https://elyphant.ai/auth?invite=${invitationData.invitationToken}`
+      : 'https://elyphant.ai/auth';
+    
+    console.log('[InviteNewFriendStep] Sending invitation email with URL:', invitationUrl);
+
     // Call orchestrator to send personalized invitation email with standardized payload
     const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
@@ -130,10 +145,12 @@ const InviteNewFriendStep = ({
           sender_name: invitationData.giftorName,
           recipient_name: invitationData.recipientName,
           recipient_email: invitationData.recipientEmail,
-          invitation_url: 'https://elyphant.ai/auth',
+          invitation_url: invitationUrl,
           occasion: invitationData.occasion || null,
           event_date: invitationData.eventDate || null,
-          relationship_type: invitationData.relationship || 'friend'
+          relationship_type: invitationData.relationship || 'friend',
+          has_pending_gift: invitationData.hasPendingGift || false,
+          gift_occasion: invitationData.occasion || null
         }
       }
     });

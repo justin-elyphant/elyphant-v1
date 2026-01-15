@@ -7,6 +7,9 @@ import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const INVITATION_TOKEN_STORAGE_KEY = 'elyphant_invitation_token';
+
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -30,12 +33,16 @@ const Auth = () => {
     senderName: string;
   } | null>(null);
 
-  // Validate invitation token on mount
+  // Validate invitation token on mount and store for post-signup linking
   useEffect(() => {
     const validateInvitation = async () => {
       if (!inviteToken) return;
       
       console.log('[Auth] Validating invite token:', inviteToken);
+      
+      // Store token in sessionStorage for post-signup linking (handles different email signup)
+      sessionStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
+      console.log('[Auth] Stored invitation token for post-signup linking');
       
       try {
         // Call edge function to validate invitation (bypasses RLS issues)
@@ -47,7 +54,12 @@ const Auth = () => {
         
         if (error || !data) {
           console.error('[Auth] Failed to validate invitation:', error);
-          toast.error('Invalid or expired invitation link');
+          // Check for cancelled invitation
+          if (data?.type === 'cancelled') {
+            toast.error(data.message || 'This invitation was cancelled');
+          } else {
+            toast.error('Invalid or expired invitation link');
+          }
           return;
         }
         
@@ -88,12 +100,38 @@ const Auth = () => {
     validateInvitation();
   }, [inviteToken]);
 
-  // Handle post-signup interests modal and redirect
+  // Handle post-signup linking and redirect
   useEffect(() => {
     if (user && !isLoading) {
-      // NEW: Check for and link pending auto-gift rules
-      const linkPendingRules = async () => {
+      const handlePostSignupLinking = async () => {
         try {
+          // Check for stored invitation token (handles different email signup)
+          const storedToken = sessionStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
+          
+          if (storedToken) {
+            console.log('[Auth] Found stored invitation token, attempting to link by token...');
+            
+            // Try to link by token first (works even if user signed up with different email)
+            const { data: tokenLinkResult, error: tokenLinkError } = await supabase
+              .rpc('accept_invitation_by_token', {
+                p_user_id: user.id,
+                p_token: storedToken
+              });
+            
+            if (!tokenLinkError && tokenLinkResult?.linked) {
+              console.log('[Auth] Successfully linked connection by token:', tokenLinkResult);
+              toast.success('🤝 Connection established!', {
+                description: 'You are now connected with your friend'
+              });
+            } else {
+              console.log('[Auth] Token-based linking failed or no match:', tokenLinkError);
+            }
+            
+            // Clear stored token after attempting to use it
+            sessionStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
+          }
+          
+          // Also try email-based linking for auto-gift rules
           const { data, error } = await supabase
             .rpc('link_pending_rules_manual', {
               p_user_id: user.id,
@@ -113,7 +151,7 @@ const Auth = () => {
         }
       };
       
-      linkPendingRules();
+      handlePostSignupLinking();
       
       // Normal redirect flow
       const redirectPath = searchParams.get('redirect') || '/';

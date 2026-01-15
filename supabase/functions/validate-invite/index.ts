@@ -30,12 +30,11 @@ Deno.serve(async (req) => {
 
     console.log('[validate-invite] Validating token:', token);
 
-    // First, try to find a connection invitation
+    // First, try to find a connection invitation (including cancelled ones)
     const { data: connectionData, error: connectionError } = await supabase
       .from('user_connections')
-      .select('id, pending_recipient_email, pending_recipient_name, user_id')
+      .select('id, pending_recipient_email, pending_recipient_name, user_id, status')
       .eq('invitation_token', token)
-      .eq('status', 'pending_invitation')
       .maybeSingle();
 
     if (connectionError) {
@@ -43,7 +42,28 @@ Deno.serve(async (req) => {
     }
 
     if (connectionData) {
-      console.log('[validate-invite] Found connection invitation:', connectionData.id);
+      // Check if invitation was cancelled/rejected
+      if (connectionData.status === 'rejected') {
+        console.log('[validate-invite] Found cancelled invitation:', connectionData.id);
+        return new Response(
+          JSON.stringify({
+            type: 'cancelled',
+            message: 'This invitation was cancelled by the sender'
+          }),
+          { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Only proceed if status is pending_invitation
+      if (connectionData.status !== 'pending_invitation') {
+        console.log('[validate-invite] Connection found but not pending_invitation:', connectionData.status);
+        return new Response(
+          JSON.stringify({ error: 'This invitation has already been used or expired' }),
+          { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[validate-invite] Found valid connection invitation:', connectionData.id);
       
       // Fetch sender name from profiles (optional, best-effort)
       let senderName = 'Your friend';

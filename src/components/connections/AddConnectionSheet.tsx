@@ -123,8 +123,8 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         gift_preferences: {}
       };
 
-      // Create pending connection with full details
-      await unifiedGiftManagementService.createPendingConnection(
+      // Create pending connection with full details - returns row with invitation_token
+      const pendingConnection = await unifiedGiftManagementService.createPendingConnection(
         inviteForm.email,
         fullName,
         inviteForm.relationship,
@@ -132,6 +132,15 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         inviteForm.birthday || null,
         relationshipContext
       );
+
+      // Extract invitation token from created connection
+      const invitationToken = pendingConnection?.invitation_token;
+      console.log('[AddConnectionSheet] Created pending connection with token:', invitationToken);
+
+      // Build invitation URL with token for automatic connection linking
+      const invitationUrl = invitationToken 
+        ? `https://elyphant.ai/auth?invite=${invitationToken}`
+        : 'https://elyphant.ai/auth';
 
       // Track invitation analytics
       await invitationAnalyticsService.trackInvitationSent({
@@ -156,7 +165,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
             sender_name: user.user_metadata?.name || user.email || 'Someone',
             recipient_name: fullName,
             recipient_email: inviteForm.email,
-            invitation_url: 'https://elyphant.ai/auth',
+            invitation_url: invitationUrl,
             custom_message: inviteForm.customMessage || `Hi ${inviteForm.firstName}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`
           }
         }

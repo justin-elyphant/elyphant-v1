@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,36 @@ const OAuthProfileCompletion = () => {
       // Initial validation
       validateMandatoryFields(initialData);
     }
+  }, [user]);
+
+  // Process any stored invitation token for OAuth signups
+  useEffect(() => {
+    const processInvitation = async () => {
+      if (!user?.id) return;
+      
+      const storedToken = sessionStorage.getItem('elyphant_invitation_token');
+      if (!storedToken) return;
+      
+      console.log('[OAuth] Processing stored invitation token');
+      try {
+        const { data: rpcResult, error: rpcError } = await supabase.rpc(
+          'accept_invitation_by_token' as any,
+          { p_token: storedToken, p_user_id: user.id }
+        );
+        
+        if (!rpcError && rpcResult?.linked) {
+          toast.success("Connection linked!", {
+            description: "You're now connected with your friend!"
+          });
+        }
+      } catch (error) {
+        console.error('[OAuth] Error linking invitation:', error);
+      } finally {
+        sessionStorage.removeItem('elyphant_invitation_token');
+      }
+    };
+    
+    processInvitation();
   }, [user]);
 
   const validateMandatoryFields = (data: OAuthProfileData) => {

@@ -231,6 +231,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                 const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                                   body: {
                                     eventType: 'connection_invitation',
+                                    recipientEmail: conn.pending_recipient_email,
                                     data: {
                                       sender_name: senderName,
                                       recipient_email: conn.pending_recipient_email,

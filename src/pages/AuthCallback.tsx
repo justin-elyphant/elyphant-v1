@@ -49,6 +49,27 @@ const AuthCallback = () => {
           setStatus('success');
           toast.success('Email verified successfully!');
           
+          // Process any stored invitation token
+          const storedToken = sessionStorage.getItem('elyphant_invitation_token');
+          if (storedToken) {
+            console.log('[AuthCallback] Processing stored invitation token');
+            try {
+              const { data: rpcResult } = await supabase.rpc(
+                'accept_invitation_by_token' as any,
+                { p_token: storedToken, p_user_id: data.user.id }
+              );
+              if (rpcResult?.linked) {
+                toast.success("Connection linked!", {
+                  description: "You're now connected with your friend!"
+                });
+              }
+            } catch (error) {
+              console.error('[AuthCallback] Error linking invitation:', error);
+            } finally {
+              sessionStorage.removeItem('elyphant_invitation_token');
+            }
+          }
+          
           // Store completion state for streamlined profile setup
           localStorage.setItem('profileCompletionState', JSON.stringify({
             step: 'profile',

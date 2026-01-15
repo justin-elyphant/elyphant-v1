@@ -74,7 +74,8 @@ const AddressRequestDialog: React.FC<AddressRequestDialogProps> = ({
       const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request',
-          customData: requestData
+          recipientEmail: connection.email,
+          data: requestData
         }
       });
 

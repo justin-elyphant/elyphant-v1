@@ -243,7 +243,8 @@ class RecipientAddressResolver {
       const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request',
-          customData: {
+          recipientEmail,
+          data: {
             recipientEmail,
             recipientName,
             requesterName: 'User',

@@ -111,7 +111,8 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
       const { data, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'address_request',
-          customData: {
+          recipientEmail: addressRequest.email,
+          data: {
             recipientId: selectedConnection.connected_user_id,
             recipientEmail: addressRequest.email,
             recipientName: selectedConnection.name,

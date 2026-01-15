@@ -49,7 +49,8 @@ export const emailNotificationService = {
       const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'auto_gift_approval',
-          customData: emailData
+          recipientEmail: userEmail,
+          data: emailData
         }
       });
 
@@ -136,7 +137,8 @@ export const emailNotificationService = {
       const { data: result, error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
           eventType: 'wishlist_welcome',
-          customData: emailData
+          recipientEmail: data.userEmail,
+          data: emailData
         }
       });
 

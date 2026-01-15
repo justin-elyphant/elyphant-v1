@@ -244,11 +244,22 @@ const orderFailedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Issue with order ${props.order_number}` });
 };
 
-// Connection Invitation Template
+// Connection Invitation Template (also used for gift invitations)
 const connectionInvitationTemplate = (props: any): string => {
+  // Build gift context banner if this invitation has a pending gift
+  const giftContextBanner = props.has_pending_gift ? `
+    <table style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #f97316; width: 100%;">
+      <tr><td>
+        <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #c2410c;">🎁 ${props.sender_name} has a gift waiting for you!</p>
+        ${props.gift_occasion ? `<p style="margin: 0; font-size: 14px; color: #ea580c;">For your ${props.gift_occasion}</p>` : ''}
+      </td></tr>
+    </table>
+  ` : '';
+
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">You've been invited! 🎉</h2>
     <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.sender_name} wants to connect with you on Elyphant!</p>
+    ${giftContextBanner}
     ${props.custom_message ? `
     <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea; width: 100%;">
       <tr><td>
@@ -268,7 +279,13 @@ const connectionInvitationTemplate = (props: any): string => {
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `${props.sender_name} invited you to connect` });
+  
+  // Customize preheader based on gift context
+  const preheader = props.has_pending_gift 
+    ? `🎁 ${props.sender_name} has a gift waiting for you on Elyphant!`
+    : `${props.sender_name} invited you to connect`;
+    
+  return baseEmailTemplate({ content, preheader });
 };
 
 // Welcome Email Template
@@ -474,9 +491,12 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         subject: `Order Processing Issue - ${data.order_number || 'Action Required'}`
       };
     case 'connection_invitation':
+    case 'gift_invitation': // Both use the same template - gift_invitation includes gift context
       return {
         html: connectionInvitationTemplate(data),
-        subject: `${data.sender_name || 'Someone'} invited you to Elyphant! 🎉`
+        subject: data.has_pending_gift 
+          ? `🎁 ${data.sender_name || 'Someone'} has a gift waiting for you!`
+          : `${data.sender_name || 'Someone'} invited you to Elyphant! 🎉`
       };
     case 'connection_established':
       return {

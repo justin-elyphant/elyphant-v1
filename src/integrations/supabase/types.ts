@@ -5231,6 +5231,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation_by_token: {
+        Args: { p_token: string; p_user_id: string }
+        Returns: Json
+      }
       add_business_admin: {
         Args: {
           admin_level_param: string

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { UserPlus, Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import InviteFriendModal from "./InviteFriendModal";
+import { Heart, UserPlus, Sparkles } from "lucide-react";
+import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
 
 const InviteFriendCTA = () => {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <>
@@ -25,7 +25,7 @@ const InviteFriendCTA = () => {
             </p>
           </div>
           <Button 
-            onClick={() => setModalOpen(true)}
+            onClick={() => setSheetOpen(true)}
             className="bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-700 hover:to-rose-700 text-white border-0 shadow-md h-10 sm:h-9 w-full sm:w-auto flex items-center gap-2"
             size="sm"
           >
@@ -36,9 +36,9 @@ const InviteFriendCTA = () => {
         </div>
       </div>
 
-      <InviteFriendModal 
-        open={modalOpen}
-        onOpenChange={setModalOpen}
+      <AddConnectionSheet 
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
       />
     </>
   );

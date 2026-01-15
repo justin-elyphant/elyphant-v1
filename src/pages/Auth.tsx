@@ -112,14 +112,16 @@ const Auth = () => {
             console.log('[Auth] Found stored invitation token, attempting to link by token...');
             
             // Try to link by token first (works even if user signed up with different email)
+            // Using type assertion since the function was just created and types aren't regenerated yet
             const { data: tokenLinkResult, error: tokenLinkError } = await supabase
-              .rpc('accept_invitation_by_token', {
+              .rpc('accept_invitation_by_token' as any, {
                 p_user_id: user.id,
                 p_token: storedToken
               });
             
-            if (!tokenLinkError && tokenLinkResult?.linked) {
-              console.log('[Auth] Successfully linked connection by token:', tokenLinkResult);
+            const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string } | null;
+            if (!tokenLinkError && linkResult?.linked) {
+              console.log('[Auth] Successfully linked connection by token:', linkResult);
               toast.success('🤝 Connection established!', {
                 description: 'You are now connected with your friend'
               });

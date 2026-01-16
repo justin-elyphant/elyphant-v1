@@ -72,6 +72,9 @@ const Wishlists = () => {
   }) => {
     if (!currentWishlistId) return;
 
+    // Close dialog immediately for smooth UX (optimistic)
+    setEditDialogOpen(false);
+
     await updateWishlist({
       wishlistId: currentWishlistId,
       data: {
@@ -79,8 +82,6 @@ const Wishlists = () => {
         description: values.description || "",
       },
     });
-
-    setEditDialogOpen(false);
   };
 
   const handleDeleteWishlist = (id: string) => {

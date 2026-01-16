@@ -182,7 +182,11 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
 
   // Privacy toggle component - clickable to toggle public/private
   const PrivacyToggle = () => (
-    <div className="absolute top-2 left-2 z-10">
+    <div 
+      className="absolute top-2 left-2 z-30"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -190,24 +194,24 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
               variant="secondary"
               size="sm"
               className={cn(
-                "h-7 px-2 rounded-full flex items-center gap-1.5",
-                "bg-background/90 backdrop-blur-sm shadow-sm border-0",
-                "hover:bg-background transition-colors",
+                "h-7 px-2.5 rounded-full flex items-center gap-1.5",
+                "bg-white/95 backdrop-blur-sm shadow-md border border-border/50",
+                "hover:bg-white transition-colors",
                 isTogglingPrivacy && "opacity-70 cursor-wait"
               )}
               onClick={handlePrivacyToggle}
               disabled={!onUpdateSharing || isTogglingPrivacy}
             >
               {isTogglingPrivacy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
               ) : wishlist.is_public ? (
                 <Globe className="h-3.5 w-3.5 text-green-600" />
               ) : (
-                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                <Lock className="h-3.5 w-3.5 text-gray-500" />
               )}
               <span className={cn(
                 "text-xs font-medium",
-                wishlist.is_public ? "text-green-600" : "text-foreground"
+                wishlist.is_public ? "text-green-700" : "text-gray-700"
               )}>
                 {wishlist.is_public ? "Public" : "Private"}
               </span>
@@ -215,7 +219,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           </TooltipTrigger>
           <TooltipContent 
             side="bottom" 
-            className="bg-popover text-popover-foreground border shadow-md"
+            className="bg-gray-900 text-white border-0 shadow-lg"
           >
             <p className="text-xs">
               {wishlist.is_public 

@@ -26,13 +26,15 @@ interface MobileWishlistHubProps {
   onCreateWishlist: () => void;
   onEditWishlist: (id: string) => void;
   onDeleteWishlist: (id: string) => void;
+  onUpdateSharing?: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
 }
 
 const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
   wishlists,
   onCreateWishlist,
   onEditWishlist,
-  onDeleteWishlist
+  onDeleteWishlist,
+  onUpdateSharing
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabMode>("wishlists");
@@ -242,6 +244,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                       variant="mobile"
                       onEdit={onEditWishlist}
                       onDelete={onDeleteWishlist}
+                      onUpdateSharing={onUpdateSharing}
                     />
                   ))}
                 </div>

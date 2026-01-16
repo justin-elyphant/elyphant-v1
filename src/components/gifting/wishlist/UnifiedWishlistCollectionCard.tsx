@@ -184,8 +184,11 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   const PrivacyToggle = () => (
     <div 
       className="absolute top-2 left-2 z-30"
+      role="button"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       <TooltipProvider>
         <Tooltip>
@@ -203,23 +206,20 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
               disabled={!onUpdateSharing || isTogglingPrivacy}
             >
               {isTogglingPrivacy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
               ) : wishlist.is_public ? (
                 <Globe className="h-3.5 w-3.5 text-green-600" />
               ) : (
-                <Lock className="h-3.5 w-3.5 text-gray-500" />
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
               )}
-              <span className={cn(
-                "text-xs font-medium",
-                wishlist.is_public ? "text-green-700" : "text-gray-700"
-              )}>
+              <span className="text-xs font-medium text-foreground">
                 {wishlist.is_public ? "Public" : "Private"}
               </span>
             </Button>
           </TooltipTrigger>
           <TooltipContent 
             side="bottom" 
-            className="bg-gray-900 text-white border-0 shadow-lg"
+            className="bg-popover text-popover-foreground border shadow-md"
           >
             <p className="text-xs">
               {wishlist.is_public 

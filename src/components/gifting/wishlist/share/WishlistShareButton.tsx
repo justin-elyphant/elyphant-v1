@@ -40,20 +40,24 @@ const WishlistShareButton = ({
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
-              variant={wishlist.is_public ? "default" : "outline"}
+              variant="outline"
               className={cn(
                 sizeStyles[size],
-                wishlist.is_public && "bg-green-600 hover:bg-green-700 text-white",
+                "border-border/50",
                 className
               )}
-              onClick={() => setDialogOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setDialogOpen(true);
+              }}
             >
               {wishlist.is_public ? (
-                <Globe className={iconSize[size]} />
+                <Globe className={cn(iconSize[size], "text-green-600")} />
               ) : (
-                <Lock className={iconSize[size]} />
+                <Lock className={cn(iconSize[size], "text-muted-foreground")} />
               )}
-              Share
+              <span className="text-foreground">Share</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">

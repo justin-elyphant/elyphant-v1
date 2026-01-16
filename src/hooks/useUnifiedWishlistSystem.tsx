@@ -180,12 +180,6 @@ export const useUnifiedWishlistSystem = () => {
       }
     }
 
-      if (error) {
-        console.error("Error creating wishlist:", error);
-        throw error;
-      }
-    }
-
     return wishlist;
   }, [user]);
 

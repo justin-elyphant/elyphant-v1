@@ -40,6 +40,15 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
     refreshRecommendations 
   } = useNicoleRecommendations();
 
+  // Responsive product counts per section based on maxProducts hint
+  const productsPerSection = useMemo(() => {
+    // Determine responsive count: mobile=6, tablet=6, desktop=8
+    // Use maxProducts as a hint (16 = desktop, 12 = tablet, 6 = mobile)
+    if (maxProducts >= 16) return 8; // Desktop
+    if (maxProducts >= 12) return 6; // Tablet
+    return 6; // Mobile
+  }, [maxProducts]);
+
   // Build sections for full variant
   const displaySections: ProductSection[] = useMemo(() => {
     if (variant === "compact") return [];
@@ -49,25 +58,25 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
         id: "search",
         title: "Based on Your Searches",
         icon: <History className="h-4 w-4" />,
-        products: sections.searchBased.slice(0, 6),
+        products: sections.searchBased.slice(0, productsPerSection),
         emptyMessage: "Search for products to get personalized picks"
       },
       {
         id: "viewed",
         title: "Similar to Items You Viewed",
         icon: <Sparkles className="h-4 w-4" />,
-        products: sections.viewedBased.slice(0, 6),
+        products: sections.viewedBased.slice(0, productsPerSection),
         emptyMessage: "Browse products to see similar recommendations"
       },
       {
         id: "trending",
         title: "Trending Gifts",
         icon: <TrendingUp className="h-4 w-4" />,
-        products: sections.trending.slice(0, 6),
+        products: sections.trending.slice(0, productsPerSection),
         emptyMessage: "No trending products available"
       }
     ].filter(section => variant === "full" || section.products.length > 0);
-  }, [sections, variant]);
+  }, [sections, variant, productsPerSection]);
 
   // For compact mode, use mixed products
   const compactProducts = useMemo(() => {
@@ -87,9 +96,9 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
     toast.success("Refreshing recommendations...");
   };
 
-  // Render product grid (2-column vertical scroll)
+  // Render product grid - responsive columns
   const renderProductGrid = (productList: any[]) => (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
       {productList.map((product) => (
         <AirbnbStyleProductCard
           key={product.product_id || product.id}
@@ -101,10 +110,10 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
     </div>
   );
 
-  // Loading skeleton - grid version
+  // Loading skeleton - responsive grid version
   const renderSkeleton = () => (
-    <div className="grid grid-cols-2 gap-3">
-      {[1, 2, 3, 4].map((i) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      {[1, 2, 3, 4, 5, 6, 7, 8].slice(0, maxProducts >= 16 ? 8 : maxProducts >= 12 ? 6 : 4).map((i) => (
         <div key={i} className="rounded-xl overflow-hidden">
           <div className="aspect-square bg-muted animate-pulse" />
           <div className="p-3 space-y-2">

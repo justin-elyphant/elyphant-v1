@@ -23,7 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import "@/styles/mobile-wishlist.css";
 
 const Wishlists = () => {
@@ -47,6 +56,10 @@ const Wishlists = () => {
   const [currentWishlistId, setCurrentWishlistId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Desktop search & sort states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "name" | "items" | "updated">("recent");
+
   // Get current wishlist for editing
   const currentWishlist = wishlists?.find(w => w.id === currentWishlistId) || null;
 
@@ -54,6 +67,35 @@ const Wishlists = () => {
   const totalItems = useMemo(() => {
     return wishlists?.reduce((acc, w) => acc + (w.items?.length || 0), 0) || 0;
   }, [wishlists]);
+
+  // Filter and sort wishlists for desktop
+  const filteredAndSortedWishlists = useMemo(() => {
+    let filtered = wishlists || [];
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(w =>
+        w.title.toLowerCase().includes(query) ||
+        w.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sort
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.title.localeCompare(b.title);
+        case "items":
+          return (b.items?.length || 0) - (a.items?.length || 0);
+        case "updated":
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [wishlists, searchQuery, sortBy]);
 
   // Handlers
   const handleCreateWishlist = async (values: { title: string; description?: string }) => {
@@ -230,15 +272,54 @@ const Wishlists = () => {
             <NicoleAISuggestions maxProducts={8} />
           </div>
 
+          {/* Search & Sort Bar */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+            <div className="flex items-center justify-between gap-4">
+              {/* Search Input */}
+              <div className="relative max-w-sm flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search wishlists..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 h-10 rounded-lg bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 rounded-full"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Sort Dropdown */}
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                <SelectTrigger className="w-[160px] h-10 rounded-lg">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recently Added</SelectItem>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="items">Most Items</SelectItem>
+                  <SelectItem value="updated">Last Updated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Wishlists Grid */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : wishlists && wishlists.length > 0 ? (
+            ) : filteredAndSortedWishlists.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {wishlists.map((wishlist) => (
+                {filteredAndSortedWishlists.map((wishlist) => (
                   <UnifiedWishlistCollectionCard
                     key={wishlist.id}
                     wishlist={wishlist}
@@ -251,6 +332,13 @@ const Wishlists = () => {
                     }}
                   />
                 ))}
+              </div>
+            ) : wishlists && wishlists.length > 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No wishlists match "{searchQuery}"</p>
+                <Button variant="outline" onClick={() => setSearchQuery("")}>
+                  Clear Search
+                </Button>
               </div>
             ) : (
               <div className="text-center py-12">

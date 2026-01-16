@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, ArrowRight, RefreshCw } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useNicoleTagIntegration } from "@/hooks/useNicoleTagIntegration";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import { usePersonalizedRecommendations } from "@/hooks/usePersonalizedRecommendations";
 import { useProducts } from "@/contexts/ProductContext";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
@@ -27,40 +25,67 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
   
   // Data sources
-  const { getUserTagInsights, getPersonalizedGiftTags } = useNicoleTagIntegration();
+  const { getUserTagInsights } = useNicoleTagIntegration();
   const { recentlyViewed } = useRecentlyViewed();
   const { products, isLoading: productsLoading } = useProducts();
   const { quickAddToWishlist, wishlists } = useWishlist();
   
-  // Build personalization context from user data
-  const personalizationContext = useMemo(() => {
-    const tagInsights = getUserTagInsights;
-    const giftTags = getPersonalizedGiftTags({});
-    
-    // Extract categories from wishlists and recently viewed
-    const preferredCategories = [
+  // Track categories to avoid re-computation causing infinite loops
+  const categoriesRef = useRef<string[]>([]);
+  
+  // Build personalization context from user data - stable dependencies only
+  const tagInsights = getUserTagInsights;
+  
+  // Memoize preferred categories with stable reference
+  const preferredCategories = useMemo(() => {
+    const categories = [
       ...tagInsights.preferredCategories.map((c: any) => c.category),
       ...tagInsights.commonTags.slice(0, 3).map((t: any) => t.tag)
     ].filter(Boolean);
     
-    return {
-      preferredCategories,
-      confidence: giftTags.confidence,
-      reasoning: giftTags.reasoning,
-      hasData: preferredCategories.length > 0 || recentlyViewed.length >= 3
-    };
-  }, [getUserTagInsights, getPersonalizedGiftTags, recentlyViewed]);
-
-  // Get personalized recommendations
-  const { recommendations, isLoading: recommendationsLoading } = usePersonalizedRecommendations(
-    products,
-    {
-      limit: maxProducts,
-      preferredCategories: personalizationContext.preferredCategories,
-      strategy: 'personalized',
-      includeViewedProducts: false
+    // Only update ref if categories actually changed
+    const categoriesStr = categories.join(',');
+    const prevStr = categoriesRef.current.join(',');
+    if (categoriesStr !== prevStr) {
+      categoriesRef.current = categories;
     }
-  );
+    return categoriesRef.current;
+  }, [tagInsights.preferredCategories, tagInsights.commonTags]);
+  
+  const hasData = preferredCategories.length > 0 || recentlyViewed.length >= 3;
+
+  // Get recommendations directly from products - no external hook to avoid infinite loop
+  const recommendations = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    
+    // Score products based on relevance
+    const scoredProducts = products.map(product => {
+      let score = 0;
+      score += (product.rating || product.stars || 0) * 2;
+      if (product.isBestSeller) score += 10;
+      
+      const productCategories = [
+        product.category,
+        product.category_name,
+        ...(product.tags || [])
+      ].filter(Boolean);
+      
+      preferredCategories.forEach(category => {
+        if (category && productCategories.some(pc => 
+          pc && pc.toLowerCase().includes(category.toLowerCase())
+        )) {
+          score += 15;
+        }
+      });
+      
+      return { product, score };
+    });
+    
+    return scoredProducts
+      .sort((a, b) => b.score - a.score)
+      .slice(0, maxProducts)
+      .map(item => item.product);
+  }, [products, preferredCategories, maxProducts]);
 
   // Handle quick add to wishlist
   const handleQuickAdd = async (product: any) => {
@@ -92,13 +117,12 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
   };
 
   // Don't show if user has no personalization data
-  if (!personalizationContext.hasData && !productsLoading) {
+  if (!hasData && !productsLoading) {
     return null;
   }
 
   // Don't show if no recommendations and done loading
-  const isLoading = productsLoading || recommendationsLoading;
-  if (!isLoading && recommendations.length === 0) {
+  if (!productsLoading && recommendations.length === 0) {
     return null;
   }
 
@@ -127,13 +151,8 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
               <Sparkles className="h-4 w-4 text-purple-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <h3 className="font-semibold text-foreground">
                 Nicole AI Suggestions
-                {personalizationContext.confidence >= 0.7 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {Math.round(personalizationContext.confidence * 100)}% match
-                  </Badge>
-                )}
               </h3>
               <p className="text-xs text-muted-foreground">
                 {getSubtitle()}
@@ -153,7 +172,7 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
         </div>
 
         {/* Products Carousel */}
-        {isLoading ? (
+        {productsLoading ? (
           // Loading skeleton
           <div 
             className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6"

@@ -126,6 +126,9 @@ verify_jwt = false
 [functions.nicole-weekly-curator]
 verify_jwt = false
 
+[functions.nicole-recommendations]
+verify_jwt = false
+
 [functions.delete-user-account]
 verify_jwt = true
 

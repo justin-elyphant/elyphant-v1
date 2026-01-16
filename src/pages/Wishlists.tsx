@@ -36,6 +36,7 @@ const Wishlists = () => {
     loading: isLoading,
     createWishlist,
     deleteWishlist,
+    updateWishlist,
     updateWishlistSharing,
   } = useUnifiedWishlistSystem();
 
@@ -63,6 +64,29 @@ const Wishlists = () => {
   const handleEditWishlist = (id: string) => {
     setCurrentWishlistId(id);
     setEditDialogOpen(true);
+  };
+
+  const handleEditDialogSubmit = async (values: {
+    title: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+    priority?: "low" | "medium" | "high";
+  }) => {
+    if (!currentWishlistId) return;
+
+    await updateWishlist({
+      wishlistId: currentWishlistId,
+      data: {
+        title: values.title,
+        description: values.description || "",
+        category: values.category?.trim() ? values.category.trim() : null,
+        tags: values.tags || [],
+        priority: values.priority || "medium",
+      },
+    });
+
+    setEditDialogOpen(false);
   };
 
   const handleDeleteWishlist = (id: string) => {
@@ -115,7 +139,7 @@ const Wishlists = () => {
       <EditWishlistDialog 
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        onSubmit={async () => setEditDialogOpen(false)}
+        onSubmit={handleEditDialogSubmit}
         wishlist={currentWishlist}
       />
 

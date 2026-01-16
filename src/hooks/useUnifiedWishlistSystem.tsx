@@ -146,7 +146,8 @@ export const useUnifiedWishlistSystem = () => {
           title: wishlist.title,
           description: wishlist.description,
           is_public: wishlist.is_public,
-          category: wishlist.category,
+          category: wishlist.category ?? null,
+          tags: Array.isArray(wishlist.tags) ? wishlist.tags : null,
           priority: wishlist.priority,
           updated_at: new Date().toISOString()
         })
@@ -166,11 +167,18 @@ export const useUnifiedWishlistSystem = () => {
           title: wishlist.title,
           description: wishlist.description,
           is_public: wishlist.is_public || false,
-          category: wishlist.category,
-          priority: wishlist.priority || 1,
+          category: wishlist.category ?? null,
+          tags: Array.isArray(wishlist.tags) ? wishlist.tags : null,
+          priority: wishlist.priority || "medium",
           created_at: wishlist.created_at,
           updated_at: wishlist.updated_at
         } as any);
+
+      if (error) {
+        console.error("Error creating wishlist:", error);
+        throw error;
+      }
+    }
 
       if (error) {
         console.error("Error creating wishlist:", error);
@@ -366,6 +374,66 @@ export const useUnifiedWishlistSystem = () => {
     }
   });
 
+  // Update wishlist details mutation
+  const updateWishlistMutation = useMutation({
+    mutationFn: async ({
+      wishlistId,
+      data,
+    }: {
+      wishlistId: string;
+      data: {
+        title?: string;
+        description?: string;
+        category?: string | null;
+        tags?: string[] | null;
+        priority?: 'low' | 'medium' | 'high';
+      };
+    }) => {
+      if (!user) throw new Error("User must be authenticated");
+
+      const payload: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (typeof data.title === 'string') payload.title = data.title.trim();
+      if (typeof data.description === 'string') payload.description = data.description.trim();
+
+      if (data.category === null) payload.category = null;
+      else if (typeof data.category === 'string') {
+        const cleaned = data.category.trim();
+        payload.category = cleaned.length ? cleaned : null;
+      }
+
+      if (data.tags === null) payload.tags = null;
+      else if (Array.isArray(data.tags)) payload.tags = data.tags;
+
+      if (data.priority) payload.priority = data.priority;
+
+      const { error } = await supabase
+        .from('wishlists')
+        .update(payload)
+        .eq('id', wishlistId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error("Error updating wishlist:", error);
+        throw error;
+      }
+
+      return { wishlistId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.wishlists(user?.id || ''),
+      });
+      toast.success("Wishlist updated");
+    },
+    onError: (error: any) => {
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
+    },
+  });
+
   // Update wishlist sharing mutation
   const updateWishlistSharingMutation = useMutation({
     mutationFn: async ({ wishlistId, isPublic }: { wishlistId: string; isPublic: boolean }) => {
@@ -510,6 +578,7 @@ export const useUnifiedWishlistSystem = () => {
     deleteWishlist: deleteWishlistMutation.mutateAsync,
     addToWishlist: addToWishlistMutation.mutateAsync,
     removeFromWishlist: removeFromWishlistMutation.mutateAsync,
+    updateWishlist: updateWishlistMutation.mutateAsync,
     updateWishlistSharing: updateWishlistSharingMutation.mutateAsync,
 
     // Convenience operations
@@ -522,6 +591,7 @@ export const useUnifiedWishlistSystem = () => {
     isDeleting: deleteWishlistMutation.isPending,
     isAdding: addToWishlistMutation.isPending,
     isRemoving: removeFromWishlistMutation.isPending,
+    isUpdating: updateWishlistMutation.isPending,
     isUpdatingSharing: updateWishlistSharingMutation.isPending,
 
     // Manual refresh

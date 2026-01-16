@@ -91,6 +91,7 @@ const MyWishlists = () => {
     createWishlist,
     deleteWishlist,
     removeFromWishlist,
+    updateWishlist,
     updateWishlistSharing,
   } = useUnifiedWishlistSystem();
 
@@ -184,8 +185,20 @@ const MyWishlists = () => {
 
   const handleEditDialogSubmit = async (values: WishlistFormValues) => {
     if (!currentWishlist) return;
+
     const cleanCat = cleanCategory(values.category);
-    toast.info("Wishlist editing will be available soon!");
+
+    await updateWishlist({
+      wishlistId: currentWishlist.id,
+      data: {
+        title: values.title,
+        description: values.description || "",
+        category: cleanCat,
+        tags: values.tags || [],
+        priority: (values.priority as any) || "medium",
+      },
+    });
+
     setEditDialogOpen(false);
   };
 

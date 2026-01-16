@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Grid3X3, List } from "lucide-react";
+import { Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -19,7 +19,7 @@ import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
 import NicoleAISuggestions from "./NicoleAISuggestions";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
-type ViewMode = "grid" | "list";
+type TabMode = "wishlists" | "nicole";
 type SortOption = "recent" | "name" | "items" | "updated";
 
 interface TabletWishlistLayoutProps {
@@ -38,7 +38,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
   onUpdateSharing
 }) => {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [activeTab, setActiveTab] = useState<TabMode>("wishlists");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
 
   // Calculate total items
@@ -63,10 +63,10 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
     });
   }, [wishlists, sortBy]);
 
-  // Handle view mode toggle with haptic
-  const handleViewModeChange = (mode: ViewMode) => {
-    triggerHapticFeedback(HapticPatterns.buttonTap);
-    setViewMode(mode);
+  // Handle tab switch with haptic
+  const handleTabSwitch = (tab: TabMode) => {
+    triggerHapticFeedback(HapticPatterns.tabSwitch);
+    setActiveTab(tab);
   };
 
   return (
@@ -79,96 +79,107 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         className="sticky top-0 z-40"
       />
 
-      {/* Hero Section for Tablet */}
-      <div className="px-6 py-6 space-y-6">
-        <WishlistHeroSection 
-          wishlistCount={wishlists.length}
-          totalItemCount={totalItems}
-          onCreateWishlist={onCreateWishlist}
-        />
-        
-        {wishlists.length < 3 && <WishlistBenefitsGrid />}
-        
-        {/* Nicole AI Suggestions */}
-        <NicoleAISuggestions maxProducts={6} />
-      </div>
-
-      {/* Controls Bar - View Toggle & Sort */}
-      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            {/* View Mode Toggle */}
-            <div className="flex bg-muted/50 rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 px-3 rounded-md min-h-[44px] min-w-[44px] touch-manipulation",
-                  viewMode === "grid" ? "bg-background shadow-sm" : ""
-                )}
-                onClick={() => handleViewModeChange("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 px-3 rounded-md min-h-[44px] min-w-[44px] touch-manipulation",
-                  viewMode === "list" ? "bg-background shadow-sm" : ""
-                )}
-                onClick={() => handleViewModeChange("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-[160px] h-10 rounded-lg">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Recently Added</SelectItem>
-                <SelectItem value="name">Name A-Z</SelectItem>
-                <SelectItem value="items">Most Items</SelectItem>
-                <SelectItem value="updated">Last Updated</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Tab Toggle - matching mobile style */}
+      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/30">
+        <div className="px-6 py-3">
+          <div className="flex bg-muted/50 rounded-xl p-1 max-w-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "flex-1 h-10 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
+                activeTab === "wishlists"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => handleTabSwitch("wishlists")}
+            >
+              <Heart className="h-4 w-4" />
+              My Wishlists
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "flex-1 h-10 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
+                activeTab === "nicole"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => handleTabSwitch("nicole")}
+            >
+              <Sparkles className="h-4 w-4" />
+              Nicole AI
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-6 py-6">
-        {/* Wishlists Section */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Your Wishlists</h2>
-
-          {sortedWishlists.length > 0 ? (
-            <div className={cn(
-              viewMode === "grid" 
-                ? "grid grid-cols-2 gap-4" 
-                : "space-y-4"
-            )}>
-              {sortedWishlists.map((wishlist) => (
-                <UnifiedWishlistCollectionCard
-                  key={wishlist.id}
-                  wishlist={wishlist}
-                  variant="tablet"
-                  onEdit={onEditWishlist}
-                  onDelete={onDeleteWishlist}
-                  onUpdateSharing={onUpdateSharing}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex justify-center py-12">
-              <CreateWishlistCard onCreateNew={onCreateWishlist} />
-            </div>
-          )}
+      {/* Content based on active tab */}
+      {activeTab === "nicole" ? (
+        /* Nicole AI Tab - Full Experience */
+        <div className="px-6 py-6">
+          <NicoleAISuggestions maxProducts={12} variant="full" />
         </div>
-      </div>
+      ) : (
+        /* Wishlists Tab */
+        <>
+          {/* Hero Section for Tablet */}
+          <div className="px-6 py-6 space-y-6">
+            <WishlistHeroSection 
+              wishlistCount={wishlists.length}
+              totalItemCount={totalItems}
+              onCreateWishlist={onCreateWishlist}
+            />
+            
+            {wishlists.length < 3 && <WishlistBenefitsGrid />}
+          </div>
+
+          {/* Sort Bar */}
+          <div className="px-6 pb-4">
+            <div className="flex justify-end">
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-[160px] h-10 rounded-lg">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recently Added</SelectItem>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="items">Most Items</SelectItem>
+                  <SelectItem value="updated">Last Updated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="px-6 pb-6">
+            {/* Wishlists Section */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Your Wishlists</h2>
+
+              {sortedWishlists.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {sortedWishlists.map((wishlist) => (
+                    <UnifiedWishlistCollectionCard
+                      key={wishlist.id}
+                      wishlist={wishlist}
+                      variant="tablet"
+                      onEdit={onEditWishlist}
+                      onDelete={onDeleteWishlist}
+                      onUpdateSharing={onUpdateSharing}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex justify-center py-12">
+                  <CreateWishlistCard onCreateNew={onCreateWishlist} />
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

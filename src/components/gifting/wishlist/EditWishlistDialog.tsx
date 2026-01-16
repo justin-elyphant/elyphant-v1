@@ -1,9 +1,8 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,21 +12,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wishlist } from "@/types/profile";
-import { Separator } from "@/components/ui/separator";
-import EnhancedTagInput from "./EnhancedTagInput";
-import { normalizeTags } from "@/lib/utils";
 
 const wishlistFormSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title cannot exceed 100 characters"),
-  description: z.string().max(500, "Description cannot exceed 500 characters").optional(),
-  category: z.string().optional(),
-  tags: z.array(z.string()).max(10, "Cannot add more than 10 tags").optional(),
-  priority: z.enum(["low", "medium", "high"]).default("medium")
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title cannot exceed 100 characters"),
+  description: z
+    .string()
+    .max(500, "Description cannot exceed 500 characters")
+    .optional(),
 });
 
 type FormValues = z.infer<typeof wishlistFormSchema>;
@@ -39,44 +44,20 @@ interface EditWishlistDialogProps {
   wishlist: Wishlist | null;
 }
 
-const WISHLIST_CATEGORIES = [
-  { value: "birthday", label: "Birthday" },
-  { value: "holiday", label: "Holiday" },
-  { value: "anniversary", label: "Anniversary" },
-  { value: "wedding", label: "Wedding" },
-  { value: "baby", label: "Baby" },
-  { value: "personal", label: "Personal" },
-  { value: "shopping", label: "Shopping" },
-  { value: "gift-ideas", label: "Gift Ideas" },
-  { value: "other", label: "Other" },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-];
-
-const EditWishlistDialog = ({ 
-  open, 
-  onOpenChange, 
+const EditWishlistDialog = ({
+  open,
+  onOpenChange,
   onSubmit,
-  wishlist 
+  wishlist,
 }: EditWishlistDialogProps) => {
-  // Manage tags state separately to make the component more responsive
-  const [tags, setTags] = useState<string[]>([]);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(wishlistFormSchema),
     defaultValues: {
       title: wishlist?.title || "",
       description: wishlist?.description || "",
-      category: wishlist?.category || "personal",
-      tags: wishlist?.tags || [],
-      priority: (wishlist?.priority as "low" | "medium" | "high") || "medium"
-    }
+    },
   });
-  
+
   const { formState, reset } = form;
   const isSubmitting = formState.isSubmitting;
 
@@ -86,58 +67,37 @@ const EditWishlistDialog = ({
       reset({
         title: wishlist.title,
         description: wishlist.description || "",
-        category: wishlist.category || "personal",
-        tags: wishlist.tags || [],
-        priority: (wishlist.priority as "low" | "medium" | "high") || "medium"
       });
-      
-      // Initialize tags state from wishlist
-      setTags(wishlist.tags || []);
     }
   }, [wishlist, reset, open]);
-  
+
   const handleSubmit = async (values: FormValues) => {
-    // Normalize tags and merge with form values
-    const normalizedValues = {
-      ...values,
-      tags: normalizeTags(tags)
-    };
-    
-    await onSubmit(normalizedValues);
+    await onSubmit(values);
   };
-  
-  // Reset form and tags when dialog is closed
-  const handleOpenChange = (open: boolean) => {
-    if (!open && wishlist) {
+
+  // Reset form when dialog is closed
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen && wishlist) {
       reset({
         title: wishlist.title,
         description: wishlist.description || "",
-        category: wishlist.category || "personal",
-        tags: wishlist.tags || [],
-        priority: (wishlist.priority as "low" | "medium" | "high") || "medium"
       });
-      setTags(wishlist.tags || []);
     }
-    onOpenChange(open);
+    onOpenChange(isOpen);
   };
 
   if (!wishlist) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto pb-safe-or-6"
-        style={{
-          marginBottom: 'env(safe-area-inset-bottom, 0px)',
-          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))'
-        }}
-      >
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Wishlist</DialogTitle>
           <DialogDescription>
             Update your wishlist details.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -147,13 +107,13 @@ const EditWishlistDialog = ({
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="My Wishlist" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -161,117 +121,20 @@ const EditWishlistDialog = ({
                 <FormItem>
                   <FormLabel>Description (optional)</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       {...field}
                       value={field.value || ""}
+                      placeholder="Add a description for your wishlist..."
                       className="resize-none"
+                      rows={3}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <Separator className="my-4" />
-            
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Organization</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value || "personal"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {WISHLIST_CATEGORIES.map((category) => (
-                            <SelectItem key={category.value} value={category.value}>
-                              {category.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose a category for your wishlist
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PRIORITY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Set the importance level
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="tags"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Tags (optional)</FormLabel>
-                    <FormControl>
-                      <EnhancedTagInput 
-                        tags={tags}
-                        onChange={setTags}
-                        placeholder="Add tags to organize your wishlist..."
-                        disabled={isSubmitting}
-                        maxTags={10}
-                        wishlistTitle={wishlist?.title || ""}
-                        wishlistDescription={wishlist?.description || ""}
-                        category={wishlist?.category}
-                        showSuggestions={true}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Smart suggestions help you organize and find your wishlist later
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <DialogFooter className="pt-4 pb-safe-or-4"
-              style={{
-                paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))'
-              }}
-            >
+
+            <DialogFooter className="pt-4">
               <Button
                 type="button"
                 variant="outline"

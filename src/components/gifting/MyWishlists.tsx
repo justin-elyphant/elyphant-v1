@@ -186,6 +186,9 @@ const MyWishlists = () => {
   const handleEditDialogSubmit = async (values: { title: string; description?: string }) => {
     if (!currentWishlist) return;
 
+    // Close dialog immediately for smooth UX (optimistic)
+    setEditDialogOpen(false);
+
     await updateWishlist({
       wishlistId: currentWishlist.id,
       data: {
@@ -193,8 +196,6 @@ const MyWishlists = () => {
         description: values.description || "",
       },
     });
-
-    setEditDialogOpen(false);
   };
 
   const handleDeleteWishlist = (id: string) => {

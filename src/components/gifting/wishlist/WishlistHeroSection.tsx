@@ -70,17 +70,16 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleCreateClick}
-                className="bg-white hover:bg-white/90 text-[#FF6B6B] min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation"
+                className="bg-white hover:bg-white/90 text-[#FF6B6B] border-0 min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation shadow-md"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {wishlistCount === 0 ? "Create New Wishlist" : "Create New Wishlist"}
+                Create New Wishlist
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleBrowseClick}
-                variant="outline" 
-                className="border-white/40 text-white hover:bg-white/10 min-h-[48px] w-full sm:w-auto touch-manipulation"
+                className="bg-white/20 hover:bg-white/30 border-2 border-white text-white min-h-[48px] w-full sm:w-auto touch-manipulation"
               >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Browse Marketplace

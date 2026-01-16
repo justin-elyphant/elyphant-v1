@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { getWishlistDirectUrl } from "@/utils/urlUtils";
 
 interface ShareToWishlistConnectionButtonProps {
   wishlist: Wishlist;
@@ -42,7 +43,7 @@ const ShareToWishlistConnectionButton = ({
   const connectionId = selectedConnection?.id || "";
   const { sendMessage } = useDirectMessaging(connectionId);
 
-  const shareUrl = `${window.location.origin}/wishlist/${wishlist.id}`;
+  const shareUrl = getWishlistDirectUrl(wishlist.id);
   const itemCount = wishlist.items?.length || 0;
   const totalValue = wishlist.items?.reduce((sum, item) => sum + (item.price || 0), 0) || 0;
 

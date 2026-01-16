@@ -15,6 +15,7 @@ import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { getWishlistDirectUrl } from "@/utils/urlUtils";
 
 const WishlistWorkspace = () => {
   const { wishlistId } = useParams();
@@ -216,7 +217,7 @@ const WishlistWorkspace = () => {
     
     await triggerHapticFeedback('light');
     
-    const shareUrl = `${window.location.origin}/wishlist/${wishlistId}`;
+    const shareUrl = getWishlistDirectUrl(wishlistId || '');
     
     if (navigator.share) {
       try {

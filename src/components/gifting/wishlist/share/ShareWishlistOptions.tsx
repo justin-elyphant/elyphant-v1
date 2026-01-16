@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Copy, Mail, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 interface ShareWishlistOptionsProps {
   wishlistId: string;
@@ -11,7 +12,7 @@ interface ShareWishlistOptionsProps {
 
 const ShareWishlistOptions = ({ wishlistId }: ShareWishlistOptionsProps) => {
   const [copied, setCopied] = useState(false);
-  const shareUrl = `${window.location.origin}/shared-wishlist/${wishlistId}`;
+  const shareUrl = getWishlistShareUrl(wishlistId);
 
   const copyToClipboard = async () => {
     try {

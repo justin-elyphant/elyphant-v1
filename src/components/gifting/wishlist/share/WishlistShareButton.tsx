@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 interface WishlistShareButtonProps {
   wishlist: Wishlist;
@@ -32,7 +33,7 @@ const WishlistShareButton = ({
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   
-  const shareUrl = `${window.location.origin}/shared-wishlist/${wishlist.id}`;
+  const shareUrl = getWishlistShareUrl(wishlist.id);
   
   const sizeStyles = {
     sm: iconOnly ? "h-7 w-7 p-0" : "text-xs h-8 px-2 gap-1",

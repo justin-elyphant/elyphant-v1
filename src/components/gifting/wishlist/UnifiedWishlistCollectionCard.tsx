@@ -12,7 +12,8 @@ import {
   Share2,
   Lock,
   Globe,
-  ShoppingBag
+  ShoppingBag,
+  Loader2
 } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,12 @@ import {
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import WishlistShareButton from "./share/WishlistShareButton";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface UnifiedWishlistCollectionCardProps {
   wishlist: Wishlist;
@@ -49,6 +56,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   const navigate = useNavigate();
   const [isPressed, setIsPressed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
 
   // Get preview images for 2x2 grid display
   const previewImages = wishlist.items
@@ -155,19 +163,68 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     );
   };
 
-  // Privacy indicator component
-  const PrivacyIndicator = () => (
+  // Handle privacy toggle
+  const handlePrivacyToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (!onUpdateSharing || isTogglingPrivacy) return;
+    
+    setIsTogglingPrivacy(true);
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    
+    try {
+      await onUpdateSharing(wishlist.id, !wishlist.is_public);
+    } finally {
+      setIsTogglingPrivacy(false);
+    }
+  };
+
+  // Privacy toggle component - clickable to toggle public/private
+  const PrivacyToggle = () => (
     <div className="absolute top-2 left-2 z-10">
-      <div className={cn(
-        "h-7 w-7 rounded-full flex items-center justify-center",
-        "bg-background/80 backdrop-blur-sm shadow-sm"
-      )}>
-        {wishlist.is_public ? (
-          <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-        ) : (
-          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              className={cn(
+                "h-7 px-2 rounded-full flex items-center gap-1.5",
+                "bg-background/90 backdrop-blur-sm shadow-sm border-0",
+                "hover:bg-background transition-colors",
+                isTogglingPrivacy && "opacity-70 cursor-wait"
+              )}
+              onClick={handlePrivacyToggle}
+              disabled={!onUpdateSharing || isTogglingPrivacy}
+            >
+              {isTogglingPrivacy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              ) : wishlist.is_public ? (
+                <Globe className="h-3.5 w-3.5 text-green-600" />
+              ) : (
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+              <span className={cn(
+                "text-xs font-medium",
+                wishlist.is_public ? "text-green-600" : "text-foreground"
+              )}>
+                {wishlist.is_public ? "Public" : "Private"}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="bottom" 
+            className="bg-popover text-popover-foreground border shadow-md"
+          >
+            <p className="text-xs">
+              {wishlist.is_public 
+                ? "Click to make private" 
+                : "Click to make public"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 
@@ -311,8 +368,8 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     >
       {/* Square Image Area */}
       <div className="relative aspect-square bg-muted overflow-hidden rounded-t-lg">
-        {/* Privacy Indicator - Always visible top-left */}
-        <PrivacyIndicator />
+        {/* Privacy Toggle - Always visible top-left */}
+        <PrivacyToggle />
 
         {/* Actions - Mobile uses dropdown, Desktop/Tablet uses hover overlay */}
         {isMobile ? <MobileActionMenu /> : <HoverActionOverlay />}

@@ -264,15 +264,28 @@ const Wishlists = () => {
             className="sticky top-0 z-40"
           />
 
-          {/* Tab Toggle - matching mobile/tablet style */}
-          <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/30">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-              <div className="flex bg-muted/50 rounded-xl p-1 max-w-md">
+          {/* Hero Section - Always visible */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <WishlistHeroSection 
+              wishlistCount={wishlists?.length || 0}
+              totalItemCount={totalItems}
+              onCreateWishlist={() => setCreateDialogOpen(true)}
+            />
+            
+            {/* Benefits Grid - show for users with fewer wishlists */}
+            {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
+          </div>
+
+          {/* Tab Toggle + Sort Bar - Same Row Below Hero */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+            <div className="flex items-center justify-between">
+              {/* Tab Toggle */}
+              <div className="flex bg-muted/50 rounded-xl p-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "flex-1 h-10 rounded-lg text-sm font-medium transition-all gap-2",
+                    "h-10 px-5 rounded-lg text-sm font-medium transition-all gap-2",
                     activeTab === "wishlists"
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -286,7 +299,7 @@ const Wishlists = () => {
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "flex-1 h-10 rounded-lg text-sm font-medium transition-all gap-2",
+                    "h-10 px-5 rounded-lg text-sm font-medium transition-all gap-2",
                     activeTab === "nicole"
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -297,6 +310,21 @@ const Wishlists = () => {
                   Nicole AI
                 </Button>
               </div>
+
+              {/* Sort Dropdown - Only show when on wishlists tab */}
+              {activeTab === "wishlists" && (
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                  <SelectTrigger className="w-[160px] h-10 rounded-lg">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Recently Added</SelectItem>
+                    <SelectItem value="name">Name A-Z</SelectItem>
+                    <SelectItem value="items">Most Items</SelectItem>
+                    <SelectItem value="updated">Last Updated</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
@@ -307,70 +335,38 @@ const Wishlists = () => {
               <NicoleAISuggestions maxProducts={16} variant="full" />
             </div>
           ) : (
-            /* Wishlists Tab */
-            <>
-              {/* Hero Section */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-                <WishlistHeroSection 
-                  wishlistCount={wishlists?.length || 0}
-                  totalItemCount={totalItems}
-                  onCreateWishlist={() => setCreateDialogOpen(true)}
-                />
-                
-                {/* Benefits Grid - show for users with fewer wishlists */}
-                {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
-              </div>
-
-              {/* Sort Bar */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
-                <div className="flex justify-end">
-                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-                    <SelectTrigger className="w-[160px] h-10 rounded-lg">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="recent">Recently Added</SelectItem>
-                      <SelectItem value="name">Name A-Z</SelectItem>
-                      <SelectItem value="items">Most Items</SelectItem>
-                      <SelectItem value="updated">Last Updated</SelectItem>
-                    </SelectContent>
-                  </Select>
+            /* Wishlists Tab - Grid */
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              </div>
-
-              {/* Wishlists Grid */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : sortedWishlists.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {sortedWishlists.map((wishlist) => (
-                      <UnifiedWishlistCollectionCard
-                        key={wishlist.id}
-                        wishlist={wishlist}
-                        variant="desktop"
-                        onEdit={handleEditWishlist}
-                        onDelete={handleDeleteWishlist}
-                        onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
-                          await updateWishlistSharing({ wishlistId, isPublic });
-                          return true;
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Start building your wishlist to share with friends and family. 
-                      It's the perfect way to let others know what you'd love to receive!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </>
+              ) : sortedWishlists.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {sortedWishlists.map((wishlist) => (
+                    <UnifiedWishlistCollectionCard
+                      key={wishlist.id}
+                      wishlist={wishlist}
+                      variant="desktop"
+                      onEdit={handleEditWishlist}
+                      onDelete={handleDeleteWishlist}
+                      onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+                        await updateWishlistSharing({ wishlistId, isPublic });
+                        return true;
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Start building your wishlist to share with friends and family. 
+                    It's the perfect way to let others know what you'd love to receive!
+                  </p>
+                </div>
+              )}
+            </div>
           )}
           
           {/* Shared dialogs for desktop */}

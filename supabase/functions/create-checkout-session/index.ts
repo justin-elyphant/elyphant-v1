@@ -138,23 +138,26 @@ serve(async (req) => {
         unit_amount: Math.round(contributionAmount * 100),
       },
       quantity: 1,
-    }] : cartItems.map((item: any) => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name || item.product?.name,
-          images: item.image_url ? [item.image_url] : (item.product?.image ? [item.product.image] : []),
-          metadata: {
-            product_id: item.product_id || item.product?.product_id,
-            recipient_id: item.recipientAssignment?.connectionId || '',
-            recipient_name: item.recipientAssignment?.connectionName || '',
-            gift_message: item.recipientAssignment?.giftMessage || ''
-          }
-        },
-        unit_amount: Math.round((item.price || item.product?.price || 0) * 100)
+  }] : cartItems.map((item: any) => ({
+    price_data: {
+      currency: 'usd',
+      product_data: {
+        name: item.name || item.product?.name,
+        images: item.image_url ? [item.image_url] : (item.product?.image ? [item.product.image] : []),
+        metadata: {
+          product_id: item.product_id || item.product?.product_id,
+          recipient_id: item.recipientAssignment?.connectionId || '',
+          recipient_name: item.recipientAssignment?.connectionName || '',
+          gift_message: item.recipientAssignment?.giftMessage || '',
+          // Wishlist tracking metadata for purchase tracking
+          wishlist_id: item.wishlist_id || '',
+          wishlist_item_id: item.wishlist_item_id || ''
+        }
       },
-      quantity: item.quantity
-    }));
+      unit_amount: Math.round((item.price || item.product?.price || 0) * 100)
+    },
+    quantity: item.quantity
+  }));
 
     // Add shipping fee as line item if applicable
     if (pricingBreakdown.shippingCost > 0) {

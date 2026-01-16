@@ -17,9 +17,21 @@ interface WishlistItemsGridProps {
   onGiftNow?: (item: WishlistItem) => void;
   isOwner?: boolean;
   isGuestPreview?: boolean;
+  // Guest purchase mode props
+  onAddToCart?: (item: WishlistItem) => void;
+  purchasedItemIds?: Set<string>;
 }
 
-const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner = true, isGuestPreview = false }: WishlistItemsGridProps) => {
+const WishlistItemsGrid = ({ 
+  items, 
+  onSaveItem, 
+  savingItemId, 
+  onGiftNow, 
+  isOwner = true, 
+  isGuestPreview = false,
+  onAddToCart,
+  purchasedItemIds = new Set()
+}: WishlistItemsGridProps) => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showSchedulingModal, setShowSchedulingModal] = useState(false);
@@ -254,6 +266,8 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner
               onScheduleGift={handleSingleSchedule}
               isOwner={isOwner}
               isGuestPreview={isGuestPreview}
+              onAddToCart={onAddToCart}
+              purchasedItemIds={purchasedItemIds}
             />
           ))}
         </div>
@@ -271,6 +285,9 @@ const WishlistItemsGrid = ({ items, onSaveItem, savingItemId, onGiftNow, isOwner
               isSelectionMode={isSelectionMode}
               isSelected={selectedItems.has(item.id)}
               onSelectionChange={handleSelectionChange}
+              isPurchased={purchasedItemIds.has(item.id)}
+              isGuestView={isGuestPreview}
+              onAddToCart={onAddToCart && !purchasedItemIds.has(item.id) ? () => onAddToCart(item) : undefined}
               className="min-h-[320px]"
             />
           ))}

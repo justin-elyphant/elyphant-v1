@@ -212,8 +212,8 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   // Desktop/Tablet: Hover overlay for actions
   const HoverActionOverlay = () => (
     <div className={cn(
-      "absolute inset-x-2 top-2 flex justify-between items-start z-20 transition-opacity duration-200",
-      isHovered ? "opacity-100" : "opacity-0"
+      "absolute inset-x-2 top-2 flex justify-between items-start z-20 transition-all duration-200",
+      isHovered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
     )}>
       <div className="flex gap-1">
         <Button

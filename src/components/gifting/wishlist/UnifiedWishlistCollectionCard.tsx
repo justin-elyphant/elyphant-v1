@@ -296,7 +296,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   return (
     <Card 
       className={cn(
-        "relative flex flex-col h-full transition-all duration-200 border-border/40 bg-card cursor-pointer",
+        "relative transition-all duration-200 border-border/40 bg-card cursor-pointer",
         // Touch optimization
         "touch-manipulation",
         "-webkit-tap-highlight-color-transparent",
@@ -352,29 +352,23 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
       </div>
 
       {/* Text Content Below Image */}
-      <div className={cn(
-        "p-3 flex flex-col flex-grow",
-        isDesktop && "p-4"
-      )}>
-        {/* Title and description - flexible height */}
-        <div className="flex-grow">
-          <h3 className={cn(
-            "font-medium line-clamp-1 text-foreground",
-            isMobile ? "text-sm" : "text-base"
-          )}>
-            {wishlist.title}
-          </h3>
-          
-          {!isMobile && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mt-1 min-h-[2rem]">
-              {wishlist.description || '\u00A0'}
-            </p>
-          )}
-        </div>
+      <div className={cn("p-3", isDesktop && "p-4")}>
+        <h3 className={cn(
+          "font-medium line-clamp-1 text-foreground",
+          isMobile ? "text-sm" : "text-base"
+        )}>
+          {wishlist.title}
+        </h3>
+        
+        {wishlist.description && !isMobile && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+            {wishlist.description}
+          </p>
+        )}
 
         {/* Tags, Category, and Footer Actions - Only show on tablet/desktop */}
         {!isMobile && (
-          <div className="flex items-center justify-between gap-2 mt-auto pt-2">
+          <div className="flex items-center justify-between gap-2 mt-3">
             {/* Left side: Tags and category */}
             <div className="flex flex-wrap gap-1 flex-1 min-w-0">
               {wishlist.category && (

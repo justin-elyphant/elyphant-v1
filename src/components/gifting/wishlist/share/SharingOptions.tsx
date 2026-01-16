@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 interface SharingOptionsProps {
   isPublic: boolean;
@@ -17,9 +18,7 @@ const SharingOptions = ({ isPublic, wishlistId }: SharingOptionsProps) => {
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Base URL for sharing
-  const baseUrl = window.location.origin;
-  const shareUrl = wishlistId ? `${baseUrl}/shared-wishlist/${wishlistId}` : "";
+  const shareUrl = wishlistId ? getWishlistShareUrl(wishlistId) : "";
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);

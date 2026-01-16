@@ -4,6 +4,7 @@ import { Plus, Eye, EyeOff, Share2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { getProfileUrl } from "@/utils/urlUtils";
 
 interface WishlistActionToolbarProps {
   wishlistId: string;
@@ -33,7 +34,7 @@ const WishlistActionToolbar = ({
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/profile/${ownerId}?wishlist=${wishlistId}`;
+    const shareUrl = getProfileUrl(ownerId, wishlistId);
     
     if (navigator.share) {
       try {

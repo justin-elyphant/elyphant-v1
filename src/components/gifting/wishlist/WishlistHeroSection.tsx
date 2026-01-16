@@ -52,16 +52,16 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
       className={isMobile ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}
       style={{ transform: 'translate3d(0,0,0)' }}
     >
-      {/* Lululemon-inspired Hero Card - Grey background with red accent */}
-      <Card className="relative overflow-hidden bg-[#F7F7F7] border-0 text-foreground">
+      {/* Coral/Pink Hero Card - warm gradient with white text */}
+      <Card className="relative overflow-hidden bg-gradient-to-br from-[#FF6B6B] via-[#FF8E72] to-[#FFA07A] border-0 text-white">
         <CardContent className={padding}>
-          <Badge className="bg-black/10 text-foreground border-0 mb-3 lg:mb-4 text-xs font-medium">
+          <Badge className="bg-white/20 text-white border-0 mb-3 lg:mb-4 text-xs font-medium">
             YOUR LISTS
           </Badge>
-          <h1 className={`${titleSize} font-bold mb-3 lg:mb-4 leading-tight text-foreground`}>
+          <h1 className={`${titleSize} font-bold mb-3 lg:mb-4 leading-tight text-white`}>
             My Wishlists
           </h1>
-          <p className={`${subtitleSize} text-muted-foreground mb-4 lg:mb-6 leading-relaxed`}>
+          <p className={`${subtitleSize} text-white/90 mb-4 lg:mb-6 leading-relaxed`}>
             Build your dream collections and share with friends and family. 
             The perfect way to never receive a gift you don't love.
           </p>
@@ -70,20 +70,20 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleCreateClick}
-                className="bg-[#DC2626] hover:bg-[#B91C1C] text-white min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation"
+                className="bg-white hover:bg-white/90 text-[#FF6B6B] min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {wishlistCount === 0 ? "Create Your First Wishlist" : "Create New Wishlist"}
+                {wishlistCount === 0 ? "Create New Wishlist" : "Create New Wishlist"}
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleBrowseClick}
                 variant="outline" 
-                className="border-foreground/20 text-foreground hover:bg-black/5 min-h-[48px] w-full sm:w-auto touch-manipulation"
+                className="border-white/40 text-white hover:bg-white/10 min-h-[48px] w-full sm:w-auto touch-manipulation"
               >
                 <ShoppingBag className="h-4 w-4 mr-2" />
-                Browse Products
+                Browse Marketplace
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </motion.div>
@@ -91,9 +91,9 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
           
           {/* Stats on mobile - shown below CTAs */}
           {isMobile && (
-            <div className="mt-4 pt-4 border-t border-foreground/10">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{wishlistCount}</span> {wishlistCount === 1 ? 'wishlist' : 'wishlists'} · <span className="font-semibold text-foreground">{totalItemCount}</span> items
+            <div className="mt-4 pt-4 border-t border-white/20">
+              <p className="text-sm text-white/80">
+                <span className="font-semibold text-white">{wishlistCount}</span> {wishlistCount === 1 ? 'wishlist' : 'wishlists'} · <span className="font-semibold text-white">{totalItemCount}</span> items
               </p>
             </div>
           )}

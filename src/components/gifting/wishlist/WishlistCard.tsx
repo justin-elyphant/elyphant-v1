@@ -91,7 +91,7 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
   return (
     <Card 
       key={wishlist.id} 
-      className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="relative overflow-hidden cursor-pointer hover:shadow-md transition-all touch-manipulation active:scale-[0.97]"
       onClick={handleCardClick}
     >
       {/* Privacy status indicator at top corner */}
@@ -176,7 +176,7 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
             </p>
             <Button 
               variant="default" 
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white"
               onClick={handleStartShopping}
             >
               <ShoppingBag className="mr-2 h-4 w-4" />
@@ -207,7 +207,7 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
           <Button 
             variant="default" 
             size="sm" 
-            className="w-full bg-purple-600 hover:bg-purple-700"
+            className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white"
             onClick={handleAddMoreItems}
           >
             <ShoppingBag className="mr-2 h-3 w-3" />

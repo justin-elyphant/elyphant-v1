@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
-import MobileWishlistCard from "./MobileWishlistCard";
+import UnifiedWishlistCollectionCard from "./UnifiedWishlistCollectionCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
@@ -236,9 +236,10 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
               {filteredWishlists.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   {filteredWishlists.map((wishlist) => (
-                    <MobileWishlistCard
+                    <UnifiedWishlistCollectionCard
                       key={wishlist.id}
                       wishlist={wishlist}
+                      variant="mobile"
                       onEdit={onEditWishlist}
                       onDelete={onDeleteWishlist}
                     />
@@ -258,7 +259,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                   </div>
                   <Button 
                     onClick={onCreateWishlist}
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
+                    className="w-full h-12 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white"
                   >
                     <Plus className="h-5 w-5 mr-2" />
                     Create Your First Wishlist

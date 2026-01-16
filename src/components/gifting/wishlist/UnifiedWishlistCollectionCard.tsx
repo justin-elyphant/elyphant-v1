@@ -270,58 +270,12 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     </div>
   );
 
-  // Desktop/Tablet: Hover overlay for actions
+  // Desktop/Tablet: Hover overlay for actions - positioned on RIGHT side to not conflict with privacy toggle
   const HoverActionOverlay = () => (
     <div className={cn(
-      "absolute inset-x-2 top-2 flex justify-between items-start z-20 transition-all duration-200",
+      "absolute top-2 right-2 flex gap-1 z-20 transition-all duration-200",
       isHovered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
     )}>
-      <div className="flex gap-1">
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            console.log('[UnifiedCard] View button clicked for wishlist:', wishlist.id);
-            triggerHapticFeedback(HapticPatterns.buttonTap);
-            navigate(`/wishlist/${wishlist.id}`);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            console.log('[UnifiedCard] Edit button clicked for wishlist:', wishlist.id);
-            triggerHapticFeedback(HapticPatterns.buttonTap);
-            onEdit(wishlist.id);
-          }}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background text-[#DC2626] hover:text-[#B91C1C]"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            console.log('[UnifiedCard] Delete button clicked for wishlist:', wishlist.id);
-            triggerHapticFeedback(HapticPatterns.removeItem);
-            onDelete(wishlist.id);
-          }}
-          aria-label={`Delete ${wishlist.title} wishlist`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-      
       {onUpdateSharing && (
         <WishlistShareButton 
           wishlist={wishlist}
@@ -330,6 +284,49 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           className="bg-background/80 backdrop-blur-sm hover:bg-background"
         />
       )}
+      <Button
+        variant="secondary"
+        size="icon"
+        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          console.log('[UnifiedCard] View button clicked for wishlist:', wishlist.id);
+          triggerHapticFeedback(HapticPatterns.buttonTap);
+          navigate(`/wishlist/${wishlist.id}`);
+        }}
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="secondary"
+        size="icon"
+        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          console.log('[UnifiedCard] Edit button clicked for wishlist:', wishlist.id);
+          triggerHapticFeedback(HapticPatterns.buttonTap);
+          onEdit(wishlist.id);
+        }}
+      >
+        <Edit className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="secondary"
+        size="icon"
+        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background text-destructive hover:text-destructive"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          console.log('[UnifiedCard] Delete button clicked for wishlist:', wishlist.id);
+          triggerHapticFeedback(HapticPatterns.removeItem);
+          onDelete(wishlist.id);
+        }}
+        aria-label={`Delete ${wishlist.title} wishlist`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </div>
   );
 

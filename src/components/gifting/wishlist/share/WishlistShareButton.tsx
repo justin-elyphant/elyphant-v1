@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2, Globe, Lock } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Wishlist } from "@/types/profile";
 import ShareWishlistDialog from "../ShareWishlistDialog";
@@ -52,11 +52,7 @@ const WishlistShareButton = ({
                 setDialogOpen(true);
               }}
             >
-              {wishlist.is_public ? (
-                <Globe className={cn(iconSize[size], "text-green-600")} />
-              ) : (
-                <Lock className={cn(iconSize[size], "text-muted-foreground")} />
-              )}
+              <Share2 className={cn(iconSize[size], "text-foreground")} />
               <span className="text-foreground">Share</span>
             </Button>
           </TooltipTrigger>

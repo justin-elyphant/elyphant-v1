@@ -98,8 +98,8 @@ const WishlistShareButton = ({
   };
   
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <TooltipProvider>
+    <TooltipProvider>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
@@ -121,15 +121,14 @@ const WishlistShareButton = ({
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">
+          <TooltipContent side="top" sideOffset={8} className="text-xs z-50">
             {wishlist.is_public 
               ? "Share this wishlist" 
               : "Make public to share"}
           </TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuContent align="end" className="w-48 z-50" onClick={(e) => e.stopPropagation()}>
         {wishlist.is_public ? (
           <>
             <DropdownMenuItem onClick={copyToClipboard} className="cursor-pointer">
@@ -174,8 +173,9 @@ const WishlistShareButton = ({
             </DropdownMenuItem>
           </>
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TooltipProvider>
   );
 };
 

@@ -309,12 +309,14 @@ async function handleCheckoutSessionCompleted(
       // This is a product item - accumulate subtotal
       subtotalAmount += itemAmount;
       
-      // Fetch product to get metadata containing Amazon ASIN and gift message
+      // Fetch product to get metadata containing Amazon ASIN, gift message, and wishlist tracking
       let amazonAsin = 'unknown';
       let recipientId = null;
       let recipientName = '';
       let giftMessage = '';
       let imageUrl = '';
+      let wishlistId = '';
+      let wishlistItemId = '';
       
       if (stripeProductId) {
         try {
@@ -324,8 +326,11 @@ async function handleCheckoutSessionCompleted(
           recipientName = product.metadata?.recipient_name || '';
           giftMessage = product.metadata?.gift_message || '';
           imageUrl = product.images?.[0] || '';  // Get first product image from Stripe
+          // Wishlist tracking
+          wishlistId = product.metadata?.wishlist_id || '';
+          wishlistItemId = product.metadata?.wishlist_item_id || '';
           
-          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Stripe ID: ${stripeProductId}`);
+          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Wishlist: ${wishlistId ? 'Yes' : 'No'} | Stripe ID: ${stripeProductId}`);
           if (!imageUrl) {
             console.warn(`⚠️  [IMAGE] No image URL for product: ${description} (${amazonAsin})`);
           }
@@ -344,6 +349,8 @@ async function handleCheckoutSessionCompleted(
         recipient_id: recipientId === 'self' ? null : recipientId,  // Convert 'self' to null
         recipient_name: recipientName,
         gift_message: giftMessage,
+        wishlist_id: wishlistId,
+        wishlist_item_id: wishlistItemId,
       };
     })
   );
@@ -413,6 +420,31 @@ async function handleCheckoutSessionCompleted(
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`✅ [STEP 6] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number}`);
+
+    // STEP 6.1: Track wishlist item purchases
+    console.log(`📋 [STEP 6.1] Tracking wishlist item purchases...`);
+    for (const item of group.items) {
+      if (item.wishlist_id && item.wishlist_item_id) {
+        const { error: purchaseError } = await supabase
+          .from('wishlist_item_purchases')
+          .insert({
+            wishlist_id: item.wishlist_id,
+            item_id: item.wishlist_item_id,
+            product_id: item.product_id,
+            purchaser_user_id: userId,
+            is_anonymous: false,
+            order_id: newOrder.id,
+            quantity: item.quantity,
+            price_paid: item.unit_price * item.quantity
+          });
+        
+        if (purchaseError) {
+          console.warn(`⚠️ Failed to track wishlist purchase:`, purchaseError);
+        } else {
+          console.log(`✅ Wishlist item tracked: ${item.wishlist_item_id}`);
+        }
+      }
+    }
 
     // Send email and process
     await triggerEmailOrchestrator(newOrder.id, session, group.items, supabase);

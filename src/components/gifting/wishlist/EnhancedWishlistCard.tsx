@@ -37,6 +37,8 @@ interface EnhancedWishlistCardProps {
   isPurchased?: boolean;
   onCopyToWishlist?: (item: WishlistItem) => void;
   isGuestView?: boolean;
+  // Guest purchase mode
+  onAddToCart?: () => void;
   // Style props
   className?: string;
 }
@@ -53,6 +55,7 @@ const EnhancedWishlistCard = ({
   isPurchased = false,
   onCopyToWishlist,
   isGuestView = false,
+  onAddToCart,
   className
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -238,9 +241,33 @@ const EnhancedWishlistCard = ({
             
             <div className="flex justify-between items-center">
               <p className="font-bold text-xl">{formattedPrice}</p>
-              {!isSelectionMode && (
+              {!isSelectionMode && !isPurchased && (
                 <div className="flex gap-2">
-                  {isGuestView && onCopyToWishlist ? (
+                  {/* Guest view with Add to Cart option */}
+                  {isGuestView && onAddToCart ? (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={handleViewDetails}
+                        className="text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToCart();
+                        }}
+                        className="text-xs bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Add to Cart
+                      </Button>
+                    </>
+                  ) : isGuestView && onCopyToWishlist ? (
                     <Button 
                       size="sm" 
                       variant="outline"

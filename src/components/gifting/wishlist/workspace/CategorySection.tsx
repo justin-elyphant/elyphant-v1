@@ -12,6 +12,9 @@ interface CategorySectionProps {
   onScheduleGift?: (item: WishlistItem) => void;
   isOwner?: boolean;
   isGuestPreview?: boolean;
+  // Guest purchase mode props
+  onAddToCart?: (item: WishlistItem) => void;
+  purchasedItemIds?: Set<string>;
 }
 
 const CategorySection = ({
@@ -23,7 +26,9 @@ const CategorySection = ({
   onGiftNow,
   onScheduleGift,
   isOwner = true,
-  isGuestPreview = false
+  isGuestPreview = false,
+  onAddToCart,
+  purchasedItemIds = new Set()
 }: CategorySectionProps) => {
   if (items.length === 0) return null;
 
@@ -50,6 +55,9 @@ const CategorySection = ({
             isRemoving={savingItemId === item.id}
             onGiftNow={onGiftNow}
             onScheduleGift={onScheduleGift}
+            isPurchased={purchasedItemIds.has(item.id)}
+            isGuestView={isGuestPreview}
+            onAddToCart={onAddToCart && !purchasedItemIds.has(item.id) ? () => onAddToCart(item) : undefined}
             className="min-h-[320px]"
           />
         ))}

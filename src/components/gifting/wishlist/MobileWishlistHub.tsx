@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Plus, Heart, Sparkles, TrendingUp, Gift } from "lucide-react";
+import { Plus, Heart, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
@@ -9,8 +9,6 @@ import UnifiedWishlistCollectionCard from "./UnifiedWishlistCollectionCard";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
 import NicoleAISuggestions from "./NicoleAISuggestions";
-import { useProducts } from "@/contexts/ProductContext";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 type TabMode = "wishlists" | "nicole";
@@ -37,10 +35,8 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
   const totalItems = useMemo(() => {
     return wishlists.reduce((acc, w) => acc + (w.items?.length || 0), 0);
   }, [wishlists]);
-  
-  // Trending products for Nicole AI tab
-  const { products, isLoading: productsLoading } = useProducts();
-  const trendingProducts = useMemo(() => products.slice(0, 8), [products]);
+
+
 
   // Handle tab switch with haptic
   const handleTabSwitch = (tab: TabMode) => {
@@ -159,61 +155,9 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
             </div>
           )}
 
-          {/* Nicole AI Tab */}
+          {/* Nicole AI Tab - Full Recommendation Engine */}
           {activeTab === "nicole" && (
-            <div className="space-y-6">
-              {/* Nicole AI Header */}
-              <div className="text-center py-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Powered by Nicole AI</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Personalized picks based on your searches & trending gifts
-                </p>
-              </div>
-
-              {/* Nicole AI Suggestions Component */}
-              <NicoleAISuggestions maxProducts={8} className="" />
-
-              {/* Trending Section */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Trending Gifts</span>
-                </div>
-
-                {trendingProducts.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {trendingProducts.map((product: any) => (
-                      <AirbnbStyleProductCard
-                        key={product.product_id || product.id}
-                        product={product}
-                        onProductClick={() => navigate(`/product/${product.product_id || product.id}`)}
-                        context="wishlist"
-                      />
-                    ))}
-                  </div>
-                ) : !productsLoading && (
-                  <div className="text-center py-8">
-                    <Gift className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-medium mb-2">Discovering Gifts</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Nicole is learning your preferences to suggest perfect gifts
-                    </p>
-                  </div>
-                )}
-
-                {/* Loading state */}
-                {productsLoading && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="aspect-square bg-muted/50 rounded-xl animate-pulse" />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <NicoleAISuggestions maxProducts={16} variant="full" className="" />
           )}
         </div>
       </div>

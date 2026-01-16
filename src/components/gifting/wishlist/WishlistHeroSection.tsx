@@ -53,7 +53,7 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
       style={{ transform: 'translate3d(0,0,0)' }}
     >
       {/* Coral/Pink Hero Card - warm gradient with white text */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-[#FF6B6B] via-[#FF8E72] to-[#FFA07A] border-0 text-white">
+      <Card className="relative overflow-hidden bg-gradient-to-r from-[#F97066] via-[#FB923C] to-[#FDBA74] border-0 text-white">
         <CardContent className={padding}>
           <Badge className="bg-white/20 text-white border-0 mb-3 lg:mb-4 text-xs font-medium">
             YOUR LISTS

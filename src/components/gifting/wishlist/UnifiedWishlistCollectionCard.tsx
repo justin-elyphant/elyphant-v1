@@ -286,10 +286,22 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         !isMobile && "hover:shadow-md hover:border-primary/20",
         className
       )}
-      onTouchStart={() => setIsPressed(true)}
-      onTouchEnd={() => setIsPressed(false)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
+      onTouchStart={(e) => {
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        setIsPressed(true);
+      }}
+      onTouchEnd={(e) => {
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        setIsPressed(false);
+      }}
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        setIsPressed(true);
+      }}
+      onMouseUp={(e) => {
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        setIsPressed(false);
+      }}
       onMouseLeave={() => {
         setIsPressed(false);
         setIsHovered(false);

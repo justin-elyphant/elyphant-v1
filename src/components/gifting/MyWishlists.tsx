@@ -183,19 +183,14 @@ const MyWishlists = () => {
     }
   };
 
-  const handleEditDialogSubmit = async (values: WishlistFormValues) => {
+  const handleEditDialogSubmit = async (values: { title: string; description?: string }) => {
     if (!currentWishlist) return;
-
-    const cleanCat = cleanCategory(values.category);
 
     await updateWishlist({
       wishlistId: currentWishlist.id,
       data: {
         title: values.title,
         description: values.description || "",
-        category: cleanCat,
-        tags: values.tags || [],
-        priority: (values.priority as any) || "medium",
       },
     });
 

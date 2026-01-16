@@ -69,9 +69,6 @@ const Wishlists = () => {
   const handleEditDialogSubmit = async (values: {
     title: string;
     description?: string;
-    category?: string;
-    tags?: string[];
-    priority?: "low" | "medium" | "high";
   }) => {
     if (!currentWishlistId) return;
 
@@ -80,9 +77,6 @@ const Wishlists = () => {
       data: {
         title: values.title,
         description: values.description || "",
-        category: values.category?.trim() ? values.category.trim() : null,
-        tags: values.tags || [],
-        priority: values.priority || "medium",
       },
     });
 

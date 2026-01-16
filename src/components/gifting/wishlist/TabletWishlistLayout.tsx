@@ -31,13 +31,15 @@ interface TabletWishlistLayoutProps {
   onCreateWishlist: () => void;
   onEditWishlist: (id: string) => void;
   onDeleteWishlist: (id: string) => void;
+  onUpdateSharing?: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
 }
 
 const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
   wishlists,
   onCreateWishlist,
   onEditWishlist,
-  onDeleteWishlist
+  onDeleteWishlist,
+  onUpdateSharing
 }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -320,6 +322,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                   variant="tablet"
                   onEdit={onEditWishlist}
                   onDelete={onDeleteWishlist}
+                  onUpdateSharing={onUpdateSharing}
                 />
               ))}
             </div>

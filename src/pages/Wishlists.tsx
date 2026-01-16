@@ -178,6 +178,10 @@ const Wishlists = () => {
             onCreateWishlist={() => setCreateDialogOpen(true)}
             onEditWishlist={handleEditWishlist}
             onDeleteWishlist={handleDeleteWishlist}
+            onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+              await updateWishlistSharing({ wishlistId, isPublic });
+              return true;
+            }}
           />
           <WishlistDialogs />
         </ProductProvider>
@@ -195,6 +199,10 @@ const Wishlists = () => {
             onCreateWishlist={() => setCreateDialogOpen(true)}
             onEditWishlist={handleEditWishlist}
             onDeleteWishlist={handleDeleteWishlist}
+            onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+              await updateWishlistSharing({ wishlistId, isPublic });
+              return true;
+            }}
           />
           <WishlistDialogs />
         </ProductProvider>

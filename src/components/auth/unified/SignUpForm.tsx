@@ -88,36 +88,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ invitationData }) => {
               // Don't block signup for this
             }
             
-            // NEW: Auto-accept invitation if present
-            if (invitationData?.connectionId) {
-              try {
-                console.log('📝 Updating connection with corrected data:', {
-                  name: values.name,
-                  email: values.email
-                });
-                
-                const { error: acceptError } = await supabase
-                  .from('user_connections')
-                  .update({
-                    connected_user_id: data.user.id,
-                    status: 'accepted',
-                    accepted_at: new Date().toISOString(),
-                    // Sync the actual name/email the user provided (in case they corrected it)
-                    pending_recipient_name: values.name,
-                    pending_recipient_email: values.email
-                  })
-                  .eq('id', invitationData.connectionId);
-                
-                if (!acceptError) {
-                  toast.success(`You're now connected with ${invitationData.senderName}! 🎉`);
-                  
-                  // Note: connection_established emails are now sent automatically by the database trigger
-                  // No manual email invocation needed - the trigger queue_connection_established_emails() handles it
-                }
-              } catch (error) {
-                console.error('Failed to auto-accept invitation:', error);
-              }
-            }
+            // Invitation linking is handled by Auth.tsx via accept_invitation_by_token RPC
+            // which also links associated auto_gifting_rules - no duplicate logic needed here
             
             toast.success("Account created! Complete your profile to get started.");
             

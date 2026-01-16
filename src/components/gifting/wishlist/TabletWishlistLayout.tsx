@@ -16,12 +16,12 @@ import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
 import WishlistCard from "./WishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
-import ShoppingHeroSection from "./ShoppingHeroSection";
-import MarketplaceProductsSection from "./MarketplaceProductsSection";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
+import NicoleAISuggestions from "./NicoleAISuggestions";
 import { useProducts } from "@/contexts/ProductContext";
 import { useMarketplace } from "@/hooks/useMarketplace";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 type ViewMode = "grid" | "list";
 type SortOption = "recent" | "name" | "items" | "updated";
@@ -145,7 +145,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         className="sticky top-0 z-40"
       />
 
-      {/* Hero Section for Tablet - Full hero */}
+      {/* Hero Section for Tablet */}
       <div className="px-6 py-6 space-y-6">
         <WishlistHeroSection 
           wishlistCount={wishlists.length}
@@ -154,6 +154,9 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         />
         
         {wishlists.length < 3 && <WishlistBenefitsGrid />}
+        
+        {/* Nicole AI Suggestions */}
+        <NicoleAISuggestions maxProducts={6} />
       </div>
 
       {/* Search & Controls Bar */}
@@ -295,20 +298,6 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
 
       {/* Main Content */}
       <div className="px-6 py-6">
-        {/* Product Search Results */}
-        {isProductSearch && searchResults.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Products for "{searchQuery}"</h2>
-            <MarketplaceProductsSection
-              products={searchResults}
-              wishlists={wishlists}
-              onCreateWishlist={onCreateWishlist}
-              isLoading={searchLoading}
-              mode="browse"
-              title={`Products for "${searchQuery}"`}
-            />
-          </div>
-        )}
 
         {/* Wishlists Section */}
         <div>

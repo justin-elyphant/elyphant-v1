@@ -11,11 +11,13 @@ import MobileWishlistCard from "./MobileWishlistCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
+import NicoleAISuggestions from "./NicoleAISuggestions";
 import { useProducts, Product } from "@/contexts/ProductContext";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 type TabMode = "wishlists" | "shop";
 
@@ -92,9 +94,16 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
 
   // Clear search
   const clearSearch = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     setSearchQuery("");
     setSearchResults([]);
     setActiveTab("wishlists");
+  };
+
+  // Handle tab switch with haptic
+  const handleTabSwitch = (tab: TabMode) => {
+    triggerHapticFeedback(HapticPatterns.tabSwitch);
+    setActiveTab(tab);
   };
 
   // Products to display
@@ -160,12 +169,12 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
               variant="ghost"
               size="sm"
               className={cn(
-                "flex-1 h-9 rounded-lg text-sm font-medium transition-all gap-2",
+                "flex-1 h-9 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
                 activeTab === "wishlists"
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
-              onClick={() => setActiveTab("wishlists")}
+              onClick={() => handleTabSwitch("wishlists")}
             >
               <Heart className="h-4 w-4" />
               My Wishlists
@@ -174,12 +183,12 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
               variant="ghost"
               size="sm"
               className={cn(
-                "flex-1 h-9 rounded-lg text-sm font-medium transition-all gap-2",
+                "flex-1 h-9 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
                 activeTab === "shop"
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
-              onClick={() => setActiveTab("shop")}
+              onClick={() => handleTabSwitch("shop")}
             >
               <ShoppingBag className="h-4 w-4" />
               Shop to Add
@@ -212,6 +221,9 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
               
               {/* Benefits Grid for new users */}
               {wishlists.length < 3 && <WishlistBenefitsGrid className="mt-4" />}
+
+              {/* Nicole AI Suggestions - personalized product carousel */}
+              <NicoleAISuggestions maxProducts={6} className="mt-4" />
 
               {/* Search results info */}
               {searchQuery && (

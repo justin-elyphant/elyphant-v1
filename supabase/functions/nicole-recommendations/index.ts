@@ -18,6 +18,7 @@ interface ScoredProduct {
   product: any;
   score: number;
   matchReason: string[];
+  section: 'search' | 'viewed' | 'tag' | 'trending';
 }
 
 serve(async (req) => {
@@ -50,40 +51,85 @@ serve(async (req) => {
     const allProducts: ScoredProduct[] = [];
     let cacheHits = 0;
     let cacheMisses = 0;
+    let searchBasedFound = 0;
+    let viewedBasedFound = 0;
 
     // ===== STRATEGY 1: User's Recent Searches =====
     if (recentSearches.length > 0) {
-      console.log('🔍 Searching products from user searches:', recentSearches.slice(0, 3));
+      const uniqueSearches = [...new Set(recentSearches.slice(0, 5))];
+      console.log('🔍 Searching products from user searches:', uniqueSearches);
       
-      for (const searchTerm of recentSearches.slice(0, 3)) {
+      for (const searchTerm of uniqueSearches) {
         const normalizedTerm = searchTerm.toLowerCase().trim();
         if (normalizedTerm.length < 2) continue;
 
-        // Query cached products first
-        const { data: cachedProducts, error } = await supabase
+        // Try different search strategies
+        // Strategy 1a: Direct title match
+        let { data: cachedProducts, error } = await supabase
           .from('products')
           .select('*')
           .ilike('title', `%${normalizedTerm}%`)
-          .order('view_count', { ascending: false })
+          .order('view_count', { ascending: false, nullsFirst: false })
           .limit(6);
+
+        // Strategy 1b: If no direct match, try splitting search terms
+        if ((!cachedProducts || cachedProducts.length === 0) && normalizedTerm.includes(' ')) {
+          const keywords = normalizedTerm.split(' ').filter(k => k.length > 2);
+          if (keywords.length > 0) {
+            const { data: keywordProducts } = await supabase
+              .from('products')
+              .select('*')
+              .or(keywords.map(k => `title.ilike.%${k}%`).join(','))
+              .order('view_count', { ascending: false, nullsFirst: false })
+              .limit(6);
+            
+            if (keywordProducts && keywordProducts.length > 0) {
+              cachedProducts = keywordProducts;
+            }
+          }
+        }
 
         if (!error && cachedProducts && cachedProducts.length > 0) {
           cacheHits += cachedProducts.length;
-          console.log(`✅ Cache hit for "${searchTerm}": ${cachedProducts.length} products`);
+          searchBasedFound += cachedProducts.length;
+          console.log(`✅ Found products for "${searchTerm}": ${cachedProducts.length}`);
           
           cachedProducts.forEach(product => {
             allProducts.push({
               product: formatProduct(product),
-              score: 25, // High score for search-based
-              matchReason: [`Matches your search: "${searchTerm}"`]
+              score: 25,
+              matchReason: [`Based on "${searchTerm}"`],
+              section: 'search'
             });
           });
         } else {
           cacheMisses++;
-          console.log(`⚠️ Cache miss for "${searchTerm}" - would trigger Zinc API`);
-          // Note: We don't call Zinc directly here to avoid costs
-          // The user's actual search will populate the cache
+          console.log(`⚠️ No products found for "${searchTerm}"`);
         }
+      }
+    }
+
+    // ===== FALLBACK for Search-Based: Use popular products if no search matches =====
+    if (searchBasedFound === 0 && recentSearches.length > 0) {
+      console.log('📦 No search matches - using popular products for "Based on Searches" section');
+      
+      const { data: popularProducts } = await supabase
+        .from('products')
+        .select('*')
+        .not('view_count', 'is', null)
+        .order('view_count', { ascending: false })
+        .limit(6);
+
+      if (popularProducts && popularProducts.length > 0) {
+        cacheHits += popularProducts.length;
+        popularProducts.forEach(product => {
+          allProducts.push({
+            product: formatProduct(product),
+            score: 22,
+            matchReason: ['Curated for you'],
+            section: 'search'
+          });
+        });
       }
     }
 
@@ -94,7 +140,7 @@ serve(async (req) => {
       // First get the viewed products to extract categories/brands
       const { data: viewedProducts, error: viewedError } = await supabase
         .from('products')
-        .select('category, brand, title')
+        .select('product_id, category, brand, title')
         .in('product_id', recentlyViewedIds.slice(0, 5));
 
       if (!viewedError && viewedProducts && viewedProducts.length > 0) {
@@ -110,17 +156,19 @@ serve(async (req) => {
             .from('products')
             .select('*')
             .ilike('category', `%${category}%`)
-            .not('product_id', 'in', `(${recentlyViewedIds.join(',')})`)
-            .order('view_count', { ascending: false })
+            .not('product_id', 'in', `(${recentlyViewedIds.map(id => `'${id}'`).join(',')})`)
+            .order('view_count', { ascending: false, nullsFirst: false })
             .limit(4);
 
           if (!error && similarProducts && similarProducts.length > 0) {
             cacheHits += similarProducts.length;
+            viewedBasedFound += similarProducts.length;
             similarProducts.forEach(product => {
               allProducts.push({
                 product: formatProduct(product),
-                score: 20, // Good score for similar items
-                matchReason: [`Similar to items you viewed in ${category}`]
+                score: 20,
+                matchReason: [`More in ${category}`],
+                section: 'viewed'
               });
             });
           }
@@ -132,21 +180,50 @@ serve(async (req) => {
             .from('products')
             .select('*')
             .ilike('brand', `%${brand}%`)
-            .not('product_id', 'in', `(${recentlyViewedIds.join(',')})`)
-            .order('view_count', { ascending: false })
+            .not('product_id', 'in', `(${recentlyViewedIds.map(id => `'${id}'`).join(',')})`)
+            .order('view_count', { ascending: false, nullsFirst: false })
             .limit(3);
 
           if (!error && brandProducts && brandProducts.length > 0) {
             cacheHits += brandProducts.length;
+            viewedBasedFound += brandProducts.length;
             brandProducts.forEach(product => {
               allProducts.push({
                 product: formatProduct(product),
-                score: 18, // Good score for same brand
-                matchReason: [`More from ${brand}`]
+                score: 18,
+                matchReason: [`More from ${brand}`],
+                section: 'viewed'
               });
             });
           }
         }
+      } else {
+        console.log('⚠️ Viewed products not found in cache');
+      }
+    }
+
+    // ===== FALLBACK for Viewed-Based: Use diverse category products =====
+    if (viewedBasedFound === 0 && recentlyViewedIds.length > 0) {
+      console.log('📦 No viewed matches - using diverse products for "Similar to Viewed" section');
+      
+      // Get products from different categories
+      const { data: diverseProducts } = await supabase
+        .from('products')
+        .select('*')
+        .not('category', 'is', null)
+        .order('view_count', { ascending: false })
+        .limit(6);
+
+      if (diverseProducts && diverseProducts.length > 0) {
+        cacheHits += diverseProducts.length;
+        diverseProducts.forEach(product => {
+          allProducts.push({
+            product: formatProduct(product),
+            score: 18,
+            matchReason: ['You might also like'],
+            section: 'viewed'
+          });
+        });
       }
     }
 
@@ -161,7 +238,7 @@ serve(async (req) => {
           .from('products')
           .select('*')
           .or(`title.ilike.%${normalizedTag}%,category.ilike.%${normalizedTag}%,brand.ilike.%${normalizedTag}%`)
-          .order('view_count', { ascending: false })
+          .order('view_count', { ascending: false, nullsFirst: false })
           .limit(4);
 
         if (!error && tagProducts && tagProducts.length > 0) {
@@ -169,8 +246,9 @@ serve(async (req) => {
           tagProducts.forEach(product => {
             allProducts.push({
               product: formatProduct(product),
-              score: 15, // Moderate score for tag-based
-              matchReason: [`Matches your preference: "${tag}"`]
+              score: 15,
+              matchReason: [`Matches "${tag}"`],
+              section: 'tag'
             });
           });
         }
@@ -178,32 +256,33 @@ serve(async (req) => {
     }
 
     // ===== STRATEGY 4: Global Trending (Fallback) =====
-    console.log('📈 Fetching global trending products');
+    console.log('📈 Fetching trending products');
     
     // Get trending search terms
-    const { data: trendingSearches, error: trendError } = await supabase
+    const { data: trendingSearches } = await supabase
       .from('search_trends')
       .select('search_query, search_count')
-      .gt('search_count', 5)
+      .gt('search_count', 3)
       .order('search_count', { ascending: false })
       .limit(5);
 
-    if (!trendError && trendingSearches && trendingSearches.length > 0) {
+    if (trendingSearches && trendingSearches.length > 0) {
       for (const trend of trendingSearches.slice(0, 3)) {
-        const { data: trendingProducts, error } = await supabase
+        const { data: trendingProducts } = await supabase
           .from('products')
           .select('*')
           .ilike('title', `%${trend.search_query}%`)
-          .order('view_count', { ascending: false })
+          .order('view_count', { ascending: false, nullsFirst: false })
           .limit(4);
 
-        if (!error && trendingProducts && trendingProducts.length > 0) {
+        if (trendingProducts && trendingProducts.length > 0) {
           cacheHits += trendingProducts.length;
           trendingProducts.forEach(product => {
             allProducts.push({
               product: formatProduct(product),
-              score: 10, // Base score for trending
-              matchReason: [`Trending: "${trend.search_query}"`]
+              score: 10,
+              matchReason: [`Trending: ${trend.search_query}`],
+              section: 'trending'
             });
           });
         }
@@ -211,20 +290,21 @@ serve(async (req) => {
     }
 
     // Also get popular products by view count
-    const { data: popularProducts, error: popError } = await supabase
+    const { data: popularProducts } = await supabase
       .from('products')
       .select('*')
       .gt('view_count', 0)
       .order('view_count', { ascending: false })
       .limit(8);
 
-    if (!popError && popularProducts && popularProducts.length > 0) {
+    if (popularProducts && popularProducts.length > 0) {
       cacheHits += popularProducts.length;
       popularProducts.forEach(product => {
         allProducts.push({
           product: formatProduct(product),
-          score: 8, // Base popularity score
-          matchReason: ['Popular gift choice']
+          score: 8,
+          matchReason: ['Popular gift'],
+          section: 'trending'
         });
       });
     }
@@ -238,7 +318,11 @@ serve(async (req) => {
       
       const existing = productMap.get(productId);
       if (existing) {
-        // Combine scores and reasons
+        // Keep the higher priority section
+        const sectionPriority = { search: 4, viewed: 3, tag: 2, trending: 1 };
+        if (sectionPriority[scored.section] > sectionPriority[existing.section]) {
+          existing.section = scored.section;
+        }
         existing.score += scored.score;
         existing.matchReason = [...new Set([...existing.matchReason, ...scored.matchReason])];
       } else {
@@ -250,17 +334,14 @@ serve(async (req) => {
     const scoredProducts = Array.from(productMap.values()).map(sp => {
       let bonusScore = 0;
       
-      // Rating bonus
       const stars = sp.product.stars || sp.product.metadata?.stars || 0;
       if (stars >= 4.5) bonusScore += 5;
       else if (stars >= 4.0) bonusScore += 3;
       
-      // Review count bonus
       const reviewCount = sp.product.review_count || sp.product.metadata?.review_count || 0;
       if (reviewCount > 1000) bonusScore += 4;
       else if (reviewCount > 100) bonusScore += 2;
       
-      // Best seller bonus
       if (sp.product.metadata?.isBestSeller) bonusScore += 5;
       
       sp.score += bonusScore;
@@ -275,27 +356,27 @@ serve(async (req) => {
     // ===== GROUP INTO SECTIONS =====
     const sections = {
       searchBased: rankedProducts
-        .filter(sp => sp.matchReason.some(r => r.includes('Matches your search')))
+        .filter(sp => sp.section === 'search')
         .slice(0, 6)
         .map(sp => ({ ...sp.product, matchReason: sp.matchReason[0] })),
       
       viewedBased: rankedProducts
-        .filter(sp => sp.matchReason.some(r => r.includes('Similar to') || r.includes('More from')))
+        .filter(sp => sp.section === 'viewed')
         .slice(0, 6)
         .map(sp => ({ ...sp.product, matchReason: sp.matchReason[0] })),
       
       tagBased: rankedProducts
-        .filter(sp => sp.matchReason.some(r => r.includes('preference')))
+        .filter(sp => sp.section === 'tag')
         .slice(0, 4)
         .map(sp => ({ ...sp.product, matchReason: sp.matchReason[0] })),
       
       trending: rankedProducts
-        .filter(sp => sp.matchReason.some(r => r.includes('Trending') || r.includes('Popular')))
+        .filter(sp => sp.section === 'trending')
         .slice(0, 6)
         .map(sp => ({ ...sp.product, matchReason: sp.matchReason[0] }))
     };
 
-    // Also return a flat mixed list
+    // Mixed list
     const mixedProducts = rankedProducts
       .slice(0, limit)
       .map(sp => ({ ...sp.product, matchReason: sp.matchReason[0], score: sp.score }));

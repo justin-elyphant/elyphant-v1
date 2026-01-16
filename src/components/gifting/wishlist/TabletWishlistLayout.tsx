@@ -1,17 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Search, X, Plus, SlidersHorizontal, Grid3X3, List } from "lucide-react";
+import { Search, X, Grid3X3, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
 import UnifiedWishlistCollectionCard from "./UnifiedWishlistCollectionCard";
@@ -19,8 +18,6 @@ import CreateWishlistCard from "./CreateWishlistCard";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
 import NicoleAISuggestions from "./NicoleAISuggestions";
-import { useProducts } from "@/contexts/ProductContext";
-import { useMarketplace } from "@/hooks/useMarketplace";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
 type ViewMode = "grid" | "list";
@@ -45,53 +42,27 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-
-  // Product search
-  const { products, isLoading: productsLoading } = useProducts();
-  const { executeSearch, isLoading: searchLoading } = useMarketplace();
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isProductSearch, setIsProductSearch] = useState(false);
-
-  // Extract categories
-  const availableCategories = useMemo(() => {
-    const categories = new Set<string>();
-    wishlists.forEach(w => {
-      if (w.category) categories.add(w.category);
-    });
-    return Array.from(categories);
-  }, [wishlists]);
 
   // Calculate total items
   const totalItems = useMemo(() => {
     return wishlists.reduce((acc, w) => acc + (w.items?.length || 0), 0);
   }, [wishlists]);
 
-  // Sort options
-  const sortOptions = [
-    { value: "recent" as const, label: "Recently Added" },
-    { value: "name" as const, label: "Name A-Z" },
-    { value: "items" as const, label: "Most Items" },
-    { value: "updated" as const, label: "Last Updated" }
-  ];
-
   // Filter and sort wishlists
   const filteredAndSortedWishlists = useMemo(() => {
-    let filtered = wishlists.filter(wishlist => {
-      if (categoryFilter && wishlist.category !== categoryFilter) {
-        return false;
-      }
-      if (searchQuery && !isProductSearch) {
-        const query = searchQuery.toLowerCase();
-        return (
-          wishlist.title.toLowerCase().includes(query) ||
-          wishlist.description?.toLowerCase().includes(query)
-        );
-      }
-      return true;
-    });
+    let filtered = wishlists;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = wishlists.filter(wishlist =>
+        wishlist.title.toLowerCase().includes(query) ||
+        wishlist.description?.toLowerCase().includes(query)
+      );
+    }
 
-    return filtered.sort((a, b) => {
+    // Apply sort
+    return [...filtered].sort((a, b) => {
       switch (sortBy) {
         case "name":
           return a.title.localeCompare(b.title);
@@ -104,38 +75,19 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
     });
-  }, [wishlists, categoryFilter, searchQuery, sortBy, isProductSearch]);
+  }, [wishlists, searchQuery, sortBy]);
 
-  // Handle search
-  const handleSearchChange = async (value: string) => {
-    setSearchQuery(value);
-    
-    // Detect if this is a product search (doesn't match wishlist names)
-    const matchesWishlist = wishlists.some(w => 
-      w.title.toLowerCase().includes(value.toLowerCase())
-    );
-    
-    if (value.trim() && !matchesWishlist) {
-      setIsProductSearch(true);
-      const response = await executeSearch(value);
-      setSearchResults(response.products || []);
-    } else {
-      setIsProductSearch(false);
-      setSearchResults([]);
-    }
+  // Handle view mode toggle with haptic
+  const handleViewModeChange = (mode: ViewMode) => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
+    setViewMode(mode);
   };
 
-  const clearFilters = () => {
+  // Clear search
+  const clearSearch = () => {
+    triggerHapticFeedback(HapticPatterns.buttonTap);
     setSearchQuery("");
-    setCategoryFilter(null);
-    setIsProductSearch(false);
-    setSearchResults([]);
   };
-
-  const activeFiltersCount = [
-    searchQuery.length > 0,
-    categoryFilter !== null
-  ].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -161,17 +113,17 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         <NicoleAISuggestions maxProducts={6} />
       </div>
 
-      {/* Search & Controls Bar */}
+      {/* Search & Controls Bar - Consistent with Desktop */}
       <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
         <div className="px-6 py-4">
           <div className="flex items-center gap-4">
-            {/* Search */}
+            {/* Search - Wishlist only */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search wishlists or products..."
+                placeholder="Search wishlists..."
                 value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 h-10 rounded-xl bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
               />
               {searchQuery && (
@@ -179,7 +131,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                   variant="ghost"
                   size="sm"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 rounded-full"
-                  onClick={clearFilters}
+                  onClick={clearSearch}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -192,10 +144,10 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 px-3 rounded-md",
+                  "h-8 px-3 rounded-md min-h-[44px] min-w-[44px] touch-manipulation",
                   viewMode === "grid" ? "bg-background shadow-sm" : ""
                 )}
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleViewModeChange("grid")}
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
@@ -203,111 +155,38 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 px-3 rounded-md",
+                  "h-8 px-3 rounded-md min-h-[44px] min-w-[44px] touch-manipulation",
                   viewMode === "list" ? "bg-background shadow-sm" : ""
                 )}
-                onClick={() => setViewMode("list")}
+                onClick={() => handleViewModeChange("list")}
               >
                 <List className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Filter Sheet */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10 rounded-lg">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <Badge variant="secondary" className="ml-2">
-                      {activeFiltersCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px]">
-                <SheetHeader>
-                  <SheetTitle>Filter & Sort</SheetTitle>
-                </SheetHeader>
-                <div className="py-6 space-y-6">
-                  {/* Sort Options */}
-                  <div>
-                    <h3 className="font-medium mb-3">Sort By</h3>
-                    <div className="space-y-2">
-                      {sortOptions.map(option => (
-                        <Button
-                          key={option.value}
-                          variant={sortBy === option.value ? "default" : "outline"}
-                          className="w-full justify-start"
-                          onClick={() => setSortBy(option.value)}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Categories */}
-                  {availableCategories.length > 0 && (
-                    <div>
-                      <h3 className="font-medium mb-3">Categories</h3>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant={categoryFilter === null ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => setCategoryFilter(null)}
-                        >
-                          All
-                        </Badge>
-                        {availableCategories.map(cat => (
-                          <Badge
-                            key={cat}
-                            variant={categoryFilter === cat ? "default" : "outline"}
-                            className="cursor-pointer"
-                            onClick={() => setCategoryFilter(cat)}
-                          >
-                            {cat}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
+            {/* Inline Sort Dropdown - Consistent with Desktop */}
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[160px] h-10 rounded-lg">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Recently Added</SelectItem>
+                <SelectItem value="name">Name A-Z</SelectItem>
+                <SelectItem value="items">Most Items</SelectItem>
+                <SelectItem value="updated">Last Updated</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-
-        {/* Active Filters */}
-        {activeFiltersCount > 0 && (
-          <div className="px-6 pb-3 flex gap-2">
-            {categoryFilter && (
-              <Badge variant="secondary" className="rounded-full">
-                {categoryFilter}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-1 h-auto p-0"
-                  onClick={() => setCategoryFilter(null)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
       <div className="px-6 py-6">
-
         {/* Wishlists Section */}
         <div>
-          {!isProductSearch && (
-            <h2 className="text-xl font-semibold mb-4">
-              {searchQuery ? `Wishlists matching "${searchQuery}"` : "Your Wishlists"}
-            </h2>
-          )}
+          <h2 className="text-xl font-semibold mb-4">
+            {searchQuery ? `Wishlists matching "${searchQuery}"` : "Your Wishlists"}
+          </h2>
 
           {filteredAndSortedWishlists.length > 0 ? (
             <div className={cn(
@@ -332,9 +211,9 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No wishlists match your filters</p>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
+              <p className="text-muted-foreground mb-4">No wishlists match "{searchQuery}"</p>
+              <Button variant="outline" onClick={clearSearch}>
+                Clear Search
               </Button>
             </div>
           )}

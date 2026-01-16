@@ -270,48 +270,12 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     </div>
   );
 
-  // Desktop/Tablet: Hover overlay for actions - positioned on RIGHT side to not conflict with privacy toggle
-  const HoverActionOverlay = () => (
+  // Desktop/Tablet: Delete button only in top-right corner
+  const DeleteButton = () => (
     <div className={cn(
-      "absolute top-2 right-2 flex gap-1 z-20 transition-all duration-200",
+      "absolute top-2 right-2 z-20 transition-all duration-200",
       isHovered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
     )}>
-      {onUpdateSharing && (
-        <WishlistShareButton 
-          wishlist={wishlist}
-          size="sm"
-          onShareSettingsChange={onUpdateSharing}
-          className="bg-background/80 backdrop-blur-sm hover:bg-background"
-        />
-      )}
-      <Button
-        variant="secondary"
-        size="icon"
-        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          console.log('[UnifiedCard] View button clicked for wishlist:', wishlist.id);
-          triggerHapticFeedback(HapticPatterns.buttonTap);
-          navigate(`/wishlist/${wishlist.id}`);
-        }}
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="secondary"
-        size="icon"
-        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          console.log('[UnifiedCard] Edit button clicked for wishlist:', wishlist.id);
-          triggerHapticFeedback(HapticPatterns.buttonTap);
-          onEdit(wishlist.id);
-        }}
-      >
-        <Edit className="h-4 w-4" />
-      </Button>
       <Button
         variant="secondary"
         size="icon"
@@ -319,7 +283,6 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          console.log('[UnifiedCard] Delete button clicked for wishlist:', wishlist.id);
           triggerHapticFeedback(HapticPatterns.removeItem);
           onDelete(wishlist.id);
         }}
@@ -372,8 +335,8 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         {/* Privacy Toggle - Always visible top-left */}
         <PrivacyToggle />
 
-        {/* Actions - Mobile uses dropdown, Desktop/Tablet uses hover overlay */}
-        {isMobile ? <MobileActionMenu /> : <HoverActionOverlay />}
+        {/* Actions - Mobile uses dropdown, Desktop/Tablet uses delete button only */}
+        {isMobile ? <MobileActionMenu /> : <DeleteButton />}
 
         {/* Image Grid */}
         {renderImageGrid()}
@@ -403,38 +366,67 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           </p>
         )}
 
-        {/* Tags and Category - Only show on tablet/desktop */}
+        {/* Tags, Category, and Footer Actions - Only show on tablet/desktop */}
         {!isMobile && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {wishlist.category && (
-              <WishlistCategoryBadge category={wishlist.category} className="text-xs" />
-            )}
-            
-            {wishlist.priority && (
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-xs bg-gray-50 border-gray-200",
-                  wishlist.priority === 'high' && "border-red-200 text-red-700 bg-red-50",
-                  wishlist.priority === 'medium' && "border-amber-200 text-amber-700 bg-amber-50",
-                  wishlist.priority === 'low' && "border-blue-200 text-blue-700 bg-blue-50"
-                )}
-              >
-                {wishlist.priority}
-              </Badge>
-            )}
+          <div className="flex items-center justify-between gap-2 mt-2">
+            {/* Left side: Tags and category */}
+            <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+              {wishlist.category && (
+                <WishlistCategoryBadge category={wishlist.category} className="text-xs" />
+              )}
+              
+              {wishlist.priority && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-xs bg-gray-50 border-gray-200",
+                    wishlist.priority === 'high' && "border-red-200 text-red-700 bg-red-50",
+                    wishlist.priority === 'medium' && "border-amber-200 text-amber-700 bg-amber-50",
+                    wishlist.priority === 'low' && "border-blue-200 text-blue-700 bg-blue-50"
+                  )}
+                >
+                  {wishlist.priority}
+                </Badge>
+              )}
 
-            {wishlist.tags?.slice(0, 2).map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
-                {tag}
-              </Badge>
-            ))}
-            
-            {(wishlist.tags?.length || 0) > 2 && (
-              <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
-                +{(wishlist.tags?.length || 0) - 2}
-              </Badge>
-            )}
+              {wishlist.tags?.slice(0, 2).map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
+                  {tag}
+                </Badge>
+              ))}
+              
+              {(wishlist.tags?.length || 0) > 2 && (
+                <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
+                  +{(wishlist.tags?.length || 0) - 2}
+                </Badge>
+              )}
+            </div>
+
+            {/* Right side: Edit and Share actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  triggerHapticFeedback(HapticPatterns.buttonTap);
+                  onEdit(wishlist.id);
+                }}
+                aria-label="Edit wishlist"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              {onUpdateSharing && (
+                <WishlistShareButton 
+                  wishlist={wishlist}
+                  size="sm"
+                  onShareSettingsChange={onUpdateSharing}
+                  className="h-7 w-7 p-0 border-0 bg-transparent hover:bg-accent"
+                />
+              )}
+            </div>
           </div>
         )}
 

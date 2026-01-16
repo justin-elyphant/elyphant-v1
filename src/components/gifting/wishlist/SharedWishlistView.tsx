@@ -14,6 +14,7 @@ import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { convertWishlistItemToProduct, calculateWishlistTotal } from "@/utils/wishlistConversions";
 import { toast } from "sonner";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface SharedWishlistViewProps {
   wishlist: Wishlist;
@@ -66,6 +67,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
 
   // Handle adding a single item to cart
   const handleAddToCart = async (item: WishlistItem) => {
+    triggerHapticFeedback('success');
     try {
       const product = convertWishlistItemToProduct(item, wishlist.id);
       await addToCart(product, 1, {
@@ -91,6 +93,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
 
   // Handle adding all items to cart
   const handleAddAllToCart = async () => {
+    triggerHapticFeedback('success');
     setIsAddingAll(true);
     
     try {

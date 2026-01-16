@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ShoppingCart, X, UserPlus } from "lucide-react";
+import { X, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { cn } from "@/lib/utils";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface GiftCartFloatingBarProps {
   itemCount: number;
@@ -47,7 +48,8 @@ const GiftCartFloatingBar: React.FC<GiftCartFloatingBarProps> = ({
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 z-50",
-      "bg-background border-t border-border shadow-lg",
+      "bg-background/95 backdrop-blur-xl border-t border-border shadow-lg",
+      "pb-safe", // iOS home indicator safe area
       "animate-in slide-in-from-bottom duration-300"
     )}>
       {/* Signup prompt for guests */}
@@ -81,23 +83,33 @@ const GiftCartFloatingBar: React.FC<GiftCartFloatingBarProps> = ({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              onClick={() => navigate("/cart")}
+              size="default"
+              className="min-h-[44px] touch-manipulation active:scale-95 transition-transform"
+              onClick={() => {
+                triggerHapticFeedback('light');
+                navigate("/cart");
+              }}
             >
               View Cart
             </Button>
             <Button
-              size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => navigate("/checkout")}
+              size="default"
+              className="bg-red-600 hover:bg-red-700 text-white min-h-[44px] touch-manipulation active:scale-95 transition-transform"
+              onClick={() => {
+                triggerHapticFeedback('success');
+                navigate("/checkout");
+              }}
             >
               Checkout
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
-              onClick={onClose}
+              className="h-11 w-11 touch-manipulation active:scale-95 transition-transform"
+              onClick={() => {
+                triggerHapticFeedback('light');
+                onClose();
+              }}
             >
               <X className="h-4 w-4" />
             </Button>

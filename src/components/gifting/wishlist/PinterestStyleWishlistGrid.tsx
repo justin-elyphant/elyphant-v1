@@ -19,9 +19,8 @@ interface PinterestStyleWishlistGridProps {
 }
 
 const getImageAspectRatio = (index: number) => {
-  // Create varied aspect ratios like Pinterest
-  const patterns = ['bleed-tall', 'bleed-square', 'bleed-wide', 'bleed-square', 'bleed-tall'];
-  return patterns[index % patterns.length];
+  // Use consistent square aspect ratio for uniform card heights
+  return 'bleed-square';
 };
 
 const getItemPreviewImages = (items: WishlistItem[], maxImages: number = 3) => {

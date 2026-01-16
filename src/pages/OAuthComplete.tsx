@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,8 +21,8 @@ const OAuthComplete = () => {
       // Process any stored invitation token BEFORE redirecting
       const storedToken = sessionStorage.getItem('elyphant_invitation_token');
       if (storedToken) {
-        console.log('[OAuthComplete] Processing stored invitation token');
-        (async () => {
+        const processInvitation = async () => {
+          console.log('[OAuthComplete] Processing stored invitation token');
           try {
             const { data: rpcResult, error: rpcError } = await supabase.rpc(
               'accept_invitation_by_token' as any,
@@ -38,7 +38,8 @@ const OAuthComplete = () => {
           } finally {
             sessionStorage.removeItem('elyphant_invitation_token');
           }
-        })();
+        };
+        processInvitation();
       }
       
       // Redirect to home after successful OAuth sign-in

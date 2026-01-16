@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { Wishlist } from "@/types/profile";
 import CompactProfileHeader from "./CompactProfileHeader";
-import WishlistCard from "./WishlistCard";
+import UnifiedWishlistCollectionCard from "./UnifiedWishlistCollectionCard";
 import CreateWishlistCard from "./CreateWishlistCard";
 import WishlistHeroSection from "./WishlistHeroSection";
 import WishlistBenefitsGrid from "./WishlistBenefitsGrid";
@@ -314,9 +314,10 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                 : "space-y-4"
             )}>
               {filteredAndSortedWishlists.map((wishlist) => (
-                <WishlistCard
+                <UnifiedWishlistCollectionCard
                   key={wishlist.id}
                   wishlist={wishlist}
+                  variant="tablet"
                   onEdit={onEditWishlist}
                   onDelete={onDeleteWishlist}
                 />

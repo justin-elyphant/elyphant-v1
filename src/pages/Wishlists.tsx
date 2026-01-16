@@ -11,7 +11,7 @@ import EditWishlistDialog from "@/components/gifting/wishlist/EditWishlistDialog
 import WishlistHeroSection from "@/components/gifting/wishlist/WishlistHeroSection";
 import WishlistBenefitsGrid from "@/components/gifting/wishlist/WishlistBenefitsGrid";
 import NicoleAISuggestions from "@/components/gifting/wishlist/NicoleAISuggestions";
-import PinterestStyleWishlistGrid from "@/components/gifting/wishlist/PinterestStyleWishlistGrid";
+import UnifiedWishlistCollectionCard from "@/components/gifting/wishlist/UnifiedWishlistCollectionCard";
 import MainLayout from "@/components/layout/MainLayout";
 import {
   AlertDialog,
@@ -210,15 +210,21 @@ const Wishlists = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : wishlists && wishlists.length > 0 ? (
-              <PinterestStyleWishlistGrid
-                wishlists={wishlists}
-                onEdit={handleEditWishlist}
-                onDelete={handleDeleteWishlist}
-                onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
-                  await updateWishlistSharing({ wishlistId, isPublic });
-                  return true;
-                }}
-              />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {wishlists.map((wishlist) => (
+                  <UnifiedWishlistCollectionCard
+                    key={wishlist.id}
+                    wishlist={wishlist}
+                    variant="desktop"
+                    onEdit={handleEditWishlist}
+                    onDelete={handleDeleteWishlist}
+                    onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+                      await updateWishlistSharing({ wishlistId, isPublic });
+                      return true;
+                    }}
+                  />
+                ))}
+              </div>
             ) : (
               <div className="text-center py-12">
                 <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>

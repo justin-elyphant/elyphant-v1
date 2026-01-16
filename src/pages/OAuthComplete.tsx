@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
+import { toast } from 'sonner';
 
 const OAuthComplete = () => {
   const { user, isLoading } = useAuth();
@@ -14,8 +16,30 @@ const OAuthComplete = () => {
     if (isLoading) return;
 
     if (user) {
-      
       setStatus('success');
+      
+      // Process any stored invitation token BEFORE redirecting
+      const storedToken = sessionStorage.getItem('elyphant_invitation_token');
+      if (storedToken) {
+        console.log('[OAuthComplete] Processing stored invitation token');
+        (async () => {
+          try {
+            const { data: rpcResult, error: rpcError } = await supabase.rpc(
+              'accept_invitation_by_token' as any,
+              { p_token: storedToken, p_user_id: user.id }
+            );
+            if (!rpcError && rpcResult?.linked) {
+              toast.success("Connection linked!", {
+                description: "You're now connected with your friend!"
+              });
+            }
+          } catch (error) {
+            console.error('[OAuthComplete] Error linking invitation:', error);
+          } finally {
+            sessionStorage.removeItem('elyphant_invitation_token');
+          }
+        })();
+      }
       
       // Redirect to home after successful OAuth sign-in
       setTimeout(() => {

@@ -222,6 +222,9 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
+            console.log('[UnifiedCard] View button clicked for wishlist:', wishlist.id);
+            triggerHapticFeedback(HapticPatterns.buttonTap);
             navigate(`/wishlist/${wishlist.id}`);
           }}
         >
@@ -231,7 +234,13 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           variant="secondary"
           size="icon"
           className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={handleEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('[UnifiedCard] Edit button clicked for wishlist:', wishlist.id);
+            triggerHapticFeedback(HapticPatterns.buttonTap);
+            onEdit(wishlist.id);
+          }}
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -239,7 +248,13 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           variant="secondary"
           size="icon"
           className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background text-[#DC2626] hover:text-[#B91C1C]"
-          onClick={handleDelete}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('[UnifiedCard] Delete button clicked for wishlist:', wishlist.id);
+            triggerHapticFeedback(HapticPatterns.removeItem);
+            onDelete(wishlist.id);
+          }}
           aria-label={`Delete ${wishlist.title} wishlist`}
         >
           <Trash2 className="h-4 w-4" />

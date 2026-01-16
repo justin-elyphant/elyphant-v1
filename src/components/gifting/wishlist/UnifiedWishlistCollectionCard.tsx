@@ -422,8 +422,9 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
                 <WishlistShareButton 
                   wishlist={wishlist}
                   size="sm"
+                  iconOnly
                   onShareSettingsChange={onUpdateSharing}
-                  className="h-7 w-7 p-0 border-0 bg-transparent hover:bg-accent"
+                  className="text-muted-foreground hover:text-foreground"
                 />
               )}
             </div>

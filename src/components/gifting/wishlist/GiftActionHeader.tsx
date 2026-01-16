@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { ShoppingCart, Gift, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface GiftActionHeaderProps {
   ownerName: string;
@@ -71,10 +72,13 @@ const GiftActionHeader: React.FC<GiftActionHeaderProps> = ({
       </div>
       
       <Button
-        onClick={onAddAllToCart}
+        onClick={() => {
+          triggerHapticFeedback('success');
+          onAddAllToCart();
+        }}
         disabled={isAdding}
         className={cn(
-          "bg-red-600 hover:bg-red-700 text-white",
+          "bg-red-600 hover:bg-red-700 text-white min-h-[44px] touch-manipulation active:scale-95 transition-transform",
           isMobile && "w-full"
         )}
       >

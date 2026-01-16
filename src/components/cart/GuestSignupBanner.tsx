@@ -3,6 +3,7 @@ import { Gift, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface GuestSignupBannerProps {
   className?: string;
@@ -26,6 +27,7 @@ const GuestSignupBanner: React.FC<GuestSignupBannerProps> = ({ className }) => {
   }
 
   const handleDismiss = () => {
+    triggerHapticFeedback('light');
     setIsDismissed(true);
     localStorage.setItem("guestSignupBannerDismissed", "true");
   };
@@ -44,14 +46,18 @@ const GuestSignupBanner: React.FC<GuestSignupBannerProps> = ({ className }) => {
             </p>
             <div className="flex items-center gap-3 mt-3">
               <Link to="/auth/signup?return=/cart">
-                <Button size="sm" className="gap-2">
+                <Button 
+                  size="sm" 
+                  className="gap-2 min-h-[44px] touch-manipulation active:scale-95 transition-transform"
+                  onClick={() => triggerHapticFeedback('medium')}
+                >
                   Create Account
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <button
                 onClick={handleDismiss}
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground hover:text-foreground min-h-[44px] px-2 touch-manipulation"
               >
                 Continue as Guest
               </button>
@@ -61,7 +67,7 @@ const GuestSignupBanner: React.FC<GuestSignupBannerProps> = ({ className }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0"
+          className="h-11 w-11 shrink-0 touch-manipulation active:scale-95 transition-transform"
           onClick={handleDismiss}
         >
           <X className="h-4 w-4" />

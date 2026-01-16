@@ -20,7 +20,7 @@ import { formatPriceWithDetection } from "@/utils/productSourceDetection";
 import { WishlistItem } from "@/types/profile";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-
+import { triggerHapticFeedback } from "@/utils/haptics";
 import { Product } from "@/types/product";
 
 interface EnhancedWishlistCardProps {
@@ -89,6 +89,7 @@ const EnhancedWishlistCard = ({
   
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    triggerHapticFeedback('success');
     try {
       // Cast item to Product and extract wishlist ID from enhanced item
       const wishlistId = (item as any).wishlistId || '';
@@ -155,7 +156,7 @@ const EnhancedWishlistCard = ({
 
   return (
     <>
-      <Card className={`group relative overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/20 ${
+      <Card className={`group relative overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/20 ios-touch-feedback ${
         isSelected ? 'ring-2 ring-primary border-primary' : ''
       } ${className || ''}`}>
         {/* Selection checkbox */}
@@ -259,9 +260,10 @@ const EnhancedWishlistCard = ({
                         size="sm" 
                         onClick={(e) => {
                           e.stopPropagation();
+                          triggerHapticFeedback('success');
                           onAddToCart();
                         }}
-                        className="text-xs bg-red-600 hover:bg-red-700 text-white"
+                        className="text-xs bg-red-600 hover:bg-red-700 text-white min-h-[36px] touch-manipulation active:scale-95 transition-transform"
                       >
                         <ShoppingCart className="h-3 w-3 mr-1" />
                         Add to Cart

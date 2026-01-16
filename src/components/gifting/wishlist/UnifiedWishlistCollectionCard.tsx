@@ -132,9 +132,9 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     }
 
     return (
-      <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-0.5">
+      <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-lg">
         {[...Array(4)].map((_, index) => (
-          <div key={index} className="relative overflow-hidden bg-muted/50">
+          <div key={index} className="relative bg-muted/50 overflow-hidden">
             {previewImages[index] ? (
               <>
                 <img
@@ -296,7 +296,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   return (
     <Card 
       className={cn(
-        "relative overflow-hidden transition-all duration-200 border-border/40 bg-card cursor-pointer",
+        "relative transition-all duration-200 border-border/40 bg-card cursor-pointer",
         // Touch optimization
         "touch-manipulation",
         "-webkit-tap-highlight-color-transparent",
@@ -331,7 +331,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
       onClick={handleCardPress}
     >
       {/* Square Image Area */}
-      <div className="relative aspect-square bg-muted overflow-hidden rounded-t-lg">
+      <div className="relative aspect-square bg-muted rounded-t-lg">
         {/* Privacy Toggle - Always visible top-left */}
         <PrivacyToggle />
 

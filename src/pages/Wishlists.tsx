@@ -12,6 +12,7 @@ import WishlistHeroSection from "@/components/gifting/wishlist/WishlistHeroSecti
 import WishlistBenefitsGrid from "@/components/gifting/wishlist/WishlistBenefitsGrid";
 import NicoleAISuggestions from "@/components/gifting/wishlist/NicoleAISuggestions";
 import PinterestStyleWishlistGrid from "@/components/gifting/wishlist/PinterestStyleWishlistGrid";
+import MainLayout from "@/components/layout/MainLayout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,83 +152,89 @@ const Wishlists = () => {
   // Mobile layout - MobileWishlistHub
   if (screenSize === 'mobile') {
     return (
-      <ProductProvider>
-        <MobileWishlistHub
-          wishlists={wishlists || []}
-          onCreateWishlist={() => setCreateDialogOpen(true)}
-          onEditWishlist={handleEditWishlist}
-          onDeleteWishlist={handleDeleteWishlist}
-        />
-        <WishlistDialogs />
-      </ProductProvider>
+      <MainLayout>
+        <ProductProvider>
+          <MobileWishlistHub
+            wishlists={wishlists || []}
+            onCreateWishlist={() => setCreateDialogOpen(true)}
+            onEditWishlist={handleEditWishlist}
+            onDeleteWishlist={handleDeleteWishlist}
+          />
+          <WishlistDialogs />
+        </ProductProvider>
+      </MainLayout>
     );
   }
 
   // Tablet layout - TabletWishlistLayout
   if (screenSize === 'tablet') {
     return (
-      <ProductProvider>
-        <TabletWishlistLayout
-          wishlists={wishlists || []}
-          onCreateWishlist={() => setCreateDialogOpen(true)}
-          onEditWishlist={handleEditWishlist}
-          onDeleteWishlist={handleDeleteWishlist}
-        />
-        <WishlistDialogs />
-      </ProductProvider>
+      <MainLayout>
+        <ProductProvider>
+          <TabletWishlistLayout
+            wishlists={wishlists || []}
+            onCreateWishlist={() => setCreateDialogOpen(true)}
+            onEditWishlist={handleEditWishlist}
+            onDeleteWishlist={handleDeleteWishlist}
+          />
+          <WishlistDialogs />
+        </ProductProvider>
+      </MainLayout>
     );
   }
 
   // Desktop layout - Simplified e-commerce style (no SidebarLayout, consistent with tablet/mobile)
   return (
-    <ProductProvider>
-      <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <WishlistHeroSection 
-            wishlistCount={wishlists?.length || 0}
-            totalItemCount={totalItems}
-            onCreateWishlist={() => setCreateDialogOpen(true)}
-          />
-          
-          {/* Benefits Grid - show for users with fewer wishlists */}
-          {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
-          
-          {/* Nicole AI Suggestions - personalized product carousel */}
-          <NicoleAISuggestions maxProducts={8} />
-        </div>
-
-        {/* Wishlists Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : wishlists && wishlists.length > 0 ? (
-            <PinterestStyleWishlistGrid
-              wishlists={wishlists}
-              onEdit={handleEditWishlist}
-              onDelete={handleDeleteWishlist}
-              onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
-                await updateWishlistSharing({ wishlistId, isPublic });
-                return true;
-              }}
+    <MainLayout>
+      <ProductProvider>
+        <div className="bg-background">
+          {/* Hero Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <WishlistHeroSection 
+              wishlistCount={wishlists?.length || 0}
+              totalItemCount={totalItems}
+              onCreateWishlist={() => setCreateDialogOpen(true)}
             />
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Start building your wishlist to share with friends and family. 
-                It's the perfect way to let others know what you'd love to receive!
-              </p>
-            </div>
-          )}
+            
+            {/* Benefits Grid - show for users with fewer wishlists */}
+            {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
+            
+            {/* Nicole AI Suggestions - personalized product carousel */}
+            <NicoleAISuggestions maxProducts={8} />
+          </div>
+
+          {/* Wishlists Grid */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : wishlists && wishlists.length > 0 ? (
+              <PinterestStyleWishlistGrid
+                wishlists={wishlists}
+                onEdit={handleEditWishlist}
+                onDelete={handleDeleteWishlist}
+                onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
+                  await updateWishlistSharing({ wishlistId, isPublic });
+                  return true;
+                }}
+              />
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium mb-2">Create Your First Wishlist</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Start building your wishlist to share with friends and family. 
+                  It's the perfect way to let others know what you'd love to receive!
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Shared dialogs for desktop */}
+          <WishlistDialogs />
         </div>
-        
-        {/* Shared dialogs for desktop */}
-        <WishlistDialogs />
-      </div>
-    </ProductProvider>
+      </ProductProvider>
+    </MainLayout>
   );
 };
 

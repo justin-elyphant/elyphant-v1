@@ -13,7 +13,7 @@ import WishlistBenefitsGrid from "@/components/gifting/wishlist/WishlistBenefits
 import NicoleAISuggestions from "@/components/gifting/wishlist/NicoleAISuggestions";
 import UnifiedWishlistCollectionCard from "@/components/gifting/wishlist/UnifiedWishlistCollectionCard";
 import CompactProfileHeader from "@/components/gifting/wishlist/CompactProfileHeader";
-import MainLayout from "@/components/layout/MainLayout";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -212,7 +212,7 @@ const Wishlists = () => {
   // Mobile layout - MobileWishlistHub
   if (screenSize === 'mobile') {
     return (
-      <MainLayout>
+      <SidebarLayout>
         <ProductProvider>
           <MobileWishlistHub
             wishlists={wishlists || []}
@@ -226,14 +226,14 @@ const Wishlists = () => {
           />
           <WishlistDialogs />
         </ProductProvider>
-      </MainLayout>
+      </SidebarLayout>
     );
   }
 
   // Tablet layout - TabletWishlistLayout
   if (screenSize === 'tablet') {
     return (
-      <MainLayout>
+      <SidebarLayout>
         <ProductProvider>
           <TabletWishlistLayout
             wishlists={wishlists || []}
@@ -247,13 +247,13 @@ const Wishlists = () => {
           />
           <WishlistDialogs />
         </ProductProvider>
-      </MainLayout>
+      </SidebarLayout>
     );
   }
 
   // Desktop layout - Now with tabs and CompactProfileHeader for consistency
   return (
-    <MainLayout>
+    <SidebarLayout>
       <ProductProvider>
         <div className="bg-background min-h-screen">
           {/* Compact Profile Header - matching mobile/tablet */}
@@ -373,7 +373,7 @@ const Wishlists = () => {
           <WishlistDialogs />
         </div>
       </ProductProvider>
-    </MainLayout>
+    </SidebarLayout>
   );
 };
 

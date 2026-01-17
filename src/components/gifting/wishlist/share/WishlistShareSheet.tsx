@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { cn } from "@/lib/utils";
 import ShareToWishlistConnectionButton from "./ShareToWishlistConnectionButton";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 // Social platform icons as simple components
 const WhatsAppIcon = () => (
@@ -54,7 +55,8 @@ const WishlistShareSheet = ({
 }: WishlistShareSheetProps) => {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `${window.location.origin}/wishlist/${wishlist.id}`;
+  // Use public share URL for external sharing
+  const shareUrl = getWishlistShareUrl(wishlist.id);
   const itemCount = wishlist.items?.length || 0;
   const totalValue = wishlist.items?.reduce((sum, item) => sum + (item.price || 0), 0) || 0;
   const coverImage = wishlist.items?.[0]?.image_url || null;

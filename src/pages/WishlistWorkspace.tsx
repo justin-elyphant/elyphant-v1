@@ -15,7 +15,7 @@ import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import { getWishlistDirectUrl } from "@/utils/urlUtils";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 const WishlistWorkspace = () => {
   const { wishlistId } = useParams();
@@ -70,16 +70,24 @@ const WishlistWorkspace = () => {
         
         if (wishlistError) {
           console.error("Error fetching wishlist:", wishlistError);
-          toast.error("Wishlist not found");
-          navigate('/wishlists');
+          // Only redirect authenticated users to /wishlists
+          if (user) {
+            toast.error("Wishlist not found");
+            navigate('/wishlists');
+          }
+          // For guests, we'll show NoWishlistFound via the !wishlist check
           return;
         }
         
         const canAccess = user?.id === wishlistData.user_id || wishlistData.is_public;
         
         if (!canAccess) {
-          toast.error("This wishlist is private");
-          navigate('/wishlists');
+          // Only redirect authenticated users
+          if (user) {
+            toast.error("This wishlist is private");
+            navigate('/wishlists');
+          }
+          // For guests, we'll show NoWishlistFound
           return;
         }
         
@@ -211,13 +219,14 @@ const WishlistWorkspace = () => {
     }
   };
 
-  // Share handler with native share sheet
+  // Share handler with native share sheet - uses public share URL
   const handleShare = async () => {
     if (!wishlist) return;
     
     await triggerHapticFeedback('light');
     
-    const shareUrl = getWishlistDirectUrl(wishlistId || '');
+    // Use public share URL for external sharing
+    const shareUrl = getWishlistShareUrl(wishlistId || '');
     
     if (navigator.share) {
       try {

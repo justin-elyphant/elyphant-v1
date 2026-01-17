@@ -8,6 +8,7 @@ import WishlistSwitcher from "../navigation/WishlistSwitcher";
 import InlinePrivacyToggle from "../share/InlinePrivacyToggle";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { toast } from "sonner";
+import { getWishlistShareUrl } from "@/utils/urlUtils";
 
 interface WishlistWorkspaceHeaderProps {
   wishlist: Wishlist;
@@ -45,8 +46,8 @@ const WishlistWorkspaceHeader = ({
     if (onShare) {
       onShare();
     } else {
-      // Default share behavior
-      const shareUrl = `${window.location.origin}/wishlist/${wishlist.id}`;
+      // Use public share URL for external sharing
+      const shareUrl = getWishlistShareUrl(wishlist.id);
       
       if (navigator.share) {
         try {

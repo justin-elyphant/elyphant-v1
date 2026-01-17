@@ -24,6 +24,7 @@ interface SharedWishlistViewProps {
     id: string;
     bio?: string;
     location?: string;
+    shippingAddress?: any; // Owner's shipping address for registry-style fulfillment
   };
 }
 
@@ -72,9 +73,13 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
     triggerHapticFeedback('success');
     try {
       const product = convertWishlistItemToProduct(item, wishlist.id);
+      // Include owner shipping address for registry-style fulfillment
       await addToCart(product, 1, {
         wishlist_id: wishlist.id,
         wishlist_item_id: item.id,
+        wishlist_owner_id: owner.id,
+        wishlist_owner_name: owner.name,
+        wishlist_owner_shipping: owner.shippingAddress,
       });
       
       setAddedItemCount(prev => prev + 1);
@@ -95,9 +100,13 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
     try {
       for (const item of availableItems) {
         const product = convertWishlistItemToProduct(item, wishlist.id);
+        // Include owner shipping address for registry-style fulfillment
         await addToCart(product, 1, {
           wishlist_id: wishlist.id,
           wishlist_item_id: item.id,
+          wishlist_owner_id: owner.id,
+          wishlist_owner_name: owner.name,
+          wishlist_owner_shipping: owner.shippingAddress,
         });
       }
       

@@ -57,7 +57,7 @@ const SharedWishlist = () => {
         // Sharing is intentional, so we can show more profile details
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, first_name, last_name, profile_image, bio, city, state, username')
+          .select('id, name, first_name, last_name, profile_image, bio, city, state, username, shipping_address')
           .eq('id', wishlistData.user_id)
           .maybeSingle();
         
@@ -134,13 +134,15 @@ const SharedWishlist = () => {
           image: profileData.profile_image,
           id: profileData.id,
           bio: profileData.bio,
-          location: location
+          location: location,
+          shippingAddress: profileData.shipping_address
         } : {
           name: displayName,
           image: null,
           id: wishlistData.user_id,
           bio: undefined,
-          location: undefined
+          location: undefined,
+          shippingAddress: undefined
         };
         
         setWishlist(transformedWishlist);

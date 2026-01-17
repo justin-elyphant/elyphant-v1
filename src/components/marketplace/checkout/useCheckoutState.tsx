@@ -78,6 +78,14 @@ export const useCheckoutState = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   
+  // Registry-style fulfillment: detect if this is a wishlist purchase
+  const [isWishlistPurchase, setIsWishlistPurchase] = useState(false);
+  const [wishlistOwnerInfo, setWishlistOwnerInfo] = useState<{
+    name: string;
+    id: string;
+    shipping: any;
+  } | null>(null);
+  
   // CRITICAL: Checkout data with proper defaults
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     shippingInfo: {
@@ -111,11 +119,49 @@ export const useCheckoutState = () => {
    * This effect loads user's default address and profile information
    * to pre-populate the checkout form. This provides a seamless UX.
    * 
+   * REGISTRY-STYLE: For wishlist purchases, use owner's shipping address
+   * 
    * DO NOT REMOVE: This is essential for user experience
    */
   useEffect(() => {
     const loadAddressData = async () => {
       if (addressesLoaded) return;
+
+      // Check if ALL cart items are from the same wishlist with owner shipping (registry-style)
+      const wishlistItems = cartItems.filter(item => item.wishlist_owner_shipping);
+      
+      if (wishlistItems.length > 0 && wishlistItems.length === cartItems.length) {
+        // All items from one wishlist - use owner's shipping address (registry fulfillment)
+        const ownerShipping = wishlistItems[0].wishlist_owner_shipping;
+        
+        console.log("✅ Detected wishlist purchase - using owner's shipping address (registry-style)");
+        
+        setIsWishlistPurchase(true);
+        setWishlistOwnerInfo({
+          name: wishlistItems[0].wishlist_owner_name || 'Gift Recipient',
+          id: wishlistItems[0].wishlist_owner_id || '',
+          shipping: ownerShipping
+        });
+        
+        // Pre-fill shipping from owner's address
+        setCheckoutData(prev => ({
+          ...prev,
+          shippingInfo: {
+            ...prev.shippingInfo,
+            name: wishlistItems[0].wishlist_owner_name || '',
+            email: prev.shippingInfo.email || user?.email || '',
+            address: ownerShipping.address_line1 || ownerShipping.street || '',
+            addressLine2: ownerShipping.address_line2 || '',
+            city: ownerShipping.city || '',
+            state: ownerShipping.state || '',
+            zipCode: ownerShipping.zip_code || ownerShipping.zipCode || '',
+            country: ownerShipping.country || 'United States'
+          }
+        }));
+        
+        setAddressesLoaded(true);
+        return;
+      }
 
       // For guests (no user), just initialize with empty form
       if (!user) {
@@ -171,7 +217,7 @@ export const useCheckoutState = () => {
     };
 
     loadAddressData();
-  }, [user, profile, addressesLoaded]);
+  }, [user, profile, addressesLoaded, cartItems]);
 
   /*
    * 🔗 CRITICAL: Tab navigation handler
@@ -294,6 +340,8 @@ export const useCheckoutState = () => {
     checkoutData,
     giftOptions,
     addressesLoaded,
+    isWishlistPurchase,
+    wishlistOwnerInfo,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,

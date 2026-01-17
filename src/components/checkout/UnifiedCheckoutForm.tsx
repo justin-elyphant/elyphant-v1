@@ -45,10 +45,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
 import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
+import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft, Shield, Gift, Mail } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -86,6 +88,8 @@ const UnifiedCheckoutForm: React.FC = () => {
     giftOptions,
     addressesLoaded,
     isProcessing,
+    isWishlistPurchase,
+    wishlistOwnerInfo,
     setIsProcessing,
     handleTabChange,
     handleUpdateShippingInfo,
@@ -277,6 +281,13 @@ const UnifiedCheckoutForm: React.FC = () => {
       return;
     }
 
+    // Validate guest email for non-logged-in users
+    if (!user && !checkoutData.shippingInfo.email?.trim()) {
+      console.error('🚨 Guest checkout requires email');
+      toast.error('Please enter your email address');
+      return;
+    }
+
     try {
       setIsProcessing(true);
       setInitError(null); // Clear any previous errors
@@ -287,42 +298,62 @@ const UnifiedCheckoutForm: React.FC = () => {
       // 🎯 PREFLIGHT ADDRESS ENRICHMENT - Ensure all delivery groups have complete addresses
       console.log('🔍 Starting preflight address enrichment...');
       
-      const enrichedDeliveryGroups = await Promise.all(
-        deliveryGroups.map(async (group) => {
-          let currentAddress = group.shippingAddress;
-          
-          // Check if address is already complete
-          if (isCompleteAddress(currentAddress)) {
-            console.log(`✅ Group ${group.connectionName} already has complete address`);
-            return {
-              ...group,
-              shippingAddress: normalizeAddress(currentAddress, group.connectionName)
-            };
-          }
-          
-          // Address incomplete - try to enrich from recipient profile
-          console.log(`🔄 Enriching address for ${group.connectionName}...`);
-          
-          try {
-            const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+      // Check if this is a wishlist purchase (registry-style fulfillment)
+      const isRegistryPurchase = cartItems.every(item => item.wishlist_owner_shipping);
+      
+      let enrichedDeliveryGroups;
+      
+      if (isRegistryPurchase && deliveryGroups.length === 0) {
+        // Registry-style: Create synthetic delivery group using wishlist owner's shipping
+        console.log('🎁 Registry-style purchase detected - using wishlist owner shipping');
+        const ownerShipping = cartItems[0].wishlist_owner_shipping;
+        
+        enrichedDeliveryGroups = [{
+          id: `wishlist_${cartItems[0].wishlist_id}`,
+          connectionId: cartItems[0].wishlist_owner_id || 'wishlist_owner',
+          connectionName: cartItems[0].wishlist_owner_name || 'Gift Recipient',
+          items: cartItems.map(item => item.product.product_id || item.product.id),
+          shippingAddress: normalizeAddress(ownerShipping, cartItems[0].wishlist_owner_name || 'Gift Recipient')
+        }];
+      } else {
+        // Standard flow: Enrich delivery groups from recipient profiles
+        enrichedDeliveryGroups = await Promise.all(
+          deliveryGroups.map(async (group) => {
+            let currentAddress = group.shippingAddress;
             
-            if (recipient?.address && isCompleteAddress(recipient.address)) {
-              console.log(`✅ Enriched ${group.connectionName} from profile`);
+            // Check if address is already complete
+            if (isCompleteAddress(currentAddress)) {
+              console.log(`✅ Group ${group.connectionName} already has complete address`);
               return {
                 ...group,
-                shippingAddress: normalizeAddress(recipient.address, group.connectionName)
+                shippingAddress: normalizeAddress(currentAddress, group.connectionName)
               };
             }
-          } catch (error) {
-            console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
-          }
-          
-          // Still incomplete - BLOCK payment
-          const errorMsg = `Complete shipping address required for ${group.connectionName}. Please update their address in cart.`;
-          console.error('🚨 ADDRESS VALIDATION FAILED:', errorMsg);
-          throw new Error(errorMsg);
-        })
-      );
+            
+            // Address incomplete - try to enrich from recipient profile
+            console.log(`🔄 Enriching address for ${group.connectionName}...`);
+            
+            try {
+              const recipient = await unifiedRecipientService.getRecipientById(group.connectionId);
+              
+              if (recipient?.address && isCompleteAddress(recipient.address)) {
+                console.log(`✅ Enriched ${group.connectionName} from profile`);
+                return {
+                  ...group,
+                  shippingAddress: normalizeAddress(recipient.address, group.connectionName)
+                };
+              }
+            } catch (error) {
+              console.error(`❌ Failed to fetch recipient ${group.connectionName}:`, error);
+            }
+            
+            // Still incomplete - BLOCK payment
+            const errorMsg = `Complete shipping address required for ${group.connectionName}. Please update their address in cart.`;
+            console.error('🚨 ADDRESS VALIDATION FAILED:', errorMsg);
+            throw new Error(errorMsg);
+          })
+        );
+      }
 
       console.log('✅ Preflight enrichment complete:', 
         enrichedDeliveryGroups.map(g => ({
@@ -572,8 +603,62 @@ const UnifiedCheckoutForm: React.FC = () => {
         <div className="w-full max-w-full grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Checkout Content - Mobile: Stack vertically */}
           <div className="w-full lg:col-span-2 space-y-4 lg:space-y-6 min-w-0">
-          {/* Shipping Review Section - Mobile: Collapsible */}
-          <CheckoutShippingReview shippingCost={shippingCost} />
+          
+          {/* Registry-Style Wishlist Purchase: Show owner shipping info */}
+          {isWishlistPurchase && wishlistOwnerInfo ? (
+            <Card className="border-purple-200 bg-purple-50/50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <Gift className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-purple-800">
+                      Shipping to {wishlistOwnerInfo.name}'s address
+                    </p>
+                    <p className="text-sm text-purple-600">
+                      {wishlistOwnerInfo.shipping?.city}, {wishlistOwnerInfo.shipping?.state}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Full address provided securely to our delivery partner
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Standard Shipping Review Section - Mobile: Collapsible */
+            <CheckoutShippingReview shippingCost={shippingCost} />
+          )}
+          
+          {/* Guest Email Collection - For non-logged-in users buying from wishlists */}
+          {!user && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Your Email
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label htmlFor="guest-email">Email address</Label>
+                  <Input
+                    id="guest-email"
+                    type="email"
+                    placeholder="Enter your email for order confirmation"
+                    value={checkoutData.shippingInfo.email}
+                    onChange={(e) => handleUpdateShippingInfo({ email: e.target.value })}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  We'll send your order confirmation and tracking details here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment Section - Mobile: Full width */}
           <Card>

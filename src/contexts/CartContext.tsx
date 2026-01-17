@@ -38,13 +38,17 @@ export interface CartItem {
   // Wishlist tracking metadata
   wishlist_id?: string;
   wishlist_item_id?: string;
+  // Registry-style fulfillment: ship to wishlist owner's address
+  wishlist_owner_id?: string;
+  wishlist_owner_name?: string;
+  wishlist_owner_shipping?: any;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartTotal: number;
   deliveryGroups: DeliveryGroup[];
-  addToCart: (product: Product, quantity?: number, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => void;
+  addToCart: (product: Product, quantity?: number, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string; wishlist_owner_id?: string; wishlist_owner_name?: string; wishlist_owner_shipping?: any }) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -129,7 +133,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * ========================================================================
    */
 
-  const addToCart = async (product: Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }) => {
+  const addToCart = async (product: Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string; wishlist_owner_id?: string; wishlist_owner_name?: string; wishlist_owner_shipping?: any }) => {
     await serviceAddToCart(product, quantity, wishlistMetadata);
     triggerHapticFeedback('success'); // Native haptic on add to cart
   };

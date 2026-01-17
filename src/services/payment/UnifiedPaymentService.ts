@@ -730,7 +730,7 @@ class UnifiedPaymentService {
    * Add product to cart - MUST call UnifiedMarketplaceService for validation
    * Can accept either a productId string or a full Product object (for variations)
    */
-  async addToCart(productOrId: string | Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string }): Promise<void> {
+  async addToCart(productOrId: string | Product, quantity: number = 1, wishlistMetadata?: { wishlist_id: string; wishlist_item_id: string; wishlist_owner_id?: string; wishlist_owner_name?: string; wishlist_owner_shipping?: any }): Promise<void> {
     try {
       let product: Product;
       let productId: string;
@@ -861,11 +861,16 @@ class UnifiedPaymentService {
           selectedVariations: typeof productOrId === 'object' ? (productOrId as any).selectedVariations : undefined,
           // Store wishlist metadata for purchase tracking
           wishlist_id: wishlistMetadata?.wishlist_id,
-          wishlist_item_id: wishlistMetadata?.wishlist_item_id
+          wishlist_item_id: wishlistMetadata?.wishlist_item_id,
+          // Registry-style fulfillment: ship to wishlist owner's address
+          wishlist_owner_id: wishlistMetadata?.wishlist_owner_id,
+          wishlist_owner_name: wishlistMetadata?.wishlist_owner_name,
+          wishlist_owner_shipping: wishlistMetadata?.wishlist_owner_shipping
         });
         console.log(`[CART DEBUG] Added new item to cart`, {
           variationText: typeof productOrId === 'object' ? (productOrId as any).variationText : undefined,
-          wishlistTracking: wishlistMetadata ? `wishlist ${wishlistMetadata.wishlist_id}` : 'none'
+          wishlistTracking: wishlistMetadata ? `wishlist ${wishlistMetadata.wishlist_id}` : 'none',
+          wishlistOwner: wishlistMetadata?.wishlist_owner_name || 'none'
         });
       }
 

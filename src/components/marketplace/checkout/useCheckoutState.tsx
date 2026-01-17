@@ -115,7 +115,13 @@ export const useCheckoutState = () => {
    */
   useEffect(() => {
     const loadAddressData = async () => {
-      if (!user || addressesLoaded) return;
+      if (addressesLoaded) return;
+
+      // For guests (no user), just initialize with empty form
+      if (!user) {
+        setAddressesLoaded(true);
+        return;
+      }
 
       try {
         // Get default address from address service

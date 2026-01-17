@@ -22,6 +22,8 @@ interface SharedWishlistViewProps {
     name: string;
     image?: string;
     id: string;
+    bio?: string;
+    location?: string;
   };
 }
 
@@ -78,13 +80,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
       setAddedItemCount(prev => prev + 1);
       setShowFloatingBar(true);
       
-      toast.success(`Added to cart`, {
-        description: "Create an account to track delivery",
-        action: {
-          label: "Sign Up",
-          onClick: () => navigate("/auth/signup?return=/cart"),
-        },
-      });
+      toast.success("Added to cart");
     } catch (error) {
       console.error("Failed to add item to cart:", error);
       toast.error("Failed to add to cart");
@@ -108,13 +104,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
       setAddedItemCount(availableItems.length);
       setShowFloatingBar(true);
       
-      toast.success(`Added ${availableItems.length} items to cart`, {
-        description: "Create an account to track delivery",
-        action: {
-          label: "Sign Up",
-          onClick: () => navigate("/auth/signup?return=/cart"),
-        },
-      });
+      toast.success(`Added ${availableItems.length} items to cart`);
     } catch (error) {
       console.error("Failed to add items to cart:", error);
       toast.error("Failed to add items to cart");
@@ -160,8 +150,14 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
             <div>
               <div className="text-sm font-medium">{owner.name}</div>
               <div className="flex items-center text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3 mr-1" />
-                {formattedDate}
+                {owner.location ? (
+                  <span>{owner.location}</span>
+                ) : (
+                  <>
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {formattedDate}
+                  </>
+                )}
               </div>
             </div>
           </div>

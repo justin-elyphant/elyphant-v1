@@ -53,10 +53,11 @@ const SharedWishlist = () => {
           return;
         }
         
-        // Step 2: Fetch owner profile separately (avoids PostgREST join issues)
+        // Step 2: Fetch owner profile separately with extended info for shared wishlists
+        // Sharing is intentional, so we can show more profile details
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, profile_image')
+          .select('id, name, first_name, last_name, profile_image, bio, city, state, username')
           .eq('id', wishlistData.user_id)
           .maybeSingle();
         
@@ -109,14 +110,37 @@ const SharedWishlist = () => {
           })
         };
         
+        // Build display name with fallback logic for shared wishlists
+        let displayName = 'A Friend';
+        if (profileData) {
+          if (profileData.name) {
+            displayName = profileData.name;
+          } else if (profileData.first_name && profileData.last_name) {
+            displayName = `${profileData.first_name} ${profileData.last_name}`;
+          } else if (profileData.username) {
+            displayName = profileData.username;
+          } else if (profileData.first_name) {
+            displayName = profileData.first_name;
+          }
+        }
+        
+        // Build location string if available
+        const location = profileData?.city && profileData?.state 
+          ? `${profileData.city}, ${profileData.state}`
+          : profileData?.city || profileData?.state || undefined;
+        
         const ownerInfo = profileData ? {
-          name: profileData.name,
+          name: displayName,
           image: profileData.profile_image,
-          id: profileData.id
+          id: profileData.id,
+          bio: profileData.bio,
+          location: location
         } : {
-          name: 'Wishlist Owner',
+          name: displayName,
           image: null,
-          id: wishlistData.user_id
+          id: wishlistData.user_id,
+          bio: undefined,
+          location: undefined
         };
         
         setWishlist(transformedWishlist);

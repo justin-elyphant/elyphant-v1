@@ -79,15 +79,27 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
         className="sticky top-0 z-40"
       />
 
-      {/* Tab Toggle - matching mobile style */}
-      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/30">
-        <div className="px-6 py-3">
-          <div className="flex bg-muted/50 rounded-xl p-1 max-w-md">
+      {/* Hero Section - Always visible at top */}
+      <div className="px-6 py-6 space-y-6">
+        <WishlistHeroSection 
+          wishlistCount={wishlists.length}
+          totalItemCount={totalItems}
+          onCreateWishlist={onCreateWishlist}
+        />
+        
+        {wishlists.length < 3 && <WishlistBenefitsGrid />}
+      </div>
+
+      {/* Tab Toggle + Sort Bar - Below Hero, matching desktop */}
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between">
+          {/* Tab Toggle */}
+          <div className="flex bg-muted/50 rounded-xl p-1">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "flex-1 h-10 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
+                "h-10 px-5 rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
                 activeTab === "wishlists"
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -101,7 +113,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
               variant="ghost"
               size="sm"
               className={cn(
-                "flex-1 h-10 min-h-[44px] rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
+                "h-10 px-5 rounded-lg text-sm font-medium transition-all gap-2 touch-manipulation",
                 activeTab === "nicole"
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -112,6 +124,21 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
               Nicole AI
             </Button>
           </div>
+
+          {/* Sort Dropdown - Only show when on wishlists tab */}
+          {activeTab === "wishlists" && (
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[160px] h-10 rounded-lg">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Recently Added</SelectItem>
+                <SelectItem value="name">Name A-Z</SelectItem>
+                <SelectItem value="items">Most Items</SelectItem>
+                <SelectItem value="updated">Last Updated</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -124,33 +151,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
       ) : (
         /* Wishlists Tab */
         <>
-          {/* Hero Section for Tablet */}
-          <div className="px-6 py-6 space-y-6">
-            <WishlistHeroSection 
-              wishlistCount={wishlists.length}
-              totalItemCount={totalItems}
-              onCreateWishlist={onCreateWishlist}
-            />
-            
-            {wishlists.length < 3 && <WishlistBenefitsGrid />}
-          </div>
 
-          {/* Sort Bar */}
-          <div className="px-6 pb-4">
-            <div className="flex justify-end">
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-[160px] h-10 rounded-lg">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Recently Added</SelectItem>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                  <SelectItem value="items">Most Items</SelectItem>
-                  <SelectItem value="updated">Last Updated</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
           {/* Main Content */}
           <div className="px-6 pb-6">

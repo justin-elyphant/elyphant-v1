@@ -27,19 +27,20 @@ const SharedWishlist = () => {
       try {
         setLoading(true);
         
-        // Query the new wishlists table directly with proper joins
+        // Step 1: Fetch wishlist WITHOUT embedded join (avoids FK relationship issues)
         const { data: wishlistData, error: wishlistError } = await supabase
           .from('wishlists')
-          .select(`
-            *,
-            profiles!inner(id, name, profile_image)
-          `)
+          .select('*')
           .eq('id', wishlistId)
-          .single();
+          .maybeSingle();
         
         if (wishlistError) {
-          console.error("Error fetching wishlist:", wishlistError);
-          // Don't show toast for guests - just show the NoWishlistFound UI
+          console.error("[SharedWishlist] Wishlist fetch error:", wishlistError.code, wishlistError.message);
+          return;
+        }
+        
+        if (!wishlistData) {
+          console.log("[SharedWishlist] No wishlist found for id:", wishlistId);
           return;
         }
         
@@ -48,11 +49,23 @@ const SharedWishlist = () => {
         const canAccess = isOwner || wishlistData.is_public;
         
         if (!canAccess) {
-          // Don't show toast for guests - just show the NoWishlistFound UI
+          console.log("[SharedWishlist] Access denied - not owner and not public");
           return;
         }
         
-        // Fetch wishlist items
+        // Step 2: Fetch owner profile separately (avoids PostgREST join issues)
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, name, profile_image')
+          .eq('id', wishlistData.user_id)
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error("[SharedWishlist] Profile fetch error:", profileError.code, profileError.message);
+          // Continue anyway - we can show wishlist without owner info
+        }
+        
+        // Step 3: Fetch wishlist items
         const { data: items, error: itemsError } = await supabase
           .from('wishlist_items')
           .select('*')
@@ -60,7 +73,7 @@ const SharedWishlist = () => {
           .order('created_at', { ascending: false });
         
         if (itemsError) {
-          console.error("Error fetching wishlist items:", itemsError);
+          console.error("[SharedWishlist] Items fetch error:", itemsError.code, itemsError.message);
           // Still show wishlist even if items fail to load
         }
         
@@ -96,10 +109,14 @@ const SharedWishlist = () => {
           })
         };
         
-        const ownerInfo = {
-          name: wishlistData.profiles.name,
-          image: wishlistData.profiles.profile_image,
-          id: wishlistData.profiles.id
+        const ownerInfo = profileData ? {
+          name: profileData.name,
+          image: profileData.profile_image,
+          id: profileData.id
+        } : {
+          name: 'Wishlist Owner',
+          image: null,
+          id: wishlistData.user_id
         };
         
         setWishlist(transformedWishlist);

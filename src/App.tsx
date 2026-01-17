@@ -54,6 +54,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Connections = lazy(() => import("./pages/Connections"));
 const Wishlists = lazy(() => import("./pages/Wishlists"));
 const WishlistWorkspace = lazy(() => import("./pages/WishlistWorkspace"));
+const SharedWishlist = lazy(() => import("./pages/SharedWishlist"));
 const StreamlinedProfileSetup = lazy(() => import("./pages/StreamlinedProfileSetup"));
 const StreamlinedSignUp = lazy(() => import("./components/onboarding/StreamlinedSignUp"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
@@ -252,7 +253,7 @@ function AppContent() {
           <Route path="/connections" element={<Connections />} />
           <Route path="/wishlists" element={<Wishlists />} />
           <Route path="/wishlist/:wishlistId" element={<WishlistWorkspace />} />
-          <Route path="/shared-wishlist/:wishlistId" element={<WishlistWorkspace />} />
+          <Route path="/shared-wishlist/:wishlistId" element={<SharedWishlist />} />
           <Route path="/about" element={<AboutUs />} />
            <Route path="/careers" element={<Careers />} />
            <Route path="/press" element={<Press />} />

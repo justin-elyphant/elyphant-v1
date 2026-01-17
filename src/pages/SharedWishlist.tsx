@@ -39,7 +39,7 @@ const SharedWishlist = () => {
         
         if (wishlistError) {
           console.error("Error fetching wishlist:", wishlistError);
-          toast.error("Wishlist not found or is private");
+          // Don't show toast for guests - just show the NoWishlistFound UI
           return;
         }
         
@@ -48,7 +48,7 @@ const SharedWishlist = () => {
         const canAccess = isOwner || wishlistData.is_public;
         
         if (!canAccess) {
-          toast.error("This wishlist is private");
+          // Don't show toast for guests - just show the NoWishlistFound UI
           return;
         }
         

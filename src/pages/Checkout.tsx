@@ -68,7 +68,11 @@ const Checkout = () => {
   };
 
   // Comprehensive validation for all order types
+  // Skip validation for guests - they'll enter shipping info inline
   const validateCheckoutReadiness = () => {
+    // Guests skip this validation - they'll enter shipping at checkout
+    if (!profile) return [];
+    
     const issues = [];
     const unassignedItems = getUnassignedItems();
     const hasUnassignedItems = unassignedItems.length > 0;

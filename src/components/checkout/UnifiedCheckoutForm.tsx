@@ -243,11 +243,10 @@ const UnifiedCheckoutForm: React.FC = () => {
    * V2 MODERNIZATION: Create Checkout Session that redirects to Stripe hosted page.
    * Order will be created by webhook after payment succeeds.
    */
+  // Guest checkout supported - generate guest session ID if no user
+  const guestSessionId = !user ? `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null;
+
   const createCheckoutSession = async () => {
-    if (!user) {
-      toast.error('Please log in to continue');
-      return;
-    }
 
     // 🚨 CRITICAL: Wait for shipping cost to load before creating payment intent
     if (isLoadingShipping || shippingCost === null || !shippingCostLoaded) {
@@ -379,7 +378,9 @@ const UnifiedCheckoutForm: React.FC = () => {
             taxAmount
           },
           metadata: {
-            user_id: user.id,
+            user_id: user?.id || null,
+            guest_session_id: guestSessionId,
+            guest_email: !user ? checkoutData.shippingInfo.email : null,
             order_type: 'marketplace_purchase',
             item_count: cartItems.length
           }

@@ -50,14 +50,12 @@ const Cart = () => {
   const handleCheckout = async () => {
     triggerHapticFeedback(HapticPatterns.addToCart);
     
-    if (!user) {
-      toast.error("Please sign in to continue with checkout");
-      navigate("/signin");
-      return;
-    }
+    // Guest checkout allowed - users can enter shipping at checkout
+    // No authentication required for shared wishlist purchases
     
-    // Check for unassigned items - only block if user lacks shipping address
-    if (unassignedItems.length > 0) {
+    // For authenticated users with unassigned items, check shipping address
+    // For guests, they'll enter shipping info at checkout
+    if (user && unassignedItems.length > 0) {
       const shippingAddress = profile?.shipping_address;
       const hasCompleteAddress = shippingAddress && 
         profile?.name &&
@@ -599,7 +597,10 @@ const Cart = () => {
         
         {/* Sticky Bottom CTA Bar - Mobile/Tablet - Above Bottom Nav */}
         {isMobile && cartItems.length > 0 && (
-          <div className="fixed bottom-20 left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40">
+          <div 
+            className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40"
+            style={{ bottom: 'calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px))' }}
+          >
             <div className="flex items-center justify-between gap-4 p-4">
               <div>
                 <p className="text-xs text-muted-foreground">Total</p>
@@ -608,9 +609,9 @@ const Cart = () => {
               <Button 
                 onClick={handleCheckout}
                 className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white h-12"
-                disabled={!hasCompleteAddress}
+                disabled={user ? !hasCompleteAddress : false}
               >
-                {hasCompleteAddress ? 'Checkout' : 'Add Address'}
+                {user ? (hasCompleteAddress ? 'Checkout' : 'Add Address') : 'Checkout'}
               </Button>
             </div>
           </div>

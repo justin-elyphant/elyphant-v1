@@ -61,7 +61,7 @@ const GiftCartFloatingBar: React.FC<GiftCartFloatingBarProps> = ({
               Create an account to track your gift delivery
             </p>
             <Link 
-              to="/auth/signup?return=/cart"
+              to="/signup?redirect=/cart"
               className="text-sm font-medium text-primary hover:underline"
             >
               Sign Up

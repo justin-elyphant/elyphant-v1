@@ -225,13 +225,26 @@ const Cart = () => {
 
   const unassignedItems = getUnassignedItems();
   
+  // Check if this is a registry-style wishlist purchase (all items ship to wishlist owner)
+  const isWishlistPurchase = cartItems.length > 0 && 
+    cartItems.every(item => item.wishlist_owner_shipping);
+  
+  // Debug logging for wishlist purchase detection
+  console.log('🎁 [Cart] Wishlist purchase detection:', {
+    isWishlistPurchase,
+    cartItemCount: cartItems.length,
+    itemsWithOwnerShipping: cartItems.filter(item => item.wishlist_owner_shipping).length,
+    firstItemOwnerName: cartItems[0]?.wishlist_owner_name,
+    firstItemOwnerShipping: cartItems[0]?.wishlist_owner_shipping
+  });
+  
   const shippingAddress = profile?.shipping_address;
-  const hasCompleteAddress = shippingAddress && 
+  const hasCompleteAddress = isWishlistPurchase || (shippingAddress && 
     profile?.name &&
     (shippingAddress.address_line1 || shippingAddress.street) &&
     shippingAddress.city &&
     shippingAddress.state &&
-    (shippingAddress.zip_code || shippingAddress.zipCode);
+    (shippingAddress.zip_code || shippingAddress.zipCode));
 
   // Get unique recipient names for sidebar summary
   const recipientSummary = deliveryGroups.map(g => ({
@@ -244,7 +257,7 @@ const Cart = () => {
       <ZincMetadataDebugger />
       <div className={cn(
         "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing",
-        isMobile && cartItems.length > 0 ? "pb-40" : "py-8"
+        isMobile && cartItems.length > 0 ? "pb-48" : "py-8"
       )}>
         {/* Sticky Header with Backdrop Blur - iOS Style */}
         <div className={cn(
@@ -285,12 +298,31 @@ const Cart = () => {
           <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
             {/* Cart Content */}
             <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
-              {/* Unassigned Items Section */}
-              <UnassignedItemsSection 
-                unassignedItems={unassignedItems}
-                onAssignAll={handleAssignAllToRecipients}
-                onAssignToMe={handleAssignAllToMe}
-              />
+              {/* Wishlist Purchase Indicator */}
+              {isWishlistPurchase && cartItems[0]?.wishlist_owner_name && (
+                <div className="mb-4 p-4 bg-purple-50/50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Gift className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-purple-900">
+                        Gift for {cartItems[0].wishlist_owner_name}
+                      </p>
+                      <p className="text-sm text-purple-700">
+                        Ships directly to their address
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Unassigned Items Section - Only show if not a wishlist purchase */}
+              {!isWishlistPurchase && (
+                <UnassignedItemsSection 
+                  unassignedItems={unassignedItems}
+                  onAssignAll={handleAssignAllToRecipients}
+                  onAssignToMe={handleAssignAllToMe}
+                />
+              )}
 
               {/* Package Previews - Collapsed Accordion */}
               {deliveryGroups.length > 0 && (
@@ -595,11 +627,10 @@ const Cart = () => {
           />
         )}
         
-        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Above Bottom Nav */}
+        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed to bottom */}
         {isMobile && cartItems.length > 0 && (
           <div 
-            className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40"
-            style={{ bottom: 'calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px))' }}
+            className="fixed left-0 right-0 bottom-0 bg-background/95 backdrop-blur-xl border-t z-50 pb-safe"
           >
             <div className="flex items-center justify-between gap-4 p-4">
               <div>
@@ -609,9 +640,9 @@ const Cart = () => {
               <Button 
                 onClick={handleCheckout}
                 className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white h-12"
-                disabled={user ? !hasCompleteAddress : false}
+                disabled={!isWishlistPurchase && user ? !hasCompleteAddress : false}
               >
-                {user ? (hasCompleteAddress ? 'Checkout' : 'Add Address') : 'Checkout'}
+                {isWishlistPurchase ? 'Checkout' : (user ? (hasCompleteAddress ? 'Checkout' : 'Add Address') : 'Checkout')}
               </Button>
             </div>
           </div>

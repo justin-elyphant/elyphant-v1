@@ -222,7 +222,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getUnassignedItems = (): CartItem[] => {
-    return cartItems.filter(item => !item.recipientAssignment);
+    // Items are considered "assigned" if they have:
+    // 1. A recipient assignment, OR
+    // 2. Wishlist owner shipping info (registry-style fulfillment)
+    return cartItems.filter(item => 
+      !item.recipientAssignment && !item.wishlist_owner_shipping
+    );
   };
 
   const assignItemsToNewRecipient = (productIds: string[], recipientData: any) => {

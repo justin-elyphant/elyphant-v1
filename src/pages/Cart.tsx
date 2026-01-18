@@ -226,14 +226,28 @@ const Cart = () => {
   const unassignedItems = getUnassignedItems();
   
   // Check if this is a registry-style wishlist purchase (all items ship to wishlist owner)
-  const isWishlistPurchase = cartItems.length > 0 && 
+  // Primary: items have wishlist_owner_shipping populated
+  const hasWishlistOwnerShipping = cartItems.length > 0 && 
     cartItems.every(item => item.wishlist_owner_shipping);
+  
+  // Fallback: all items have wishlist_id and owner_id, AND buyer is NOT the owner
+  const hasWishlistItems = cartItems.length > 0 &&
+    cartItems.every(item => item.wishlist_id && item.wishlist_owner_id);
+  const buyerIsNotOwner = hasWishlistItems && cartItems[0]?.wishlist_owner_id !== user?.id;
+  
+  // Combined: wishlist purchase if has shipping, OR if has wishlist items and buyer is not owner
+  const isWishlistPurchase = hasWishlistOwnerShipping || (hasWishlistItems && buyerIsNotOwner);
   
   // Debug logging for wishlist purchase detection
   console.log('🎁 [Cart] Wishlist purchase detection:', {
     isWishlistPurchase,
+    hasWishlistOwnerShipping,
+    hasWishlistItems,
+    buyerIsNotOwner,
     cartItemCount: cartItems.length,
     itemsWithOwnerShipping: cartItems.filter(item => item.wishlist_owner_shipping).length,
+    firstItemOwnerId: cartItems[0]?.wishlist_owner_id,
+    currentUserId: user?.id,
     firstItemOwnerName: cartItems[0]?.wishlist_owner_name,
     firstItemOwnerShipping: cartItems[0]?.wishlist_owner_shipping
   });
@@ -627,10 +641,11 @@ const Cart = () => {
           />
         )}
         
-        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed to bottom */}
+        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed above bottom nav */}
         {isMobile && cartItems.length > 0 && (
           <div 
-            className="fixed left-0 right-0 bottom-0 bg-background/95 backdrop-blur-xl border-t z-50 pb-safe"
+            className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
           >
             <div className="flex items-center justify-between gap-4 p-4">
               <div>

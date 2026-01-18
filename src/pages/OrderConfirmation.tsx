@@ -379,6 +379,12 @@ const OrderConfirmation = () => {
 
   const isMultiRecipient = order.is_split_order && !order.parent_order_id;
 
+  // Check if this order is from a wishlist purchase
+  const isFromWishlist = order?.cart_data?.source === 'wishlist' || 
+                        order?.cart_data?.wishlist_id ||
+                        order?.cart_data?.wishlist_owner_id;
+  const wishlistOwnerName = order?.cart_data?.wishlist_owner_name || 'the recipient';
+
   return (
     <SidebarLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -393,16 +399,41 @@ const OrderConfirmation = () => {
           </Alert>
         )}
         
-        {/* Success Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
-            <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+        {/* Wishlist Gift Sent Hero - Coral-Orange Theme */}
+        {isFromWishlist && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-[#EF4444] via-[#F97316] to-[#FB923C] rounded-2xl text-white text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4 backdrop-blur-sm">
+              <Gift className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">
+              🎉 Gift Sent to {wishlistOwnerName}!
+            </h2>
+            <p className="text-white/90 mb-4">
+              Your thoughtful gift is on its way. They'll receive tracking updates directly.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center text-sm">
+              <span className="bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                ✨ Gift wrapped with care
+              </span>
+              <span className="bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                📦 Ships to their address
+              </span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-          <p className="text-muted-foreground">
-            Your order has been received and is being processed
-          </p>
-        </div>
+        )}
+
+        {/* Success Header - Only show for non-wishlist orders */}
+        {!isFromWishlist && (
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
+              <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
+            <p className="text-muted-foreground">
+              Your order has been received and is being processed
+            </p>
+          </div>
+        )}
 
         {/* Order Number */}
         <Card className="p-6 mb-6">

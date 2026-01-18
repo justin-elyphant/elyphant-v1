@@ -158,7 +158,7 @@ export const useCartCompatibility = () => {
       });
       return groupedItems;
     },
-    getUnassignedItems: () => cart.cartItems.filter(item => !item.recipientAssignment),
+    getUnassignedItems: () => cart.cartItems.filter(item => !item.recipientAssignment && !item.wishlist_owner_shipping),
     transferGuestCart: () => {
       // Guest cart transfer logic can be implemented here
       console.log('Guest cart transfer - to be implemented');

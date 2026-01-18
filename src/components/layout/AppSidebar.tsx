@@ -40,6 +40,11 @@ const AppSidebar = () => {
   const { unreadCount: notificationsCount } = useNotifications();
   const { getItemCount } = useCart();
   const cartItemCount = getItemCount();
+  
+  // Don't render sidebar for guests (unauthenticated users)
+  if (!user) {
+    return null;
+  }
 
   // Shopping section
   const shoppingItems = [

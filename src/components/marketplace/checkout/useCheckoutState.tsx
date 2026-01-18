@@ -127,37 +127,61 @@ export const useCheckoutState = () => {
     const loadAddressData = async () => {
       if (addressesLoaded) return;
 
-      // Check if ALL cart items are from the same wishlist with owner shipping (registry-style)
-      const wishlistItems = cartItems.filter(item => item.wishlist_owner_shipping);
+      // PRIMARY: Check if ALL cart items have wishlist_owner_shipping populated
+      const itemsWithOwnerShipping = cartItems.filter(item => item.wishlist_owner_shipping);
+      const hasCompleteOwnerShipping = itemsWithOwnerShipping.length > 0 && 
+        itemsWithOwnerShipping.length === cartItems.length;
       
-      if (wishlistItems.length > 0 && wishlistItems.length === cartItems.length) {
-        // All items from one wishlist - use owner's shipping address (registry fulfillment)
-        const ownerShipping = wishlistItems[0].wishlist_owner_shipping;
+      // FALLBACK: All items have wishlist metadata and buyer is NOT the owner
+      const itemsWithWishlistId = cartItems.filter(item => item.wishlist_id && item.wishlist_owner_id);
+      const hasWishlistMetadata = itemsWithWishlistId.length > 0 && 
+        itemsWithWishlistId.length === cartItems.length;
+      const buyerIsNotOwner = hasWishlistMetadata && cartItems[0]?.wishlist_owner_id !== user?.id;
+      
+      // Combined registry detection
+      const isRegistryPurchase = hasCompleteOwnerShipping || (hasWishlistMetadata && buyerIsNotOwner);
+      
+      console.log("🎁 [useCheckoutState] Registry purchase detection:", {
+        hasCompleteOwnerShipping,
+        hasWishlistMetadata,
+        buyerIsNotOwner,
+        isRegistryPurchase,
+        userId: user?.id,
+        ownerId: cartItems[0]?.wishlist_owner_id
+      });
+      
+      if (isRegistryPurchase) {
+        // Registry-style fulfillment: use owner's shipping address
+        let ownerShipping = cartItems[0]?.wishlist_owner_shipping;
+        const ownerName = cartItems[0]?.wishlist_owner_name || 'Gift Recipient';
+        const ownerId = cartItems[0]?.wishlist_owner_id || '';
         
         console.log("✅ Detected wishlist purchase - using owner's shipping address (registry-style)");
         
         setIsWishlistPurchase(true);
         setWishlistOwnerInfo({
-          name: wishlistItems[0].wishlist_owner_name || 'Gift Recipient',
-          id: wishlistItems[0].wishlist_owner_id || '',
+          name: ownerName,
+          id: ownerId,
           shipping: ownerShipping
         });
         
-        // Pre-fill shipping from owner's address
-        setCheckoutData(prev => ({
-          ...prev,
-          shippingInfo: {
-            ...prev.shippingInfo,
-            name: wishlistItems[0].wishlist_owner_name || '',
-            email: prev.shippingInfo.email || user?.email || '',
-            address: ownerShipping.address_line1 || ownerShipping.street || '',
-            addressLine2: ownerShipping.address_line2 || '',
-            city: ownerShipping.city || '',
-            state: ownerShipping.state || '',
-            zipCode: ownerShipping.zip_code || ownerShipping.zipCode || '',
-            country: ownerShipping.country || 'United States'
-          }
-        }));
+        // If owner shipping is present, pre-fill the form
+        if (ownerShipping) {
+          setCheckoutData(prev => ({
+            ...prev,
+            shippingInfo: {
+              ...prev.shippingInfo,
+              name: ownerName,
+              email: prev.shippingInfo.email || user?.email || '',
+              address: ownerShipping.address_line1 || ownerShipping.street || '',
+              addressLine2: ownerShipping.address_line2 || '',
+              city: ownerShipping.city || '',
+              state: ownerShipping.state || '',
+              zipCode: ownerShipping.zip_code || ownerShipping.zipCode || '',
+              country: ownerShipping.country || 'United States'
+            }
+          }));
+        }
         
         setAddressesLoaded(true);
         return;

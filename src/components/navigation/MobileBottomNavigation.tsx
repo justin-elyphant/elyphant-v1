@@ -96,7 +96,7 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] mobile-bottom-nav" data-mobile-nav>
       {/* iOS-style rounded container with backdrop blur */}
       <div className="bg-white/80 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-floating">
         <div className="flex items-center justify-around h-14 px-2 pb-[env(safe-area-inset-bottom)]">

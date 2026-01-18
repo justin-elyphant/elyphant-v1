@@ -5427,6 +5427,21 @@ export type Database = {
           username: string
         }[]
       }
+      get_public_wishlist_owner_profile: {
+        Args: { wishlist_owner_id: string }
+        Returns: {
+          bio: string
+          city: string
+          first_name: string
+          id: string
+          last_name: string
+          name: string
+          profile_image: string
+          shipping_address: Json
+          state: string
+          username: string
+        }[]
+      }
       get_safe_profile_data: {
         Args: { profile_user_id: string }
         Returns: boolean

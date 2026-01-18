@@ -54,12 +54,10 @@ const SharedWishlist = () => {
           return;
         }
         
-        // Step 2: Fetch owner profile separately with extended info for shared wishlists
-        // Sharing is intentional, so we can show more profile details
+        // Step 2: Fetch owner profile using security definer function
+        // This bypasses RLS issues for anonymous users viewing public wishlists
         const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, name, first_name, last_name, profile_image, bio, city, state, username, shipping_address')
-          .eq('id', wishlistData.user_id)
+          .rpc('get_public_wishlist_owner_profile', { wishlist_owner_id: wishlistData.user_id })
           .maybeSingle();
         
         if (profileError) {

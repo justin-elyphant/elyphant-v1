@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import WishlistItemsGrid from "./WishlistItemsGrid";
-import GiftActionHeader from "./GiftActionHeader";
+import WishlistOwnerHero from "./WishlistOwnerHero";
+import GuestWishlistCTA from "./GuestWishlistCTA";
 import GiftCartFloatingBar from "./GiftCartFloatingBar";
-import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,9 +40,6 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
   
   // Check if the current user is the wishlist owner (buying from their own wishlist)
   const isOwnWishlist = user?.id === owner.id;
-
-  const wishlistDate = new Date(wishlist.created_at);
-  const formattedDate = format(wishlistDate, "MMMM d, yyyy");
 
   // Fetch purchased items on mount
   useEffect(() => {
@@ -149,66 +143,26 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
   };
 
   return (
-    <div className="pb-24">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <Link to="/wishlists" className="flex items-center text-sm text-muted-foreground mb-2 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3 w-3 mr-1" />
-            Back to wishlists
-          </Link>
-          
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl md:text-3xl font-bold">{wishlist.title}</h1>
-            {wishlist.category && (
-              <WishlistCategoryBadge category={wishlist.category} />
-            )}
-          </div>
-          
-          {wishlist.description && (
-            <p className="text-muted-foreground mt-2">{wishlist.description}</p>
-          )}
-        </div>
-        
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage 
-                src={normalizeImageUrl(owner.image, { bucket: 'avatars' })}
-                onError={(e) => {
-                  console.warn('Failed to load owner avatar:', owner.image);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <AvatarFallback>{owner.name?.charAt(0) || "U"}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="text-sm font-medium">{owner.name}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                {owner.location ? (
-                  <span>{owner.location}</span>
-                ) : (
-                  <>
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {formattedDate}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <Link to={`/user/${owner.id}`}>
-            <Button size="sm" variant="outline" className="flex items-center gap-1">
-              <User className="h-3 w-3 mr-1" />
-              View Profile
-            </Button>
-          </Link>
-        </div>
+    <div className="pb-24 md:pb-8">
+      {/* Back Navigation - Subtle on all platforms */}
+      <div className="mb-4">
+        <Link 
+          to="/wishlists" 
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors touch-manipulation min-h-[44px] md:min-h-0"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1.5" />
+          Browse wishlists
+        </Link>
       </div>
 
-      {/* Gift Action Header - Add All to Cart CTA */}
-      <GiftActionHeader
-        ownerName={owner.name}
+      {/* Enhanced Owner Hero Section */}
+      <WishlistOwnerHero
+        owner={owner}
+        wishlist={{
+          title: wishlist.title,
+          description: wishlist.description,
+          category: wishlist.category
+        }}
         itemCount={wishlist.items.length}
         totalPrice={totalPrice}
         purchasedCount={purchasedItemIds.size}
@@ -216,7 +170,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         isAdding={isAddingAll}
       />
       
-      {/* Wishlist Content */}
+      {/* Wishlist Content - Responsive Grid */}
       <WishlistItemsGrid 
         items={wishlist.items}
         onSaveItem={() => {}}
@@ -226,6 +180,9 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         onAddToCart={handleAddToCart}
         purchasedItemIds={purchasedItemIds}
       />
+
+      {/* Guest Signup CTA - After product grid */}
+      <GuestWishlistCTA ownerName={owner.name} />
 
       {/* Floating Cart Bar */}
       <GiftCartFloatingBar

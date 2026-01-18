@@ -156,9 +156,9 @@ const EnhancedWishlistCard = ({
 
   return (
     <>
-      <Card className={`group relative overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/20 ios-touch-feedback ${
+      <Card className={`group relative overflow-hidden hover:shadow-lg transition-all duration-200 border-border/50 hover:border-primary/20 ios-touch-feedback touch-manipulation active:scale-[0.98] md:active:scale-100 ${
         isSelected ? 'ring-2 ring-primary border-primary' : ''
-      } ${className || ''}`}>
+      } ${isPurchased ? 'opacity-60' : ''} ${className || ''}`}>
         {/* Selection checkbox */}
         {isSelectionMode && (
           <div className="absolute top-3 left-3 z-20">
@@ -263,7 +263,7 @@ const EnhancedWishlistCard = ({
                           triggerHapticFeedback('success');
                           onAddToCart();
                         }}
-                        className="text-xs bg-red-600 hover:bg-red-700 text-white min-h-[36px] touch-manipulation active:scale-95 transition-transform"
+                        className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground min-h-[44px] touch-manipulation active:scale-95 transition-transform font-medium"
                       >
                         <ShoppingCart className="h-3 w-3 mr-1" />
                         Add to Cart

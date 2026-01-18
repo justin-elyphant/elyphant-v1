@@ -9,6 +9,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlistSkeleton";
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
 import SharedWishlistView from "@/components/gifting/wishlist/SharedWishlistView";
+import MainLayout from "@/components/layout/MainLayout";
 import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 
 const SharedWishlist = () => {
@@ -161,24 +162,30 @@ const SharedWishlist = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <SharedWishlistSkeleton />
-      </div>
+      <MainLayout>
+        <div className="container mx-auto py-6 px-4 lg:py-8 lg:px-6">
+          <SharedWishlistSkeleton />
+        </div>
+      </MainLayout>
     );
   }
 
   if (!wishlist) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <NoWishlistFound />
-      </div>
+      <MainLayout>
+        <div className="container mx-auto py-6 px-4 lg:py-8 lg:px-6">
+          <NoWishlistFound />
+        </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <SharedWishlistView wishlist={wishlist} owner={ownerProfile} />
-    </div>
+    <MainLayout>
+      <div className="container mx-auto py-6 px-4 lg:py-8 lg:px-6">
+        <SharedWishlistView wishlist={wishlist} owner={ownerProfile} />
+      </div>
+    </MainLayout>
   );
 };
 

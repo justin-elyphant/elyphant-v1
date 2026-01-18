@@ -316,16 +316,18 @@ const Cart = () => {
           <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
             {/* Cart Content */}
             <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
-              {/* Wishlist Purchase Indicator */}
+              {/* Wishlist Purchase Indicator - Coral-Orange Theme */}
               {isWishlistPurchase && cartItems[0]?.wishlist_owner_name && (
-                <div className="mb-4 p-4 bg-purple-50/50 border border-purple-200 rounded-lg">
+                <div className="mb-4 p-4 bg-gradient-to-r from-[#EF4444] via-[#F97316] to-[#FB923C] rounded-lg text-white">
                   <div className="flex items-center gap-3">
-                    <Gift className="h-5 w-5 text-purple-600" />
+                    <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
+                      <Gift className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-medium text-purple-900">
-                        Gift for {cartItems[0].wishlist_owner_name}
+                      <p className="font-semibold">
+                        🎁 Gift for {cartItems[0].wishlist_owner_name}
                       </p>
-                      <p className="text-sm text-purple-700">
+                      <p className="text-sm text-white/80">
                         Ships directly to their address
                       </p>
                     </div>

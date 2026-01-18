@@ -118,7 +118,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
       <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
         <CollapsibleContent>
           <CardContent className="space-y-4">
-            {/* Registry-style Wishlist Purchase Banner */}
+            {/* Registry-style Wishlist Purchase Banner - Coral-Orange Theme */}
             {isWishlistPurchase && wishlistOwnerInfo && (() => {
               // Extract city and state with fallbacks for different field naming conventions
               const shipping = wishlistOwnerInfo.shipping || {};
@@ -127,22 +127,22 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               const locationHint = city && state ? `${city}, ${state}` : city || state || '';
               
               return (
-                <div className="w-full p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="w-full p-4 bg-gradient-to-r from-[#EF4444] via-[#F97316] to-[#FB923C] rounded-lg text-white">
                   <div className="flex items-start gap-3 w-full">
-                    <div className="p-2 bg-purple-100 rounded-full flex-shrink-0">
-                      <Gift className="h-4 w-4 text-purple-600" />
+                    <div className="p-2 bg-white/20 rounded-full flex-shrink-0 backdrop-blur-sm">
+                      <Gift className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-purple-800">
+                      <p className="font-semibold">
                         Shipping to {wishlistOwnerInfo.name}'s address
                       </p>
                       {locationHint && (
-                        <p className="text-sm text-purple-700 mt-1">
-                          {locationHint}
+                        <p className="text-sm text-white/80 mt-1">
+                          📍 {locationHint}
                         </p>
                       )}
-                      <p className="text-xs text-purple-600 mt-1">
-                        Gift will be delivered directly to the wishlist owner
+                      <p className="text-xs text-white/60 mt-2">
+                        🔒 Their full address is kept private for security
                       </p>
                     </div>
                   </div>

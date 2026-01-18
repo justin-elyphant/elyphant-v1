@@ -22,6 +22,7 @@ import ZincMetadataDebugger from "@/components/debug/ZincMetadataDebugger";
 import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 import { formatScheduledDate } from "@/utils/dateUtils";
 
@@ -265,9 +266,12 @@ const Cart = () => {
     name: g.connectionName,
     count: g.items.length
   }));
+  
+  // Determine layout: guests use MainLayout (no sidebar), authenticated use SidebarLayout
+  const Layout = user ? SidebarLayout : MainLayout;
 
   return (
-    <SidebarLayout>
+    <Layout>
       <ZincMetadataDebugger />
       <div className={cn(
         "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing",
@@ -641,11 +645,11 @@ const Cart = () => {
           />
         )}
         
-        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed above bottom nav */}
+        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed above bottom nav (only for authenticated) */}
         {isMobile && cartItems.length > 0 && (
           <div 
             className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40"
-            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+            style={{ bottom: user ? 'calc(env(safe-area-inset-bottom, 0px) + 64px)' : 'env(safe-area-inset-bottom, 0px)' }}
           >
             <div className="flex items-center justify-between gap-4 p-4">
               <div>
@@ -663,7 +667,7 @@ const Cart = () => {
           </div>
         )}
       </div>
-    </SidebarLayout>
+    </Layout>
   );
 };
 

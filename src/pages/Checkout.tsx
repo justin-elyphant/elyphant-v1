@@ -3,10 +3,12 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
+import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, AlertCircle, Info, Shield } from 'lucide-react';
 import UnifiedCheckoutForm from '@/components/checkout/UnifiedCheckoutForm';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Checkout = () => {
@@ -14,7 +16,19 @@ const Checkout = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { cartItems, deliveryGroups, getUnassignedItems } = useCart();
   const { profile } = useProfile();
+  const { user } = useAuth();
   
+  // Detect if this is a registry-style wishlist purchase (guest buying for owner)
+  const hasWishlistOwnerShipping = cartItems.length > 0 && 
+    cartItems.every(item => item.wishlist_owner_shipping);
+  const hasWishlistItems = cartItems.length > 0 &&
+    cartItems.every(item => item.wishlist_id && item.wishlist_owner_id);
+  const buyerIsNotOwner = hasWishlistItems && cartItems[0]?.wishlist_owner_id !== user?.id;
+  const isWishlistPurchase = hasWishlistOwnerShipping || (hasWishlistItems && buyerIsNotOwner);
+  
+  // Determine layout: guests use MainLayout (no sidebar), authenticated use SidebarLayout
+  const Layout = user ? SidebarLayout : MainLayout;
+
   // Check if user cancelled payment
   const cancelled = searchParams.get('cancelled') === 'true';
 
@@ -24,7 +38,7 @@ const Checkout = () => {
   // Check cart completeness and redirect accordingly
   if (cartItems.length === 0) {
     return (
-      <SidebarLayout>
+      <Layout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center py-16">
             <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -37,7 +51,7 @@ const Checkout = () => {
             </Button>
           </div>
         </div>
-      </SidebarLayout>
+      </Layout>
     );
   }
 
@@ -68,11 +82,12 @@ const Checkout = () => {
   };
 
   // Comprehensive validation for all order types
-  // Skip validation for guests - they'll enter shipping info inline
+  // Skip validation for guests AND wishlist purchases - they have special handling
   const validateCheckoutReadiness = () => {
     // Guests skip this validation - they'll enter shipping at checkout
-    if (!profile) return [];
-    
+    // Wishlist purchases skip this - shipping comes from wishlist owner
+    if (!user || isWishlistPurchase) return [];
+
     const issues = [];
     const unassignedItems = getUnassignedItems();
     const hasUnassignedItems = unassignedItems.length > 0;
@@ -117,7 +132,7 @@ const Checkout = () => {
   // Block checkout if any addresses are incomplete
   if (validationIssues.length > 0) {
     return (
-      <SidebarLayout>
+      <Layout>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-orange-500 mx-auto mb-4" />
@@ -157,12 +172,12 @@ const Checkout = () => {
             </div>
           </div>
         </div>
-      </SidebarLayout>
+      </Layout>
     );
   }
 
   return (
-    <SidebarLayout>
+    <Layout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Cancelled Payment Banner */}
         {cancelled && (
@@ -183,7 +198,7 @@ const Checkout = () => {
         )}
       </div>
       <UnifiedCheckoutForm />
-    </SidebarLayout>
+    </Layout>
   );
 };
 

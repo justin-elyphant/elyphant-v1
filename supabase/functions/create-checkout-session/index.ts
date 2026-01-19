@@ -53,8 +53,10 @@ serve(async (req) => {
       contributionAmount
     } = requestBody;
 
-    // Handle authentication - allow service role for auto-gift orchestrator
+    // Handle authentication - support guests, service role, and authenticated users
     let user: { id: string; email: string };
+    let isGuestCheckout = false;
+    
     if (isServiceRole && isAutoGift) {
       // Auto-gift orchestrator passes user_id in metadata
       const userId = clientMetadata?.user_id;
@@ -62,14 +64,34 @@ serve(async (req) => {
       if (!userId) throw new Error("user_id required in metadata for auto-gift orchestrator");
       user = { id: userId, email: userEmail };
       logStep("Auto-gift orchestrator authenticated", { userId: user.id });
-    } else {
-      if (!authHeader) throw new Error("No authorization header provided");
+    } else if (clientMetadata?.guest_email && !authHeader) {
+      // Guest checkout - no auth required, use guest email
+      isGuestCheckout = true;
+      user = { 
+        id: `guest_${Date.now()}`, 
+        email: clientMetadata.guest_email 
+      };
+      logStep("Guest checkout", { email: user.email });
+    } else if (authHeader) {
+      // Standard authenticated user
       const token = authHeader.replace("Bearer ", "");
       const { data: userData, error: userError } = await supabaseService.auth.getUser(token);
-      if (userError) throw new Error(`Authentication error: ${userError.message}`);
-      if (!userData.user?.email) throw new Error("User not authenticated");
-      user = { id: userData.user.id, email: userData.user.email };
-      logStep("User authenticated", { userId: user.id, email: user.email });
+      
+      if (userError || !userData.user?.email) {
+        // Auth failed but guest email provided - fall back to guest
+        if (clientMetadata?.guest_email) {
+          isGuestCheckout = true;
+          user = { id: `guest_${Date.now()}`, email: clientMetadata.guest_email };
+          logStep("Auth failed, falling back to guest checkout", { email: user.email, originalError: userError?.message });
+        } else {
+          throw new Error(`Authentication error: ${userError?.message || 'User not authenticated'}`);
+        }
+      } else {
+        user = { id: userData.user.id, email: userData.user.email };
+        logStep("User authenticated", { userId: user.id, email: user.email });
+      }
+    } else {
+      throw new Error("No authorization header or guest email provided");
     }
 
     // Check if this is a payment intent only request (for Apple Pay)

@@ -411,9 +411,11 @@ const UnifiedCheckoutForm: React.FC = () => {
           metadata: {
             user_id: user?.id || null,
             guest_session_id: guestSessionId,
-            guest_email: !user ? checkoutData.shippingInfo.email : null,
+            // Always send email for graceful fallback if auth fails
+            guest_email: checkoutData.shippingInfo.email,
             order_type: 'marketplace_purchase',
-            item_count: cartItems.length
+            item_count: cartItems.length,
+            is_wishlist_purchase: isWishlistPurchase || false
           }
         }
       });

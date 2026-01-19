@@ -5,11 +5,12 @@ import ProductRating from "@/components/shared/ProductRating";
 
 interface ProductPriceAndRatingProps {
   product: Product;
+  variantPrice?: number; // Override price for selected variant
 }
 
-const ProductPriceAndRating: React.FC<ProductPriceAndRatingProps> = ({ product }) => {
-  // Prefer current_price from offers API (stored in metadata), fallback to product.price
-  const price = product.metadata?.current_price || product.price || 0;
+const ProductPriceAndRating: React.FC<ProductPriceAndRatingProps> = ({ product, variantPrice }) => {
+  // Priority: variant price > current_price from offers API > product.price
+  const price = variantPrice || product.metadata?.current_price || product.price || 0;
   const rating = product.stars || product.rating || product.metadata?.stars || 0;
   const reviewCount = product.reviewCount || product.num_reviews || 
                       product.metadata?.review_count || 0;

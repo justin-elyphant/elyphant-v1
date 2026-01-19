@@ -25,10 +25,12 @@ interface ProductDetailsSidebarProps {
   context?: string;
   // Variation props from parent
   hasVariations: boolean;
+  selectedVariations: Record<string, string>;
   handleVariationChange: (newSelections: any, newProductId: string) => void;
   getEffectiveProductId: () => string;
   getVariationDisplayText: () => string;
   isVariationComplete: () => boolean;
+  variantPrice?: number; // Override price for selected variant
 }
 
 const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({ 
@@ -36,10 +38,12 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   user,
   context = 'marketplace',
   hasVariations,
+  selectedVariations,
   handleVariationChange,
   getEffectiveProductId,
   getVariationDisplayText,
-  isVariationComplete
+  isVariationComplete,
+  variantPrice
 }) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -76,11 +80,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
     const effectiveProductId = getEffectiveProductId();
     const variationText = getVariationDisplayText();
     
-    // Add to cart with variation info
+    // Add to cart with variation info (including structured selectedVariations)
     const cartProduct = {
       ...product,
       product_id: effectiveProductId,
-      variationText: variationText || undefined
+      variationText: variationText || undefined,
+      selectedVariations: Object.keys(selectedVariations).length > 0 
+        ? JSON.stringify(selectedVariations) 
+        : undefined
     };
     
     addToCart(cartProduct);
@@ -93,9 +100,30 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
     });
   };
   
-  // 2. Buy Now
+  // 2. Buy Now - FIXED: Validate variations before purchase
   const handleBuyNow = () => {
-    addToCart(product);
+    // Validate variation selection (same as Add to Cart)
+    if (hasVariations && !isVariationComplete()) {
+      toast.error("Please select all product options", {
+        description: "Choose size, color, and other options before purchase"
+      });
+      return;
+    }
+    
+    // Use effective product ID (selected variant or base product)
+    const effectiveProductId = getEffectiveProductId();
+    const variationText = getVariationDisplayText();
+    
+    const cartProduct = {
+      ...product,
+      product_id: effectiveProductId,
+      variationText: variationText || undefined,
+      selectedVariations: Object.keys(selectedVariations).length > 0 
+        ? JSON.stringify(selectedVariations) 
+        : undefined
+    };
+    
+    addToCart(cartProduct);
     navigate("/checkout");
   };
   
@@ -144,8 +172,8 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           />
         </div>
         
-        {/* Price & Rating */}
-        <ProductPriceAndRating product={product} />
+        {/* Price & Rating - supports variant-specific pricing */}
+        <ProductPriceAndRating product={product} variantPrice={variantPrice} />
         
         {/* Size Selector - NEW (My Sizes Integration) */}
         {userSizes && (

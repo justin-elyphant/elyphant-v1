@@ -6,6 +6,7 @@ import ProductInfoDetails from "./ProductInfoDetails";
 import ProductDetailsActionsSection from "./ProductDetailsActionsSection";
 import VariationSelector from "./VariationSelector";
 import WishlistStatusBanner from "./WishlistStatusBanner";
+import { Spinner } from "@/components/ui/spinner";
 import { getProductName, getProductImages } from "../product-item/productUtils";
 
 interface MobileProductLayoutProps {
@@ -24,6 +25,11 @@ interface MobileProductLayoutProps {
   context?: 'marketplace' | 'wishlist';
   isInWishlist?: boolean;
   wishlistCount?: number;
+  // New variant props
+  variantImages?: string[] | null;
+  variantPrice?: number | null;
+  isLoadingVariant?: boolean;
+  selectedVariations?: Record<string, string>;
 }
 
 const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
@@ -41,14 +47,23 @@ const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
   source,
   context = 'marketplace',
   isInWishlist = false,
-  wishlistCount = 0
+  wishlistCount = 0,
+  variantImages,
+  variantPrice,
+  isLoadingVariant = false,
+  selectedVariations = {}
 }) => {
   return (
     <div className="space-y-4 ios-typography-optimize">
       {/* Mobile Image Gallery - Full width */}
       <div className="relative -mx-4 ios-product-card-optimize">
+        {isLoadingVariant && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+            <Spinner />
+          </div>
+        )}
         <ProductCarousel 
-          images={getProductImages(productDetail)} 
+          images={variantImages || getProductImages(productDetail)} 
           productName={getProductName(productDetail)}
         />
       </div>
@@ -63,7 +78,7 @@ const MobileProductLayout: React.FC<MobileProductLayoutProps> = ({
           />
         )}
         
-        <ProductInfoHeader product={productDetail} />
+        <ProductInfoHeader product={productDetail} variantPrice={variantPrice} />
         
         {/* Variations - Mobile optimized */}
         {hasVariations && productDetail.all_variants && (

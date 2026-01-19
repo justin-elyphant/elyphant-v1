@@ -67,7 +67,10 @@ const ProductDetailsDialog = ({
     handleVariationChange,
     getEffectiveProductId,
     isVariationComplete,
-    getVariationDisplayText
+    getVariationDisplayText,
+    variantPrice,
+    variantImages,
+    isLoadingVariant
   } = useProductVariations(productDetail || product);
 
   // Enhanced debug variation rendering
@@ -210,13 +213,22 @@ const ProductDetailsDialog = ({
             context={context}
             isInWishlist={isInWishlist}
             wishlistCount={wishlistCount}
+            variantImages={variantImages}
+            variantPrice={variantPrice}
+            isLoadingVariant={isLoadingVariant}
+            selectedVariations={selectedVariations}
           />
         ) : (
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 py-4">
             {/* Image Gallery */}
             <div className="relative overflow-hidden rounded-lg order-1 lg:order-1">
+              {isLoadingVariant && (
+                <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+                  <Spinner />
+                </div>
+              )}
               <ProductCarousel 
-                images={getProductImages(productDetail)} 
+                images={variantImages || getProductImages(productDetail)} 
                 productName={getProductName(productDetail)} 
               />
             </div>
@@ -231,7 +243,7 @@ const ProductDetailsDialog = ({
                 />
               )}
               
-              <ProductInfoHeader product={productDetail} />
+              <ProductInfoHeader product={productDetail} variantPrice={variantPrice} />
               
               {/* Product Variations - Keep prominent */}
               {hasVariations && productDetail.all_variants && (

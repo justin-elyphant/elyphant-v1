@@ -35,11 +35,13 @@ const ProductDetailsPage: React.FC = () => {
   // Use product variations hook at parent level
   const {
     hasVariations,
+    selectedVariations,
     selectedProductId,
     handleVariationChange,
     getEffectiveProductId,
     getVariationDisplayText,
-    isVariationComplete
+    isVariationComplete,
+    variantPrice
   } = useProductVariations(productDetail);
   
   // Fetch product details on mount
@@ -268,10 +270,12 @@ const ProductDetailsPage: React.FC = () => {
             user={user}
             context={context}
             hasVariations={hasVariations}
+            selectedVariations={selectedVariations}
             handleVariationChange={handleVariationChange}
             getEffectiveProductId={getEffectiveProductId}
             getVariationDisplayText={getVariationDisplayText}
             isVariationComplete={isVariationComplete}
+            variantPrice={variantPrice}
           />
           </div>
         </div>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/types/product";
+import { getProductDetail } from "@/api/product";
 
 type SelectedVariations = {
   [dimension: string]: string;
@@ -8,6 +9,9 @@ type SelectedVariations = {
 export const useProductVariations = (product: Product | null) => {
   const [selectedVariations, setSelectedVariations] = useState<SelectedVariations>({});
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [variantPrice, setVariantPrice] = useState<number | null>(null);
+  const [variantImages, setVariantImages] = useState<string[] | null>(null);
+  const [isLoadingVariant, setIsLoadingVariant] = useState(false);
 
   // Check if product has variations
   const hasVariations = useMemo(() => {
@@ -63,26 +67,61 @@ export const useProductVariations = (product: Product | null) => {
     }
   }, [product?.product_id]);
 
-  // Handle variation change
-  const handleVariationChange = (newSelections: SelectedVariations, newProductId: string) => {
+  // Handle variation change - now triggers variant data fetch
+  const handleVariationChange = useCallback((newSelections: SelectedVariations, newProductId: string) => {
     setSelectedVariations(newSelections);
     setSelectedProductId(newProductId || product?.product_id || "");
-  };
+  }, [product?.product_id]);
+
+  // Fetch variant-specific data (images, price) when variant changes
+  useEffect(() => {
+    const fetchVariantData = async () => {
+      // Only fetch if we have a different variant selected
+      if (!selectedProductId || selectedProductId === product?.product_id) {
+        // Reset to base product data
+        setVariantPrice(null);
+        setVariantImages(null);
+        return;
+      }
+
+      setIsLoadingVariant(true);
+      try {
+        console.log('[useProductVariations] Fetching variant data for:', selectedProductId);
+        const variantDetail = await getProductDetail(selectedProductId, 'amazon');
+        
+        if (variantDetail) {
+          // Update variant-specific price if available
+          if (variantDetail.price) {
+            console.log('[useProductVariations] Variant price:', variantDetail.price);
+            setVariantPrice(variantDetail.price);
+          }
+          
+          // Update variant-specific images if available
+          if (variantDetail.images && variantDetail.images.length > 0) {
+            console.log('[useProductVariations] Variant images:', variantDetail.images.length);
+            setVariantImages(variantDetail.images);
+          }
+        }
+      } catch (error) {
+        console.error('[useProductVariations] Error fetching variant data:', error);
+        // Keep using base product data on error
+      } finally {
+        setIsLoadingVariant(false);
+      }
+    };
+
+    if (hasVariations && selectedProductId) {
+      fetchVariantData();
+    }
+  }, [selectedProductId, product?.product_id, hasVariations]);
 
   // Get the effective product ID for cart/order operations
-  const getEffectiveProductId = () => {
+  const getEffectiveProductId = useCallback(() => {
     return selectedProductId || product?.product_id || "";
-  };
-
-  // Get current price (could be enhanced to show variant-specific pricing)
-  const getCurrentPrice = () => {
-    // For now, return the base product price
-    // In future, this could lookup variant-specific pricing
-    return product?.price || 0;
-  };
+  }, [selectedProductId, product?.product_id]);
 
   // Check if all required variations are selected
-  const isVariationComplete = () => {
+  const isVariationComplete = useCallback(() => {
     if (!hasVariations || !product?.all_variants) return true;
 
     // Get all dimensions that need to be selected
@@ -97,15 +136,25 @@ export const useProductVariations = (product: Product | null) => {
     return Array.from(requiredDimensions).every(dimension => 
       selectedVariations[dimension]
     );
-  };
+  }, [hasVariations, product?.all_variants, selectedVariations]);
 
   // Get variation display text for cart/confirmation
-  const getVariationDisplayText = () => {
+  const getVariationDisplayText = useCallback(() => {
     const variations = Object.entries(selectedVariations);
     if (variations.length === 0) return "";
     
     return variations.map(([dimension, value]) => `${dimension}: ${value}`).join(", ");
-  };
+  }, [selectedVariations]);
+
+  // Get current price - now supports variant-specific pricing
+  const getCurrentPrice = useCallback(() => {
+    return variantPrice || product?.price || 0;
+  }, [variantPrice, product?.price]);
+
+  // Get current images - supports variant-specific images
+  const getCurrentImages = useCallback(() => {
+    return variantImages;
+  }, [variantImages]);
 
   return {
     hasVariations,
@@ -114,6 +163,10 @@ export const useProductVariations = (product: Product | null) => {
     handleVariationChange,
     getEffectiveProductId,
     getCurrentPrice,
+    getCurrentImages,
+    variantPrice,
+    variantImages,
+    isLoadingVariant,
     isVariationComplete,
     getVariationDisplayText
   };

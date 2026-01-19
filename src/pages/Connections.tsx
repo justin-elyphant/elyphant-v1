@@ -289,16 +289,24 @@ const Connections = () => {
                 mobile={true}
               />
             </div>
-            <SearchSuggestions
-              suggestions={searchSuggestions}
-              isVisible={showSuggestions}
-              onSuggestionClick={(suggestion) => {
-                setSearchTerm(suggestion);
-                setShowSuggestions(false);
-                searchInputRef.current?.blur();
-              }}
-              mobile={true}
-            />
+            {/* Inline suggestions dropdown */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm">
+                {searchSuggestions.map((suggestion, idx) => (
+                  <li
+                    key={idx}
+                    className="p-3 cursor-pointer hover:bg-muted border-b border-gray-100 last:border-b-0 touch-manipulation min-h-[44px] flex items-center"
+                    onClick={() => {
+                      setSearchTerm(suggestion);
+                      setShowSuggestions(false);
+                      searchInputRef.current?.blur();
+                    }}
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 

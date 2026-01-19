@@ -25,12 +25,17 @@ export async function invokeWithAuthRetry<T = any>(
     
     lastError = error;
     
-    // Check if error is auth-related
+    // Check if error is auth-related (including corrupted JWT with missing claims)
+    const errorMsg = error.message?.toLowerCase() || '';
     const isAuthError = 
       error.status === 401 || 
-      error.message?.toLowerCase().includes('jwt') ||
-      error.message?.toLowerCase().includes('token') ||
-      error.message?.toLowerCase().includes('unauthorized');
+      error.status === 403 ||
+      errorMsg.includes('jwt') ||
+      errorMsg.includes('token') ||
+      errorMsg.includes('unauthorized') ||
+      errorMsg.includes('sub claim') ||
+      errorMsg.includes('bad_jwt') ||
+      errorMsg.includes('invalid claim');
     
     // If this is the last attempt or not an auth error, stop retrying
     if (attempt >= maxRetries || !isAuthError) {
@@ -42,7 +47,9 @@ export async function invokeWithAuthRetry<T = any>(
     const { error: refreshError } = await supabase.auth.refreshSession();
     
     if (refreshError) {
-      console.error('❌ Failed to refresh session:', refreshError);
+      console.error('❌ Failed to refresh session, clearing corrupted session:', refreshError);
+      // Sign out to clear corrupted tokens - user will need to re-login
+      await supabase.auth.signOut();
       break;
     }
     

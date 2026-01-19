@@ -25,7 +25,7 @@ import { MobilePullToRefresh } from "@/components/mobile/MobilePullToRefresh";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import MobileSwipeGestures from "@/components/mobile/MobileSwipeGestures";
 import VoiceInputButton from "@/components/search/VoiceInputButton";
-import SearchSuggestions from "@/components/search/SearchSuggestions";
+// SearchSuggestions removed - using UnifiedSearchBar
 import { triggerHapticFeedback } from "@/utils/haptics";
 import "@/styles/connections-mobile.css";
 

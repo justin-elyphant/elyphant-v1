@@ -21,11 +21,8 @@ export interface SearchOptions {
   occasionType?: string;
 }
 
-const mockBrands = [
-  "Nike", "Apple", "Samsung", "Sony", "Microsoft", "Google", "Amazon", 
-  "Tesla", "BMW", "Mercedes", "Louis Vuitton", "Gucci", "Rolex",
-  "Starbucks", "McDonald's", "Coca-Cola", "Pepsi", "Netflix", "Spotify"
-];
+// Brands are now queried from the products table via edge function
+// Mock brands removed - using real data from search-suggestions edge function
 
 /**
  * Detect if a query looks like a person's name
@@ -155,18 +152,10 @@ export const unifiedSearch = async (
     console.log('🔍 [unifiedSearch] Skipping product search - query appears to be a person name');
   }
 
-  // Search brands (mock for now)
+  // Brand search - now returns empty as brands come from search-suggestions edge function
   if (includeBrands && query.length >= 2) {
-    try {
-      console.log('🔍 [unifiedSearch] Searching brands...');
-      const brandResults = mockBrands
-        .filter(brand => brand.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, Math.floor(maxResults / 3));
-      results.brands = brandResults;
-      console.log(`🔍 [unifiedSearch] Brand search completed: ${results.brands.length} results`);
-    } catch (error) {
-      console.error('🔍 [unifiedSearch] Error searching brands:', error);
-    }
+    console.log('🔍 [unifiedSearch] Brand search skipped - handled by search-suggestions edge function');
+    results.brands = [];
   }
 
   results.total = results.friends.length + results.products.length + results.brands.length;

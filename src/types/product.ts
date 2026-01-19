@@ -67,6 +67,7 @@ export type Product = {
   best_seller_rank?: number;
   sales_rank?: number;
   badges?: string[];
+  variant_count?: number; // Number of available variants (colors, sizes)
   
   // New fields for wishlist and preference tracking
   tags?: string[];

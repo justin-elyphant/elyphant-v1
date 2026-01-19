@@ -288,6 +288,35 @@ serve(async (req) => {
         description: enhancedData.description ? enhancedData.description.substring(0, 100) + '...' : 'No description'
       });
       
+      // PHASE 2: Parent ASIN Resolution for Complete Variants
+      // If this product has no variants but has a parent_asin, fetch parent to get all variants
+      if (enhancedData.all_variants.length === 0 && data.parent_asin && data.parent_asin !== product_id) {
+        console.log(`[Parent Resolution] Product ${product_id} has parent ASIN: ${data.parent_asin}, fetching variants...`);
+        
+        try {
+          const parentResponse = await fetch(
+            `https://api.zinc.io/v1/products/${data.parent_asin}?retailer=${retailer}`,
+            {
+              method: 'GET',
+              headers: { 'Authorization': authHeader }
+            }
+          );
+          
+          if (parentResponse.ok) {
+            const parentData = await parentResponse.json();
+            
+            if (parentData.all_variants && parentData.all_variants.length > 0) {
+              enhancedData.all_variants = parentData.all_variants;
+              enhancedData.hasVariations = true;
+              enhancedData.parent_asin = data.parent_asin;
+              console.log(`[Parent Resolution] Found ${parentData.all_variants.length} variants from parent ${data.parent_asin}`);
+            }
+          }
+        } catch (parentError) {
+          console.log('[Parent Resolution] Error fetching parent (non-fatal):', parentError);
+        }
+      }
+      
       // PHASE 2: Store COMPLETE Zinc response in products table
       // Use correct column names that match schema (image_url, not image)
       // Store stars/review_count in metadata JSONB, not as top-level columns

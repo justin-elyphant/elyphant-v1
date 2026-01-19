@@ -118,6 +118,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
         </div>
         
+        {/* Variant Count Badge (like Amazon "15 colors") */}
+        {product.variant_count && product.variant_count > 1 && (
+          <p className="text-xs text-muted-foreground">
+            {product.variant_count} options available
+          </p>
+        )}
+        
         {/* Price and Action Icons */}
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold text-foreground">

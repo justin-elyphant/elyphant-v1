@@ -55,6 +55,7 @@ export const normalizeBrandTerm = (term: string): string => {
 
 /**
  * Calculate relevance score for a product based on search query
+ * Enhanced with model number detection for apparel searches
  */
 export const calculateRelevanceScore = (
   product: any, 
@@ -66,12 +67,27 @@ export const calculateRelevanceScore = (
   const brand = (product.brand || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
   
+  // Detect model numbers in search (3-4 digit numbers like "512", "501", "505")
+  const searchModelNumbers = searchTerms.filter(t => /^\d{3,4}$/.test(t));
+  
   for (const term of searchTerms) {
     const normalizedTerm = normalizeBrandTerm(term);
+    const isModelNumber = /^\d{3,4}$/.test(term);
+    
     // Brand match = highest priority (100 points)
     if (brand.includes(term) || brand.includes(normalizedTerm)) score += 100;
-    // Title match = good (50 points)
-    if (title.includes(term) || title.includes(normalizedTerm)) score += 50;
+    
+    // Title match scoring
+    if (title.includes(term) || title.includes(normalizedTerm)) {
+      if (isModelNumber) {
+        // BOOST: Model numbers get 150 points (vs 50 for generic terms)
+        // This ensures "512" in title ranks higher than generic "jeans" matches
+        score += 150;
+      } else {
+        score += 50;
+      }
+    }
+    
     // Category match = decent (20 points)
     if (category.includes(term)) score += 20;
   }
@@ -84,6 +100,20 @@ export const calculateRelevanceScore = (
            category.includes(t);
   });
   if (allMatch) score += 200;
+  
+  // PENALTY: Wrong model numbers
+  // If searching for "512", heavily penalize products with different model numbers (537, 505, etc.)
+  if (searchModelNumbers.length > 0) {
+    const titleNumbers = title.match(/\b\d{3,4}\b/g) || [];
+    const hasSearchModel = searchModelNumbers.some(m => titleNumbers.includes(m));
+    const hasWrongModel = titleNumbers.some(num => !searchModelNumbers.includes(num));
+    
+    if (hasWrongModel && !hasSearchModel) {
+      // Product has a model number that doesn't match search - heavy penalty
+      score -= 100;
+      console.log(`[Relevance] Penalized wrong model: "${title}" has [${titleNumbers.join(',')}] but searching [${searchModelNumbers.join(',')}]`);
+    }
+  }
   
   // If searching for a specific brand, penalize products that don't match it
   if (searchBrands.length > 0) {

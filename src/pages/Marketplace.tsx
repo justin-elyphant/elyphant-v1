@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import StreamlinedMarketplaceWrapper from "@/components/marketplace/StreamlinedMarketplaceWrapper";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import MainLayout from "@/components/layout/MainLayout";
 import { ProductProvider } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";

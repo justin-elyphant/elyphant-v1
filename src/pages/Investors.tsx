@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import InvestorPitchDeck from "@/components/investors/InvestorPitchDeck";
 
 const Investors = () => {

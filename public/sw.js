@@ -1,10 +1,12 @@
 /**
  * Service Worker for aggressive caching of marketplace data
+ * Version-based cache invalidation ensures fresh builds are served
  */
 
-const CACHE_NAME = 'marketplace-cache-v1';
-const STATIC_CACHE_NAME = 'marketplace-static-v1';
-const API_CACHE_NAME = 'marketplace-api-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `marketplace-cache-${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = `marketplace-static-${CACHE_VERSION}`;
+const API_CACHE_NAME = `marketplace-api-${CACHE_VERSION}`;
 
 // Cache duration in milliseconds
 const CACHE_DURATION = {
@@ -48,7 +50,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches (version-based invalidation)
 self.addEventListener('activate', (event) => {
   console.log('Service Worker: Activating...');
   
@@ -56,14 +58,15 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && 
-                cacheName !== STATIC_CACHE_NAME && 
-                cacheName !== API_CACHE_NAME) {
+          cacheNames
+            .filter((cacheName) => {
+              // Delete any cache that doesn't match current version
+              return !cacheName.includes(CACHE_VERSION);
+            })
+            .map((cacheName) => {
               console.log('Service Worker: Deleting old cache', cacheName);
               return caches.delete(cacheName);
-            }
-          })
+            })
         );
       })
       .then(() => {

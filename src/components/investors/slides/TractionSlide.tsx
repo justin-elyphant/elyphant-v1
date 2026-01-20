@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Check, Circle, Target } from 'lucide-react';
 import { slideVariants, itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
 
@@ -10,14 +11,44 @@ interface SlideProps {
 }
 
 const milestones = [
-  { date: "Q1 2025", event: "Platform MVP Launch" },
-  { date: "Q2 2025", event: "AI Gifting Engine (Nicole)" },
-  { date: "Q3 2025", event: "Auto-Gift Automation" },
-  { date: "Q4 2025", event: "1,000 Active Users" },
-  { date: "Q1 2026", event: "Amazon Fulfillment Integration" },
+  { date: "Q1 2025", event: "Platform Launch", status: "complete" },
+  { date: "Q3 2025", event: "Nicole AI Beta", status: "complete" },
+  { date: "Q1 2026", event: "Auto-Gift v2", status: "current" },
+  { date: "Q2 2026", event: "5K Active Users", status: "upcoming" },
+  { date: "Q4 2026", event: "$500K GMV", status: "target" },
 ];
 
 const TractionSlide = ({ direction }: SlideProps) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'complete':
+        return <Check className="w-3 h-3 text-white" />;
+      case 'current':
+        return <Circle className="w-2 h-2 fill-current text-sky-400" />;
+      case 'upcoming':
+        return <Circle className="w-2 h-2 text-gray-500" />;
+      case 'target':
+        return <Target className="w-3 h-3 text-purple-400" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'complete':
+        return 'bg-green-500';
+      case 'current':
+        return 'bg-sky-500 animate-pulse';
+      case 'upcoming':
+        return 'bg-gray-600';
+      case 'target':
+        return 'bg-gradient-to-r from-purple-500 to-sky-500';
+      default:
+        return 'bg-gray-600';
+    }
+  };
+
   return (
     <motion.div
       variants={slideVariants}
@@ -40,7 +71,7 @@ const TractionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-12"
       >
-        Early Momentum
+        Building Momentum
       </motion.h2>
 
       {/* Key metrics */}
@@ -79,7 +110,7 @@ const TractionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="relative max-w-4xl w-full"
       >
-        <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gradient-to-r from-purple-500/50 to-sky-500/50" />
+        <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gradient-to-r from-green-500/50 via-sky-500/50 to-purple-500/50" />
         <div className="flex justify-between">
           {milestones.map((milestone, index) => (
             <motion.div
@@ -89,9 +120,13 @@ const TractionSlide = ({ direction }: SlideProps) => {
               transition={{ delay: 0.5 + index * 0.1 }}
               className="relative flex flex-col items-center"
             >
-              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-purple-500 to-sky-500 mb-3" />
-              <div className="text-white text-sm font-medium">{milestone.date}</div>
-              <div className="text-gray-500 text-xs text-center max-w-[80px] mt-1">
+              <div className={`w-6 h-6 rounded-full ${getStatusColor(milestone.status)} flex items-center justify-center mb-3 border-2 border-gray-900`}>
+                {getStatusIcon(milestone.status)}
+              </div>
+              <div className={`text-sm font-medium ${milestone.status === 'current' ? 'text-sky-400' : 'text-white'}`}>
+                {milestone.date}
+              </div>
+              <div className={`text-xs text-center max-w-[80px] mt-1 ${milestone.status === 'current' ? 'text-sky-400/70' : 'text-gray-500'}`}>
                 {milestone.event}
               </div>
             </motion.div>

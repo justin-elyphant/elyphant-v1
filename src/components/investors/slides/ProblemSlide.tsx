@@ -30,25 +30,46 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Big stat */}
       <motion.div variants={itemVariants} className="text-center mb-8">
         <div className="text-6xl md:text-8xl lg:text-9xl font-bold text-white mb-4">
-          $<AnimatedCounter value={890} duration={2} />B
+          $<AnimatedCounter value={850} duration={2} />B
         </div>
         <p className="text-xl md:text-2xl text-gray-300">
-          The US retail return crisis in 2024
+          The US retail return crisis in 2025
         </p>
       </motion.div>
 
-      {/* Supporting stat */}
+      {/* Supporting stats */}
       <motion.div 
         variants={itemVariants}
-        className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-8 py-6 mb-8"
+        className="flex flex-col md:flex-row items-center gap-4 mb-8"
       >
-        <div className="text-4xl md:text-5xl font-bold text-red-400">
-          17.6%
+        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
+          <div className="text-4xl md:text-5xl font-bold text-red-400">
+            15.8%
+          </div>
+          <div className="text-gray-400 text-left">
+            <p className="font-semibold text-white">of all retail sales</p>
+            <p>were returned last year</p>
+          </div>
         </div>
-        <div className="text-gray-400 text-left">
-          <p className="font-semibold text-white">of all retail sales</p>
-          <p>were returned last year</p>
+
+        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
+          <div className="text-4xl md:text-5xl font-bold text-orange-400">
+            19.3%
+          </div>
+          <div className="text-gray-400 text-left">
+            <p className="font-semibold text-white">of online purchases</p>
+            <p>are returned</p>
+          </div>
         </div>
+      </motion.div>
+
+      {/* Fraud callout */}
+      <motion.div 
+        variants={itemVariants}
+        className="bg-red-500/10 border border-red-500/20 rounded-xl px-6 py-3 mb-6"
+      >
+        <span className="text-red-400 font-semibold">9% of all returns are fraudulent</span>
+        <span className="text-gray-500 ml-2">— costing retailers $103B annually</span>
       </motion.div>
 
       {/* Source */}
@@ -56,7 +77,7 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-gray-600 text-sm"
       >
-        Source: National Retail Federation & CNBC, 2024
+        Source: National Retail Federation, October 2025
       </motion.p>
     </motion.div>
   );

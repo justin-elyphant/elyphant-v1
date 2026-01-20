@@ -8,23 +8,28 @@ import WhyGiftingFailsSlide from './slides/WhyGiftingFailsSlide';
 import SolutionSlide from './slides/SolutionSlide';
 import HowItWorksSlide from './slides/HowItWorksSlide';
 import MarketSlide from './slides/MarketSlide';
+import WhyNowSlide from './slides/WhyNowSlide';
+import CompetitionSlide from './slides/CompetitionSlide';
 import BusinessModelSlide from './slides/BusinessModelSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
 import ContactSlide from './slides/ContactSlide';
 import { Button } from '@/components/ui/button';
 
+// Sequoia-optimized slide order (12 slides)
 const slides = [
-  { id: 'title', component: TitleSlide },
-  { id: 'problem', component: ProblemSlide },
-  { id: 'why-fails', component: WhyGiftingFailsSlide },
-  { id: 'solution', component: SolutionSlide },
-  { id: 'how-it-works', component: HowItWorksSlide },
-  { id: 'market', component: MarketSlide },
-  { id: 'business-model', component: BusinessModelSlide },
-  { id: 'traction', component: TractionSlide },
-  { id: 'team', component: TeamSlide },
-  { id: 'contact', component: ContactSlide },
+  { id: 'title', component: TitleSlide },           // 1 - Hook
+  { id: 'problem', component: ProblemSlide },       // 2 - $850B crisis
+  { id: 'why-fails', component: WhyGiftingFailsSlide }, // 3 - Root causes
+  { id: 'solution', component: SolutionSlide },     // 4 - Our answer
+  { id: 'how-it-works', component: HowItWorksSlide }, // 5 - Demo flow
+  { id: 'market', component: MarketSlide },         // 6 - TAM/SAM/SOM
+  { id: 'why-now', component: WhyNowSlide },        // 7 - Market timing
+  { id: 'competition', component: CompetitionSlide }, // 8 - Differentiation
+  { id: 'business-model', component: BusinessModelSlide }, // 9 - Revenue
+  { id: 'traction', component: TractionSlide },     // 10 - Metrics + roadmap
+  { id: 'team', component: TeamSlide },             // 11 - Founders
+  { id: 'contact', component: ContactSlide },       // 12 - CTA
 ];
 
 const InvestorPitchDeck = () => {

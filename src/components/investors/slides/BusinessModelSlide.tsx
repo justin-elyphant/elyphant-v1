@@ -22,14 +22,14 @@ const revenueStreams = [
     title: "Auto-Gift Subscription",
     value: "$9.99/mo",
     description: "Premium automation features",
-    status: "Coming Q2",
+    status: "Q2 2026",
   },
   {
     icon: Zap,
     title: "Brand Partnerships",
     value: "15-20%",
     description: "Featured product placements",
-    status: "Coming Q3",
+    status: "Q3 2026",
   },
 ];
 

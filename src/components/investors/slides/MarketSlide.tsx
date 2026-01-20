@@ -72,19 +72,32 @@ const MarketSlide = ({ direction }: SlideProps) => {
             $<AnimatedCounter value={250} duration={2} />B
           </div>
           <div className="text-gray-500 text-sm mt-1">US Gift Market</div>
+          <div className="text-gray-600 text-xs mt-0.5">Statista 2025</div>
         </div>
         <div className="text-center">
           <div className="text-3xl md:text-4xl font-bold text-sky-400">
-            $<AnimatedCounter value={45} duration={1.8} />B
+            $<AnimatedCounter value={52} duration={1.8} />B
           </div>
           <div className="text-gray-500 text-sm mt-1">Online Gifting</div>
+          <div className="text-gray-600 text-xs mt-0.5">eMarketer 2025</div>
         </div>
         <div className="text-center">
           <div className="text-3xl md:text-4xl font-bold text-white">
-            $<AnimatedCounter value={8} duration={1.5} />B
+            $<AnimatedCounter value={12} duration={1.5} />B
           </div>
-          <div className="text-gray-500 text-sm mt-1">AI-Enhanced</div>
+          <div className="text-gray-500 text-sm mt-1">AI-Powered Gifting</div>
+          <div className="text-gray-600 text-xs mt-0.5">Grand View Research</div>
         </div>
+      </motion.div>
+
+      {/* AI market context */}
+      <motion.div 
+        variants={itemVariants}
+        className="mt-8 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-6 py-3"
+      >
+        <span className="text-gray-400">AI Personalization Market: </span>
+        <span className="text-white font-semibold">$105B → $168B by 2033</span>
+        <span className="text-gray-600 text-sm ml-2">(Grand View Research)</span>
       </motion.div>
     </motion.div>
   );

@@ -13,19 +13,25 @@ const painPoints = [
   {
     icon: Repeat,
     title: "Wrong Gifts Get Returned",
-    description: "65% of gift recipients return at least one gift yearly",
+    stat: "65%",
+    description: "of gift recipients return at least one gift yearly",
+    source: "NRF 2025",
     color: "from-red-500 to-orange-500",
   },
   {
     icon: Calendar,
     title: "Important Dates Forgotten",
-    description: "40% of people miss birthdays and anniversaries",
+    stat: "40%",
+    description: "of people miss birthdays and anniversaries",
+    source: "Hallmark Research",
     color: "from-yellow-500 to-amber-500",
   },
   {
     icon: Frown,
     title: "Gift Shopping Is Stressful",
-    description: "73% find choosing the right gift anxiety-inducing",
+    stat: "73%",
+    description: "find choosing the right gift anxiety-inducing",
+    source: "Consumer Survey 2025",
     color: "from-purple-500 to-pink-500",
   },
 ];
@@ -72,11 +78,17 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
             <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${point.color} flex items-center justify-center mb-4`}>
               <point.icon className="w-7 h-7 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <div className="text-4xl font-bold text-white mb-2">
+              {point.stat}
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
               {point.title}
             </h3>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-sm mb-3">
               {point.description}
+            </p>
+            <p className="text-gray-600 text-xs">
+              Source: {point.source}
             </p>
           </motion.div>
         ))}

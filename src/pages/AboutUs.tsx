@@ -97,11 +97,11 @@ const AboutUs = () => {
                 <div className="bg-red-50 border-l-4 border-red-400 p-6 mb-6">
                   <h3 className="text-lg font-semibold text-red-800 mb-2">The Return Crisis</h3>
                   <p className="text-red-700 mb-2">
-                    <strong>$890 billion</strong> - That's how much merchandise was returned in the US retail market in 2024, 
-                    representing nearly 17.6% of all retail sales.
+                    <strong>$850 billion</strong> - That's how much merchandise was returned in the US retail market in 2025, 
+                    representing nearly 15.8% of all retail sales.
                   </p>
                   <p className="text-red-700 text-sm">
-                    Source: National Retail Federation & CNBC 2024 Returns Report
+                    Source: National Retail Federation, October 2025
                   </p>
                 </div>
                 

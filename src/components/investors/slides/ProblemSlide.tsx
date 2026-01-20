@@ -37,34 +37,23 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         </p>
       </motion.div>
 
-      {/* Supporting stats with clear hierarchy */}
+      {/* Holiday concentration callout */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-col md:flex-row items-center gap-4 mb-6"
+        className="flex flex-col items-center gap-2 mb-6"
       >
-        {/* Baseline stat */}
-        <div className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
-          <span className="text-xs uppercase tracking-widest text-gray-500 mb-2">Annual Baseline</span>
-          <div className="text-4xl md:text-5xl font-bold text-gray-400">
-            15.8%
+        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-2xl px-8 py-6">
+          <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">
+            $<AnimatedCounter value={168} duration={1.5} />B
           </div>
-          <p className="text-gray-500 text-sm mt-1">all retail returns</p>
+          <p className="text-white text-lg font-medium">concentrated in holiday season alone</p>
+          <p className="text-gray-400 text-sm mt-1">20% of total returns in just 8 weeks</p>
         </div>
-
-        {/* Arrow indicator */}
-        <div className="flex flex-col items-center text-red-400">
-          <span className="text-2xl">→</span>
-          <span className="text-xs uppercase tracking-wider">spikes to</span>
-        </div>
-
-        {/* Holiday spike stat */}
-        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-2xl px-6 py-4">
-          <span className="text-xs uppercase tracking-widest text-red-400 mb-2">Holiday Season</span>
-          <div className="text-4xl md:text-5xl font-bold text-red-400">
-            17%
-          </div>
-          <p className="text-gray-400 text-sm mt-1">of holiday sales returned</p>
-        </div>
+        
+        {/* Supporting rate context */}
+        <p className="text-gray-500 text-sm mt-2">
+          Return rates spike from 15.8% → 17% during Nov-Jan
+        </p>
       </motion.div>
 
       {/* Bridge to gifting */}

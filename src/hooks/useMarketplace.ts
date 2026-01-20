@@ -22,6 +22,12 @@ export interface MarketplaceState {
   maxPrice: number | null;
   sortBy: string;
   brands: string[];
+  // Clothing-specific filters
+  waist: string[];
+  inseam: string[];
+  size: string[];
+  color: string[];
+  gender: string[];
 }
 
 /**
@@ -35,6 +41,12 @@ const extractStateFromURL = (searchParams: URLSearchParams): MarketplaceState =>
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : null,
     sortBy: searchParams.get('sortBy') || 'popularity',
     brands: searchParams.get('brands')?.split(',').filter(Boolean) || [],
+    // Clothing-specific filters
+    waist: searchParams.get('waist')?.split(',').filter(Boolean) || [],
+    inseam: searchParams.get('inseam')?.split(',').filter(Boolean) || [],
+    size: searchParams.get('size')?.split(',').filter(Boolean) || [],
+    color: searchParams.get('color')?.split(',').filter(Boolean) || [],
+    gender: searchParams.get('gender')?.split(',').filter(Boolean) || [],
   };
 };
 
@@ -63,6 +75,23 @@ const stateToSearchOptions = (state: MarketplaceState, limit: number): SearchOpt
   }
   if (state.brands.length > 0) {
     options.filters!.brands = state.brands;
+  }
+  
+  // Clothing-specific filters - pass to server for post-search filtering
+  if (state.waist.length > 0) {
+    options.filters!.waist = state.waist;
+  }
+  if (state.inseam.length > 0) {
+    options.filters!.inseam = state.inseam;
+  }
+  if (state.size.length > 0) {
+    options.filters!.size = state.size;
+  }
+  if (state.color.length > 0) {
+    options.filters!.color = state.color;
+  }
+  if (state.gender.length > 0) {
+    options.filters!.gender = state.gender;
   }
 
   return options;

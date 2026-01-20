@@ -63,14 +63,13 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Fraud callout */}
-      <motion.div 
+      {/* Bridge to gifting */}
+      <motion.p 
         variants={itemVariants}
-        className="bg-red-500/10 border border-red-500/20 rounded-xl px-6 py-3 mb-6"
+        className="text-gray-400 text-lg italic mb-6"
       >
-        <span className="text-red-400 font-semibold">9% of all returns are fraudulent</span>
-        <span className="text-gray-500 ml-2">— costing retailers $103B annually</span>
-      </motion.div>
+        Wrong gifts are a leading contributor
+      </motion.p>
 
       {/* Source */}
       <motion.p 

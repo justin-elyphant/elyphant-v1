@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
@@ -124,30 +125,32 @@ function App() {
   }, [trackRender]);
 
   return (
-    <QueryProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <ProfileProvider>
-            <CartProvider>
-              <ProductProvider>
-                <NotificationsProvider>
-                  <EventsProvider>
-                    <NicoleStateProvider>
-                      <Router>
-                        <EmployeeRouteGuard>
-                          <EmployeeRedirectHandler />
-                          <AppContent />
-                        </EmployeeRouteGuard>
-                      </Router>
-                    </NicoleStateProvider>
-                  </EventsProvider>
-                </NotificationsProvider>
-              </ProductProvider>
-            </CartProvider>
-          </ProfileProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryProvider>
+    <HelmetProvider>
+      <QueryProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ProfileProvider>
+              <CartProvider>
+                <ProductProvider>
+                  <NotificationsProvider>
+                    <EventsProvider>
+                      <NicoleStateProvider>
+                        <Router>
+                          <EmployeeRouteGuard>
+                            <EmployeeRedirectHandler />
+                            <AppContent />
+                          </EmployeeRouteGuard>
+                        </Router>
+                      </NicoleStateProvider>
+                    </EventsProvider>
+                  </NotificationsProvider>
+                </ProductProvider>
+              </CartProvider>
+            </ProfileProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryProvider>
+    </HelmetProvider>
   );
 }
 

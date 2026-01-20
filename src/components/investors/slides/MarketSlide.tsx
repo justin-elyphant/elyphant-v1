@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { slideVariants, itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
+import { TrendingUp, Users, DollarSign } from 'lucide-react';
 
 interface SlideProps {
   direction: number;
@@ -22,7 +23,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-sm mb-4"
       >
         Market Opportunity
       </motion.span>
@@ -30,74 +31,116 @@ const MarketSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-12"
+        className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-8"
       >
-        Massive & Growing Market
+        Massive Market, Clear Path
       </motion.h2>
 
-      {/* TAM/SAM/SOM circles */}
+      {/* Two-column layout */}
       <motion.div 
         variants={itemVariants}
-        className="relative flex items-center justify-center mb-8"
+        className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full mb-6"
       >
-        {/* TAM - outer ring */}
-        <div className="absolute w-80 h-80 md:w-96 md:h-96 rounded-full border-2 border-purple-500/30 flex items-center justify-center">
-          <span className="absolute -top-8 text-purple-400 text-sm font-medium">TAM</span>
-        </div>
-        
-        {/* SAM - middle ring */}
-        <div className="absolute w-56 h-56 md:w-72 md:h-72 rounded-full border-2 border-sky-500/50 flex items-center justify-center">
-          <span className="absolute -top-6 text-sky-400 text-sm font-medium">SAM</span>
-        </div>
-        
-        {/* SOM - center */}
-        <div className="relative w-32 h-32 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 border-2 border-white/30 flex items-center justify-center">
-          <span className="absolute -top-6 text-white text-sm font-medium">SOM</span>
-          <div className="text-center">
-            <div className="text-2xl md:text-3xl font-bold text-white">
-              $<AnimatedCounter value={500} duration={1.5} />M
+        {/* Left: Market Size */}
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-2xl p-6">
+          <h3 className="text-purple-400 text-sm font-semibold uppercase tracking-wider mb-4">
+            Market Size
+          </h3>
+          
+          <div className="space-y-4">
+            <div>
+              <div className="text-3xl md:text-4xl font-bold text-purple-400">
+                $<AnimatedCounter value={250} duration={2} />B
+              </div>
+              <div className="text-gray-400 text-sm">TAM: US Gift Market</div>
+              <div className="text-gray-600 text-xs">Statista 2025</div>
             </div>
-            <div className="text-gray-400 text-xs">Year 5</div>
+            
+            <div>
+              <div className="text-2xl md:text-3xl font-bold text-sky-400">
+                $<AnimatedCounter value={12} duration={1.5} />B
+              </div>
+              <div className="text-gray-400 text-sm">SAM: AI-Powered Gifting</div>
+              <div className="text-gray-600 text-xs">Grand View Research</div>
+            </div>
+            
+            <div className="flex items-center gap-2 pt-2">
+              <TrendingUp className="w-4 h-4 text-green-400" />
+              <span className="text-green-400 font-semibold">15%+ CAGR</span>
+              <span className="text-gray-500 text-sm">through 2030</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Our Path */}
+        <div className="bg-gradient-to-br from-sky-500/10 to-sky-500/5 border border-sky-500/20 rounded-2xl p-6">
+          <h3 className="text-sky-400 text-sm font-semibold uppercase tracking-wider mb-4">
+            Our 5-Year Path
+          </h3>
+          
+          <div className="space-y-4">
+            {/* Year 2 */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400">Year 2</span>
+              </div>
+              <div className="text-right">
+                <div className="text-white font-semibold">100K users</div>
+                <div className="text-sky-400 text-sm">$1.3M revenue</div>
+              </div>
+            </div>
+            
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <div className="w-0.5 h-6 bg-gradient-to-b from-sky-500/50 to-white/50" />
+            </div>
+            
+            {/* Year 5 */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-white" />
+                <span className="text-white font-medium">Year 5</span>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold text-white">1M users</div>
+                <div className="text-xl font-bold text-green-400">$14M revenue</div>
+              </div>
+            </div>
+            
+            {/* GMV context */}
+            <div className="pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-400 text-sm">Year 5 GMV:</span>
+                <span className="text-white font-semibold">$56M</span>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Market size legend */}
+      {/* Unit Economics Transparency Box */}
       <motion.div 
         variants={itemVariants}
-        className="grid grid-cols-3 gap-8 mt-8"
+        className="bg-white/5 border border-white/10 rounded-xl px-6 py-3 max-w-3xl"
       >
         <div className="text-center">
-          <div className="text-3xl md:text-4xl font-bold text-purple-400">
-            $<AnimatedCounter value={250} duration={2} />B
-          </div>
-          <div className="text-gray-500 text-sm mt-1">US Gift Market</div>
-          <div className="text-gray-600 text-xs mt-0.5">Statista 2025</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl md:text-4xl font-bold text-sky-400">
-            $<AnimatedCounter value={52} duration={1.8} />B
-          </div>
-          <div className="text-gray-500 text-sm mt-1">Online Gifting</div>
-          <div className="text-gray-600 text-xs mt-0.5">eMarketer 2025</div>
-        </div>
-        <div className="text-center">
-          <div className="text-3xl md:text-4xl font-bold text-white">
-            $<AnimatedCounter value={12} duration={1.5} />B
-          </div>
-          <div className="text-gray-500 text-sm mt-1">AI-Powered Gifting</div>
-          <div className="text-gray-600 text-xs mt-0.5">Grand View Research</div>
+          <span className="text-gray-500 text-sm">Conservative assumptions: </span>
+          <span className="text-gray-400 text-sm">
+            25% active rate • 3 gifts/user/year • $75 AOV • 20% take rate
+          </span>
         </div>
       </motion.div>
 
       {/* AI market context */}
       <motion.div 
         variants={itemVariants}
-        className="mt-8 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-6 py-3"
+        className="mt-4 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-6 py-3"
       >
-        <span className="text-gray-400">AI Personalization Market: </span>
-        <span className="text-white font-semibold">$105B → $168B by 2033</span>
-        <span className="text-gray-600 text-sm ml-2">(Grand View Research)</span>
+        <span className="text-gray-400 text-sm">AI Personalization Market: </span>
+        <span className="text-white font-semibold text-sm">$105B → $168B by 2033</span>
+        <span className="text-gray-600 text-xs ml-2">(Grand View Research)</span>
       </motion.div>
     </motion.div>
   );

@@ -40,28 +40,36 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Supporting stats */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-col md:flex-row items-center gap-4 mb-8"
+        className="flex flex-col md:flex-row items-center gap-4 mb-4"
       >
         <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
-          <div className="text-4xl md:text-5xl font-bold text-red-400">
-            15.8%
+          <div className="text-4xl md:text-5xl font-bold text-gray-400">
+            ~10%
           </div>
           <div className="text-gray-400 text-left">
-            <p className="font-semibold text-white">of all retail sales</p>
-            <p>were returned last year</p>
+            <p className="font-semibold text-white">In-store</p>
+            <p>return rate</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
-          <div className="text-4xl md:text-5xl font-bold text-orange-400">
+          <div className="text-4xl md:text-5xl font-bold text-red-400">
             19.3%
           </div>
           <div className="text-gray-400 text-left">
-            <p className="font-semibold text-white">of online purchases</p>
-            <p>are returned</p>
+            <p className="font-semibold text-white">Online</p>
+            <p>return rate</p>
           </div>
         </div>
       </motion.div>
+
+      {/* 2x callout */}
+      <motion.p 
+        variants={itemVariants}
+        className="text-xl md:text-2xl text-orange-400 font-semibold mb-4"
+      >
+        Online shopping has 2× the return problem
+      </motion.p>
 
       {/* Bridge to gifting */}
       <motion.p 

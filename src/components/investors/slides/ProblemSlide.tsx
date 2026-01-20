@@ -37,29 +37,33 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         </p>
       </motion.div>
 
-      {/* Supporting stats */}
+      {/* Supporting stats with clear hierarchy */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-col md:flex-row items-center gap-6 mb-6"
+        className="flex flex-col md:flex-row items-center gap-4 mb-6"
       >
-        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
+        {/* Baseline stat */}
+        <div className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
+          <span className="text-xs uppercase tracking-widest text-gray-500 mb-2">Annual Baseline</span>
           <div className="text-4xl md:text-5xl font-bold text-gray-400">
             15.8%
           </div>
-          <div className="text-gray-400 text-left">
-            <p className="font-semibold text-white">of total retail</p>
-            <p>stores + online combined</p>
-          </div>
+          <p className="text-gray-500 text-sm mt-1">all retail returns</p>
         </div>
 
-        <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-6 py-5">
+        {/* Arrow indicator */}
+        <div className="flex flex-col items-center text-red-400">
+          <span className="text-2xl">→</span>
+          <span className="text-xs uppercase tracking-wider">spikes to</span>
+        </div>
+
+        {/* Holiday spike stat */}
+        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-2xl px-6 py-4">
+          <span className="text-xs uppercase tracking-widest text-red-400 mb-2">Holiday Season</span>
           <div className="text-4xl md:text-5xl font-bold text-red-400">
             17%
           </div>
-          <div className="text-gray-400 text-left">
-            <p className="font-semibold text-white">of holiday sales</p>
-            <p>returned after gifting season</p>
-          </div>
+          <p className="text-gray-400 text-sm mt-1">of holiday sales returned</p>
         </div>
       </motion.div>
 

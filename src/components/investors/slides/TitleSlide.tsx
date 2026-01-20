@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Gift } from 'lucide-react';
 import { slideVariants, itemVariants } from '../slideAnimations';
 
 interface SlideProps {
@@ -19,18 +19,12 @@ const TitleSlide = ({ direction, onNext }: SlideProps) => {
       custom={direction}
       className="absolute inset-0 flex flex-col items-center justify-center px-8"
     >
-      {/* Logo */}
-      <motion.div variants={itemVariants} className="mb-8">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center">
-          <span className="text-4xl">🐘</span>
-        </div>
-      </motion.div>
-
-      {/* Title */}
+      {/* Title with Gift Icon */}
       <motion.h1 
         variants={itemVariants}
-        className="text-5xl md:text-7xl lg:text-8xl font-bold text-white text-center mb-6"
+        className="text-5xl md:text-7xl lg:text-8xl font-bold text-white text-center mb-6 flex items-center gap-4"
       >
+        <Gift className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 text-sky-400" />
         <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-sky-400 bg-clip-text text-transparent">
           Elyphant
         </span>

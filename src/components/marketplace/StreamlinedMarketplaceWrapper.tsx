@@ -279,47 +279,44 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     };
   }, [startTimer]);
 
-  // Enhanced search trigger function
+  // Enhanced search trigger function - uses React Router's setSearchParams for proper reactivity
   const triggerEnhancedSearch = useCallback(async (filters: any) => {
     if (!urlSearchTerm) return;
     
     try {
       console.log('🚀 TRIGGERED: Enhanced search with filters:', filters);
       console.log('🚀 Current URL search term:', urlSearchTerm);
-      toast.loading('Searching with filters...', { id: 'filter-search' });
+      toast.loading('Applying filters...', { id: 'filter-search' });
       
-      // Build enhanced query with filter context
+      // Build enhanced query with filter context for better search relevance
       const enhancedQuery = buildEnhancedQuery(urlSearchTerm, filters);
       console.log('🎯 Enhanced query:', enhancedQuery);
       
       // Store filter context for the handleLoadMore function
       sessionStorage.setItem('active-filters', JSON.stringify(filters));
       
-      // Update the search params to include filter information
-      const newSearchParams = new URLSearchParams(window.location.search);
-      newSearchParams.set('search', enhancedQuery);
+      // Build new URLSearchParams - use React Router to trigger proper re-render
+      const newParams = new URLSearchParams();
+      newParams.set('search', enhancedQuery);
       
-      // Add filter params to URL for proper caching and state management
-      if (filters.waist?.length) newSearchParams.set('waist', filters.waist.join(','));
-      if (filters.inseam?.length) newSearchParams.set('inseam', filters.inseam.join(','));
-      if (filters.size?.length) newSearchParams.set('size', filters.size.join(','));
-      if (filters.brand?.length) newSearchParams.set('brand', filters.brand.join(','));
-      if (filters.color?.length) newSearchParams.set('color', filters.color.join(','));
-      if (filters.gender?.length) newSearchParams.set('gender', filters.gender.join(','));
+      // Add filter params to URL for proper server-side filtering
+      if (filters.waist?.length) newParams.set('waist', filters.waist.join(','));
+      if (filters.inseam?.length) newParams.set('inseam', filters.inseam.join(','));
+      if (filters.size?.length) newParams.set('size', filters.size.join(','));
+      if (filters.brand?.length) newParams.set('brand', filters.brand.join(','));
+      if (filters.color?.length) newParams.set('color', filters.color.join(','));
+      if (filters.gender?.length) newParams.set('gender', filters.gender.join(','));
       
-      // Update URL without page reload
-      window.history.pushState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);
+      // Use React Router's navigate to update URL - this TRIGGERS useMarketplace refetch
+      navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
       
-      // Manually trigger refreshPagination to reload with new search
-      refreshPagination();
-      
-      toast.success('Search updated with filters', { id: 'filter-search' });
+      toast.success('Filters applied', { id: 'filter-search' });
       
     } catch (error) {
       console.error('Enhanced search failed:', error);
-      toast.error('Search with filters failed', { id: 'filter-search' });
+      toast.error('Filter application failed', { id: 'filter-search' });
     }
-  }, [urlSearchTerm, refreshPagination]);
+  }, [urlSearchTerm, navigate, location.pathname]);
 
   // Helper function to build enhanced queries
   const buildEnhancedQuery = useCallback((baseQuery: string, filters: any): string => {

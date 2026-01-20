@@ -811,6 +811,142 @@ const searchBrandCategories = async (
 };
 
 /**
+ * Apply clothing-specific filters to products (waist, inseam, color, size, gender)
+ * These filters work by matching against product titles and attributes
+ */
+const applyClothingFilters = (products: any[], clothingFilters: {
+  waist: string[];
+  inseam: string[];
+  size: string[];
+  color: string[];
+  gender: string[];
+}): any[] => {
+  if (!products || products.length === 0) return products;
+  
+  const hasFilters = clothingFilters.waist.length > 0 || 
+                     clothingFilters.inseam.length > 0 || 
+                     clothingFilters.size.length > 0 ||
+                     clothingFilters.color.length > 0 ||
+                     clothingFilters.gender.length > 0;
+  
+  if (!hasFilters) return products;
+  
+  let filtered = [...products];
+  const originalCount = filtered.length;
+  
+  // Filter by waist size (e.g., "36", "32")
+  if (clothingFilters.waist.length > 0) {
+    filtered = filtered.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const variant = (p.variant_specifics || []).map((v: any) => `${v.dimension || ''} ${v.value || ''}`.toLowerCase()).join(' ');
+      
+      return clothingFilters.waist.some((w: string) => {
+        const waistNum = w.replace(/['"]/g, '').trim();
+        // Match patterns like "36W", "W36", "36x", "waist 36", "36 waist"
+        const patterns = [
+          new RegExp(`\\b${waistNum}w\\b`, 'i'),
+          new RegExp(`\\bw${waistNum}\\b`, 'i'),
+          new RegExp(`\\b${waistNum}x\\d+`, 'i'),  // "36x30" format
+          new RegExp(`waist\\s*${waistNum}`, 'i'),
+          new RegExp(`${waistNum}\\s*waist`, 'i'),
+          new RegExp(`\\b${waistNum}\\b`, 'i')  // fallback: just the number
+        ];
+        return patterns.some(pattern => pattern.test(title) || pattern.test(variant));
+      });
+    });
+    console.log(`📏 Waist filter (${clothingFilters.waist.join(',')}): ${originalCount} → ${filtered.length} products`);
+  }
+  
+  // Filter by inseam length (e.g., "30", "32")
+  if (clothingFilters.inseam.length > 0) {
+    const preInseamCount = filtered.length;
+    filtered = filtered.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const variant = (p.variant_specifics || []).map((v: any) => `${v.dimension || ''} ${v.value || ''}`.toLowerCase()).join(' ');
+      
+      return clothingFilters.inseam.some((i: string) => {
+        const inseamNum = i.replace(/['"]/g, '').trim();
+        // Match patterns like "30L", "L30", "x30", "inseam 30", "30 inseam"
+        const patterns = [
+          new RegExp(`\\b${inseamNum}l\\b`, 'i'),
+          new RegExp(`\\bl${inseamNum}\\b`, 'i'),
+          new RegExp(`\\d+x${inseamNum}\\b`, 'i'),  // "36x30" format
+          new RegExp(`inseam\\s*${inseamNum}`, 'i'),
+          new RegExp(`${inseamNum}\\s*inseam`, 'i'),
+          new RegExp(`\\b${inseamNum}"`, 'i')  // "30" format
+        ];
+        return patterns.some(pattern => pattern.test(title) || pattern.test(variant));
+      });
+    });
+    console.log(`📏 Inseam filter (${clothingFilters.inseam.join(',')}): ${preInseamCount} → ${filtered.length} products`);
+  }
+  
+  // Filter by color
+  if (clothingFilters.color.length > 0) {
+    const preColorCount = filtered.length;
+    filtered = filtered.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const productColor = (p.color || '').toLowerCase();
+      const variant = (p.variant_specifics || []).map((v: any) => `${v.dimension || ''} ${v.value || ''}`.toLowerCase()).join(' ');
+      
+      return clothingFilters.color.some((c: string) => {
+        const colorLower = c.toLowerCase().trim();
+        return title.includes(colorLower) || 
+               productColor.includes(colorLower) || 
+               variant.includes(colorLower);
+      });
+    });
+    console.log(`🎨 Color filter (${clothingFilters.color.join(',')}): ${preColorCount} → ${filtered.length} products`);
+  }
+  
+  // Filter by size (for non-pants like shirts: S, M, L, XL)
+  if (clothingFilters.size.length > 0) {
+    const preSizeCount = filtered.length;
+    filtered = filtered.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const variant = (p.variant_specifics || []).map((v: any) => `${v.dimension || ''} ${v.value || ''}`.toLowerCase()).join(' ');
+      
+      return clothingFilters.size.some((s: string) => {
+        const sizeLower = s.toLowerCase().trim();
+        // Match exact size codes (S, M, L, XL, XXL)
+        const patterns = [
+          new RegExp(`\\b${sizeLower}\\b`, 'i'),
+          new RegExp(`size\\s*${sizeLower}`, 'i'),
+          new RegExp(`${sizeLower}\\s*size`, 'i')
+        ];
+        return patterns.some(pattern => pattern.test(title) || pattern.test(variant));
+      });
+    });
+    console.log(`📐 Size filter (${clothingFilters.size.join(',')}): ${preSizeCount} → ${filtered.length} products`);
+  }
+  
+  // Filter by gender (men, women, unisex)
+  if (clothingFilters.gender.length > 0) {
+    const preGenderCount = filtered.length;
+    filtered = filtered.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const category = (p.category || '').toLowerCase();
+      
+      return clothingFilters.gender.some((g: string) => {
+        const genderLower = g.toLowerCase().trim();
+        // Match gender patterns
+        const genderPatterns: Record<string, RegExp[]> = {
+          'men': [/\bmen'?s?\b/i, /\bmale\b/i, /\bmasculine\b/i],
+          'women': [/\bwomen'?s?\b/i, /\bfemale\b/i, /\bfeminine\b/i, /\bladies\b/i],
+          'unisex': [/\bunisex\b/i, /\ball\b/i]
+        };
+        const patterns = genderPatterns[genderLower] || [new RegExp(`\\b${genderLower}\\b`, 'i')];
+        return patterns.some(pattern => pattern.test(title) || pattern.test(category));
+      });
+    });
+    console.log(`👤 Gender filter (${clothingFilters.gender.join(',')}): ${preGenderCount} → ${filtered.length} products`);
+  }
+  
+  console.log(`📏 Total clothing filter result: ${originalCount} → ${filtered.length} products`);
+  return filtered;
+};
+
+/**
  * Normalize prices from Zinc API response
  */
 const normalizePrices = (products: any[]) => {
@@ -925,6 +1061,24 @@ serve(async (req) => {
     
     const sortBy = filters.sortBy || 'popularity';
     
+    // Extract clothing-specific filters for post-search filtering
+    const clothingFilters = {
+      waist: filters.waist || [],
+      inseam: filters.inseam || [],
+      size: filters.size || [],
+      color: filters.color || [],
+      gender: filters.gender || []
+    };
+    const hasClothingFilters = clothingFilters.waist.length > 0 || 
+                                clothingFilters.inseam.length > 0 || 
+                                clothingFilters.size.length > 0 ||
+                                clothingFilters.color.length > 0 ||
+                                clothingFilters.gender.length > 0;
+    
+    if (hasClothingFilters) {
+      console.log(`📏 Clothing filters active:`, clothingFilters);
+    }
+    
     console.log(`Request: category="${activeCategory}", query="${query}", priceFilter:`, priceFilter);
     
     if (query) {
@@ -1033,6 +1187,11 @@ serve(async (req) => {
             sortedProducts.sort((a, b) => (b.stars || b.rating || 0) - (a.stars || a.rating || 0));
           } else {
             sortedProducts = sortByPopularity(sortedProducts);
+          }
+          
+          // Apply clothing-specific filters (waist, inseam, color, size, gender)
+          if (hasClothingFilters) {
+            sortedProducts = applyClothingFilters(sortedProducts, clothingFilters);
           }
           
           if (userId) {
@@ -1149,8 +1308,13 @@ serve(async (req) => {
       // Add facets to response
       const facets = generateFacetsFromResults(searchResponse.products || filteredResults);
       
-      // Apply personalization if user_id provided
+      // Apply clothing-specific filters (waist, inseam, color, size, gender)
       let finalProducts = searchResponse.products;
+      if (hasClothingFilters && finalProducts.length > 0) {
+        finalProducts = applyClothingFilters(finalProducts, clothingFilters);
+      }
+      
+      // Apply personalization if user_id provided
       if (userId && finalProducts.length > 0) {
         finalProducts = await applyPersonalizedRanking(supabase, finalProducts, userId);
       }

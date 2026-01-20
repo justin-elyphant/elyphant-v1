@@ -19,6 +19,10 @@ export interface SearchFilters {
   sortBy?: 'popularity' | 'price-low' | 'price-high' | 'rating' | 'newest';
   gender?: string[];
   size?: string[];
+  // Clothing-specific filters for sidebar
+  waist?: string[];
+  inseam?: string[];
+  color?: string[];
 }
 
 export interface SearchOptions {

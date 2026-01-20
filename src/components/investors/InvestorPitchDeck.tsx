@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { Maximize, Minimize } from 'lucide-react';
 import SlideNavigation from './SlideNavigation';
 import TitleSlide from './slides/TitleSlide';
 import ProblemSlide from './slides/ProblemSlide';
@@ -11,6 +12,7 @@ import BusinessModelSlide from './slides/BusinessModelSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
 import ContactSlide from './slides/ContactSlide';
+import { Button } from '@/components/ui/button';
 
 const slides = [
   { id: 'title', component: TitleSlide },
@@ -28,7 +30,35 @@ const slides = [
 const InvestorPitchDeck = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await containerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error('Error entering fullscreen:', err);
+      }
+    } else {
+      try {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      } catch (err) {
+        console.error('Error exiting fullscreen:', err);
+      }
+    }
+  }, []);
+
+  // Listen for fullscreen changes (e.g., user presses Escape)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const goToNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
@@ -64,6 +94,9 @@ const InvestorPitchDeck = () => {
       } else if (e.key === 'End') {
         e.preventDefault();
         goToSlide(slides.length - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
       }
     };
 
@@ -127,6 +160,17 @@ const InvestorPitchDeck = () => {
           style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
         />
       </div>
+
+      {/* Fullscreen toggle button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleFullscreen}
+        className="absolute top-4 right-4 z-50 text-gray-400 hover:text-white hover:bg-white/10"
+        title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen (F)'}
+      >
+        {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+      </Button>
 
       {/* Slide content */}
       <AnimatePresence mode="wait" custom={direction}>

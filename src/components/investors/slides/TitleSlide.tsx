@@ -35,7 +35,7 @@ const TitleSlide = ({ direction, onNext }: SlideProps) => {
         variants={itemVariants}
         className="text-xl md:text-2xl lg:text-3xl text-gray-300 text-center max-w-3xl mb-12"
       >
-        AI-Powered Gifting That Never Forgets
+        Connecting Through AI-Powered Gifting
       </motion.p>
 
       {/* Subtitle */}

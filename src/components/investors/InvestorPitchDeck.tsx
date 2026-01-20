@@ -1,0 +1,161 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import SlideNavigation from './SlideNavigation';
+import TitleSlide from './slides/TitleSlide';
+import ProblemSlide from './slides/ProblemSlide';
+import WhyGiftingFailsSlide from './slides/WhyGiftingFailsSlide';
+import SolutionSlide from './slides/SolutionSlide';
+import HowItWorksSlide from './slides/HowItWorksSlide';
+import MarketSlide from './slides/MarketSlide';
+import BusinessModelSlide from './slides/BusinessModelSlide';
+import TractionSlide from './slides/TractionSlide';
+import TeamSlide from './slides/TeamSlide';
+import ContactSlide from './slides/ContactSlide';
+
+const slides = [
+  { id: 'title', component: TitleSlide },
+  { id: 'problem', component: ProblemSlide },
+  { id: 'why-fails', component: WhyGiftingFailsSlide },
+  { id: 'solution', component: SolutionSlide },
+  { id: 'how-it-works', component: HowItWorksSlide },
+  { id: 'market', component: MarketSlide },
+  { id: 'business-model', component: BusinessModelSlide },
+  { id: 'traction', component: TractionSlide },
+  { id: 'team', component: TeamSlide },
+  { id: 'contact', component: ContactSlide },
+];
+
+const InvestorPitchDeck = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const goToNext = useCallback(() => {
+    if (currentSlide < slides.length - 1) {
+      setDirection(1);
+      setCurrentSlide(prev => prev + 1);
+    }
+  }, [currentSlide]);
+
+  const goToPrevious = useCallback(() => {
+    if (currentSlide > 0) {
+      setDirection(-1);
+      setCurrentSlide(prev => prev - 1);
+    }
+  }, [currentSlide]);
+
+  const goToSlide = useCallback((index: number) => {
+    setDirection(index > currentSlide ? 1 : -1);
+    setCurrentSlide(index);
+  }, [currentSlide]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        goToNext();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPrevious();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNext, goToPrevious, goToSlide]);
+
+  // Touch/swipe support
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let startY = 0;
+    let startX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const endY = e.changedTouches[0].clientY;
+      const endX = e.changedTouches[0].clientX;
+      const diffY = startY - endY;
+      const diffX = startX - endX;
+
+      // Require minimum 50px swipe
+      if (Math.abs(diffY) > 50 || Math.abs(diffX) > 50) {
+        if (Math.abs(diffY) > Math.abs(diffX)) {
+          // Vertical swipe
+          if (diffY > 0) goToNext();
+          else goToPrevious();
+        } else {
+          // Horizontal swipe
+          if (diffX > 0) goToNext();
+          else goToPrevious();
+        }
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart);
+    container.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [goToNext, goToPrevious]);
+
+  const CurrentSlideComponent = slides[currentSlide].component;
+
+  return (
+    <div 
+      ref={containerRef}
+      className="fixed inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 overflow-hidden"
+    >
+      {/* Progress bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gray-800 z-50">
+        <div 
+          className="h-full bg-gradient-to-r from-purple-500 to-sky-500 transition-all duration-500 ease-out"
+          style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Slide content */}
+      <AnimatePresence mode="wait" custom={direction}>
+        <CurrentSlideComponent 
+          key={slides[currentSlide].id} 
+          direction={direction}
+          onNext={goToNext}
+          isFirst={currentSlide === 0}
+          isLast={currentSlide === slides.length - 1}
+        />
+      </AnimatePresence>
+
+      {/* Navigation */}
+      <SlideNavigation
+        currentSlide={currentSlide}
+        totalSlides={slides.length}
+        onNavigate={goToSlide}
+        onNext={goToNext}
+        onPrevious={goToPrevious}
+      />
+
+      {/* Keyboard hint (only on first slide) */}
+      {currentSlide === 0 && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-gray-500 text-sm animate-pulse hidden md:block">
+          Press arrow keys or scroll to navigate
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InvestorPitchDeck;

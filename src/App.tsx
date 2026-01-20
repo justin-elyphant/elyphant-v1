@@ -81,6 +81,7 @@ const TrunklineLogin = lazy(() => import("./pages/TrunklineLogin"));
 const WishlistAdd = lazy(() => import("./pages/WishlistAdd"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const Investors = lazy(() => import("./pages/Investors"));
 const OAuthComplete = lazy(() => import("./pages/OAuthComplete"));
 
 function App() {
@@ -266,6 +267,7 @@ function AppContent() {
            <Route path="/help" element={<FAQ />} />
            <Route path="/faq" element={<FAQ />} />
            <Route path="/contact" element={<Contact />} />
+           <Route path="/investors" element={<Investors />} />
            <Route path="/auto-gift-approval" element={<AutoGiftApprovalPage />} />
            <Route path="/auto-gifts/approve/:token" element={<AutoGiftApprovalPage />} />
            <Route path="/address/provide/:requestId" element={<AddressProviderPage />} />

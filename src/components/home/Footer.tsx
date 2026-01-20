@@ -19,6 +19,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
               <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
               <li><Link to="/careers" className="text-gray-400 hover:text-white transition-colors">Careers</Link></li>
               <li><Link to="/press" className="text-gray-400 hover:text-white transition-colors">Press</Link></li>
+              <li><Link to="/investors" className="text-gray-400 hover:text-white transition-colors">Investors</Link></li>
             </ul>
           </div>
           <div>

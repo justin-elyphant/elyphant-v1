@@ -839,20 +839,30 @@ const applyClothingFilters = (products: any[], clothingFilters: {
     filtered = filtered.filter(p => {
       const title = (p.title || '').toLowerCase();
       const variant = (p.variant_specifics || []).map((v: any) => `${v.dimension || ''} ${v.value || ''}`.toLowerCase()).join(' ');
+      // Also check metadata for size info
+      const metadata = typeof p.metadata === 'object' ? JSON.stringify(p.metadata || {}).toLowerCase() : '';
+      const combinedText = `${title} ${variant} ${metadata}`;
       
-      return clothingFilters.waist.some((w: string) => {
+      const matchResult = clothingFilters.waist.some((w: string) => {
         const waistNum = w.replace(/['"]/g, '').trim();
-        // Match patterns like "36W", "W36", "36x", "waist 36", "36 waist"
+        // Match patterns like "36W", "W36", "36x", "waist 36", "36 waist", ", 36W x"
         const patterns = [
           new RegExp(`\\b${waistNum}w\\b`, 'i'),
           new RegExp(`\\bw${waistNum}\\b`, 'i'),
           new RegExp(`\\b${waistNum}x\\d+`, 'i'),  // "36x30" format
           new RegExp(`waist\\s*${waistNum}`, 'i'),
           new RegExp(`${waistNum}\\s*waist`, 'i'),
-          new RegExp(`\\b${waistNum}\\b`, 'i')  // fallback: just the number
+          new RegExp(`,\\s*${waistNum}w`, 'i'),   // ", 36W x" format
+          new RegExp(`size[:\\s]*${waistNum}`, 'i'),  // "size: 36" format
+          new RegExp(`\\b${waistNum}\\s*x\\s*\\d+`, 'i'),  // "36 x 30" with spaces
         ];
-        return patterns.some(pattern => pattern.test(title) || pattern.test(variant));
+        return patterns.some(pattern => pattern.test(combinedText));
       });
+      
+      if (!matchResult) {
+        console.log(`📏 Waist filter rejected: "${title.substring(0, 60)}..." (looking for ${clothingFilters.waist.join(',')})`);
+      }
+      return matchResult;
     });
     console.log(`📏 Waist filter (${clothingFilters.waist.join(',')}): ${originalCount} → ${filtered.length} products`);
   }

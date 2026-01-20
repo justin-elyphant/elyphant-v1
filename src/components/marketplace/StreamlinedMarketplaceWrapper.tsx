@@ -319,10 +319,12 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   }, [urlSearchTerm, navigate, location.pathname]);
 
   // Helper function to build enhanced queries
+  // NOTE: Waist/inseam filters are NOT added to query - they're handled server-side via URL params
   const buildEnhancedQuery = useCallback((baseQuery: string, filters: any): string => {
     const queryParts = [baseQuery];
     
-    // Add filter terms to enhance search relevance
+    // Only add general filters to enhance search relevance
+    // Size-specific filters (waist, inseam) are handled server-side via URL params
     if (filters.gender?.length) {
       queryParts.push(...filters.gender);
     }
@@ -342,13 +344,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       queryParts.push(...filters.features);
     }
     
-    // Add size context for better matching
-    if (filters.waist?.length) {
-      queryParts.push(`waist ${filters.waist.join(' ')}`);
-    }
-    if (filters.inseam?.length) {
-      queryParts.push(`inseam ${filters.inseam.join(' ')}`);
-    }
+    // DO NOT add waist/inseam to query - they're filtered server-side
+    // This prevents double-filtering that causes 0 results
     
     return queryParts.join(' ').trim();
   }, []);

@@ -140,14 +140,27 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Win-Win callout */}
+      {/* Win-Win Value Proposition with Vendor ROI */}
       <motion.div 
         variants={itemVariants}
-        className="text-center mt-6"
+        className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl px-8 py-5 text-center mt-6"
       >
-        <p className="text-gray-400 text-lg">
-          <span className="text-white font-medium">Two-sided value:</span>{" "}
-          Consumers get perfect gifts. Vendors reduce return rates.
+        <p className="text-white font-semibold text-lg mb-3">
+          Two-Sided Value Creation
+        </p>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+          <div>
+            <span className="text-purple-400 font-medium">Consumers:</span>
+            <span className="text-gray-300 ml-2">Gift anxiety eliminated</span>
+          </div>
+          <div className="hidden md:block w-px h-6 bg-gray-700" />
+          <div>
+            <span className="text-green-400 font-medium">Retailers:</span>
+            <span className="text-gray-300 ml-2">Recover margin from 17% holiday returns</span>
+          </div>
+        </div>
+        <p className="text-gray-500 text-sm mt-3 italic">
+          Every prevented wrong gift = ~$32 saved in processing costs per $100 item
         </p>
       </motion.div>
     </motion.div>

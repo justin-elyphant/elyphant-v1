@@ -5,6 +5,7 @@ import SlideNavigation from './SlideNavigation';
 import TitleSlide from './slides/TitleSlide';
 import ProblemSlide from './slides/ProblemSlide';
 import WhyGiftingFailsSlide from './slides/WhyGiftingFailsSlide';
+import WelcomeSlide from './slides/WelcomeSlide';
 import SolutionSlide from './slides/SolutionSlide';
 import HowItWorksSlide from './slides/HowItWorksSlide';
 import MarketSlide from './slides/MarketSlide';
@@ -16,20 +17,21 @@ import TeamSlide from './slides/TeamSlide';
 import ContactSlide from './slides/ContactSlide';
 import { Button } from '@/components/ui/button';
 
-// Sequoia-optimized slide order (12 slides)
+// Sequoia-optimized slide order (13 slides)
 const slides = [
   { id: 'title', component: TitleSlide },           // 1 - Hook
   { id: 'problem', component: ProblemSlide },       // 2 - $850B crisis
   { id: 'why-fails', component: WhyGiftingFailsSlide }, // 3 - Root causes
-  { id: 'solution', component: SolutionSlide },     // 4 - Our answer
-  { id: 'how-it-works', component: HowItWorksSlide }, // 5 - Demo flow
-  { id: 'market', component: MarketSlide },         // 6 - TAM/SAM/SOM
-  { id: 'why-now', component: WhyNowSlide },        // 7 - Market timing
-  { id: 'competition', component: CompetitionSlide }, // 8 - Differentiation
-  { id: 'business-model', component: BusinessModelSlide }, // 9 - Revenue
-  { id: 'traction', component: TractionSlide },     // 10 - Metrics + roadmap
-  { id: 'team', component: TeamSlide },             // 11 - Founders
-  { id: 'contact', component: ContactSlide },       // 12 - CTA
+  { id: 'welcome', component: WelcomeSlide },       // 4 - Brand moment
+  { id: 'solution', component: SolutionSlide },     // 5 - Our answer
+  { id: 'how-it-works', component: HowItWorksSlide }, // 6 - Demo flow
+  { id: 'market', component: MarketSlide },         // 7 - TAM/SAM/SOM
+  { id: 'why-now', component: WhyNowSlide },        // 8 - Market timing
+  { id: 'competition', component: CompetitionSlide }, // 9 - Differentiation
+  { id: 'business-model', component: BusinessModelSlide }, // 10 - Revenue
+  { id: 'traction', component: TractionSlide },     // 11 - Metrics + roadmap
+  { id: 'team', component: TeamSlide },             // 12 - Founders
+  { id: 'contact', component: ContactSlide },       // 13 - CTA
 ];
 
 const InvestorPitchDeck = () => {

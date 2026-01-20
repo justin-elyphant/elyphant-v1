@@ -8,7 +8,7 @@ export const ReturnReductionSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            The $890 Billion Problem We're Solving Together
+            The $850 Billion Problem We're Solving Together
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Returns are crushing retail margins. Elyphant's wishlist technology helps retailers 
@@ -20,14 +20,14 @@ export const ReturnReductionSection = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-12 border-l-4 border-red-500">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-3xl font-bold text-red-600 mb-2">$890B</div>
-              <div className="text-gray-700">Total US returns in 2024</div>
-              <div className="text-sm text-gray-500 mt-1">Source: NRF & CNBC</div>
+              <div className="text-3xl font-bold text-red-600 mb-2">$850B</div>
+              <div className="text-gray-700">Total US returns in 2025</div>
+              <div className="text-sm text-gray-500 mt-1">Source: NRF 2025</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-red-600 mb-2">17.6%</div>
+              <div className="text-3xl font-bold text-red-600 mb-2">15.8%</div>
               <div className="text-gray-700">Average return rate</div>
-              <div className="text-sm text-gray-500 mt-1">Nearly 1 in 5 purchases</div>
+              <div className="text-sm text-gray-500 mt-1">Nearly 1 in 6 purchases</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-red-600 mb-2">25%+</div>

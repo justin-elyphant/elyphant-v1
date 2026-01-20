@@ -136,7 +136,7 @@ const Press = () => {
                     </h3>
                     <ul className="text-gray-700 space-y-2">
                       <li>• Technology startups supporting wildlife conservation</li>
-                      <li>• The $890B retail return problem and solutions</li>
+                      <li>• The $850B retail return problem and solutions</li>
                       <li>• How AI can strengthen human relationships</li>
                       <li>• Corporate responsibility in emerging tech companies</li>
                     </ul>

@@ -49,7 +49,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1024); // Include tablets for touch-friendly Drawer
   
   const { connections, pendingInvitations, loading } = useEnhancedConnections();
   
@@ -426,7 +426,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[350px] p-0 pointer-events-auto" align="start">
+      <PopoverContent className="w-[350px] p-0 pointer-events-auto z-[150]" align="start" sideOffset={8}>
         <SelectorContent />
       </PopoverContent>
     </Popover>

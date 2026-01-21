@@ -12,12 +12,13 @@ import MarketSlide from './slides/MarketSlide';
 import WhyNowSlide from './slides/WhyNowSlide';
 import CompetitionSlide from './slides/CompetitionSlide';
 import BusinessModelSlide from './slides/BusinessModelSlide';
+import RevenueStreamsSlide from './slides/RevenueStreamsSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
 import ContactSlide from './slides/ContactSlide';
 import { Button } from '@/components/ui/button';
 
-// Sequoia-optimized slide order (13 slides)
+// Sequoia-optimized slide order (14 slides)
 const slides = [
   { id: 'title', component: TitleSlide },           // 1 - Hook
   { id: 'problem', component: ProblemSlide },       // 2 - $850B crisis
@@ -28,10 +29,11 @@ const slides = [
   { id: 'market', component: MarketSlide },         // 7 - TAM/SAM/SOM
   { id: 'why-now', component: WhyNowSlide },        // 8 - Market timing
   { id: 'competition', component: CompetitionSlide }, // 9 - Differentiation
-  { id: 'business-model', component: BusinessModelSlide }, // 10 - Revenue
-  { id: 'traction', component: TractionSlide },     // 11 - Metrics + roadmap
-  { id: 'team', component: TeamSlide },             // 12 - Founders
-  { id: 'contact', component: ContactSlide },       // 13 - CTA
+  { id: 'business-model', component: BusinessModelSlide }, // 10 - Revenue overview
+  { id: 'revenue-streams', component: RevenueStreamsSlide }, // 11 - Detailed projections
+  { id: 'traction', component: TractionSlide },     // 12 - Metrics + roadmap
+  { id: 'team', component: TeamSlide },             // 13 - Founders
+  { id: 'contact', component: ContactSlide },       // 14 - CTA
 ];
 
 const InvestorPitchDeck = () => {

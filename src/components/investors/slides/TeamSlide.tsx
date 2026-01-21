@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Linkedin } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 
 interface SlideProps {
   direction: number;
@@ -17,7 +18,6 @@ const team = [
     linkedin: "#",
     initials: "YN",
   },
-  // Add more team members as needed
 ];
 
 const advisors = [
@@ -28,18 +28,11 @@ const advisors = [
 
 const TeamSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-3"
       >
         The Team
       </motion.span>
@@ -47,7 +40,7 @@ const TeamSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-12"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-6 md:mb-8"
       >
         Built by Gift Givers
       </motion.h2>
@@ -55,7 +48,7 @@ const TeamSlide = ({ direction }: SlideProps) => {
       {/* Team members */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-wrap justify-center gap-8 mb-12"
+        className="flex flex-wrap justify-center gap-6 mb-8"
       >
         {team.map((member, index) => (
           <motion.div
@@ -63,46 +56,46 @@ const TeamSlide = ({ direction }: SlideProps) => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + index * 0.15 }}
-            className="flex flex-col items-center text-center max-w-xs"
+            className="flex flex-col items-center text-center max-w-[200px]"
           >
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-4 text-4xl font-bold text-white">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-3 text-2xl md:text-3xl font-bold text-white">
               {member.initials}
             </div>
-            <h3 className="text-xl font-semibold text-white mb-1">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-0.5">
               {member.name}
             </h3>
-            <p className="text-purple-400 text-sm mb-2">{member.role}</p>
-            <p className="text-gray-500 text-sm mb-3">{member.bio}</p>
+            <p className="text-purple-400 text-xs md:text-sm mb-1">{member.role}</p>
+            <p className="text-gray-500 text-xs mb-2">{member.bio}</p>
             <a 
               href={member.linkedin} 
               className="text-gray-400 hover:text-white transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Linkedin className="w-5 h-5" />
+              <Linkedin className="w-4 h-4" />
             </a>
           </motion.div>
         ))}
       </motion.div>
 
       {/* Advisors */}
-      <motion.div variants={itemVariants} className="text-center">
-        <h4 className="text-gray-400 text-sm uppercase tracking-wider mb-4">
+      <motion.div variants={itemVariants} className="text-center w-full">
+        <h4 className="text-gray-400 text-xs uppercase tracking-wider mb-3">
           Advisors
         </h4>
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="flex flex-wrap justify-center gap-3">
           {advisors.map((advisor) => (
             <div 
               key={advisor.name}
-              className="bg-white/5 border border-white/10 rounded-lg px-4 py-2"
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2"
             >
-              <span className="text-white font-medium">{advisor.name}</span>
-              <span className="text-gray-500 text-sm ml-2">• {advisor.expertise}</span>
+              <span className="text-white text-sm font-medium">{advisor.name}</span>
+              <span className="text-gray-500 text-xs ml-1.5">• {advisor.expertise}</span>
             </div>
           ))}
         </div>
       </motion.div>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

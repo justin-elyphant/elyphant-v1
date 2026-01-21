@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
 
 interface SlideProps {
@@ -11,28 +12,21 @@ interface SlideProps {
 
 const ProblemSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-8"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-4 md:mb-6"
       >
         The Problem
       </motion.span>
 
       {/* Big stat */}
-      <motion.div variants={itemVariants} className="text-center mb-8">
-        <div className="text-6xl md:text-8xl lg:text-9xl font-bold text-white mb-4">
+      <motion.div variants={itemVariants} className="text-center mb-4 md:mb-6">
+        <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-2">
           $<AnimatedCounter value={850} duration={2} />B
         </div>
-        <p className="text-xl md:text-2xl text-gray-300">
+        <p className="text-base sm:text-lg md:text-xl text-gray-300">
           The US retail return crisis in 2025
         </p>
       </motion.div>
@@ -40,18 +34,18 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Holiday concentration callout */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-col items-center gap-2 mb-6"
+        className="flex flex-col items-center gap-2 mb-4"
       >
-        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-2xl px-8 py-6">
-          <div className="text-5xl md:text-6xl font-bold text-red-400 mb-2">
+        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-xl px-4 sm:px-6 py-4">
+          <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-red-400 mb-1">
             $<AnimatedCounter value={168} duration={1.5} />B
           </div>
-          <p className="text-white text-lg font-medium">concentrated in holiday season alone</p>
-          <p className="text-gray-400 text-sm mt-1">20% of total returns in just 8 weeks</p>
+          <p className="text-white text-sm md:text-base font-medium text-center">concentrated in holiday season alone</p>
+          <p className="text-gray-400 text-xs md:text-sm mt-1">20% of total returns in just 8 weeks</p>
         </div>
         
         {/* Supporting rate context */}
-        <p className="text-gray-500 text-sm mt-2">
+        <p className="text-gray-500 text-xs md:text-sm mt-1">
           Return rates spike from 15.8% → 17% during Nov-Jan
         </p>
       </motion.div>
@@ -59,7 +53,7 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Bridge to gifting */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-lg italic mb-6"
+        className="text-gray-400 text-sm md:text-base italic mb-3"
       >
         Wrong gifts are a leading contributor
       </motion.p>
@@ -67,11 +61,11 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Source */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-600 text-sm"
+        className="text-gray-600 text-xs"
       >
         Source: National Retail Federation, October 2025
       </motion.p>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Check, X, Crown, Target, TrendingUp } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 import {
   Table,
   TableBody,
@@ -23,7 +24,7 @@ const competitors = [
     tier: "Giant",
     funding: "$7B+",
     fundingLabel: "market cap",
-    gap: "Marketplace, not gifting-focused",
+    gap: "Not gifting-focused",
     accent: "from-amber-500/20 to-orange-500/20",
     border: "border-amber-500/30",
     icon: Crown
@@ -33,7 +34,7 @@ const competitors = [
     tier: "Tier 1",
     funding: "$98M",
     fundingLabel: "raised",
-    gap: "No automation, no AI",
+    gap: "No AI",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
     icon: Target
@@ -43,7 +44,7 @@ const competitors = [
     tier: "Tier 1",
     funding: "$70M",
     fundingLabel: "raised",
-    gap: "B2B only, no consumer",
+    gap: "B2B only",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
     icon: Target
@@ -53,7 +54,7 @@ const competitors = [
     tier: "Tier 2",
     funding: "Funded",
     fundingLabel: "",
-    gap: "B2B focus, no group funding",
+    gap: "B2B focus",
     accent: "from-gray-500/10 to-gray-500/10",
     border: "border-gray-500/20",
     icon: TrendingUp
@@ -67,35 +68,20 @@ const featureComparison = [
   { feature: "Group Funding", elyphant: true, etsy: false, elfster: false, snappy: false, goody: false },
   { feature: "Giftee Wishlist", elyphant: true, etsy: false, elfster: true, snappy: false, goody: true },
   { feature: "Gift Scheduling", elyphant: true, etsy: false, elfster: false, snappy: true, goody: false },
-  { feature: "Consumer Focus", elyphant: true, etsy: true, elfster: true, snappy: false, goody: false },
-  { feature: "Retailer API Integration", elyphant: true, etsy: false, elfster: true, snappy: true, goody: false },
-];
-
-const keyStats = [
-  { stat: "0/12", label: "competitors offer Auto-Gifting" },
-  { stat: "1/12", label: "has Group Funding" },
-  { stat: "$7B+", label: "in market cap, 0 solve 'never forget'" },
 ];
 
 const CompetitionSlide = ({ direction }: SlideProps) => {
   const renderFeatureIcon = (value: boolean) => {
-    if (value) return <Check className="w-4 h-4 text-green-400" />;
-    return <X className="w-4 h-4 text-gray-600" />;
+    if (value) return <Check className="w-3 h-3 text-green-400" />;
+    return <X className="w-3 h-3 text-gray-600" />;
   };
 
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-4 md:px-8 py-6 overflow-y-auto"
-    >
+    <SlideWrapper direction={direction} verticalScroll>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-4"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-2"
       >
         Competitive Landscape
       </motion.span>
@@ -103,7 +89,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-2"
+        className="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center mb-1"
       >
         $7B+ Market Cap. <span className="bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">0 Offer Automation.</span>
       </motion.h2>
@@ -111,15 +97,15 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Subtitle */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-center mb-6 text-sm md:text-base"
+        className="text-gray-400 text-center mb-4 text-xs"
       >
         The giants are missing what matters most
       </motion.p>
 
-      {/* Competitor Cards - Funding Validation */}
+      {/* Competitor Cards */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-wrap justify-center gap-3 mb-6 max-w-5xl"
+        className="flex flex-wrap justify-center gap-2 mb-4 w-full"
       >
         {competitors.map((comp, index) => {
           const Icon = comp.icon;
@@ -129,17 +115,17 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
-              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-xl px-4 py-3 min-w-[140px]`}
+              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 min-w-[100px]`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Icon className={`w-4 h-4 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-gray-400'}`} />
-                <span className="text-xs text-gray-500 uppercase tracking-wider">{comp.tier}</span>
+              <div className="flex items-center gap-1 mb-0.5">
+                <Icon className={`w-3 h-3 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-gray-400'}`} />
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">{comp.tier}</span>
               </div>
-              <div className="text-white font-bold text-lg">{comp.name}</div>
-              <div className="text-purple-300 font-semibold text-sm">
-                {comp.funding} <span className="text-gray-500 font-normal">{comp.fundingLabel}</span>
+              <div className="text-white font-bold text-sm">{comp.name}</div>
+              <div className="text-purple-300 font-semibold text-xs">
+                {comp.funding}
               </div>
-              <div className="text-gray-500 text-xs mt-1">{comp.gap}</div>
+              <div className="text-gray-500 text-[10px]">{comp.gap}</div>
             </motion.div>
           );
         })}
@@ -148,41 +134,41 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Feature Comparison Table */}
       <motion.div 
         variants={itemVariants}
-        className="w-full max-w-4xl"
+        className="w-full overflow-x-auto"
       >
-        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden min-w-[400px]">
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-gray-400 font-medium text-xs md:text-sm">Feature</TableHead>
-                <TableHead className="text-center bg-gradient-to-b from-purple-500/20 to-sky-500/20">
-                  <span className="text-white font-bold text-xs md:text-sm">Elyphant</span>
+                <TableHead className="text-gray-400 font-medium text-[10px] md:text-xs py-2">Feature</TableHead>
+                <TableHead className="text-center bg-gradient-to-b from-purple-500/20 to-sky-500/20 py-2">
+                  <span className="text-white font-bold text-[10px] md:text-xs">Elyphant</span>
                 </TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-xs md:text-sm">Etsy</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-xs md:text-sm">Elfster</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-xs md:text-sm">Snappy</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-xs md:text-sm">Goody</TableHead>
+                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Etsy</TableHead>
+                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Elfster</TableHead>
+                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Snappy</TableHead>
+                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Goody</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {featureComparison.map((row, index) => (
+              {featureComparison.map((row) => (
                 <TableRow 
                   key={row.feature}
                   className="border-white/5 hover:bg-white/5"
                 >
-                  <TableCell className="text-gray-300 text-xs md:text-sm font-medium py-2">
+                  <TableCell className="text-gray-300 text-[10px] md:text-xs font-medium py-1.5">
                     {row.feature}
                     {(row.feature === "Auto-Gifting" || row.feature === "Group Funding") && (
-                      <span className="ml-2 text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded">UNIQUE</span>
+                      <span className="ml-1 text-[8px] bg-purple-500/20 text-purple-300 px-1 py-0.5 rounded">UNIQUE</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center bg-gradient-to-b from-purple-500/10 to-sky-500/10 py-2">
+                  <TableCell className="text-center bg-gradient-to-b from-purple-500/10 to-sky-500/10 py-1.5">
                     {renderFeatureIcon(row.elyphant)}
                   </TableCell>
-                  <TableCell className="text-center py-2">{renderFeatureIcon(row.etsy)}</TableCell>
-                  <TableCell className="text-center py-2">{renderFeatureIcon(row.elfster)}</TableCell>
-                  <TableCell className="text-center py-2">{renderFeatureIcon(row.snappy)}</TableCell>
-                  <TableCell className="text-center py-2">{renderFeatureIcon(row.goody)}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.etsy)}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.elfster)}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.snappy)}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.goody)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -190,35 +176,14 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Key Differentiators */}
-      <motion.div 
-        variants={itemVariants}
-        className="flex flex-wrap justify-center gap-4 md:gap-8 mt-6"
-      >
-        {keyStats.map((item, index) => (
-          <motion.div
-            key={item.stat}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1 + index * 0.1 }}
-            className="text-center"
-          >
-            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">
-              {item.stat}
-            </div>
-            <div className="text-gray-500 text-xs md:text-sm max-w-[150px]">{item.label}</div>
-          </motion.div>
-        ))}
-      </motion.div>
-
       {/* Closing Tagline */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-sm mt-6 text-center italic"
+        className="text-gray-400 text-xs mt-4 text-center italic"
       >
         "We're building what $7B+ in market value hasn't solved"
       </motion.p>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

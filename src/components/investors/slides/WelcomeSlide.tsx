@@ -41,11 +41,11 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
         }}
       />
 
-      {/* Main logo container with zoom animation */}
+      {/* Main logo container with zoom animation - scaled for container */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ 
-          scale: [0.8, 1, 1.8, 2.2],
+          scale: [0.8, 1, 1.5, 1.8],
           opacity: [0, 1, 1, 1]
         }}
         transition={{ 
@@ -53,23 +53,23 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
           times: [0, 0.2, 0.7, 1],
           ease: [0.25, 0.1, 0.25, 1]
         }}
-        className="flex items-center gap-4 md:gap-6 lg:gap-8 z-10"
+        className="flex items-center gap-2 sm:gap-3 md:gap-4 z-10"
       >
         {/* Gift icon with glow */}
         <motion.div
           animate={{ 
-            filter: ['drop-shadow(0 0 20px rgba(56,189,248,0.3))', 'drop-shadow(0 0 40px rgba(56,189,248,0.6))', 'drop-shadow(0 0 60px rgba(56,189,248,0.8))']
+            filter: ['drop-shadow(0 0 15px rgba(56,189,248,0.3))', 'drop-shadow(0 0 30px rgba(56,189,248,0.6))', 'drop-shadow(0 0 45px rgba(56,189,248,0.8))']
           }}
           transition={{ duration: 2.5, times: [0, 0.5, 1] }}
         >
-          <Gift className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 text-sky-400" />
+          <Gift className="w-10 h-10 sm:w-14 sm:h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 text-sky-400" />
         </motion.div>
 
         {/* Elyphant text with gradient */}
         <motion.span 
-          className="text-5xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-sky-400 bg-clip-text text-transparent"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-sky-400 bg-clip-text text-transparent"
           animate={{
-            filter: ['drop-shadow(0 0 10px rgba(168,85,247,0.3))', 'drop-shadow(0 0 30px rgba(168,85,247,0.5))', 'drop-shadow(0 0 50px rgba(168,85,247,0.7))']
+            filter: ['drop-shadow(0 0 8px rgba(168,85,247,0.3))', 'drop-shadow(0 0 20px rgba(168,85,247,0.5))', 'drop-shadow(0 0 35px rgba(168,85,247,0.7))']
           }}
           transition={{ duration: 2.5, times: [0, 0.5, 1] }}
         >
@@ -82,7 +82,7 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.8, duration: 0.8 }}
-        className="absolute bottom-40 md:bottom-44 text-xl md:text-2xl lg:text-3xl text-gray-300 text-center z-10"
+        className="absolute bottom-28 sm:bottom-32 md:bottom-36 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 text-center px-4 z-10"
       >
         The Future of Thoughtful Gifting
       </motion.p>
@@ -93,14 +93,14 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 2.2, duration: 0.5 }}
         onClick={onNext}
-        className="absolute bottom-24 flex flex-col items-center gap-2 text-gray-400 hover:text-white transition-colors z-10"
+        className="absolute bottom-16 sm:bottom-18 md:bottom-20 flex flex-col items-center gap-1.5 text-gray-400 hover:text-white transition-colors z-10"
       >
-        <span className="text-sm">Discover Our Solution</span>
+        <span className="text-xs md:text-sm">Discover Our Solution</span>
         <motion.div
-          animate={{ y: [0, 8, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 2.5 }}
         >
-          <ChevronDown className="w-6 h-6" />
+          <ChevronDown className="w-5 h-5 md:w-6 md:h-6" />
         </motion.div>
       </motion.button>
 
@@ -112,15 +112,15 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
           animate={{ 
             opacity: [0, 0.8, 0],
             scale: [0, 1, 0.5],
-            x: [0, (i % 2 === 0 ? 1 : -1) * (50 + i * 30)],
-            y: [0, (i % 3 === 0 ? -1 : 1) * (40 + i * 20)]
+            x: [0, (i % 2 === 0 ? 1 : -1) * (30 + i * 20)],
+            y: [0, (i % 3 === 0 ? -1 : 1) * (25 + i * 15)]
           }}
           transition={{ 
             duration: 2,
             delay: 1 + i * 0.15,
             ease: "easeOut"
           }}
-          className="absolute w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-sky-400"
+          className="absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-gradient-to-r from-purple-400 to-sky-400"
           style={{
             left: '50%',
             top: '50%',

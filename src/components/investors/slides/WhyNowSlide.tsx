@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Brain, Users, Heart } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 
 interface SlideProps {
   direction: number;
@@ -44,18 +45,11 @@ const timingFactors = [
 
 const WhyNowSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-3"
       >
         Market Timing
       </motion.span>
@@ -63,7 +57,7 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-12"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-4 md:mb-6"
       >
         Why Now?
       </motion.h2>
@@ -71,7 +65,7 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
       {/* Timing factors */}
       <motion.div 
         variants={itemVariants}
-        className="grid md:grid-cols-3 gap-6 max-w-6xl w-full mb-10"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-4"
       >
         {timingFactors.map((factor, index) => (
           <motion.div
@@ -79,30 +73,30 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.15 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
+            className="bg-white/5 border border-white/10 rounded-xl p-4"
           >
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${factor.color} flex items-center justify-center mb-4`}>
-              <factor.icon className="w-7 h-7 text-white" />
+            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${factor.color} flex items-center justify-center mb-3`}>
+              <factor.icon className="w-5 h-5 text-white" />
             </div>
             
-            <h3 className="text-xl font-semibold text-white mb-4">
+            <h3 className="text-base font-semibold text-white mb-3">
               {factor.title}
             </h3>
             
-            <div className="space-y-3 mb-4">
+            <div className="space-y-2 mb-3">
               {factor.stats.map((stat, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent flex-shrink-0">
                     {stat.value}
                   </span>
-                  <span className="text-gray-400 text-sm">
+                  <span className="text-gray-400 text-xs leading-tight">
                     {stat.text}
                   </span>
                 </div>
               ))}
             </div>
             
-            <p className="text-gray-600 text-xs">
+            <p className="text-gray-600 text-[10px]">
               Source: {factor.source}
             </p>
           </motion.div>
@@ -112,16 +106,16 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
       {/* Convergence callout */}
       <motion.div 
         variants={itemVariants}
-        className="bg-gradient-to-r from-purple-500/10 via-sky-500/10 to-pink-500/10 border border-white/10 rounded-2xl px-8 py-5 max-w-4xl text-center"
+        className="bg-gradient-to-r from-purple-500/10 via-sky-500/10 to-pink-500/10 border border-white/10 rounded-xl px-4 py-3 w-full text-center"
       >
-        <p className="text-gray-300 text-lg">
+        <p className="text-gray-300 text-xs md:text-sm">
           The convergence of <span className="text-purple-400 font-semibold">AI capability</span> + 
           <span className="text-sky-400 font-semibold"> consumer trust</span> + 
           <span className="text-pink-400 font-semibold"> personalization demand</span> creates a 
           <span className="text-white font-semibold"> once-in-a-generation opportunity</span>
         </p>
       </motion.div>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Users, ListChecks, Sparkles, Gift } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 
 interface SlideProps {
   direction: number;
@@ -38,18 +39,11 @@ const steps = [
 
 const HowItWorksSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-3 md:mb-4"
       >
         The Experience
       </motion.span>
@@ -57,58 +51,43 @@ const HowItWorksSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-16"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-6 md:mb-8"
       >
         How It Works
       </motion.h2>
 
-      {/* Steps flow */}
+      {/* Steps - responsive grid */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-col md:flex-row items-center gap-4 md:gap-0 max-w-6xl w-full"
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full"
       >
         {steps.map((step, index) => (
           <motion.div
             key={step.step}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 + index * 0.15 }}
-            className="flex items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + index * 0.1 }}
+            className="flex flex-col items-center text-center"
           >
             {/* Step card */}
-            <div className="flex flex-col items-center text-center px-6">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-sky-500/20 border border-purple-500/30 flex items-center justify-center mb-3">
-                  <step.icon className="w-8 h-8 text-purple-400" />
-                </div>
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-sky-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  {step.step}
-                </span>
+            <div className="relative mb-2">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-sky-500/20 border border-purple-500/30 flex items-center justify-center">
+                <step.icon className="w-6 h-6 md:w-7 md:h-7 text-purple-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-1">
-                {step.title}
-              </h3>
-              <p className="text-gray-500 text-sm max-w-[150px]">
-                {step.description}
-              </p>
+              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-purple-500 to-sky-500 text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {step.step}
+              </span>
             </div>
-
-            {/* Arrow connector (not on last) */}
-            {index < steps.length - 1 && (
-              <div className="hidden md:block text-purple-500/50 mx-2">
-                <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-                  <path 
-                    d="M0 10H35M35 10L28 3M35 10L28 17" 
-                    stroke="currentColor" 
-                    strokeWidth="2"
-                  />
-                </svg>
-              </div>
-            )}
+            <h3 className="text-sm md:text-base font-semibold text-white mb-0.5">
+              {step.title}
+            </h3>
+            <p className="text-gray-500 text-xs md:text-sm max-w-[120px]">
+              {step.description}
+            </p>
           </motion.div>
         ))}
       </motion.div>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

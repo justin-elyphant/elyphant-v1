@@ -27,10 +27,10 @@ const slides = [
   { id: 'solution', component: SolutionSlide },     // 5 - Our answer
   { id: 'how-it-works', component: HowItWorksSlide }, // 6 - Demo flow
   { id: 'market', component: MarketSlide },         // 7 - TAM/SAM/SOM
-  { id: 'why-now', component: WhyNowSlide },        // 8 - Market timing
-  { id: 'competition', component: CompetitionSlide }, // 9 - Differentiation
-  { id: 'business-model', component: BusinessModelSlide }, // 10 - Revenue overview
-  { id: 'revenue-streams', component: RevenueStreamsSlide }, // 11 - Detailed projections
+  { id: 'revenue-streams', component: RevenueStreamsSlide }, // 8 - Detailed projections
+  { id: 'why-now', component: WhyNowSlide },        // 9 - Market timing
+  { id: 'competition', component: CompetitionSlide }, // 10 - Differentiation
+  { id: 'business-model', component: BusinessModelSlide }, // 11 - Revenue overview
   { id: 'traction', component: TractionSlide },     // 12 - Metrics + roadmap
   { id: 'team', component: TeamSlide },             // 13 - Founders
   { id: 'contact', component: ContactSlide },       // 14 - CTA

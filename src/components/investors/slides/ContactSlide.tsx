@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { Mail, Calendar, ArrowRight } from 'lucide-react';
+import { Mail, Calendar, ArrowRight, DollarSign, Shield, Megaphone, Code, Users, Target } from 'lucide-react';
 import { slideVariants, itemVariants } from '../slideAnimations';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 interface SlideProps {
   direction: number;
@@ -9,6 +10,19 @@ interface SlideProps {
   isFirst: boolean;
   isLast: boolean;
 }
+
+const useOfFunds = [
+  { category: 'Growth & Marketing', amount: '$675K', percentage: 45, icon: Megaphone, purpose: 'User acquisition, vendor onboarding' },
+  { category: 'Product & Engineering', amount: '$450K', percentage: 30, icon: Code, purpose: 'Nicole AI, Auto-Gift engine, Marketplace' },
+  { category: 'Operations & Hiring', amount: '$375K', percentage: 25, icon: Users, purpose: 'Core team expansion' },
+];
+
+const milestones = [
+  { label: '100K Users', timeline: 'Q4 2026' },
+  { label: '$1.3M Revenue', timeline: 'Year 2' },
+  { label: 'Marketplace', timeline: 'Q2 2026' },
+  { label: 'Series A Ready', timeline: 'Q4 2026' },
+];
 
 const ContactSlide = ({ direction }: SlideProps) => {
   return (
@@ -18,12 +32,12 @@ const ContactSlide = ({ direction }: SlideProps) => {
       animate="center"
       exit="exit"
       custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
+      className="absolute inset-0 flex flex-col items-center justify-center px-4 md:px-8 overflow-y-auto py-8"
     >
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-sm mb-4"
       >
         Let's Connect
       </motion.span>
@@ -31,31 +45,101 @@ const ContactSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-4"
+        className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-6"
       >
         Join Us on This Journey
       </motion.h2>
 
-      <motion.p 
-        variants={itemVariants}
-        className="text-gray-400 text-lg mb-12 text-center max-w-2xl"
-      >
-        We're raising our seed round to scale the platform and bring effortless gifting to millions.
-      </motion.p>
-
       {/* The Ask */}
       <motion.div 
         variants={itemVariants}
-        className="bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/30 rounded-2xl px-12 py-8 mb-12 text-center"
+        className="bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/30 rounded-2xl px-8 py-6 mb-6 text-center"
       >
-        <div className="text-gray-400 text-sm uppercase tracking-wider mb-2">
+        <div className="text-gray-400 text-sm uppercase tracking-wider mb-1">
           Raising
         </div>
-        <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-2">
+        <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-1">
           $1.5M
         </div>
         <div className="text-gray-400">
-          Seed Round
+          Seed Round • 18-Month Runway
+        </div>
+      </motion.div>
+
+      {/* Founder Commitment Banner */}
+      <motion.div 
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row gap-4 mb-8"
+      >
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center">
+            <DollarSign className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <div className="text-xl font-bold text-white">$600K</div>
+            <div className="text-xs text-gray-400">Founder Investment</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-sky-400" />
+          </div>
+          <div>
+            <div className="text-xl font-bold text-white">Patent</div>
+            <div className="text-xs text-gray-400">Pending on Auto-Gift</div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Use of Funds */}
+      <motion.div 
+        variants={itemVariants}
+        className="w-full max-w-2xl mb-8"
+      >
+        <div className="text-gray-400 text-xs uppercase tracking-wider mb-4 text-center">
+          Use of Funds
+        </div>
+        <div className="space-y-3">
+          {useOfFunds.map((item, index) => (
+            <div key={index} className="bg-white/5 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <item.icon className="w-4 h-4 text-purple-400" />
+                  <span className="text-white text-sm font-medium">{item.category}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-xs">{item.amount}</span>
+                  <span className="text-white text-sm font-bold">{item.percentage}%</span>
+                </div>
+              </div>
+              <Progress value={item.percentage} className="h-2 bg-white/10" />
+              <div className="text-gray-500 text-xs mt-1">{item.purpose}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Key Milestones */}
+      <motion.div 
+        variants={itemVariants}
+        className="w-full max-w-2xl mb-8"
+      >
+        <div className="text-gray-400 text-xs uppercase tracking-wider mb-4 text-center">
+          Key Milestones (18 Months)
+        </div>
+        <div className="flex items-center justify-between relative">
+          {/* Connecting line */}
+          <div className="absolute top-4 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 to-sky-500/50" />
+          
+          {milestones.map((milestone, index) => (
+            <div key={index} className="relative flex flex-col items-center z-10">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-2">
+                <Target className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-white text-xs font-medium text-center">{milestone.label}</div>
+              <div className="text-gray-500 text-xs">{milestone.timeline}</div>
+            </div>
+          ))}
         </div>
       </motion.div>
 

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Repeat, Calendar, Frown } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 
 interface SlideProps {
   direction: number;
@@ -38,18 +39,11 @@ const painPoints = [
 
 const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-3 md:mb-4"
       >
         Root Causes
       </motion.span>
@@ -57,7 +51,7 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-12"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-6 md:mb-8"
       >
         Why Gifting Fails
       </motion.h2>
@@ -65,7 +59,7 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
       {/* Pain points grid */}
       <motion.div 
         variants={itemVariants}
-        className="grid md:grid-cols-3 gap-6 max-w-5xl w-full"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 w-full"
       >
         {painPoints.map((point, index) => (
           <motion.div
@@ -73,18 +67,18 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.15 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors"
+            className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors"
           >
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${point.color} flex items-center justify-center mb-4`}>
-              <point.icon className="w-7 h-7 text-white" />
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${point.color} flex items-center justify-center mb-3`}>
+              <point.icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-2xl md:text-3xl font-bold text-white mb-1">
               {point.stat}
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <h3 className="text-sm md:text-base font-semibold text-white mb-1">
               {point.title}
             </h3>
-            <p className="text-gray-400 text-sm mb-3">
+            <p className="text-gray-400 text-xs md:text-sm mb-2">
               {point.description}
             </p>
             <p className="text-gray-600 text-xs">
@@ -93,7 +87,7 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
           </motion.div>
         ))}
       </motion.div>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

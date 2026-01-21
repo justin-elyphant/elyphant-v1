@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Heart, Brain, Truck } from 'lucide-react';
-import { slideVariants, itemVariants } from '../slideAnimations';
+import SlideWrapper from './SlideWrapper';
+import { itemVariants } from '../slideAnimations';
 
 interface SlideProps {
   direction: number;
@@ -32,18 +33,11 @@ const pillars = [
 
 const SolutionSlide = ({ direction }: SlideProps) => {
   return (
-    <motion.div
-      variants={slideVariants}
-      initial="enter"
-      animate="center"
-      exit="exit"
-      custom={direction}
-      className="absolute inset-0 flex flex-col items-center justify-center px-8"
-    >
+    <SlideWrapper direction={direction}>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
-        className="text-purple-400 uppercase tracking-widest text-sm mb-6"
+        className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-3 md:mb-4"
       >
         Our Solution
       </motion.span>
@@ -51,7 +45,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-4xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-4"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-2"
       >
         Elyphant Makes Gifting
         <br />
@@ -62,7 +56,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
 
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-lg mb-12 text-center max-w-2xl"
+        className="text-gray-400 text-sm md:text-base mb-6 md:mb-8 text-center max-w-xl"
       >
         The world's first AI-powered platform that remembers, recommends, and delivers the perfect gift—automatically.
       </motion.p>
@@ -70,7 +64,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
       {/* Three pillars */}
       <motion.div 
         variants={itemVariants}
-        className="grid md:grid-cols-3 gap-8 max-w-5xl w-full"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full"
       >
         {pillars.map((pillar, index) => (
           <motion.div
@@ -80,19 +74,19 @@ const SolutionSlide = ({ direction }: SlideProps) => {
             transition={{ delay: 0.4 + index * 0.15, type: "spring" }}
             className="text-center"
           >
-            <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20`}>
-              <pillar.icon className="w-10 h-10 text-white" />
+            <div className={`w-14 h-14 md:w-16 md:h-16 mx-auto rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center mb-3 shadow-lg shadow-purple-500/20`}>
+              <pillar.icon className="w-7 h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-1">
               {pillar.title}
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs md:text-sm">
               {pillar.description}
             </p>
           </motion.div>
         ))}
       </motion.div>
-    </motion.div>
+    </SlideWrapper>
   );
 };
 

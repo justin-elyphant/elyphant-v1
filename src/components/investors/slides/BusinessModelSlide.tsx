@@ -12,8 +12,8 @@ interface SlideProps {
 const revenueStreams = [
   {
     icon: ShoppingBag,
-    title: "Transaction Fee",
-    value: "8-12%",
+    title: "Gifting Fees",
+    value: "20%",
     description: "Fee on every gift purchase",
     status: "Active",
   },
@@ -22,22 +22,22 @@ const revenueStreams = [
     title: "Auto-Gift Subscription",
     value: "$9.99/mo",
     description: "Premium automation features",
-    status: "Q2 2026",
+    status: "Active",
   },
   {
     icon: Store,
     title: "Vendor Marketplace",
-    value: "Commission",
-    description: "Per-sale revenue from vendor partners",
+    value: "15%",
+    description: "Commission on vendor partner sales",
     status: "Roadmap",
     vendorTypes: ["Retailers", "Venues", "Golf Courses", "Hotels"],
   },
   {
     icon: CreditCard,
-    title: "Listing Credits",
-    value: "Tiered Model",
-    description: "Vendors pay for additional listings",
-    status: "Roadmap",
+    title: "Sponsored Listings",
+    value: "$0.75 CPC",
+    description: "Cost-per-click product promotion",
+    status: "Q2 2026",
   },
 ];
 
@@ -125,18 +125,18 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
         className="bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-2xl px-8 py-5 flex items-center gap-8"
       >
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">$45</div>
+          <div className="text-2xl font-bold text-white">$75</div>
           <div className="text-gray-500 text-sm">Avg Order Value</div>
         </div>
         <div className="w-px h-12 bg-gray-700" />
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">$4.50</div>
+          <div className="text-2xl font-bold text-white">$15</div>
           <div className="text-gray-500 text-sm">Gross Margin/Order</div>
         </div>
         <div className="w-px h-12 bg-gray-700" />
         <div className="text-center">
-          <div className="text-2xl font-bold text-green-400">68%</div>
-          <div className="text-gray-500 text-sm">Target Gross Margin</div>
+          <div className="text-2xl font-bold text-green-400">20%</div>
+          <div className="text-gray-500 text-sm">Take Rate</div>
         </div>
       </motion.div>
 

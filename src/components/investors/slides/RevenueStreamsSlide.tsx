@@ -175,14 +175,13 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Assumptions transparency box */}
       <motion.div 
         variants={itemVariants}
         className="bg-white/5 border border-white/10 rounded-xl px-6 py-3 max-w-4xl"
       >
         <p className="text-gray-500 text-xs text-center">
           <span className="text-gray-400 font-medium">Conservative projections:</span>{' '}
-          25% active rate • $75 AOV • 3 gifts/user/year • 2% subscription conversion • $0.75 CPC
+          100K users (Y2) → 1M users (Y5) • 25% active rate • $75 AOV • 3 gifts/user/year • 2% subscription conversion • $0.75 CPC
         </p>
       </motion.div>
     </motion.div>

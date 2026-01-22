@@ -124,6 +124,51 @@ function groupItemsByRecipient(
 }
 
 // ============================================================================
+// HELPER: Fetch recipient addresses from user_connections table
+// ============================================================================
+async function fetchRecipientAddresses(
+  recipientIds: string[],
+  supabase: any
+): Promise<Map<string, any>> {
+  const addressMap = new Map<string, any>();
+  
+  if (recipientIds.length === 0) return addressMap;
+  
+  console.log(`📍 [FETCH] Looking up addresses for ${recipientIds.length} recipient(s)...`);
+  
+  const { data: connections, error } = await supabase
+    .from('user_connections')
+    .select('id, name, pending_shipping_address, connected_user_id')
+    .in('id', recipientIds);
+  
+  if (error) {
+    console.error(`❌ [FETCH] Failed to fetch recipient addresses:`, error);
+    return addressMap;
+  }
+  
+  for (const conn of connections || []) {
+    if (conn.pending_shipping_address) {
+      const addr = conn.pending_shipping_address;
+      // Normalize field names from user_connections format to order format
+      addressMap.set(conn.id, {
+        name: addr.name || conn.name || '',
+        address_line1: addr.street || addr.address_line1 || addr.addressLine1 || '',
+        address_line2: addr.address_line2 || addr.addressLine2 || '',
+        city: addr.city || '',
+        state: addr.state || '',
+        postal_code: addr.zipCode || addr.zip_code || addr.postalCode || addr.postal_code || '',
+        country: addr.country || 'US',
+      });
+      console.log(`✅ [FETCH] Found address for ${conn.name}: ${addr.city}, ${addr.state}`);
+    } else {
+      console.warn(`⚠️ [FETCH] No pending_shipping_address for connection ${conn.id} (${conn.name})`);
+    }
+  }
+  
+  return addressMap;
+}
+
+// ============================================================================
 // HELPER: Calculate total amount for a delivery group
 // ============================================================================
 function calculateGroupTotal(items: any[]): number {
@@ -368,7 +413,34 @@ async function handleCheckoutSessionCompleted(
 
   // STEP 5: Group line items by recipient (multi-recipient order splitting)
   console.log(`📦 [STEP 5] Grouping line items by recipient for order splitting...`);
+  
+  // 5.1: Get unique recipient IDs (excluding 'self' and null)
+  const uniqueRecipientIds = [...new Set(
+    lineItems
+      .map(item => item.recipient_id)
+      .filter((id): id is string => !!id && id !== 'self')
+  )];
+  console.log(`📍 [STEP 5.1] Found ${uniqueRecipientIds.length} unique recipient(s): ${uniqueRecipientIds.join(', ') || 'none'}`);
+  
+  // 5.2: Fetch recipient addresses from user_connections
+  const recipientAddresses = await fetchRecipientAddresses(uniqueRecipientIds, supabase);
+  console.log(`📍 [STEP 5.2] Fetched ${recipientAddresses.size} recipient address(es)`);
+  
+  // 5.3: Group items by recipient
   const deliveryGroups = groupItemsByRecipient(lineItems, shippingAddress, metadata);
+  
+  // 5.4: Override addresses for non-self recipients with their actual addresses
+  for (const group of deliveryGroups) {
+    if (group.recipientId && recipientAddresses.has(group.recipientId)) {
+      const recipientAddr = recipientAddresses.get(group.recipientId);
+      group.shippingAddress = recipientAddr;
+      console.log(`🎁 [STEP 5.4] Gift for ${group.recipientName}: shipping to ${recipientAddr.city}, ${recipientAddr.state}`);
+    } else if (group.recipientId && group.recipientId !== 'self') {
+      // Recipient ID exists but no address found - log warning
+      console.warn(`⚠️ [STEP 5.4] WARNING: Gift for ${group.recipientName} (${group.recipientId}) using BUYER's address - no recipient address found!`);
+    }
+  }
+  
   console.log(`✅ [STEP 5] Found ${deliveryGroups.length} delivery group(s)`);
 
   // STEP 6: Create orders (parent + children for multi-recipient)

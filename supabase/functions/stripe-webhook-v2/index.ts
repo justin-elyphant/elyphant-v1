@@ -138,7 +138,7 @@ async function fetchRecipientAddresses(
   
   const { data: connections, error } = await supabase
     .from('user_connections')
-    .select('id, name, pending_shipping_address, connected_user_id')
+    .select('id, pending_recipient_name, pending_shipping_address, connected_user_id')
     .in('id', recipientIds);
   
   if (error) {
@@ -151,7 +151,7 @@ async function fetchRecipientAddresses(
       const addr = conn.pending_shipping_address;
       // Normalize field names from user_connections format to order format
       addressMap.set(conn.id, {
-        name: addr.name || conn.name || '',
+        name: addr.name || conn.pending_recipient_name || '',
         address_line1: addr.street || addr.address_line1 || addr.addressLine1 || '',
         address_line2: addr.address_line2 || addr.addressLine2 || '',
         city: addr.city || '',
@@ -159,9 +159,9 @@ async function fetchRecipientAddresses(
         postal_code: addr.zipCode || addr.zip_code || addr.postalCode || addr.postal_code || '',
         country: addr.country || 'US',
       });
-      console.log(`✅ [FETCH] Found address for ${conn.name}: ${addr.city}, ${addr.state}`);
+      console.log(`✅ [FETCH] Found address for ${conn.pending_recipient_name}: ${addr.city}, ${addr.state}`);
     } else {
-      console.warn(`⚠️ [FETCH] No pending_shipping_address for connection ${conn.id} (${conn.name})`);
+      console.warn(`⚠️ [FETCH] No pending_shipping_address for connection ${conn.id} (${conn.pending_recipient_name})`);
     }
   }
   

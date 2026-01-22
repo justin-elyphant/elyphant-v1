@@ -391,7 +391,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   // Mobile: use Drawer, Desktop: use Popover
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={setOpen} modal={false}>
         <DrawerTrigger asChild>
           <Button
             variant="outline"

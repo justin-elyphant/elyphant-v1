@@ -24,7 +24,15 @@ class CheckoutErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Checkout error:', error, errorInfo);
+    console.error('🚨 Checkout Error Boundary caught:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'unknown',
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+    });
   }
 
   render() {

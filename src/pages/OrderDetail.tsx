@@ -117,7 +117,10 @@ const OrderDetail = () => {
             customerName: shopperName,
             recipientName: recipientName,
             tracking_number: data.tracking_number || null,
-            zinc_order_id: data.zinc_order_id || null
+            zinc_order_id: data.zinc_order_id || null,
+            // Include timeline data for OrderTimeline component (cast to access JSONB fields)
+            zinc_timeline_events: Array.isArray((data as any).zinc_timeline_events) ? (data as any).zinc_timeline_events : [],
+            merchant_tracking_data: (data as any).merchant_tracking_data || {}
           };
           setOrder(transformedOrder);
         }

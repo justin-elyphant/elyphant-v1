@@ -245,8 +245,10 @@ const OrderTimeline = ({
       }
     ];
 
-    // Handle cancelled/failed orders
-    if (orderStatus === "cancelled" || orderStatus === "failed") {
+    // Handle cancelled/failed orders - NEVER show failed for shipped/delivered orders
+    const terminalSuccessStatuses = ["shipped", "delivered", "processing"];
+    if ((orderStatus === "cancelled" || orderStatus === "failed") && 
+        !terminalSuccessStatuses.includes(orderStatus)) {
       baseEvents.push({
         id: "cancelled",
         title: orderStatus === "cancelled" ? "Order Cancelled" : "Order Failed",

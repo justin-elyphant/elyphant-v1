@@ -701,14 +701,15 @@ const UnifiedCheckoutForm: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 hidden lg:block">
-                  <p className="text-sm text-muted-foreground">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground hidden lg:block">
                     Click the button below to proceed to secure checkout.
                   </p>
+                  {/* Desktop/Tablet inline button - hidden on phone (sticky bar used instead) */}
                   <Button
                     onClick={createCheckoutSession}
                     disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
-                    className="w-full"
+                    className="w-full hidden md:flex"
                     size="lg"
                   >
                     {isProcessing ? (
@@ -748,37 +749,35 @@ const UnifiedCheckoutForm: React.FC = () => {
         </div>
       </div>
       
-      {/* Sticky Bottom CTA Bar - Mobile Only */}
-      {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-40 pb-safe">
-          <div className="flex items-center justify-between gap-4 p-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-lg font-bold">
-                {isLoadingShipping ? 'Calculating...' : `$${totalAmount.toFixed(2)}`}
-              </p>
-            </div>
-            <Button
-              onClick={() => {
-                triggerHapticFeedback(HapticPatterns.buttonTap);
-                createCheckoutSession();
-              }}
-              disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
-              className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
-              size="lg"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
-                </>
-              ) : (
-                'Pay Now'
-              )}
-            </Button>
+      {/* Sticky Bottom CTA Bar - Phone Only (md:hidden) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-40 pb-safe md:hidden">
+        <div className="flex items-center justify-between gap-4 p-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-lg font-bold">
+              {isLoadingShipping ? 'Calculating...' : `$${totalAmount.toFixed(2)}`}
+            </p>
           </div>
+          <Button
+            onClick={() => {
+              triggerHapticFeedback(HapticPatterns.buttonTap);
+              createCheckoutSession();
+            }}
+            disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
+            className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
+            size="lg"
+          >
+            {isProcessing ? (
+              <>
+                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processing...
+              </>
+            ) : (
+              'Pay Now'
+            )}
+          </Button>
         </div>
-      )}
+      </div>
     </div>
     </>
   );

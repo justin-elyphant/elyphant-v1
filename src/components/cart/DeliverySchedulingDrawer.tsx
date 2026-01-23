@@ -80,7 +80,7 @@ const DeliverySchedulingDrawer: React.FC<DeliverySchedulingDrawerProps> = ({
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange} modal={false}>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader className="border-b pb-4">
           <div className="flex items-center justify-between">

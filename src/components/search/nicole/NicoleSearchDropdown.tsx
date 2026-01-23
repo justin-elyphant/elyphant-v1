@@ -132,7 +132,7 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
 
   return (
     <>
-      <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2 duration-200">
+      <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg z-[150] animate-in slide-in-from-top-2 duration-200">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-border bg-muted">
         <div className="flex items-center gap-2">

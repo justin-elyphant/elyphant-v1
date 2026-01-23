@@ -160,26 +160,40 @@ serve(async (req) => {
         unit_amount: Math.round(contributionAmount * 100),
       },
       quantity: 1,
-  }] : cartItems.map((item: any) => ({
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: item.name || item.product?.name,
-        images: item.image_url ? [item.image_url] : (item.product?.image ? [item.product.image] : []),
-        metadata: {
-          product_id: item.product_id || item.product?.product_id,
-          recipient_id: item.recipientAssignment?.connectionId || '',
-          recipient_name: item.recipientAssignment?.connectionName || '',
-          gift_message: item.recipientAssignment?.giftMessage || '',
-          // Wishlist tracking metadata for purchase tracking
-          wishlist_id: item.wishlist_id || '',
-          wishlist_item_id: item.wishlist_item_id || ''
-        }
+}] : cartItems.map((item: any) => {
+    // Extract recipient shipping address if assigned
+    const recipientAssignment = item.recipientAssignment || {};
+    const recipientShipping = recipientAssignment.shippingAddress || {};
+    
+    return {
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: item.name || item.product?.name,
+          images: item.image_url ? [item.image_url] : (item.product?.image ? [item.product.image] : []),
+          metadata: {
+            product_id: item.product_id || item.product?.product_id,
+            recipient_id: recipientAssignment.connectionId || '',
+            recipient_name: recipientAssignment.connectionName || '',
+            gift_message: recipientAssignment.giftMessage || '',
+            // Wishlist tracking metadata for purchase tracking
+            wishlist_id: item.wishlist_id || '',
+            wishlist_item_id: item.wishlist_item_id || '',
+            // CRITICAL: Include recipient shipping address in metadata for reliable routing
+            recipient_ship_name: recipientShipping.name || recipientAssignment.connectionName || '',
+            recipient_ship_line1: recipientShipping.address_line1 || recipientShipping.street || '',
+            recipient_ship_line2: recipientShipping.address_line2 || '',
+            recipient_ship_city: recipientShipping.city || '',
+            recipient_ship_state: recipientShipping.state || '',
+            recipient_ship_postal: recipientShipping.postal_code || recipientShipping.zipCode || recipientShipping.zip_code || '',
+            recipient_ship_country: recipientShipping.country || 'US',
+          }
+        },
+        unit_amount: Math.round((item.price || item.product?.price || 0) * 100)
       },
-      unit_amount: Math.round((item.price || item.product?.price || 0) * 100)
-    },
-    quantity: item.quantity
-  }));
+      quantity: item.quantity
+    };
+  });
 
     // Add shipping fee as line item if applicable
     if (pricingBreakdown.shippingCost > 0) {

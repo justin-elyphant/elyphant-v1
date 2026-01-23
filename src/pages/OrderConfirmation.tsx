@@ -10,6 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { useCart } from "@/contexts/CartContext";
+import { getOrderLineItems, getOrderLineItemsPricing } from "@/lib/utils/orderUtils";
+import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 
 interface Order {
   id: string;
@@ -142,7 +144,7 @@ const OrderConfirmation = () => {
         eventType: eventType,
         eventDate: eventDate,
         budgetLimit: Math.ceil(totalAmount),
-        selectedProducts: orderData.line_items?.map((item: any) => ({
+        selectedProducts: getOrderLineItems(orderData).map((item: any) => ({
           productId: item.product_id || item.id,
           name: item.name,
           price: item.price,
@@ -488,7 +490,7 @@ const OrderConfirmation = () => {
                   </div>
 
                   <div className="space-y-2">
-                  {child.line_items?.map((item: any, idx: number) => (
+                  {getOrderLineItems(child).map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-3 py-2 border-t">
                       {item.image_url && (
                         <img 
@@ -532,7 +534,7 @@ const OrderConfirmation = () => {
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.line_items?.map((item: any, idx: number) => (
+              {getOrderLineItems(order).map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center gap-4 pb-4 border-b last:border-0">
                   {item.image_url && (
                     <img 
@@ -567,49 +569,31 @@ const OrderConfirmation = () => {
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="space-y-2">
             {(() => {
-              // Calculate breakdown from line_items
-              let subtotal = 0;
-              let shipping = 0;
-              let tax = 0;
-              let giftingFee = 0;
-              
-              order.line_items?.forEach(item => {
-                const itemTotal = item.quantity * (item.unit_price || item.price || 0);
-                const title = (item.title || item.name || '').toLowerCase();
-                
-                if (title.includes('shipping')) {
-                  shipping += itemTotal;
-                } else if (title.includes('tax')) {
-                  tax += itemTotal;
-                } else if (title.includes('gifting fee') || title.includes('gift fee')) {
-                  giftingFee += itemTotal;
-                } else {
-                  subtotal += itemTotal;
-                }
-              });
+              // Use the pricing breakdown utility which handles both formats
+              const pricing = getOrderPricingBreakdown(order);
 
               return (
                 <>
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>${pricing.subtotal.toFixed(2)}</span>
                   </div>
-                  {shipping > 0 && (
+                  {pricing.shipping_cost > 0 && (
                     <div className="flex justify-between">
                       <span>Shipping:</span>
-                      <span>${shipping.toFixed(2)}</span>
+                      <span>${pricing.shipping_cost.toFixed(2)}</span>
                     </div>
                   )}
-                  {tax > 0 && (
+                  {pricing.tax_amount > 0 && (
                     <div className="flex justify-between">
                       <span>Tax:</span>
-                      <span>${tax.toFixed(2)}</span>
+                      <span>${pricing.tax_amount.toFixed(2)}</span>
                     </div>
                   )}
-                  {giftingFee > 0 && (
+                  {pricing.gifting_fee > 0 && (
                     <div className="flex justify-between">
-                      <span>Gifting Fee:</span>
-                      <span>${giftingFee.toFixed(2)}</span>
+                      <span>{pricing.gifting_fee_name}:</span>
+                      <span>${pricing.gifting_fee.toFixed(2)}</span>
                     </div>
                   )}
                 </>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { getOrderLineItems } from '@/lib/utils/orderUtils';
 
 interface GiftActivity {
   id: string;
@@ -202,9 +203,9 @@ export const useGiftActivity = () => {
 
           const recipientName = 'Recipient';
 
-          // Extract product name from line_items JSONB
-          const lineItems = order.line_items as any;
-          const productName = lineItems?.[0]?.title || lineItems?.[0]?.name || 'Unknown Product';
+          // Extract product name from line_items JSONB (handles both formats)
+          const lineItemsArray = getOrderLineItems(order);
+          const productName = lineItemsArray[0]?.title || lineItemsArray[0]?.name || 'Unknown Product';
 
           let status: GiftActivity['status'] = 'success';
           switch (order.status) {

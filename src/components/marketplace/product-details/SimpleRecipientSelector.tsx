@@ -25,6 +25,7 @@ export interface SelectedRecipient {
     state: string;
     zipCode: string;
     country: string;
+    phone?: string;
   };
   addressVerified?: boolean;
 }
@@ -124,7 +125,8 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       city: rawAddress.city || '',
       state: rawAddress.state || '',
       zipCode: rawAddress.zip_code || rawAddress.zipCode || '',
-      country: rawAddress.country || 'US'
+      country: rawAddress.country || 'US',
+      phone: rawAddress.phone || ''
     } : undefined;
 
     onChange({

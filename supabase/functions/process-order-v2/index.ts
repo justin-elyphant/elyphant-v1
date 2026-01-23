@@ -43,12 +43,15 @@ serve(async (req) => {
 
     console.log(`✅ Order found: ${order.order_number} | Status: ${order.status} | Payment: ${order.payment_status}`);
 
-    // Fetch profile email/name for fallback
+    // Fetch profile email/name/phone for fallback (shopper's phone as backup for gift recipients)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email, name')
+      .select('email, name, shipping_address')
       .eq('id', order.user_id)
       .single();
+
+    // Extract shopper's phone for fallback when recipient phone is missing
+    const shopperPhone = profile?.shipping_address?.phone || '';
 
     // STEP 2: Validate payment status
     if (order.payment_status !== 'paid' && order.payment_status !== 'authorized') {
@@ -254,7 +257,8 @@ serve(async (req) => {
         city: requiredShippingFields.city,
         state: requiredShippingFields.state,
         country: shippingAddress.country || 'US',
-        phone_number: shippingAddress.phone || '', // Required for carrier delivery notifications
+        // Fallback chain: recipient phone → shopper phone → empty (for carrier delivery notifications)
+        phone_number: shippingAddress.phone || shopperPhone || '',
       },
       is_gift: !!(order.gift_options?.giftMessage),
       gift_message: order.gift_options?.giftMessage 

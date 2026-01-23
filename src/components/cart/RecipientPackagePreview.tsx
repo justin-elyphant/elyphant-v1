@@ -43,29 +43,30 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
         <div className="bg-background border rounded-lg">
           {/* Collapsed Header - Always Visible */}
           <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Package className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{deliveryGroup.connectionName}</span>
-                <span className="text-sm text-muted-foreground">
-                  ({groupItems.length} {groupItems.length === 1 ? 'item' : 'items'})
-                </span>
+            <div className="flex items-start justify-between p-4 hover:bg-muted/50 transition-colors">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <Package className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex flex-col items-start gap-1 min-w-0">
+                  <span className="font-medium text-left">{deliveryGroup.connectionName}</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                    <span>({groupItems.length} {groupItems.length === 1 ? 'item' : 'items'})</span>
+                    {deliveryGroup.scheduledDeliveryDate && (
+                      <span className="flex items-center gap-1">
+                        <span className="hidden sm:inline">•</span>
+                        <Calendar className="h-3 w-3" />
+                        {formatScheduledDate(deliveryGroup.scheduledDeliveryDate)}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                {deliveryGroup.scheduledDeliveryDate && (
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatScheduledDate(deliveryGroup.scheduledDeliveryDate)}
-                  </span>
-                )}
-                <ChevronDown 
-                  className={cn(
-                    "h-4 w-4 text-muted-foreground transition-transform",
-                    isOpen && "rotate-180"
-                  )} 
-                />
-              </div>
+              <ChevronDown 
+                className={cn(
+                  "h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ml-2 mt-0.5",
+                  isOpen && "rotate-180"
+                )} 
+              />
             </div>
           </CollapsibleTrigger>
 

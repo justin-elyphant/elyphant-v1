@@ -101,13 +101,20 @@ function groupItemsByRecipient(
     const groupKey = recipientId || 'self';
 
     if (!groupsMap.has(groupKey)) {
+      // METADATA-FIRST: Use recipient shipping from Stripe metadata if available
+      let initialShippingAddress = defaultShippingAddress;
+      if (item.recipient_shipping && item.recipient_shipping.address_line1) {
+        initialShippingAddress = item.recipient_shipping;
+        console.log(`🎁 [GROUP] Using metadata-embedded address for ${item.recipient_name || groupKey}: ${initialShippingAddress.city}, ${initialShippingAddress.state}`);
+      }
+      
       groupsMap.set(groupKey, {
         deliveryGroupId: groupKey,
         recipientId: recipientId,
         recipientName: item.recipient_name || 'Self',
         items: [],
         giftMessage: item.gift_message || '',
-        shippingAddress: defaultShippingAddress, // Will be overridden for connections
+        shippingAddress: initialShippingAddress,
       });
     }
 
@@ -117,6 +124,13 @@ function groupItemsByRecipient(
     // Update gift message if this item has one and group doesn't
     if (item.gift_message && !group.giftMessage) {
       group.giftMessage = item.gift_message;
+    }
+    
+    // METADATA-FIRST: If this item has recipient shipping and group doesn't have a valid one, use it
+    if (item.recipient_shipping && item.recipient_shipping.address_line1 && 
+        (!group.shippingAddress.address_line1 || group.shippingAddress === defaultShippingAddress)) {
+      group.shippingAddress = item.recipient_shipping;
+      console.log(`🎁 [GROUP] Updated address for ${group.recipientName} from item metadata: ${item.recipient_shipping.city}, ${item.recipient_shipping.state}`);
     }
   }
 
@@ -354,7 +368,7 @@ async function handleCheckoutSessionCompleted(
       // This is a product item - accumulate subtotal
       subtotalAmount += itemAmount;
       
-      // Fetch product to get metadata containing Amazon ASIN, gift message, and wishlist tracking
+      // Fetch product to get metadata containing Amazon ASIN, gift message, recipient shipping, and wishlist tracking
       let amazonAsin = 'unknown';
       let recipientId = null;
       let recipientName = '';
@@ -362,6 +376,8 @@ async function handleCheckoutSessionCompleted(
       let imageUrl = '';
       let wishlistId = '';
       let wishlistItemId = '';
+      // NEW: Capture recipient shipping from Stripe product metadata
+      let recipientShipping: any = null;
       
       if (stripeProductId) {
         try {
@@ -375,7 +391,22 @@ async function handleCheckoutSessionCompleted(
           wishlistId = product.metadata?.wishlist_id || '';
           wishlistItemId = product.metadata?.wishlist_item_id || '';
           
-          console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Wishlist: ${wishlistId ? 'Yes' : 'No'} | Stripe ID: ${stripeProductId}`);
+          // CRITICAL: Extract recipient shipping address from Stripe metadata (metadata-first routing)
+          if (product.metadata?.recipient_ship_line1) {
+            recipientShipping = {
+              name: product.metadata.recipient_ship_name || recipientName,
+              address_line1: product.metadata.recipient_ship_line1,
+              address_line2: product.metadata.recipient_ship_line2 || '',
+              city: product.metadata.recipient_ship_city || '',
+              state: product.metadata.recipient_ship_state || '',
+              postal_code: product.metadata.recipient_ship_postal || '',
+              country: product.metadata.recipient_ship_country || 'US',
+            };
+            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Recipient Shipping from metadata: ${recipientShipping.city}, ${recipientShipping.state}`);
+          } else {
+            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Wishlist: ${wishlistId ? 'Yes' : 'No'} | Stripe ID: ${stripeProductId}`);
+          }
+          
           if (!imageUrl) {
             console.warn(`⚠️  [IMAGE] No image URL for product: ${description} (${amazonAsin})`);
           }
@@ -396,6 +427,8 @@ async function handleCheckoutSessionCompleted(
         gift_message: giftMessage,
         wishlist_id: wishlistId,
         wishlist_item_id: wishlistItemId,
+        // NEW: Include recipient shipping from Stripe metadata (for metadata-first routing)
+        recipient_shipping: recipientShipping,
       };
     })
   );
@@ -429,15 +462,28 @@ async function handleCheckoutSessionCompleted(
   // 5.3: Group items by recipient
   const deliveryGroups = groupItemsByRecipient(lineItems, shippingAddress, metadata);
   
-  // 5.4: Override addresses for non-self recipients with their actual addresses
+  // 5.4: Override addresses for non-self recipients (METADATA-FIRST, then DB lookup fallback)
   for (const group of deliveryGroups) {
-    if (group.recipientId && recipientAddresses.has(group.recipientId)) {
+    // Skip 'self' groups - they use buyer's address
+    if (!group.recipientId || group.recipientId === 'self') {
+      continue;
+    }
+    
+    // Check if group already has a valid address from Stripe metadata (set in groupItemsByRecipient)
+    const hasMetadataAddress = group.shippingAddress && 
+                               group.shippingAddress.address_line1 && 
+                               group.shippingAddress !== shippingAddress;
+    
+    if (hasMetadataAddress) {
+      console.log(`✅ [STEP 5.4] Gift for ${group.recipientName}: using METADATA address: ${group.shippingAddress.city}, ${group.shippingAddress.state}`);
+    } else if (recipientAddresses.has(group.recipientId)) {
+      // Fallback: Use address from user_connections DB lookup
       const recipientAddr = recipientAddresses.get(group.recipientId);
       group.shippingAddress = recipientAddr;
-      console.log(`🎁 [STEP 5.4] Gift for ${group.recipientName}: shipping to ${recipientAddr.city}, ${recipientAddr.state}`);
-    } else if (group.recipientId && group.recipientId !== 'self') {
-      // Recipient ID exists but no address found - log warning
-      console.warn(`⚠️ [STEP 5.4] WARNING: Gift for ${group.recipientName} (${group.recipientId}) using BUYER's address - no recipient address found!`);
+      console.log(`🎁 [STEP 5.4] Gift for ${group.recipientName}: using DB lookup address: ${recipientAddr.city}, ${recipientAddr.state}`);
+    } else {
+      // No address from metadata OR DB - using buyer's address (PROBLEM!)
+      console.warn(`⚠️ [STEP 5.4] WARNING: Gift for ${group.recipientName} (${group.recipientId}) using BUYER's address - no recipient address found in metadata or DB!`);
     }
   }
   

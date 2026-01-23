@@ -156,7 +156,7 @@ export const SearchableColorDropdown: React.FC<SearchableColorDropdownProps> = (
   // Use Drawer on mobile, Popover on desktop
   if (!isDesktop) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={setOpen} modal={false}>
         <DrawerTrigger asChild>
           {TriggerButton}
         </DrawerTrigger>
@@ -171,11 +171,11 @@ export const SearchableColorDropdown: React.FC<SearchableColorDropdownProps> = (
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         {TriggerButton}
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0 bg-background border shadow-lg z-50" align="start">
+      <PopoverContent className="w-[300px] p-0 bg-background border shadow-lg z-[150]" align="start">
         {ColorList}
       </PopoverContent>
     </Popover>

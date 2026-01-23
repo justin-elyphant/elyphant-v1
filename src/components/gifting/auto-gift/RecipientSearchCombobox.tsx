@@ -599,7 +599,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
   return (
     <>
       {isMobile ? (
-        <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer open={open} onOpenChange={setOpen} modal={false}>
           <DrawerTrigger asChild>
             <Button
               variant="outline"
@@ -621,7 +621,7 @@ export const RecipientSearchCombobox: React.FC<RecipientSearchComboboxProps> = (
           </DrawerContent>
         </Drawer>
       ) : (
-        <Popover open={open} onOpenChange={setOpen} modal={true}>
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"

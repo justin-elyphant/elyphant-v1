@@ -64,7 +64,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
       </button>
 
       {/* Gift Message Drawer */}
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} modal={false}>
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader className="border-b pb-4">
             <div className="flex items-center justify-between">

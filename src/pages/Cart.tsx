@@ -315,10 +315,10 @@ const Cart = () => {
           </div>
         ) : (
           <div className={cn(
-            "grid gap-6",
+            "grid gap-4",
             isPhone && "grid-cols-1",
-            isTablet && "grid-cols-2", // Tablet: 2-column split (items + summary side by side)
-            !usesMobileShell && "lg:grid-cols-3"
+            isTablet && "grid-cols-[1fr_260px]", // Tablet: asymmetric split - items get more space
+            !usesMobileShell && "lg:grid-cols-3 gap-6"
           )}>
             {/* Cart Content */}
             <div className={cn(
@@ -442,16 +442,21 @@ const Cart = () => {
                         <div className="mt-3 pt-3 border-t border-border/50">
                           {item.recipientAssignment ? (
                             <div className="space-y-2">
-                              {/* Recipient line - stacked layout for tablet */}
+                              {/* Recipient line - responsive stacking for tablet */}
                               <div className="flex flex-col gap-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-muted-foreground">→</span>
-                                    <span className="font-medium text-foreground">
+                                <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1">
+                                  <div className="flex items-center gap-2 text-sm min-w-0">
+                                    <span className="text-muted-foreground flex-shrink-0">→</span>
+                                    <span className="font-medium text-foreground truncate">
                                       {item.recipientAssignment.connectionName}
                                     </span>
+                                    {item.recipientAssignment.shippingAddress && (
+                                      <span className="text-xs text-muted-foreground truncate hidden xs:inline">
+                                        ({item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state})
+                                      </span>
+                                    )}
                                   </div>
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-1 flex-shrink-0 ml-5 xs:ml-0">
                                     <button
                                       onClick={() => {
                                         triggerHapticFeedback(HapticPatterns.buttonTap);
@@ -473,8 +478,9 @@ const Cart = () => {
                                     </button>
                                   </div>
                                 </div>
+                                {/* City/state on mobile only - already inline on wider screens */}
                                 {item.recipientAssignment.shippingAddress && (
-                                  <span className="text-sm text-muted-foreground ml-5">
+                                  <span className="text-xs text-muted-foreground ml-5 xs:hidden">
                                     {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
                                   </span>
                                 )}
@@ -562,16 +568,19 @@ const Cart = () => {
                       <span>{formatPrice(cartTotal)}</span>
                     </div>
                     
-                    {/* Compact recipient summary */}
+                    {/* Compact recipient summary - collapse to count on tablet */}
                     {recipientSummary.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Shipping to</span>
-                        <span className="text-right text-xs">
-                          {recipientSummary.map((r, i) => (
-                            <span key={r.name}>
-                              {r.name} ({r.count}){i < recipientSummary.length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted-foreground flex-shrink-0">Shipping to</span>
+                        <span className="text-right text-xs truncate">
+                          {recipientSummary.length <= 2 
+                            ? recipientSummary.map((r, i) => (
+                                <span key={r.name}>
+                                  {r.name}{i < recipientSummary.length - 1 ? ', ' : ''}
+                                </span>
+                              ))
+                            : `${recipientSummary.length} recipients`
+                          }
                         </span>
                       </div>
                     )}

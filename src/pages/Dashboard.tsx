@@ -6,7 +6,7 @@ import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +20,8 @@ const Dashboard = () => {
   const { profile } = useUnifiedProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
+  const { isPhone, isTablet, usesMobileShell } = useResponsiveLayout();
+  const isMobile = isPhone; // Keep for backward compatibility in conditionals
   const [searchParams, setSearchParams] = useSearchParams();
   const [profileLoading, setProfileLoading] = useState(true);
   const [localLoadingTimeout, setLocalLoadingTimeout] = useState(true);
@@ -108,8 +109,8 @@ const Dashboard = () => {
   
   const timeOfDay = getTimeOfDayGreeting();
 
-  // Mobile-first layout optimization
-  if (isMobile) {
+  // Phone layout - single column, bottom nav
+  if (isPhone) {
     return (
       <div className="min-h-screen w-full overflow-x-hidden">
         {/* Always render Header for mobile */}
@@ -143,6 +144,69 @@ const Dashboard = () => {
               setSearchParams({ tab });
             }} className="w-full">
               <TabsList className="w-full rounded-full bg-muted p-1 mb-4 min-h-[44px]">
+                <TabsTrigger value="overview" className="flex-1 rounded-full min-h-[40px]">Overview</TabsTrigger>
+                <TabsTrigger value="auto-gifts" className="flex-1 rounded-full min-h-[40px]">AI Gifting</TabsTrigger>
+              </TabsList>
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <TabsContent value="overview" forceMount={activeTab === 'overview' ? true : undefined} className={activeTab !== 'overview' ? 'hidden' : ''}>
+                    <OverviewTab />
+                  </TabsContent>
+                  
+                  <TabsContent value="auto-gifts" forceMount={activeTab === 'auto-gifts' ? true : undefined} className={activeTab !== 'auto-gifts' ? 'hidden' : ''}>
+                    <AutoGiftsTab />
+                  </TabsContent>
+                </motion.div>
+              </AnimatePresence>
+            </Tabs>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
+
+  // Tablet layout - 2-column content with iOS shell (bottom nav still visible)
+  if (isTablet) {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden">
+        {/* Header for tablet */}
+        <UnifiedShopperHeader mode="main" />
+        
+        {/* Tablet dashboard content - wider container, 2-column grid */}
+        <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>
+          <ResponsiveContainer 
+            fullWidthOnMobile={false} 
+            maxWidth="xl" 
+            padding="standard"
+            className="mobile-content-spacing safe-area-bottom"
+          >
+            {/* Tablet Account Header */}
+            <div className="mb-6 pt-4">
+              <div className="flex flex-col gap-2 mb-4">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl font-bold text-foreground mb-1">
+                    Good {timeOfDay}{firstName ? `, ${firstName}` : ''}
+                  </h1>
+                  <p className="text-muted-foreground text-sm">
+                    How can we help you gift today? Explore gifting, social connections, and more.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* iOS-style Tabs - wider on tablet */}
+            <Tabs value={activeTab} onValueChange={(tab) => {
+              triggerHapticFeedback('selection');
+              setSearchParams({ tab });
+            }} className="w-full">
+              <TabsList className="w-full max-w-md rounded-full bg-muted p-1 mb-6 min-h-[44px]">
                 <TabsTrigger value="overview" className="flex-1 rounded-full min-h-[40px]">Overview</TabsTrigger>
                 <TabsTrigger value="auto-gifts" className="flex-1 rounded-full min-h-[40px]">AI Gifting</TabsTrigger>
               </TabsList>

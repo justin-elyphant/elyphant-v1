@@ -9,7 +9,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Users, UserPlus, Clock, AlertCircle, Search } from "lucide-react";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
 import { toast } from "sonner";
 import { Connection, RelationshipType } from "@/types/connections";
 import ConnectionDetailPanel from "@/components/connections/ConnectionDetailPanel";
@@ -77,7 +77,8 @@ const Connections = () => {
   console.log('🚀 [Connections] Page component loaded!');
   const { user } = useAuth();
   const { profile } = useProfile();
-  const isMobile = useIsMobile();
+  const { isPhone, isTablet, usesMobileShell } = useResponsiveLayout();
+  const isMobile = isPhone; // Keep for backward compatibility
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
@@ -443,6 +444,168 @@ const Connections = () => {
         </MobileBottomSheet>
 
         {/* FAB */}
+        <AddConnectionFAB onClick={() => setShowInviteSheet(true)} />
+
+        {/* Add Connection Sheet */}
+        <AddConnectionSheet
+          isOpen={showInviteSheet}
+          onClose={() => setShowInviteSheet(false)}
+          onConnectionAdded={() => {
+            refreshPendingConnections();
+            triggerHapticFeedback('success');
+          }}
+        />
+
+        {/* Find Friends Dialog */}
+        <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Find New Connections</DialogTitle>
+            </DialogHeader>
+            <EnhancedConnectionSearch />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ========== TABLET LAYOUT (iPad-style split view) ==========
+  if (isTablet) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <MobileConnectionsHeader />
+        
+        {/* Tablet: Split View Container */}
+        <div className="grid grid-cols-2 gap-4 p-4 h-[calc(100vh-80px)]">
+          {/* Left Panel: Connection List */}
+          <div className="overflow-y-auto rounded-lg border bg-background">
+            {/* Hero Section - Compact */}
+            <div className="p-4 border-b">
+              <ConnectionsHeroSection
+                friendsCount={safeFriends.length}
+                pendingCount={safePending.length}
+                onFindFriends={() => setShowFindFriendsDialog(true)}
+                onInviteNew={() => setShowInviteSheet(true)}
+                isMobile={false}
+              />
+            </div>
+            
+            {/* Search Bar */}
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b p-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search connections..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-11"
+                />
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full h-12 bg-transparent p-0 border-b">
+                <TabsTrigger 
+                  value="friends" 
+                  className="flex-1 min-h-[44px]"
+                  onClick={() => triggerHapticFeedback('selection')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Friends ({filteredFriends.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="pending"
+                  className="flex-1 min-h-[44px]"
+                  onClick={() => triggerHapticFeedback('selection')}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Pending ({filteredPending.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="friends" className="mt-0 p-3 space-y-2">
+                {connectionsLoading ? (
+                  <MobileConnectionsSkeleton />
+                ) : filteredFriends.length > 0 ? (
+                  filteredFriends.map((friend) => (
+                    <div 
+                      key={friend.id}
+                      onClick={() => {
+                        triggerHapticFeedback('selection');
+                        setSelectedConnection(friend);
+                      }}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all min-h-[44px] ${
+                        selectedConnection?.id === friend.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'hover:border-muted-foreground/20'
+                      }`}
+                    >
+                      <p className="font-medium">{friend.name}</p>
+                      <p className="text-sm text-muted-foreground">{friend.relationship || 'Friend'}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">No friends found</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="pending" className="mt-0 p-3 space-y-2">
+                {connectionsLoading ? (
+                  <MobileConnectionsSkeleton count={2} />
+                ) : filteredPending.length > 0 ? (
+                  filteredPending.map((pending) => (
+                    <div 
+                      key={pending.id}
+                      onClick={() => {
+                        triggerHapticFeedback('selection');
+                        setSelectedConnection(pending);
+                      }}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all min-h-[44px] ${
+                        selectedConnection?.id === pending.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'hover:border-muted-foreground/20'
+                      }`}
+                    >
+                      <p className="font-medium">{pending.name}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">No pending requests</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+          
+          {/* Right Panel: Connection Detail */}
+          <div className="overflow-y-auto rounded-lg border bg-background">
+            {selectedConnection ? (
+              <ConnectionDetailPanel
+                connection={selectedConnection}
+                onClose={() => setSelectedConnection(null)}
+                onRelationshipChange={handleRelationshipChange}
+                onAutoGiftToggle={handleAutoGiftToggle}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                <Users className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Select a Connection</h3>
+                <p className="text-muted-foreground text-sm">
+                  Choose a friend from the list to view their details
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Add Connection FAB */}
         <AddConnectionFAB onClick={() => setShowInviteSheet(true)} />
 
         {/* Add Connection Sheet */}

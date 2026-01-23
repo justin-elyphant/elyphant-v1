@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, Gift, UserPlus, Calendar, Pencil } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useUnifiedProfile } from "@/hooks/useUnifiedProfile";
 import { emergencyCartCleanup } from "@/utils/cartSecurityUtils";
@@ -44,7 +44,8 @@ const Cart = () => {
     updateRecipientAssignment,
     updateDeliveryGroupScheduling
   } = useCart();
-  const isMobile = useIsMobile();
+  const { isPhone, isTablet, usesMobileShell } = useResponsiveLayout();
+  const isMobile = usesMobileShell; // Keep existing behavior for mobile shell (bottom nav, safe areas)
   const [showRecipientModal, setShowRecipientModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
@@ -313,9 +314,18 @@ const Cart = () => {
             </Button>
           </div>
         ) : (
-          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
+          <div className={cn(
+            "grid gap-6",
+            isPhone && "grid-cols-1",
+            isTablet && "grid-cols-2", // Tablet: 2-column split (items + summary side by side)
+            !usesMobileShell && "lg:grid-cols-3"
+          )}>
             {/* Cart Content */}
-            <div className={isMobile ? 'order-1' : 'lg:col-span-2'}>
+            <div className={cn(
+              isPhone && "order-1",
+              isTablet && "col-span-1", // Tablet: items on left
+              !usesMobileShell && "lg:col-span-2"
+            )}>
               {/* Wishlist Purchase Indicator - Coral-Orange Theme */}
               {isWishlistPurchase && cartItems[0]?.wishlist_owner_name && (
                 <div className="mb-4 p-4 bg-gradient-to-r from-[#EF4444] via-[#F97316] to-[#FB923C] rounded-lg text-white">
@@ -538,9 +548,9 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Order Summary - Desktop Only */}
-            {!isMobile && (
-              <div>
+            {/* Order Summary - Desktop AND Tablet (sticky sidebar) */}
+            {(isTablet || !usesMobileShell) && (
+              <div className={cn(isTablet && "col-span-1")}>
                 <div className="bg-background border rounded-lg p-6 sticky top-4">
                   <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
                   
@@ -584,7 +594,7 @@ const Cart = () => {
                   <div className="space-y-3">
                     <Button 
                       onClick={handleCheckout}
-                      className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white"
+                      className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white min-h-[44px]"
                       disabled={!hasCompleteAddress}
                     >
                       {hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address'}
@@ -596,7 +606,7 @@ const Cart = () => {
                         triggerHapticFeedback(HapticPatterns.navigationTap);
                         navigate("/marketplace");
                       }}
-                      className="w-full"
+                      className="w-full min-h-[44px]"
                     >
                       Continue Shopping
                     </Button>
@@ -617,8 +627,8 @@ const Cart = () => {
               </div>
             )}
             
-            {/* Mobile Summary Card - Compact */}
-            {isMobile && (
+            {/* Phone-Only Summary Card - Compact (Tablets get sidebar instead) */}
+            {isPhone && (
               <div className="order-2 bg-muted/30 rounded-lg p-4 mb-4">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
@@ -647,8 +657,8 @@ const Cart = () => {
           />
         )}
         
-        {/* Sticky Bottom CTA Bar - Mobile/Tablet - Fixed above bottom nav (only for authenticated) */}
-        {isMobile && cartItems.length > 0 && (
+        {/* Sticky Bottom CTA Bar - Phone Only (Tablets have sidebar summary) */}
+        {isPhone && cartItems.length > 0 && (
           <div 
             className="fixed left-0 right-0 bg-background/95 backdrop-blur-xl border-t z-40"
             style={{ bottom: user ? 'calc(env(safe-area-inset-bottom, 0px) + 64px)' : 'env(safe-area-inset-bottom, 0px)' }}

@@ -442,54 +442,56 @@ const Cart = () => {
                         <div className="mt-3 pt-3 border-t border-border/50">
                           {item.recipientAssignment ? (
                             <div className="space-y-2">
-                              {/* Recipient line */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <span>→</span>
-                                  <span className="font-medium text-foreground">
-                                    {item.recipientAssignment.connectionName}
-                                  </span>
-                                  {item.recipientAssignment.shippingAddress && (
-                                    <span>
-                                      • {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
+                              {/* Recipient line - stacked layout for tablet */}
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground">→</span>
+                                    <span className="font-medium text-foreground">
+                                      {item.recipientAssignment.connectionName}
                                     </span>
-                                  )}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => {
+                                        triggerHapticFeedback(HapticPatterns.buttonTap);
+                                        handleAssignRecipient(item.product.product_id);
+                                      }}
+                                      className="text-xs text-muted-foreground hover:text-foreground underline min-h-[44px] flex items-center px-2"
+                                    >
+                                      Change
+                                    </button>
+                                    <span className="text-muted-foreground">|</span>
+                                    <button
+                                      onClick={() => {
+                                        triggerHapticFeedback(HapticPatterns.removeItem);
+                                        handleUnassignRecipient(item.product.product_id);
+                                      }}
+                                      className="text-xs text-muted-foreground hover:text-destructive underline min-h-[44px] flex items-center px-2"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => {
-                                      triggerHapticFeedback(HapticPatterns.buttonTap);
-                                      handleAssignRecipient(item.product.product_id);
-                                    }}
-                                    className="text-xs text-muted-foreground hover:text-foreground underline min-h-[44px] flex items-center px-2"
-                                  >
-                                    Change
-                                  </button>
-                                  <span className="text-muted-foreground">|</span>
-                                  <button
-                                    onClick={() => {
-                                      triggerHapticFeedback(HapticPatterns.removeItem);
-                                      handleUnassignRecipient(item.product.product_id);
-                                    }}
-                                    className="text-xs text-muted-foreground hover:text-destructive underline min-h-[44px] flex items-center px-2"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
+                                {item.recipientAssignment.shippingAddress && (
+                                  <span className="text-sm text-muted-foreground ml-5">
+                                    {item.recipientAssignment.shippingAddress.city}, {item.recipientAssignment.shippingAddress.state}
+                                  </span>
+                                )}
                               </div>
                               
                               {/* Gift message preview */}
                               {item.recipientAssignment.giftMessage && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Gift className="h-3 w-3" />
-                                  <span className="truncate max-w-[200px]">
+                                  <Gift className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate flex-1 min-w-0">
                                     "{item.recipientAssignment.giftMessage}"
                                   </span>
                                   <button
                                     onClick={() => {
                                       // Will open edit in ItemGiftMessageSection
                                     }}
-                                    className="text-xs hover:text-foreground"
+                                    className="text-xs hover:text-foreground flex-shrink-0"
                                   >
                                     <Pencil className="h-3 w-3" />
                                   </button>
@@ -499,7 +501,7 @@ const Cart = () => {
                               {/* Scheduled date */}
                               {item.recipientAssignment.scheduledDeliveryDate && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
+                                  <Calendar className="h-3 w-3 flex-shrink-0" />
                                   <span>{formatScheduledDate(item.recipientAssignment.scheduledDeliveryDate)}</span>
                                 </div>
                               )}

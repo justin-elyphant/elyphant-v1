@@ -43,7 +43,8 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useCart();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(); // < 768px
+  const isTabletOrMobile = useIsMobile(1024); // < 1024px (includes tablets)
 
   const productId = String(product.product_id || product.id);
   
@@ -136,14 +137,22 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
       <div 
         className={cn(
           "flex cursor-pointer",
-          isMobile ? "flex-col" : "flex-row gap-8 p-6"
+          isMobile 
+            ? "flex-col" 
+            : isTabletOrMobile 
+              ? "flex-row gap-4 p-4" // Tablet: side-by-side but tighter
+              : "flex-row gap-8 p-6" // Desktop: generous spacing
         )}
         onClick={handleProductClick}
       >
         {/* Image Section */}
         <div className={cn(
           "relative overflow-hidden bg-muted",
-          isMobile ? "aspect-square w-full" : "w-80 h-80 flex-shrink-0 rounded-xl"
+          isMobile 
+            ? "aspect-square w-full" 
+            : isTabletOrMobile 
+              ? "w-64 h-64 flex-shrink-0 rounded-xl" // Tablet: smaller image
+              : "w-80 h-80 flex-shrink-0 rounded-xl" // Desktop: full size
         )}>
           <img
             src={getProductImage()}
@@ -177,7 +186,7 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
             {/* Title */}
             <h2 className={cn(
               "font-semibold text-foreground mb-2 line-clamp-2",
-              isMobile ? "text-lg" : "text-2xl"
+              isMobile ? "text-lg" : isTabletOrMobile ? "text-xl" : "text-2xl"
             )}>
               {getProductTitle()}
             </h2>
@@ -213,10 +222,10 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
             )}
 
             {/* Price */}
-            <div className="flex items-baseline gap-2 mb-4">
+            <div className="flex items-baseline gap-2 mb-4 flex-wrap">
               <span className={cn(
                 "font-bold text-foreground",
-                isMobile ? "text-2xl" : "text-3xl"
+                isMobile ? "text-2xl" : isTabletOrMobile ? "text-2xl" : "text-3xl"
               )}>
                 {getProductPrice()}
               </span>
@@ -235,10 +244,10 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Stack on mobile/tablet, row on desktop */}
           <div className={cn(
-            "flex gap-3 mt-4",
-            isMobile ? "flex-col" : "flex-row"
+            "flex gap-2 mt-4",
+            isTabletOrMobile ? "flex-wrap" : "flex-row"
           )}>
             {/* Add to Wishlist - Primary */}
             {user ? (
@@ -252,10 +261,10 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
                     brand: product.brand || "",
                   }}
                   triggerClassName={cn(
-                    "flex items-center justify-center gap-2 px-6 py-3 rounded-full",
+                    "flex items-center justify-center gap-2 rounded-full",
                     "bg-foreground text-background hover:bg-foreground/90",
-                    "font-medium transition-all",
-                    isMobile && "min-h-[44px] w-full"
+                    "font-medium transition-all min-h-[44px]",
+                    isTabletOrMobile ? "px-4 py-2 text-sm" : "px-6 py-3"
                   )}
                   onAdded={() => {}}
                 />
@@ -268,13 +277,13 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
                   navigate('/auth');
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-6 py-3 rounded-full",
+                  "flex items-center gap-2 rounded-full min-h-[44px]",
                   "bg-foreground text-background hover:bg-foreground/90",
-                  isMobile && "min-h-[44px] w-full"
+                  isTabletOrMobile ? "px-4 py-2 text-sm" : "px-6 py-3"
                 )}
               >
                 <Heart className="w-4 h-4" />
-                Add to Wishlist
+                Save
               </Button>
             )}
 
@@ -283,9 +292,9 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
               variant="outline"
               onClick={handleScheduleGift}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 rounded-full",
+                "flex items-center gap-2 rounded-full min-h-[44px]",
                 "border-border hover:bg-accent",
-                isMobile && "min-h-[44px] w-full"
+                isTabletOrMobile ? "px-4 py-2 text-sm" : "px-6 py-3"
               )}
             >
               <Calendar className="w-4 h-4" />
@@ -297,9 +306,9 @@ const FeaturedProductHero: React.FC<FeaturedProductHeroProps> = memo(({
               variant="outline"
               onClick={handleAddToCart}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 rounded-full",
+                "flex items-center gap-2 rounded-full min-h-[44px]",
                 "border-border hover:bg-accent",
-                isMobile && "min-h-[44px] w-full"
+                isTabletOrMobile ? "px-4 py-2 text-sm" : "px-6 py-3"
               )}
             >
               <ShoppingCart className="w-4 h-4" />

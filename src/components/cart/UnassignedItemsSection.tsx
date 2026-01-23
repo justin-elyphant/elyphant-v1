@@ -78,25 +78,25 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
           ))}
         </div>
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={onAssignAll}
-            className="flex-1 flex items-center gap-2"
+            className="flex-1 flex items-center justify-center gap-2 min-h-[44px]"
           >
-            <UserPlus className="h-4 w-4" />
-            Assign All to a Recipient
+            <UserPlus className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">Assign to Recipient</span>
           </Button>
           {hasCompleteAddress && (
             <Button
               variant="outline"
               size="sm"
               onClick={onAssignToMe}
-              className="flex-1 flex items-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2 min-h-[44px]"
             >
-              <User className="h-4 w-4" />
-              Ship All to Me
+              <User className="h-4 w-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Ship to Me</span>
             </Button>
           )}
         </div>

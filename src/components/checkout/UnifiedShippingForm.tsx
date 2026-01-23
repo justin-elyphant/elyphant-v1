@@ -87,6 +87,7 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
    * 
    * This function validates that all required address fields are filled.
    * It's essential for preventing incomplete orders.
+   * Phone is now required for Zinc/carrier delivery notifications.
    */
   const isAddressComplete = () => {
     return (
@@ -96,7 +97,8 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
       shippingInfo.city &&
       shippingInfo.state &&
       shippingInfo.zipCode &&
-      shippingInfo.country
+      shippingInfo.country &&
+      shippingInfo.phone
     );
   };
 
@@ -191,15 +193,31 @@ const UnifiedShippingForm: React.FC<UnifiedShippingFormProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="country">Country *</Label>
-            <Input
-              id="country"
-              value={shippingInfo.country}
-              onChange={(e) => handleInputChange('country', e.target.value)}
-              placeholder="Enter country"
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="country">Country *</Label>
+              <Input
+                id="country"
+                value={shippingInfo.country}
+                onChange={(e) => handleInputChange('country', e.target.value)}
+                placeholder="Enter country"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={shippingInfo.phone || ''}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="(555) 123-4567"
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Required for delivery notifications
+              </p>
+            </div>
           </div>
 
           {/* Address validation indicator */}

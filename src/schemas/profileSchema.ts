@@ -7,6 +7,7 @@ export const addressSchema = z.object({
   state: z.string().min(1, "State is required"),
   zipCode: z.string().min(4, "Valid postal/zip code is required"),
   country: z.string().min(1, "Country is required"),
+  phone: z.string().min(10, "Phone required for delivery notifications").optional(),
 });
 
 export const dataSharingSchema = z.object({

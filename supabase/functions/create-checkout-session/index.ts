@@ -181,11 +181,12 @@ serve(async (req) => {
             wishlist_item_id: item.wishlist_item_id || '',
             // CRITICAL: Include recipient shipping address in metadata for reliable routing
             recipient_ship_name: recipientShipping.name || recipientAssignment.connectionName || '',
-            recipient_ship_line1: recipientShipping.address_line1 || recipientShipping.street || '',
-            recipient_ship_line2: recipientShipping.address_line2 || '',
+            recipient_ship_line1: recipientShipping.address_line1 || recipientShipping.street || recipientShipping.address || '',
+            recipient_ship_line2: recipientShipping.address_line2 || recipientShipping.addressLine2 || '',
             recipient_ship_city: recipientShipping.city || '',
             recipient_ship_state: recipientShipping.state || '',
             recipient_ship_postal: recipientShipping.postal_code || recipientShipping.zipCode || recipientShipping.zip_code || '',
+            recipient_ship_phone: recipientShipping.phone || '',
             recipient_ship_country: recipientShipping.country || 'US',
           }
         },

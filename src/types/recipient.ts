@@ -13,6 +13,7 @@ export interface RecipientAssignment {
     state: string;
     zipCode: string;
     country: string;
+    phone?: string;
   };
   // Address verification fields
   address_verified?: boolean;

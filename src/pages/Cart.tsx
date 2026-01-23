@@ -275,7 +275,7 @@ const Cart = () => {
     <Layout>
       <ZincMetadataDebugger />
       <div className={cn(
-        "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing",
+        "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing overflow-x-hidden",
         isMobile && cartItems.length > 0 ? "pb-48" : "py-8"
       )}>
         {/* Sticky Header with Backdrop Blur - iOS Style */}
@@ -322,8 +322,9 @@ const Cart = () => {
           )}>
             {/* Cart Content */}
             <div className={cn(
+              "min-w-0 overflow-hidden", // Prevent flex overflow
               isPhone && "order-1",
-              isTablet && "col-span-1", // Tablet: items on left
+              isTablet && "col-span-1",
               !usesMobileShell && "lg:col-span-2"
             )}>
               {/* Wishlist Purchase Indicator - Coral-Orange Theme */}
@@ -383,7 +384,7 @@ const Cart = () => {
                       
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm line-clamp-2 mb-1">
+                        <h3 className="font-medium text-sm line-clamp-2">
                           {item.product.name || item.product.title}
                         </h3>
                         

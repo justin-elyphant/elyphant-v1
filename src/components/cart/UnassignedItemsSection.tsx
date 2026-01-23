@@ -34,7 +34,7 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
     (shippingAddress.zip_code || shippingAddress.zipCode);
 
   return (
-    <Card className="border-orange-200 bg-orange-50/50">
+    <Card className="border-orange-200 bg-orange-50/50 mb-4 overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="h-4 w-4 text-orange-600" />
@@ -64,7 +64,7 @@ const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
 
         <div className="space-y-2">
           {unassignedItems.map((item) => (
-            <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border">
+            <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border overflow-hidden">
               <CartItemImage item={item} size="md" className="flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">

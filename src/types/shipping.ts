@@ -1,6 +1,7 @@
 
 /**
  * Standardized ShippingAddress interface to be used across the application
+ * CRITICAL: phone field is required for Zinc API delivery notifications
  */
 export interface ShippingAddress {
   address_line1?: string;
@@ -9,10 +10,13 @@ export interface ShippingAddress {
   state?: string;
   zip_code?: string;  // Using standard database naming
   country?: string;
+  phone?: string;     // Required for Zinc/carrier delivery notifications
   is_default?: boolean;
   formatted_address?: string;  // Added to support Google Places
   place_id?: string;           // Added to support Google Places
-  // Legacy compatibility fields
+  is_verified?: boolean;       // True if validated by Google Address Validation API
+  verified_at?: string;        // Timestamp of verification
+  // Legacy compatibility fields (deprecated - use address_line1 and zip_code)
   street?: string;
   zipCode?: string;
 }
@@ -29,6 +33,7 @@ export function mapFormToApiAddress(formAddress: any): ShippingAddress {
     state: formAddress.state || '',
     zip_code: formAddress.zipCode || '',
     country: formAddress.country || '',
+    phone: formAddress.phone || '',
     is_default: true,
     // Legacy compatibility
     street: formAddress.street || '',
@@ -44,6 +49,7 @@ export function mapApiToFormAddress(apiAddress: ShippingAddress): any {
     city: apiAddress.city || '',
     state: apiAddress.state || '',
     zipCode: apiAddress.zip_code || apiAddress.zipCode || '',
-    country: apiAddress.country || ''
+    country: apiAddress.country || '',
+    phone: apiAddress.phone || ''
   };
 }

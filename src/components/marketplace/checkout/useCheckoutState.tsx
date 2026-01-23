@@ -47,6 +47,7 @@ export interface ShippingInfo {
   state: string;
   zipCode: string;
   country: string;
+  phone: string;  // Required for Zinc/carrier delivery notifications
 }
 
 // Import unified interface
@@ -96,7 +97,8 @@ export const useCheckoutState = () => {
       city: "",
       state: "",
       zipCode: "",
-      country: "United States"
+      country: "United States",
+      phone: ""
     },
     shippingMethod: "standard",
     paymentMethod: "card"

@@ -254,6 +254,7 @@ serve(async (req) => {
         city: requiredShippingFields.city,
         state: requiredShippingFields.state,
         country: shippingAddress.country || 'US',
+        phone_number: shippingAddress.phone || '', // Required for carrier delivery notifications
       },
       is_gift: !!(order.gift_options?.giftMessage),
       gift_message: order.gift_options?.giftMessage 

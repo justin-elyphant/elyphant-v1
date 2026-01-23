@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import RelationshipSelector from '@/components/shared/RelationshipSelector';
 import { 
   Users, 
@@ -19,7 +20,8 @@ import {
   UserPlus, 
   ArrowRight,
   User,
-  Heart
+  Heart,
+  CheckCircle
 } from 'lucide-react';
 import { UnifiedRecipient, unifiedRecipientService } from '@/services/unifiedRecipientService';
 import GooglePlacesAutocomplete from '@/components/forms/GooglePlacesAutocomplete';
@@ -29,6 +31,8 @@ import { searchFriends, FriendSearchResult } from '@/services/search/privacyAwar
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 import AddressRequestDialog from './AddressRequestDialog';
+import InlineAddressVerification from '@/components/profile-setup/InlineAddressVerification';
+import StateSelect from '@/components/profile-setup/steps/shipping-address/StateSelect';
 
 interface UnifiedRecipientSelectionProps {
   onRecipientSelect: (recipient: UnifiedRecipient) => void;
@@ -41,6 +45,15 @@ interface NewRecipientForm {
   name: string;
   email: string;
   relationship_type: string;
+  knowAddress: boolean;
+  phone: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  } | null;
 }
 
 const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
@@ -56,7 +69,10 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const [newRecipientForm, setNewRecipientForm] = useState<NewRecipientForm>({
     name: '',
     email: '',
-    relationship_type: 'friend'
+    relationship_type: 'friend',
+    knowAddress: false,
+    phone: '',
+    address: null
   });
   const [isCreatingRecipient, setIsCreatingRecipient] = useState(false);
   const [creationProgress, setCreationProgress] = useState('');
@@ -64,6 +80,21 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
   const [userSearchResults, setUserSearchResults] = useState<FriendSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [addressRequestRecipient, setAddressRequestRecipient] = useState<UnifiedRecipient | null>(null);
+  const [addressVerified, setAddressVerified] = useState(false);
+
+  // Handle Google Places address selection for new recipient form
+  const handleGooglePlacesSelect = (standardizedAddress: StandardizedAddress) => {
+    setNewRecipientForm(prev => ({
+      ...prev,
+      address: {
+        street: standardizedAddress.street,
+        city: standardizedAddress.city,
+        state: standardizedAddress.state,
+        zipCode: standardizedAddress.zipCode,
+        country: standardizedAddress.country
+      }
+    }));
+  };
 
   useEffect(() => {
     fetchRecipients();
@@ -141,7 +172,16 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       const sanitizedData = {
         name: newRecipientForm.name.trim(),
         email: newRecipientForm.email.trim().toLowerCase(),
-        relationship_type: newRecipientForm.relationship_type
+        relationship_type: newRecipientForm.relationship_type,
+        // Include address if shopper knows it
+        pending_shipping_address: newRecipientForm.knowAddress && newRecipientForm.address ? {
+          street: newRecipientForm.address.street,
+          city: newRecipientForm.address.city,
+          state: newRecipientForm.address.state,
+          zipCode: newRecipientForm.address.zipCode,
+          country: newRecipientForm.address.country || 'US',
+          phone: newRecipientForm.phone
+        } : null
       };
       
       console.log('🧹 [DATA_SANITIZATION] Sanitized data:', sanitizedData);
@@ -151,20 +191,36 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
       
       console.log('✅ [API_SUCCESS] Pending recipient created:', newPendingRecipient);
       
+      // Build the unified recipient with address if provided
+      const recipientAddress = newRecipientForm.knowAddress && newRecipientForm.address ? {
+        name: sanitizedData.name,
+        address: newRecipientForm.address.street,
+        city: newRecipientForm.address.city,
+        state: newRecipientForm.address.state,
+        zipCode: newRecipientForm.address.zipCode,
+        country: newRecipientForm.address.country || 'US',
+        phone: newRecipientForm.phone
+      } : null;
+      
       const unifiedRecipient: UnifiedRecipient = {
         id: newPendingRecipient.id,
         name: sanitizedData.name,
         email: sanitizedData.email,
         source: 'pending',
         relationship_type: sanitizedData.relationship_type,
-        status: 'pending_invitation'
+        status: 'pending_invitation',
+        address: recipientAddress
       };
       
       console.log('🎯 [RECIPIENT_CREATION] Unified recipient object:', unifiedRecipient);
       
       setCreationProgress('Finalizing...');
       onRecipientSelect(unifiedRecipient);
-      toast.success(`Invitation sent! ${sanitizedData.name} will provide their address during signup.`);
+      
+      const successMessage = newRecipientForm.knowAddress && recipientAddress 
+        ? `Gift ready! ${sanitizedData.name}'s address is confirmed.`
+        : `Invitation sent! ${sanitizedData.name} will provide their address during signup.`;
+      toast.success(successMessage);
       
       setShowNewRecipientForm(false);
       resetNewRecipientForm();
@@ -220,7 +276,10 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
     setNewRecipientForm({
       name: '',
       email: '',
-      relationship_type: 'friend'
+      relationship_type: 'friend',
+      knowAddress: false,
+      phone: '',
+      address: null
     });
   };
 
@@ -644,11 +703,126 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
                     />
                   </div>
 
-                  {/* Info badge explaining address collection */}
-                  <div className="bg-muted border border-border rounded-lg p-3">
-                    <p className="text-sm text-muted-foreground">
-                      <span className="text-purple-600">📦</span> <strong>{newRecipientForm.name || 'The recipient'}</strong> will provide their shipping address when they sign up.
-                    </p>
+                  {/* "Know Their Address?" Toggle */}
+                  <div className="space-y-4 border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label htmlFor="know-address" className="text-sm font-medium">
+                          Do you know their shipping address?
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {newRecipientForm.knowAddress 
+                            ? "Gift can ship immediately" 
+                            : "They'll provide it during signup"}
+                        </p>
+                      </div>
+                      <Switch
+                        id="know-address"
+                        checked={newRecipientForm.knowAddress}
+                        onCheckedChange={(checked) => {
+                          setNewRecipientForm(prev => ({ 
+                            ...prev, 
+                            knowAddress: checked,
+                            address: checked ? prev.address : null,
+                            phone: checked ? prev.phone : ''
+                          }));
+                          setAddressVerified(false);
+                        }}
+                      />
+                    </div>
+
+                    {/* Address Form (shown when knowAddress is true) */}
+                    {newRecipientForm.knowAddress && (
+                      <div className="space-y-4 pt-4 border-t">
+                        <GooglePlacesAutocomplete
+                          value={newRecipientForm.address?.street || ''}
+                          onChange={(value) => setNewRecipientForm(prev => ({
+                            ...prev,
+                            address: { ...prev.address!, street: value }
+                          }))}
+                          onAddressSelect={handleGooglePlacesSelect}
+                          label="Street Address *"
+                          placeholder="Start typing their address..."
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="recipient-city">City *</Label>
+                            <Input
+                              id="recipient-city"
+                              value={newRecipientForm.address?.city || ''}
+                              onChange={(e) => setNewRecipientForm(prev => ({
+                                ...prev,
+                                address: { ...prev.address!, city: e.target.value }
+                              }))}
+                              placeholder="City"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="recipient-state">State *</Label>
+                            <StateSelect
+                              value={newRecipientForm.address?.state || ''}
+                              onChange={(state) => setNewRecipientForm(prev => ({
+                                ...prev,
+                                address: { ...prev.address!, state }
+                              }))}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="recipient-zip">Zip Code *</Label>
+                            <Input
+                              id="recipient-zip"
+                              value={newRecipientForm.address?.zipCode || ''}
+                              onChange={(e) => setNewRecipientForm(prev => ({
+                                ...prev,
+                                address: { ...prev.address!, zipCode: e.target.value }
+                              }))}
+                              placeholder="Zip Code"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="recipient-phone">Phone *</Label>
+                            <Input
+                              id="recipient-phone"
+                              type="tel"
+                              value={newRecipientForm.phone}
+                              onChange={(e) => setNewRecipientForm(prev => ({
+                                ...prev,
+                                phone: e.target.value
+                              }))}
+                              placeholder="(555) 123-4567"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Address Verification Badge */}
+                        {newRecipientForm.address?.street && newRecipientForm.address?.city && 
+                         newRecipientForm.address?.state && newRecipientForm.address?.zipCode && (
+                          <InlineAddressVerification
+                            address={{
+                              street: newRecipientForm.address.street,
+                              city: newRecipientForm.address.city,
+                              state: newRecipientForm.address.state,
+                              zipCode: newRecipientForm.address.zipCode,
+                              country: newRecipientForm.address.country || 'US'
+                            }}
+                            onVerificationChange={(isVerified) => setAddressVerified(isVerified)}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Info badge when NOT providing address */}
+                    {!newRecipientForm.knowAddress && (
+                      <div className="bg-muted rounded-lg p-3">
+                        <p className="text-sm text-muted-foreground">
+                          <span className="text-purple-600">📦</span> <strong>{newRecipientForm.name || 'The recipient'}</strong> will provide their shipping address when they sign up.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </form>
 

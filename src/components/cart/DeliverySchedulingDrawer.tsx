@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Calendar } from 'lucide-react';
 import Picker from 'react-mobile-picker';
+import { toast } from 'sonner';
 import {
   Drawer,
   DrawerClose,
@@ -10,6 +11,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { PAYMENT_LEAD_TIME } from '@/lib/constants/paymentLeadTime';
 
 interface DeliverySchedulingDrawerProps {
   open: boolean;
@@ -64,14 +66,24 @@ const DeliverySchedulingDrawer: React.FC<DeliverySchedulingDrawerProps> = ({
 
   const handleSave = () => {
     const monthIndex = months.indexOf(pickerValue.month);
-    const date = new Date(
+    const selectedDate = new Date(
       parseInt(pickerValue.year),
       monthIndex,
       parseInt(pickerValue.day)
     );
     
+    // Enforce minimum lead time
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + PAYMENT_LEAD_TIME.MIN_SCHEDULING_DAYS);
+    minDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < minDate) {
+      toast.error(`Please select a date at least ${PAYMENT_LEAD_TIME.MIN_SCHEDULING_DAYS} days from now`);
+      return;
+    }
+    
     // Format as YYYY-MM-DD
-    const formattedDate = date.toISOString().split('T')[0];
+    const formattedDate = selectedDate.toISOString().split('T')[0];
     onDateUpdate(formattedDate);
   };
 
@@ -134,7 +146,7 @@ const DeliverySchedulingDrawer: React.FC<DeliverySchedulingDrawerProps> = ({
 
           {/* Info text */}
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Order will be processed 4 days before to ensure on-time arrival
+            Gift will arrive on or before this date
           </p>
         </div>
 

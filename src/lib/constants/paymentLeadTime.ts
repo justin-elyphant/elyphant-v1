@@ -2,17 +2,24 @@
  * Payment Lead Time System - Frontend Constants
  * 
  * Mirrors the edge function configuration for UI display consistency.
- * This system manages the two-stage order processing for scheduled and auto-gift orders.
  * 
- * Flow:
- * 1. Scheduled orders have payment authorized at checkout
- * 2. PAYMENT_CAPTURE_LEAD_DAYS before delivery: payment is captured → status becomes PAYMENT_CONFIRMED
- * 3. On delivery date: order is submitted to Zinc → status becomes 'processing'
+ * KEY CONCEPT: The scheduled date represents ARRIVAL, not Zinc submission.
+ * 
+ * Timeline for Feb 14 arrival:
+ * 1. Feb 7 (T-7): Payment captured
+ * 2. Feb 11 (T-3): Submitted to Zinc
+ * 3. Feb 14 (T): Gift arrives
  */
 
 export const PAYMENT_LEAD_TIME = {
-  /** Days before delivery to capture payment (Stage 1) */
+  /** Days before Zinc submission to capture payment (Stage 1) */
   CAPTURE_LEAD_DAYS: 4,
+  
+  /** Days for Amazon Prime delivery (Zinc submission lead) */
+  SHIPPING_BUFFER_DAYS: 3,
+  
+  /** Minimum days user must schedule ahead (CAPTURE + SHIPPING) */
+  MIN_SCHEDULING_DAYS: 7,
   
   /** Order status after payment is captured but before Zinc submission */
   PAYMENT_CONFIRMED_STATUS: 'payment_confirmed',

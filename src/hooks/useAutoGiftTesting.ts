@@ -153,12 +153,40 @@ export const useAutoGiftTesting = () => {
     }
   };
 
+  const triggerScheduledProcessor = async (simulatedDate?: string) => {
+    try {
+      setLoading(true);
+      console.log('Triggering scheduled order processor...', simulatedDate || 'using today');
+      
+      const { data, error } = await supabase.functions.invoke('scheduled-order-processor', {
+        body: simulatedDate ? { simulatedDate } : {}
+      });
+
+      if (error) {
+        console.error('Error triggering scheduled processor:', error);
+        toast.error('Failed to trigger scheduled processor');
+        throw error;
+      }
+
+      console.log('Scheduled processor result:', data);
+      toast.success(`Processor complete: ${data?.captured || 0} captured, ${data?.submitted || 0} submitted`);
+      return data;
+    } catch (error) {
+      console.error('Scheduled processor error:', error);
+      toast.error('Failed to trigger scheduled processor');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     triggerDailyCheck,
     triggerProcessing,
     getExecutions,
     getEventLogs,
     getScheduledOrders,
+    triggerScheduledProcessor,
     loading
   };
 };

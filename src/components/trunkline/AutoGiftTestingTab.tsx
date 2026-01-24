@@ -18,6 +18,7 @@ const AutoGiftTestingTab = () => {
     getExecutions,
     getEventLogs,
     getScheduledOrders,
+    triggerScheduledProcessor,
     loading
   } = useAutoGiftTesting();
 
@@ -26,6 +27,7 @@ const AutoGiftTestingTab = () => {
   const [eventLogs, setEventLogs] = useState<any[]>([]);
   const [scheduledOrders, setScheduledOrders] = useState<any[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [simulatedDate, setSimulatedDate] = useState('');
 
   const loadData = async () => {
     const [execData, logsData, ordersData] = await Promise.all([
@@ -56,6 +58,11 @@ const AutoGiftTestingTab = () => {
 
   const handleProcessing = async () => {
     await triggerProcessing();
+    await loadData();
+  };
+
+  const handleScheduledProcessor = async () => {
+    await triggerScheduledProcessor(simulatedDate || undefined);
     await loadData();
   };
 
@@ -148,6 +155,27 @@ const AutoGiftTestingTab = () => {
             >
               {autoRefresh ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
             </Button>
+
+            <Separator orientation="vertical" className="h-8" />
+
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={simulatedDate}
+                onChange={(e) => setSimulatedDate(e.target.value)}
+                className="w-40"
+                placeholder="Simulate date"
+              />
+              <Button
+                onClick={handleScheduledProcessor}
+                disabled={loading}
+                variant="secondary"
+                className="gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Run Scheduler
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

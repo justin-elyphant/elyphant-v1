@@ -19,7 +19,7 @@ serve(async (req) => {
 
   try {
     console.log('📅 Running scheduled order processor (two-stage)...');
-    console.log(`⚙️ Config: Capture ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before delivery`);
+    console.log(`⚙️ Config: Capture ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before Zinc, Ship ${PAYMENT_LEAD_TIME_CONFIG.SHIPPING_BUFFER_DAYS} days before arrival`);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -34,10 +34,19 @@ serve(async (req) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // Calculate the capture threshold date
+    // Calculate total lead time: CAPTURE_LEAD_DAYS + SHIPPING_BUFFER_DAYS before arrival
+    const totalLeadDays = PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS + 
+                          PAYMENT_LEAD_TIME_CONFIG.SHIPPING_BUFFER_DAYS;
+    
+    // Stage 1 threshold: orders with arrival date within totalLeadDays need payment captured
     const captureThresholdDate = new Date(today);
-    captureThresholdDate.setDate(captureThresholdDate.getDate() + PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS);
+    captureThresholdDate.setDate(captureThresholdDate.getDate() + totalLeadDays);
     const captureThresholdStr = captureThresholdDate.toISOString().split('T')[0];
+    
+    // Stage 2 threshold: orders with arrival date within SHIPPING_BUFFER_DAYS need Zinc submission
+    const submitThresholdDate = new Date(today);
+    submitThresholdDate.setDate(submitThresholdDate.getDate() + PAYMENT_LEAD_TIME_CONFIG.SHIPPING_BUFFER_DAYS);
+    const submitThresholdStr = submitThresholdDate.toISOString().split('T')[0];
 
     const results = {
       captured: [] as string[],
@@ -121,15 +130,15 @@ serve(async (req) => {
     }
 
     // ============================================
-    // STAGE 2: Submit to Zinc for orders due today
+    // STAGE 2: Submit to Zinc for orders arriving within SHIPPING_BUFFER_DAYS
     // ============================================
-    console.log(`🚀 Stage 2: Submitting orders with delivery <= ${todayStr} to Zinc`);
+    console.log(`🚀 Stage 2: Submitting orders with arrival <= ${submitThresholdStr} to Zinc`);
 
     const { data: ordersToSubmit, error: submitQueryError } = await supabase
       .from('orders')
       .select('*')
       .eq('status', PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS)
-      .lte('scheduled_delivery_date', todayStr)
+      .lte('scheduled_delivery_date', submitThresholdStr)
       .order('scheduled_delivery_date', { ascending: true });
 
     if (submitQueryError) {
@@ -193,9 +202,11 @@ serve(async (req) => {
         details: results,
         config: {
           paymentCaptureLeadDays: PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS,
+          shippingBufferDays: PAYMENT_LEAD_TIME_CONFIG.SHIPPING_BUFFER_DAYS,
           capturedStatus: PAYMENT_LEAD_TIME_CONFIG.CAPTURED_STATUS,
           todayDate: todayStr,
           captureThresholdDate: captureThresholdStr,
+          submitThresholdDate: submitThresholdStr,
         },
       }),
       { 

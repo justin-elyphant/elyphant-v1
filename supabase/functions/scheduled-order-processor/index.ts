@@ -18,6 +18,15 @@ serve(async (req) => {
   }
 
   try {
+    // Parse optional simulatedDate from request body
+    let simulatedDate: string | null = null;
+    try {
+      const body = await req.json();
+      simulatedDate = body?.simulatedDate || null;
+    } catch {
+      // No body or invalid JSON - use real date
+    }
+
     console.log('📅 Running scheduled order processor (two-stage)...');
     console.log(`⚙️ Config: Capture ${PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS} days before Zinc, Ship ${PAYMENT_LEAD_TIME_CONFIG.SHIPPING_BUFFER_DAYS} days before arrival`);
 
@@ -31,8 +40,10 @@ serve(async (req) => {
       { apiVersion: '2023-10-16' }
     );
 
-    const today = new Date();
+    // Use simulated date if provided, otherwise use real date
+    const today = simulatedDate ? new Date(simulatedDate) : new Date();
     const todayStr = today.toISOString().split('T')[0];
+    console.log(`📅 Using date: ${todayStr}${simulatedDate ? ' (SIMULATED)' : ''}`);
     
     // Calculate total lead time: CAPTURE_LEAD_DAYS + SHIPPING_BUFFER_DAYS before arrival
     const totalLeadDays = PAYMENT_LEAD_TIME_CONFIG.CAPTURE_LEAD_DAYS + 
@@ -207,6 +218,7 @@ serve(async (req) => {
           todayDate: todayStr,
           captureThresholdDate: captureThresholdStr,
           submitThresholdDate: submitThresholdStr,
+          simulatedDate: simulatedDate || null,
         },
       }),
       { 

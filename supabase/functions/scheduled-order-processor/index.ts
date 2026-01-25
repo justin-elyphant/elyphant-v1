@@ -60,10 +60,111 @@ serve(async (req) => {
     const submitThresholdStr = submitThresholdDate.toISOString().split('T')[0];
 
     const results = {
-      captured: [] as string[],
-      submitted: [] as string[],
+      authorized: [] as string[], // Stage 0: pending_payment → scheduled
+      captured: [] as string[],   // Stage 1: scheduled → payment_confirmed
+      submitted: [] as string[],  // Stage 2: payment_confirmed → processing
       failed: [] as { orderId: string; error: string; stage: string }[],
     };
+
+    // ============================================
+    // STAGE 0: Authorize pending_payment orders (deferred payment - 8+ days at checkout)
+    // These orders had setup mode checkout, now entering the 7-day authorization window
+    // ============================================
+    console.log(`🔮 Stage 0: Authorizing pending_payment orders entering T-7 window (delivery <= ${captureThresholdStr})`);
+
+    const { data: ordersToAuthorize, error: authQueryError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'pending_payment')
+      .lte('scheduled_delivery_date', captureThresholdStr)
+      .order('scheduled_delivery_date', { ascending: true });
+
+    if (authQueryError) {
+      console.error('❌ Error querying orders to authorize:', authQueryError);
+    } else {
+      console.log(`📦 Found ${ordersToAuthorize?.length || 0} pending_payment orders to authorize`);
+
+      for (const order of ordersToAuthorize || []) {
+        try {
+          console.log(`🔮 Authorizing deferred payment for order: ${order.id} (delivery: ${order.scheduled_delivery_date})`);
+
+          // Get the SetupIntent to retrieve the payment method
+          if (!order.setup_intent_id) {
+            throw new Error('No setup_intent_id found for pending_payment order');
+          }
+
+          const setupIntent = await stripe.setupIntents.retrieve(order.setup_intent_id);
+          
+          if (!setupIntent.payment_method) {
+            throw new Error('No payment_method attached to SetupIntent');
+          }
+
+          const paymentMethodId = typeof setupIntent.payment_method === 'string' 
+            ? setupIntent.payment_method 
+            : setupIntent.payment_method.id;
+
+          const customerId = order.stripe_customer_id || 
+            (typeof setupIntent.customer === 'string' ? setupIntent.customer : setupIntent.customer?.id);
+
+          if (!customerId) {
+            throw new Error('No customer ID found for order');
+          }
+
+          // Create a new PaymentIntent with manual capture (authorize only)
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(order.total_amount * 100),
+            currency: order.currency || 'usd',
+            customer: customerId,
+            payment_method: paymentMethodId,
+            capture_method: 'manual', // Authorize only - will capture at T-7
+            confirm: true,
+            off_session: true,
+            metadata: {
+              order_id: order.id,
+              deferred_authorization: 'true',
+              original_setup_intent: order.setup_intent_id,
+            },
+          });
+
+          if (paymentIntent.status !== 'requires_capture') {
+            throw new Error(`Unexpected PaymentIntent status: ${paymentIntent.status}`);
+          }
+
+          // Update order: pending_payment → scheduled (now has valid authorization)
+          await supabase
+            .from('orders')
+            .update({
+              payment_intent_id: paymentIntent.id,
+              payment_method_id: paymentMethodId,
+              status: 'scheduled', // Now has fresh authorization
+              payment_status: 'authorized',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', order.id);
+
+          results.authorized.push(order.id);
+          console.log(`✅ Deferred order ${order.id} authorized: ${paymentIntent.id}`);
+
+        } catch (error: any) {
+          console.error(`❌ Failed to authorize order ${order.id}:`, error);
+          results.failed.push({
+            orderId: order.id,
+            error: error.message,
+            stage: 'authorize',
+          });
+
+          // Mark order as needing attention (payment method may have failed)
+          await supabase
+            .from('orders')
+            .update({
+              status: 'requires_attention',
+              notes: `Deferred authorization failed: ${error.message}. Customer may need to update payment method.`,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', order.id);
+        }
+      }
+    }
 
     // ============================================
     // STAGE 1: Capture payments for orders within lead time
@@ -207,8 +308,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        captured: results.captured.length,
-        submitted: results.submitted.length,
+        authorized: results.authorized.length, // Stage 0: deferred → scheduled
+        captured: results.captured.length,     // Stage 1: scheduled → payment_confirmed
+        submitted: results.submitted.length,   // Stage 2: payment_confirmed → processing
         failed: results.failed.length,
         details: results,
         config: {

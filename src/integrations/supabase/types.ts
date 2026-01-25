@@ -2971,6 +2971,7 @@ export type Database = {
           payment_method_id: string | null
           payment_status: string | null
           scheduled_delivery_date: string | null
+          setup_intent_id: string | null
           shipping_address: Json | null
           status: string
           stripe_customer_id: string | null
@@ -3005,6 +3006,7 @@ export type Database = {
           payment_method_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
+          setup_intent_id?: string | null
           shipping_address?: Json | null
           status?: string
           stripe_customer_id?: string | null
@@ -3039,6 +3041,7 @@ export type Database = {
           payment_method_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
+          setup_intent_id?: string | null
           shipping_address?: Json | null
           status?: string
           stripe_customer_id?: string | null

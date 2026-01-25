@@ -169,7 +169,7 @@ export const useAutoGiftTesting = () => {
       }
 
       console.log('Scheduled processor result:', data);
-      toast.success(`Processor complete: ${data?.captured || 0} captured, ${data?.submitted || 0} submitted`);
+      toast.success(`Processor complete: ${data?.authorized || 0} authorized, ${data?.captured || 0} captured, ${data?.submitted || 0} submitted`);
       return data;
     } catch (error) {
       console.error('Scheduled processor error:', error);

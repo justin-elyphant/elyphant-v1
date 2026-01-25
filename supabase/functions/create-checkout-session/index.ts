@@ -246,6 +246,19 @@ serve(async (req) => {
     // Determine if payment should be held (for scheduled deliveries)
     const isScheduled = scheduledDeliveryDate && new Date(scheduledDeliveryDate) > new Date();
     
+    // Calculate days until delivery for deferred payment decision
+    const deliveryDate = scheduledDeliveryDate ? new Date(scheduledDeliveryDate) : null;
+    const daysUntilDelivery = deliveryDate 
+      ? Math.ceil((deliveryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : 0;
+    
+    // Use setup mode for far-future orders (8+ days) to avoid Stripe's 7-day authorization expiry
+    const useDeferredPayment = isScheduled && daysUntilDelivery > 7;
+    
+    if (useDeferredPayment) {
+      logStep("Deferred payment mode detected", { daysUntilDelivery, deliveryDate: scheduledDeliveryDate });
+    }
+    
     // Build metadata (500 char limit per field, but we have plenty of fields)
     const metadata: Record<string, string> = {
       user_id: user.id,
@@ -349,17 +362,31 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       client_reference_id: user.id, // CRITICAL: Ensure user_id is always set
-      line_items: lineItems,
-      mode: 'payment',
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata,
-      // Shipping already collected at /checkout, passed in metadata (lines 236-245)
-      // Webhook reads from session.shipping_details populated by Stripe from metadata
+      metadata: {
+        ...metadata,
+        deferred_payment: String(useDeferredPayment),
+        order_total_cents: String(amountInCents),
+        stripe_customer_id: customerId,
+      },
     };
 
+    // DEFERRED PAYMENT MODE: Use setup mode for far-future orders (8+ days)
+    // This saves the card without authorization, avoiding 7-day expiry
+    if (useDeferredPayment) {
+      sessionParams.mode = 'setup';
+      sessionParams.payment_method_types = ['card'];
+      // Setup mode doesn't use line_items - order details stored in metadata
+      logStep("Using SETUP mode for deferred payment", { daysUntilDelivery });
+    } else {
+      // Standard payment mode with line items
+      sessionParams.mode = 'payment';
+      sessionParams.line_items = lineItems;
+    }
+
     // For group gifts, hold funds in escrow until project completes
-    if (isGroupGift) {
+    if (isGroupGift && !useDeferredPayment) {
       sessionParams.payment_intent_data = {
         capture_method: 'manual', // Escrow - capture when project funded
         metadata: {
@@ -372,8 +399,8 @@ serve(async (req) => {
       logStep("Configured for group gift contribution (escrow)");
     }
 
-    // For scheduled deliveries, hold the payment
-    if (isScheduled) {
+    // For scheduled deliveries within 7 days, hold the payment with manual capture
+    if (isScheduled && !useDeferredPayment) {
       sessionParams.payment_intent_data = {
         capture_method: 'manual', // Hold funds until scheduled date
         metadata: {
@@ -381,11 +408,11 @@ serve(async (req) => {
           payment_type: 'scheduled'
         }
       };
-      logStep("Configured for scheduled delivery (manual capture)");
+      logStep("Configured for scheduled delivery (manual capture, within 7 days)");
     }
 
     // For auto-gifts with saved payment method
-    if (isAutoGift && paymentMethod) {
+    if (isAutoGift && paymentMethod && !useDeferredPayment) {
       sessionParams.payment_method_types = ['card'];
       sessionParams.payment_intent_data = {
         ...(sessionParams.payment_intent_data || {}),

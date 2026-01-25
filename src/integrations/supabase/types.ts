@@ -2968,10 +2968,12 @@ export type Database = {
           order_number: string
           parent_order_id: string | null
           payment_intent_id: string | null
+          payment_method_id: string | null
           payment_status: string | null
           scheduled_delivery_date: string | null
           shipping_address: Json | null
           status: string
+          stripe_customer_id: string | null
           total_amount: number
           tracking_number: string | null
           updated_at: string
@@ -3000,10 +3002,12 @@ export type Database = {
           order_number: string
           parent_order_id?: string | null
           payment_intent_id?: string | null
+          payment_method_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
           status?: string
+          stripe_customer_id?: string | null
           total_amount: number
           tracking_number?: string | null
           updated_at?: string
@@ -3032,10 +3036,12 @@ export type Database = {
           order_number?: string
           parent_order_id?: string | null
           payment_intent_id?: string | null
+          payment_method_id?: string | null
           payment_status?: string | null
           scheduled_delivery_date?: string | null
           shipping_address?: Json | null
           status?: string
+          stripe_customer_id?: string | null
           total_amount?: number
           tracking_number?: string | null
           updated_at?: string

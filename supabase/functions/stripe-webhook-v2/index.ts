@@ -45,9 +45,10 @@ serve(async (req) => {
     );
 
     // CORE: Handle checkout.session.completed (primary order creation path)
+    // This handles BOTH payment mode and setup mode (deferred payment) sessions
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`📋 [${new Date().toISOString()}] Processing checkout.session.completed: ${session.id}`);
+      console.log(`📋 [${new Date().toISOString()}] Processing checkout.session.completed: ${session.id} | Mode: ${session.mode}`);
       await handleCheckoutSessionCompleted(session, supabase, stripe);
     } 
     // CORE: Handle checkout.session.expired
@@ -286,9 +287,18 @@ async function handleCheckoutSessionCompleted(
 
   console.log(`✅ [STEP 1] No existing order found - proceeding with creation`);
 
+  // STEP 1.5: Check if this is a SETUP MODE session (deferred payment for 8+ day orders)
+  const metadata = session.metadata || {};
+  const isDeferredPayment = metadata.deferred_payment === 'true';
+  
+  if (isDeferredPayment && session.mode === 'setup') {
+    console.log(`🔮 [STEP 1.5] DEFERRED PAYMENT detected - creating pending_payment order`);
+    await handleDeferredPaymentOrder(session, supabase);
+    return;
+  }
+
   // STEP 2: Extract shipping from metadata (collected at /checkout)
   console.log(`🔍 [STEP 2] Extracting shipping address from session metadata...`);
-  const metadata = session.metadata || {};
   
   const shippingAddress = {
     name: metadata.ship_name || '',
@@ -761,6 +771,142 @@ async function triggerEmailOrchestrator(
     }
   } catch (err: any) {
     console.error(`❌ [${new Date().toISOString()}] Failed to trigger email orchestrator:`, err.message);
+  }
+}
+
+// ============================================================================
+// HELPER: Handle deferred payment orders (setup mode - 8+ days before delivery)
+// ============================================================================
+async function handleDeferredPaymentOrder(
+  session: Stripe.Checkout.Session,
+  supabase: any
+) {
+  const sessionId = session.id;
+  const metadata = session.metadata || {};
+  const startTime = Date.now();
+  
+  console.log(`🔮 [DEFERRED] Creating pending_payment order for session: ${sessionId}`);
+  
+  // Extract user info
+  const userId = metadata.user_id || session.client_reference_id;
+  if (!userId) {
+    throw new Error('Missing user_id in deferred payment session');
+  }
+  
+  // Get the setup intent to extract payment method
+  const setupIntentId = session.setup_intent as string;
+  if (!setupIntentId) {
+    throw new Error('No setup_intent found in setup mode session');
+  }
+  
+  console.log(`🔍 [DEFERRED] Fetching setup intent: ${setupIntentId}`);
+  
+  // We need to fetch the setup intent to get the payment method
+  // This is done via the Stripe SDK in the calling context, but we have session.setup_intent
+  // The payment_method is attached to the setup_intent after completion
+  
+  // Extract shipping address from metadata
+  const shippingAddress = {
+    name: metadata.ship_name || '',
+    address_line1: metadata.ship_address_line1 || '',
+    address_line2: metadata.ship_address_line2 || '',
+    city: metadata.ship_city || '',
+    state: metadata.ship_state || '',
+    postal_code: metadata.ship_postal_code || '',
+    country: metadata.ship_country || 'US',
+  };
+  
+  // Validate shipping
+  if (!shippingAddress.address_line1 || !shippingAddress.city) {
+    console.error(`❌ [DEFERRED] Missing shipping address`);
+    throw new Error('Missing shipping address for deferred payment order');
+  }
+  
+  // Parse order total from metadata
+  const totalAmountCents = Number(metadata.order_total_cents) || 0;
+  const totalAmount = totalAmountCents / 100;
+  
+  // Get Stripe customer ID
+  const stripeCustomerId = metadata.stripe_customer_id || session.customer as string;
+  
+  // Create line items from metadata (stored as JSON in create-checkout-session)
+  // For setup mode, line items aren't fetched from Stripe - they're in metadata
+  const lineItems = {
+    items: [], // Will be populated from cart data in metadata if available
+    subtotal: Number(metadata.subtotal) || 0,
+    shipping: Number(metadata.shipping_cost) || 0,
+    tax: Number(metadata.tax_amount) || 0,
+    gifting_fee: Number(metadata.gifting_fee) || 0,
+  };
+  
+  const scheduledDate = metadata.scheduled_delivery_date || null;
+  const isAutoGift = metadata.is_auto_gift === 'true';
+  const autoGiftRuleId = metadata.auto_gift_rule_id || null;
+  
+  // Create the pending_payment order
+  // Note: payment_method_id will be populated by scheduled-order-processor when it fetches the setup intent
+  const orderData = {
+    user_id: userId,
+    checkout_session_id: sessionId,
+    setup_intent_id: setupIntentId, // Store setup intent for later payment method retrieval
+    payment_intent_id: null, // Will be created when we authorize at T-7
+    stripe_customer_id: stripeCustomerId,
+    status: 'pending_payment', // NEW STATUS: Card saved, no authorization yet
+    payment_status: 'pending',
+    total_amount: totalAmount,
+    currency: session.currency || 'usd',
+    line_items: lineItems,
+    shipping_address: shippingAddress,
+    gift_options: {
+      isGift: !!metadata.gift_message || isAutoGift,
+      giftMessage: metadata.gift_message || '',
+      giftWrapping: false,
+      isSurpriseGift: false,
+    },
+    scheduled_delivery_date: scheduledDate,
+    is_auto_gift: isAutoGift,
+    auto_gift_rule_id: autoGiftRuleId,
+    notes: JSON.stringify({
+      deferred_payment: true,
+      original_days_until_delivery: metadata.days_until_delivery || 'unknown',
+      setup_intent_id: setupIntentId,
+    }),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  
+  const { data: newOrder, error: insertError } = await supabase
+    .from('orders')
+    .insert(orderData)
+    .select('id, order_number, status')
+    .single();
+  
+  if (insertError) {
+    console.error(`❌ [DEFERRED] Failed to create pending_payment order:`, insertError);
+    throw new Error(`Failed to create deferred order: ${insertError.message}`);
+  }
+  
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`✅ [DEFERRED] Pending payment order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number}`);
+  console.log(`📅 [DEFERRED] Scheduled delivery: ${scheduledDate} | Will authorize at T-7`);
+  
+  // Trigger confirmation email (no payment yet, but order is placed)
+  try {
+    await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      body: {
+        eventType: 'order_pending_payment',
+        orderId: newOrder.id,
+        recipientEmail: metadata.user_email,
+        metadata: {
+          order_number: newOrder.order_number,
+          scheduled_date: scheduledDate,
+          total_amount: totalAmount,
+        }
+      }
+    });
+    console.log(`📧 [DEFERRED] Pending payment confirmation email triggered`);
+  } catch (emailErr: any) {
+    console.warn(`⚠️ [DEFERRED] Email trigger failed (non-fatal):`, emailErr.message);
   }
 }
 

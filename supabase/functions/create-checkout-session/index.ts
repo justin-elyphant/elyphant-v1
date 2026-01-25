@@ -377,8 +377,42 @@ serve(async (req) => {
     if (useDeferredPayment) {
       sessionParams.mode = 'setup';
       sessionParams.payment_method_types = ['card'];
-      // Setup mode doesn't use line_items - order details stored in metadata
-      logStep("Using SETUP mode for deferred payment", { daysUntilDelivery });
+      
+      // CRITICAL: Store cart items in metadata for setup mode (no line_items in Stripe)
+      // We need to preserve product info for Zinc fulfillment later
+      const cartItemsForStorage = cartItems.map((item: any) => ({
+        product_id: item.product_id || item.product?.product_id,
+        name: item.name || item.product?.name,
+        price: item.price || item.product?.price,
+        quantity: item.quantity,
+        image_url: item.image_url || item.product?.image,
+        recipient_id: item.recipientAssignment?.connectionId || '',
+        recipient_name: item.recipientAssignment?.connectionName || '',
+        gift_message: item.recipientAssignment?.giftMessage || '',
+        wishlist_id: item.wishlist_id || '',
+        wishlist_item_id: item.wishlist_item_id || '',
+        // Include recipient shipping address
+        recipient_shipping: item.recipientAssignment?.shippingAddress || null,
+      }));
+      
+      // Store as JSON string (Stripe metadata limit is 500 chars per field)
+      // Split across multiple fields if needed
+      const cartItemsJson = JSON.stringify(cartItemsForStorage);
+      if (cartItemsJson.length <= 500) {
+        sessionParams.metadata!.cart_items = cartItemsJson;
+      } else {
+        // Split into chunks for large carts
+        const chunkSize = 500;
+        for (let i = 0; i < Math.ceil(cartItemsJson.length / chunkSize); i++) {
+          sessionParams.metadata![`cart_items_${i}`] = cartItemsJson.slice(i * chunkSize, (i + 1) * chunkSize);
+        }
+        sessionParams.metadata!.cart_items_chunks = String(Math.ceil(cartItemsJson.length / chunkSize));
+      }
+      
+      logStep("Using SETUP mode for deferred payment", { 
+        daysUntilDelivery,
+        cartItemsStored: cartItemsForStorage.length
+      });
     } else {
       // Standard payment mode with line items
       sessionParams.mode = 'payment';

@@ -829,10 +829,51 @@ async function handleDeferredPaymentOrder(
   // Get Stripe customer ID
   const stripeCustomerId = metadata.stripe_customer_id || session.customer as string;
   
-  // Create line items from metadata (stored as JSON in create-checkout-session)
-  // For setup mode, line items aren't fetched from Stripe - they're in metadata
+  // CRITICAL: Parse cart items from metadata (stored by create-checkout-session for setup mode)
+  // This is how we preserve product info for Zinc fulfillment
+  let cartItems: any[] = [];
+  
+  if (metadata.cart_items) {
+    // Single field storage (small cart)
+    try {
+      cartItems = JSON.parse(metadata.cart_items);
+      console.log(`✅ [DEFERRED] Parsed ${cartItems.length} cart items from metadata`);
+    } catch (e) {
+      console.error(`❌ [DEFERRED] Failed to parse cart_items:`, e);
+    }
+  } else if (metadata.cart_items_chunks) {
+    // Chunked storage (large cart)
+    const chunks = Number(metadata.cart_items_chunks);
+    let combinedJson = '';
+    for (let i = 0; i < chunks; i++) {
+      combinedJson += metadata[`cart_items_${i}`] || '';
+    }
+    try {
+      cartItems = JSON.parse(combinedJson);
+      console.log(`✅ [DEFERRED] Parsed ${cartItems.length} cart items from ${chunks} metadata chunks`);
+    } catch (e) {
+      console.error(`❌ [DEFERRED] Failed to parse chunked cart_items:`, e);
+    }
+  }
+  
+  // Transform cart items to line_items format (matching what payment mode orders use)
+  const transformedLineItems = cartItems.map((item: any) => ({
+    product_id: item.product_id,
+    title: item.name,
+    quantity: item.quantity,
+    unit_price: item.price,
+    currency: 'usd',
+    image_url: item.image_url,
+    recipient_id: item.recipient_id || null,
+    recipient_name: item.recipient_name || '',
+    gift_message: item.gift_message || '',
+    wishlist_id: item.wishlist_id || '',
+    wishlist_item_id: item.wishlist_item_id || '',
+    recipient_shipping: item.recipient_shipping || null,
+  }));
+  
   const lineItems = {
-    items: [], // Will be populated from cart data in metadata if available
+    items: transformedLineItems,
     subtotal: Number(metadata.subtotal) || 0,
     shipping: Number(metadata.shipping_cost) || 0,
     tax: Number(metadata.tax_amount) || 0,

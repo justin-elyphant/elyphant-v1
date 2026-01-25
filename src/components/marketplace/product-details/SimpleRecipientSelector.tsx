@@ -224,7 +224,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
             {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
           </div>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {/* Invite New Recipient Option - TOP of list for visibility */}
         {onInviteNew && (
           <div className="p-2">
@@ -416,7 +416,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -428,7 +428,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[350px] p-0 pointer-events-auto z-[150] max-h-[60vh] overflow-hidden flex flex-col bg-background" align="start" sideOffset={8}>
+      <PopoverContent className="w-[350px] p-0 pointer-events-auto z-[150] max-h-[60vh] overflow-hidden flex flex-col min-h-0 bg-background" align="start" sideOffset={8}>
         <SelectorContent />
       </PopoverContent>
     </Popover>

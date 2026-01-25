@@ -61,3 +61,28 @@ export const calculateHolidayDate = (holidayKey: string, year?: number): string 
 export const isKnownHoliday = (dateType: string): boolean => {
   return dateType in HOLIDAY_DATES;
 };
+
+/**
+ * Detect if a given date matches any known holiday
+ * Used for smart upsell prompts when user selects a holiday date for one-time scheduling
+ * @param date - The date to check
+ * @returns The holiday key (e.g., 'christmas', 'valentine') or null if no match
+ */
+export const detectHolidayFromDate = (date: Date): { key: string; label: string } | null => {
+  const dateStr = date.toISOString().split('T')[0];
+  
+  const holidayLabels: Record<string, string> = {
+    christmas: "Christmas",
+    valentine: "Valentine's Day",
+    mothers_day: "Mother's Day",
+    fathers_day: "Father's Day",
+  };
+  
+  for (const key of Object.keys(HOLIDAY_DATES)) {
+    const holidayDate = calculateHolidayDate(key);
+    if (holidayDate === dateStr) {
+      return { key, label: holidayLabels[key] || key };
+    }
+  }
+  return null;
+};

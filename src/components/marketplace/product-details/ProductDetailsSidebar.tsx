@@ -13,7 +13,7 @@ import VariationSelector from "./VariationSelector";
 import ProductDetailsContent from "./ProductDetailsContent";
 import TrustBadges from "@/components/marketplace/TrustBadges";
 
-import ScheduleGiftModal from "./ScheduleGiftModal";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -247,11 +247,13 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         </Accordion>
       </div>
       
-      {/* Gift Scheduling Modal */}
-      <ScheduleGiftModal
+      {/* Unified Gift Scheduling Modal */}
+      <UnifiedGiftSchedulingModal
         open={showScheduleGiftModal}
         onOpenChange={setShowScheduleGiftModal}
         product={product}
+        defaultMode="one-time"
+        allowModeSwitch={true}
         hasVariations={hasVariations}
         getEffectiveProductId={getEffectiveProductId}
         getVariationDisplayText={getVariationDisplayText}

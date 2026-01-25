@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown, Package, Calendar, Gift } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
-import { DeliveryGroup } from '@/types/recipient';
+import { DeliveryGroup, RecipientAssignment } from '@/types/recipient';
 import { cn } from '@/lib/utils';
 import { formatScheduledDate } from '@/utils/dateUtils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import DeliverySchedulingDrawer from './DeliverySchedulingDrawer';
+import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;
@@ -32,9 +32,22 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
       .filter(Boolean)
   );
 
-  const handleDateUpdate = (date: string | null) => {
-    onPackageSchedulingUpdate?.(deliveryGroup.id, date);
+  const handleSchedulingComplete = (result: any) => {
+    if (result.scheduledDate) {
+      onPackageSchedulingUpdate?.(deliveryGroup.id, result.scheduledDate);
+    }
     setShowSchedulingDrawer(false);
+  };
+
+  // Build recipient assignment for the modal
+  const existingRecipient: RecipientAssignment = {
+    connectionId: deliveryGroup.connectionId,
+    connectionName: deliveryGroup.connectionName,
+    deliveryGroupId: deliveryGroup.id,
+    scheduledDeliveryDate: deliveryGroup.scheduledDeliveryDate,
+    shippingAddress: deliveryGroup.shippingAddress,
+    address_verified: deliveryGroup.address_verified,
+    giftMessage: groupItems[0]?.recipientAssignment?.giftMessage
   };
 
   return (
@@ -117,13 +130,14 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
         </div>
       </Collapsible>
 
-      {/* Delivery Scheduling Drawer */}
-      <DeliverySchedulingDrawer
+      {/* Unified Gift Scheduling Modal (date-only mode from cart) */}
+      <UnifiedGiftSchedulingModal
         open={showSchedulingDrawer}
         onOpenChange={setShowSchedulingDrawer}
-        recipientName={deliveryGroup.connectionName}
-        currentDate={deliveryGroup.scheduledDeliveryDate}
-        onDateUpdate={handleDateUpdate}
+        existingRecipient={existingRecipient}
+        defaultMode="one-time"
+        allowModeSwitch={false}
+        onComplete={handleSchedulingComplete}
       />
     </>
   );

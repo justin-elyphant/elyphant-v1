@@ -204,15 +204,15 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
             {events.length > 0 ? (
               <>
                 <Gift className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">All events are on autopilot! 🎉</h3>
+                <h3 className="text-lg font-medium mb-2">All events covered! 🎉</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  All your upcoming events have auto-gifting enabled
+                  All your upcoming events have recurring gifts enabled
                 </p>
                 <Button 
                   variant="outline" 
                   size="sm"
                 >
-                  View Auto-Gift Rules
+                  View Recurring Gifts
                 </Button>
               </>
             ) : (

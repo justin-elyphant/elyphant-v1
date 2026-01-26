@@ -28,7 +28,7 @@ export const GiftPathSelector: React.FC<GiftPathSelectorProps> = ({
               Recommended
             </Badge>
           </div>
-          <CardTitle className="text-lg md:text-xl">AI Autopilot</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Recurring Gifts</CardTitle>
           <CardDescription className="text-sm md:text-base">
             Set it and forget it - AI handles everything
           </CardDescription>

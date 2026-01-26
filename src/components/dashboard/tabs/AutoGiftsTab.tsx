@@ -43,18 +43,18 @@ const AutoGiftsTab = () => {
   }, [user]);
 
   if (loading) {
-    return <div className="text-muted-foreground">Loading AI gifting rules...</div>;
+    return <div className="text-muted-foreground">Loading recurring gift rules...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">AI Gifting Rules</h2>
-          <p className="text-muted-foreground">Manage your AI-powered gifting</p>
+          <h2 className="text-2xl font-semibold">Recurring Gift Rules</h2>
+          <p className="text-muted-foreground">Manage your recurring gifts</p>
         </div>
         <Button asChild>
-          <Link to="/auto-gifts/setup">
+          <Link to="/recurring-gifts">
             <Plus className="h-4 w-4 mr-2" />
             Create Rule
           </Link>
@@ -65,12 +65,12 @@ const AutoGiftsTab = () => {
         <Card>
           <CardContent className="pt-6 text-center">
             <Gift className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">No AI gifting rules yet</h3>
+            <h3 className="text-lg font-medium mb-2">No recurring gift rules yet</h3>
             <p className="text-muted-foreground mb-4">
-              Set up AI-powered gifting for special occasions
+              Set up recurring gifts for special occasions
             </p>
             <Button asChild>
-              <Link to="/auto-gifts/setup">Schedule Your First Gift</Link>
+              <Link to="/recurring-gifts">Schedule Your First Gift</Link>
             </Button>
           </CardContent>
         </Card>
@@ -101,7 +101,7 @@ const AutoGiftsTab = () => {
                     Budget: ${rule.budget_limit}
                   </span>
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/auto-gifts/${rule.id}`}>Manage</Link>
+                    <Link to={`/recurring-gifts`}>Manage</Link>
                   </Button>
                 </div>
               </CardContent>

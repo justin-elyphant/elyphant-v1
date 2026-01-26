@@ -8,8 +8,8 @@ const QuickGiftCTA = () => {
   const navigate = useNavigate();
   
   const handleOpenGifting = () => {
-    // Navigate to auto-gifts tab on dashboard
-    navigate('/dashboard?tab=auto-gifts');
+    // Navigate to recurring gifts page
+    navigate('/recurring-gifts');
   };
 
   return (
@@ -20,9 +20,9 @@ const QuickGiftCTA = () => {
           <div className="flex-1">
             <h4 className="font-semibold flex items-center text-foreground">
               <Zap className="h-5 w-5 mr-2 text-muted-foreground" />
-              AI Gift Autopilot
+              Recurring Gift Autopilot
             </h4>
-            <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Our AI will pick, purchase, and deliver the perfect gift automatically</p>
+            <p className="text-sm text-muted-foreground mt-1">Don't know what to get? Set up recurring gifts and we'll pick, purchase, and deliver the perfect gift automatically</p>
           </div>
           <Button 
             onClick={handleOpenGifting}
@@ -30,7 +30,7 @@ const QuickGiftCTA = () => {
             size="sm"
           >
             <Zap className="h-4 w-4 mr-2" />
-            Enable AI Gifting
+            Enable Recurring Gifts
           </Button>
         </div>
       </div>

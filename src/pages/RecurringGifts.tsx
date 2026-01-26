@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Heart, Brain, Sparkles, Calendar, ArrowRight, Settings } from "lucide-react";
+import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -18,14 +18,15 @@ import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
 import RuleApprovalDialog from "@/components/gifting/auto-gift/RuleApprovalDialog";
 
-const AIGifting = () => {
+const RecurringGifts = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { rules, loading } = useAutoGifting();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [approvalRuleId, setApprovalRuleId] = useState<string | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
@@ -51,7 +52,7 @@ const AIGifting = () => {
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading AI Gifting...</p>
+          <p className="text-muted-foreground">Loading Recurring Gifts...</p>
         </div>
       </div>
     );
@@ -67,13 +68,13 @@ const AIGifting = () => {
           <Card className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-sky-500 border-0 text-white">
             <CardContent className="p-8 lg:p-10">
               <Badge className="bg-white/20 text-white border-0 mb-4 backdrop-blur-sm">
-                SMART AUTOMATION
+                POWERED BY NICOLE AI
               </Badge>
               <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-                AI Gifting
+                Recurring Gifts
               </h1>
               <p className="text-lg text-white/90 mb-6 leading-relaxed">
-                Never miss a birthday, anniversary, or special occasion. Our AI learns your connections' preferences and handles everything automatically.
+                Never miss a birthday, anniversary, or special occasion. Set up once and we'll handle everything automatically—gift selection, purchase, and delivery.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3">
@@ -81,12 +82,12 @@ const AIGifting = () => {
                   <Button 
                     onClick={() => {
                       triggerHapticFeedback('selection');
-                      setSetupDialogOpen(true);
+                      navigate('/marketplace');
                     }}
                     className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {rules.length === 0 ? "Schedule Your First Gift" : "Schedule Another Gift"}
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    Browse Products
                   </Button>
                 </motion.div>
                 <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
@@ -115,7 +116,7 @@ const AIGifting = () => {
                     Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
                   </h2>
                   <p className="text-muted-foreground">
-                    You have <span className="font-semibold text-foreground">{rules.length}</span> active automation {rules.length === 1 ? 'rule' : 'rules'}
+                    You have <span className="font-semibold text-foreground">{rules.length}</span> active recurring gift {rules.length === 1 ? 'rule' : 'rules'}
                   </p>
                 </div>
 
@@ -139,7 +140,7 @@ const AIGifting = () => {
                     <div>
                       <p className="font-medium text-sm mb-1">Preference Learning</p>
                       <p className="text-xs text-muted-foreground">
-                        Our AI learns interests, sizes, and styles for perfect matches
+                        Nicole AI learns interests, sizes, and styles for perfect matches
                       </p>
                     </div>
                   </div>
@@ -193,7 +194,7 @@ const AIGifting = () => {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Wishlist-Powered</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Our AI prioritizes items from their wishlist, ensuring they get exactly what they want.
+                  Nicole AI prioritizes items from their wishlist, ensuring they get exactly what they want.
                 </p>
               </CardContent>
             </Card>
@@ -211,7 +212,7 @@ const AIGifting = () => {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Smart Budget Control</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Set spending limits and let our AI find the perfect gift within your budget range.
+                  Set spending limits and let Nicole AI find the perfect gift within your budget range.
                 </p>
               </CardContent>
             </Card>
@@ -235,8 +236,8 @@ const AIGifting = () => {
                 <Settings className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <CardTitle className="text-lg">AI Settings</CardTitle>
-                <CardDescription>Customize how our AI learns your preferences</CardDescription>
+                <CardTitle className="text-lg">Nicole AI Settings</CardTitle>
+                <CardDescription>Customize how Nicole AI learns your preferences</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -244,7 +245,7 @@ const AIGifting = () => {
             <div className="flex items-center justify-between gap-4 py-2">
               <div className="space-y-1 flex-1">
                 <Label htmlFor="save-preferences" className="text-sm font-medium cursor-pointer">Save search preferences</Label>
-                <p className="text-xs text-muted-foreground">Allow AI to remember your gift search patterns</p>
+                <p className="text-xs text-muted-foreground">Allow Nicole AI to remember your gift search patterns</p>
               </div>
               <div className="flex items-center justify-center min-w-[44px] min-h-[44px]">
                 <Switch 
@@ -278,7 +279,7 @@ const AIGifting = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog */}
+      {/* Auto-Gift Setup Dialog (for editing existing rules) */}
       <AutoGiftSetupFlow
         open={setupDialogOpen}
         onOpenChange={(open) => {
@@ -330,4 +331,4 @@ const AIGifting = () => {
   );
 };
 
-export default AIGifting;
+export default RecurringGifts;

@@ -4,27 +4,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Gift, DollarSign, Calendar, Users, Sparkles, 
-  CheckCircle, ArrowRight, Bell, ShoppingCart, CreditCard, Ruler
+  CheckCircle, ArrowRight, Bell, CreditCard, Ruler
 } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
-import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { RecipientSearchCombobox } from "./RecipientSearchCombobox";
-import HolidaySelector from "@/components/gifting/events/add-dialog/HolidaySelector";
 import { calculateHolidayDate, isKnownHoliday } from "@/constants/holidayDates";
 import SmartHolidayInfo from "./SmartHolidayInfo";
-import { DatePicker } from "@/components/ui/date-picker";
 import UnifiedPaymentMethodManager from "@/components/payments/UnifiedPaymentMethodManager";
 import MultiEventSelector, { SelectedEvent } from "@/components/gifting/events/add-dialog/MultiEventSelector";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
@@ -32,6 +29,8 @@ import AddressVerificationWarning from "./AddressVerificationWarning";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
+import SchedulingModeToggle from "@/components/gifting/unified/SchedulingModeToggle";
+import { SelectedRecipient } from "@/components/marketplace/product-details/SimpleRecipientSelector";
 
 interface AutoGiftSetupFlowProps {
   open: boolean;
@@ -42,6 +41,12 @@ interface AutoGiftSetupFlowProps {
   initialData?: any; // For editing existing rules
   ruleId?: string; // For updating existing rules
   onRequestEditRule?: (rule: any) => void; // Callback to request editing a different rule
+  // Embedded mode props
+  embedded?: boolean;
+  initialRecipient?: SelectedRecipient | null;
+  onComplete?: () => void;
+  showModeToggle?: boolean;
+  onModeChange?: (mode: string) => void;
 }
 
 interface SetupStep {
@@ -59,7 +64,12 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   recipientId,
   initialData,
   ruleId,
-  onRequestEditRule
+  onRequestEditRule,
+  embedded = false,
+  initialRecipient,
+  onComplete,
+  showModeToggle = false,
+  onModeChange
 }) => {
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
@@ -67,9 +77,18 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   const { profile } = useProfile();
   // Get user sizes from profile metadata (cast for JSONB field access)
   const userSizes = (profile as any)?.metadata?.sizes || null;
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const isMobile = useIsMobile();
+  
+  // When embedded with initialRecipient, start at step 1 (Budget & Payment)
+  const getInitialStep = () => {
+    if (embedded && initialRecipient && initialRecipient.type !== 'later' && initialRecipient.connectionId) {
+      return 1; // Skip recipient selection, start at budget
+    }
+    return 0;
+  };
+  
+  const [currentStep, setCurrentStep] = useState(getInitialStep);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Ref for the scrollable container
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -92,6 +111,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     selectedPaymentMethodId: ""
   });
 
+  // Initialize from embedded recipient
+  useEffect(() => {
+    if (embedded && initialRecipient && initialRecipient.type !== 'later') {
+      setFormData(prev => ({
+        ...prev,
+        recipientId: initialRecipient.connectionId || '',
+        recipientName: initialRecipient.connectionName
+      }));
+    }
+  }, [embedded, initialRecipient]);
+
   // Helper to calculate next birthday from MM-DD format
   const calculateNextBirthday = (dobMMDD: string | undefined): string | null => {
     if (!dobMMDD || dobMMDD.length < 5) return null;
@@ -110,7 +140,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     {
       id: "recipient",
       title: "Choose Recipient",
-      description: "Select who you want to set up auto-gifting for",
+      description: "Select who you want to set up recurring gifts for",
       icon: Users
     },
     {
@@ -127,28 +157,18 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     }
   ];
 
-  const eventTypes = [
-    { value: "birthday", label: "Birthday" },
-    { value: "anniversary", label: "Anniversary" },
-    { value: "graduation", label: "Graduation" },
-    { value: "promotion", label: "Promotion" },
-    { value: "holiday", label: "Holiday" },
-    { value: "other", label: "Just Because" }
-  ];
-
   useEffect(() => {
-    console.log('🔍 AutoGiftSetupFlow - Props received:', { recipientId, eventType, initialData, ruleId });
-    console.log('🔍 AutoGiftSetupFlow - Current formData before update:', formData);
+    console.log('🔍 AutoGiftSetupFlow - Props received:', { recipientId, eventType, initialData, ruleId, embedded });
     
     // Check if we have a saved draft and show notification
     const existingDraft = localStorage.getItem('autoGiftDraft');
-    if (existingDraft && open && !initialData) {
+    if (existingDraft && open && !initialData && !embedded) {
       try {
         const parsedDraft = JSON.parse(existingDraft);
         // Only show toast if there's meaningful data in the draft
         if (parsedDraft.recipientId || parsedDraft.eventType || parsedDraft.giftMessage) {
           toast.info("Draft restored", {
-            description: "Your previous auto-gift setup has been restored"
+            description: "Your previous setup has been restored"
           });
         }
       } catch (error) {
@@ -165,7 +185,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       
       // Show confirmation that data was pre-filled
       if (initialData.recipientName && open) {
-        toast.success(`Auto-gift setup opened for ${initialData.recipientName}`, {
+        toast.success(`Recurring gift setup opened for ${initialData.recipientName}`, {
           description: `Event details for ${initialData.eventType} have been pre-filled`
         });
       }
@@ -185,13 +205,10 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
           selectedDate: initialData.eventDate && initialData.eventType === 'other' ? 
             new Date(initialData.eventDate) : prev.selectedDate
         };
-        console.log('🔍 AutoGiftSetupFlow - New formData after update:', newData);
         return newData;
       });
-    } else {
-      console.log('🔍 AutoGiftSetupFlow - No initialData provided');
     }
-  }, [recipientId, eventType, initialData, ruleId, open]);
+  }, [recipientId, eventType, initialData, ruleId, open, embedded]);
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -211,6 +228,9 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     if (currentStep > 0) {
       triggerHapticFeedback('light');
       setCurrentStep(currentStep - 1);
+    } else if (embedded && onModeChange) {
+      // If at step 0 in embedded mode, switch back to one-time
+      onModeChange('one-time');
     }
   };
 
@@ -245,23 +265,23 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     }
 
     if (!formData.selectedPaymentMethodId) {
-      toast.error("Please select a payment method for auto-gifting");
+      toast.error("Please select a payment method for recurring gifts");
       return;
     }
 
-      setIsLoading(true);
-      
-      // Normalize eventId (strip special- prefix and validate UUID)
-      const normalizeUuid = (val?: string | null) => {
-        if (!val) return null;
-        const stripped = val.startsWith('special-') ? val.slice(8) : val;
-        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stripped) ? stripped : null;
-      };
-      const normalizedEventId = normalizeUuid(eventId || null);
+    setIsLoading(true);
+    
+    // Normalize eventId (strip special- prefix and validate UUID)
+    const normalizeUuid = (val?: string | null) => {
+      if (!val) return null;
+      const stripped = val.startsWith('special-') ? val.slice(8) : val;
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stripped) ? stripped : null;
+    };
+    const normalizedEventId = normalizeUuid(eventId || null);
 
     try {
       // Phase 2: Setup initiation with progress feedback
-      toast.info("Initializing secure auto-gift setup...", { duration: 2000 });
+      toast.info("Setting up recurring gifts...", { duration: 2000 });
 
       // Find the selected recipient from both accepted connections and pending invitations
       const allConnections = [...connections, ...pendingInvitations];
@@ -333,7 +353,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : emailFromInitial))
         : null;
 
-      console.log('🔍 Auto-gift setup - Enhanced connection resolution:', {
+      console.log('🔍 Recurring gift setup - Enhanced connection resolution:', {
         formDataRecipientId: formData.recipientId,
         isEmail,
         isUuid,
@@ -341,9 +361,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         connectionId: selectedConnection?.id,
         connectionStatus: selectedConnection?.status,
         isPendingInvitation,
-        actualRecipientId,  // Should be null for pending
-        pendingEmail,  // Should be email for pending
-        autoCreated: isEmail && selectedConnection && !allConnections.find(c => c.id === selectedConnection?.id)
+        actualRecipientId,
+        pendingEmail,
       });
 
       // Validation: Ensure data integrity
@@ -420,16 +439,13 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       // Phase 3: Batch rule creation with enhanced feedback
       if (ruleId) {
         // For editing, only update the first rule (legacy single-event mode)
-        toast.info("Updating auto-gifting rule securely...", { duration: 2000 });
+        toast.info("Updating recurring gift rule...", { duration: 2000 });
         await updateRule(ruleId, rulesToCreate[0]);
-        toast.success("Auto-gifting rule updated successfully!", {
-          description: "All changes have been saved and secured with token validation"
-        });
+        toast.success("Recurring gift rule updated successfully!");
       } else {
-        toast.info(`Creating ${rulesToCreate.length} auto-gifting rules...`, { duration: 2000 });
+        toast.info(`Creating ${rulesToCreate.length} recurring gift rules...`, { duration: 2000 });
         
         // Use batch creation service
-        // Pass the recipient_id from the first rule (will be null for pending invitations)
         const recipientIdentifier = rulesToCreate[0].recipient_id || rulesToCreate[0].pending_recipient_email || '';
         await unifiedGiftManagementService.createBatchRulesForRecipient(
           recipientIdentifier,
@@ -450,40 +466,39 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
         }
       }
 
-      // Phase 5: Successful completion with secure closure
+      // Phase 5: Successful completion
       toast.success("Setup completed successfully!", {
-        description: `${rulesToCreate.length} auto-gifting events configured and secured`
+        description: `${rulesToCreate.length} recurring gift events configured`
       });
       
       // Clear the draft after successful completion
       localStorage.removeItem('autoGiftDraft');
-      console.log('✅ Auto-gift draft cleared after successful setup');
+      console.log('✅ Recurring gift draft cleared after successful setup');
       
-      onOpenChange(false);
+      // Call onComplete callback for embedded mode
+      if (embedded && onComplete) {
+        onComplete();
+      } else {
+        onOpenChange(false);
+      }
       setCurrentStep(0);
       
     } catch (error) {
-      console.error("Error in auto-gift setup:", error);
+      console.error("Error in recurring gift setup:", error);
       
       const e: any = error;
       const errorMessage = e?.message || e?.error?.message || e?.hint || e?.code || 'Unknown error occurred';
-      const errorDetails = e?.details || e?.error_description || e?.name;
-      if (errorDetails) console.error('Auto-gift setup details:', errorDetails);
-      
-      if (typeof error === 'object') {
-        try { console.error('Auto-gift setup raw:', JSON.stringify(error)); } catch {}
-      }
       
       if (String(errorMessage).toLowerCase().includes("rate limit")) {
         toast.error("Setup rate limit exceeded", {
-          description: "Please wait a moment before creating another auto-gifting rule"
+          description: "Please wait a moment before creating another rule"
         });
       } else if (String(errorMessage).toLowerCase().includes("validation") || String(errorMessage).toLowerCase().includes("recipient")) {
         toast.error("Setup validation failed", {
           description: errorMessage
         });
       } else {
-        toast.error("Failed to create auto-gifting rules", {
+        toast.error("Failed to create recurring gift rules", {
           description: errorMessage
         });
       }
@@ -492,457 +507,511 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     }
   };
 
-
   const getCurrentStepIcon = () => {
     const Icon = steps[currentStep].icon;
     return <Icon className="h-6 w-6" />;
   };
 
+  // Content for the wizard
+  const WizardContent = () => (
+    <div 
+      ref={scrollContainerRef}
+      className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden w-full max-w-full mobile-container ios-smooth-scroll pb-safe-bottom"
+    >
+      <DialogHeader className="pb-0">
+        <DialogTitle className="flex items-center gap-2">
+          <Gift className="h-5 w-5" />
+          {ruleId ? 'Edit Recurring Gift Rule' : 'Set Up Recurring Gifts'}
+        </DialogTitle>
+      </DialogHeader>
+
+      {/* Mode Toggle (when embedded) */}
+      {showModeToggle && (
+        <div className="pt-4 px-1">
+          <SchedulingModeToggle
+            mode="recurring"
+            onModeChange={(mode) => onModeChange?.(mode)}
+          />
+        </div>
+      )}
+
+      {/* Progress Steps */}
+      <Tabs value={currentStep.toString()} className="w-full mt-4">
+        <TabsList className="grid w-full grid-cols-3">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <TabsTrigger 
+                key={step.id} 
+                value={index.toString()}
+                className="flex items-center gap-2"
+                disabled={index > currentStep}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{step.title}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {/* Step 1: Recipient Selection */}
+        <TabsContent value="0" className="space-y-4 pb-32 overflow-x-hidden">
+          {initialData?.recipientName && (
+            <div className="p-3 bg-muted border border-border rounded-lg">
+              <div className="flex items-center gap-2 text-foreground">
+                <CheckCircle className="h-4 w-4 text-blue-500" />
+                <span className="font-medium">Event Details Pre-filled</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Setting up recurring gifts for {initialData.recipientName}'s {initialData.eventType}
+                {initialData.eventDate && ` on ${new Date(initialData.eventDate).toLocaleDateString()}`}
+              </p>
+            </div>
+          )}
+          
+          {embedded && initialRecipient && initialRecipient.type !== 'later' && (
+            <div className="p-3 bg-muted border border-border rounded-lg">
+              <div className="flex items-center gap-2 text-foreground">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="font-medium">Recipient Selected</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Setting up recurring gifts for {initialRecipient.connectionName || 'selected recipient'}
+              </p>
+            </div>
+          )}
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Choose Recipient & Event
+              </CardTitle>
+              <CardDescription>
+                Select who you want to set up recurring gifts for
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="recipient" className="flex items-center gap-2">
+                  Recipient
+                  {initialData?.recipientName && (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+                      Pre-filled
+                    </Badge>
+                  )}
+                  {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+                      Pending Invitation
+                    </Badge>
+                  )}
+                </Label>
+                 <RecipientSearchCombobox
+                  value={formData.recipientId}
+                  onChange={({ recipientId, recipientName, relationshipType, recipientDob }) => 
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      recipientId,
+                      recipientName,
+                      relationshipType: relationshipType || prev.relationshipType,
+                      recipientDob: recipientDob || prev.recipientDob
+                    }))
+                  }
+                  connections={connections}
+                  pendingInvitations={pendingInvitations}
+                  sentRequests={sentRequests}
+                  onNewRecipientCreate={async (recipient) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      recipientId: recipient.id,
+                      recipientName: recipient.name,
+                      relationshipType: recipient.relationship_type || 'friend'
+                    }));
+                    toast.success(`Added ${recipient.name} as recipient`);
+                    
+                    // Refresh connections to include the newly created recipient
+                    await fetchConnections();
+                    
+                    // Scroll back to top so user can verify the recipient was added
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  onEditExistingRule={(rule) => {
+                    if (onRequestEditRule) {
+                      onRequestEditRule(rule);
+                    }
+                  }}
+                />
+                {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This gift will be sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts the invitation and provides their address.
+                  </p>
+                )}
+              </div>
+
+              {/* Address Verification Status */}
+              {formData.recipientId && (
+                <AddressVerificationWarning
+                  recipientId={formData.recipientId}
+                  connections={connections}
+                  pendingInvitations={pendingInvitations}
+                  sentRequests={sentRequests}
+                />
+              )}
+
+              <MultiEventSelector
+                value={formData.selectedEvents}
+                onChange={(events) => setFormData(prev => ({ ...prev, selectedEvents: events }))}
+              />
+
+              {formData.eventType === "holiday" && formData.specificHoliday && (
+                <SmartHolidayInfo 
+                  holidayType={formData.specificHoliday}
+                  recipientName={
+                    connections.find(c => c.id === formData.recipientId)?.profile_name ||
+                    pendingInvitations.find(c => c.id === formData.recipientId)?.pending_recipient_name
+                  }
+                />
+              )}
+
+              {formData.eventType === "holiday" && formData.calculatedDate && (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 inline mr-1" />
+                    Recurring gift will trigger for: {new Date(formData.calculatedDate).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+
+              {formData.eventType === "other" && formData.selectedDate && (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 inline mr-1" />
+                    Gift will be delivered on: {formData.selectedDate.toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Step 2: Budget & Payment */}
+        <TabsContent value="1" className="space-y-4 pb-32 overflow-x-hidden">
+          {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+            <div className="p-3 bg-muted border border-border rounded-lg">
+              <div className="flex items-center gap-2 text-foreground">
+                <Bell className="h-4 w-4 text-amber-500" />
+                <span className="font-medium">Pending Invitation</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Recurring gifts will activate once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your connection and provides their shipping address.
+              </p>
+            </div>
+          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Budget & Payment Method
+              </CardTitle>
+              <CardDescription>
+                Set your budget and payment method. Our AI will automatically select the best gifts by checking wishlist items first, then preferences, then smart recommendations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <p className="font-medium text-sm">Smart Gift Selection</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Our system automatically finds the perfect gift by checking: 1) Recipient's wishlist items 2) Their preferences and interests 3) AI-powered smart recommendations if needed
+                </p>
+              </div>
+
+              {/* Show user sizes if available */}
+              {userSizes && (
+                <div className="p-4 border rounded-lg bg-muted/30">
+                  <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Ruler className="h-4 w-4" />
+                    Your Saved Sizes (for Nicole AI)
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
+                    {userSizes.tops && (
+                      <div>
+                        <span className="font-medium text-foreground">Tops:</span> {userSizes.tops}
+                      </div>
+                    )}
+                    {userSizes.bottoms && (
+                      <div>
+                        <span className="font-medium text-foreground">Bottoms:</span> {userSizes.bottoms}
+                      </div>
+                    )}
+                    {userSizes.shoes && (
+                      <div>
+                        <span className="font-medium text-foreground">Shoes:</span> {userSizes.shoes}
+                      </div>
+                    )}
+                    {userSizes.ring && (
+                      <div>
+                        <span className="font-medium text-foreground">Ring:</span> {userSizes.ring}
+                      </div>
+                    )}
+                    {userSizes.fit_preference && (
+                      <div className="col-span-2">
+                        <span className="font-medium text-foreground">Fit:</span> {userSizes.fit_preference}
+                      </div>
+                    )}
+                  </div>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="text-xs p-0 h-auto mt-3"
+                    onClick={() => window.open('/settings?tab=sizes', '_blank')}
+                  >
+                    Update sizes →
+                  </Button>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="budget">Budget Limit ($)</Label>
+                <Input
+                  id="budget"
+                  type="number"
+                  min="5"
+                  max="1000"
+                  value={formData.budgetLimit}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    budgetLimit: Number(e.target.value) 
+                  }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Recommended: $25-100 depending on your relationship
+                </p>
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Payment Method
+                </Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Select which payment method to use for recurring gift purchases
+                </p>
+                <UnifiedPaymentMethodManager
+                  mode="selection"
+                  onSelectMethod={(method) => 
+                    setFormData(prev => ({ ...prev, selectedPaymentMethodId: method.id }))
+                  }
+                  selectedMethodId={formData.selectedPaymentMethodId}
+                  showAddNew={true}
+                  allowSelection={true}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Step 3: Notifications & Approval */}
+        <TabsContent value="2" className="space-y-4 pb-32 overflow-x-hidden">
+          {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
+            <div className="p-3 bg-muted border border-border rounded-lg">
+              <div className="flex items-center gap-2 text-foreground">
+                <Bell className="h-4 w-4 text-amber-500" />
+                <span className="font-medium">Pending Invitation</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                The gift will be automatically sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your invitation and provides their shipping address.
+              </p>
+            </div>
+          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notifications & Approval
+              </CardTitle>
+              <CardDescription>
+                Configure how you want to be notified and approve gifts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Auto-approve gifts</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically purchase approved gifts without manual approval
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.autoApprove}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoApprove: checked }))}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Email notifications</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified about recurring gift processing and approvals
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.emailNotifications}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, emailNotifications: checked }))}
+                />
+              </div>
+
+              <div>
+                <Label>Notification timing (days before event)</Label>
+                <div className="flex gap-2 mt-2">
+                  {[1, 3, 7, 14].map((day) => (
+                    <Badge
+                      key={day}
+                      variant={formData.notificationDays.includes(day) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          notificationDays: prev.notificationDays.includes(day)
+                            ? prev.notificationDays.filter(d => d !== day)
+                            : [...prev.notificationDays, day].sort((a, b) => b - a)
+                        }));
+                      }}
+                    >
+                      {day} day{day !== 1 ? 's' : ''}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="giftMessage">Custom gift message (optional)</Label>
+                <Textarea
+                  id="giftMessage"
+                  placeholder="Add a personal message to include with gifts..."
+                  value={formData.giftMessage}
+                  onChange={(e) => setFormData(prev => ({ ...prev, giftMessage: e.target.value }))}
+                  maxLength={200}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Navigation - Fixed at bottom with safe area */}
+      <div className="sticky bottom-0 bg-background border-t pt-4 pb-16 md:pb-4 px-4 md:px-6 mt-4 overflow-x-hidden" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
+        {/* Mobile: Stack vertically, Desktop: horizontal */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          {/* Step indicator - full width on mobile, centered */}
+          <div className="text-sm text-muted-foreground text-center md:text-left whitespace-nowrap shrink-0">
+            Step {currentStep + 1} of {steps.length}
+          </div>
+          
+          {/* Buttons - centered on mobile, right-aligned on desktop */}
+          <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+            {(currentStep > 0 || (embedded && onModeChange)) && (
+              <motion.div 
+                whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <Button 
+                  variant="outline" 
+                  onClick={handleBack}
+                  className="min-h-[44px] min-w-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
+                >
+                  Back
+                </Button>
+              </motion.div>
+            )}
+            
+            {currentStep < steps.length - 1 ? (
+              <motion.div 
+                whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <Button 
+                  onClick={handleNext} 
+                  className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
+                  disabled={
+                    (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
+                    (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
+                  }
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div 
+                whileTap={isMobile ? undefined : { scale: 0.97 }} 
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <Button 
+                  onClick={() => {
+                    triggerHapticFeedback('success');
+                    handleSubmit();
+                  }} 
+                  className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100 whitespace-nowrap"
+                  disabled={
+                    isLoading || 
+                    !formData.recipientId || 
+                    formData.selectedEvents.length === 0 ||
+                    !formData.selectedPaymentMethodId ||
+                    formData.budgetLimit < 5
+                  }
+                >
+                  {isLoading ? "Scheduling..." : "Schedule Recurring Gift"}
+                  <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Embedded mode - use Drawer on mobile, Dialog on desktop
+  if (embedded) {
+    if (isMobile) {
+      return (
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="max-h-[95vh] pb-safe">
+            <DrawerHeader className="border-b pb-4">
+              <DrawerTitle className="flex items-center gap-2 text-lg font-bold">
+                <Gift className="h-5 w-5" />
+                {ruleId ? 'Edit Recurring Gift' : 'Set Up Recurring Gifts'}
+              </DrawerTitle>
+            </DrawerHeader>
+            <WizardContent />
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+    
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden overflow-x-hidden">
+          <WizardContent />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Standalone mode (original behavior)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden overflow-x-hidden">
-        <div 
-          ref={scrollContainerRef}
-          className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden w-full max-w-full mobile-container ios-smooth-scroll pb-safe-bottom"
-        >
-        <DialogHeader className="pb-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5" />
-            {ruleId ? 'Edit AI Gifting Rule' : 'Set Up AI Gifting'}
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Progress Steps */}
-        <Tabs value={currentStep.toString()} className="w-full -mt-1">
-          <TabsList className="grid w-full grid-cols-3">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <TabsTrigger 
-                  key={step.id} 
-                  value={index.toString()}
-                  className="flex items-center gap-2"
-                  disabled={index > currentStep}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{step.title}</span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-
-          {/* Step 1: Recipient Selection */}
-          <TabsContent value="0" className="space-y-4 pb-32 overflow-x-hidden">
-            {initialData?.recipientName && (
-              <div className="p-3 bg-muted border border-border rounded-lg">
-                <div className="flex items-center gap-2 text-foreground">
-                  <CheckCircle className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">Event Details Pre-filled</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Setting up AI Gifting for {initialData.recipientName}'s {initialData.eventType}
-                  {initialData.eventDate && ` on ${new Date(initialData.eventDate).toLocaleDateString()}`}
-                </p>
-              </div>
-            )}
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Choose Recipient & Event
-                </CardTitle>
-                <CardDescription>
-                  Select who you want to set up automated gifting for
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="recipient" className="flex items-center gap-2">
-                    Recipient
-                    {initialData?.recipientName && (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
-                        Pre-filled
-                      </Badge>
-                    )}
-                    {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
-                        Pending Invitation
-                      </Badge>
-                    )}
-                  </Label>
-                   <RecipientSearchCombobox
-                    value={formData.recipientId}
-                    onChange={({ recipientId, recipientName, relationshipType, recipientDob }) => 
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        recipientId,
-                        recipientName,
-                        relationshipType: relationshipType || prev.relationshipType,
-                        recipientDob: recipientDob || prev.recipientDob
-                      }))
-                    }
-                    connections={connections}
-                    pendingInvitations={pendingInvitations}
-                    sentRequests={sentRequests}
-                    onNewRecipientCreate={async (recipient) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        recipientId: recipient.id,
-                        recipientName: recipient.name,
-                        relationshipType: recipient.relationship_type || 'friend'
-                      }));
-                      toast.success(`Added ${recipient.name} as recipient`);
-                      
-                      // Refresh connections to include the newly created recipient
-                      await fetchConnections();
-                      
-                      // Scroll back to top so user can verify the recipient was added
-                      if (scrollContainerRef.current) {
-                        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                    }}
-                    onEditExistingRule={(rule) => {
-                      if (onRequestEditRule) {
-                        onRequestEditRule(rule);
-                      }
-                    }}
-                  />
-                  {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      This gift will be sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts the invitation and provides their address.
-                    </p>
-                  )}
-                </div>
-
-                {/* Address Verification Status */}
-                {formData.recipientId && (
-                  <AddressVerificationWarning
-                    recipientId={formData.recipientId}
-                    connections={connections}
-                    pendingInvitations={pendingInvitations}
-                    sentRequests={sentRequests}
-                  />
-                )}
-
-                <MultiEventSelector
-                  value={formData.selectedEvents}
-                  onChange={(events) => setFormData(prev => ({ ...prev, selectedEvents: events }))}
-                />
-
-                {formData.eventType === "holiday" && formData.specificHoliday && (
-                  <SmartHolidayInfo 
-                    holidayType={formData.specificHoliday}
-                    recipientName={
-                      connections.find(c => c.id === formData.recipientId)?.profile_name ||
-                      pendingInvitations.find(c => c.id === formData.recipientId)?.pending_recipient_name
-                    }
-                  />
-                )}
-
-                {formData.eventType === "holiday" && formData.calculatedDate && (
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4 inline mr-1" />
-                      Auto-gifting will trigger for: {new Date(formData.calculatedDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-
-                {formData.eventType === "other" && formData.selectedDate && (
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4 inline mr-1" />
-                      Gift will be delivered on: {formData.selectedDate.toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 2: Budget & Payment */}
-          <TabsContent value="1" className="space-y-4 pb-32 overflow-x-hidden">
-            {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-              <div className="p-3 bg-muted border border-border rounded-lg">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Bell className="h-4 w-4 text-amber-500" />
-                  <span className="font-medium">Pending Invitation</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  AI Gifting will activate once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your connection and provides their shipping address.
-                </p>
-              </div>
-            )}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Budget & Payment Method
-                </CardTitle>
-                <CardDescription>
-                  Set your budget and payment method. Our AI will automatically select the best gifts by checking wishlist items first, then preferences, then smart recommendations.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <p className="font-medium text-sm">Smart Gift Selection</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Our system automatically finds the perfect gift by checking: 1) Recipient's wishlist items 2) Their preferences and interests 3) AI-powered smart recommendations if needed
-                  </p>
-                </div>
-
-                {/* Show user sizes if available */}
-                {userSizes && (
-                  <div className="p-4 border rounded-lg bg-muted/30">
-                    <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      Your Saved Sizes (for Nicole AI)
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
-                      {userSizes.tops && (
-                        <div>
-                          <span className="font-medium text-foreground">Tops:</span> {userSizes.tops}
-                        </div>
-                      )}
-                      {userSizes.bottoms && (
-                        <div>
-                          <span className="font-medium text-foreground">Bottoms:</span> {userSizes.bottoms}
-                        </div>
-                      )}
-                      {userSizes.shoes && (
-                        <div>
-                          <span className="font-medium text-foreground">Shoes:</span> {userSizes.shoes}
-                        </div>
-                      )}
-                      {userSizes.ring && (
-                        <div>
-                          <span className="font-medium text-foreground">Ring:</span> {userSizes.ring}
-                        </div>
-                      )}
-                      {userSizes.fit_preference && (
-                        <div className="col-span-2">
-                          <span className="font-medium text-foreground">Fit:</span> {userSizes.fit_preference}
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      className="text-xs p-0 h-auto mt-3"
-                      onClick={() => window.open('/settings?tab=sizes', '_blank')}
-                    >
-                      Update sizes →
-                    </Button>
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="budget">Budget Limit ($)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    min="5"
-                    max="1000"
-                    value={formData.budgetLimit}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      budgetLimit: Number(e.target.value) 
-                    }))}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Recommended: $25-100 depending on your relationship
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <Label className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Payment Method
-                  </Label>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Select which payment method to use for auto-gifting purchases
-                  </p>
-                  <UnifiedPaymentMethodManager
-                    mode="selection"
-                    onSelectMethod={(method) => 
-                      setFormData(prev => ({ ...prev, selectedPaymentMethodId: method.id }))
-                    }
-                    selectedMethodId={formData.selectedPaymentMethodId}
-                    showAddNew={true}
-                    allowSelection={true}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 3: Notifications & Approval */}
-          <TabsContent value="2" className="space-y-4 pb-32 overflow-x-hidden">
-            {formData.recipientId && pendingInvitations.some(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId) && (
-              <div className="p-3 bg-muted border border-border rounded-lg">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Bell className="h-4 w-4 text-amber-500" />
-                  <span className="font-medium">Pending Invitation</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  The gift will be automatically sent once {pendingInvitations.find(p => p.display_user_id === formData.recipientId || p.id === formData.recipientId)?.pending_recipient_name} accepts your invitation and provides their shipping address.
-                </p>
-              </div>
-            )}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notifications & Approval
-                </CardTitle>
-                <CardDescription>
-                  Configure how you want to be notified and approve gifts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Auto-approve gifts</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically purchase approved gifts without manual approval
-                    </p>
-                  </div>
-                  <Switch
-                    checked={formData.autoApprove}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoApprove: checked }))}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified about auto-gift processing and approvals
-                    </p>
-                  </div>
-                  <Switch
-                    checked={formData.emailNotifications}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, emailNotifications: checked }))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Notification timing (days before event)</Label>
-                  <div className="flex gap-2 mt-2">
-                    {[1, 3, 7, 14].map((day) => (
-                      <Badge
-                        key={day}
-                        variant={formData.notificationDays.includes(day) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            notificationDays: prev.notificationDays.includes(day)
-                              ? prev.notificationDays.filter(d => d !== day)
-                              : [...prev.notificationDays, day].sort((a, b) => b - a)
-                          }));
-                        }}
-                      >
-                        {day} day{day !== 1 ? 's' : ''}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="giftMessage">Custom gift message (optional)</Label>
-                  <Textarea
-                    id="giftMessage"
-                    placeholder="Add a personal message to include with gifts..."
-                    value={formData.giftMessage}
-                    onChange={(e) => setFormData(prev => ({ ...prev, giftMessage: e.target.value }))}
-                    maxLength={200}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Navigation - Fixed at bottom with safe area */}
-        <div className="sticky bottom-0 bg-background border-t pt-4 pb-16 md:pb-4 px-4 md:px-6 mt-4 overflow-x-hidden" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))' }}>
-          {/* Mobile: Stack vertically, Desktop: horizontal */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            {/* Step indicator - full width on mobile, centered */}
-            <div className="text-sm text-muted-foreground text-center md:text-left whitespace-nowrap shrink-0">
-              Step {currentStep + 1} of {steps.length}
-            </div>
-            
-            {/* Buttons - centered on mobile, right-aligned on desktop */}
-            <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto">
-              {currentStep > 0 && (
-                <motion.div 
-                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <Button 
-                    variant="outline" 
-                    onClick={handleBack}
-                    className="min-h-[44px] min-w-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
-                  >
-                    Back
-                  </Button>
-                </motion.div>
-              )}
-              
-              {currentStep < steps.length - 1 ? (
-                <motion.div 
-                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <Button 
-                    onClick={handleNext} 
-                    className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100"
-                    disabled={
-                      (currentStep === 0 && (!formData.recipientId || formData.selectedEvents.length === 0)) ||
-                      (currentStep === 1 && (formData.budgetLimit < 5 || !formData.selectedPaymentMethodId))
-                    }
-                  >
-                    Next
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  whileTap={isMobile ? undefined : { scale: 0.97 }} 
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <Button 
-                    onClick={() => {
-                      triggerHapticFeedback('success');
-                      handleSubmit();
-                    }} 
-                    className="min-h-[44px] px-4 md:px-6 touch-manipulation active:scale-[0.97] md:active:scale-100 whitespace-nowrap"
-                    disabled={
-                      isLoading || 
-                      !formData.recipientId || 
-                      formData.selectedEvents.length === 0 ||
-                      !formData.selectedPaymentMethodId ||
-                      formData.budgetLimit < 5
-                    }
-                  >
-                    {isLoading ? "Scheduling..." : "Schedule AI Gift"}
-                    <CheckCircle className="ml-2 h-4 w-4" />
-                  </Button>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </div>
-        </div>
+        <WizardContent />
       </DialogContent>
     </Dialog>
   );

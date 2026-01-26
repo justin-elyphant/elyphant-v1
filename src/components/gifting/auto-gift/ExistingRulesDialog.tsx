@@ -34,7 +34,7 @@ const ExistingRulesDialog: React.FC<ExistingRulesDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-x-hidden overflow-y-auto ios-smooth-scroll modal-scroll-container">
         <DialogHeader>
-          <DialogTitle>AI Gifting for {recipientName}</DialogTitle>
+          <DialogTitle>Recurring Gifts for {recipientName}</DialogTitle>
           <DialogDescription>
             You already have {rules.length} active {rules.length === 1 ? 'rule' : 'rules'} for this person. 
             Would you like to edit an existing rule or schedule another gift?

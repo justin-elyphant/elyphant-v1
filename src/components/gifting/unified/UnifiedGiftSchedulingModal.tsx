@@ -11,22 +11,19 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/auth';
 import { useProfile } from '@/contexts/profile/ProfileContext';
-import { useAutoGifting } from '@/hooks/useAutoGifting';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Product } from '@/types/product';
 import { RecipientAssignment } from '@/types/recipient';
 import { triggerHapticFeedback } from '@/utils/haptics';
-import { motion } from 'framer-motion';
 import Picker from 'react-mobile-picker';
 import { PAYMENT_LEAD_TIME } from '@/lib/constants/paymentLeadTime';
-import { detectHolidayFromDate, calculateHolidayDate } from '@/constants/holidayDates';
+import { detectHolidayFromDate } from '@/constants/holidayDates';
 import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
 import SchedulingModeToggle, { SchedulingMode } from './SchedulingModeToggle';
 import HolidayConversionBanner from './HolidayConversionBanner';
-import HolidaySelector from '@/components/gifting/events/add-dialog/HolidaySelector';
-import UnifiedPaymentMethodManager from '@/components/payments/UnifiedPaymentMethodManager';
+import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
 
 interface UnifiedGiftSchedulingModalProps {
   open: boolean;
@@ -75,13 +72,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const { user } = useAuth();
   const { profile } = useProfile();
   const { addToCart, assignItemToRecipient } = useCart();
-  const { createRule, settings } = useAutoGifting();
 
   // State
   const [mode, setMode] = useState<SchedulingMode>(defaultMode);
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
   const [giftMessage, setGiftMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
 
   // One-time scheduling state (iOS scroll wheel)
@@ -106,11 +101,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   // Holiday detection state
   const [detectedHoliday, setDetectedHoliday] = useState<{ key: string; label: string } | null>(null);
   const [holidayBannerDismissed, setHolidayBannerDismissed] = useState(false);
-
-  // Recurring-specific state
-  const [selectedHoliday, setSelectedHoliday] = useState<string>('');
-  const [budgetLimit, setBudgetLimit] = useState(settings?.default_budget_limit || 50);
-  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>('');
 
   // User info
   const userAddress = profile?.shipping_address;
@@ -181,7 +171,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const handleHolidayConversion = () => {
     if (detectedHoliday) {
       setMode('recurring');
-      setSelectedHoliday(detectedHoliday.key);
       setDetectedHoliday(null);
       toast.success(`Switched to recurring mode for ${detectedHoliday.label}`);
     }
@@ -305,88 +294,18 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     onOpenChange(false);
   };
 
-  // Handle recurring rule creation
-  const handleRecurringSetup = async () => {
-    if (!selectedRecipient || selectedRecipient.type === 'later') {
-      toast.error('Please select a recipient');
-      return;
-    }
-
-    if (!selectedHoliday) {
-      toast.error('Please select an occasion');
-      return;
-    }
-
-    if (!selectedPaymentMethodId) {
-      toast.error('Please select a payment method');
-      return;
-    }
-
-    setIsSubmitting(true);
-    triggerHapticFeedback('light');
-
-    try {
-      const scheduledDate = calculateHolidayDate(selectedHoliday);
-      
-      const ruleData = {
-        recipient_id: selectedRecipient.type === 'self' ? null : selectedRecipient.connectionId,
-        pending_recipient_email: null,
-        date_type: selectedHoliday,
-        scheduled_date: scheduledDate,
-        is_active: true,
-        budget_limit: budgetLimit,
-        notification_preferences: {
-          enabled: true,
-          days_before: [7, 3, 1],
-          email: true,
-          push: false
-        },
-        gift_selection_criteria: {
-          source: 'both' as const,
-          max_price: budgetLimit,
-          min_price: Math.max(1, budgetLimit * 0.1),
-          categories: [],
-          exclude_items: []
-        },
-        payment_method_id: selectedPaymentMethodId,
-        gift_message: giftMessage
-      };
-
-      await createRule(ruleData);
-
-      triggerHapticFeedback('success');
-      toast.success('Auto-gift rule created!', {
-        description: `We'll automatically send a gift for ${selectedHoliday.replace('_', ' ')}`
-      });
-
-      onComplete?.({
-        mode: 'recurring',
-        recipientId: selectedRecipient.connectionId,
-        recipientName: selectedRecipient.connectionName,
-        occasionType: selectedHoliday,
-        giftMessage
-      });
-
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error creating rule:', error);
-      toast.error('Failed to create auto-gift rule');
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle recurring rule creation complete
+  const handleRecurringComplete = () => {
+    onComplete?.({
+      mode: 'recurring',
+      recipientId: selectedRecipient?.connectionId,
+      recipientName: selectedRecipient?.connectionName
+    });
+    onOpenChange(false);
   };
 
-  // Handle submit based on mode
-  const handleSubmit = () => {
-    if (mode === 'one-time') {
-      handleOneTimeSchedule();
-    } else {
-      handleRecurringSetup();
-    }
-  };
-
-  // Modal content
-  const ModalContent = () => (
+  // One-time mode content
+  const OneTimeContent = () => (
     <div className="space-y-5">
       {/* Mode Toggle */}
       {allowModeSwitch && (
@@ -436,99 +355,53 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
       <Separator />
 
-      {/* Date/Occasion Selection */}
-      {mode === 'one-time' ? (
-        <div>
-          <label className="text-sm font-semibold text-foreground mb-2 block">
-            Delivery Date
-          </label>
-          <div className="bg-muted/30 rounded-lg py-3">
-            <Picker
-              value={pickerValue}
-              onChange={(value) => setPickerValue(value as { month: string; day: string; year: string })}
-              wheelMode="natural"
-              height={160}
-            >
-              <Picker.Column name="month">
-                {months.map((month) => (
-                  <Picker.Item key={month} value={month}>
-                    {month}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              <Picker.Column name="day">
-                {days.map((day) => (
-                  <Picker.Item key={day} value={day}>
-                    {day}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              <Picker.Column name="year">
-                {years.map((year) => (
-                  <Picker.Item key={year} value={year}>
-                    {year}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-            </Picker>
-          </div>
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Gift will arrive on or before this date
-          </p>
-
-          {/* Holiday Conversion Banner */}
-          <HolidayConversionBanner
-            holidayLabel={detectedHoliday?.label || ''}
-            visible={!!detectedHoliday && !holidayBannerDismissed}
-            onConvert={handleHolidayConversion}
-            onDismiss={() => setHolidayBannerDismissed(true)}
-          />
+      {/* Date Selection */}
+      <div>
+        <label className="text-sm font-semibold text-foreground mb-2 block">
+          Delivery Date
+        </label>
+        <div className="bg-muted/30 rounded-lg py-3">
+          <Picker
+            value={pickerValue}
+            onChange={(value) => setPickerValue(value as { month: string; day: string; year: string })}
+            wheelMode="natural"
+            height={160}
+          >
+            <Picker.Column name="month">
+              {months.map((month) => (
+                <Picker.Item key={month} value={month}>
+                  {month}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+            <Picker.Column name="day">
+              {days.map((day) => (
+                <Picker.Item key={day} value={day}>
+                  {day}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+            <Picker.Column name="year">
+              {years.map((year) => (
+                <Picker.Item key={year} value={year}>
+                  {year}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+          </Picker>
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              Occasion
-            </label>
-            <HolidaySelector
-              value={selectedHoliday}
-              onChange={setSelectedHoliday}
-            />
-          </div>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Gift will arrive on or before this date
+        </p>
 
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              Budget Limit
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="25"
-                max="500"
-                step="25"
-                value={budgetLimit}
-                onChange={(e) => setBudgetLimit(Number(e.target.value))}
-                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <span className="text-lg font-semibold min-w-[60px] text-right">
-                ${budgetLimit}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              Payment Method
-            </label>
-            <UnifiedPaymentMethodManager
-              selectedMethodId={selectedPaymentMethodId}
-              onSelectMethod={(method) => setSelectedPaymentMethodId(method.id)}
-              showAddNew={true}
-              mode="selection"
-            />
-          </div>
-        </div>
-      )}
+        {/* Holiday Conversion Banner */}
+        <HolidayConversionBanner
+          holidayLabel={detectedHoliday?.label || ''}
+          visible={!!detectedHoliday && !holidayBannerDismissed}
+          onConvert={handleHolidayConversion}
+          onDismiss={() => setHolidayBannerDismissed(true)}
+        />
+      </div>
 
       <Separator />
 
@@ -552,8 +425,8 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     </div>
   );
 
-  // Footer buttons
-  const FooterButtons = ({ className }: { className?: string }) => (
+  // Footer buttons for one-time mode
+  const OneTimeFooterButtons = ({ className }: { className?: string }) => (
     <div className={cn("flex gap-3", className)}>
       <Button
         variant="outline"
@@ -564,16 +437,29 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       </Button>
       <Button
         className="flex-1 h-11 min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
-        onClick={handleSubmit}
-        disabled={isSubmitting}
+        onClick={handleOneTimeSchedule}
       >
-        {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        {mode === 'one-time' ? 'Schedule Gift' : 'Create Auto-Gift'}
+        Schedule Gift
       </Button>
     </div>
   );
 
-  // Render responsive container
+  // Render recurring mode - embed AutoGiftSetupFlow
+  if (mode === 'recurring') {
+    return (
+      <AutoGiftSetupFlow
+        open={open}
+        onOpenChange={onOpenChange}
+        embedded={true}
+        initialRecipient={selectedRecipient}
+        onComplete={handleRecurringComplete}
+        showModeToggle={allowModeSwitch}
+        onModeChange={(newMode) => setMode(newMode as SchedulingMode)}
+      />
+    );
+  }
+
+  // Render one-time mode - responsive container
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -582,7 +468,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
             <div className="flex items-center justify-between">
               <DrawerTitle className="flex items-center gap-2 text-lg font-bold">
                 <Gift className="h-5 w-5" />
-                {mode === 'one-time' ? 'Schedule Gift' : 'Set Up Auto-Gift'}
+                Schedule Gift
               </DrawerTitle>
               <Button
                 variant="ghost"
@@ -596,11 +482,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           </DrawerHeader>
 
           <div className="p-4 overflow-y-auto">
-            <ModalContent />
+            <OneTimeContent />
           </div>
 
           <DrawerFooter className="border-t pt-4">
-            <FooterButtons className="w-full" />
+            <OneTimeFooterButtons className="w-full" />
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -613,13 +499,13 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Gift className="h-5 w-5" />
-            {mode === 'one-time' ? 'Schedule Gift' : 'Set Up Auto-Gift'}
+            Schedule Gift
           </DialogTitle>
         </DialogHeader>
 
-        <ModalContent />
+        <OneTimeContent />
 
-        <FooterButtons className="pt-4" />
+        <OneTimeFooterButtons className="pt-4" />
       </DialogContent>
     </Dialog>
   );

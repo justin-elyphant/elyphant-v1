@@ -90,11 +90,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   
   const hasMoreConnections = !searchQuery.trim() && filteredConnections.length > 3;
   
+  // Only show pending when searching (not in default top 3 view)
   const filteredPending = useMemo(() => {
-    if (searchQuery.length < 2) return pendingInvitations;
+    if (searchQuery.length < 2) return []; // Hide pending in default view
     return pendingInvitations.filter(inv => 
       inv.profile_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.pending_recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      inv.pending_recipient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      inv.pending_recipient_email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [pendingInvitations, searchQuery]);
 

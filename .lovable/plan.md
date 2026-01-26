@@ -1,151 +1,173 @@
 
-# Consolidated Plan: Recurring Gifts with AI (Rebranded & Unified)
+# Unify Recurring Gift Rules Display: Reuse Existing Components
 
-## Summary
+## Problem Summary
 
-Consolidate the "Recurring" mode in `UnifiedGiftSchedulingModal` with the full `AutoGiftSetupFlow` wizard, and rebrand from "AI Gifting" to **"Recurring Gifts"** (with "Powered by Nicole AI" badge). This maximizes component reuse and eliminates duplicate pathways.
+The `ActiveRulesSection` component (163 lines) is a flat list of rule cards that duplicates functionality already built into `RecipientGiftCard` + `MyGiftsDashboardSimplified`. This creates:
+- **Visual inconsistency**: `/recurring-gifts` page shows flat cards while dashboard shows grouped avatars
+- **Code duplication**: Same toggle, delete, edit logic in 2 places
+- **Missing features**: `ActiveRulesSection` lacks inline budget editing, better UX
+
+## Solution: Replace ActiveRulesSection with Existing Components
+
+Instead of building new grouping logic, **delete `ActiveRulesSection`** and reuse the already-built pattern from `MyGiftsDashboardSimplified`.
 
 ---
 
-## Phase 1: Embed AutoGiftSetupFlow in UnifiedGiftSchedulingModal
+## Implementation Plan
 
-### What We're Reusing (NOT Rebuilding)
-- `AutoGiftSetupFlow` (951 lines) - already has multi-step wizard, validation, batch rule creation
-- `SimpleRecipientSelector` - already in modal, just pass to embedded flow
-- `ExistingRulesDialog` - already built for rule collision detection
-- `MultiEventSelector` - already in AutoGiftSetupFlow for multiple occasions
-- `HolidaySelector` - shared between both
-- `UnifiedPaymentMethodManager` - shared between both
+### Phase 1: Extract Reusable Grouped Rules Component
 
-### Changes to UnifiedGiftSchedulingModal.tsx
+**Create: `src/components/gifting/unified/GroupedRulesSection.tsx`**
 
-**DELETE** (duplicate logic):
-- Lines 309-377: `handleRecurringSetup()` function (~68 lines)
-- Lines 487-531: Inline recurring UI (HolidaySelector, budget slider, payment method) (~44 lines)
+Extract the grouping logic + `RecipientGiftCard` usage from `MyGiftsDashboardSimplified` into a standalone component:
 
-**ADD**:
-```tsx
-// Import
-import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
-
-// In mode === 'recurring' section, replace inline form with:
-<AutoGiftSetupFlow
-  open={true}  // Always open when embedded
-  onOpenChange={(open) => !open && onOpenChange(false)}
-  embedded={true}
-  initialRecipient={selectedRecipient}  // Pre-fill from SimpleRecipientSelector
-  onComplete={() => {
-    onComplete?.({ mode: 'recurring', ... });
-    onOpenChange(false);
-  }}
-/>
+```text
+GroupedRulesSection (new extracted component)
+├── Title: "Active Recurring Gift Rules" (configurable)
+├── Grouping logic (from MyGiftsDashboardSimplified lines 88-110)
+└── Maps to RecipientGiftCard (already exists)
+    ├── Avatar + recipient name + occasion count
+    ├── Collapsible list of OccasionRow (already exists)
+    │   ├── Toggle switch (is_active)
+    │   ├── BudgetEditor (inline editing - already exists)
+    │   ├── Advanced Settings button (edit)
+    │   └── Remove button (delete)
+    └── "Show More" if >3 occasions
 ```
 
-**Estimated change**: -112 lines, +15 lines = **~97 lines removed**
-
----
-
-## Phase 2: Add Embedded Mode to AutoGiftSetupFlow
-
-### Changes to AutoGiftSetupFlow.tsx
-
-**ADD new props**:
-```tsx
-interface AutoGiftSetupFlowProps {
-  // ... existing props
-  embedded?: boolean;  // Skip Dialog wrapper
-  initialRecipient?: SelectedRecipient;  // Pre-selected from parent
-  onComplete?: () => void;  // Callback instead of onOpenChange
+**Props:**
+```typescript
+interface GroupedRulesSectionProps {
+  rules: UnifiedGiftRule[];
+  title?: string;
+  description?: string;
+  showEmptyState?: boolean;
+  onEditRule: (ruleId: string) => void;
+  onBudgetUpdate?: (ruleId: string, newBudget: number) => Promise<void>;
 }
 ```
 
-**MODIFY rendering**:
+### Phase 2: Update RecurringGifts.tsx Page
+
+**Replace:**
 ```tsx
-// When embedded={true}:
-// 1. Don't render <Dialog> wrapper - return content directly
-// 2. Skip Step 1 (recipient) if initialRecipient provided - start at Step 2
-// 3. Call onComplete() instead of onOpenChange(false) on success
+// OLD - flat list
+<ActiveRulesSection 
+  rules={rules} 
+  onEditRule={(rule) => {...}}
+/>
 ```
 
-**REPLACE** `RecipientSearchCombobox` with `SimpleRecipientSelector`:
-- Lines 574-616: Replace combobox with same selector used in modal
-- This ensures visual consistency between embedded and standalone modes
+**With:**
+```tsx
+// NEW - grouped by recipient with avatars
+<GroupedRulesSection 
+  rules={rules}
+  title="Active Recurring Gift Rules"
+  description="Manage your recurring gift rules"
+  onEditRule={(ruleId) => {...}}
+/>
+```
 
-**Estimated change**: +30 lines for new props/logic, -40 lines by removing combobox wrapper = **~10 lines removed**
+### Phase 3: Update AutomatedGiftingTabContent.tsx
 
----
+Same replacement - swap `ActiveRulesSection` for `GroupedRulesSection`.
 
-## Phase 3: Rebrand "AI Gifting" → "Recurring Gifts"
+### Phase 4: Simplify MyGiftsDashboardSimplified.tsx
 
-### Files to Update
+Now that `GroupedRulesSection` is extracted, `MyGiftsDashboardSimplified` can import it instead of having inline grouping logic. This removes ~40 lines of duplicate grouping code.
 
-| File | Change |
-|------|--------|
-| `src/App.tsx:223` | Route stays `/recurring-gifts` (new) |
-| `src/App.tsx:241-242` | Add redirect: `/ai-gifting` → `/recurring-gifts` |
-| `src/components/navigation/DesktopHorizontalNav.tsx:19` | Label: "Recurring Gifts" |
-| `src/components/navigation/MobileBottomNavigation.tsx:32` | Label: "Recurring Gifts" |
-| `src/components/layout/AppSidebar.tsx:72` | Label: "Recurring Gifts" |
-| `src/components/layout/navigation/navigationData.tsx:8` | Label: "Recurring Gifts" |
-| `src/pages/AIGifting.tsx:73` | Title: "Recurring Gifts" + "Powered by Nicole AI" badge |
+### Phase 5: Delete ActiveRulesSection.tsx
 
-### Page Simplification (AIGifting.tsx → RecurringGifts.tsx)
-
-**KEEP**:
-- Lines 60-162: Hero section (rebrand text)
-- Lines 220-228: `ActiveRulesSection` (management table)
-- Lines 310-328: `RuleApprovalDialog` (email link approvals)
-
-**REMOVE** (setup now happens in modal):
-- Lines 79-91: "Schedule Your First Gift" button opening `AutoGiftSetupFlow`
-- Lines 280-309: `AutoGiftSetupFlow` standalone Dialog instance
-
-**MODIFY**:
-- Hero CTA → "Browse Products" (navigate to `/marketplace`)
-- Badge: "SMART AUTOMATION" → "POWERED BY NICOLE AI"
-- Title: "AI Gifting" → "Recurring Gifts"
-- Description: Update copy to focus on "set and forget" recurring
-
-**Estimated change**: -30 lines (remove setup dialog), minor text updates
-
----
-
-## Phase 4: Update Supporting Components
-
-### Minor Text Updates Only (No Logic Changes)
-
-| Component | Change |
-|-----------|--------|
-| `AutoGiftStatusBadge.tsx:21` | "AI Gifting Ready" → "Recurring Gifts Active" |
-| `AutoGiftToggle.tsx:32` | "AI Gifting with {name}" → "Recurring Gifts for {name}" |
-| `QuickGiftCTA.tsx:24-33` | "AI Gift Autopilot" → "Recurring Gift Autopilot" |
-| `ExistingRulesDialog.tsx:37` | "AI Gifting for {name}" → "Recurring Gifts for {name}" |
-| `HowItWorksModal.tsx` | Update any "AI Gifting" text |
+Once all usages are migrated, delete the redundant file.
 
 ---
 
 ## Component Reuse Summary
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| `SimpleRecipientSelector` | ✅ Reuse | Already in modal, will replace combobox in flow |
-| `HolidaySelector` | ✅ Reuse | Shared component, no changes |
-| `MultiEventSelector` | ✅ Reuse | Already in AutoGiftSetupFlow |
-| `UnifiedPaymentMethodManager` | ✅ Reuse | Shared component, no changes |
-| `ExistingRulesDialog` | ✅ Reuse | Already exists, just integrate |
-| `ActiveRulesSection` | ✅ Reuse | Management table, no changes |
-| `AddressVerificationWarning` | ✅ Reuse | Already in AutoGiftSetupFlow |
-| `HowItWorksModal` | ✅ Reuse | Educational content, text updates only |
+| Component | Status | Action |
+|-----------|--------|--------|
+| `RecipientGiftCard` | ✅ Reuse | No changes needed |
+| `OccasionRow` | ✅ Reuse | Already inside RecipientGiftCard |
+| `BudgetEditor` | ✅ Reuse | Already used by OccasionRow |
+| `getRecipientDisplayName` | ✅ Reuse | Already in helpers |
+| `isPendingInvitation` | ✅ Reuse | Already in helpers |
+| `ActiveRulesSection` | ❌ Delete | Replaced by GroupedRulesSection |
 
 ---
 
-## What We're NOT Building
+## Files Changed
 
-1. ~~New hooks for rule detection~~ → `ExistingRulesDialog` already handles this
-2. ~~Multi-event UI~~ → `MultiEventSelector` already exists
-3. ~~Notification config UI~~ → Already Step 3 in AutoGiftSetupFlow
-4. ~~New management table~~ → `ActiveRulesSection` already exists
-5. ~~Payment method selection~~ → `UnifiedPaymentMethodManager` shared
+| File | Action |
+|------|--------|
+| `src/components/gifting/unified/GroupedRulesSection.tsx` | **Create** - Extract grouping + RecipientGiftCard usage |
+| `src/pages/RecurringGifts.tsx` | **Modify** - Import GroupedRulesSection instead of ActiveRulesSection |
+| `src/components/gifting/events/automated-tab/AutomatedGiftingTabContent.tsx` | **Modify** - Import GroupedRulesSection |
+| `src/components/gifting/unified/MyGiftsDashboardSimplified.tsx` | **Modify** - Import GroupedRulesSection (remove inline grouping) |
+| `src/components/gifting/events/automated-tab/ActiveRulesSection.tsx` | **Delete** - No longer needed |
+
+---
+
+## Visual Result
+
+### Before (Flat Cards - Current ActiveRulesSection)
+```text
+┌─ Birthday for Charles Meeks ─────────────────────┐
+│  Budget: $50 │ Source: Wishlist │ [Toggle] [Edit] [Delete]
+└──────────────────────────────────────────────────┘
+
+┌─ Christmas for Charles Meeks ────────────────────┐
+│  Budget: $50 │ Source: Wishlist │ [Toggle] [Edit] [Delete]
+└──────────────────────────────────────────────────┘
+```
+
+### After (Grouped with Avatar - Reusing RecipientGiftCard)
+```text
+┌───────────────────────────────────────────────────────────┐
+│  (avatar)  Charles Meeks                    2 occasions ▼ │
+│            $100/year                                      │
+├───────────────────────────────────────────────────────────┤
+│  ┌─ Birthday ──────────────────────────────────────────┐ │
+│  │  $50 • Sends annually │ [Toggle] │ [▼ expand]       │ │
+│  │  ┌─────────────────────────────────────────────┐    │ │
+│  │  │ Up to $50 ✎ │ Wishlist + AI                 │    │ │
+│  │  │ [Advanced Settings]  [Remove]               │    │ │
+│  │  └─────────────────────────────────────────────┘    │ │
+│  └─────────────────────────────────────────────────────┘ │
+│  ┌─ Christmas ─────────────────────────────────────────┐ │
+│  │  $50 • Sends Dec 25th │ [Toggle] │ [▼ expand]       │ │
+│  └─────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Technical Details
+
+### Grouping Logic (Already Exists - lines 88-110 of MyGiftsDashboardSimplified)
+```typescript
+const groupedRules = useMemo(() => {
+  const groups = new Map<string, UnifiedGiftRule[]>();
+  
+  rules.forEach(rule => {
+    const key = rule.recipient_id || rule.pending_recipient_email || 'unknown';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(rule);
+  });
+  
+  return Array.from(groups.entries()).map(([key, recipientRules]) => ({
+    recipientKey: key,
+    recipientName: getRecipientDisplayName(recipientRules[0]),
+    recipientProfileImage: recipientRules[0].recipient?.profile_image,
+    isPending: isPendingInvitation(recipientRules[0]),
+    rules: recipientRules,
+    totalBudget: recipientRules.reduce((sum, r) => sum + (r.budget_limit || 50), 0)
+  }));
+}, [rules]);
+```
+
+This exact logic will be moved into `GroupedRulesSection`.
 
 ---
 
@@ -153,22 +175,18 @@ interface AutoGiftSetupFlowProps {
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Duplicate rule creation logic | 2 implementations | 1 (in AutoGiftSetupFlow) |
-| Recipient selectors | 2 different UIs | 1 (SimpleRecipientSelector) |
-| User pathways for recurring gifts | 3 (modal + page + dashboard tab) | 2 (modal entry + page management) |
-| Lines in UnifiedGiftSchedulingModal | 628 | ~530 |
-| Lines in AIGifting.tsx | 333 | ~300 (renamed to RecurringGifts.tsx) |
+| Rule display components | 2 (`ActiveRulesSection` + `RecipientGiftCard`) | 1 (`RecipientGiftCard` only) |
+| Grouping logic implementations | 2 (MyGiftsDashboardSimplified + new in ActiveRulesSection) | 1 (GroupedRulesSection) |
+| Lines in ActiveRulesSection | 163 | 0 (deleted) |
+| New GroupedRulesSection | 0 | ~80 (extracted, not new logic) |
+| Net lines removed | ~83 lines |
 
 ---
 
-## Testing Checklist
+## Benefits
 
-1. **Product page → Schedule Gift → One-Time mode** - unchanged
-2. **Product page → Schedule Gift → Recurring mode** - opens embedded AutoGiftSetupFlow
-3. **Pre-selected recipient carries over** when toggling to Recurring
-4. **Existing rules dialog appears** if recipient has active rules
-5. **Multi-event selection works** in embedded mode
-6. **/recurring-gifts page** shows management view only
-7. **Navigation links** all point to `/recurring-gifts`
-8. **Old /ai-gifting URLs** redirect to `/recurring-gifts`
-9. **Mobile (iOS Capacitor)** - 44px targets, haptics work in embedded flow
+1. **Single source of truth** - One component for displaying grouped rules everywhere
+2. **Visual consistency** - Same avatar + accordion pattern on `/recurring-gifts` and dashboard
+3. **Feature parity** - Inline budget editing now available everywhere (was missing in ActiveRulesSection)
+4. **Less code** - Delete 163 lines of duplicate logic
+5. **Better UX** - Grouped view reduces clutter when one person has multiple occasions

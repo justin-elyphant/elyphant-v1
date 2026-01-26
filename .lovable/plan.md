@@ -1,150 +1,156 @@
 
-# Checkout Legacy Code Cleanup Plan
+# Unify Cart Recipient Selection with SimpleRecipientSelector Pattern
 
-## Summary
-Delete 4 orphaned legacy components (~1,130 lines) and deprecate the checkout's `UnifiedDeliverySection` that renders broken recipient assignment UI.
+## Problem Statement
 
----
+The Cart page's "Select Recipient" modal (`UnifiedRecipientSelection.tsx` - 880 lines) has a different look and feel compared to the new `SimpleRecipientSelector` (429 lines) used in the `UnifiedGiftSchedulingModal`. This creates visual inconsistency across the app.
 
-## Audit Findings
+### Current State (Cart Modal - from your screenshot)
 
-### 1. Safe Deletions (Unused Components)
+| Aspect | Cart Modal (UnifiedRecipientSelection) |
+|--------|---------------------------------------|
+| **Layout** | Full modal overlay with fixed positioning |
+| **Connection Display** | Card-style rows with large avatars (40px) |
+| **Grouping** | Grouped by source: "Pending Invitations" → "Connected Friends" |
+| **Search** | Top of list, separate from options |
+| **Add New** | Bottom button "Add New Recipient" → Full inline form |
+| **Touch Targets** | Variable, some smaller than 44px |
+| **Haptic Feedback** | None |
+| **Styling** | Cards with colored borders (orange for pending) |
 
-| File | Lines | Status |
-|------|-------|--------|
-| `src/components/checkout/EnhancedRecipientSelection.tsx` | 168 | ❌ Orphaned - not imported anywhere |
-| `src/components/connections/ConnectionRecipientSelector.tsx` | 251 | ❌ Orphaned - only used by EnhancedRecipientSelection |
+### Target State (SimpleRecipientSelector Pattern)
 
-**Evidence**: The main checkout (`UnifiedCheckoutForm.tsx`) does NOT import either component. They are relics from a pre-unified architecture.
-
----
-
-### 2. Dual RecipientAssignmentSection Problem
-
-There are **TWO files** with the same name:
-
-| File | Lines | Status |
-|------|-------|--------|
-| `src/components/cart/RecipientAssignmentSection.tsx` | 678 | ❌ Legacy - contains mock data, duplicate scheduling UI |
-| `src/components/marketplace/checkout/RecipientAssignmentSection.tsx` | 31 | ❌ Stub - empty placeholder with props that are never passed |
-
-**The Problem**:
-- `UnifiedDeliverySection.tsx` imports from `src/components/cart/RecipientAssignmentSection.tsx`
-- It renders `<RecipientAssignmentSection />` with **no props** (line 100)
-- The cart version internally fetches its own data (not using passed props)
-- It contains mock connections that display in production
-- It has its own scheduling UI (lines 454-520) that conflicts with `UnifiedGiftSchedulingModal`
-
-**Recommendation**: Both files should be deleted. The checkout flow should rely on:
-1. **Cart page**: Already uses `RecipientPackagePreview` + `UnifiedGiftSchedulingModal` (working correctly)
-2. **Checkout page**: Should display already-assigned recipients from CartContext (read-only summary), not provide a duplicate assignment UI
+| Aspect | SimpleRecipientSelector |
+|--------|------------------------|
+| **Layout** | Inline expandable (Radix Collapsible) |
+| **Connection Display** | Compact list rows with smaller avatars (32px) |
+| **Grouping** | "Top 3 Connections" first, pending only shown when searching |
+| **Search** | Below "Ship to Myself", acts as gateway to more |
+| **Add New** | Top of list "Invite New Recipient" with gradient icon |
+| **Touch Targets** | Consistent 44px minimum (iOS Capacitor compliant) |
+| **Haptic Feedback** | Yes (`triggerHapticFeedback('light')` on selection) |
+| **Styling** | Monochromatic with subtle purple gradient accent |
 
 ---
 
-## Implementation Plan
+## Recommended Approach: Migrate UnifiedRecipientSelection to Use SimpleRecipientSelector
 
-### Phase 1: Delete Orphaned Checkout Components
-**Files to Delete**:
-```
-src/components/checkout/EnhancedRecipientSelection.tsx (168 lines)
-src/components/connections/ConnectionRecipientSelector.tsx (251 lines)
-```
+Rather than maintaining two different UIs, refactor `UnifiedRecipientSelection` to wrap `SimpleRecipientSelector` while preserving its modal container and "Add New Recipient" inline form functionality.
 
-### Phase 2: Delete Legacy RecipientAssignmentSection Files
-**Files to Delete**:
-```
-src/components/cart/RecipientAssignmentSection.tsx (678 lines)
-src/components/marketplace/checkout/RecipientAssignmentSection.tsx (31 lines)
-```
+### Architecture Option
 
-### Phase 3: Fix UnifiedDeliverySection
-**File**: `src/components/marketplace/checkout/UnifiedDeliverySection.tsx`
+**Option A: Thin Modal Wrapper** (Recommended)
+- Keep `UnifiedRecipientSelection` as a thin Dialog wrapper
+- Replace the 600+ lines of recipient list UI with `SimpleRecipientSelector`
+- Preserve the "Add New Recipient" form (unique to cart flow)
+- Result: ~200-250 lines (down from 880)
 
-**Current Broken Code (lines 91-102)**:
-```tsx
-{(scenario === 'gift' || scenario === 'mixed') && (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Users className="h-5 w-5" />
-        Gift Recipients
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <RecipientAssignmentSection />  // ← Renders broken legacy component
-    </CardContent>
-  </Card>
-)}
-```
-
-**Replacement**: Display a read-only summary of recipients already assigned in the cart:
-```tsx
-{(scenario === 'gift' || scenario === 'mixed') && (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Users className="h-5 w-5" />
-        Gift Recipients
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <p className="text-sm text-muted-foreground">
-        Recipients assigned in cart will be shown here.
-      </p>
-      {/* Future: Map over deliveryGroups from CartContext */}
-    </CardContent>
-  </Card>
-)}
-```
+**Option B: Full Replacement**
+- Delete `UnifiedRecipientSelection` entirely
+- Use `SimpleRecipientSelector` directly everywhere
+- Move "Add New Recipient" form to a separate modal
+- Result: Simpler but requires more refactoring of cart integration points
 
 ---
 
-## Technical Details
+## Implementation Plan (Option A - Thin Wrapper)
 
-### Why This Is Safe
-1. **Checkout flow already works**: The cart page handles all recipient assignment via `UnifiedRecipientSelection` and `RecipientPackagePreview`
-2. **No props are passed**: The legacy component is invoked with `<RecipientAssignmentSection />` (no props), so it's already semi-broken
-3. **Mock data displays in production**: The 678-line file falls back to showing "Sarah Johnson, Mike Chen..." mock users when no connections load
+### Phase 1: Refactor UnifiedRecipientSelection.tsx
 
-### What Remains After Cleanup
-- **Recipient Selection**: `SimpleRecipientSelector` (inline expandable) via `UnifiedGiftSchedulingModal`
-- **Cart Recipient UI**: `RecipientPackagePreview` (displays assigned packages with edit capability)
-- **Cart Assignment Modal**: `UnifiedRecipientSelection` (880 lines) - keep for now, potential future migration
-- **Scheduling**: `UnifiedGiftSchedulingModal` (the single standard)
+1. **Remove duplicate recipient list UI** (lines 504-656)
+   - Delete the custom card-based recipient rendering
+   - Delete the grouped recipients logic (`groupedRecipients`, `getSourceIcon`, `getSourceLabel`)
+   - Delete the user search results section
+
+2. **Import and integrate SimpleRecipientSelector**
+   - Add import for `SimpleRecipientSelector, { SelectedRecipient }`
+   - Render SimpleRecipientSelector in the modal content area
+   - Wire up `onChange` handler to convert `SelectedRecipient` → `UnifiedRecipient`
+
+3. **Keep the "Add New Recipient" form**
+   - The inline form (lines 657-879) is unique to the cart flow
+   - Preserve this as a separate state (`showNewRecipientForm`)
+   - Style the form to match SimpleRecipientSelector aesthetics
+
+4. **Simplify modal structure**
+   - Use Radix Dialog instead of custom fixed overlay
+   - Apply consistent styling with other modals
+
+### Phase 2: Type Alignment
+
+Create adapter to convert between:
+```typescript
+// SimpleRecipientSelector output
+SelectedRecipient {
+  type: 'self' | 'connection' | 'later';
+  connectionId?: string;
+  connectionName?: string;
+  shippingAddress?: {...};
+}
+
+// Cart's expected format
+UnifiedRecipient {
+  id: string;
+  name: string;
+  email?: string;
+  source: 'connection' | 'pending' | 'address_book';
+  relationship_type?: string;
+  status?: string;
+  address?: {...};
+}
+```
+
+### Phase 3: Visual Alignment
+
+Apply SimpleRecipientSelector's design patterns to the remaining form UI:
+- 44px minimum touch targets
+- Haptic feedback on interactions
+- Gradient accent on primary CTAs
+- Monochromatic foundation
 
 ---
-
-## Impact Summary
-
-| Metric | Before | After |
-|--------|--------|-------|
-| Recipient selection components | 4 overlapping | 2 unified |
-| RecipientAssignmentSection files | 2 conflicting | 0 |
-| Lines removed | - | ~1,128 lines |
-| Mock data in checkout | Present | Eliminated |
-
----
-
-## Files to Delete
-
-```
-src/components/checkout/EnhancedRecipientSelection.tsx
-src/components/connections/ConnectionRecipientSelector.tsx
-src/components/cart/RecipientAssignmentSection.tsx
-src/components/marketplace/checkout/RecipientAssignmentSection.tsx
-```
 
 ## Files to Modify
 
-```
-src/components/marketplace/checkout/UnifiedDeliverySection.tsx
-```
+| File | Action |
+|------|--------|
+| `src/components/cart/UnifiedRecipientSelection.tsx` | Major refactor - wrap SimpleRecipientSelector |
+
+## Files Unchanged
+
+| File | Reason |
+|------|--------|
+| `src/components/marketplace/product-details/SimpleRecipientSelector.tsx` | Already the target pattern |
+| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Already uses SimpleRecipientSelector |
 
 ---
 
-## Post-Cleanup Testing
+## Estimated Reduction
 
-1. **Product Page**: Verify "Schedule Gift" modal opens and recipient selection works
-2. **Cart Page**: Verify recipient packages display correctly with edit capability
-3. **Checkout Page (gift scenario)**: Verify no crash when gift items are present
-4. **Checkout Page (self scenario)**: Verify shipping form displays correctly
+| Metric | Before | After |
+|--------|--------|-------|
+| UnifiedRecipientSelection.tsx | 880 lines | ~200-250 lines |
+| Duplicate recipient list UI | Yes | No |
+| iOS Capacitor compliance | Partial | Full |
+| Visual consistency | Inconsistent | Unified |
+
+---
+
+## Technical Considerations
+
+1. **"Invite New Recipient" flow uniqueness**: The cart's inline form includes Google Places autocomplete and relationship selector. This should be preserved but restyled.
+
+2. **Universal user search**: `UnifiedRecipientSelection` has a feature to search all Elyphant users (not just connections) and create pending invitations. This could be added to `SimpleRecipientSelector` as a future enhancement, OR kept as a cart-specific feature in the form.
+
+3. **onRecipientSelect callback**: The cart expects `UnifiedRecipient` type. An adapter function will bridge the `SelectedRecipient` output from `SimpleRecipientSelector`.
+
+---
+
+## Testing Checklist
+
+1. Cart page: Click "Assign to Recipient" on unassigned item
+2. Verify modal opens with SimpleRecipientSelector-style UI
+3. Select an existing connection - verify address flows through
+4. Click "Invite New Recipient" - verify form appears with correct styling
+5. Submit new recipient - verify pending invitation created
+6. Test on iOS Capacitor - verify 44px touch targets and haptics

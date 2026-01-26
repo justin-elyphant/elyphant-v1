@@ -245,20 +245,6 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
             </div>
           ) : (
             <div className="flex flex-col">
-              {/* Search input - sticky header */}
-              <div className="flex items-center border-b px-3 py-2 sticky top-0 bg-background z-10">
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                <input
-                  type="text"
-                  placeholder="Search connections..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
-                  autoComplete="off"
-                />
-                {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
-              </div>
-
               {/* Connection list - natural height, parent modal scrolls */}
               <div className="divide-y">
                 {/* Invite New Recipient Option - TOP of list for visibility */}
@@ -302,6 +288,20 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                     </div>
                     {value?.type === 'self' && <Check className="h-4 w-4 text-primary" />}
                   </button>
+                </div>
+
+                {/* Search input - positioned above Top Connections */}
+                <div className="flex items-center border-b px-3 py-2 bg-background">
+                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <input
+                    type="text"
+                    placeholder="Search connections..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
+                    autoComplete="off"
+                  />
+                  {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
                 </div>
 
                 {/* Top Connections Section */}

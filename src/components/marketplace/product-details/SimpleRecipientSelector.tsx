@@ -61,11 +61,17 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     }
   }, [open]);
   
-  // Filter accepted connections
-  const acceptedConnections = useMemo(
-    () => connections.filter(c => c.status === 'accepted'),
-    [connections]
-  );
+  // Filter accepted connections and sort by most recently added (fallback until gift history available)
+  const acceptedConnections = useMemo(() => {
+    const accepted = connections.filter(c => c.status === 'accepted');
+    // Sort by created_at DESC (most recently added first)
+    // TODO: When gift history is available, sort by last_gift_date DESC instead
+    return accepted.sort((a, b) => {
+      const aDate = a.created_at || '';
+      const bDate = b.created_at || '';
+      return bDate.localeCompare(aDate);
+    });
+  }, [connections]);
   
   // Filter based on search
   const filteredConnections = useMemo(() => {
@@ -75,6 +81,14 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       c.profile_username?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [acceptedConnections, searchQuery]);
+  
+  // Limit to top 3 when not searching
+  const displayConnections = useMemo(() => {
+    if (searchQuery.trim().length >= 2) return filteredConnections; // Show all matches when searching
+    return filteredConnections.slice(0, 3); // Limit to top 3 when not searching
+  }, [filteredConnections, searchQuery]);
+  
+  const hasMoreConnections = !searchQuery.trim() && filteredConnections.length > 3;
   
   const filteredPending = useMemo(() => {
     if (searchQuery.length < 2) return pendingInvitations;
@@ -290,14 +304,14 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                   </button>
                 </div>
 
-                {/* Connections Section */}
-                {filteredConnections.length > 0 && (
+                {/* Top Connections Section */}
+                {displayConnections.length > 0 && (
                   <div className="p-2">
                     <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      Your Connections
+                      {searchQuery.trim().length >= 2 ? 'Matching Connections' : 'Your Top Connections'}
                     </div>
-                    {filteredConnections.map((connection) => {
+                    {displayConnections.map((connection) => {
                       const connectionId = connection.display_user_id || connection.connected_user_id;
                       const isSelected = value?.type === 'connection' && value?.connectionId === connectionId;
                       
@@ -329,6 +343,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                         </button>
                       );
                     })}
+                    
+                    {/* Show hint when more connections exist */}
+                    {hasMoreConnections && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                        +{filteredConnections.length - 3} more • Search to find them
+                      </div>
+                    )}
                   </div>
                 )}
 

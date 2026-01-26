@@ -25,11 +25,22 @@ import SchedulingModeToggle, { SchedulingMode } from './SchedulingModeToggle';
 import HolidayConversionBanner from './HolidayConversionBanner';
 import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
 
+// Product context for saving hints when creating recurring rules
+export interface ProductContext {
+  productId: string;
+  title: string;
+  brand?: string;
+  category?: string;
+  price: number;
+  image: string;
+}
+
 interface UnifiedGiftSchedulingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Context props
   product?: Product;
+  productContext?: ProductContext; // For recurring rule product hints
   existingRecipient?: RecipientAssignment;
   // Mode control
   defaultMode?: SchedulingMode;
@@ -52,12 +63,15 @@ export interface SchedulingResult {
   // Recurring-specific
   ruleId?: string;
   occasionType?: string;
+  // Buy + Recur indicator
+  alsoAddedToCart?: boolean;
 }
 
 const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   open,
   onOpenChange,
   product,
+  productContext,
   existingRecipient,
   defaultMode = 'one-time',
   allowModeSwitch = true,
@@ -294,13 +308,72 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     onOpenChange(false);
   };
 
-  // Handle recurring rule creation complete
-  const handleRecurringComplete = () => {
-    onComplete?.({
-      mode: 'recurring',
-      recipientId: selectedRecipient?.connectionId,
-      recipientName: selectedRecipient?.connectionName
-    });
+  // Handle recurring rule creation complete - implements "Buy + Recur" dual action
+  const handleRecurringComplete = (ruleData?: { dateType?: string; scheduledDate?: string }) => {
+    // Step 1: If we have a product and recipient, add to cart for THIS year's occasion (immediate sale)
+    if (product && selectedRecipient && selectedRecipient.type !== 'later') {
+      const effectiveProductId = getEffectiveProductId 
+        ? getEffectiveProductId() 
+        : String(product.product_id || product.id);
+      const variationText = getVariationDisplayText ? getVariationDisplayText() : undefined;
+      
+      // Use the scheduled date from the rule if available, otherwise calculate from date type
+      let scheduledDate: Date;
+      if (ruleData?.scheduledDate) {
+        scheduledDate = new Date(ruleData.scheduledDate);
+      } else {
+        // Default to 14 days from now if no specific date
+        scheduledDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+      }
+      
+      // Add product to cart
+      const cartProduct = {
+        ...product,
+        product_id: effectiveProductId,
+        image: product.image,
+        images: product.images,
+        variationText
+      };
+      addToCart(cartProduct);
+      
+      // Assign recipient with scheduled date
+      const recipientAssignment: RecipientAssignment = {
+        connectionId: selectedRecipient.type === 'self' ? 'self' : (selectedRecipient.connectionId || ''),
+        connectionName: selectedRecipient.type === 'self' ? userName : (selectedRecipient.connectionName || ''),
+        deliveryGroupId: `gift_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        scheduledDeliveryDate: scheduledDate.toISOString(),
+        giftMessage: giftMessage || undefined,
+        shippingAddress: selectedRecipient.shippingAddress,
+        address_verified: selectedRecipient.addressVerified
+      };
+      assignItemToRecipient(effectiveProductId, recipientAssignment);
+      
+      triggerHapticFeedback('success');
+      toast.success('Added to cart for this year!', {
+        description: `Also set up recurring gift for future ${ruleData?.dateType || 'occasions'}`,
+        action: {
+          label: 'View Cart',
+          onClick: () => navigate('/cart')
+        }
+      });
+      
+      onComplete?.({
+        mode: 'recurring',
+        recipientId: selectedRecipient.connectionId,
+        recipientName: selectedRecipient.connectionName,
+        scheduledDate: scheduledDate.toISOString().split('T')[0],
+        alsoAddedToCart: true,
+        occasionType: ruleData?.dateType
+      });
+    } else {
+      // No product context - just complete the recurring rule
+      onComplete?.({
+        mode: 'recurring',
+        recipientId: selectedRecipient?.connectionId,
+        recipientName: selectedRecipient?.connectionName
+      });
+    }
+    
     onOpenChange(false);
   };
 
@@ -445,6 +518,29 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   );
 
   // Render recurring mode - embed AutoGiftSetupFlow
+  // Build product hints from product or productContext
+  const buildProductHints = () => {
+    const ctx = productContext || (product ? {
+      productId: String(product.product_id || product.id),
+      title: product.title || product.name || '',
+      brand: product.brand,
+      category: product.category || product.category_name,
+      price: product.price,
+      image: product.image
+    } : undefined);
+    
+    if (!ctx) return undefined;
+    
+    return {
+      productId: ctx.productId,
+      title: ctx.title,
+      brand: ctx.brand,
+      category: ctx.category,
+      priceRange: [Math.floor(ctx.price * 0.8), Math.ceil(ctx.price * 1.2)] as [number, number],
+      image: ctx.image
+    };
+  };
+  
   if (mode === 'recurring') {
     return (
       <AutoGiftSetupFlow
@@ -455,6 +551,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         onComplete={handleRecurringComplete}
         showModeToggle={allowModeSwitch}
         onModeChange={(newMode) => setMode(newMode as SchedulingMode)}
+        productHints={buildProductHints()}
       />
     );
   }

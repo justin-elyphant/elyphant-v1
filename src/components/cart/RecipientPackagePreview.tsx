@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronDown, Package, Calendar, Gift } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import { DeliveryGroup, RecipientAssignment } from '@/types/recipient';
 import { cn } from '@/lib/utils';
 import { formatScheduledDate } from '@/utils/dateUtils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { detectHolidayFromDate } from '@/constants/holidayDates';
+import { useAutoGifting } from '@/hooks/useAutoGifting';
 import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
+import RecurringGiftUpsellBanner from './RecurringGiftUpsellBanner';
+import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;
@@ -20,10 +24,33 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSchedulingDrawer, setShowSchedulingDrawer] = useState(false);
+  const [showRecurringSetup, setShowRecurringSetup] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  
+  const { rules } = useAutoGifting();
 
   const groupItems = cartItems.filter(
     item => item.recipientAssignment?.connectionId === deliveryGroup.connectionId
   );
+
+  // Detect if scheduled date is a holiday
+  const detectedHoliday = useMemo(() => {
+    if (!deliveryGroup.scheduledDeliveryDate) return null;
+    return detectHolidayFromDate(new Date(deliveryGroup.scheduledDeliveryDate));
+  }, [deliveryGroup.scheduledDeliveryDate]);
+
+  // Check if rule already exists for this recipient + occasion
+  const hasExistingRule = useMemo(() => {
+    if (!detectedHoliday) return false;
+    return rules.some(r => 
+      r.recipient_id === deliveryGroup.connectionId && 
+      r.date_type === detectedHoliday.key &&
+      r.is_active
+    );
+  }, [rules, deliveryGroup.connectionId, detectedHoliday]);
+
+  // Show banner if holiday detected, no existing rule, not dismissed
+  const showUpsellBanner = detectedHoliday && !hasExistingRule && !bannerDismissed;
 
   // Get unique gift messages
   const uniqueMessages = new Set(
@@ -39,6 +66,11 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
     setShowSchedulingDrawer(false);
   };
 
+  const handleRecurringSetupComplete = () => {
+    setShowRecurringSetup(false);
+    setBannerDismissed(true); // Hide banner after successful setup
+  };
+
   // Build recipient assignment for the modal
   const existingRecipient: RecipientAssignment = {
     connectionId: deliveryGroup.connectionId,
@@ -48,6 +80,22 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
     shippingAddress: deliveryGroup.shippingAddress,
     address_verified: deliveryGroup.address_verified,
     giftMessage: groupItems[0]?.recipientAssignment?.giftMessage
+  };
+
+  // Build product hints from cart items for recurring setup
+  const buildProductHints = () => {
+    if (groupItems.length === 0) return undefined;
+    const firstProduct = groupItems[0].product;
+    const totalPrice = groupItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    return {
+      productId: String(firstProduct.product_id || firstProduct.id),
+      title: firstProduct.title || firstProduct.name || '',
+      brand: firstProduct.brand,
+      category: firstProduct.category || firstProduct.category_name,
+      priceRange: [Math.floor(totalPrice * 0.8), Math.ceil(totalPrice * 1.2)] as [number, number],
+      image: firstProduct.image
+    };
   };
 
   return (
@@ -128,6 +176,17 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
             </div>
           </CollapsibleContent>
         </div>
+        
+        {/* Holiday Upsell Banner - Shows outside the collapsible */}
+        {showUpsellBanner && (
+          <RecurringGiftUpsellBanner
+            holidayLabel={detectedHoliday?.label || ''}
+            recipientName={deliveryGroup.connectionName}
+            visible={true}
+            onConvert={() => setShowRecurringSetup(true)}
+            onDismiss={() => setBannerDismissed(true)}
+          />
+        )}
       </Collapsible>
 
       {/* Unified Gift Scheduling Modal (date-only mode from cart) */}
@@ -138,6 +197,17 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
         defaultMode="one-time"
         allowModeSwitch={false}
         onComplete={handleSchedulingComplete}
+      />
+      
+      {/* Recurring Gift Setup (from banner conversion) */}
+      <AutoGiftSetupFlow
+        open={showRecurringSetup}
+        onOpenChange={setShowRecurringSetup}
+        embedded={false}
+        recipientId={deliveryGroup.connectionId}
+        eventType={detectedHoliday?.key}
+        onComplete={handleRecurringSetupComplete}
+        productHints={buildProductHints()}
       />
     </>
   );

@@ -304,13 +304,15 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                   {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
                 </div>
 
-                {/* Top Connections Section */}
-                {displayConnections.length > 0 && (
+                {/* Top Connections Section (includes pending invitations) */}
+                {(displayConnections.length > 0 || filteredPending.length > 0) && (
                   <div className="p-2">
                     <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {searchQuery.trim().length >= 2 ? 'Matching Connections' : 'Your Top Connections'}
                     </div>
+                    
+                    {/* Accepted connections */}
                     {displayConnections.map((connection) => {
                       const connectionId = connection.display_user_id || connection.connected_user_id;
                       const isSelected = value?.type === 'connection' && value?.connectionId === connectionId;
@@ -344,22 +346,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                       );
                     })}
                     
-                    {/* Show hint when more connections exist */}
-                    {hasMoreConnections && (
-                      <div className="px-3 py-2 text-xs text-muted-foreground text-center">
-                        +{filteredConnections.length - 3} more • Search to find them
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Pending Invitations Section */}
-                {filteredPending.length > 0 && (
-                  <div className="p-2">
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Pending Invitations
-                    </div>
+                    {/* Pending invitations (merged into same section) */}
                     {filteredPending.map((invitation) => {
                       const isSelected = value?.type === 'connection' && value?.connectionId === invitation.id;
                       
@@ -391,6 +378,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                         </button>
                       );
                     })}
+                    
+                    {/* Show hint when more connections exist */}
+                    {hasMoreConnections && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                        +{filteredConnections.length - 3} more • Search to find them
+                      </div>
+                    )}
                   </div>
                 )}
 

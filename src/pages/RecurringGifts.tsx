@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
-import ActiveRulesSection from "@/components/gifting/events/automated-tab/ActiveRulesSection";
+import { GroupedRulesSection } from "@/components/gifting/unified/GroupedRulesSection";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import HowItWorksModal from "@/components/gifting/auto-gift/HowItWorksModal";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -220,11 +220,16 @@ const RecurringGifts = () => {
         </div>
 
         {/* Active Rules Section */}
-        <ActiveRulesSection 
-          rules={rules} 
-          onEditRule={(rule) => {
-            setEditingRule(rule);
-            setSetupDialogOpen(true);
+        <GroupedRulesSection 
+          rules={rules}
+          title="Active Recurring Gift Rules"
+          description="Manage your recurring gift rules"
+          onEditRule={(ruleId) => {
+            const rule = rules.find(r => r.id === ruleId);
+            if (rule) {
+              setEditingRule(rule);
+              setSetupDialogOpen(true);
+            }
           }}
         />
 

@@ -1,156 +1,174 @@
 
-# Unify Cart Recipient Selection with SimpleRecipientSelector Pattern
+# Consolidated Plan: Recurring Gifts with AI (Rebranded & Unified)
 
-## Problem Statement
+## Summary
 
-The Cart page's "Select Recipient" modal (`UnifiedRecipientSelection.tsx` - 880 lines) has a different look and feel compared to the new `SimpleRecipientSelector` (429 lines) used in the `UnifiedGiftSchedulingModal`. This creates visual inconsistency across the app.
-
-### Current State (Cart Modal - from your screenshot)
-
-| Aspect | Cart Modal (UnifiedRecipientSelection) |
-|--------|---------------------------------------|
-| **Layout** | Full modal overlay with fixed positioning |
-| **Connection Display** | Card-style rows with large avatars (40px) |
-| **Grouping** | Grouped by source: "Pending Invitations" → "Connected Friends" |
-| **Search** | Top of list, separate from options |
-| **Add New** | Bottom button "Add New Recipient" → Full inline form |
-| **Touch Targets** | Variable, some smaller than 44px |
-| **Haptic Feedback** | None |
-| **Styling** | Cards with colored borders (orange for pending) |
-
-### Target State (SimpleRecipientSelector Pattern)
-
-| Aspect | SimpleRecipientSelector |
-|--------|------------------------|
-| **Layout** | Inline expandable (Radix Collapsible) |
-| **Connection Display** | Compact list rows with smaller avatars (32px) |
-| **Grouping** | "Top 3 Connections" first, pending only shown when searching |
-| **Search** | Below "Ship to Myself", acts as gateway to more |
-| **Add New** | Top of list "Invite New Recipient" with gradient icon |
-| **Touch Targets** | Consistent 44px minimum (iOS Capacitor compliant) |
-| **Haptic Feedback** | Yes (`triggerHapticFeedback('light')` on selection) |
-| **Styling** | Monochromatic with subtle purple gradient accent |
+Consolidate the "Recurring" mode in `UnifiedGiftSchedulingModal` with the full `AutoGiftSetupFlow` wizard, and rebrand from "AI Gifting" to **"Recurring Gifts"** (with "Powered by Nicole AI" badge). This maximizes component reuse and eliminates duplicate pathways.
 
 ---
 
-## Recommended Approach: Migrate UnifiedRecipientSelection to Use SimpleRecipientSelector
+## Phase 1: Embed AutoGiftSetupFlow in UnifiedGiftSchedulingModal
 
-Rather than maintaining two different UIs, refactor `UnifiedRecipientSelection` to wrap `SimpleRecipientSelector` while preserving its modal container and "Add New Recipient" inline form functionality.
+### What We're Reusing (NOT Rebuilding)
+- `AutoGiftSetupFlow` (951 lines) - already has multi-step wizard, validation, batch rule creation
+- `SimpleRecipientSelector` - already in modal, just pass to embedded flow
+- `ExistingRulesDialog` - already built for rule collision detection
+- `MultiEventSelector` - already in AutoGiftSetupFlow for multiple occasions
+- `HolidaySelector` - shared between both
+- `UnifiedPaymentMethodManager` - shared between both
 
-### Architecture Option
+### Changes to UnifiedGiftSchedulingModal.tsx
 
-**Option A: Thin Modal Wrapper** (Recommended)
-- Keep `UnifiedRecipientSelection` as a thin Dialog wrapper
-- Replace the 600+ lines of recipient list UI with `SimpleRecipientSelector`
-- Preserve the "Add New Recipient" form (unique to cart flow)
-- Result: ~200-250 lines (down from 880)
+**DELETE** (duplicate logic):
+- Lines 309-377: `handleRecurringSetup()` function (~68 lines)
+- Lines 487-531: Inline recurring UI (HolidaySelector, budget slider, payment method) (~44 lines)
 
-**Option B: Full Replacement**
-- Delete `UnifiedRecipientSelection` entirely
-- Use `SimpleRecipientSelector` directly everywhere
-- Move "Add New Recipient" form to a separate modal
-- Result: Simpler but requires more refactoring of cart integration points
+**ADD**:
+```tsx
+// Import
+import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
+
+// In mode === 'recurring' section, replace inline form with:
+<AutoGiftSetupFlow
+  open={true}  // Always open when embedded
+  onOpenChange={(open) => !open && onOpenChange(false)}
+  embedded={true}
+  initialRecipient={selectedRecipient}  // Pre-fill from SimpleRecipientSelector
+  onComplete={() => {
+    onComplete?.({ mode: 'recurring', ... });
+    onOpenChange(false);
+  }}
+/>
+```
+
+**Estimated change**: -112 lines, +15 lines = **~97 lines removed**
 
 ---
 
-## Implementation Plan (Option A - Thin Wrapper)
+## Phase 2: Add Embedded Mode to AutoGiftSetupFlow
 
-### Phase 1: Refactor UnifiedRecipientSelection.tsx
+### Changes to AutoGiftSetupFlow.tsx
 
-1. **Remove duplicate recipient list UI** (lines 504-656)
-   - Delete the custom card-based recipient rendering
-   - Delete the grouped recipients logic (`groupedRecipients`, `getSourceIcon`, `getSourceLabel`)
-   - Delete the user search results section
-
-2. **Import and integrate SimpleRecipientSelector**
-   - Add import for `SimpleRecipientSelector, { SelectedRecipient }`
-   - Render SimpleRecipientSelector in the modal content area
-   - Wire up `onChange` handler to convert `SelectedRecipient` → `UnifiedRecipient`
-
-3. **Keep the "Add New Recipient" form**
-   - The inline form (lines 657-879) is unique to the cart flow
-   - Preserve this as a separate state (`showNewRecipientForm`)
-   - Style the form to match SimpleRecipientSelector aesthetics
-
-4. **Simplify modal structure**
-   - Use Radix Dialog instead of custom fixed overlay
-   - Apply consistent styling with other modals
-
-### Phase 2: Type Alignment
-
-Create adapter to convert between:
-```typescript
-// SimpleRecipientSelector output
-SelectedRecipient {
-  type: 'self' | 'connection' | 'later';
-  connectionId?: string;
-  connectionName?: string;
-  shippingAddress?: {...};
-}
-
-// Cart's expected format
-UnifiedRecipient {
-  id: string;
-  name: string;
-  email?: string;
-  source: 'connection' | 'pending' | 'address_book';
-  relationship_type?: string;
-  status?: string;
-  address?: {...};
+**ADD new props**:
+```tsx
+interface AutoGiftSetupFlowProps {
+  // ... existing props
+  embedded?: boolean;  // Skip Dialog wrapper
+  initialRecipient?: SelectedRecipient;  // Pre-selected from parent
+  onComplete?: () => void;  // Callback instead of onOpenChange
 }
 ```
 
-### Phase 3: Visual Alignment
+**MODIFY rendering**:
+```tsx
+// When embedded={true}:
+// 1. Don't render <Dialog> wrapper - return content directly
+// 2. Skip Step 1 (recipient) if initialRecipient provided - start at Step 2
+// 3. Call onComplete() instead of onOpenChange(false) on success
+```
 
-Apply SimpleRecipientSelector's design patterns to the remaining form UI:
-- 44px minimum touch targets
-- Haptic feedback on interactions
-- Gradient accent on primary CTAs
-- Monochromatic foundation
+**REPLACE** `RecipientSearchCombobox` with `SimpleRecipientSelector`:
+- Lines 574-616: Replace combobox with same selector used in modal
+- This ensures visual consistency between embedded and standalone modes
 
----
-
-## Files to Modify
-
-| File | Action |
-|------|--------|
-| `src/components/cart/UnifiedRecipientSelection.tsx` | Major refactor - wrap SimpleRecipientSelector |
-
-## Files Unchanged
-
-| File | Reason |
-|------|--------|
-| `src/components/marketplace/product-details/SimpleRecipientSelector.tsx` | Already the target pattern |
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Already uses SimpleRecipientSelector |
+**Estimated change**: +30 lines for new props/logic, -40 lines by removing combobox wrapper = **~10 lines removed**
 
 ---
 
-## Estimated Reduction
+## Phase 3: Rebrand "AI Gifting" → "Recurring Gifts"
+
+### Files to Update
+
+| File | Change |
+|------|--------|
+| `src/App.tsx:223` | Route stays `/recurring-gifts` (new) |
+| `src/App.tsx:241-242` | Add redirect: `/ai-gifting` → `/recurring-gifts` |
+| `src/components/navigation/DesktopHorizontalNav.tsx:19` | Label: "Recurring Gifts" |
+| `src/components/navigation/MobileBottomNavigation.tsx:32` | Label: "Recurring Gifts" |
+| `src/components/layout/AppSidebar.tsx:72` | Label: "Recurring Gifts" |
+| `src/components/layout/navigation/navigationData.tsx:8` | Label: "Recurring Gifts" |
+| `src/pages/AIGifting.tsx:73` | Title: "Recurring Gifts" + "Powered by Nicole AI" badge |
+
+### Page Simplification (AIGifting.tsx → RecurringGifts.tsx)
+
+**KEEP**:
+- Lines 60-162: Hero section (rebrand text)
+- Lines 220-228: `ActiveRulesSection` (management table)
+- Lines 310-328: `RuleApprovalDialog` (email link approvals)
+
+**REMOVE** (setup now happens in modal):
+- Lines 79-91: "Schedule Your First Gift" button opening `AutoGiftSetupFlow`
+- Lines 280-309: `AutoGiftSetupFlow` standalone Dialog instance
+
+**MODIFY**:
+- Hero CTA → "Browse Products" (navigate to `/marketplace`)
+- Badge: "SMART AUTOMATION" → "POWERED BY NICOLE AI"
+- Title: "AI Gifting" → "Recurring Gifts"
+- Description: Update copy to focus on "set and forget" recurring
+
+**Estimated change**: -30 lines (remove setup dialog), minor text updates
+
+---
+
+## Phase 4: Update Supporting Components
+
+### Minor Text Updates Only (No Logic Changes)
+
+| Component | Change |
+|-----------|--------|
+| `AutoGiftStatusBadge.tsx:21` | "AI Gifting Ready" → "Recurring Gifts Active" |
+| `AutoGiftToggle.tsx:32` | "AI Gifting with {name}" → "Recurring Gifts for {name}" |
+| `QuickGiftCTA.tsx:24-33` | "AI Gift Autopilot" → "Recurring Gift Autopilot" |
+| `ExistingRulesDialog.tsx:37` | "AI Gifting for {name}" → "Recurring Gifts for {name}" |
+| `HowItWorksModal.tsx` | Update any "AI Gifting" text |
+
+---
+
+## Component Reuse Summary
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `SimpleRecipientSelector` | ✅ Reuse | Already in modal, will replace combobox in flow |
+| `HolidaySelector` | ✅ Reuse | Shared component, no changes |
+| `MultiEventSelector` | ✅ Reuse | Already in AutoGiftSetupFlow |
+| `UnifiedPaymentMethodManager` | ✅ Reuse | Shared component, no changes |
+| `ExistingRulesDialog` | ✅ Reuse | Already exists, just integrate |
+| `ActiveRulesSection` | ✅ Reuse | Management table, no changes |
+| `AddressVerificationWarning` | ✅ Reuse | Already in AutoGiftSetupFlow |
+| `HowItWorksModal` | ✅ Reuse | Educational content, text updates only |
+
+---
+
+## What We're NOT Building
+
+1. ~~New hooks for rule detection~~ → `ExistingRulesDialog` already handles this
+2. ~~Multi-event UI~~ → `MultiEventSelector` already exists
+3. ~~Notification config UI~~ → Already Step 3 in AutoGiftSetupFlow
+4. ~~New management table~~ → `ActiveRulesSection` already exists
+5. ~~Payment method selection~~ → `UnifiedPaymentMethodManager` shared
+
+---
+
+## Estimated Impact
 
 | Metric | Before | After |
 |--------|--------|-------|
-| UnifiedRecipientSelection.tsx | 880 lines | ~200-250 lines |
-| Duplicate recipient list UI | Yes | No |
-| iOS Capacitor compliance | Partial | Full |
-| Visual consistency | Inconsistent | Unified |
-
----
-
-## Technical Considerations
-
-1. **"Invite New Recipient" flow uniqueness**: The cart's inline form includes Google Places autocomplete and relationship selector. This should be preserved but restyled.
-
-2. **Universal user search**: `UnifiedRecipientSelection` has a feature to search all Elyphant users (not just connections) and create pending invitations. This could be added to `SimpleRecipientSelector` as a future enhancement, OR kept as a cart-specific feature in the form.
-
-3. **onRecipientSelect callback**: The cart expects `UnifiedRecipient` type. An adapter function will bridge the `SelectedRecipient` output from `SimpleRecipientSelector`.
+| Duplicate rule creation logic | 2 implementations | 1 (in AutoGiftSetupFlow) |
+| Recipient selectors | 2 different UIs | 1 (SimpleRecipientSelector) |
+| User pathways for recurring gifts | 3 (modal + page + dashboard tab) | 2 (modal entry + page management) |
+| Lines in UnifiedGiftSchedulingModal | 628 | ~530 |
+| Lines in AIGifting.tsx | 333 | ~300 (renamed to RecurringGifts.tsx) |
 
 ---
 
 ## Testing Checklist
 
-1. Cart page: Click "Assign to Recipient" on unassigned item
-2. Verify modal opens with SimpleRecipientSelector-style UI
-3. Select an existing connection - verify address flows through
-4. Click "Invite New Recipient" - verify form appears with correct styling
-5. Submit new recipient - verify pending invitation created
-6. Test on iOS Capacitor - verify 44px touch targets and haptics
+1. **Product page → Schedule Gift → One-Time mode** - unchanged
+2. **Product page → Schedule Gift → Recurring mode** - opens embedded AutoGiftSetupFlow
+3. **Pre-selected recipient carries over** when toggling to Recurring
+4. **Existing rules dialog appears** if recipient has active rules
+5. **Multi-event selection works** in embedded mode
+6. **/recurring-gifts page** shows management view only
+7. **Navigation links** all point to `/recurring-gifts`
+8. **Old /ai-gifting URLs** redirect to `/recurring-gifts`
+9. **Mobile (iOS Capacitor)** - 44px targets, haptics work in embedded flow

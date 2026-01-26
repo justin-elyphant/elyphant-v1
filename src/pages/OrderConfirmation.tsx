@@ -3,15 +3,16 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles } from "lucide-react";
+import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import AutoGiftSetupFlow, { ProductHints } from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { useCart } from "@/contexts/CartContext";
 import { getOrderLineItems, getOrderLineItemsPricing } from "@/lib/utils/orderUtils";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
+import { detectHolidayFromDate } from "@/constants/holidayDates";
 
 interface Order {
   id: string;
@@ -27,6 +28,9 @@ interface Order {
   cart_data?: any;
   line_items?: any[];
   shipping_address?: any;
+  scheduled_delivery_date?: string;
+  recipient_id?: string;
+  recipient_name?: string;
 }
 
 const OrderConfirmation = () => {
@@ -95,56 +99,99 @@ const OrderConfirmation = () => {
                             orderData.cart_data?.wishlist_id ||
                             orderData.cart_data?.wishlist_owner_id;
 
-      if (!isFromWishlist) return;
+      // NEW: Check for holiday-scheduled orders
+      const scheduledDate = orderData.scheduled_delivery_date || orderData.cart_data?.scheduled_delivery_date;
+      const detectedHoliday = scheduledDate 
+        ? detectHolidayFromDate(new Date(scheduledDate)) 
+        : null;
 
-      const wishlistOwnerId = orderData.cart_data?.wishlist_owner_id;
-      const wishlistOwnerName = orderData.cart_data?.wishlist_owner_name || 'them';
+      // Show upsell if: wishlist OR holiday-scheduled
+      if (!isFromWishlist && !detectedHoliday) return;
+
+      // Get recipient info from order or cart data
+      const recipientId = orderData.recipient_id || 
+                         orderData.cart_data?.wishlist_owner_id ||
+                         orderData.cart_data?.recipient_id;
+      const recipientName = orderData.recipient_name || 
+                           orderData.cart_data?.wishlist_owner_name || 
+                           orderData.cart_data?.recipient_name ||
+                           'them';
       const totalAmount = orderData.total_amount;
 
-      if (!wishlistOwnerId) return;
+      if (!recipientId) return;
 
-      // Try to infer event type from profile's important_dates
-      const { data: profile } = await (supabase as any)
-        .from('profiles')
-        .select('important_dates')
-        .eq('id', wishlistOwnerId)
-        .single();
+      // Check for existing recurring rule for this recipient + occasion
+      const eventType = detectedHoliday?.key || 'other';
+      const { data: existingRule } = await (supabase as any)
+        .from('auto_gifting_rules')
+        .select('id')
+        .eq('recipient_id', recipientId)
+        .eq('date_type', eventType)
+        .eq('is_active', true)
+        .maybeSingle();
 
-      let eventType = 'other';
-      let eventDate = null;
+      if (existingRule) return; // Already has recurring rule
 
-      if (profile && profile.important_dates) {
-        const dates = Array.isArray(profile.important_dates) ? profile.important_dates : [];
-        const today = new Date();
-        
-        // Find next upcoming date
-        const upcomingDate = dates
-          .map((date: any) => {
-            const dateStr = date.date;
-            const [month, day] = dateStr.split('-').map(Number);
-            const parsedDate = new Date(today.getFullYear(), month - 1, day);
-            if (parsedDate < today) {
-              parsedDate.setFullYear(parsedDate.getFullYear() + 1);
-            }
-            return { ...date, parsedDate };
-          })
-          .filter((date: any) => date.parsedDate >= today)
-          .sort((a: any, b: any) => a.parsedDate.getTime() - b.parsedDate.getTime())[0];
+      // Try to infer event type from profile's important_dates (for wishlist orders)
+      let eventDate = scheduledDate || null;
 
-        if (upcomingDate) {
-          eventType = upcomingDate.type || 'other';
-          eventDate = upcomingDate.parsedDate.toISOString();
+      if (!detectedHoliday && isFromWishlist) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles')
+          .select('important_dates')
+          .eq('id', recipientId)
+          .single();
+
+        if (profile && profile.important_dates) {
+          const dates = Array.isArray(profile.important_dates) ? profile.important_dates : [];
+          const today = new Date();
+          
+          // Find next upcoming date
+          const upcomingDate = dates
+            .map((date: any) => {
+              const dateStr = date.date;
+              const [month, day] = dateStr.split('-').map(Number);
+              const parsedDate = new Date(today.getFullYear(), month - 1, day);
+              if (parsedDate < today) {
+                parsedDate.setFullYear(parsedDate.getFullYear() + 1);
+              }
+              return { ...date, parsedDate };
+            })
+            .filter((date: any) => date.parsedDate >= today)
+            .sort((a: any, b: any) => a.parsedDate.getTime() - b.parsedDate.getTime())[0];
+
+          if (upcomingDate) {
+            eventDate = upcomingDate.parsedDate.toISOString();
+          }
         }
       }
 
+      // Build product hints from order items for AI suggestions
+      const orderItems = getOrderLineItems(orderData);
+      const productHints: ProductHints | undefined = orderItems.length > 0 ? {
+        productId: orderItems[0].product_id || orderItems[0].id || '',
+        title: orderItems[0].name || orderItems[0].title || '',
+        brand: orderItems[0].brand,
+        category: orderItems[0].category,
+        priceRange: [
+          Math.floor(totalAmount * 0.8),
+          Math.ceil(totalAmount * 1.2)
+        ] as [number, number],
+        image: orderItems[0].image_url || orderItems[0].image || ''
+      } : undefined;
+
       // Prepare initial data for auto-gift setup
       setAutoGiftInitialData({
-        recipientId: wishlistOwnerId,
-        recipientName: wishlistOwnerName,
-        eventType: eventType,
-        eventDate: eventDate,
+        recipientId,
+        recipientName,
+        eventType: detectedHoliday?.key || 'other',
+        eventDate,
         budgetLimit: Math.ceil(totalAmount),
-        selectedProducts: getOrderLineItems(orderData).map((item: any) => ({
+        productHints,
+        // Enhanced copy data for holiday detection
+        isHolidayScheduled: !!detectedHoliday,
+        holidayLabel: detectedHoliday?.label,
+        selectedProducts: orderItems.map((item: any) => ({
           productId: item.product_id || item.id,
           name: item.name,
           price: item.price,
@@ -622,30 +669,35 @@ const OrderConfirmation = () => {
           </Card>
         )}
 
-        {/* Auto-Gift Upsell Banner */}
+        {/* Auto-Gift Upsell Banner - Enhanced for holiday detection */}
         {autoGiftInitialData && !showAutoGiftUpsell && (
-          <Card className="p-6 mb-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+          <Card className="p-6 mb-6 bg-gradient-to-r from-purple-50 to-sky-50 dark:from-purple-950/20 dark:to-sky-950/20 border-purple-200 dark:border-purple-800">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center">
+                  <RefreshCw className="h-6 w-6 text-white" />
                 </div>
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-2">
-                  Want to automate gifts for {autoGiftInitialData.recipientName}?
+                  {autoGiftInitialData.isHolidayScheduled 
+                    ? `Make this a recurring ${autoGiftInitialData.holidayLabel} gift?`
+                    : `Want to automate gifts for ${autoGiftInitialData.recipientName}?`
+                  }
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Never miss their special occasions! Set up auto-gifting and we'll handle everything - 
-                  from product selection to delivery - so you can focus on what matters.
+                  {autoGiftInitialData.isHolidayScheduled 
+                    ? `You just gifted for ${autoGiftInitialData.holidayLabel}! Set up recurring and we'll remind you next year with similar gift suggestions.`
+                    : `Never miss ${autoGiftInitialData.recipientName}'s special occasions! Set up recurring gifts and we'll handle everything - from product selection to delivery.`
+                  }
                 </p>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <Button
                     onClick={() => setShowAutoGiftUpsell(true)}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
                   >
-                    <Gift className="h-4 w-4 mr-2" />
-                    Set Up Auto-Gifting
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Set Up Recurring Gift
                   </Button>
                   <Button
                     variant="outline"
@@ -670,11 +722,12 @@ const OrderConfirmation = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog */}
+      {/* Auto-Gift Setup Dialog - Pass productHints for AI suggestions */}
       <AutoGiftSetupFlow
         open={showAutoGiftUpsell}
         onOpenChange={setShowAutoGiftUpsell}
         initialData={autoGiftInitialData}
+        productHints={autoGiftInitialData?.productHints}
       />
     </SidebarLayout>
   );

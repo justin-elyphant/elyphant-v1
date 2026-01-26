@@ -32,6 +32,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import SchedulingModeToggle from "@/components/gifting/unified/SchedulingModeToggle";
 import { SelectedRecipient } from "@/components/marketplace/product-details/SimpleRecipientSelector";
 
+// Product hints for AI gift suggestions
+export interface ProductHints {
+  productId: string;
+  title: string;
+  brand?: string;
+  category?: string;
+  priceRange: [number, number];
+  image: string;
+}
+
 interface AutoGiftSetupFlowProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,9 +54,11 @@ interface AutoGiftSetupFlowProps {
   // Embedded mode props
   embedded?: boolean;
   initialRecipient?: SelectedRecipient | null;
-  onComplete?: () => void;
+  onComplete?: (ruleData?: { dateType?: string; scheduledDate?: string }) => void;
   showModeToggle?: boolean;
   onModeChange?: (mode: string) => void;
+  // Product context for AI hints
+  productHints?: ProductHints;
 }
 
 interface SetupStep {
@@ -69,7 +81,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   initialRecipient,
   onComplete,
   showModeToggle = false,
-  onModeChange
+  onModeChange,
+  productHints
 }) => {
   // Component initialization
   const { createRule, updateRule, settings, updateSettings } = useAutoGifting();
@@ -425,11 +438,19 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
             push: false,
           },
           gift_selection_criteria: {
-            source: "both" as const,
+            source: productHints ? "specific" as const : "both" as const,
+            specific_product_id: productHints?.productId,
+            preferred_brands: productHints?.brand ? [productHints.brand] : [],
+            categories: productHints?.category ? [productHints.category] : [],
             max_price: formData.budgetLimit,
             min_price: Math.max(1, formData.budgetLimit * 0.1),
-            categories: [],
             exclude_items: [],
+            // Original product as reference for AI suggestions
+            original_product_reference: productHints ? {
+              title: productHints.title,
+              image: productHints.image,
+              price: productHints.priceRange[0]
+            } : undefined,
           },
           payment_method_id: formData.selectedPaymentMethodId,
           gift_message: formData.giftMessage,
@@ -475,9 +496,14 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       localStorage.removeItem('autoGiftDraft');
       console.log('✅ Recurring gift draft cleared after successful setup');
       
-      // Call onComplete callback for embedded mode
+      // Call onComplete callback for embedded mode with rule data for "Buy + Recur" flow
       if (embedded && onComplete) {
-        onComplete();
+        // Get the first rule's date info for cart assignment
+        const firstRule = rulesToCreate[0];
+        onComplete({
+          dateType: firstRule?.date_type,
+          scheduledDate: firstRule?.scheduled_date || undefined
+        });
       } else {
         onOpenChange(false);
       }

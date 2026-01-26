@@ -147,7 +147,7 @@ const NewRecipientForm: React.FC<NewRecipientFormProps> = ({
         <div className="flex items-start gap-3 text-sm bg-muted rounded-lg p-3 mx-1">
           <UserPlus className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
           <p className="text-muted-foreground leading-relaxed">
-            <strong className="font-semibold">Setting up AI Gifting:</strong> After sending the invitation, 
+            <strong className="font-semibold">Setting up Recurring Gifts:</strong> After sending the invitation, 
             you'll continue to configure gift preferences, budget, and notification settings.
           </p>
         </div>

@@ -69,7 +69,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className }) =>
         <Tabs defaultValue="all" className="flex-1 flex flex-col">
           <TabsList className="grid grid-cols-4 px-4 pt-2">
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="auto-gifts">AI Gifting</TabsTrigger>
+            <TabsTrigger value="auto-gifts">Recurring</TabsTrigger>
             <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="gifts">Gifts</TabsTrigger>
           </TabsList>

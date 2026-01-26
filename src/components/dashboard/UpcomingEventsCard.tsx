@@ -143,11 +143,11 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
               <CardDescription className="text-sm text-muted-foreground mt-1">
                 {upcomingEvents.length > 0 
                   ? `${upcomingEvents.length} event${upcomingEvents.length > 1 ? 's' : ''} need${upcomingEvents.length === 1 ? 's' : ''} your attention`
-                  : "All events are on autopilot"
+                  : "All events have recurring gifts set up"
                 }
               </CardDescription>
             </div>
-            <Link to="/gifting" className="text-sm text-muted-foreground hover:text-primary flex items-center">
+            <Link to="/recurring-gifts" className="text-sm text-muted-foreground hover:text-primary flex items-center">
               View All
             </Link>
           </div>
@@ -214,11 +214,11 @@ const UpcomingEventsCardContent = ({ onAddEvent }: UpcomingEventsCardContentProp
             ) : (
               <EmptyState
                 icon={Calendar}
-                title="All events on autopilot! 🎉"
-                description="Every upcoming event has auto-gifting enabled. You're all set!"
+                title="All events covered! 🎉"
+                description="Every upcoming event has recurring gifts enabled. You're all set!"
                 action={{
-                  label: "View Gift Autopilot",
-                  onClick: () => window.location.href = '/gifting',
+                  label: "View Recurring Gifts",
+                  onClick: () => window.location.href = '/recurring-gifts',
                   variant: "outline"
                 }}
               />

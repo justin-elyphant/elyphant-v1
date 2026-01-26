@@ -71,16 +71,16 @@ const UpcomingAutoGiftsWidget = () => {
           <div className="flex items-start gap-3 mb-4">
             <Gift className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
-              <h3 className="text-sm font-medium mb-1">Upcoming AI Gifts</h3>
+              <h3 className="text-sm font-medium mb-1">Upcoming Recurring Gifts</h3>
               <p className="text-sm text-muted-foreground">No gifts scheduled</p>
             </div>
           </div>
           <div className="pt-3 border-t border-border">
             <Link 
-              to="/dashboard?tab=auto-gifts" 
+              to="/recurring-gifts" 
               className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
             >
-              View all AI gifts
+              View all recurring gifts
             </Link>
           </div>
         </CardContent>
@@ -94,7 +94,7 @@ const UpcomingAutoGiftsWidget = () => {
     <Card>
       <CardContent className="pt-6">
         <div className="mb-4">
-          <h3 className="text-sm font-medium mb-3">Upcoming AI Gifts</h3>
+          <h3 className="text-sm font-medium mb-3">Upcoming Recurring Gifts</h3>
           <div className="space-y-1">
             <p className="text-sm font-medium">{nextGift.recipient_name}</p>
             <p className="text-sm text-muted-foreground">
@@ -108,10 +108,10 @@ const UpcomingAutoGiftsWidget = () => {
         </div>
         <div className="pt-3 border-t border-border">
           <Link 
-            to="/dashboard?tab=auto-gifts" 
+            to="/recurring-gifts" 
             className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
           >
-            View all AI gifts
+            View all recurring gifts
           </Link>
         </div>
       </CardContent>

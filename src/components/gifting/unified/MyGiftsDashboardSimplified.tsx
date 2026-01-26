@@ -231,7 +231,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Bot className="h-5 w-5 text-purple-500" />
-                  🎁 Gift Autopilot
+                  🎁 Recurring Gifts
                 </CardTitle>
                 <CardDescription>
                   Your occasions are set up and ready to go automatically

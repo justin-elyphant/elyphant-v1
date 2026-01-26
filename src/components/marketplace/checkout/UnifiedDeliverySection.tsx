@@ -1,11 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Truck, Users, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import UnifiedShippingForm from '@/components/checkout/UnifiedShippingForm';
-import RecipientAssignmentSection from '@/components/cart/RecipientAssignmentSection';
 import { ShippingInfo } from './useCheckoutState';
 import { ShippingOption } from '@/components/marketplace/zinc/services/shippingQuoteService';
 import { DeliveryScenario } from './useAdaptiveCheckout';
@@ -97,7 +95,9 @@ const UnifiedDeliverySection: React.FC<UnifiedDeliverySectionProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RecipientAssignmentSection />
+            <p className="text-sm text-muted-foreground">
+              Recipients assigned in cart will receive their gifts at their saved addresses.
+            </p>
           </CardContent>
         </Card>
       )}

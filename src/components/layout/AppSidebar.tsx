@@ -69,8 +69,8 @@ const AppSidebar = () => {
   // Gifting section
   const giftingItems = [
     {
-      title: "AI Gifting",
-      url: "/ai-gifting",
+      title: "Recurring Gifts",
+      url: "/recurring-gifts",
       icon: Gift,
     },
     {

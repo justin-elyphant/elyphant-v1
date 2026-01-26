@@ -28,9 +28,9 @@ const MobileBottomNavigation: React.FC = () => {
       icon: <ShoppingBag className="h-5 w-5" />
     },
     {
-      id: 'auto-gifts',
-      label: 'AI Gifting',
-      href: '/ai-gifting',
+      id: 'recurring-gifts',
+      label: 'Recurring',
+      href: '/recurring-gifts',
       icon: <Gift className="h-5 w-5" />
     },
     {
@@ -59,9 +59,9 @@ const MobileBottomNavigation: React.FC = () => {
     if (tab.id === "shop") {
       return location.pathname.startsWith("/marketplace");
     }
-    // Auto-Gifts
-    if (tab.id === "auto-gifts") {
-      return location.pathname.startsWith("/ai-gifting");
+    // Recurring Gifts
+    if (tab.id === "recurring-gifts") {
+      return location.pathname.startsWith("/recurring-gifts");
     }
     // Wishlists
     if (tab.id === "wishlists") {

@@ -16,10 +16,10 @@ const DesktopHorizontalNav: React.FC = () => {
       match: (path: string) => path.startsWith("/marketplace")
     },
     { 
-      label: "AI Gifting", 
-      href: "/ai-gifting", 
+      label: "Recurring Gifts", 
+      href: "/recurring-gifts", 
       icon: Gift,
-      match: (path: string) => path.startsWith("/ai-gifting")
+      match: (path: string) => path.startsWith("/recurring-gifts")
     },
     { 
       label: "Wishlists", 

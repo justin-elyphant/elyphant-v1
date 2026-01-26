@@ -60,10 +60,10 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onOpenChange })
         <DialogHeader className="space-y-3 pb-6">
           <div className="flex items-center gap-2">
             <Badge className="bg-gradient-to-r from-purple-600 to-sky-500 text-white border-0">
-              AI GIFTING
+              RECURRING GIFTS
             </Badge>
           </div>
-          <DialogTitle className="text-2xl font-bold">How AI Gifting Works</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">How Recurring Gifts Works</DialogTitle>
           <p className="text-muted-foreground">
             Set it up once, and we'll handle gift-giving for that person forever—automatically.
           </p>

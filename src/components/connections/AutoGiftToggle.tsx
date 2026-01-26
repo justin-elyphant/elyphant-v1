@@ -29,7 +29,7 @@ export const AutoGiftToggle: React.FC<AutoGiftToggleProps> = ({
   return (
     <div className={`flex items-center justify-between py-2 ${className}`}>
       <Label htmlFor={`auto-gift-${connectionId}`} className="text-sm font-medium text-muted-foreground">
-        AI Gifting with {connectionName}
+        Recurring Gifts for {connectionName}
       </Label>
       <div className="flex items-center gap-2">
         {isLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}

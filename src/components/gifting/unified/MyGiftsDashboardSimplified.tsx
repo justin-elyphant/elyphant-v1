@@ -1,31 +1,18 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  Bot, Calendar, Clock, Gift, Package, Settings, 
-  CheckCircle, AlertCircle, Pause, Play, Edit, Trash2, Plus, Target,
-  Mail, Info
-} from "lucide-react";
-import { format } from "date-fns";
+import { Bot, Calendar, Gift, Plus } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import ScheduledGiftsSection from "@/components/gifting/sections/ScheduledGiftsSection";
 import GiftActivityFeed from "@/components/gifting/sections/GiftActivityFeed";
-import { BudgetEditor } from "./BudgetEditor";
-import { 
-  getRecipientDisplayName,
-  isPendingInvitation
-} from "@/utils/autoGiftDisplayHelpers";
-import { toast } from "sonner";
-import { RecipientGiftCard } from "./RecipientGiftCard";
+import { GroupedRulesSection } from "./GroupedRulesSection";
 
 interface MyGiftsDashboardSimplifiedProps {
   onEditRule?: (ruleId: string) => void;
@@ -39,7 +26,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
   onSwitchToSmartGifting
 }) => {
   const { user } = useAuth();
-  const { rules, loading, updateRule, deleteRule, refreshData } = useAutoGifting();
+  const { rules, loading } = useAutoGifting();
 
   // Refs for smooth scrolling to sections
   const autopilotRef = React.useRef<HTMLDivElement>(null);
@@ -50,87 +37,18 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleToggleActive = async (ruleId: string, isActive: boolean) => {
-    try {
-      await updateRule(ruleId, { is_active: isActive });
-      toast.success(isActive ? "Auto-gifting enabled" : "Auto-gifting paused");
-    } catch (error) {
-      toast.error("Failed to update. Please try again.");
-    }
-  };
-
-  const handleBudgetUpdate = async (ruleId: string, newBudget: number) => {
-    try {
-      await updateRule(ruleId, { budget_limit: newBudget });
-      toast.success(`Budget updated to $${newBudget}`);
-      refreshData();
-    } catch (error) {
-      toast.error("Failed to update budget. Please try again.");
-      throw error;
-    }
-  };
-
-  const handleDeleteRule = async (ruleId: string) => {
-    if (!confirm("Remove this auto-gift occasion? You can always set it up again later.")) {
-      return;
-    }
-    
-    try {
-      await deleteRule(ruleId);
-      toast.success("Occasion removed");
-      refreshData();
-    } catch (error) {
-      toast.error("Failed to remove. Please try again.");
-    }
-  };
-
-  // Group rules by recipient
-  const groupedRules = React.useMemo(() => {
+  // Count active rules for stats
+  const activeRulesCount = React.useMemo(() => {
     const activeRules = rules?.filter(rule => rule.is_active) || [];
-    const groups = new Map<string, typeof activeRules>();
-    
+    const groups = new Set<string>();
     activeRules.forEach(rule => {
-      const recipientKey = rule.recipient_id || rule.pending_recipient_email || 'unknown';
-      if (!groups.has(recipientKey)) {
-        groups.set(recipientKey, []);
-      }
-      groups.get(recipientKey)!.push(rule);
+      groups.add(rule.recipient_id || rule.pending_recipient_email || 'unknown');
     });
-    
-    return Array.from(groups.entries()).map(([key, recipientRules]) => ({
-      recipientKey: key,
-      recipientName: getRecipientDisplayName(recipientRules[0]),
-      recipientProfileImage: recipientRules[0].recipient?.profile_image,
-      isPending: isPendingInvitation(recipientRules[0]),
-      recipientEmail: recipientRules[0].pending_recipient_email,
-      recipientId: recipientRules[0].recipient_id,
-      rules: recipientRules,
-      totalBudget: recipientRules.reduce((sum, r) => sum + (r.budget_limit || 50), 0)
-    }));
+    return groups.size;
   }, [rules]);
 
   const scheduledGifts = []; // TODO: Integrate with actual scheduled gifts data
   const giftHistory = []; // TODO: Integrate with actual gift history
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-emerald-100 text-emerald-700';
-      case 'paused': return 'bg-yellow-100 text-yellow-700';
-      case 'scheduled': return 'bg-blue-100 text-blue-700';
-      case 'completed': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <Bot className="h-4 w-4" />;
-      case 'paused': return <Pause className="h-4 w-4" />;
-      case 'scheduled': return <Clock className="h-4 w-4" />;
-      case 'completed': return <CheckCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
-    }
-  };
 
   if (loading) {
     return (
@@ -159,7 +77,7 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
                 <CardContent className="p-4 md:pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-primary">{groupedRules.length}</p>
+                      <p className="text-xl md:text-2xl font-bold text-primary">{activeRulesCount}</p>
                       <p className="text-xs md:text-sm text-muted-foreground">People Auto-Gifted</p>
                     </div>
                     <Bot className="h-6 w-6 md:h-8 md:w-8 text-purple-500" />
@@ -249,31 +167,19 @@ export const MyGiftsDashboardSimplified: React.FC<MyGiftsDashboardSimplifiedProp
             </div>
           </CardHeader>
           <CardContent>
-            {groupedRules.length > 0 ? (
-              <div className="space-y-3">
-                {groupedRules.map((group) => (
-                  <RecipientGiftCard
-                    key={group.recipientKey}
-                    recipientName={group.recipientName}
-                    recipientId={group.recipientId}
-                    recipientEmail={group.recipientEmail}
-                    recipientProfileImage={group.recipientProfileImage}
-                    isPending={group.isPending}
-                    rules={group.rules}
-                    totalBudget={group.totalBudget}
-                    onEditRule={onEditRule!}
-                    onToggleRule={handleToggleActive}
-                    onDeleteRule={handleDeleteRule}
-                    onBudgetUpdate={handleBudgetUpdate}
-                  />
-                ))}
-              </div>
+            {rules && rules.filter(r => r.is_active).length > 0 ? (
+              <GroupedRulesSection 
+                rules={rules}
+                activeOnly={true}
+                showEmptyState={false}
+                onEditRule={onEditRule}
+              />
             ) : (
               <div className="text-center py-8">
                 <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <p className="text-sm text-muted-foreground mb-2">Never forget a special occasion</p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Set up auto-gifting and we'll handle the rest—on time, every time
+                  Set up recurring gifts and we'll handle the rest—on time, every time
                 </p>
                 <Button onClick={onSwitchToSmartGifting}>
                   Get Started

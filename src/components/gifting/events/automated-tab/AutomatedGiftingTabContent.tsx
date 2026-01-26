@@ -8,7 +8,7 @@ import { UserPlus, Zap, Plus } from "lucide-react";
 import BudgetTrackingSection from "./BudgetTrackingSection";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
-import ActiveRulesSection from "./ActiveRulesSection";
+import { GroupedRulesSection } from "@/components/gifting/unified/GroupedRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
 import AutoGiftExecutionProcessor from "@/components/auto-gifting/AutoGiftExecutionProcessor";
 import AutoGiftSetupFlow from "../../auto-gift/AutoGiftSetupFlow";
@@ -96,8 +96,17 @@ const AutomatedGiftingTabContent = () => {
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
-          <ActiveRulesSection 
-            rules={rules} 
+          <GroupedRulesSection 
+            rules={rules}
+            title="My Recurring Gift Rules"
+            description="View and manage your automated gift-giving rules"
+            onEditRule={(ruleId) => {
+              const rule = rules.find(r => r.id === ruleId);
+              if (rule) {
+                setEditingRule(rule);
+                setSetupDialogOpen(true);
+              }
+            }}
           />
         </TabsContent>
 

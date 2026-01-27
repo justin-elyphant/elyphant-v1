@@ -26,6 +26,7 @@ export interface SelectedRecipient {
     phone?: string;
   };
   addressVerified?: boolean;
+  recipientDob?: string; // Birthday in MM-DD format from profile
 }
 
 interface SimpleRecipientSelectorProps {
@@ -160,7 +161,8 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       connectionId: connection.display_user_id || connection.connected_user_id || connection.id,
       connectionName: connection.profile_name || connection.pending_recipient_name || 'Recipient',
       shippingAddress,
-      addressVerified: !!rawAddress
+      addressVerified: !!rawAddress,
+      recipientDob: connection.profile_dob || undefined
     });
     setOpen(false);
     setSearchQuery("");

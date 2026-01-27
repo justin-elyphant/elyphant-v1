@@ -24,7 +24,7 @@ import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementSe
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
 import PresetHolidaySelector from './PresetHolidaySelector';
 import RecurringToggleSection from './RecurringToggleSection';
-import { AnimatePresence, motion } from 'framer-motion';
+
 
 // Product context for saving hints when creating recurring rules
 export interface ProductContext {
@@ -97,7 +97,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   // Preset/Holiday selection
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Recurring toggle state
@@ -151,12 +150,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     );
   }, [pickerValue]);
 
-  // Get the effective selected date (from preset or custom picker)
+  // Get the effective selected date (from picker or preset)
   const effectiveDate = useMemo(() => {
     if (selectedDate) return selectedDate;
-    if (showCustomDatePicker) return getPickerDate();
-    return null;
-  }, [selectedDate, showCustomDatePicker, getPickerDate]);
+    return getPickerDate();
+  }, [selectedDate, getPickerDate]);
 
   // Calculate recipient's next birthday if available
   const recipientBirthdayDate = useMemo(() => {
@@ -190,7 +188,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     if (open) {
       setGiftMessage('');
       setSelectedPreset(null);
-      setShowCustomDatePicker(false);
       setSelectedDate(null);
       setIsRecurring(false);
       setBudget(product?.price ? Math.round(product.price * 1.2) : 50);
@@ -217,26 +214,30 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     }
   }, [open, existingRecipient, product?.price]);
 
-  // Handle preset selection
+  // Handle preset selection - updates picker to match
   const handlePresetSelect = (presetKey: string, date: Date) => {
     setSelectedPreset(presetKey);
     setSelectedDate(date);
-    setShowCustomDatePicker(false);
+    // Sync picker to match the selected holiday date
+    setPickerValue({
+      month: months[date.getMonth()],
+      day: String(date.getDate()),
+      year: String(date.getFullYear())
+    });
   };
 
-  // Handle custom date selection
-  const handleCustomDateSelect = () => {
-    setSelectedPreset('custom');
-    setShowCustomDatePicker(true);
+  // Handle picker change - clears preset selection
+  const handlePickerChange = (value: { month: string; day: string; year: string }) => {
+    setPickerValue(value);
+    setSelectedPreset(null);
+    setSelectedDate(null); // Will use getPickerDate() via effectiveDate
+  };
+
+  // Handle clearing preset from dropdown
+  const handlePresetClear = () => {
+    setSelectedPreset(null);
     setSelectedDate(null);
   };
-
-  // Update selected date when custom picker changes
-  useEffect(() => {
-    if (showCustomDatePicker && selectedPreset === 'custom') {
-      setSelectedDate(getPickerDate());
-    }
-  }, [pickerValue, showCustomDatePicker, selectedPreset, getPickerDate]);
 
   // Handle invite new recipient
   const handleInviteNew = async (name: string, email: string) => {
@@ -481,65 +482,60 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
       <Separator />
 
-      {/* Preset Holiday Selector */}
+      {/* Delivery Date Section */}
+      <div className="space-y-3">
+        <label className="text-sm font-semibold text-foreground block">
+          Delivery Date
+        </label>
+        
+        {/* iOS Scroll Wheel Picker - Always Visible */}
+        <div className="bg-muted/30 rounded-lg py-3">
+          <Picker
+            value={pickerValue}
+            onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
+            wheelMode="natural"
+            height={160}
+          >
+            <Picker.Column name="month">
+              {months.map((month) => (
+                <Picker.Item key={month} value={month}>
+                  {month}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+            <Picker.Column name="day">
+              {days.map((day) => (
+                <Picker.Item key={day} value={day}>
+                  {day}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+            <Picker.Column name="year">
+              {years.map((year) => (
+                <Picker.Item key={year} value={year}>
+                  {year}
+                </Picker.Item>
+              ))}
+            </Picker.Column>
+          </Picker>
+        </div>
+
+        {/* Selected Date Preview */}
+        {effectiveDate && (
+          <p className="text-xs text-muted-foreground text-center">
+            Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Popular Holidays/Events Dropdown */}
       <PresetHolidaySelector
         selectedPreset={selectedPreset}
         recipientDob={recipientDobForPresets}
         recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
         onPresetSelect={handlePresetSelect}
-        onCustomDateSelect={handleCustomDateSelect}
+        onClear={handlePresetClear}
       />
-
-      {/* Custom Date Picker (iOS Scroll Wheel) */}
-      <AnimatePresence>
-        {showCustomDatePicker && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="bg-muted/30 rounded-lg py-3">
-              <Picker
-                value={pickerValue}
-                onChange={(value) => setPickerValue(value as { month: string; day: string; year: string })}
-                wheelMode="natural"
-                height={160}
-              >
-                <Picker.Column name="month">
-                  {months.map((month) => (
-                    <Picker.Item key={month} value={month}>
-                      {month}
-                    </Picker.Item>
-                  ))}
-                </Picker.Column>
-                <Picker.Column name="day">
-                  {days.map((day) => (
-                    <Picker.Item key={day} value={day}>
-                      {day}
-                    </Picker.Item>
-                  ))}
-                </Picker.Column>
-                <Picker.Column name="year">
-                  {years.map((year) => (
-                    <Picker.Item key={year} value={year}>
-                      {year}
-                    </Picker.Item>
-                  ))}
-                </Picker.Column>
-              </Picker>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Selected Date Preview */}
-      {effectiveDate && (
-        <p className="text-xs text-muted-foreground text-center">
-          Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
-        </p>
-      )}
 
       <Separator />
 

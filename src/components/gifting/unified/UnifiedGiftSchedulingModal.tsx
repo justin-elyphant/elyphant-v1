@@ -593,7 +593,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   // Footer buttons
   const FooterButtons = ({ className }: { className?: string }) => (
-    <div className={cn("flex gap-3", className)}>
+    <div className={cn("flex flex-row gap-3 w-full", className)}>
       <Button
         variant="outline"
         className="flex-1 h-11 min-h-[44px]"
@@ -603,7 +603,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         Cancel
       </Button>
       <Button
-        className="flex-1 h-11 min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
+        className="flex-1 h-11 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground"
         onClick={handleSchedule}
         disabled={isSubmitting || !effectiveDate}
       >
@@ -649,17 +649,21 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Gift className="h-5 w-5" />
             Schedule Gift
           </DialogTitle>
         </DialogHeader>
 
-        <ModalContent />
+        <div className="overflow-y-auto flex-1 py-2">
+          <ModalContent />
+        </div>
 
-        <FooterButtons className="pt-4" />
+        <div className="flex-shrink-0 border-t pt-4 mt-2">
+          <FooterButtons />
+        </div>
       </DialogContent>
     </Dialog>
   );

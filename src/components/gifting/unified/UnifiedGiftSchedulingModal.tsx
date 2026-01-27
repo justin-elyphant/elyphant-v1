@@ -553,7 +553,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
               transition={{ duration: 0.2 }}
               className="space-y-3"
             >
-              {/* Holiday dropdown first */}
+              {/* Holiday dropdown - date is handled automatically */}
               <PresetHolidaySelector
                 selectedPreset={selectedPreset}
                 recipientDob={recipientDobForPresets}
@@ -563,44 +563,19 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
                 onClear={handlePresetClear}
               />
               
-              {/* Date picker below, synced to holiday */}
-              <div className="bg-muted/30 rounded-lg py-3 px-2">
-                {isMobile ? (
-                  <Picker
-                    value={pickerValue}
-                    onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
-                    wheelMode="natural"
-                    height={160}
+              {/* Helper text for edge cases - only show when no holiday selected */}
+              {!selectedPreset && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Don't see your date? Switch to{' '}
+                  <button 
+                    type="button"
+                    onClick={() => setDeliveryType('specific')}
+                    className="text-primary underline underline-offset-2 font-medium"
                   >
-                    <Picker.Column name="month">
-                      {months.map((month) => (
-                        <Picker.Item key={month} value={month}>
-                          {month}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                    <Picker.Column name="day">
-                      {days.map((day) => (
-                        <Picker.Item key={day} value={day}>
-                          {day}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                    <Picker.Column name="year">
-                      {years.map((year) => (
-                        <Picker.Item key={year} value={year}>
-                          {year}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                  </Picker>
-                ) : (
-                  <DropdownDatePicker
-                    value={pickerValue}
-                    onChange={handlePickerChange}
-                  />
-                )}
-              </div>
+                    Specific Date
+                  </button>
+                </p>
+              )}
             </motion.div>
           ) : (
             <motion.div

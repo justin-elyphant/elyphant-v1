@@ -1,159 +1,322 @@
 
-# Responsive Date Picker: Desktop Dropdowns vs Mobile Scroll Wheel
+
+# Gift Scheduling Coaching Flow: "Holiday or Specific Date?"
+## With iOS Capacitor Compliance
+
+---
 
 ## Overview
 
-Create a device-aware date selection experience that uses point-and-click dropdown selects on desktop while preserving the iOS-style scroll wheel picker on mobile/tablet devices.
+Add a coaching question before the date selection area to guide users through the scheduling process. This creates a clearer mental model and helps shoppers understand their options, while maintaining full iOS Capacitor compliance for mobile and tablet devices.
 
 ---
 
 ## Current vs Proposed Layout
 
 ```text
-DESKTOP (lg and up):                        MOBILE/TABLET (md and below):
+CURRENT FLOW:                               PROPOSED FLOW:
 ┌────────────────────────────────────┐      ┌────────────────────────────────────┐
-│ Delivery Date                      │      │ Delivery Date                      │
-│ ┌──────────┐ ┌──────────┐ ┌──────┐ │      │ ┌──────────────────────────────┐   │
-│ │ January▼ │ │ 15     ▼ │ │2027▼ │ │      │ │   January    15    2027      │   │
-│ └──────────┘ └──────────┘ └──────┘ │      │ │   ◄─────────────────────►    │   │
-│                                    │      │ └──────────────────────────────┘   │
-│ Popular Holidays/Events            │      │                                    │
-│ ┌────────────────────────────────┐ │      │ Popular Holidays/Events            │
-│ │ Select a holiday...         ▼  │ │      │ ┌────────────────────────────────┐ │
-│ └────────────────────────────────┘ │      │ │ Select a holiday...         ▼  │ │
-└────────────────────────────────────┘      │ └────────────────────────────────┘ │
-                                            └────────────────────────────────────┘
+│ 🎁 Schedule Gift                   │      │ 🎁 Schedule Gift                   │
+│                                    │      │                                    │
+│ Who is this gift for?              │      │ Who is this gift for?              │
+│ ┌────────────────────────────────┐ │      │ ┌────────────────────────────────┐ │
+│ │ Select recipient            ▼  │ │      │ │ Select recipient            ▼  │ │
+│ └────────────────────────────────┘ │      │ └────────────────────────────────┘ │
+│                                    │      │                                    │
+│ ───────────────────────────────    │      │ ───────────────────────────────    │
+│                                    │      │                                    │
+│ Delivery Date                      │      │ When should this gift arrive?      │
+│ ┌──────────┐ ┌──────────┐ ┌──────┐ │      │                                    │
+│ │ February │ │ 3       ▼ │ │2026▼ │ │      │ ┌─────────────┐ ┌───────────────┐  │
+│ └──────────┘ └──────────┘ └──────┘ │      │ │   🎄        │ │   📅          │  │
+│                                    │      │ │ Holiday/    │ │ Specific      │  │
+│ Popular Holidays/Events            │      │ │ Event       │ │ Date          │  │
+│ ┌────────────────────────────────┐ │      │ └──[SELECTED]─┘ └───────────────┘  │
+│ │ Select a holiday...         ▼  │ │      │                                    │
+│ └────────────────────────────────┘ │      │ [Then show either Holiday picker   │
+│                                    │      │  OR Date picker based on choice]   │
+└────────────────────────────────────┘      └────────────────────────────────────┘
 ```
 
 ---
 
-## Key Changes
+## iOS Capacitor Standards Checklist
 
-1. **New `DropdownDatePicker` Component**: Three inline Select dropdowns for Month, Day, Year with proper z-index and event handling for nested dialogs
+| Requirement | Implementation |
+|-------------|----------------|
+| **44px Touch Targets** | Cards use `min-h-[56px]` (larger than minimum for better UX) |
+| **Haptic Feedback** | `triggerHapticFeedback('selection')` on card tap |
+| **Spring Animations** | `motion.div` with `type: 'spring', stiffness: 400, damping: 30` |
+| **whileTap Scale** | `whileTap={{ scale: 0.98 }}` for tactile press feedback |
+| **Safe Area Compatibility** | Inherits from parent modal's safe area handling |
+| **Touch Action** | `touch-action: manipulation` to prevent zoom delays |
+| **No Gesture Interception** | Native scroll behavior preserved (no custom touch hooks) |
 
-2. **Conditional Rendering in Modal**: Use `useIsMobile(1024)` to determine which picker to show:
-   - Desktop (≥1024px): DropdownDatePicker
-   - Mobile/Tablet (<1024px): Existing iOS scroll wheel Picker
+---
 
-3. **Shared State**: Both picker types will use the same `pickerValue` state (`{ month, day, year }`) so switching between them or selecting holidays syncs correctly
+## Design Decision: Two Clickable Cards
+
+A toggle-style UI with two horizontally arranged cards (matching `SchedulingModeToggle` pattern):
+
+| Option | Icon | Label | Description |
+|--------|------|-------|-------------|
+| **Holiday/Event** | CalendarHeart | "Holiday / Event" | "Arriving for a special occasion" |
+| **Specific Date** | Calendar | "Specific Date" | "Pick an exact arrival date" |
+
+### Why Cards over Radio Buttons?
+- More visual and engaging for e-commerce context
+- Easier to tap on mobile (56px touch targets exceed 44px minimum)
+- Matches the Lululemon-inspired minimalist aesthetic
+- Matches existing `SchedulingModeToggle` component pattern
+
+---
+
+## Behavior Logic
+
+| Selection | What Shows Next |
+|-----------|----------------|
+| **Holiday/Event** | Show `PresetHolidaySelector` dropdown first, then date picker below synced to selection |
+| **Specific Date** | Show date picker immediately (no holiday dropdown visible) |
+
+### Smart Defaults
+- If recipient has a birthday or important dates coming up within 60 days: **default to Holiday/Event**
+- Otherwise: **default to Specific Date** (most common use case)
 
 ---
 
 ## Technical Implementation
 
-### Phase 1: Create DropdownDatePicker Component
+### Phase 1: Create DeliveryTypeSelector Component
 
-**New File**: `src/components/ui/dropdown-date-picker.tsx`
+**New File**: `src/components/gifting/unified/DeliveryTypeSelector.tsx`
 
 ```typescript
-interface DropdownDatePickerProps {
-  value: { month: string; day: string; year: string };
-  onChange: (value: { month: string; day: string; year: string }) => void;
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { Calendar, CalendarHeart } from 'lucide-react';
+import { triggerHapticFeedback } from '@/utils/haptics';
+import { motion } from 'framer-motion';
+
+export type DeliveryType = 'holiday' | 'specific';
+
+interface DeliveryTypeSelectorProps {
+  selectedType: DeliveryType;
+  onTypeChange: (type: DeliveryType) => void;
+  disabled?: boolean;
   className?: string;
 }
-```
 
-**Key Features**:
-- Three Radix Select components in a horizontal flex row
-- `onPointerDown={(e) => e.stopPropagation()}` on triggers (for nested dialog compatibility)
-- `z-[9999]` and `position="popper"` on SelectContent
-- Days dynamically calculated based on selected month/year
-- Compact styling matching modal aesthetic
+const DeliveryTypeSelector: React.FC<DeliveryTypeSelectorProps> = ({
+  selectedType,
+  onTypeChange,
+  disabled = false,
+  className
+}) => {
+  const handleTypeSelect = (newType: DeliveryType) => {
+    if (disabled || newType === selectedType) return;
+    triggerHapticFeedback('selection'); // iOS Capacitor haptic
+    onTypeChange(newType);
+  };
 
-**UI Structure**:
-```typescript
-<div className="grid grid-cols-3 gap-2">
-  {/* Month Select */}
-  <Select value={month} onValueChange={handleMonthChange}>
-    <SelectTrigger onPointerDown={(e) => e.stopPropagation()}>
-      <SelectValue placeholder="Month" />
-    </SelectTrigger>
-    <SelectContent className="z-[9999]" position="popper">
-      {months.map(...)}
-    </SelectContent>
-  </Select>
-  
-  {/* Day Select */}
-  <Select value={day} onValueChange={handleDayChange}>
-    ...
-  </Select>
-  
-  {/* Year Select */}
-  <Select value={year} onValueChange={handleYearChange}>
-    ...
-  </Select>
-</div>
+  return (
+    <div className={cn(
+      "relative grid grid-cols-2 gap-2",
+      disabled && "opacity-50 pointer-events-none",
+      className
+    )}>
+      {/* Holiday/Event Option */}
+      <motion.button
+        type="button"
+        onClick={() => handleTypeSelect('holiday')}
+        whileTap={{ scale: 0.98 }} // iOS tactile feedback
+        className={cn(
+          "relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-colors",
+          "min-h-[56px]", // Exceeds 44px iOS touch target
+          "touch-action-manipulation", // Prevent zoom delay
+          selectedType === 'holiday'
+            ? "bg-primary/5 border-primary"
+            : "bg-background border-border hover:border-muted-foreground/30"
+        )}
+      >
+        <CalendarHeart className={cn(
+          "h-5 w-5",
+          selectedType === 'holiday' ? "text-primary" : "text-muted-foreground"
+        )} />
+        <span className={cn(
+          "text-sm font-medium",
+          selectedType === 'holiday' ? "text-foreground" : "text-muted-foreground"
+        )}>
+          Holiday / Event
+        </span>
+        <span className="text-xs text-muted-foreground text-center">
+          For a special occasion
+        </span>
+      </motion.button>
+
+      {/* Specific Date Option */}
+      <motion.button
+        type="button"
+        onClick={() => handleTypeSelect('specific')}
+        whileTap={{ scale: 0.98 }} // iOS tactile feedback
+        className={cn(
+          "relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-colors",
+          "min-h-[56px]", // Exceeds 44px iOS touch target
+          "touch-action-manipulation", // Prevent zoom delay
+          selectedType === 'specific'
+            ? "bg-primary/5 border-primary"
+            : "bg-background border-border hover:border-muted-foreground/30"
+        )}
+      >
+        <Calendar className={cn(
+          "h-5 w-5",
+          selectedType === 'specific' ? "text-primary" : "text-muted-foreground"
+        )} />
+        <span className={cn(
+          "text-sm font-medium",
+          selectedType === 'specific' ? "text-foreground" : "text-muted-foreground"
+        )}>
+          Specific Date
+        </span>
+        <span className="text-xs text-muted-foreground text-center">
+          Pick an exact date
+        </span>
+      </motion.button>
+    </div>
+  );
+};
+
+export default DeliveryTypeSelector;
 ```
 
 ### Phase 2: Update UnifiedGiftSchedulingModal.tsx
 
-**Replace** the current Picker section (lines 500-530) with conditional rendering:
-
+**New State**:
 ```typescript
-{/* Date Picker - Responsive */}
-<div className="bg-muted/30 rounded-lg py-3 px-2">
-  {isMobile ? (
-    // Mobile/Tablet: iOS Scroll Wheel
-    <Picker
-      value={pickerValue}
-      onChange={(value) => handlePickerChange(value)}
-      wheelMode="natural"
-      height={160}
-    >
-      {/* ... existing columns ... */}
-    </Picker>
-  ) : (
-    // Desktop: Dropdown Selects
-    <DropdownDatePicker
-      value={pickerValue}
-      onChange={handlePickerChange}
-    />
+const [deliveryType, setDeliveryType] = useState<'holiday' | 'specific'>('holiday');
+```
+
+**Smart Default Logic**:
+```typescript
+// Check if recipient has upcoming events within 60 days
+const hasUpcomingEvents = useMemo(() => {
+  if (!selectedRecipient) return false;
+  const now = new Date();
+  const futureWindow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+  
+  // Check birthday
+  if (recipientDobForPresets) {
+    // Parse and check if within window
+    return true; // Simplified - actual implementation will calculate
+  }
+  
+  return recipientImportantDatesForPresets.length > 0;
+}, [recipientDobForPresets, recipientImportantDatesForPresets, selectedRecipient]);
+
+// Set initial delivery type based on events
+useEffect(() => {
+  if (selectedRecipient) {
+    setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
+  }
+}, [hasUpcomingEvents, selectedRecipient]);
+```
+
+**Updated Delivery Date Section**:
+```typescript
+{/* Delivery Date Section */}
+<div className="space-y-3">
+  <label className="text-sm font-semibold text-foreground block">
+    When should this gift arrive?
+  </label>
+  
+  {/* Step 1: Coaching Question */}
+  <DeliveryTypeSelector
+    selectedType={deliveryType}
+    onTypeChange={(type) => {
+      setDeliveryType(type);
+      if (type === 'specific') {
+        setSelectedPreset(''); // Clear holiday selection
+      }
+    }}
+  />
+  
+  {/* Step 2: Conditional content based on selection */}
+  <AnimatePresence mode="wait">
+    {deliveryType === 'holiday' ? (
+      <motion.div
+        key="holiday-flow"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="space-y-3"
+      >
+        {/* Holiday dropdown first */}
+        <PresetHolidaySelector {...props} />
+        
+        {/* Date picker below, synced */}
+        <div className="bg-muted/30 rounded-lg py-3 px-2">
+          {isMobile ? <Picker ... /> : <DropdownDatePicker ... />}
+        </div>
+      </motion.div>
+    ) : (
+      <motion.div
+        key="specific-flow"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+      >
+        {/* Specific date: Just show date picker */}
+        <div className="bg-muted/30 rounded-lg py-3 px-2">
+          {isMobile ? <Picker ... /> : <DropdownDatePicker ... />}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+  
+  {/* Date confirmation */}
+  {effectiveDate && (
+    <p className="text-xs text-muted-foreground text-center">
+      Gift will arrive on or before <span className="font-medium">{format(effectiveDate, 'PPP')}</span>
+    </p>
   )}
 </div>
 ```
 
-**Note**: The `isMobile` hook is already imported with breakpoint 1024, so tablets (768-1023px) will get the scroll picker, matching iOS Capacitor behavior.
+---
+
+## Visual Design (Monochromatic + iOS Native Feel)
+
+### Card States
+| State | Styling |
+|-------|---------|
+| **Default** | `bg-background border-border` |
+| **Hover** | `border-muted-foreground/30` (subtle) |
+| **Selected** | `bg-primary/5 border-primary` (Elyphant purple accent) |
+| **Pressed** | `scale: 0.98` via framer-motion |
+
+### Responsive Behavior
+| Device | Layout |
+|--------|--------|
+| **Mobile** | 2-column grid, compact text, scroll wheel date picker |
+| **Tablet** | 2-column grid, full descriptions, scroll wheel date picker |
+| **Desktop** | 2-column grid, full descriptions, dropdown date picker |
 
 ---
 
-## Component Changes Summary
+## Files to Create/Modify
 
-| Component | Changes |
-|-----------|---------|
-| `src/components/ui/dropdown-date-picker.tsx` | **NEW** - Desktop dropdown date picker with Month/Day/Year selects |
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Conditional render: DropdownDatePicker on desktop, Picker on mobile/tablet |
-
----
-
-## Visual Design
-
-**Dropdown Styling**:
-- Use existing Radix Select with `bg-background` triggers
-- Compact height matching modal inputs
-- Month dropdown slightly wider to accommodate long names (flex-[1.5])
-- Day and Year equal width (flex-1)
-
-**Responsive Breakpoint**:
-- Uses existing `useIsMobile(1024)` hook
-- Desktop: ≥1024px width
-- Mobile/Tablet: <1024px width
+| File | Action |
+|------|--------|
+| `src/components/gifting/unified/DeliveryTypeSelector.tsx` | **CREATE** - New coaching component with iOS Capacitor compliance |
+| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | **MODIFY** - Add state, smart defaults, and conditional rendering |
 
 ---
 
-## User Experience
+## User Experience Benefits
 
-| Device | Behavior |
-|--------|----------|
-| **Desktop** | Click dropdowns to select month, day, year - precise point-and-click |
-| **Tablet** | iOS scroll wheel - natural touch gestures |
-| **Mobile** | iOS scroll wheel - optimized for finger scrolling |
+1. **Reduced Cognitive Load**: Users immediately understand their two paths
+2. **Guided Journey**: Question format feels conversational
+3. **Smart Defaults**: System anticipates user intent based on recipient data
+4. **Cleaner UI**: Hiding the holiday dropdown when not needed reduces visual noise
+5. **Native iOS Feel**: Haptics, spring animations, and proper touch targets
+6. **Consistent Patterns**: Matches existing `SchedulingModeToggle` component
 
----
-
-## Benefits
-
-1. **Trackpad Friendly**: Eliminates scroll sensitivity issues on desktop
-2. **Familiar Pattern**: Desktop users expect dropdowns for date selection
-3. **Touch Optimized**: Mobile/tablet keeps the native-feeling scroll wheel
-4. **Consistent State**: Same `pickerValue` state works for both picker types
-5. **Holiday Sync**: Selecting a holiday updates both picker types correctly

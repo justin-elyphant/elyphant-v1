@@ -119,20 +119,28 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
     }
     
     // Add recipient's important dates (anniversaries, etc.)
-    recipientImportantDates.forEach((importantDate, index) => {
-      const nextDate = calculateNextOccurrence(importantDate.date);
-      if (nextDate) {
-        const title = importantDate.title || importantDate.description || 'Special Date';
-        const icon = getEventIcon(importantDate.type, title);
-        options.push({
-          key: `custom_${importantDate.id || index}`,
-          label: recipientName ? `${recipientName}'s ${title}` : title,
-          icon,
-          date: nextDate,
-          dateLabel: nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        });
-      }
-    });
+    // SKIP birthday entries - we handle those via recipientDob prop
+    recipientImportantDates
+      .filter(importantDate => {
+        const lowerTitle = (importantDate.title || '').toLowerCase();
+        const lowerType = (importantDate.type || '').toLowerCase();
+        // Skip if it's a birthday (already handled above)
+        return !lowerTitle.includes('birthday') && lowerType !== 'birthday';
+      })
+      .forEach((importantDate, index) => {
+        const nextDate = calculateNextOccurrence(importantDate.date);
+        if (nextDate) {
+          const title = importantDate.title || importantDate.description || 'Special Date';
+          const icon = getEventIcon(importantDate.type, title);
+          options.push({
+            key: `custom_${importantDate.id || index}`,
+            label: recipientName ? `${recipientName}'s ${title}` : title,
+            icon,
+            date: nextDate,
+            dateLabel: nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          });
+        }
+      });
     
     // Add standard holidays (skip birthday as we handle it above)
     Object.entries(PRESET_HOLIDAYS).forEach(([key, preset]) => {

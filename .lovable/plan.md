@@ -1,408 +1,397 @@
 
 
-# Buy Now + Recur Later: Unified Product-to-Recurring Flow
+# Unified Hybrid Gift Scheduling Modal with Birthday Integration
 
-## Problem Statement
+## Overview
 
-When a user clicks "Schedule as Gift" → "Recurring" from a product page (e.g., Apple AirPods for Mom's birthday):
-
-**Current behavior**: Creates a recurring rule BUT doesn't add the product to cart → **Lost sale**
-
-**Desired behavior**: 
-1. ✅ Add THIS product to cart for THIS occasion (immediate purchase)
-2. ✅ Create recurring rule for NEXT year with product context saved
-3. ✅ Show upsell banners in cart when holiday detected
+This plan transforms the current tab-based "One-Time vs Recurring" modal into a **single linear flow** where recurring is an optional toggle enhancement. Birthday is added as a special preset that dynamically pulls the recipient's birthday from their profile data.
 
 ---
 
-## Solution Overview
-
-### Three Integrated Features
+## Architecture Changes
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         PRODUCT PAGE                                     │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  [Schedule as Gift]                                              │   │
-│  │      └─► "Recurring" mode selected                               │   │
-│  │           └─► DUAL ACTION:                                       │   │
-│  │                ✓ Add product to cart for Dec 25, 2026           │   │
-│  │                ✓ Create recurring rule for Dec 25, 2027+        │   │
-│  │                ✓ Save product hints: category, brand, price     │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
+CURRENT (Tab-Based):                    PROPOSED (Linear with Toggle):
+┌─────────────────────────┐             ┌─────────────────────────────────────┐
+│ [One-Time] [Recurring]  │             │ Schedule Gift                        │
+├─────────────────────────┤             ├─────────────────────────────────────┤
+│ One-Time:               │             │ Who is this gift for?               │
+│ • Recipient             │             │ [SimpleRecipientSelector]           │
+│ • Date picker           │             │                                     │
+│ • Gift message          │  ────────►  │ Delivery Date                       │
+├─────────────────────────┤             │ [Birthday*] [Christmas] [Valentine] │
+│ Recurring:              │             │ [Mother's Day] [Other Date...]      │
+│ • Completely separate   │             │                                     │
+│   wizard (3 steps)      │             │ Gift Message (Optional)             │
+│ • Step navigation       │             │ [Textarea]                          │
+└─────────────────────────┘             │                                     │
+                                        │ ─────────────────────────────────── │
+                                        │ 🔄 Make this recurring      [OFF]   │
+                                        │    ▼ Expands when ON:               │
+                                        │    • Budget selector                │
+                                        │    • Payment method                 │
+                                        │    • Notification preferences       │
+                                        │                                     │
+                                        │ [Schedule Gift]                     │
+                                        └─────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                             CART                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  📦 Charles Meeks (2 items)                                      │   │
-│  │     Scheduled: Dec 25, 2026                                      │   │
-│  ├─────────────────────────────────────────────────────────────────┤   │
-│  │  🔔 This is Christmas! Make it a recurring gift?                 │   │
-│  │                                    [Make Recurring]  [Dismiss]   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      ORDER CONFIRMATION                                  │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  ✨ Want to automate this gift for Charles next year?           │   │
-│  │     You just gifted AirPods for Christmas.                       │   │
-│  │     Set up recurring and we'll remind you next December!         │   │
-│  │                        [Set Up Recurring Gift]                   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
+* Birthday chip is DYNAMIC - only appears when recipient has dob in profile
 ```
 
 ---
 
-## Phase 1: Product Page "Buy + Recur" Flow
+## Phase 1: Data Flow Enhancement
 
-### Changes to UnifiedGiftSchedulingModal.tsx
+### Update `SelectedRecipient` Interface
 
-**New Prop**:
+Add `recipientDob` to carry birthday data through the selector:
+
 ```typescript
-interface UnifiedGiftSchedulingModalProps {
-  // ... existing props
-  productContext?: {
-    productId: string;
-    title: string;
-    brand?: string;
-    category?: string;
-    price: number;
-    image: string;
-  };
+// src/components/marketplace/product-details/SimpleRecipientSelector.tsx
+export interface SelectedRecipient {
+  type: 'self' | 'connection' | 'later';
+  connectionId?: string;
+  connectionName?: string;
+  shippingAddress?: { ... };
+  addressVerified?: boolean;
+  recipientDob?: string;  // NEW: MM-DD format from profile
 }
 ```
 
-**New Behavior in Recurring Mode**:
+### Update `EnhancedConnection` Interface
 
-When user completes AutoGiftSetupFlow from a product page:
-1. First, execute one-time scheduling (add to cart + assign recipient)
-2. Then, create the recurring rule with product context saved
+Include `dob` in connection data:
 
 ```typescript
-// Enhanced recurring complete handler
-const handleRecurringComplete = (ruleResult: any) => {
-  // Step 1: If product exists, add to cart for THIS occasion (immediate sale)
-  if (product && selectedRecipient) {
-    const selectedDate = getNextOccasionDate(ruleResult.dateType); // e.g., Dec 25, 2026
+// src/hooks/profile/useEnhancedConnections.ts
+export interface EnhancedConnection {
+  // ... existing fields
+  profile_dob?: string | null;  // NEW: MM-DD format
+}
+```
+
+### Update Profile Query
+
+Fetch `dob` when retrieving connection profiles:
+
+```typescript
+// Line 84 in useEnhancedConnections.ts
+.select('id, name, email, profile_image, bio, username, interests, important_dates, shipping_address, dob')
+```
+
+### Pass Birthday in `handleSelectConnection`
+
+Update `SimpleRecipientSelector.tsx` to include birthday:
+
+```typescript
+onChange({
+  type: 'connection',
+  connectionId: connection.display_user_id || connection.connected_user_id || connection.id,
+  connectionName: connection.profile_name || connection.pending_recipient_name || 'Recipient',
+  shippingAddress,
+  addressVerified: !!rawAddress,
+  recipientDob: connection.profile_dob || undefined  // NEW
+});
+```
+
+---
+
+## Phase 2: New Components
+
+### 2.1 PresetHolidaySelector.tsx
+
+Horizontal chip selector for quick date selection:
+
+```typescript
+interface PresetHolidaySelectorProps {
+  selectedPreset: string | null;
+  selectedDate: Date | null;
+  recipientDob?: string;  // MM-DD format - enables Birthday chip
+  recipientName?: string;
+  onPresetSelect: (presetKey: string, date: Date) => void;
+  onCustomDateSelect: (date: Date) => void;
+  showDatePicker: boolean;
+  onToggleDatePicker: () => void;
+}
+```
+
+**Features:**
+- Horizontal scrollable chips: Birthday (conditional), Christmas, Valentine's Day, Mother's Day, Father's Day
+- "Other Date..." chip that expands to iOS scroll picker
+- Birthday chip ONLY appears if `recipientDob` is provided
+- Birthday chip shows calculated next occurrence date
+- Selected chip gets primary color highlight with checkmark
+
+**UI Structure:**
+```text
+┌──────────────────────────────────────────────────────────┐
+│ [🎂 Birthday (Mar 15)] [🎄 Christmas] [💝 Valentine's]   │
+│ [👩 Mother's Day] [👨 Father's Day] [📅 Other Date...]   │
+└──────────────────────────────────────────────────────────┘
+          ▲ Scrollable horizontally on mobile
+```
+
+### 2.2 RecurringToggleSection.tsx
+
+Collapsible section for recurring gift options:
+
+```typescript
+interface RecurringToggleSectionProps {
+  isRecurring: boolean;
+  onToggle: (enabled: boolean) => void;
+  detectedHoliday: { key: string; label: string } | null;
+  budget: number;
+  onBudgetChange: (budget: number) => void;
+  paymentMethodId: string;
+  onPaymentMethodChange: (id: string) => void;
+  autoApprove: boolean;
+  onAutoApproveChange: (enabled: boolean) => void;
+  notificationDays: number[];
+  onNotificationDaysChange: (days: number[]) => void;
+}
+```
+
+**Features:**
+- Toggle switch with label "Make this a recurring gift"
+- Subtitle explaining: "Automatically send a gift for this occasion every year"
+- Animated expansion using framer-motion when toggled ON
+- Embedded components:
+  - Budget quick-select chips ($25, $50, $75, $100, Custom)
+  - `UnifiedPaymentMethodManager` for saved cards
+  - Auto-approve toggle
+  - Notification preference (simplified - days before)
+
+---
+
+## Phase 3: Refactor UnifiedGiftSchedulingModal
+
+### Remove Tab-Based Logic
+
+Delete these imports and state:
+- Remove `SchedulingModeToggle` import
+- Remove tab-based `mode` state as primary controller
+- Remove conditional rendering between `OneTimeContent` and `AutoGiftSetupFlow`
+
+### Add New State
+
+```typescript
+// Preset/Holiday selection
+const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+
+// Recurring toggle state
+const [isRecurring, setIsRecurring] = useState(false);
+const [budget, setBudget] = useState(50);
+const [paymentMethodId, setPaymentMethodId] = useState('');
+const [autoApprove, setAutoApprove] = useState(false);
+const [notificationDays, setNotificationDays] = useState([7, 3, 1]);
+```
+
+### Smart Birthday Handling
+
+When recipient is selected with a `recipientDob`:
+1. Enable the Birthday chip in PresetHolidaySelector
+2. Calculate next birthday date using existing `calculateNextBirthday` logic
+3. If user selects Birthday chip, auto-populate date
+
+```typescript
+// Calculate next birthday when recipient has dob
+const nextBirthdayDate = useMemo(() => {
+  if (!selectedRecipient?.recipientDob) return null;
+  const [month, day] = selectedRecipient.recipientDob.split('-').map(Number);
+  if (!month || !day) return null;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const thisYearBirthday = new Date(currentYear, month - 1, day);
+  return thisYearBirthday >= now 
+    ? thisYearBirthday 
+    : new Date(currentYear + 1, month - 1, day);
+}, [selectedRecipient?.recipientDob]);
+```
+
+### Unified Submit Handler
+
+Single CTA that handles both one-time and recurring:
+
+```typescript
+const handleSchedule = async () => {
+  // Validate date
+  if (!validateDate()) return;
+  
+  const selectedDate = getSelectedDate();
+  const effectiveProductId = getEffectiveProductId?.() || String(product?.product_id || product?.id);
+  
+  // Step 1: ALWAYS add to cart (if product exists)
+  if (product) {
+    addToCart({ ...product, product_id: effectiveProductId });
     
-    addToCart({
-      ...product,
-      product_id: getEffectiveProductId?.() || product.product_id,
-    });
+    if (selectedRecipient && selectedRecipient.type !== 'later') {
+      assignItemToRecipient(effectiveProductId, {
+        connectionId: selectedRecipient.type === 'self' ? 'self' : selectedRecipient.connectionId,
+        connectionName: selectedRecipient.type === 'self' ? userName : selectedRecipient.connectionName,
+        deliveryGroupId: `gift_${Date.now()}`,
+        scheduledDeliveryDate: selectedDate.toISOString(),
+        giftMessage: giftMessage || undefined,
+        shippingAddress: selectedRecipient.shippingAddress,
+        address_verified: selectedRecipient.addressVerified
+      });
+    }
+  }
+  
+  // Step 2: Create recurring rule ONLY if toggle is ON
+  if (isRecurring && selectedRecipient?.connectionId) {
+    const dateType = selectedPreset || 'custom';
     
-    assignItemToRecipient(effectiveProductId, {
-      connectionId: selectedRecipient.connectionId,
-      connectionName: selectedRecipient.connectionName,
-      deliveryGroupId: `gift_${Date.now()}`,
-      scheduledDeliveryDate: selectedDate.toISOString(),
-      giftMessage: giftMessage || undefined,
-      shippingAddress: selectedRecipient.shippingAddress,
-      address_verified: selectedRecipient.addressVerified
-    });
+    const ruleData = {
+      recipient_id: selectedRecipient.connectionId,
+      date_type: dateType,
+      scheduled_date: selectedDate.toISOString().split('T')[0],
+      budget_limit: budget,
+      payment_method_id: paymentMethodId,
+      notification_preferences: {
+        enabled: true,
+        days_before: notificationDays,
+        email: true,
+        push: false
+      },
+      gift_selection_criteria: buildProductHints(),
+      is_active: true,
+      auto_approve: autoApprove
+    };
     
-    toast.success('Added to cart for this year!', {
-      description: `Also set up recurring gift for future ${ruleResult.dateType}s`
+    await createRule(ruleData);
+    
+    triggerHapticFeedback('success');
+    toast.success('Recurring gift set up!', {
+      description: `Will also send a gift for ${getPresetLabel(dateType)} every year`
     });
   }
   
-  onComplete?.({
-    mode: 'recurring',
-    alsoAddedToCart: !!product,
-    ...ruleResult
+  // Success feedback
+  const recipientText = selectedRecipient?.connectionName || userName;
+  toast.success(isRecurring ? 'Gift scheduled + recurring rule created!' : 'Gift scheduled!', {
+    description: `Will arrive for ${recipientText} on ${format(selectedDate, 'PPP')}`,
+    action: product ? { label: 'View Cart', onClick: () => navigate('/cart') } : undefined
   });
+  
+  onComplete?.({
+    mode: isRecurring ? 'recurring' : 'one-time',
+    recipientId: selectedRecipient?.connectionId,
+    scheduledDate: selectedDate.toISOString().split('T')[0],
+    alsoAddedToCart: !!product
+  });
+  
   onOpenChange(false);
 };
 ```
 
-### Changes to AutoGiftSetupFlow.tsx
-
-**New Props**:
-```typescript
-interface AutoGiftSetupFlowProps {
-  // ... existing props
-  productHints?: {
-    productId: string;
-    title: string;
-    brand?: string;
-    category?: string;
-    priceRange: [number, number]; // e.g., [140, 200] for AirPods
-    image: string;
-  };
-}
-```
-
-**Save Product Context in gift_selection_criteria**:
-
-```typescript
-// In rulesToCreate mapping (around line 427)
-gift_selection_criteria: {
-  source: productHints ? "specific" : "both",
-  specific_product_id: productHints?.productId, // Nicole can suggest same or similar
-  preferred_brands: productHints?.brand ? [productHints.brand] : [],
-  categories: productHints?.category ? [productHints.category] : [],
-  max_price: formData.budgetLimit,
-  min_price: Math.max(1, formData.budgetLimit * 0.1),
-  // Original product as reference for AI
-  original_product_reference: productHints ? {
-    title: productHints.title,
-    image: productHints.image,
-    price: productHints.priceRange[0]
-  } : undefined,
-  exclude_items: [],
-}
-```
-
 ---
 
-## Phase 2: Cart Holiday Detection Banner
+## Phase 4: Holiday Date Configuration
 
-### New Component: RecurringGiftUpsellBanner.tsx
+### Update holidayDates.ts
 
-```typescript
-interface RecurringGiftUpsellBannerProps {
-  deliveryGroup: DeliveryGroup;
-  cartItems: CartItem[];
-  onConvert: () => void;
-  onDismiss: () => void;
-}
-```
-
-**Logic**:
-1. Check if `deliveryGroup.scheduledDeliveryDate` matches a holiday
-2. Check if user already has a recurring rule for this recipient + occasion
-3. If no rule exists, show banner
-
-### Changes to RecipientPackagePreview.tsx
-
-**Add Holiday Detection**:
-```typescript
-import { detectHolidayFromDate } from '@/constants/holidayDates';
-import RecurringGiftUpsellBanner from './RecurringGiftUpsellBanner';
-import { useUnifiedGiftRules } from '@/hooks/useUnifiedGiftRules';
-
-// Inside component
-const { rules } = useUnifiedGiftRules();
-const [bannerDismissed, setBannerDismissed] = useState(false);
-
-// Detect if scheduled date is a holiday
-const detectedHoliday = useMemo(() => {
-  if (!deliveryGroup.scheduledDeliveryDate) return null;
-  return detectHolidayFromDate(new Date(deliveryGroup.scheduledDeliveryDate));
-}, [deliveryGroup.scheduledDeliveryDate]);
-
-// Check if rule already exists for this recipient + occasion
-const hasExistingRule = useMemo(() => {
-  if (!detectedHoliday) return false;
-  return rules.some(r => 
-    r.recipient_id === deliveryGroup.connectionId && 
-    r.date_type === detectedHoliday.key
-  );
-}, [rules, deliveryGroup.connectionId, detectedHoliday]);
-
-// Show banner if holiday detected, no existing rule, not dismissed
-const showUpsellBanner = detectedHoliday && !hasExistingRule && !bannerDismissed;
-```
-
-**Render Banner**:
-```tsx
-{showUpsellBanner && (
-  <RecurringGiftUpsellBanner
-    deliveryGroup={deliveryGroup}
-    detectedHoliday={detectedHoliday}
-    cartItems={groupItems}
-    onConvert={() => {
-      // Open AutoGiftSetupFlow with pre-filled data
-      setShowRecurringSetup(true);
-    }}
-    onDismiss={() => setBannerDismissed(true)}
-  />
-)}
-```
-
----
-
-## Phase 3: Enhanced Order Confirmation Upsell
-
-### Changes to OrderConfirmation.tsx
-
-**Enhance checkForAutoGiftUpsell**:
-
-The existing function already detects wishlist-based orders. We need to extend it to:
-1. Detect holiday-scheduled orders (not just wishlist)
-2. Pass product context for AI hints
+Add birthday as a special "dynamic" type:
 
 ```typescript
-const checkForAutoGiftUpsell = async (orderData: Order) => {
-  try {
-    // Existing wishlist check
-    const isFromWishlist = orderData.cart_data?.source === 'wishlist';
-    
-    // NEW: Check for holiday-scheduled items
-    const scheduledDate = orderData.scheduled_delivery_date;
-    const detectedHoliday = scheduledDate 
-      ? detectHolidayFromDate(new Date(scheduledDate)) 
-      : null;
-    
-    // Show upsell if: wishlist OR holiday-scheduled
-    if (!isFromWishlist && !detectedHoliday) return;
-    
-    // Get recipient info
-    const recipientId = orderData.recipient_id || orderData.cart_data?.wishlist_owner_id;
-    const recipientName = orderData.recipient_name || orderData.cart_data?.wishlist_owner_name;
-    
-    if (!recipientId) return;
-    
-    // Check for existing rule
-    const { data: existingRule } = await supabase
-      .from('auto_gift_rules')
-      .select('id')
-      .eq('recipient_id', recipientId)
-      .eq('date_type', detectedHoliday?.key || 'other')
-      .single();
-    
-    if (existingRule) return; // Already has recurring rule
-    
-    // Build product hints from order items
-    const orderItems = getOrderLineItems(orderData);
-    const productHints = orderItems.length > 0 ? {
-      title: orderItems[0].name,
-      brand: orderItems[0].brand,
-      category: orderItems[0].category,
-      priceRange: [
-        Math.floor(orderData.total_amount * 0.8),
-        Math.ceil(orderData.total_amount * 1.2)
-      ] as [number, number],
-      image: orderItems[0].image_url
-    } : undefined;
-    
-    setAutoGiftInitialData({
-      recipientId,
-      recipientName,
-      eventType: detectedHoliday?.key || 'other',
-      budgetLimit: Math.ceil(orderData.total_amount),
-      productHints // NEW: pass to AutoGiftSetupFlow
-    });
-  } catch (error) {
-    console.error('Error checking for recurring gift upsell:', error);
-  }
+// src/constants/holidayDates.ts
+export const PRESET_HOLIDAYS: Record<string, { label: string; icon: string; dynamic?: boolean }> = {
+  birthday: { label: "Birthday", icon: "🎂", dynamic: true },  // Date comes from recipient
+  christmas: { label: "Christmas", icon: "🎄" },
+  valentine: { label: "Valentine's Day", icon: "💝" },
+  mothers_day: { label: "Mother's Day", icon: "👩" },
+  fathers_day: { label: "Father's Day", icon: "👨" }
 };
 ```
 
-**Update Upsell Banner Copy**:
+---
 
-```tsx
-{autoGiftInitialData && !showAutoGiftUpsell && (
-  <Card className="p-6 mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
-    <div className="flex items-start gap-4">
-      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-        <RefreshCw className="h-6 w-6 text-purple-600" />
-      </div>
-      <div className="flex-1">
-        <h3 className="text-lg font-semibold mb-2">
-          Make this a recurring gift for {autoGiftInitialData.recipientName}?
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {autoGiftInitialData.eventType === 'christmas' 
-            ? "You just gifted for Christmas! Set up recurring and we'll remind you next December."
-            : `Set up recurring gifts and never miss ${autoGiftInitialData.recipientName}'s special occasions.`
-          }
-        </p>
-        <div className="flex gap-3">
-          <Button onClick={() => setShowAutoGiftUpsell(true)} className="bg-purple-600">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Set Up Recurring Gift
-          </Button>
-          <Button variant="outline" onClick={() => setAutoGiftInitialData(null)}>
-            Maybe Later
-          </Button>
-        </div>
-      </div>
-    </div>
-  </Card>
-)}
+## Files to Modify/Create
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/marketplace/product-details/SimpleRecipientSelector.tsx` | **Modify** | Add `recipientDob` to interface and pass through on selection |
+| `src/hooks/profile/useEnhancedConnections.ts` | **Modify** | Add `profile_dob` to interface and query |
+| `src/components/gifting/unified/PresetHolidaySelector.tsx` | **Create** | Horizontal holiday chip selector with Birthday support |
+| `src/components/gifting/unified/RecurringToggleSection.tsx` | **Create** | Collapsible recurring options section |
+| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | **Major Refactor** | Remove tabs, add linear flow with toggle |
+| `src/constants/holidayDates.ts` | **Modify** | Add PRESET_HOLIDAYS config with Birthday |
+| `src/components/gifting/unified/SchedulingModeToggle.tsx` | **Keep** | Keep for backward compatibility in AutoGiftSetupFlow |
+
+---
+
+## Birthday Logic Flow
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                       USER SELECTS RECIPIENT                        │
+├─────────────────────────────────────────────────────────────────────┤
+│ 1. SimpleRecipientSelector fetches connection with dob              │
+│ 2. Returns SelectedRecipient with recipientDob: "03-15"             │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      PRESET HOLIDAY SELECTOR                         │
+├─────────────────────────────────────────────────────────────────────┤
+│ 3. Checks if recipientDob exists                                    │
+│    ├─ YES: Show [🎂 Birthday (Mar 15)] chip                         │
+│    └─ NO:  Hide Birthday chip, show other presets only              │
+│                                                                      │
+│ 4. User taps Birthday chip:                                         │
+│    ├─ Calculate: 03-15 → Next occurrence = Mar 15, 2027             │
+│    └─ Set selectedDate to calculated birthday                       │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       RECURRING TOGGLE                               │
+├─────────────────────────────────────────────────────────────────────┤
+│ 5. If user toggles "Make this recurring" ON:                        │
+│    └─ date_type = "birthday" is saved to rule                       │
+│    └─ Future years auto-calculate from recipient's dob              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Files to Modify
+## User Flow Example
 
-| File | Changes |
-|------|---------|
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Add "Buy + Recur" dual action when completing recurring flow from product page |
-| `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx` | Add `productHints` prop, save in `gift_selection_criteria` |
-| `src/components/cart/RecipientPackagePreview.tsx` | Add holiday detection + upsell banner |
-| `src/components/cart/RecurringGiftUpsellBanner.tsx` | **NEW** - Holiday conversion banner for cart |
-| `src/pages/OrderConfirmation.tsx` | Enhance upsell detection for holiday orders, update copy |
+**Scenario**: User schedules birthday gift for Mom
 
----
-
-## Component Reuse
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| `detectHolidayFromDate` | ✅ Reuse | Already in holidayDates.ts |
-| `HolidayConversionBanner` | ✅ Reuse as template | Similar UI for cart banner |
-| `AutoGiftSetupFlow` | ✅ Reuse | Add productHints prop |
-| `useUnifiedGiftRules` | ✅ Reuse | Check for existing rules |
-| `SimpleRecipientSelector` | ✅ Reuse | Already integrated |
+1. Opens modal → Selects "Mom" as recipient
+2. `SimpleRecipientSelector` returns `{ ..., recipientDob: "03-15" }`
+3. **Birthday chip appears**: "🎂 Birthday (Mar 15)"
+4. User taps Birthday chip → Date auto-fills to Mar 15, 2027
+5. User writes gift message
+6. User toggles **"Make this recurring"** ON
+7. Recurring section expands:
+   - Budget: $75 (selected)
+   - Payment method: Visa •••• 4242
+   - Auto-approve: ON
+8. User taps **"Schedule Gift"**
+9. **Result**:
+   - Product added to cart for Mar 15, 2027
+   - Recurring rule created: `date_type: "birthday"` for Mom
+   - Future birthdays will auto-trigger 7 days before
 
 ---
 
-## User Flow Examples
+## Edge Cases
 
-### Example 1: Product Page → Buy + Recur
-
-1. User browses Apple AirPods ($199)
-2. Clicks "Schedule as Gift"
-3. Selects "Recurring" mode
-4. Chooses Mom, Christmas, $200 budget
-5. **RESULT**:
-   - AirPods added to cart for Dec 25, 2026 → immediate sale
-   - Recurring rule created for Christmas 2027+ with hints: `{ brand: "Apple", category: "Electronics", priceRange: [160, 240] }`
-
-### Example 2: Cart Holiday Detection
-
-1. User manually schedules gift for Dec 25
-2. Cart shows: "This is Christmas! Make it recurring?"
-3. User clicks "Make Recurring"
-4. AutoGiftSetupFlow opens pre-filled with recipient and Christmas
-
-### Example 3: Post-Checkout Upsell
-
-1. User completes checkout for gift scheduled Dec 25
-2. Order confirmation shows: "Make this a recurring gift?"
-3. User clicks "Set Up Recurring"
-4. Rule created with product hints from order items
+1. **Recipient has no birthday**: Birthday chip hidden, other presets shown
+2. **Self-ship selected**: Birthday uses current user's dob from profile
+3. **Pending invitation**: Birthday chip hidden (no profile access yet)
+4. **Birthday already passed this year**: Calculate for next year
+5. **Minimum lead time violation**: Toast error if birthday is within 7 days
 
 ---
 
 ## Technical Considerations
 
-1. **Prevent Duplicate Rules**: Check `useUnifiedGiftRules` before showing banners
-2. **Holiday Detection Edge Cases**: Same logic as `HolidayConversionBanner` in modal
-3. **Price Range Hints**: Set ±20% of original product price for AI flexibility
-4. **Haptic Feedback**: Add `triggerHapticFeedback('success')` on conversions
-5. **Analytics**: Track conversion rate from each entry point
-
----
-
-## Testing Checklist
-
-1. **Product Page Buy + Recur**
-   - [ ] Product added to cart when completing recurring setup
-   - [ ] Rule created with product hints
-   - [ ] Toast shows dual success message
-
-2. **Cart Holiday Banner**
-   - [ ] Banner appears when package scheduled for holiday
-   - [ ] Banner hidden if rule already exists
-   - [ ] Dismiss persists during session
-
-3. **Order Confirmation Upsell**
-   - [ ] Shows for holiday-scheduled orders
-   - [ ] Hidden if recurring rule exists
-   - [ ] Product hints passed to setup flow
+1. **Privacy Check**: Birthday visibility respects `data_sharing_settings.dob` via existing `can_view_profile` RPC
+2. **Date Validation**: Enforce 7-day minimum lead time for both presets and custom dates
+3. **Haptic Feedback**: Trigger on chip selection and toggle changes
+4. **iOS Compliance**: 44px touch targets, 16px font for inputs
+5. **Animation**: Use framer-motion for recurring section expand/collapse
 

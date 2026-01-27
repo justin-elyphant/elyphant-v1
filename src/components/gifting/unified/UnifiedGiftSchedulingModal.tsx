@@ -24,6 +24,7 @@ import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementSe
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
 import PresetHolidaySelector from './PresetHolidaySelector';
 import RecurringToggleSection from './RecurringToggleSection';
+import { DropdownDatePicker } from '@/components/ui/dropdown-date-picker';
 
 
 // Product context for saving hints when creating recurring rules
@@ -497,36 +498,45 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           Delivery Date
         </label>
         
-        {/* iOS Scroll Wheel Picker - Always Visible */}
-        <div className="bg-muted/30 rounded-lg py-3">
-          <Picker
-            value={pickerValue}
-            onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
-            wheelMode="natural"
-            height={160}
-          >
-            <Picker.Column name="month">
-              {months.map((month) => (
-                <Picker.Item key={month} value={month}>
-                  {month}
-                </Picker.Item>
-              ))}
-            </Picker.Column>
-            <Picker.Column name="day">
-              {days.map((day) => (
-                <Picker.Item key={day} value={day}>
-                  {day}
-                </Picker.Item>
-              ))}
-            </Picker.Column>
-            <Picker.Column name="year">
-              {years.map((year) => (
-                <Picker.Item key={year} value={year}>
-                  {year}
-                </Picker.Item>
-              ))}
-            </Picker.Column>
-          </Picker>
+        {/* Date Picker - Responsive: Dropdowns on desktop, scroll wheel on mobile/tablet */}
+        <div className="bg-muted/30 rounded-lg py-3 px-2">
+          {isMobile ? (
+            // Mobile/Tablet: iOS Scroll Wheel
+            <Picker
+              value={pickerValue}
+              onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
+              wheelMode="natural"
+              height={160}
+            >
+              <Picker.Column name="month">
+                {months.map((month) => (
+                  <Picker.Item key={month} value={month}>
+                    {month}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+              <Picker.Column name="day">
+                {days.map((day) => (
+                  <Picker.Item key={day} value={day}>
+                    {day}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+              <Picker.Column name="year">
+                {years.map((year) => (
+                  <Picker.Item key={year} value={year}>
+                    {year}
+                  </Picker.Item>
+                ))}
+              </Picker.Column>
+            </Picker>
+          ) : (
+            // Desktop: Point-and-click dropdowns
+            <DropdownDatePicker
+              value={pickerValue}
+              onChange={handlePickerChange}
+            />
+          )}
         </div>
 
         {/* Selected Date Preview */}

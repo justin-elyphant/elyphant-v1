@@ -25,6 +25,8 @@ import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketp
 import PresetHolidaySelector from './PresetHolidaySelector';
 import RecurringToggleSection from './RecurringToggleSection';
 import { DropdownDatePicker } from '@/components/ui/dropdown-date-picker';
+import DeliveryTypeSelector, { DeliveryType } from './DeliveryTypeSelector';
+import { AnimatePresence, motion } from 'framer-motion';
 
 
 // Product context for saving hints when creating recurring rules
@@ -99,6 +101,9 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   // Preset/Holiday selection
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // Delivery type coaching state
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>('holiday');
 
   // Recurring toggle state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -182,6 +187,33 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     }
     return selectedRecipient?.recipientImportantDates || [];
   }, [selectedRecipient]);
+
+  // Check if recipient has upcoming events within 60 days for smart default
+  const hasUpcomingEvents = useMemo(() => {
+    if (!selectedRecipient) return false;
+    
+    const now = new Date();
+    const futureWindow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+    
+    // Check birthday
+    if (recipientDobForPresets) {
+      const birthday = calculateNextBirthday(recipientDobForPresets);
+      if (birthday && birthday <= futureWindow) return true;
+    }
+    
+    // Check important dates
+    return recipientImportantDatesForPresets.some(date => {
+      const nextDate = new Date(date.date);
+      return nextDate <= futureWindow;
+    });
+  }, [recipientDobForPresets, recipientImportantDatesForPresets, selectedRecipient]);
+
+  // Set initial delivery type when recipient changes
+  useEffect(() => {
+    if (selectedRecipient) {
+      setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
+    }
+  }, [hasUpcomingEvents, selectedRecipient]);
 
   // Check if recurring rule already exists for this recipient+occasion
   const hasExistingRule = useMemo(() => {
@@ -495,50 +527,131 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       {/* Delivery Date Section */}
       <div className="space-y-3">
         <label className="text-sm font-semibold text-foreground block">
-          Delivery Date
+          When should this gift arrive?
         </label>
         
-        {/* Date Picker - Responsive: Dropdowns on desktop, scroll wheel on mobile/tablet */}
-        <div className="bg-muted/30 rounded-lg py-3 px-2">
-          {isMobile ? (
-            // Mobile/Tablet: iOS Scroll Wheel
-            <Picker
-              value={pickerValue}
-              onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
-              wheelMode="natural"
-              height={160}
+        {/* Step 1: Coaching Question */}
+        <DeliveryTypeSelector
+          selectedType={deliveryType}
+          onTypeChange={(type) => {
+            setDeliveryType(type);
+            if (type === 'specific') {
+              setSelectedPreset(null);
+              setSelectedDate(null);
+            }
+          }}
+        />
+        
+        {/* Step 2: Conditional content based on selection */}
+        <AnimatePresence mode="wait">
+          {deliveryType === 'holiday' ? (
+            <motion.div
+              key="holiday-flow"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3"
             >
-              <Picker.Column name="month">
-                {months.map((month) => (
-                  <Picker.Item key={month} value={month}>
-                    {month}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              <Picker.Column name="day">
-                {days.map((day) => (
-                  <Picker.Item key={day} value={day}>
-                    {day}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-              <Picker.Column name="year">
-                {years.map((year) => (
-                  <Picker.Item key={year} value={year}>
-                    {year}
-                  </Picker.Item>
-                ))}
-              </Picker.Column>
-            </Picker>
+              {/* Holiday dropdown first */}
+              <PresetHolidaySelector
+                selectedPreset={selectedPreset}
+                recipientDob={recipientDobForPresets}
+                recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
+                recipientImportantDates={recipientImportantDatesForPresets}
+                onPresetSelect={handlePresetSelect}
+                onClear={handlePresetClear}
+              />
+              
+              {/* Date picker below, synced to holiday */}
+              <div className="bg-muted/30 rounded-lg py-3 px-2">
+                {isMobile ? (
+                  <Picker
+                    value={pickerValue}
+                    onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
+                    wheelMode="natural"
+                    height={160}
+                  >
+                    <Picker.Column name="month">
+                      {months.map((month) => (
+                        <Picker.Item key={month} value={month}>
+                          {month}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                    <Picker.Column name="day">
+                      {days.map((day) => (
+                        <Picker.Item key={day} value={day}>
+                          {day}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                    <Picker.Column name="year">
+                      {years.map((year) => (
+                        <Picker.Item key={year} value={year}>
+                          {year}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                  </Picker>
+                ) : (
+                  <DropdownDatePicker
+                    value={pickerValue}
+                    onChange={handlePickerChange}
+                  />
+                )}
+              </div>
+            </motion.div>
           ) : (
-            // Desktop: Point-and-click dropdowns
-            <DropdownDatePicker
-              value={pickerValue}
-              onChange={handlePickerChange}
-            />
+            <motion.div
+              key="specific-flow"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Specific date: Just show date picker */}
+              <div className="bg-muted/30 rounded-lg py-3 px-2">
+                {isMobile ? (
+                  <Picker
+                    value={pickerValue}
+                    onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
+                    wheelMode="natural"
+                    height={160}
+                  >
+                    <Picker.Column name="month">
+                      {months.map((month) => (
+                        <Picker.Item key={month} value={month}>
+                          {month}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                    <Picker.Column name="day">
+                      {days.map((day) => (
+                        <Picker.Item key={day} value={day}>
+                          {day}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                    <Picker.Column name="year">
+                      {years.map((year) => (
+                        <Picker.Item key={year} value={year}>
+                          {year}
+                        </Picker.Item>
+                      ))}
+                    </Picker.Column>
+                  </Picker>
+                ) : (
+                  <DropdownDatePicker
+                    value={pickerValue}
+                    onChange={handlePickerChange}
+                  />
+                )}
+              </div>
+            </motion.div>
           )}
-        </div>
-
+        </AnimatePresence>
+        
         {/* Selected Date Preview */}
         {effectiveDate && (
           <p className="text-xs text-muted-foreground text-center">
@@ -546,16 +659,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           </p>
         )}
       </div>
-
-      {/* Popular Holidays/Events Dropdown */}
-      <PresetHolidaySelector
-        selectedPreset={selectedPreset}
-        recipientDob={recipientDobForPresets}
-        recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
-        recipientImportantDates={recipientImportantDatesForPresets}
-        onPresetSelect={handlePresetSelect}
-        onClear={handlePresetClear}
-      />
 
       <Separator />
 

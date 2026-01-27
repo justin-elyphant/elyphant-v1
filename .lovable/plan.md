@@ -1,397 +1,193 @@
 
 
-# Unified Hybrid Gift Scheduling Modal with Birthday Integration
+# Delivery Date UI Redesign: Calendar First + Holiday Dropdown
 
 ## Overview
 
-This plan transforms the current tab-based "One-Time vs Recurring" modal into a **single linear flow** where recurring is an optional toggle enhancement. Birthday is added as a special preset that dynamically pulls the recipient's birthday from their profile data.
+Redesign the Delivery Date section to show the calendar picker by default (always visible) and move holidays/events into a compact dropdown selector. This reduces visual clutter and makes date selection more intuitive.
 
 ---
 
-## Architecture Changes
+## Current vs Proposed Layout
 
 ```text
-CURRENT (Tab-Based):                    PROPOSED (Linear with Toggle):
-┌─────────────────────────┐             ┌─────────────────────────────────────┐
-│ [One-Time] [Recurring]  │             │ Schedule Gift                        │
-├─────────────────────────┤             ├─────────────────────────────────────┤
-│ One-Time:               │             │ Who is this gift for?               │
-│ • Recipient             │             │ [SimpleRecipientSelector]           │
-│ • Date picker           │             │                                     │
-│ • Gift message          │  ────────►  │ Delivery Date                       │
-├─────────────────────────┤             │ [Birthday*] [Christmas] [Valentine] │
-│ Recurring:              │             │ [Mother's Day] [Other Date...]      │
-│ • Completely separate   │             │                                     │
-│   wizard (3 steps)      │             │ Gift Message (Optional)             │
-│ • Step navigation       │             │ [Textarea]                          │
-└─────────────────────────┘             │                                     │
-                                        │ ─────────────────────────────────── │
-                                        │ 🔄 Make this recurring      [OFF]   │
-                                        │    ▼ Expands when ON:               │
-                                        │    • Budget selector                │
-                                        │    • Payment method                 │
-                                        │    • Notification preferences       │
-                                        │                                     │
-                                        │ [Schedule Gift]                     │
-                                        └─────────────────────────────────────┘
-
-* Birthday chip is DYNAMIC - only appears when recipient has dob in profile
+CURRENT:                                    PROPOSED:
+┌──────────────────────────────────┐       ┌──────────────────────────────────┐
+│ Delivery Date                    │       │ Delivery Date                    │
+│ ┌──────────────────────────────┐ │       │ ┌──────────────────────────────┐ │
+│ │ [Birthday] [Xmas] [Val]      │ │       │ │   January    15    2027      │ │
+│ │ [Mother's] [Father's] [Other]│ │  →→   │ │   ◄────────────────────►     │ │
+│ └──────────────────────────────┘ │       │ └──────────────────────────────┘ │
+│                                  │       │                                  │
+│ ▼ (Hidden: iOS scroll wheel     │       │ Popular Holidays/Events          │
+│    only shows on "Other" click) │       │ ┌──────────────────────────────┐ │
+│                                  │       │ │ Select a holiday...       ▼ │ │
+└──────────────────────────────────┘       │ │ • Birthday (Mar 15)         │ │
+                                           │ │ • Valentine's Day (Feb 14)  │ │
+                                           │ │ • Mother's Day (May 11)     │ │
+                                           │ │ • Christmas (Dec 25)        │ │
+                                           │ └──────────────────────────────┘ │
+                                           └──────────────────────────────────┘
 ```
 
 ---
 
-## Phase 1: Data Flow Enhancement
+## Key Changes
 
-### Update `SelectedRecipient` Interface
+1. **Calendar Picker Always Visible**: Move the iOS scroll wheel picker to be directly below "Delivery Date" title - no click required to reveal it
 
-Add `recipientDob` to carry birthday data through the selector:
+2. **New "Popular Holidays/Events" Section**: Add a labeled dropdown selector below the calendar
 
-```typescript
-// src/components/marketplace/product-details/SimpleRecipientSelector.tsx
-export interface SelectedRecipient {
-  type: 'self' | 'connection' | 'later';
-  connectionId?: string;
-  connectionName?: string;
-  shippingAddress?: { ... };
-  addressVerified?: boolean;
-  recipientDob?: string;  // NEW: MM-DD format from profile
-}
-```
+3. **Dropdown with Icons and Dates**: Each holiday option shows its emoji icon and calculated date inline
 
-### Update `EnhancedConnection` Interface
-
-Include `dob` in connection data:
-
-```typescript
-// src/hooks/profile/useEnhancedConnections.ts
-export interface EnhancedConnection {
-  // ... existing fields
-  profile_dob?: string | null;  // NEW: MM-DD format
-}
-```
-
-### Update Profile Query
-
-Fetch `dob` when retrieving connection profiles:
-
-```typescript
-// Line 84 in useEnhancedConnections.ts
-.select('id, name, email, profile_image, bio, username, interests, important_dates, shipping_address, dob')
-```
-
-### Pass Birthday in `handleSelectConnection`
-
-Update `SimpleRecipientSelector.tsx` to include birthday:
-
-```typescript
-onChange({
-  type: 'connection',
-  connectionId: connection.display_user_id || connection.connected_user_id || connection.id,
-  connectionName: connection.profile_name || connection.pending_recipient_name || 'Recipient',
-  shippingAddress,
-  addressVerified: !!rawAddress,
-  recipientDob: connection.profile_dob || undefined  // NEW
-});
-```
+4. **Two-Way Sync**: Selecting a holiday updates the scroll picker; manually changing the picker clears the holiday selection
 
 ---
 
-## Phase 2: New Components
+## Technical Implementation
 
-### 2.1 PresetHolidaySelector.tsx
+### Phase 1: Refactor PresetHolidaySelector.tsx
 
-Horizontal chip selector for quick date selection:
+Transform the horizontal scrolling chips into a dropdown select component:
 
+**Remove:**
+- Horizontal scrollable chip container
+- Individual chip motion buttons
+- "Other Date..." chip (no longer needed)
+
+**Add:**
+- Radix Select dropdown with holiday options
+- Each SelectItem shows: `{icon} {label} ({date})`
+- Birthday option conditionally included based on `recipientDob`
+
+**New Props:**
 ```typescript
 interface PresetHolidaySelectorProps {
   selectedPreset: string | null;
-  selectedDate: Date | null;
-  recipientDob?: string;  // MM-DD format - enables Birthday chip
+  recipientDob?: string;
   recipientName?: string;
   onPresetSelect: (presetKey: string, date: Date) => void;
-  onCustomDateSelect: (date: Date) => void;
-  showDatePicker: boolean;
-  onToggleDatePicker: () => void;
+  onClear: () => void;  // NEW: for when user manually changes date
+  className?: string;
 }
 ```
 
-**Features:**
-- Horizontal scrollable chips: Birthday (conditional), Christmas, Valentine's Day, Mother's Day, Father's Day
-- "Other Date..." chip that expands to iOS scroll picker
-- Birthday chip ONLY appears if `recipientDob` is provided
-- Birthday chip shows calculated next occurrence date
-- Selected chip gets primary color highlight with checkmark
+**New UI Structure:**
+```typescript
+<div className="space-y-2">
+  <label className="text-sm font-semibold text-foreground">
+    Popular Holidays/Events
+  </label>
+  <Select value={selectedPreset || ''} onValueChange={handleSelect}>
+    <SelectTrigger>
+      <SelectValue placeholder="Select a holiday..." />
+    </SelectTrigger>
+    <SelectContent>
+      {holidayOptions.map((option) => (
+        <SelectItem key={option.key} value={option.key}>
+          <div className="flex items-center gap-2">
+            <span>{option.icon}</span>
+            <span>{option.label}</span>
+            <span className="text-muted-foreground">({option.dateLabel})</span>
+          </div>
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+```
 
-**UI Structure:**
+### Phase 2: Update UnifiedGiftSchedulingModal.tsx
+
+**Layout Changes:**
+
+1. Move the iOS scroll wheel picker to render directly after "Delivery Date" label (remove AnimatePresence wrapper - always visible)
+
+2. Add the "Popular Holidays/Events" dropdown below the scroll picker
+
+3. Remove `showCustomDatePicker` state (no longer needed)
+
+**New Section Order:**
 ```text
-┌──────────────────────────────────────────────────────────┐
-│ [🎂 Birthday (Mar 15)] [🎄 Christmas] [💝 Valentine's]   │
-│ [👩 Mother's Day] [👨 Father's Day] [📅 Other Date...]   │
-└──────────────────────────────────────────────────────────┘
-          ▲ Scrollable horizontally on mobile
+1. Recipient Selection
+2. Separator
+3. Delivery Date (title)
+4. iOS Scroll Wheel Picker (always visible)
+5. Selected Date Preview
+6. Popular Holidays/Events (dropdown)
+7. Separator
+8. Gift Message
+9. Recurring Toggle Section
+10. Footer Buttons
 ```
 
-### 2.2 RecurringToggleSection.tsx
-
-Collapsible section for recurring gift options:
+**Two-Way Date Sync Logic:**
 
 ```typescript
-interface RecurringToggleSectionProps {
-  isRecurring: boolean;
-  onToggle: (enabled: boolean) => void;
-  detectedHoliday: { key: string; label: string } | null;
-  budget: number;
-  onBudgetChange: (budget: number) => void;
-  paymentMethodId: string;
-  onPaymentMethodChange: (id: string) => void;
-  autoApprove: boolean;
-  onAutoApproveChange: (enabled: boolean) => void;
-  notificationDays: number[];
-  onNotificationDaysChange: (days: number[]) => void;
-}
-```
-
-**Features:**
-- Toggle switch with label "Make this a recurring gift"
-- Subtitle explaining: "Automatically send a gift for this occasion every year"
-- Animated expansion using framer-motion when toggled ON
-- Embedded components:
-  - Budget quick-select chips ($25, $50, $75, $100, Custom)
-  - `UnifiedPaymentMethodManager` for saved cards
-  - Auto-approve toggle
-  - Notification preference (simplified - days before)
-
----
-
-## Phase 3: Refactor UnifiedGiftSchedulingModal
-
-### Remove Tab-Based Logic
-
-Delete these imports and state:
-- Remove `SchedulingModeToggle` import
-- Remove tab-based `mode` state as primary controller
-- Remove conditional rendering between `OneTimeContent` and `AutoGiftSetupFlow`
-
-### Add New State
-
-```typescript
-// Preset/Holiday selection
-const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
-
-// Recurring toggle state
-const [isRecurring, setIsRecurring] = useState(false);
-const [budget, setBudget] = useState(50);
-const [paymentMethodId, setPaymentMethodId] = useState('');
-const [autoApprove, setAutoApprove] = useState(false);
-const [notificationDays, setNotificationDays] = useState([7, 3, 1]);
-```
-
-### Smart Birthday Handling
-
-When recipient is selected with a `recipientDob`:
-1. Enable the Birthday chip in PresetHolidaySelector
-2. Calculate next birthday date using existing `calculateNextBirthday` logic
-3. If user selects Birthday chip, auto-populate date
-
-```typescript
-// Calculate next birthday when recipient has dob
-const nextBirthdayDate = useMemo(() => {
-  if (!selectedRecipient?.recipientDob) return null;
-  const [month, day] = selectedRecipient.recipientDob.split('-').map(Number);
-  if (!month || !day) return null;
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const thisYearBirthday = new Date(currentYear, month - 1, day);
-  return thisYearBirthday >= now 
-    ? thisYearBirthday 
-    : new Date(currentYear + 1, month - 1, day);
-}, [selectedRecipient?.recipientDob]);
-```
-
-### Unified Submit Handler
-
-Single CTA that handles both one-time and recurring:
-
-```typescript
-const handleSchedule = async () => {
-  // Validate date
-  if (!validateDate()) return;
-  
-  const selectedDate = getSelectedDate();
-  const effectiveProductId = getEffectiveProductId?.() || String(product?.product_id || product?.id);
-  
-  // Step 1: ALWAYS add to cart (if product exists)
-  if (product) {
-    addToCart({ ...product, product_id: effectiveProductId });
-    
-    if (selectedRecipient && selectedRecipient.type !== 'later') {
-      assignItemToRecipient(effectiveProductId, {
-        connectionId: selectedRecipient.type === 'self' ? 'self' : selectedRecipient.connectionId,
-        connectionName: selectedRecipient.type === 'self' ? userName : selectedRecipient.connectionName,
-        deliveryGroupId: `gift_${Date.now()}`,
-        scheduledDeliveryDate: selectedDate.toISOString(),
-        giftMessage: giftMessage || undefined,
-        shippingAddress: selectedRecipient.shippingAddress,
-        address_verified: selectedRecipient.addressVerified
-      });
-    }
-  }
-  
-  // Step 2: Create recurring rule ONLY if toggle is ON
-  if (isRecurring && selectedRecipient?.connectionId) {
-    const dateType = selectedPreset || 'custom';
-    
-    const ruleData = {
-      recipient_id: selectedRecipient.connectionId,
-      date_type: dateType,
-      scheduled_date: selectedDate.toISOString().split('T')[0],
-      budget_limit: budget,
-      payment_method_id: paymentMethodId,
-      notification_preferences: {
-        enabled: true,
-        days_before: notificationDays,
-        email: true,
-        push: false
-      },
-      gift_selection_criteria: buildProductHints(),
-      is_active: true,
-      auto_approve: autoApprove
-    };
-    
-    await createRule(ruleData);
-    
-    triggerHapticFeedback('success');
-    toast.success('Recurring gift set up!', {
-      description: `Will also send a gift for ${getPresetLabel(dateType)} every year`
-    });
-  }
-  
-  // Success feedback
-  const recipientText = selectedRecipient?.connectionName || userName;
-  toast.success(isRecurring ? 'Gift scheduled + recurring rule created!' : 'Gift scheduled!', {
-    description: `Will arrive for ${recipientText} on ${format(selectedDate, 'PPP')}`,
-    action: product ? { label: 'View Cart', onClick: () => navigate('/cart') } : undefined
+// When user selects a holiday from dropdown
+const handlePresetSelect = (presetKey: string, date: Date) => {
+  setSelectedPreset(presetKey);
+  setSelectedDate(date);
+  // Update picker values to match
+  setPickerValue({
+    month: months[date.getMonth()],
+    day: String(date.getDate()),
+    year: String(date.getFullYear())
   });
-  
-  onComplete?.({
-    mode: isRecurring ? 'recurring' : 'one-time',
-    recipientId: selectedRecipient?.connectionId,
-    scheduledDate: selectedDate.toISOString().split('T')[0],
-    alsoAddedToCart: !!product
-  });
-  
-  onOpenChange(false);
+};
+
+// When user manually changes picker
+const handlePickerChange = (value: { month: string; day: string; year: string }) => {
+  setPickerValue(value);
+  setSelectedPreset(null);  // Clear holiday selection
+  setSelectedDate(null);    // Will recalculate from picker
 };
 ```
 
 ---
 
-## Phase 4: Holiday Date Configuration
+## Component Changes Summary
 
-### Update holidayDates.ts
-
-Add birthday as a special "dynamic" type:
-
-```typescript
-// src/constants/holidayDates.ts
-export const PRESET_HOLIDAYS: Record<string, { label: string; icon: string; dynamic?: boolean }> = {
-  birthday: { label: "Birthday", icon: "🎂", dynamic: true },  // Date comes from recipient
-  christmas: { label: "Christmas", icon: "🎄" },
-  valentine: { label: "Valentine's Day", icon: "💝" },
-  mothers_day: { label: "Mother's Day", icon: "👩" },
-  fathers_day: { label: "Father's Day", icon: "👨" }
-};
-```
+| Component | Changes |
+|-----------|---------|
+| `PresetHolidaySelector.tsx` | Complete rewrite: horizontal chips → dropdown Select |
+| `UnifiedGiftSchedulingModal.tsx` | Remove `showCustomDatePicker` state, always show picker, reorder sections |
 
 ---
 
-## Files to Modify/Create
+## Visual Design
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/marketplace/product-details/SimpleRecipientSelector.tsx` | **Modify** | Add `recipientDob` to interface and pass through on selection |
-| `src/hooks/profile/useEnhancedConnections.ts` | **Modify** | Add `profile_dob` to interface and query |
-| `src/components/gifting/unified/PresetHolidaySelector.tsx` | **Create** | Horizontal holiday chip selector with Birthday support |
-| `src/components/gifting/unified/RecurringToggleSection.tsx` | **Create** | Collapsible recurring options section |
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | **Major Refactor** | Remove tabs, add linear flow with toggle |
-| `src/constants/holidayDates.ts` | **Modify** | Add PRESET_HOLIDAYS config with Birthday |
-| `src/components/gifting/unified/SchedulingModeToggle.tsx` | **Keep** | Keep for backward compatibility in AutoGiftSetupFlow |
+**Dropdown Styling:**
+- Use existing Radix Select component (already styled with z-index, background, etc.)
+- SelectItems with icon + label + date in muted color
+- Placeholder: "Select a holiday..."
+- When selected: shows "🎄 Christmas (Dec 25)" in trigger
 
----
-
-## Birthday Logic Flow
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                       USER SELECTS RECIPIENT                        │
-├─────────────────────────────────────────────────────────────────────┤
-│ 1. SimpleRecipientSelector fetches connection with dob              │
-│ 2. Returns SelectedRecipient with recipientDob: "03-15"             │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      PRESET HOLIDAY SELECTOR                         │
-├─────────────────────────────────────────────────────────────────────┤
-│ 3. Checks if recipientDob exists                                    │
-│    ├─ YES: Show [🎂 Birthday (Mar 15)] chip                         │
-│    └─ NO:  Hide Birthday chip, show other presets only              │
-│                                                                      │
-│ 4. User taps Birthday chip:                                         │
-│    ├─ Calculate: 03-15 → Next occurrence = Mar 15, 2027             │
-│    └─ Set selectedDate to calculated birthday                       │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                       RECURRING TOGGLE                               │
-├─────────────────────────────────────────────────────────────────────┤
-│ 5. If user toggles "Make this recurring" ON:                        │
-│    └─ date_type = "birthday" is saved to rule                       │
-│    └─ Future years auto-calculate from recipient's dob              │
-└─────────────────────────────────────────────────────────────────────┘
-```
+**Scroll Picker Styling:**
+- Keep existing `bg-muted/30 rounded-lg py-3` background
+- Remove AnimatePresence animation (always visible)
+- Keep existing Picker component and column structure
 
 ---
 
-## User Flow Example
+## User Flow
 
-**Scenario**: User schedules birthday gift for Mom
-
-1. Opens modal → Selects "Mom" as recipient
-2. `SimpleRecipientSelector` returns `{ ..., recipientDob: "03-15" }`
-3. **Birthday chip appears**: "🎂 Birthday (Mar 15)"
-4. User taps Birthday chip → Date auto-fills to Mar 15, 2027
-5. User writes gift message
-6. User toggles **"Make this recurring"** ON
-7. Recurring section expands:
-   - Budget: $75 (selected)
-   - Payment method: Visa •••• 4242
-   - Auto-approve: ON
-8. User taps **"Schedule Gift"**
-9. **Result**:
-   - Product added to cart for Mar 15, 2027
-   - Recurring rule created: `date_type: "birthday"` for Mom
-   - Future birthdays will auto-trigger 7 days before
+1. User opens "Schedule Gift" modal
+2. Sees recipient selector first
+3. Scrolls down to "Delivery Date" section
+4. **Sees iOS scroll wheel picker immediately** - can spin to any date
+5. Below picker, sees "Popular Holidays/Events" dropdown
+6. If they select "Christmas" from dropdown → picker updates to Dec 25, 2026
+7. If they then manually spin picker to Dec 26 → Christmas selection clears
+8. Continue to gift message and recurring toggle
 
 ---
 
-## Edge Cases
+## Benefits
 
-1. **Recipient has no birthday**: Birthday chip hidden, other presets shown
-2. **Self-ship selected**: Birthday uses current user's dob from profile
-3. **Pending invitation**: Birthday chip hidden (no profile access yet)
-4. **Birthday already passed this year**: Calculate for next year
-5. **Minimum lead time violation**: Toast error if birthday is within 7 days
-
----
-
-## Technical Considerations
-
-1. **Privacy Check**: Birthday visibility respects `data_sharing_settings.dob` via existing `can_view_profile` RPC
-2. **Date Validation**: Enforce 7-day minimum lead time for both presets and custom dates
-3. **Haptic Feedback**: Trigger on chip selection and toggle changes
-4. **iOS Compliance**: 44px touch targets, 16px font for inputs
-5. **Animation**: Use framer-motion for recurring section expand/collapse
+1. **Reduced Visual Clutter**: No horizontal scrolling pills taking up space
+2. **Immediate Interaction**: Calendar picker visible right away
+3. **Familiar Pattern**: Dropdowns are universally understood
+4. **Space Efficient**: Dropdown collapses when not in use
+5. **Two-Way Sync**: Intuitive behavior when switching between picker and presets
 

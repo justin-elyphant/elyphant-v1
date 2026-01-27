@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
@@ -125,6 +125,16 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   const [pickerValue, setPickerValue] = useState(getInitialPickerValues);
 
+  // Desktop trackpad/mouse-wheel dampening for react-mobile-picker.
+  // react-mobile-picker forces a minimum of 1 item per wheel event, which makes
+  // Mac trackpads feel extremely sensitive (lots of tiny wheel events).
+  const pickerWheelRef = useRef<HTMLDivElement | null>(null);
+  const wheelAccumRef = useRef<{ month: number; day: number; year: number }>({
+    month: 0,
+    day: 0,
+    year: 0,
+  });
+
   // User info
   const userAddress = profile?.shipping_address;
   const userName = profile?.name || 'Myself';
@@ -240,6 +250,71 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     setPickerValue(value);
     setSelectedPreset(null);
     setSelectedDate(null); // Will use getPickerDate() via effectiveDate
+  };
+
+  const handlePickerWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+    // Ignore horizontal trackpad gestures
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+    const el = pickerWheelRef.current;
+    if (!el) return;
+
+    // Keep the scroll interaction inside the picker (don’t scroll the modal/page)
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const frac = rect.width > 0 ? x / rect.width : 0.5;
+    const column: 'month' | 'day' | 'year' = frac < 1 / 3 ? 'month' : frac < 2 / 3 ? 'day' : 'year';
+
+    // Accumulate pixel deltas and only advance one item per threshold.
+    // (Lower threshold = more sensitive; higher threshold = less sensitive)
+    const STEP_THRESHOLD_PX = 90;
+
+    wheelAccumRef.current[column] += e.deltaY;
+    const rawSteps = Math.trunc(wheelAccumRef.current[column] / STEP_THRESHOLD_PX);
+    if (rawSteps === 0) return;
+
+    const step = rawSteps > 0 ? 1 : -1;
+    wheelAccumRef.current[column] -= step * STEP_THRESHOLD_PX;
+
+    // Wheel interaction counts as manual date change → clear any preset.
+    setSelectedPreset(null);
+    setSelectedDate(null);
+
+    setPickerValue((prev) => {
+      const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+      const prevMonthIndex = months.indexOf(prev.month);
+      const safePrevMonthIndex = prevMonthIndex >= 0 ? prevMonthIndex : 0;
+
+      const prevYearIndex = years.indexOf(prev.year);
+      const safePrevYearIndex = prevYearIndex >= 0 ? prevYearIndex : 0;
+
+      let nextMonthIndex = safePrevMonthIndex;
+      let nextYearIndex = safePrevYearIndex;
+
+      if (column === 'month') nextMonthIndex = clamp(safePrevMonthIndex + step, 0, months.length - 1);
+      if (column === 'year') nextYearIndex = clamp(safePrevYearIndex + step, 0, years.length - 1);
+
+      const nextMonth = months[nextMonthIndex];
+      const nextYear = years[nextYearIndex];
+
+      const maxDay = getDaysInMonth(nextMonthIndex, parseInt(nextYear));
+      const prevDayNum = Number.parseInt(prev.day, 10) || 1;
+
+      let nextDayNum = prevDayNum;
+      if (column === 'day') nextDayNum = clamp(prevDayNum + step, 1, maxDay);
+      // If month/year changed, keep day valid for that month/year
+      nextDayNum = clamp(nextDayNum, 1, maxDay);
+
+      return {
+        month: nextMonth,
+        day: String(nextDayNum),
+        year: nextYear,
+      };
+    });
   };
 
   // Handle clearing preset from dropdown
@@ -498,11 +573,15 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         </label>
         
         {/* iOS Scroll Wheel Picker - Always Visible */}
-        <div className="bg-muted/30 rounded-lg py-3">
+        <div
+          ref={pickerWheelRef}
+          className="bg-muted/30 rounded-lg py-3"
+          onWheelCapture={handlePickerWheel}
+        >
           <Picker
             value={pickerValue}
             onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
-            wheelMode="natural"
+            wheelMode="off"
             height={160}
           >
             <Picker.Column name="month">

@@ -24,6 +24,7 @@ export interface EnhancedConnection {
   profile_username?: string;
   profile_shipping_address?: any; // For accepted connections
   profile_dob?: string | null; // Birthday in MM-DD format
+  profile_important_dates?: any[]; // Important dates like anniversaries
   // Helper fields
   display_user_id?: string;
   is_pending_invitation?: boolean;
@@ -122,6 +123,7 @@ export const useEnhancedConnections = () => {
           profile_username: fallbackUsername,
           profile_shipping_address: profile?.shipping_address,
           profile_dob: profile?.dob || null,
+          profile_important_dates: profile?.important_dates || [],
           display_user_id: targetUserId,
           is_pending_invitation: conn.status === 'pending_invitation'
         };

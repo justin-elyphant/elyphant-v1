@@ -173,6 +173,15 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     return selectedRecipient?.recipientDob;
   }, [selectedRecipient, userDob]);
 
+  // Determine the recipient's important dates to pass to PresetHolidaySelector
+  const recipientImportantDatesForPresets = useMemo(() => {
+    if (selectedRecipient?.type === 'self') {
+      // For self, we could potentially use profile.important_dates if needed
+      return [];
+    }
+    return selectedRecipient?.recipientImportantDates || [];
+  }, [selectedRecipient]);
+
   // Check if recurring rule already exists for this recipient+occasion
   const hasExistingRule = useMemo(() => {
     if (!selectedRecipient?.connectionId || !selectedPreset) return false;
@@ -533,6 +542,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         selectedPreset={selectedPreset}
         recipientDob={recipientDobForPresets}
         recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
+        recipientImportantDates={recipientImportantDatesForPresets}
         onPresetSelect={handlePresetSelect}
         onClear={handlePresetClear}
       />

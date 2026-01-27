@@ -15,10 +15,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+export interface RecipientImportantDate {
+  id?: string;
+  title: string;
+  date: string;
+  type: string;
+  description?: string;
+}
+
 interface PresetHolidaySelectorProps {
   selectedPreset: string | null;
   recipientDob?: string; // MM-DD format - enables Birthday option
   recipientName?: string;
+  recipientImportantDates?: RecipientImportantDate[]; // Custom dates like anniversaries
   onPresetSelect: (presetKey: string, date: Date) => void;
   onClear?: () => void; // Called when user manually changes the date picker
   className?: string;
@@ -32,10 +41,60 @@ interface HolidayOption {
   dateLabel?: string;
 }
 
+// Map common event types to icons
+const getEventIcon = (type: string, title: string): string => {
+  const lowerType = type.toLowerCase();
+  const lowerTitle = title.toLowerCase();
+  
+  if (lowerType === 'birthday' || lowerTitle.includes('birthday')) return '🎂';
+  if (lowerType === 'anniversary' || lowerTitle.includes('anniversary')) return '💍';
+  if (lowerTitle.includes('graduation')) return '🎓';
+  if (lowerTitle.includes('wedding')) return '💒';
+  if (lowerTitle.includes('baby') || lowerTitle.includes('shower')) return '👶';
+  if (lowerTitle.includes('retirement')) return '🎉';
+  if (lowerTitle.includes('promotion') || lowerTitle.includes('job')) return '💼';
+  if (lowerTitle.includes('housewarming') || lowerTitle.includes('home')) return '🏠';
+  
+  return '📅'; // Default calendar icon
+};
+
+// Calculate next occurrence of a recurring date
+const calculateNextOccurrence = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+  
+  let month: number, day: number;
+  
+  // Handle MM-DD format
+  if (dateStr.length <= 5 && dateStr.includes('-')) {
+    [month, day] = dateStr.split('-').map(Number);
+  } else if (dateStr.includes('-') || dateStr.includes('T')) {
+    // Handle YYYY-MM-DD or ISO format
+    const dateParts = dateStr.split('T')[0].split('-');
+    month = parseInt(dateParts[1]);
+    day = parseInt(dateParts[2]);
+  } else {
+    return null;
+  }
+  
+  if (!month || !day || isNaN(month) || isNaN(day)) return null;
+  
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const thisYearDate = new Date(currentYear, month - 1, day, 12, 0, 0);
+  
+  // If date has passed this year, return next year's date
+  if (thisYearDate < now) {
+    return new Date(currentYear + 1, month - 1, day, 12, 0, 0);
+  }
+  
+  return thisYearDate;
+};
+
 const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
   selectedPreset,
   recipientDob,
   recipientName,
+  recipientImportantDates = [],
   onPresetSelect,
   onClear,
   className
@@ -44,26 +103,41 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
   const holidayOptions = useMemo<HolidayOption[]>(() => {
     const options: HolidayOption[] = [];
     
-    Object.entries(PRESET_HOLIDAYS).forEach(([key, preset]) => {
-      // Birthday is only shown if recipient has a DOB
-      if (key === 'birthday') {
-        if (recipientDob) {
-          const birthdayDate = calculateNextBirthday(recipientDob);
-          const dateLabel = formatBirthdayForChip(recipientDob);
-          if (birthdayDate && dateLabel) {
-            options.push({
-              key,
-              label: recipientName ? `${recipientName}'s Birthday` : preset.label,
-              icon: preset.icon,
-              date: birthdayDate,
-              dateLabel
-            });
-          }
-        }
-        return;
+    // Add recipient's birthday if available
+    if (recipientDob) {
+      const birthdayDate = calculateNextBirthday(recipientDob);
+      const dateLabel = formatBirthdayForChip(recipientDob);
+      if (birthdayDate && dateLabel) {
+        options.push({
+          key: 'birthday',
+          label: recipientName ? `${recipientName}'s Birthday` : 'Birthday',
+          icon: '🎂',
+          date: birthdayDate,
+          dateLabel
+        });
       }
+    }
+    
+    // Add recipient's important dates (anniversaries, etc.)
+    recipientImportantDates.forEach((importantDate, index) => {
+      const nextDate = calculateNextOccurrence(importantDate.date);
+      if (nextDate) {
+        const title = importantDate.title || importantDate.description || 'Special Date';
+        const icon = getEventIcon(importantDate.type, title);
+        options.push({
+          key: `custom_${importantDate.id || index}`,
+          label: recipientName ? `${recipientName}'s ${title}` : title,
+          icon,
+          date: nextDate,
+          dateLabel: nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        });
+      }
+    });
+    
+    // Add standard holidays (skip birthday as we handle it above)
+    Object.entries(PRESET_HOLIDAYS).forEach(([key, preset]) => {
+      if (key === 'birthday') return; // Already handled above
       
-      // Static holidays - calculate their next occurrence
       const holidayDateStr = calculateHolidayDate(key);
       if (holidayDateStr) {
         const holidayDate = new Date(holidayDateStr + 'T12:00:00');
@@ -84,7 +158,7 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
     });
     
     return options;
-  }, [recipientDob, recipientName]);
+  }, [recipientDob, recipientName, recipientImportantDates]);
 
   const handleSelect = (value: string) => {
     triggerHapticFeedback('light');
@@ -128,19 +202,25 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-background z-[9999] pointer-events-auto" position="popper" sideOffset={4}>
-          {holidayOptions.map((option) => (
-            <SelectItem 
-              key={option.key} 
-              value={option.key}
-              className="min-h-[44px] cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-base">{option.icon}</span>
-                <span>{option.label}</span>
-                <span className="text-muted-foreground text-sm">({option.dateLabel})</span>
-              </div>
-            </SelectItem>
-          ))}
+          {holidayOptions.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-muted-foreground">
+              No holidays or events available
+            </div>
+          ) : (
+            holidayOptions.map((option) => (
+              <SelectItem 
+                key={option.key} 
+                value={option.key}
+                className="min-h-[44px] cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{option.icon}</span>
+                  <span>{option.label}</span>
+                  <span className="text-muted-foreground text-sm">({option.dateLabel})</span>
+                </div>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>
@@ -148,4 +228,3 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
 };
 
 export default PresetHolidaySelector;
-

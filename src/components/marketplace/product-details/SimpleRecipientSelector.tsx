@@ -27,6 +27,13 @@ export interface SelectedRecipient {
   };
   addressVerified?: boolean;
   recipientDob?: string; // Birthday in MM-DD format from profile
+  recipientImportantDates?: Array<{
+    id?: string;
+    title: string;
+    date: string;
+    type: string;
+    description?: string;
+  }>; // Important dates like anniversaries from profile
 }
 
 interface SimpleRecipientSelectorProps {
@@ -162,7 +169,8 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       connectionName: connection.profile_name || connection.pending_recipient_name || 'Recipient',
       shippingAddress,
       addressVerified: !!rawAddress,
-      recipientDob: connection.profile_dob || undefined
+      recipientDob: connection.profile_dob || undefined,
+      recipientImportantDates: connection.profile_important_dates || []
     });
     setOpen(false);
     setSearchQuery("");

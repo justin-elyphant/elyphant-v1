@@ -26,6 +26,7 @@ export function ScrollDatePicker({ value, onChange, minDate = new Date(), classN
   });
   
   const debounceRef = useRef<NodeJS.Timeout>();
+  const lastChangeTime = useRef<number>(0);
 
   // Generate days based on selected month/year
   const getDaysInMonth = (month: string, year: string) => {
@@ -62,7 +63,7 @@ export function ScrollDatePicker({ value, onChange, minDate = new Date(), classN
       if (!isNaN(newDate.getTime())) {
         onChange(newDate);
       }
-    }, 150); // 150ms debounce for smoother feel
+    }, 300); // Increased debounce for smoother trackpad experience
     
     return () => {
       if (debounceRef.current) {
@@ -72,15 +73,29 @@ export function ScrollDatePicker({ value, onChange, minDate = new Date(), classN
   }, [pickerValue.month, pickerValue.day, pickerValue.year, days.length, onChange]);
 
   const handleChange = useCallback((newValue: Record<string, string>) => {
+    const now = Date.now();
+    const timeSinceLastChange = now - lastChangeTime.current;
+    
+    // Throttle rapid changes (reduces trackpad sensitivity)
+    if (timeSinceLastChange < 80) {
+      return;
+    }
+    
+    lastChangeTime.current = now;
     setPickerValue(newValue);
   }, []);
 
   return (
-    <div className={cn("scroll-date-picker", className)}>
+    <div className={cn("scroll-date-picker select-none", className)}>
+      <style>{`
+        .scroll-date-picker [data-picker-container] {
+          overscroll-behavior: contain;
+        }
+      `}</style>
       <Picker
         value={pickerValue}
         onChange={handleChange}
-        wheelMode="natural"
+        wheelMode="normal"
         height={180}
       >
         <Picker.Column name="month">

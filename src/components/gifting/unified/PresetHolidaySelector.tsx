@@ -113,7 +113,10 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
         value={selectedPreset || ''} 
         onValueChange={handleSelect}
       >
-        <SelectTrigger className="w-full min-h-[44px] bg-background">
+        <SelectTrigger 
+          className="w-full min-h-[44px] bg-background pointer-events-auto"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <SelectValue placeholder="Select a holiday...">
             {selectedOption && (
               <div className="flex items-center gap-2">
@@ -124,7 +127,7 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
             )}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className="bg-background z-50">
+        <SelectContent className="bg-background z-[9999] pointer-events-auto" position="popper" sideOffset={4}>
           {holidayOptions.map((option) => (
             <SelectItem 
               key={option.key} 

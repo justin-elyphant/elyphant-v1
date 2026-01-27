@@ -15,6 +15,68 @@ export const HOLIDAY_DATES: Record<string, HolidayDate> = {
   // Add more holidays as needed
 };
 
+// Preset holidays for quick selection UI
+// Birthday is dynamic (from recipient profile), others use HOLIDAY_DATES
+export interface PresetHoliday {
+  label: string;
+  icon: string;
+  dynamic?: boolean; // If true, date comes from recipient data (e.g., birthday)
+}
+
+export const PRESET_HOLIDAYS: Record<string, PresetHoliday> = {
+  birthday: { label: "Birthday", icon: "🎂", dynamic: true },
+  christmas: { label: "Christmas", icon: "🎄" },
+  valentine: { label: "Valentine's Day", icon: "💝" },
+  mothers_day: { label: "Mother's Day", icon: "👩" },
+  fathers_day: { label: "Father's Day", icon: "👨" }
+};
+
+/**
+ * Calculate next birthday from MM-DD format
+ * Returns the next occurrence (this year if not passed, next year if passed)
+ */
+export const calculateNextBirthday = (dob: string): Date | null => {
+  if (!dob) return null;
+  
+  // Handle both MM-DD and full date formats
+  let month: number, day: number;
+  
+  if (dob.includes('-') && dob.length <= 5) {
+    // MM-DD format
+    [month, day] = dob.split('-').map(Number);
+  } else if (dob.includes('-')) {
+    // YYYY-MM-DD or full ISO format
+    const dateParts = dob.split('T')[0].split('-');
+    month = parseInt(dateParts[1]);
+    day = parseInt(dateParts[2]);
+  } else {
+    return null;
+  }
+  
+  if (!month || !day || isNaN(month) || isNaN(day)) return null;
+  
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const thisYearBirthday = new Date(currentYear, month - 1, day, 12, 0, 0);
+  
+  // If birthday has passed this year, return next year's date
+  if (thisYearBirthday < now) {
+    return new Date(currentYear + 1, month - 1, day, 12, 0, 0);
+  }
+  
+  return thisYearBirthday;
+};
+
+/**
+ * Format birthday date for display (e.g., "Mar 15")
+ */
+export const formatBirthdayForChip = (dob: string): string | null => {
+  const nextBirthday = calculateNextBirthday(dob);
+  if (!nextBirthday) return null;
+  
+  return nextBirthday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 export const calculateHolidayDate = (holidayKey: string, year?: number): string | null => {
   const holiday = HOLIDAY_DATES[holidayKey];
   if (!holiday) return null;

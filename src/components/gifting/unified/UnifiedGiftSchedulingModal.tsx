@@ -484,47 +484,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   // Modal content - defined as JSX variable (not function) to prevent remounting on state changes
   const modalContent = (
     <div className="space-y-5">
-      {/* Recipient Selection */}
-      <div>
-        <label className="text-sm font-semibold text-foreground mb-2 block">
-          Who is this gift for?
-        </label>
-        <SimpleRecipientSelector
-          value={selectedRecipient}
-          onChange={setSelectedRecipient}
-          userAddress={userAddress}
-          userName={userName}
-          onInviteNew={handleInviteNew}
-        />
-
-        {/* Address Verification Status */}
-        {selectedRecipient && selectedRecipient.type !== 'later' && (
-          <div className="mt-2">
-            {selectedRecipient.type === 'self' || selectedRecipient.addressVerified ? (
-              <div className="flex items-center gap-1.5 text-xs text-green-600">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Address verified</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                <span>Address will be verified at checkout</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {isInviting && (
-          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Sending invitation...</span>
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Delivery Date Section */}
+      {/* Delivery Date Section - First */}
       <div className="space-y-3">
         <label className="text-sm font-semibold text-foreground block">
           When should this gift arrive?
@@ -632,6 +592,46 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           <p className="text-xs text-muted-foreground text-center">
             Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
           </p>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Recipient Selection - Second */}
+      <div>
+        <label className="text-sm font-semibold text-foreground mb-2 block">
+          Who is this gift for?
+        </label>
+        <SimpleRecipientSelector
+          value={selectedRecipient}
+          onChange={setSelectedRecipient}
+          userAddress={userAddress}
+          userName={userName}
+          onInviteNew={handleInviteNew}
+        />
+
+        {/* Address Verification Status */}
+        {selectedRecipient && selectedRecipient.type !== 'later' && (
+          <div className="mt-2">
+            {selectedRecipient.type === 'self' || selectedRecipient.addressVerified ? (
+              <div className="flex items-center gap-1.5 text-xs text-green-600">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Address verified</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                <ShieldAlert className="h-3.5 w-3.5" />
+                <span>Address will be verified at checkout</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isInviting && (
+          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Sending invitation...</span>
+          </div>
         )}
       </div>
 

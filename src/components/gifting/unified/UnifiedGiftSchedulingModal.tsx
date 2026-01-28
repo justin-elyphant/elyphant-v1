@@ -104,6 +104,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   // Delivery type coaching state
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('holiday');
+  const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false); // Track explicit user choice
 
   // Recurring toggle state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -208,12 +209,12 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     });
   }, [recipientDobForPresets, recipientImportantDatesForPresets, selectedRecipient]);
 
-  // Set initial delivery type when recipient changes
+  // Set initial delivery type when recipient changes - only if user hasn't explicitly chosen
   useEffect(() => {
-    if (selectedRecipient) {
+    if (selectedRecipient && !deliveryTypeUserSet) {
       setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
     }
-  }, [hasUpcomingEvents, selectedRecipient]);
+  }, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet]);
 
   // Check if recurring rule already exists for this recipient+occasion
   const hasExistingRule = useMemo(() => {
@@ -232,6 +233,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       setSelectedPreset(null);
       setSelectedDate(null);
       setIsRecurring(false);
+      setDeliveryTypeUserSet(false); // Reset explicit choice flag
       setBudget(product?.price ? Math.round(product.price * 1.2) : 50);
       setPaymentMethodId('');
       setAutoApprove(false);
@@ -495,6 +497,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           selectedType={deliveryType}
           onTypeChange={(type) => {
             setDeliveryType(type);
+            setDeliveryTypeUserSet(true); // Mark as explicit user choice
             if (type === 'specific') {
               setSelectedPreset(null);
               setSelectedDate(null);

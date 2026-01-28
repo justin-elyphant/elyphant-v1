@@ -1,125 +1,99 @@
 
 
-# Improve Auto-Approve Toggle Explanation
+# Fix: Preserve User's Delivery Type Selection When Choosing Recipient
 
-## Problem
+## Problem Analysis
 
-The current "Auto-approve gifts" toggle shows minimal context:
+The modal flow is:
+1. User opens modal → sees date selection first
+2. User explicitly chooses **"Specific Date"** and picks February 4, 2026
+3. User selects recipient (Charles Meeks)
+4. **Bug**: System auto-switches to "Holiday / Event" because Charles has upcoming events
+
+This happens because of a `useEffect` on lines 212-216:
+```typescript
+useEffect(() => {
+  if (selectedRecipient) {
+    setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
+  }
+}, [hasUpcomingEvents, selectedRecipient]);
 ```
-Auto-approve gifts
-Skip approval and send automatically
-```
 
-Users don't understand the email approval flow or what "skip approval" actually means in practice.
+The logic was designed for when recipient came **first** (so we could set a smart default). But now that date selection comes first, this effect overrides the user's explicit choice.
 
 ---
 
-## The Actual Flow (From `auto-gift-orchestrator`)
+## UX Best Practice
 
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                     AUTO-APPROVE OFF (Default)                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   T-7 days         Email Sent           Your Action                 │
-│   ─────────   →   ────────────────   →  ────────────               │
-│   7 days          "Nicole AI picked     [Approve ✓]                │
-│   before          a $45 gift for        [Skip ✗]                   │
-│   event           Mom's Birthday"                                   │
-│                                                                     │
-│   If Approved → Payment captured → Gift shipped                     │
-│   If Skipped  → No charge, gift not sent                           │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+**Never override an explicit user selection with an automatic default.**
 
-┌─────────────────────────────────────────────────────────────────────┐
-│                      AUTO-APPROVE ON                                │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   T-7 days         Automatic                                        │
-│   ─────────   →   ────────────                                     │
-│   7 days          Nicole picks gift                                │
-│   before          Payment captured                                  │
-│   event           Order placed                                      │
-│                                                                     │
-│   ⚠️ Safety: Gifts over $75 still require manual approval          │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+The smart default should only apply when:
+1. The modal opens fresh (no selection made yet), OR
+2. The recipient changes AND the user hasn't explicitly touched the date type yet
+
+This follows the principle: **"Be helpful with defaults, but respect explicit choices."**
 
 ---
 
 ## Solution
 
-Update `RecurringToggleSection.tsx` to show **dynamic descriptions** based on toggle state:
+**Track whether the user has explicitly interacted with the delivery type selector.** Only apply the smart default if they haven't.
 
-### Current Code (Lines 249-264):
-```tsx
-<div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 min-h-[52px]">
-  <div>
-    <p className="text-sm font-medium">Auto-approve gifts</p>
-    <p className="text-xs text-muted-foreground">
-      Skip approval and send automatically
-    </p>
-  </div>
-  <Switch ... />
-</div>
-```
+### Implementation Pattern
 
-### Updated Code:
-```tsx
-<div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 min-h-[56px]">
-  <div className="flex-1 pr-3">
-    <p className="text-sm font-medium">Auto-approve gifts</p>
-    <p className="text-xs text-muted-foreground">
-      {autoApprove 
-        ? "Gifts will be purchased automatically. Gifts over $75 still need approval."
-        : "We'll email you 7 days before with Nicole's pick. Approve or skip with one click."
-      }
-    </p>
-  </div>
-  <Switch ... />
-</div>
-```
-
----
-
-## Visual Mockup
-
-**Toggle OFF (Default):**
-```text
-┌────────────────────────────────────────────────────────────┐
-│  Auto-approve gifts                                   [○ ] │
-│  We'll email you 7 days before with Nicole's pick.         │
-│  Approve or skip with one click.                           │
-└────────────────────────────────────────────────────────────┘
-```
-
-**Toggle ON:**
-```text
-┌────────────────────────────────────────────────────────────┐
-│  Auto-approve gifts                                   [●─] │
-│  Gifts will be purchased automatically.                    │
-│  Gifts over $75 still need approval.                       │
-└────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/gifting/unified/RecurringToggleSection.tsx` | Update description text (lines 252-255) to be dynamic based on `autoApprove` state |
-
----
-
-## Technical Details
-
-The `$75 threshold` comes from `UnifiedGiftManagementService.ts` line 2295:
 ```typescript
-if (totalAmount > 75) return true; // requiresApproval = true
+// Add a "user has interacted" flag
+const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);
+
+// Update handler to mark explicit choice
+const handleDeliveryTypeChange = (type: DeliveryType) => {
+  setDeliveryType(type);
+  setDeliveryTypeUserSet(true); // User made an explicit choice
+};
+
+// Only auto-set if user hasn't explicitly chosen
+useEffect(() => {
+  if (selectedRecipient && !deliveryTypeUserSet) {
+    setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
+  }
+}, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet]);
+
+// Reset the flag when modal opens
+useEffect(() => {
+  if (open) {
+    setDeliveryTypeUserSet(false);
+    // ... other resets
+  }
+}, [open, ...]);
 ```
 
-This safety rule means even with auto-approve ON, high-value gifts still get the email flow.
+---
+
+## Technical Changes
+
+### File: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
+
+| Location | Change |
+|----------|--------|
+| ~Line 106 | Add state: `const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);` |
+| Lines 212-216 | Update useEffect to check `!deliveryTypeUserSet` before auto-setting |
+| Lines 228-257 | Add `setDeliveryTypeUserSet(false)` in the modal reset useEffect |
+| ~Line 500 (in modalContent) | Update `onTypeChange` to also call `setDeliveryTypeUserSet(true)` |
+
+---
+
+## Expected Behavior After Fix
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| Modal opens, user picks Specific Date, then selects recipient | ❌ Switches to Holiday | ✅ Stays on Specific Date |
+| Modal opens, user picks recipient first (no date type selected) | ✅ Smart default applies | ✅ Smart default still applies |
+| Modal opens, user picks Holiday, then picks different recipient | ❌ May switch | ✅ Stays on Holiday |
+| Modal re-opens fresh | ✅ Resets | ✅ Resets (flag cleared) |
+
+---
+
+## Alternative Considered
+
+**Remove the smart default entirely**: Simpler, but loses the helpful "nudge" for users who haven't made a date choice yet. The tracking approach preserves the helpfulness for new users while respecting explicit choices.
 

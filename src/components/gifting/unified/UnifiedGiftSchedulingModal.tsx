@@ -627,8 +627,8 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           )}
         </AnimatePresence>
         
-        {/* Selected Date Preview */}
-        {effectiveDate && (
+        {/* Selected Date Preview - only show when date is meaningful */}
+        {effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
           <p className="text-xs text-muted-foreground text-center">
             Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
           </p>

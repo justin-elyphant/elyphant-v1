@@ -1,86 +1,99 @@
 
-# Fix: Hide Arrival Date Preview Until Holiday Selected
 
-## The Problem
+# Fix: Gift Message Input Losing Focus After 2-3 Characters
 
-In "Holiday / Event" mode, the arrival date preview ("Gift will arrive on or before February 4th, 2026") appears even when **no holiday is selected**. This happens because:
+## Problem Analysis
 
-1. `effectiveDate` falls back to the date picker's default value (7 days from now)
-2. The preview always renders when `effectiveDate` exists
+When typing in the gift message textarea on desktop, the input loses focus after typing just 2-3 characters. The session replay and code analysis confirm this is a **React component identity issue**.
 
-This is confusing because the date is meaningless until a holiday is actually chosen.
+### Root Cause
 
----
+Lines 485-686 define `ModalContent` as an **inline arrow function**:
 
-## Current vs Proposed Behavior
-
-```text
-CURRENT (No holiday selected):           PROPOSED (No holiday selected):
-┌────────────────────────────────┐       ┌────────────────────────────────┐
-│ Popular Holidays/Events        │       │ Popular Holidays/Events        │
-│ ┌────────────────────────────┐ │       │ ┌────────────────────────────┐ │
-│ │ Select a holiday...        │ │       │ │ Select a holiday...        │ │
-│ └────────────────────────────┘ │       │ └────────────────────────────┘ │
-│                                │       │                                │
-│ Don't see your date?           │       │ Don't see your date?           │
-│                                │       │                                │
-│ Gift will arrive on or before  │       │     [NO DATE SHOWN YET]        │
-│ February 4th, 2026 ← CONFUSING │       │                                │
-└────────────────────────────────┘       └────────────────────────────────┘
-
-AFTER holiday selected:                  AFTER holiday selected:
-┌────────────────────────────────┐       ┌────────────────────────────────┐
-│ 🎂 John's Birthday (Mar 15)    │       │ 🎂 John's Birthday (Mar 15)    │
-│                                │       │                                │
-│ Gift will arrive on or before  │       │ Gift will arrive on or before  │
-│ March 15, 2026 ← NOW USEFUL    │       │ March 15, 2026 ✓               │
-└────────────────────────────────┘       └────────────────────────────────┘
-```
-
----
-
-## Technical Solution
-
-**File**: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
-
-**Location**: Lines 630-635 (the date preview section)
-
-**Change**: Conditionally show the arrival date based on delivery type:
-- **Holiday mode**: Only show when `selectedPreset` exists (a holiday was picked)
-- **Specific mode**: Always show (user is manually choosing the date)
-
-### Current Code:
 ```typescript
-{/* Selected Date Preview */}
-{effectiveDate && (
-  <p className="text-xs text-muted-foreground text-center">
-    Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
-  </p>
-)}
+const ModalContent = () => (
+  <div className="space-y-5">
+    {/* ... textarea is nested deep inside ... */}
+    <Textarea
+      value={giftMessage}
+      onChange={(e) => setGiftMessage(e.target.value)}
+    />
+  </div>
+);
 ```
 
-### Updated Code:
+**What happens:**
+1. User types a character → `setGiftMessage('Ha')` called
+2. Parent component re-renders
+3. `ModalContent` arrow function is **recreated** (new function reference)
+4. React sees a "different" component → **unmounts** old tree, **mounts** new tree
+5. Textarea loses focus because it's a brand new DOM element
+
+This is a well-known React anti-pattern: defining components inside render functions.
+
+---
+
+## Solution
+
+**Convert the inline `ModalContent` function into direct JSX** by removing the wrapper function and inlining the content directly where it's used (lines 733 and 754).
+
+### Current Architecture (Problematic)
 ```typescript
-{/* Selected Date Preview - only show when date is meaningful */}
-{effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
-  <p className="text-xs text-muted-foreground text-center">
-    Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
-  </p>
-)}
+// Inside component body - recreated every render!
+const ModalContent = () => (
+  <div className="space-y-5">...</div>
+);
+
+// Used in both mobile and desktop:
+<div className="overflow-y-auto">
+  <ModalContent />  {/* ← Treated as new component each render */}
+</div>
+```
+
+### Fixed Architecture
+```typescript
+// Define the JSX content once as a variable (not a function)
+const modalContent = (
+  <div className="space-y-5">
+    {/* ... all the recipient selector, date picker, textarea, etc ... */}
+  </div>
+);
+
+// Use the variable directly (same object reference):
+<div className="overflow-y-auto">
+  {modalContent}  {/* ← Same JSX object, stable identity */}
+</div>
 ```
 
 ---
 
-## Files to Modify
+## Technical Changes
 
-| File | Change |
-|------|--------|
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Add condition to hide date preview in holiday mode until a holiday is selected |
+### File: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
+
+| Location | Change |
+|----------|--------|
+| Lines 484-686 | Convert `const ModalContent = () => (...)` to `const modalContent = (...)` |
+| Lines 688-708 | Convert `const FooterButtons = ({className}) => (...)` to `const footerButtons = (className?: string) => (...)` or inline |
+| Line 733 | Change `<ModalContent />` to `{modalContent}` |
+| Line 755 | Change `<ModalContent />` to `{modalContent}` |
+| Lines 737, 759 | Update footer button references as needed |
 
 ---
 
-## Result
+## Why This Works
 
-- **Holiday mode**: Date preview appears only after selecting a holiday/event
-- **Specific mode**: Date preview always visible (the picker defines the date)
-- Eliminates the confusing "February 4th" default when no selection has been made
+| Approach | Function Identity | Component Tree |
+|----------|-------------------|----------------|
+| `const ModalContent = () => <div>...` | **New function each render** | Unmounts/remounts |
+| `const modalContent = <div>...` | **Same JSX object** | Updates in place |
+
+When the JSX is stored as a variable (not wrapped in a function), React sees the same object reference and performs a normal **update** instead of an **unmount/remount**. The textarea remains in the DOM and retains focus.
+
+---
+
+## Expected Result
+
+- **Before**: Typing "Ha" causes focus loss, textarea unmounts/remounts
+- **After**: Typing works normally, textarea stays focused and responsive
+

@@ -247,11 +247,14 @@ const RecurringToggleSection: React.FC<RecurringToggleSectionProps> = ({
               </div>
 
               {/* Auto-Approve Toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 min-h-[52px]">
-                <div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 min-h-[56px]">
+                <div className="flex-1 pr-3">
                   <p className="text-sm font-medium">Auto-approve gifts</p>
                   <p className="text-xs text-muted-foreground">
-                    Skip approval and send automatically
+                    {autoApprove 
+                      ? "Gifts will be purchased automatically. Gifts over $75 still need approval."
+                      : "We'll email you 7 days before with Nicole's pick. Approve or skip with one click."
+                    }
                   </p>
                 </div>
                 <Switch 

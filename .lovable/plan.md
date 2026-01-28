@@ -1,115 +1,86 @@
 
+# Fix: Hide Arrival Date Preview Until Holiday Selected
 
-# Simplify Holiday Mode: Hide Date Picker
+## The Problem
 
-## Overview
+In "Holiday / Event" mode, the arrival date preview ("Gift will arrive on or before February 4th, 2026") appears even when **no holiday is selected**. This happens because:
 
-Remove the manual date picker when "Holiday / Event" mode is selected. The holiday dropdown will handle the date automatically, and users can switch to "Specific Date" mode if they need a custom date.
+1. `effectiveDate` falls back to the date picker's default value (7 days from now)
+2. The preview always renders when `effectiveDate` exists
+
+This is confusing because the date is meaningless until a holiday is actually chosen.
 
 ---
 
-## Current vs Proposed Layout
+## Current vs Proposed Behavior
 
 ```text
-CURRENT (Holiday Mode):                  PROPOSED (Holiday Mode):
+CURRENT (No holiday selected):           PROPOSED (No holiday selected):
 ┌────────────────────────────────┐       ┌────────────────────────────────┐
-│ Holiday / Event  │ Specific    │       │ Holiday / Event  │ Specific    │
-│   [SELECTED]     │   Date      │       │   [SELECTED]     │   Date      │
-│                                │       │                                │
 │ Popular Holidays/Events        │       │ Popular Holidays/Events        │
 │ ┌────────────────────────────┐ │       │ ┌────────────────────────────┐ │
-│ │ 🎂 John's Birthday (Mar 15)│ │       │ │ 🎂 John's Birthday (Mar 15)│ │
+│ │ Select a holiday...        │ │       │ │ Select a holiday...        │ │
 │ └────────────────────────────┘ │       │ └────────────────────────────┘ │
 │                                │       │                                │
-│ ┌──────────┐┌──────────┐┌────┐ │       │ Gift will arrive on or before  │
-│ │ March    ││ 15      ▼││2026│ │       │ March 15, 2026                 │
-│ └──────────┘└──────────┘└────┘ │       │                                │
-│     [REDUNDANT - REMOVE]       │       │ Need a different date?         │
-│                                │       │ Switch to "Specific Date" →    │
-│ Gift will arrive on or before  │       └────────────────────────────────┘
-│ March 15, 2026                 │       
-└────────────────────────────────┘       
+│ Don't see your date?           │       │ Don't see your date?           │
+│                                │       │                                │
+│ Gift will arrive on or before  │       │     [NO DATE SHOWN YET]        │
+│ February 4th, 2026 ← CONFUSING │       │                                │
+└────────────────────────────────┘       └────────────────────────────────┘
+
+AFTER holiday selected:                  AFTER holiday selected:
+┌────────────────────────────────┐       ┌────────────────────────────────┐
+│ 🎂 John's Birthday (Mar 15)    │       │ 🎂 John's Birthday (Mar 15)    │
+│                                │       │                                │
+│ Gift will arrive on or before  │       │ Gift will arrive on or before  │
+│ March 15, 2026 ← NOW USEFUL    │       │ March 15, 2026 ✓               │
+└────────────────────────────────┘       └────────────────────────────────┘
 ```
 
 ---
 
-## Why This Works
+## Technical Solution
 
-| Scenario | Coverage |
-|----------|----------|
-| Standard holidays (Christmas, Valentine's, etc.) | ✅ Already in dropdown |
-| Recipient's birthday | ✅ Auto-populated from profile |
-| Custom important dates (Anniversary, Graduation) | ✅ Pulled from connection profile |
-| Obscure/missing holiday | Switch to "Specific Date" mode |
+**File**: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
 
-**Estimated coverage: 95%+ of holiday use cases handled without manual date entry**
+**Location**: Lines 630-635 (the date preview section)
 
----
+**Change**: Conditionally show the arrival date based on delivery type:
+- **Holiday mode**: Only show when `selectedPreset` exists (a holiday was picked)
+- **Specific mode**: Always show (user is manually choosing the date)
 
-## Technical Changes
-
-### File: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
-
-**Location**: Lines 546-620 (the `AnimatePresence` block)
-
-**Change**: In the `deliveryType === 'holiday'` branch, remove the date picker entirely. Keep only:
-1. `PresetHolidaySelector` dropdown
-2. Date confirmation text (if a holiday is selected)
-3. Optional helper text linking to "Specific Date" mode
-
-### Before (current code):
+### Current Code:
 ```typescript
-{deliveryType === 'holiday' ? (
-  <motion.div ...>
-    {/* Holiday dropdown */}
-    <PresetHolidaySelector ... />
-    
-    {/* Date picker - REMOVE THIS */}
-    <div className="bg-muted/30 rounded-lg py-3 px-2">
-      {isMobile ? <Picker ... /> : <DropdownDatePicker ... />}
-    </div>
-  </motion.div>
-) : ( ... )}
+{/* Selected Date Preview */}
+{effectiveDate && (
+  <p className="text-xs text-muted-foreground text-center">
+    Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
+  </p>
+)}
 ```
 
-### After (simplified):
+### Updated Code:
 ```typescript
-{deliveryType === 'holiday' ? (
-  <motion.div ...>
-    {/* Holiday dropdown only */}
-    <PresetHolidaySelector ... />
-    
-    {/* Helper text for edge cases */}
-    {!selectedPreset && (
-      <p className="text-xs text-muted-foreground text-center">
-        Don't see your date? Switch to{' '}
-        <button 
-          type="button"
-          onClick={() => setDeliveryType('specific')}
-          className="text-primary underline underline-offset-2"
-        >
-          Specific Date
-        </button>
-      </p>
-    )}
-  </motion.div>
-) : ( ... )}
+{/* Selected Date Preview - only show when date is meaningful */}
+{effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
+  <p className="text-xs text-muted-foreground text-center">
+    Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
+  </p>
+)}
 ```
 
 ---
 
 ## Files to Modify
 
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Remove date picker from holiday flow, add helper text |
+| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Add condition to hide date preview in holiday mode until a holiday is selected |
 
 ---
 
-## User Experience Benefits
+## Result
 
-1. **Cleaner UI**: 50% less visual noise in holiday mode
-2. **Clear Mental Model**: Holiday = pick from list, Specific = manual entry
-3. **Faster Task Completion**: One selection instead of two
-4. **Escape Hatch**: "Don't see your date?" link for edge cases
-
+- **Holiday mode**: Date preview appears only after selecting a holiday/event
+- **Specific mode**: Date preview always visible (the picker defines the date)
+- Eliminates the confusing "February 4th" default when no selection has been made

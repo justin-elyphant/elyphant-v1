@@ -477,7 +477,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   // Get submit button text
   const getSubmitButtonText = () => {
     if (isSubmitting) return 'Scheduling...';
-    if (isRecurring && !hasExistingRule) return 'Schedule Gift + Set Recurring';
+    if (isRecurring && !hasExistingRule) return 'Schedule & Set Recurring';
     return 'Schedule Gift';
   };
 

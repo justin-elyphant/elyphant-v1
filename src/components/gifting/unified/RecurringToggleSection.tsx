@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, ChevronDown, Bell, CreditCard } from 'lucide-react';
+import { RefreshCw, ChevronDown, Bell, CreditCard, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -130,6 +130,19 @@ const RecurringToggleSection: React.FC<RecurringToggleSectionProps> = ({
             className="overflow-hidden"
           >
             <div className="space-y-5 pt-2 pb-1">
+              {/* Nicole AI Explanation */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0 mt-0.5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Nicole AI picks the perfect gift</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    We'll choose gifts based on their wishlist, interests, and past preferences—so you never have to guess.
+                  </p>
+                </div>
+              </div>
+
               {/* Budget Selection */}
               <div>
                 <Label className="text-sm font-semibold mb-3 block">

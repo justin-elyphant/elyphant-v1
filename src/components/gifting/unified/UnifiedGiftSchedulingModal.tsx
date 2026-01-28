@@ -481,8 +481,8 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     return 'Schedule Gift';
   };
 
-  // Modal content
-  const ModalContent = () => (
+  // Modal content - defined as JSX variable (not function) to prevent remounting on state changes
+  const modalContent = (
     <div className="space-y-5">
       {/* Recipient Selection */}
       <div>
@@ -685,8 +685,8 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     </div>
   );
 
-  // Footer buttons
-  const FooterButtons = ({ className }: { className?: string }) => (
+  // Footer buttons - helper function for className support
+  const renderFooterButtons = (className?: string) => (
     <div className={cn("flex flex-row gap-3 w-full", className)}>
       <Button
         variant="outline"
@@ -730,11 +730,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           </DrawerHeader>
 
           <div className="p-4 overflow-y-auto flex-1">
-            <ModalContent />
+            {modalContent}
           </div>
 
           <DrawerFooter className="border-t pt-4">
-            <FooterButtons className="w-full" />
+            {renderFooterButtons("w-full")}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -752,11 +752,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         </DialogHeader>
 
         <div className="overflow-y-auto flex-1 py-2">
-          <ModalContent />
+          {modalContent}
         </div>
 
         <div className="flex-shrink-0 border-t pt-4 mt-2">
-          <FooterButtons />
+          {renderFooterButtons()}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,99 +1,110 @@
 
+# Fix: Auto Gift Testing Tab Crash - Invalid Date Columns
 
-# Fix: Preserve User's Delivery Type Selection When Choosing Recipient
+## Problem
 
-## Problem Analysis
+The `AutoGiftTestingTab` component crashes with `RangeError: Invalid time value` when navigating to `/trunkline/auto-gift-testing`.
 
-The modal flow is:
-1. User opens modal → sees date selection first
-2. User explicitly chooses **"Specific Date"** and picks February 4, 2026
-3. User selects recipient (Charles Meeks)
-4. **Bug**: System auto-switches to "Holiday / Event" because Charles has upcoming events
+**Root Cause**: The component references two columns that don't exist in the `orders` table:
+1. `zinc_scheduled_processing_date` - Line 322 attempts `format(new Date(order.zinc_scheduled_processing_date), ...)` but this column doesn't exist, returning `undefined`
+2. `recipient_name` - Line 314 uses `order.recipient_name` but this column doesn't exist
 
-This happens because of a `useEffect` on lines 212-216:
-```typescript
-useEffect(() => {
-  if (selectedRecipient) {
-    setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
-  }
-}, [hasUpcomingEvents, selectedRecipient]);
-```
-
-The logic was designed for when recipient came **first** (so we could set a smart default). But now that date selection comes first, this effect overrides the user's explicit choice.
+When `new Date(undefined)` is passed to `date-fns format()`, it throws `RangeError: Invalid time value`.
 
 ---
 
-## UX Best Practice
+## Database Reality
 
-**Never override an explicit user selection with an automatic default.**
-
-The smart default should only apply when:
-1. The modal opens fresh (no selection made yet), OR
-2. The recipient changes AND the user hasn't explicitly touched the date type yet
-
-This follows the principle: **"Be helpful with defaults, but respect explicit choices."**
+**Actual columns in `orders` table:**
+- `scheduled_delivery_date` - EXISTS
+- `zinc_scheduled_processing_date` - DOES NOT EXIST
+- `recipient_name` - DOES NOT EXIST
+- `shipping_address` - EXISTS (JSONB, contains recipient name)
 
 ---
 
 ## Solution
 
-**Track whether the user has explicitly interacted with the delivery type selector.** Only apply the smart default if they haven't.
+### File: `src/hooks/useAutoGiftTesting.ts`
 
-### Implementation Pattern
+Update the query to select `shipping_address` for extracting recipient info:
 
 ```typescript
-// Add a "user has interacted" flag
-const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);
+// Current (line 104-112)
+.select(`
+  id,
+  order_number,
+  scheduled_delivery_date,
+  status,
+  created_at
+`)
 
-// Update handler to mark explicit choice
-const handleDeliveryTypeChange = (type: DeliveryType) => {
-  setDeliveryType(type);
-  setDeliveryTypeUserSet(true); // User made an explicit choice
-};
+// Updated
+.select(`
+  id,
+  order_number,
+  scheduled_delivery_date,
+  status,
+  created_at,
+  shipping_address
+`)
+```
 
-// Only auto-set if user hasn't explicitly chosen
-useEffect(() => {
-  if (selectedRecipient && !deliveryTypeUserSet) {
-    setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
-  }
-}, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet]);
+### File: `src/components/trunkline/AutoGiftTestingTab.tsx`
 
-// Reset the flag when modal opens
-useEffect(() => {
-  if (open) {
-    setDeliveryTypeUserSet(false);
-    // ... other resets
-  }
-}, [open, ...]);
+1. **Fix recipient name display** (line 314):
+```typescript
+// Before
+<p className="font-medium text-sm">{order.recipient_name}</p>
+
+// After - extract from shipping_address JSONB
+<p className="font-medium text-sm">
+  {order.shipping_address?.name || order.order_number || 'Unknown'}
+</p>
+```
+
+2. **Remove non-existent column reference** (lines 321-323):
+```typescript
+// Before
+<p>
+  Process: {format(new Date(order.zinc_scheduled_processing_date), 'MMM d, yyyy')}
+</p>
+
+// After - show order_number instead
+<p className="font-mono">Order #{order.order_number}</p>
+```
+
+3. **Add null safety to scheduled_delivery_date** (line 319):
+```typescript
+// Before
+Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')}
+
+// After - with null check
+Delivery: {order.scheduled_delivery_date 
+  ? format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')
+  : 'Not set'}
 ```
 
 ---
 
-## Technical Changes
+## Files to Modify
 
-### File: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
-
-| Location | Change |
-|----------|--------|
-| ~Line 106 | Add state: `const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);` |
-| Lines 212-216 | Update useEffect to check `!deliveryTypeUserSet` before auto-setting |
-| Lines 228-257 | Add `setDeliveryTypeUserSet(false)` in the modal reset useEffect |
-| ~Line 500 (in modalContent) | Update `onTypeChange` to also call `setDeliveryTypeUserSet(true)` |
+| File | Change |
+|------|--------|
+| `src/hooks/useAutoGiftTesting.ts` | Add `shipping_address` to query select |
+| `src/components/trunkline/AutoGiftTestingTab.tsx` | Fix invalid column references and add null safety |
 
 ---
 
-## Expected Behavior After Fix
+## Expected Result After Fix
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Modal opens, user picks Specific Date, then selects recipient | ❌ Switches to Holiday | ✅ Stays on Specific Date |
-| Modal opens, user picks recipient first (no date type selected) | ✅ Smart default applies | ✅ Smart default still applies |
-| Modal opens, user picks Holiday, then picks different recipient | ❌ May switch | ✅ Stays on Holiday |
-| Modal re-opens fresh | ✅ Resets | ✅ Resets (flag cleared) |
+The Scheduled Orders section will display:
+```text
+┌───────────────────────────────────────┐
+│  Charles Meeks              scheduled │
+│  Delivery: Feb 4, 2026               │
+│  Order #63af4b                       │
+└───────────────────────────────────────┘
+```
 
----
-
-## Alternative Considered
-
-**Remove the smart default entirely**: Simpler, but loses the helpful "nudge" for users who haven't made a date choice yet. The tracking approach preserves the helpfulness for new users while respecting explicit choices.
-
+Instead of crashing with "Something went wrong".

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { format, subDays } from 'date-fns';
 
 interface StuckOrder {
   id: string;
@@ -21,6 +22,15 @@ interface StuckOrder {
   payment_status: string;
   notes: string | null;
 }
+
+type ManualRecoveryOrder = {
+  id: string;
+  order_number: string;
+  status: string;
+  zinc_order_id: string | null;
+  payment_status: string | null;
+  scheduled_delivery_date: string | null;
+};
 
 const OrderRecoveryTool = () => {
   const [stuckOrders, setStuckOrders] = useState<StuckOrder[]>([]);
@@ -70,11 +80,13 @@ const OrderRecoveryTool = () => {
       // Try to find the order by ID or order_number
       const { data: order, error: fetchError } = await supabase
         .from('orders')
-        .select('id, order_number, status, zinc_order_id')
+        .select('id, order_number, status, zinc_order_id, payment_status, scheduled_delivery_date')
         .or(`id.eq.${manualOrderId},order_number.eq.${manualOrderId}`)
-        .single();
+        .maybeSingle();
 
-      if (fetchError || !order) {
+      const typedOrder = order as ManualRecoveryOrder | null;
+
+      if (fetchError || !typedOrder) {
         toast.error('Order not found');
         setRecovering(prev => {
           const newSet = new Set(prev);
@@ -84,14 +96,32 @@ const OrderRecoveryTool = () => {
         return;
       }
 
+      // Prevent an expected 500 by gating retries behind payment confirmation.
+      // Deferred-payment scheduled orders are created as pending_payment with payment_status=pending
+      // until Stage 0 (T-7) creates a fresh authorization and capture occurs.
+      if (typedOrder.payment_status === 'pending' || typedOrder.status === 'pending_payment') {
+        const arrivalDate = typedOrder.scheduled_delivery_date ? new Date(typedOrder.scheduled_delivery_date) : null;
+        const captureDate = arrivalDate ? subDays(arrivalDate, 7) : null;
+        const submitDate = arrivalDate ? subDays(arrivalDate, 3) : null;
+
+        toast.error('Payment not confirmed (deferred payment order)', {
+          description:
+            `This order is payment_status=pending, so process-order-v2 will refuse it. ` +
+            `Use Trunkline → Auto-Gift Testing → Run Scheduler with simulated date ` +
+            `${captureDate ? format(captureDate, 'yyyy-MM-dd') : '(arrival-7 days)'} (capture) ` +
+            `then ${submitDate ? format(submitDate, 'yyyy-MM-dd') : '(arrival-3 days)'} (submit to Zinc).`,
+        });
+        return;
+      }
+
       // Re-invoke process-order-v2 to retry
       const { error } = await supabase.functions.invoke('process-order-v2', {
-        body: { orderId: order.id }
+        body: { orderId: typedOrder.id }
       });
 
       if (error) throw error;
       
-      toast.success(`Order ${order.order_number} submitted to Zinc for processing`);
+      toast.success(`Order ${typedOrder.order_number} submitted to Zinc for processing`);
       setManualOrderId('');
     } catch (error) {
       console.error('Error recovering manual order:', error);

@@ -6,18 +6,18 @@ export const useAutoGiftTesting = () => {
   const [loading, setLoading] = useState(false);
 
   const triggerDailyCheck = async (userId?: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
       console.log('Triggering daily auto-gift check...');
-      
+
       const { data, error } = await supabase.functions.invoke('daily-auto-gift-check', {
-        body: userId ? { userId } : {}
+        body: userId ? { userId } : {},
       });
 
       if (error) {
         console.error('Error triggering daily check:', error);
         toast.error('Failed to trigger daily check');
-        throw error;
+        return null;
       }
 
       console.log('Daily check result:', data);
@@ -26,25 +26,25 @@ export const useAutoGiftTesting = () => {
     } catch (error) {
       console.error('Daily check error:', error);
       toast.error('Failed to trigger daily check');
-      throw error;
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   const triggerProcessing = async (executionId?: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
       console.log('Triggering auto-gift processing...');
-      
+
       const { data, error } = await supabase.functions.invoke('process-auto-gifts', {
-        body: executionId ? { executionId } : {}
+        body: executionId ? { executionId } : {},
       });
 
       if (error) {
         console.error('Error triggering processing:', error);
         toast.error('Failed to trigger processing');
-        throw error;
+        return null;
       }
 
       console.log('Processing result:', data);
@@ -53,7 +53,7 @@ export const useAutoGiftTesting = () => {
     } catch (error) {
       console.error('Processing error:', error);
       toast.error('Failed to trigger processing');
-      throw error;
+      return null;
     } finally {
       setLoading(false);
     }
@@ -151,45 +151,47 @@ export const useAutoGiftTesting = () => {
   };
 
   const triggerScheduledProcessor = async (simulatedDate?: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
       console.log('Triggering scheduled order processor...', simulatedDate || 'using today');
-      
+
       const { data, error } = await supabase.functions.invoke('scheduled-order-processor', {
-        body: simulatedDate ? { simulatedDate } : {}
+        body: simulatedDate ? { simulatedDate } : {},
       });
 
       if (error) {
         console.error('Error triggering scheduled processor:', error);
         toast.error('Failed to trigger scheduled processor');
-        throw error;
+        return null;
       }
 
       console.log('Scheduled processor result:', data);
-      toast.success(`Processor complete: ${data?.authorized || 0} authorized, ${data?.captured || 0} captured, ${data?.submitted || 0} submitted`);
+      toast.success(
+        `Processor complete: ${data?.authorized || 0} authorized, ${data?.captured || 0} captured, ${data?.submitted || 0} submitted`
+      );
       return data;
     } catch (error) {
       console.error('Scheduled processor error:', error);
       toast.error('Failed to trigger scheduled processor');
-      throw error;
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
   const triggerOrchestrator = async (simulatedDate?: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
       console.log('Triggering auto-gift orchestrator...', simulatedDate || 'using today');
-      
+
       const { data, error } = await supabase.functions.invoke('auto-gift-orchestrator', {
-        body: simulatedDate ? { simulatedDate } : {}
+        body: simulatedDate ? { simulatedDate } : {},
       });
 
       if (error) {
         console.error('Error triggering orchestrator:', error);
         toast.error('Failed to trigger orchestrator');
-        throw error;
+        return null;
       }
 
       console.log('Orchestrator result:', data);
@@ -198,7 +200,7 @@ export const useAutoGiftTesting = () => {
     } catch (error) {
       console.error('Orchestrator error:', error);
       toast.error('Failed to trigger orchestrator');
-      throw error;
+      return null;
     } finally {
       setLoading(false);
     }

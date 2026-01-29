@@ -9,6 +9,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { BillingInfo } from "./billingService";
 import { logOrderProcessing, validateOrderMethod } from "./orderMonitoringService";
 
+const isPaymentConfirmed = (
+  paymentStatus: string | null | undefined,
+  paymentIntentId?: string | null
+) => {
+  // Legacy PaymentIntent-style value
+  if (paymentStatus === 'succeeded') return true;
+
+  // Stripe Checkout Session uses payment_status: 'paid' | 'unpaid'
+  if (paymentStatus === 'paid') return !!paymentIntentId;
+
+  return false;
+};
+
 export interface OrderRetryResult {
   success: boolean;
   message: string;
@@ -61,9 +74,12 @@ export const retryOrderWithBillingInfo = async (
     
     // CRITICAL: Verify payment status before retry to prevent duplicate charges
     console.log('💳 Verifying payment status before retry...');
-    if (orderData.payment_status !== 'succeeded') {
+    if (!isPaymentConfirmed(orderData.payment_status, orderData.payment_intent_id)) {
       console.error(`❌ Payment not confirmed: ${orderData.payment_status}`);
-      throw new Error(`Cannot retry order - payment status is ${orderData.payment_status}. Payment must be 'succeeded' before retrying to prevent duplicate charges.`);
+      throw new Error(
+        `Cannot retry order - payment_status is ${orderData.payment_status}. ` +
+          `Payment must be confirmed ('paid' for Checkout Sessions or 'succeeded' for legacy flows) before retrying to prevent duplicate charges.`
+      );
     }
     
     console.log(`✅ Payment verified: ${orderData.payment_status} for $${orderData.total_amount}`);

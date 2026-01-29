@@ -10,6 +10,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { retryOrderWithBillingInfo } from "@/services/orderRetryService";
 
+const isPaymentConfirmed = (
+  paymentStatus: string | null | undefined,
+  paymentIntentId?: string | null
+) => {
+  // Legacy PaymentIntent-style value
+  if (paymentStatus === 'succeeded') return true;
+
+  // Stripe Checkout Session uses payment_status: 'paid' | 'unpaid'
+  if (paymentStatus === 'paid') return !!paymentIntentId;
+
+  return false;
+};
+
 const OrderRetryTool = () => {
   const [orderId, setOrderId] = useState('');
   const [cardholderName, setCardholderName] = useState('');
@@ -43,8 +56,10 @@ const OrderRetryTool = () => {
 
       setOrderInfo(data);
       
-      if (data.payment_status !== 'succeeded') {
-        toast.error("⚠️ Payment not confirmed - retry blocked to prevent duplicate charges");
+      if (!isPaymentConfirmed(data.payment_status, data.payment_intent_id)) {
+        toast.error("⚠️ Payment not confirmed - retry blocked to prevent duplicate charges", {
+          description: `payment_status = ${data.payment_status || 'null'}`
+        });
       } else {
         toast.success("✅ Payment verified - safe to retry");
       }
@@ -72,7 +87,7 @@ const OrderRetryTool = () => {
       return;
     }
 
-    if (orderInfo.payment_status !== 'succeeded') {
+    if (!isPaymentConfirmed(orderInfo.payment_status, orderInfo.payment_intent_id)) {
       toast.error("Cannot retry - payment not confirmed. This prevents duplicate charges.");
       return;
     }
@@ -181,7 +196,7 @@ const OrderRetryTool = () => {
                   <div>
                     <span className="font-medium">Payment:</span> 
                     <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                      orderInfo.payment_status === 'succeeded' 
+                      isPaymentConfirmed(orderInfo.payment_status, orderInfo.payment_intent_id)
                         ? 'bg-green-100 text-green-700' 
                         : 'bg-red-100 text-red-700'
                     }`}>
@@ -204,7 +219,13 @@ const OrderRetryTool = () => {
           
           <Button 
             onClick={handleRetryOrder} 
-            disabled={isRetrying || !orderId.trim() || !cardholderName.trim() || !orderInfo || orderInfo.payment_status !== 'succeeded'}
+            disabled={
+              isRetrying ||
+              !orderId.trim() ||
+              !cardholderName.trim() ||
+              !orderInfo ||
+              !isPaymentConfirmed(orderInfo.payment_status, orderInfo.payment_intent_id)
+            }
             className="w-full"
           >
             {isRetrying ? (

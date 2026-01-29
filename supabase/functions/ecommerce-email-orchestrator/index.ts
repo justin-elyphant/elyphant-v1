@@ -693,14 +693,15 @@ const handler = async (req: Request): Promise<Response> => {
         order_number: order.order_number || `ORD-${order.id.slice(0, 8)}`,
         order_id: order.id,
         total_amount: order.total_amount || 0,
-        subtotal: (order.line_items as any)?.subtotal ? (order.line_items as any).subtotal / 100 : 0,
-        shipping_cost: (order.line_items as any)?.shipping ? (order.line_items as any).shipping / 100 : 0,
-        tax_amount: (order.line_items as any)?.tax ? (order.line_items as any).tax / 100 : 0,
-        gifting_fee: (order.line_items as any)?.gifting_fee ? (order.line_items as any).gifting_fee / 100 : 0,
+        // Values in line_items JSONB are stored in DOLLARS (not cents)
+        subtotal: (order.line_items as any)?.subtotal || 0,
+        shipping_cost: (order.line_items as any)?.shipping || 0,
+        tax_amount: (order.line_items as any)?.tax || 0,
+        gifting_fee: (order.line_items as any)?.gifting_fee || 0,
         items: lineItems.map((item: any) => ({
           title: item.title || item.product_name || 'Product',
           quantity: item.quantity || 1,
-          price: item.price ? item.price / 100 : 0,
+          price: item.price || 0, // Already in dollars
           image_url: item.image_url || item.image
         })),
         is_gift: (order.gift_options as any)?.is_gift || false,

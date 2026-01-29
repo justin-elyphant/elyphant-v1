@@ -21,13 +21,13 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
   // Extract pricing from line_items JSONB if available
   const lineItems = order.line_items || {};
   
-  // Check for pricing breakdown in line_items (stored in cents from Stripe/Zinc)
-  // New format: { items: [...], subtotal: 999, shipping: 699, tax: 148, gifting_fee: 259 }
+  // Values in line_items JSONB are stored in DOLLARS (not cents)
+  // New format: { items: [...], subtotal: 26.97, shipping: 6.99, tax: 2.36, gifting_fee: 3.70 }
   // Legacy format: just an array of items
-  const shippingFromLineItems = lineItems.shipping ? lineItems.shipping / 100 : null;
-  const taxFromLineItems = lineItems.tax ? lineItems.tax / 100 : null;
-  const subtotalFromLineItems = lineItems.subtotal ? lineItems.subtotal / 100 : null;
-  const giftingFeeFromLineItems = lineItems.gifting_fee ? lineItems.gifting_fee / 100 : null;
+  const shippingFromLineItems = lineItems.shipping ?? null;
+  const taxFromLineItems = lineItems.tax ?? null;
+  const subtotalFromLineItems = lineItems.subtotal ?? null;
+  const giftingFeeFromLineItems = lineItems.gifting_fee ?? null;
   
   // For new orders with complete pricing data from line_items JSONB
   if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {

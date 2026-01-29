@@ -130,9 +130,40 @@ serve(async (req) => {
 
     console.log(`✅ Found ${itemsArray.length} line items`);
 
-    // STEP 5: Extract and validate shipping address (from JSONB column)
-    const shippingAddress = order.shipping_address;
-    
+    // STEP 4.5: RECIPIENT-FIRST ADDRESS PRIORITY
+    // For gift orders, extract shipping from line_items.recipient_shipping
+    // This ensures gifts ship to recipient, not sender (per unified pipeline architecture)
+    let shippingAddress = order.shipping_address;
+    let recipientPhone = '';
+    let isGiftOrder = false;
+    let recipientName = '';
+
+    const firstItem = itemsArray[0];
+    if (firstItem?.recipient_id && firstItem?.recipient_shipping) {
+      const rs = firstItem.recipient_shipping;
+      isGiftOrder = true;
+      recipientName = firstItem.recipient_name || rs.name || '';
+      recipientPhone = rs.phone || '';
+      
+      // Build recipient shipping address with field normalization
+      shippingAddress = {
+        name: rs.name || recipientName,
+        address_line1: rs.address_line1 || rs.street || rs.address || '',
+        address_line2: rs.address_line2 || rs.addressLine2 || '',
+        city: rs.city || '',
+        state: rs.state || '',
+        postal_code: rs.postal_code || rs.zipCode || rs.zip_code || '',
+        country: rs.country || 'US',
+        phone: rs.phone || '',
+      };
+      
+      console.log(`🎁 [RECIPIENT-FIRST] Gift order detected → Using recipient shipping`);
+      console.log(`   📍 Recipient: ${recipientName} in ${shippingAddress.city}, ${shippingAddress.state}`);
+    } else {
+      console.log(`📦 [SELF-PURCHASE] Using order.shipping_address (buyer)`);
+    }
+
+    // STEP 5: Validate shipping address (from JSONB column or recipient data)
     if (!shippingAddress) {
       console.error('❌ No shipping_address found in order');
       await markOrderRequiresAttention(
@@ -238,7 +269,8 @@ serve(async (req) => {
     console.log(`✅ All ${itemsArray.length} product IDs validated as Amazon ASINs`);
 
     // STEP 6.5: Validate phone number (CRITICAL for Zinc/carrier delivery notifications)
-    const finalPhoneNumber = shippingAddress.phone || shopperPhone || '';
+    // Priority: recipient phone (for gifts) > shipping address phone > shopper profile phone
+    const finalPhoneNumber = recipientPhone || shippingAddress.phone || shopperPhone || '';
     if (!finalPhoneNumber) {
       console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - Zinc may reject for carrier notifications`);
       // Log to orders table for admin visibility
@@ -251,6 +283,11 @@ serve(async (req) => {
 
     // STEP 7: Build Zinc ZMA API request
     // ZMA (Zinc Managed Accounts) uses Zinc's Amazon credentials
+    // Determine gift status: explicit from line item OR from gift_options
+    const hasGiftMessage = !!(order.gift_options?.giftMessage || firstItem?.gift_message);
+    const effectiveIsGift = isGiftOrder || hasGiftMessage;
+    const giftMessageContent = firstItem?.gift_message || order.gift_options?.giftMessage || '';
+    
     const zincRequest = {
       addax: true, // CRITICAL: Enables ZMA processing
       idempotency_key: orderId,
@@ -271,9 +308,9 @@ serve(async (req) => {
         country: shippingAddress.country || 'US',
         phone_number: finalPhoneNumber,  // Use validated phone from step 6.5
       },
-      is_gift: !!(order.gift_options?.giftMessage),
-      gift_message: order.gift_options?.giftMessage 
-        ? `${order.gift_options.giftMessage}\n\nFrom: ${profile?.name || requiredShippingFields.name || 'A Friend'}`
+      is_gift: effectiveIsGift,
+      gift_message: effectiveIsGift && giftMessageContent
+        ? `${giftMessageContent}\n\nFrom: ${profile?.name || 'A Friend'}`
         : null,
       shipping_method: 'cheapest',
       // NOTE: payment_method, retailer_credentials, and billing_address 

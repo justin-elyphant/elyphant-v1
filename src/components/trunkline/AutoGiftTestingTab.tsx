@@ -19,6 +19,7 @@ const AutoGiftTestingTab = () => {
     getEventLogs,
     getScheduledOrders,
     triggerScheduledProcessor,
+    triggerOrchestrator,
     loading
   } = useAutoGiftTesting();
 
@@ -28,6 +29,7 @@ const AutoGiftTestingTab = () => {
   const [scheduledOrders, setScheduledOrders] = useState<any[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [simulatedDate, setSimulatedDate] = useState('');
+  const [orchestratorDate, setOrchestratorDate] = useState('');
 
   const loadData = async () => {
     const [execData, logsData, ordersData] = await Promise.all([
@@ -63,6 +65,11 @@ const AutoGiftTestingTab = () => {
 
   const handleScheduledProcessor = async () => {
     await triggerScheduledProcessor(simulatedDate || undefined);
+    await loadData();
+  };
+
+  const handleOrchestrator = async () => {
+    await triggerOrchestrator(orchestratorDate || undefined);
     await loadData();
   };
 
@@ -174,6 +181,27 @@ const AutoGiftTestingTab = () => {
               >
                 <Clock className="h-4 w-4" />
                 Run Scheduler
+              </Button>
+            </div>
+
+            <Separator orientation="vertical" className="h-8" />
+
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={orchestratorDate}
+                onChange={(e) => setOrchestratorDate(e.target.value)}
+                className="w-40"
+                placeholder="Simulate date"
+              />
+              <Button
+                onClick={handleOrchestrator}
+                disabled={loading}
+                variant="default"
+                className="gap-2"
+              >
+                <Zap className="h-4 w-4" />
+                Run Orchestrator
               </Button>
             </div>
           </div>

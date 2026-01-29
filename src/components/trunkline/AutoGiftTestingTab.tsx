@@ -311,17 +311,18 @@ const AutoGiftTestingTab = () => {
                       className="border rounded-lg p-3 space-y-2"
                     >
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{order.recipient_name}</p>
+                        <p className="font-medium text-sm">
+                          {order.shipping_address?.name || order.order_number || 'Unknown'}
+                        </p>
                         {getStatusBadge(order.status)}
                       </div>
                       <div className="text-xs text-muted-foreground space-y-1">
                         <p>
-                          Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')}
+                          Delivery: {order.scheduled_delivery_date 
+                            ? format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')
+                            : 'Not set'}
                         </p>
-                        <p>
-                          Process: {format(new Date(order.zinc_scheduled_processing_date), 'MMM d, yyyy')}
-                        </p>
-                        <p className="font-mono">{order.id.slice(0, 8)}</p>
+                        <p className="font-mono">Order #{order.order_number}</p>
                       </div>
                     </div>
                   ))

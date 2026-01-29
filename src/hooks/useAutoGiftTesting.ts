@@ -135,7 +135,8 @@ export const useAutoGiftTesting = () => {
           order_number,
           scheduled_delivery_date,
           status,
-          created_at
+          created_at,
+          shipping_address
         `)
         .not('scheduled_delivery_date', 'is', null)
         .order('scheduled_delivery_date', { ascending: true });

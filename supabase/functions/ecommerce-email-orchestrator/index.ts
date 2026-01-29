@@ -185,6 +185,47 @@ const orderConfirmationTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Order ${props.order_number} confirmed` });
 };
 
+// Order Pending Payment Template (for scheduled/deferred orders)
+const orderPendingPaymentTemplate = (props: any): string => {
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      Order Scheduled! 📅
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hi ${props.customer_name || 'there'}, your gift has been scheduled for future delivery.
+    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
+      <tr><td>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Arrival</p>
+        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'Pending'}</p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
+          Your payment will be processed 7 days before delivery. We'll send you a confirmation when your order ships.
+        </p>
+      </td></tr>
+    </table>
+    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
+      <tr><td>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Estimated Total</p>
+        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">$${typeof props.total_amount === 'number' ? props.total_amount.toFixed(2) : props.total_amount || '0.00'}</p>
+      </td></tr>
+    </table>
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #b45309; font-size: 14px;">💳 Payment Not Yet Charged</p>
+      <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">Your payment method has been saved securely. We'll charge your card 7 days before the scheduled delivery date.</p>
+    </div>
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Order Details
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} scheduled for ${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'delivery'}` });
+};
+
 // Order Shipped Template
 const orderShippedTemplate = (props: any): string => {
   const content = `
@@ -480,6 +521,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: orderConfirmationTemplate(data),
         subject: `Order Confirmed - ${data.order_number || 'Your Order'}`
       };
+    case 'order_pending_payment':
+      return {
+        html: orderPendingPaymentTemplate(data),
+        subject: `Order Scheduled - ${data.order_number || 'Your Order'}`
+      };
     case 'order_shipped':
       return {
         html: orderShippedTemplate(data),
@@ -533,15 +579,26 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { eventType, recipientEmail, data, orderId }: EmailRequest & { orderId?: string } = await req.json();
+    const { eventType, recipientEmail, data, orderId, metadata }: EmailRequest & { orderId?: string; metadata?: any } = await req.json();
 
     console.log(`📧 Orchestrating ${eventType} email for ${recipientEmail || 'recipient'}`);
 
-    let emailData = data;
+    let emailData = data || metadata; // Support both 'data' and 'metadata' fields
     let emailRecipient = recipientEmail;
 
-    // If orderId provided for order_confirmation, fetch order details
-    if (eventType === 'order_confirmation' && orderId && !data) {
+    // For order_pending_payment with metadata, use it directly (already has the data we need)
+    if (eventType === 'order_pending_payment' && metadata && !data) {
+      console.log(`📅 Processing scheduled order email with metadata: ${JSON.stringify(metadata)}`);
+      emailData = {
+        customer_name: metadata.customer_name || 'there',
+        order_number: metadata.order_number,
+        order_id: orderId,
+        total_amount: metadata.total_amount || 0,
+        scheduled_date: metadata.scheduled_date,
+      };
+    }
+    // If orderId provided for order_confirmation or order_pending_payment (without metadata), fetch order details
+    else if ((eventType === 'order_confirmation' || eventType === 'order_pending_payment') && orderId && !emailData) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseKey);
@@ -591,7 +648,8 @@ const handler = async (req: Request): Promise<Response> => {
         })),
         is_gift: (order.gift_options as any)?.is_gift || false,
         gift_message: (order.gift_options as any)?.gift_message || null,
-        scheduled_delivery_date: order.scheduled_delivery_date || null
+        scheduled_delivery_date: order.scheduled_delivery_date || null,
+        scheduled_date: order.scheduled_delivery_date || null, // Alias for pending_payment template
       };
     }
 

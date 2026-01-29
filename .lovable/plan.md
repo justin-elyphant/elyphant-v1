@@ -1,110 +1,185 @@
 
-# Fix: Auto Gift Testing Tab Crash - Invalid Date Columns
 
-## Problem
+# Recurring Gifts Simplification - Implementation Plan
 
-The `AutoGiftTestingTab` component crashes with `RangeError: Invalid time value` when navigating to `/trunkline/auto-gift-testing`.
+## Summary
 
-**Root Cause**: The component references two columns that don't exist in the `orders` table:
-1. `zinc_scheduled_processing_date` - Line 322 attempts `format(new Date(order.zinc_scheduled_processing_date), ...)` but this column doesn't exist, returning `undefined`
-2. `recipient_name` - Line 314 uses `order.recipient_name` but this column doesn't exist
+Simplify the over-engineered recurring gift (auto-gift) system to reuse the proven `scheduled-order-processor` pipeline you just tested successfully, while **fully preserving** the AI gift selection logic (Nicole AI choosing from wishlist/preferences/metadata).
 
-When `new Date(undefined)` is passed to `date-fns format()`, it throws `RangeError: Invalid time value`.
+## Current Problems
 
----
+| Component | Lines/Records | Issue |
+|-----------|---------------|-------|
+| `auto-gift-orchestrator` | 510 lines | Duplicates payment + checkout logic already proven in `scheduled-order-processor` |
+| `automated_gift_executions` | **0 records** | Never used tracking table |
+| `email_approval_tokens` | **0 records** | Over-engineered email approval flow |
+| `auto_gift_notifications` | **0 records** | Custom notifications never used |
+| `auto_gifting_rules` columns | 27 columns | 15+ JSONB columns never read by any code |
 
-## Database Reality
+## Solution Architecture
 
-**Actual columns in `orders` table:**
-- `scheduled_delivery_date` - EXISTS
-- `zinc_scheduled_processing_date` - DOES NOT EXIST
-- `recipient_name` - DOES NOT EXIST
-- `shipping_address` - EXISTS (JSONB, contains recipient name)
-
----
-
-## Solution
-
-### File: `src/hooks/useAutoGiftTesting.ts`
-
-Update the query to select `shipping_address` for extracting recipient info:
-
-```typescript
-// Current (line 104-112)
-.select(`
-  id,
-  order_number,
-  scheduled_delivery_date,
-  status,
-  created_at
-`)
-
-// Updated
-.select(`
-  id,
-  order_number,
-  scheduled_delivery_date,
-  status,
-  created_at,
-  shipping_address
-`)
+```text
++-------------------+     +-------------------------+     +---------------------------+
+| auto_gifting_rules|     | create-checkout-session |     | scheduled-order-processor |
+| (unchanged)       | --> | (proven flow)           | --> | (proven 3-stage)          |
+|                   |     |                         |     |                           |
+| Keeps all columns |     | Creates order with      |     | Stage 0: Authorize (>8d)  |
+| including gift_   |     | scheduled_delivery_date |     | Stage 1: Capture (T-7)    |
+| selection_criteria|     |                         |     | Stage 2: Submit (T-3)     |
++-------------------+     +-------------------------+     +---------------------------+
+         |                         ^
+         |                         |
+         v                         |
++-------------------------+        |
+| UnifiedGiftManagement   |--------+
+| Service (PRESERVED)     |
+|                         |
+| 4-Tier Gift Selection:  |
+| - Tier 1: Wishlist      |
+| - Tier 2: Preferences   |
+| - Tier 3: Metadata      |
+| - Tier 4: AI Guess      |
++-------------------------+
 ```
 
-### File: `src/components/trunkline/AutoGiftTestingTab.tsx`
+## Preserved Components (NOT Touched)
 
-1. **Fix recipient name display** (line 314):
-```typescript
-// Before
-<p className="font-medium text-sm">{order.recipient_name}</p>
+1. **Gift Selection Logic** - `UnifiedGiftManagementService.selectGiftForRecipient()` (lines 311-409)
+   - 4-tier hierarchical selection (wishlist → preferences → metadata → AI guess)
+   - Relationship multipliers and age categories
+   - Budget adjustments based on relationship type
 
-// After - extract from shipping_address JSONB
-<p className="font-medium text-sm">
-  {order.shipping_address?.name || order.order_number || 'Unknown'}
-</p>
+2. **AutoGiftSetupFlow** - Frontend setup wizard stays exactly the same
+   - Multi-event selection, budget controls, notification preferences
+   - Payment method management
+   - Product hints for AI suggestions
+
+3. **`auto_gifting_rules` Table** - Keep all 27 columns
+   - `gift_selection_criteria` JSONB used by selection logic
+   - `relationship_context` JSONB used by selection logic
+   - Other columns preserved for future use
+
+## Implementation Plan
+
+### Phase 1: Simplify `auto-gift-orchestrator` (Edge Function)
+
+**Current:** 510 lines with duplicate checkout/payment logic
+**Target:** ~200 lines that call existing services
+
+**Changes:**
+1. Remove duplicate payment method handling (checkout session handles it)
+2. Remove duplicate Stripe interactions (rely on proven flow)
+3. Add `simulatedDate` support for testing (like `scheduled-order-processor`)
+4. Call `UnifiedGiftManagementService.selectGiftForRecipient()` equivalent via edge function call to `nicole-unified-agent` for gift selection
+5. Create checkout session directly → order flows through `scheduled-order-processor`
+
+**Simplified Flow:**
+```
+T-7: Orchestrator runs
+  → Find rules with scheduled_date within 7 days
+  → For each rule:
+    1. Query recipient's wishlist for items within budget (simple first-pass)
+    2. Send notification email to user with suggested gift
+    3. If auto_approve enabled OR user approves:
+       → Call create-checkout-session with scheduled_delivery_date = rule.scheduled_date
+       → Order created with status "scheduled" or "pending_payment"
+       → scheduled-order-processor handles the rest automatically
 ```
 
-2. **Remove non-existent column reference** (lines 321-323):
-```typescript
-// Before
-<p>
-  Process: {format(new Date(order.zinc_scheduled_processing_date), 'MMM d, yyyy')}
-</p>
+### Phase 2: Add Orchestrator Button to Trunkline
 
-// After - show order_number instead
-<p className="font-mono">Order #{order.order_number}</p>
-```
+Add "Run Auto-Gift Orchestrator" button to `AutoGiftTestingTab` with simulated date support (matching existing "Run Scheduler" button).
 
-3. **Add null safety to scheduled_delivery_date** (line 319):
-```typescript
-// Before
-Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')}
+**File:** `src/components/trunkline/AutoGiftTestingTab.tsx`
 
-// After - with null check
-Delivery: {order.scheduled_delivery_date 
-  ? format(new Date(order.scheduled_delivery_date), 'MMM d, yyyy')
-  : 'Not set'}
-```
+**Changes:**
+- Add input field for simulated date
+- Add button to invoke `auto-gift-orchestrator` with simulated date
+- Display orchestrator results (notified, checkout created, failed)
 
----
+**File:** `src/hooks/useAutoGiftTesting.ts`
 
-## Files to Modify
+**Changes:**
+- Add `triggerOrchestrator(simulatedDate?: string)` function
+
+### Phase 3: Database Cleanup (Future - After Testing)
+
+**Tables to archive after validating new flow works:**
+- `automated_gift_executions` (0 records)
+- `email_approval_tokens` (0 records)
+- `auto_gift_notifications` (0 records)
+
+**Keep:**
+- `auto_gifting_rules` - All columns preserved
+- `auto_gift_event_logs` - 175 records of useful audit data
+
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/hooks/useAutoGiftTesting.ts` | Add `shipping_address` to query select |
-| `src/components/trunkline/AutoGiftTestingTab.tsx` | Fix invalid column references and add null safety |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Simplify from 510 → ~200 lines |
+| `src/components/trunkline/AutoGiftTestingTab.tsx` | Add orchestrator testing button |
+| `src/hooks/useAutoGiftTesting.ts` | Add `triggerOrchestrator()` function |
 
----
+## Files NOT Modified (Preserved)
 
-## Expected Result After Fix
+| File | Reason |
+|------|--------|
+| `src/services/UnifiedGiftManagementService.ts` | Contains AI gift selection logic |
+| `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx` | Frontend setup wizard |
+| `supabase/functions/scheduled-order-processor/index.ts` | Proven pipeline |
+| `supabase/functions/create-checkout-session/index.ts` | Proven checkout flow |
+| `supabase/functions/approve-auto-gift/index.ts` | Approval handling |
 
-The Scheduled Orders section will display:
-```text
-┌───────────────────────────────────────┐
-│  Charles Meeks              scheduled │
-│  Delivery: Feb 4, 2026               │
-│  Order #63af4b                       │
-└───────────────────────────────────────┘
+## Expected Outcome
+
+1. **Unified Pipeline** - Recurring gifts flow through the same proven `scheduled-order-processor` you just tested
+2. **Simpler Testing** - Same simulated date testing pattern for both scheduled and recurring gifts
+3. **Preserved AI Logic** - Gift selection criteria, wishlist priority, and preference-based selection unchanged
+4. **Reduced Code** - 310+ lines removed from orchestrator
+5. **Zero Data Loss** - All existing rules continue working
+
+## Technical Details
+
+### Simplified Orchestrator Logic
+
+```typescript
+// Pseudo-code for simplified flow
+for (const rule of upcomingRules) {
+  const daysUntil = getDaysUntil(new Date(rule.scheduled_date));
+  
+  if (daysUntil === NOTIFICATION_LEAD_DAYS) {
+    // Get suggested products from wishlist
+    const gifts = await getWishlistGifts(rule.recipient_id, rule.budget_limit);
+    
+    // Send notification email
+    await sendNotificationEmail(rule, gifts);
+    
+    // If auto-approve is enabled, create checkout immediately
+    if (rule.auto_approve) {
+      await createCheckoutSession({
+        cartItems: gifts.slice(0, 1),
+        scheduledDeliveryDate: rule.scheduled_date,
+        isAutoGift: true,
+        autoGiftRuleId: rule.id
+      });
+    }
+  }
+}
 ```
 
-Instead of crashing with "Something went wrong".
+### Order Status Flow After Checkout
+
+```text
+User approves gift (or auto-approve)
+    ↓
+create-checkout-session → order.status = "scheduled" (or "pending_payment" for >8 days)
+    ↓
+scheduled-order-processor (daily cron at 2 AM):
+  - Stage 0 (T-7 for >8d orders): pending_payment → scheduled
+  - Stage 1 (T-7): scheduled → payment_confirmed
+  - Stage 2 (T-3): payment_confirmed → processing (Zinc submission)
+    ↓
+Zinc fulfills order → delivered
+```
+

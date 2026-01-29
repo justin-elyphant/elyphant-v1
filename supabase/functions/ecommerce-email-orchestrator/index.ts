@@ -13,6 +13,13 @@ const truncateProductTitle = (title: string, maxLength: number = 60): string => 
   return title.substring(0, maxLength).trim() + '...';
 };
 
+// Utility function to extract first name from full name
+const getFirstName = (fullName: string | null | undefined): string => {
+  if (!fullName || fullName.trim() === '') return 'there';
+  const firstName = fullName.trim().split(' ')[0];
+  return firstName || 'there';
+};
+
 // Utility function to format scheduled delivery date
 const formatScheduledDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -187,12 +194,14 @@ const orderConfirmationTemplate = (props: any): string => {
 
 // Order Pending Payment Template (for scheduled/deferred orders)
 const orderPendingPaymentTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name);
+  
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
       Order Scheduled! 📅
     </h2>
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hi ${props.customer_name || 'there'}, your gift has been scheduled for future delivery.
+      Hi ${firstName}, your gift has been scheduled for future delivery.
     </p>
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
       <tr><td>
@@ -206,11 +215,70 @@ const orderPendingPaymentTemplate = (props: any): string => {
     <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Estimated Total</p>
+        <p style="margin: 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
+      </td></tr>
+    </table>
+    
+    ${props.items && props.items.length > 0 ? `
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
+    ${props.items.map((item: any) => {
+      const imageUrl = item.image_url || 'https://via.placeholder.com/80x80/e5e5e5/666666?text=Product';
+      return `
+    <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
+      <tr>
+        <td style="padding-right: 16px; vertical-align: top;">
+          <img src="${imageUrl}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />
+        </td>
+        <td style="vertical-align: top;">
+          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
+          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × $${typeof item.price === 'number' ? item.price.toFixed(2) : item.price || '0.00'}</p>
+        </td>
+      </tr>
+    </table>
+    `;
+    }).join('')}
+    
+    <!-- Pricing breakdown -->
+    <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Subtotal</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.subtotal ? props.subtotal.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Shipping</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.shipping_cost ? props.shipping_cost.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      ${props.tax_amount && props.tax_amount > 0 ? `
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Tax</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.tax_amount.toFixed(2)}</p></td>
+      </tr>
+      ` : ''}
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.gifting_fee ? props.gifting_fee.toFixed(2) : '0.00'}</p></td>
+      </tr>
+      <tr style="border-top: 2px solid #e5e5e5;">
+        <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
+        <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">$${typeof props.total_amount === 'number' ? props.total_amount.toFixed(2) : props.total_amount || '0.00'}</p></td>
+      </tr>
+    </table>
+    ` : `
+    <table style="background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%); border-radius: 8px; padding: 24px; margin-bottom: 20px; width: 100%;">
+      <tr><td>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Estimated Total</p>
         <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">$${typeof props.total_amount === 'number' ? props.total_amount.toFixed(2) : props.total_amount || '0.00'}</p>
       </td></tr>
     </table>
+    `}
+    
+    ${props.is_gift && props.gift_message ? `
+    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
+      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    </div>
+    ` : ''}
+    
     <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #b45309; font-size: 14px;">💳 Payment Not Yet Charged</p>
       <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">Your payment method has been saved securely. We'll charge your card 7 days before the scheduled delivery date.</p>
@@ -586,19 +654,8 @@ const handler = async (req: Request): Promise<Response> => {
     let emailData = data || metadata; // Support both 'data' and 'metadata' fields
     let emailRecipient = recipientEmail;
 
-    // For order_pending_payment with metadata, use it directly (already has the data we need)
-    if (eventType === 'order_pending_payment' && metadata && !data) {
-      console.log(`📅 Processing scheduled order email with metadata: ${JSON.stringify(metadata)}`);
-      emailData = {
-        customer_name: metadata.customer_name || 'there',
-        order_number: metadata.order_number,
-        order_id: orderId,
-        total_amount: metadata.total_amount || 0,
-        scheduled_date: metadata.scheduled_date,
-      };
-    }
-    // If orderId provided for order_confirmation or order_pending_payment (without metadata), fetch order details
-    else if ((eventType === 'order_confirmation' || eventType === 'order_pending_payment') && orderId && !emailData) {
+    // If orderId provided for order_confirmation or order_pending_payment, fetch full order details
+    if ((eventType === 'order_confirmation' || eventType === 'order_pending_payment') && orderId && !emailData) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseKey);

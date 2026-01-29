@@ -64,4 +64,3 @@ shippingAddress = {
 Console logging distinguishes between gift and self-purchase flows:
 - `🎁 [RECIPIENT-FIRST] Gift order detected → Using recipient shipping`
 - `📦 [SELF-PURCHASE] Using order.shipping_address (buyer)`
-

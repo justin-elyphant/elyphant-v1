@@ -962,17 +962,13 @@ async function handleDeferredPaymentOrder(
   console.log(`📅 [DEFERRED] Scheduled delivery: ${scheduledDate} | Will authorize at T-7`);
   
   // Trigger confirmation email (no payment yet, but order is placed)
+  // Let orchestrator fetch full order details including items, pricing, and gift options
   try {
     await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
         eventType: 'order_pending_payment',
         orderId: newOrder.id,
         recipientEmail: metadata.user_email,
-        metadata: {
-          order_number: newOrder.order_number,
-          scheduled_date: scheduledDate,
-          total_amount: totalAmount,
-        }
       }
     });
     console.log(`📧 [DEFERRED] Pending payment confirmation email triggered`);

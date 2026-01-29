@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw, Calendar } from "lucide-react";
+import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw, Calendar, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -710,14 +710,15 @@ const OrderConfirmation = () => {
             {isScheduledGift && scheduledRecipientShipping ? (
               <div className="text-sm">
                 <p className="font-medium">{scheduledRecipientShipping.name || scheduledRecipientName || 'Recipient'}</p>
-                <p>{scheduledRecipientShipping.address || scheduledRecipientShipping.address_line1 || scheduledRecipientShipping.addressLine1}</p>
-                {(scheduledRecipientShipping.addressLine2 || scheduledRecipientShipping.address_line2) && (
-                  <p>{scheduledRecipientShipping.addressLine2 || scheduledRecipientShipping.address_line2}</p>
-                )}
+                {/* Privacy: Only show city/state for gift recipients */}
                 <p>
-                  {scheduledRecipientShipping.city}, {scheduledRecipientShipping.state} {scheduledRecipientShipping.zipCode || scheduledRecipientShipping.zip_code || scheduledRecipientShipping.postal_code}
+                  {scheduledRecipientShipping.city}, {scheduledRecipientShipping.state}
                 </p>
                 <p>{scheduledRecipientShipping.country || 'United States'}</p>
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Full address securely stored for delivery
+                </p>
               </div>
             ) : (
               <div className="text-sm">

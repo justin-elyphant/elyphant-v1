@@ -71,30 +71,36 @@ const OrderDetail = () => {
           // Get complete pricing breakdown with backward compatibility
           const pricingBreakdown = getOrderPricingBreakdown(data);
           
+          // Detect scheduled gifts OR flagged gifts
+          const isScheduledGift = data.scheduled_delivery_date && 
+            new Date(data.scheduled_delivery_date) > new Date();
+          
           // Smart address resolution for gift orders - use shipping_address jsonb
           let displayShippingInfo = data.shipping_address || {};
           const shopperName = user?.user_metadata?.name || (data.shipping_address as any)?.name || "Customer";
           let recipientName = shopperName;
 
-          // For gift orders, check gift_options for recipient info
+          // For gift orders, check line_items for recipient info (modern format)
           const giftOptions = data.gift_options as any;
           const lineItems = data.line_items as any;
+          const isGift = giftOptions?.isGift || isScheduledGift;
           
-          if (giftOptions?.isGift && lineItems?.items?.length > 0) {
+          if (isGift && lineItems?.items?.length > 0) {
             const firstItem = lineItems.items[0];
-            if (firstItem?.shippingAddress) {
-              const recipientAddress = firstItem.shippingAddress;
+            // Check BOTH field names for compatibility
+            const recipientAddr = firstItem?.recipient_shipping || firstItem?.shippingAddress;
+            
+            if (recipientAddr) {
               displayShippingInfo = {
-                name: recipientAddress.name || `${recipientAddress.first_name || ''} ${recipientAddress.last_name || ''}`.trim(),
-                address_line1: recipientAddress.address_line1 || recipientAddress.address,
-                address_line2: recipientAddress.address_line2 || recipientAddress.addressLine2,
-                city: recipientAddress.city,
-                state: recipientAddress.state,
-                zip_code: recipientAddress.zip_code || recipientAddress.zipCode,
-                country: recipientAddress.country || 'US'
+                name: recipientAddr.name || firstItem.recipient_name || recipientName,
+                address_line1: recipientAddr.address_line1 || recipientAddr.address,
+                address_line2: recipientAddr.address_line2 || recipientAddr.addressLine2,
+                city: recipientAddr.city,
+                state: recipientAddr.state,
+                zip_code: recipientAddr.zip_code || recipientAddr.zipCode || recipientAddr.postal_code,
+                country: recipientAddr.country || 'US'
               };
-              recipientName = recipientAddress.name || 
-                `${recipientAddress.first_name || ''} ${recipientAddress.last_name || ''}`.trim();
+              recipientName = recipientAddr.name || firstItem.recipient_name || recipientName;
             }
           }
           
@@ -105,6 +111,7 @@ const OrderDetail = () => {
             created_at: data.created_at,
             status: data.status,
             scheduled_delivery_date: data.scheduled_delivery_date,
+            isScheduledGift: !!isScheduledGift,
             total: data.total_amount,
             subtotal: pricingBreakdown.subtotal,
             shipping_cost: pricingBreakdown.shipping_cost,

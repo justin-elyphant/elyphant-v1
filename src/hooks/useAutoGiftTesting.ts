@@ -177,6 +177,33 @@ export const useAutoGiftTesting = () => {
     }
   };
 
+  const triggerOrchestrator = async (simulatedDate?: string) => {
+    try {
+      setLoading(true);
+      console.log('Triggering auto-gift orchestrator...', simulatedDate || 'using today');
+      
+      const { data, error } = await supabase.functions.invoke('auto-gift-orchestrator', {
+        body: simulatedDate ? { simulatedDate } : {}
+      });
+
+      if (error) {
+        console.error('Error triggering orchestrator:', error);
+        toast.error('Failed to trigger orchestrator');
+        throw error;
+      }
+
+      console.log('Orchestrator result:', data);
+      toast.success(`Orchestrator complete: ${data?.notified || 0} notified, ${data?.checkoutCreated || 0} checkouts created`);
+      return data;
+    } catch (error) {
+      console.error('Orchestrator error:', error);
+      toast.error('Failed to trigger orchestrator');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     triggerDailyCheck,
     triggerProcessing,
@@ -184,6 +211,7 @@ export const useAutoGiftTesting = () => {
     getEventLogs,
     getScheduledOrders,
     triggerScheduledProcessor,
+    triggerOrchestrator,
     loading
   };
 };

@@ -929,7 +929,7 @@ async function handleDeferredPaymentOrder(
     line_items: lineItems,
     shipping_address: shippingAddress,
     gift_options: {
-      isGift: !!metadata.gift_message || isAutoGift,
+      isGift: !!metadata.gift_message || isAutoGift || transformedLineItems.some(item => item.recipient_id),
       giftMessage: metadata.gift_message || '',
       giftWrapping: false,
       isSurpriseGift: false,

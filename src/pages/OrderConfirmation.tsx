@@ -3,7 +3,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw } from "lucide-react";
+import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw, Calendar } from "lucide-react";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -322,13 +323,25 @@ const OrderConfirmation = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isScheduledGift: boolean = false) => {
+    // Special handling for pending_payment (scheduled gifts)
+    if (status === 'pending_payment' && isScheduledGift) {
+      return (
+        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-700">
+          <Calendar className="w-3 h-3 mr-1" />
+          SCHEDULED DELIVERY
+        </Badge>
+      );
+    }
+    
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       completed: "default",
       delivered: "default",
       processing: "secondary",
       shipped: "secondary",
       pending: "outline",
+      pending_payment: "outline",
+      scheduled: "outline",
       failed: "destructive",
       cancelled: "destructive"
     };
@@ -434,6 +447,19 @@ const OrderConfirmation = () => {
                         order?.cart_data?.wishlist_owner_id;
   const wishlistOwnerName = order?.cart_data?.wishlist_owner_name || 'the recipient';
 
+  // Detect scheduled gifts (orders with future delivery date)
+  const isScheduledGift = !!(
+    order?.scheduled_delivery_date && 
+    new Date(order.scheduled_delivery_date) > new Date()
+  );
+
+  // Extract recipient info from line_items for scheduled gifts
+  const orderLineItems = getOrderLineItems(order);
+  const firstItem = orderLineItems[0] || {};
+  const scheduledRecipientName = firstItem.recipient_name || order?.recipient_name;
+  const scheduledRecipientShipping = firstItem.recipient_shipping;
+  const scheduledGiftMessage = firstItem.gift_message || order?.cart_data?.giftOptions?.giftMessage;
+
   return (
     <SidebarLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -471,8 +497,29 @@ const OrderConfirmation = () => {
           </div>
         )}
 
-        {/* Success Header - Only show for non-wishlist orders */}
-        {!isFromWishlist && (
+        {/* Scheduled Gift Hero Card - Purple Theme */}
+        {isScheduledGift && scheduledRecipientName && !isFromWishlist && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl text-white text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4 backdrop-blur-sm">
+              <Gift className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">
+              🎁 Gift Scheduled for {scheduledRecipientName}!
+            </h2>
+            <p className="text-white/90 mb-2">
+              Arrives on or before {format(new Date(order.scheduled_delivery_date!), 'MMMM d, yyyy')}
+            </p>
+            {scheduledGiftMessage && (
+              <p className="text-sm italic text-white/80 mb-3">"{scheduledGiftMessage}"</p>
+            )}
+            <div className="mt-4 text-sm bg-white/20 rounded-lg p-3 backdrop-blur-sm">
+              💳 Your card has been saved. Payment will process 7 days before delivery.
+            </div>
+          </div>
+        )}
+
+        {/* Success Header - Only show for non-wishlist, non-scheduled orders */}
+        {!isFromWishlist && !isScheduledGift && (
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
               <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
@@ -493,7 +540,7 @@ const OrderConfirmation = () => {
             </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Status</p>
-              {getStatusBadge(order.status)}
+              {getStatusBadge(order.status, isScheduledGift)}
             </div>
           </div>
           
@@ -653,19 +700,36 @@ const OrderConfirmation = () => {
           </div>
         </Card>
 
-        {/* Shipping Address - Single Recipient Only */}
-        {!isMultiRecipient && order.shipping_address && (
+        {/* Shipping/Delivery Address - Single Recipient Only */}
+        {/* For scheduled gifts, show recipient address from line_items; otherwise show sender's shipping */}
+        {!isMultiRecipient && (isScheduledGift ? scheduledRecipientShipping : order.shipping_address) && (
           <Card className="p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
-            <div className="text-sm">
-              <p className="font-medium">{order.shipping_address.name || 'Customer'}</p>
-              <p>{order.shipping_address.address_line1}</p>
-              {order.shipping_address.address_line2 && <p>{order.shipping_address.address_line2}</p>}
-              <p>
-                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}
-              </p>
-              <p>{order.shipping_address.country || 'United States'}</p>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">
+              {isScheduledGift ? 'Delivery Address' : 'Shipping Address'}
+            </h2>
+            {isScheduledGift && scheduledRecipientShipping ? (
+              <div className="text-sm">
+                <p className="font-medium">{scheduledRecipientShipping.name || scheduledRecipientName || 'Recipient'}</p>
+                <p>{scheduledRecipientShipping.address || scheduledRecipientShipping.address_line1 || scheduledRecipientShipping.addressLine1}</p>
+                {(scheduledRecipientShipping.addressLine2 || scheduledRecipientShipping.address_line2) && (
+                  <p>{scheduledRecipientShipping.addressLine2 || scheduledRecipientShipping.address_line2}</p>
+                )}
+                <p>
+                  {scheduledRecipientShipping.city}, {scheduledRecipientShipping.state} {scheduledRecipientShipping.zipCode || scheduledRecipientShipping.zip_code || scheduledRecipientShipping.postal_code}
+                </p>
+                <p>{scheduledRecipientShipping.country || 'United States'}</p>
+              </div>
+            ) : (
+              <div className="text-sm">
+                <p className="font-medium">{order.shipping_address?.name || 'Customer'}</p>
+                <p>{order.shipping_address?.address_line1}</p>
+                {order.shipping_address?.address_line2 && <p>{order.shipping_address.address_line2}</p>}
+                <p>
+                  {order.shipping_address?.city}, {order.shipping_address?.state} {order.shipping_address?.postal_code}
+                </p>
+                <p>{order.shipping_address?.country || 'United States'}</p>
+              </div>
+            )}
           </Card>
         )}
 

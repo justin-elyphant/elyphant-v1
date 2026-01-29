@@ -1,185 +1,194 @@
 
+# Recipient Profile Phone Lookup - Implementation Plan
 
-# Recurring Gifts Simplification - Implementation Plan
+## Problem Summary
 
-## Summary
+The Zinc API order for Charles Meeks in Ruidoso failed because `phone_number` was empty. The sender (you) shouldn't need to know the recipient's phone - the system should automatically extract it from the **recipient's own profile**.
 
-Simplify the over-engineered recurring gift (auto-gift) system to reuse the proven `scheduled-order-processor` pipeline you just tested successfully, while **fully preserving** the AI gift selection logic (Nicole AI choosing from wishlist/preferences/metadata).
+## Current Data State
 
-## Current Problems
+```
+connection: Charles Meeks
+├── connected_user_id: f5c6fbb5-f2f2-4430-b679-39ec117e3596 ✅ (linked to profile!)
+├── pending_recipient_phone: NULL ❌
+└── pending_shipping_address: NULL ❌
 
-| Component | Lines/Records | Issue |
-|-----------|---------------|-------|
-| `auto-gift-orchestrator` | 510 lines | Duplicates payment + checkout logic already proven in `scheduled-order-processor` |
-| `automated_gift_executions` | **0 records** | Never used tracking table |
-| `email_approval_tokens` | **0 records** | Over-engineered email approval flow |
-| `auto_gift_notifications` | **0 records** | Custom notifications never used |
-| `auto_gifting_rules` columns | 27 columns | 15+ JSONB columns never read by any code |
+profile (f5c6fbb5...): Charles Meeks
+├── shipping_address.address_line1: "402 College Dr" ✅
+├── shipping_address.city: "Ruidoso" ✅
+├── shipping_address.phone: NULL ❌ (needs to be added)
+```
 
-## Solution Architecture
+## Solution: Two-Part Fix
+
+### Part 1: Immediate Data Fix (Manual)
+
+Add phone numbers to each user's `profiles.shipping_address` JSONB:
+
+```sql
+-- Justin Meeks (your test account)
+UPDATE profiles 
+SET shipping_address = shipping_address || '{"phone": "YOUR_PHONE"}'::jsonb
+WHERE id = 'a3a6e0fb-4b2c-4627-a675-a08480d60f89';
+
+-- Charles Meeks (your dad)
+UPDATE profiles 
+SET shipping_address = shipping_address || '{"phone": "DAD_PHONE"}'::jsonb
+WHERE id = 'f5c6fbb5-f2f2-4430-b679-39ec117e3596';
+
+-- Curt Davidson
+UPDATE profiles 
+SET shipping_address = shipping_address || '{"phone": "CURT_PHONE"}'::jsonb
+WHERE id = 'e306dd36-1860-4520-a74c-fef4473aa763';
+
+-- (Repeat for other users)
+```
+
+### Part 2: System Fix - Profile Phone Lookup
+
+Modify `stripe-webhook-v2` to fetch the recipient's phone from their **profile** when `connected_user_id` exists.
+
+---
+
+## Technical Implementation
+
+### File: `supabase/functions/stripe-webhook-v2/index.ts`
+
+**Location:** `fetchRecipientAddresses` function (lines 144-184)
+
+**Current Logic:**
+```typescript
+const { data: connections } = await supabase
+  .from('user_connections')
+  .select('id, pending_recipient_name, pending_shipping_address, connected_user_id')
+  .in('id', recipientIds);
+
+// Only uses pending_shipping_address from connections table
+```
+
+**New Logic:**
+```typescript
+const { data: connections } = await supabase
+  .from('user_connections')
+  .select(`
+    id, 
+    pending_recipient_name, 
+    pending_shipping_address, 
+    pending_recipient_phone,
+    connected_user_id,
+    connected_profile:profiles!user_connections_connected_user_id_fkey(
+      name,
+      shipping_address
+    )
+  `)
+  .in('id', recipientIds);
+
+for (const conn of connections || []) {
+  // PRIORITY 1: Use connected profile's shipping address (recipient-owned)
+  if (conn.connected_profile?.shipping_address) {
+    const profileAddr = conn.connected_profile.shipping_address;
+    addressMap.set(conn.id, {
+      name: conn.connected_profile.name || conn.pending_recipient_name || '',
+      address_line1: profileAddr.address_line1 || profileAddr.street || '',
+      address_line2: profileAddr.address_line2 || '',
+      city: profileAddr.city || '',
+      state: profileAddr.state || '',
+      postal_code: profileAddr.zip_code || profileAddr.zipCode || '',
+      country: profileAddr.country || 'US',
+      phone: profileAddr.phone || '',  // ✅ CRITICAL: Phone from profile!
+    });
+    console.log(`✅ [FETCH] Using PROFILE address for ${conn.connected_profile.name}`);
+    continue;
+  }
+  
+  // PRIORITY 2: Fall back to pending_shipping_address (sender-provided)
+  if (conn.pending_shipping_address) {
+    const addr = conn.pending_shipping_address;
+    addressMap.set(conn.id, {
+      name: addr.name || conn.pending_recipient_name || '',
+      address_line1: addr.street || addr.address_line1 || '',
+      // ... existing logic ...
+      phone: addr.phone || conn.pending_recipient_phone || '',
+    });
+  }
+}
+```
+
+### File: `supabase/functions/process-order-v2/index.ts`
+
+**Location:** Line 261 - Add validation warning when phone is still missing
+
+**Add after line 260:**
+```typescript
+// CRITICAL: Warn if phone is missing (Zinc may reject)
+const finalPhoneNumber = shippingAddress.phone || shopperPhone || '';
+if (!finalPhoneNumber) {
+  console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - Zinc may reject for carrier notifications`);
+  // Log to orders table for admin visibility
+  await supabase.from('orders').update({
+    notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'
+  }).eq('id', orderId);
+}
+```
+
+---
+
+## Data Flow After Fix
 
 ```text
-+-------------------+     +-------------------------+     +---------------------------+
-| auto_gifting_rules|     | create-checkout-session |     | scheduled-order-processor |
-| (unchanged)       | --> | (proven flow)           | --> | (proven 3-stage)          |
-|                   |     |                         |     |                           |
-| Keeps all columns |     | Creates order with      |     | Stage 0: Authorize (>8d)  |
-| including gift_   |     | scheduled_delivery_date |     | Stage 1: Capture (T-7)    |
-| selection_criteria|     |                         |     | Stage 2: Submit (T-3)     |
-+-------------------+     +-------------------------+     +---------------------------+
-         |                         ^
-         |                         |
-         v                         |
-+-------------------------+        |
-| UnifiedGiftManagement   |--------+
-| Service (PRESERVED)     |
-|                         |
-| 4-Tier Gift Selection:  |
-| - Tier 1: Wishlist      |
-| - Tier 2: Preferences   |
-| - Tier 3: Metadata      |
-| - Tier 4: AI Guess      |
-+-------------------------+
+Sender schedules gift for Charles Meeks
+    ↓
+create-checkout-session stores recipient_id in Stripe metadata
+    ↓
+stripe-webhook-v2 receives checkout.session.completed
+    ↓
+fetchRecipientAddresses(recipientIds):
+    ├── Fetches user_connections + JOIN profiles
+    ├── Priority 1: Use profiles.shipping_address (with phone!) ✅
+    └── Priority 2: Fall back to pending_shipping_address
+    ↓
+Order created with shipping_address.phone populated
+    ↓
+process-order-v2 builds Zinc request with phone_number ✅
+    ↓
+Zinc/Amazon delivery notification works
 ```
 
-## Preserved Components (NOT Touched)
-
-1. **Gift Selection Logic** - `UnifiedGiftManagementService.selectGiftForRecipient()` (lines 311-409)
-   - 4-tier hierarchical selection (wishlist → preferences → metadata → AI guess)
-   - Relationship multipliers and age categories
-   - Budget adjustments based on relationship type
-
-2. **AutoGiftSetupFlow** - Frontend setup wizard stays exactly the same
-   - Multi-event selection, budget controls, notification preferences
-   - Payment method management
-   - Product hints for AI suggestions
-
-3. **`auto_gifting_rules` Table** - Keep all 27 columns
-   - `gift_selection_criteria` JSONB used by selection logic
-   - `relationship_context` JSONB used by selection logic
-   - Other columns preserved for future use
-
-## Implementation Plan
-
-### Phase 1: Simplify `auto-gift-orchestrator` (Edge Function)
-
-**Current:** 510 lines with duplicate checkout/payment logic
-**Target:** ~200 lines that call existing services
-
-**Changes:**
-1. Remove duplicate payment method handling (checkout session handles it)
-2. Remove duplicate Stripe interactions (rely on proven flow)
-3. Add `simulatedDate` support for testing (like `scheduled-order-processor`)
-4. Call `UnifiedGiftManagementService.selectGiftForRecipient()` equivalent via edge function call to `nicole-unified-agent` for gift selection
-5. Create checkout session directly → order flows through `scheduled-order-processor`
-
-**Simplified Flow:**
-```
-T-7: Orchestrator runs
-  → Find rules with scheduled_date within 7 days
-  → For each rule:
-    1. Query recipient's wishlist for items within budget (simple first-pass)
-    2. Send notification email to user with suggested gift
-    3. If auto_approve enabled OR user approves:
-       → Call create-checkout-session with scheduled_delivery_date = rule.scheduled_date
-       → Order created with status "scheduled" or "pending_payment"
-       → scheduled-order-processor handles the rest automatically
-```
-
-### Phase 2: Add Orchestrator Button to Trunkline
-
-Add "Run Auto-Gift Orchestrator" button to `AutoGiftTestingTab` with simulated date support (matching existing "Run Scheduler" button).
-
-**File:** `src/components/trunkline/AutoGiftTestingTab.tsx`
-
-**Changes:**
-- Add input field for simulated date
-- Add button to invoke `auto-gift-orchestrator` with simulated date
-- Display orchestrator results (notified, checkout created, failed)
-
-**File:** `src/hooks/useAutoGiftTesting.ts`
-
-**Changes:**
-- Add `triggerOrchestrator(simulatedDate?: string)` function
-
-### Phase 3: Database Cleanup (Future - After Testing)
-
-**Tables to archive after validating new flow works:**
-- `automated_gift_executions` (0 records)
-- `email_approval_tokens` (0 records)
-- `auto_gift_notifications` (0 records)
-
-**Keep:**
-- `auto_gifting_rules` - All columns preserved
-- `auto_gift_event_logs` - 175 records of useful audit data
+---
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Simplify from 510 → ~200 lines |
-| `src/components/trunkline/AutoGiftTestingTab.tsx` | Add orchestrator testing button |
-| `src/hooks/useAutoGiftTesting.ts` | Add `triggerOrchestrator()` function |
+| `supabase/functions/stripe-webhook-v2/index.ts` | Join to profiles table in `fetchRecipientAddresses`, prioritize profile address with phone |
+| `supabase/functions/process-order-v2/index.ts` | Add validation warning for missing phone |
 
-## Files NOT Modified (Preserved)
+---
 
-| File | Reason |
-|------|--------|
-| `src/services/UnifiedGiftManagementService.ts` | Contains AI gift selection logic |
-| `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx` | Frontend setup wizard |
-| `supabase/functions/scheduled-order-processor/index.ts` | Proven pipeline |
-| `supabase/functions/create-checkout-session/index.ts` | Proven checkout flow |
-| `supabase/functions/approve-auto-gift/index.ts` | Approval handling |
+## Future Enhancement: Profile Phone Collection
 
-## Expected Outcome
+For new users, ensure phone is collected during address setup. The `UnifiedShippingForm` already validates phone (line 101), but we should ensure it's saved to `profiles.shipping_address.phone`:
 
-1. **Unified Pipeline** - Recurring gifts flow through the same proven `scheduled-order-processor` you just tested
-2. **Simpler Testing** - Same simulated date testing pattern for both scheduled and recurring gifts
-3. **Preserved AI Logic** - Gift selection criteria, wishlist priority, and preference-based selection unchanged
-4. **Reduced Code** - 310+ lines removed from orchestrator
-5. **Zero Data Loss** - All existing rules continue working
+**File: `src/services/addressService.ts`** - Ensure phone is included when saving profile address
 
-## Technical Details
+This is a minor enhancement and can be done as a follow-up after confirming the core fix works.
 
-### Simplified Orchestrator Logic
+---
 
-```typescript
-// Pseudo-code for simplified flow
-for (const rule of upcomingRules) {
-  const daysUntil = getDaysUntil(new Date(rule.scheduled_date));
-  
-  if (daysUntil === NOTIFICATION_LEAD_DAYS) {
-    // Get suggested products from wishlist
-    const gifts = await getWishlistGifts(rule.recipient_id, rule.budget_limit);
-    
-    // Send notification email
-    await sendNotificationEmail(rule, gifts);
-    
-    // If auto-approve is enabled, create checkout immediately
-    if (rule.auto_approve) {
-      await createCheckoutSession({
-        cartItems: gifts.slice(0, 1),
-        scheduledDeliveryDate: rule.scheduled_date,
-        isAutoGift: true,
-        autoGiftRuleId: rule.id
-      });
-    }
-  }
-}
-```
+## Testing Plan
 
-### Order Status Flow After Checkout
+After implementation:
 
-```text
-User approves gift (or auto-approve)
-    ↓
-create-checkout-session → order.status = "scheduled" (or "pending_payment" for >8 days)
-    ↓
-scheduled-order-processor (daily cron at 2 AM):
-  - Stage 0 (T-7 for >8d orders): pending_payment → scheduled
-  - Stage 1 (T-7): scheduled → payment_confirmed
-  - Stage 2 (T-3): payment_confirmed → processing (Zinc submission)
-    ↓
-Zinc fulfills order → delivered
-```
+1. Run the SQL updates to add phone numbers to existing profiles
+2. Retry the Charles Meeks order (Ruidoso)
+3. Verify Zinc request includes populated `phone_number`
+4. Confirm order succeeds
 
+---
+
+## Summary
+
+- **No sender burden**: Phone comes from recipient's own profile
+- **Single source of truth**: Profile shipping address is authoritative for established connections
+- **Fallback preserved**: Sender-provided data still works for pending invitations
+- **Minimal code change**: ~25 lines added to webhook, ~10 lines to order processor

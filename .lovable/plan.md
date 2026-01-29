@@ -1,194 +1,190 @@
 
-# Recipient Profile Phone Lookup - Implementation Plan
+# Investigation Summary & Fix Plan: Scheduled Gift Order Confirmation Display
 
-## Problem Summary
+## Summary of Findings
 
-The Zinc API order for Charles Meeks in Ruidoso failed because `phone_number` was empty. The sender (you) shouldn't need to know the recipient's phone - the system should automatically extract it from the **recipient's own profile**.
+### Issue 1: "No Stripe Activity"
+**This is expected behavior.** Your order `ORD-20260129-5114` used **Stripe Setup Mode** (deferred payment) because the delivery date (Feb 12) is 15 days away.
 
-## Current Data State
+**How Setup Mode works:**
+- No charge appears in Stripe yet (only a SetupIntent to save the card)
+- Payment authorization happens at T-7 (Feb 5) via `scheduled-order-processor`
+- Payment capture happens at T-7, Zinc submission at T-3
 
+**Evidence from logs:**
 ```
-connection: Charles Meeks
-├── connected_user_id: f5c6fbb5-f2f2-4430-b679-39ec117e3596 ✅ (linked to profile!)
-├── pending_recipient_phone: NULL ❌
-└── pending_shipping_address: NULL ❌
-
-profile (f5c6fbb5...): Charles Meeks
-├── shipping_address.address_line1: "402 College Dr" ✅
-├── shipping_address.city: "Ruidoso" ✅
-├── shipping_address.phone: NULL ❌ (needs to be added)
-```
-
-## Solution: Two-Part Fix
-
-### Part 1: Immediate Data Fix (Manual)
-
-Add phone numbers to each user's `profiles.shipping_address` JSONB:
-
-```sql
--- Justin Meeks (your test account)
-UPDATE profiles 
-SET shipping_address = shipping_address || '{"phone": "YOUR_PHONE"}'::jsonb
-WHERE id = 'a3a6e0fb-4b2c-4627-a675-a08480d60f89';
-
--- Charles Meeks (your dad)
-UPDATE profiles 
-SET shipping_address = shipping_address || '{"phone": "DAD_PHONE"}'::jsonb
-WHERE id = 'f5c6fbb5-f2f2-4430-b679-39ec117e3596';
-
--- Curt Davidson
-UPDATE profiles 
-SET shipping_address = shipping_address || '{"phone": "CURT_PHONE"}'::jsonb
-WHERE id = 'e306dd36-1860-4520-a74c-fef4473aa763';
-
--- (Repeat for other users)
+[DEFERRED] Creating pending_payment order for session: cs_live_c1PBF...
+[DEFERRED] Scheduled delivery: 2026-02-12 | Will authorize at T-7
+[DEFERRED] Pending payment order created: ORD-20260129-5114
 ```
 
-### Part 2: System Fix - Profile Phone Lookup
+### Issue 2: Order Confirmation Page Problems
 
-Modify `stripe-webhook-v2` to fetch the recipient's phone from their **profile** when `connected_user_id` exists.
+The current page is missing three key features for scheduled gifts:
+
+| Problem | Current State | Expected State |
+|---------|---------------|----------------|
+| **Shipping Address** | Shows sender (Justin Meeks, Solana Beach) | Should show recipient (Charles Meeks, Ruidoso) |
+| **Scheduled Gift UI** | No indication it's scheduled | Should show "Scheduled for Feb 12" with recipient's name |
+| **Status Explanation** | Just shows "PENDING PAYMENT" badge | Should explain payment will process later |
+
+**Data proof - the recipient info IS in the order:**
+```json
+{
+  "line_items.items[0]": {
+    "recipient_name": "Charles Meeks",
+    "recipient_shipping": {
+      "city": "Ruidoso",
+      "address": "402 College Dr",
+      "phone": "5759375526"
+    },
+    "gift_message": "Test gift from Elyphant"
+  },
+  "scheduled_delivery_date": "2026-02-12"
+}
+```
+
+---
+
+## Fix Plan
+
+### Part A: Add Scheduled Gift Detection Logic
+
+Detect scheduled gifts using this criteria:
+- Order has `scheduled_delivery_date` in the future OR
+- Order status is `pending_payment` OR `scheduled`
+
+Extract recipient info from:
+1. `line_items.items[0].recipient_name` (primary)
+2. `line_items.items[0].recipient_shipping` (for address display)
+
+### Part B: Add Scheduled Gift Hero Card
+
+New UI component showing:
+- 🎁 "Gift Scheduled for [Recipient]!"
+- Delivery date in human-readable format ("Arrives on or before Feb 12, 2026")
+- Gift message preview
+- Explanation: "Your payment will be processed 7 days before delivery"
+
+### Part C: Show Correct Shipping Address
+
+For scheduled gifts, display recipient's shipping address from `line_items` instead of sender's fallback address.
+
+### Part D: Improve Pending Payment Status Display
+
+Replace generic "PENDING PAYMENT" badge with contextual messaging:
+- Show calendar icon + "Scheduled Delivery"
+- Add tooltip: "Card saved, payment processes 7 days before arrival"
 
 ---
 
 ## Technical Implementation
 
+### File: `src/pages/OrderConfirmation.tsx`
+
+**Change 1: Add scheduled gift detection (near line 430)**
+```typescript
+// Detect scheduled gifts (in addition to wishlist detection)
+const isScheduledGift = !!(
+  order?.scheduled_delivery_date && 
+  new Date(order.scheduled_delivery_date) > new Date()
+);
+
+// Extract recipient info from line_items
+const lineItems = order?.line_items?.items || [];
+const firstItem = lineItems[0] || {};
+const recipientName = firstItem.recipient_name || order?.recipient_name;
+const recipientShipping = firstItem.recipient_shipping;
+const giftMessage = firstItem.gift_message || order?.gift_options?.giftMessage;
+```
+
+**Change 2: Add Scheduled Gift Hero Card (after wishlist hero)**
+```typescript
+{isScheduledGift && recipientName && (
+  <div className="mb-6 p-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl text-white text-center">
+    <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
+      <Gift className="h-8 w-8 text-white" />
+    </div>
+    <h2 className="text-2xl font-bold mb-2">
+      🎁 Gift Scheduled for {recipientName}!
+    </h2>
+    <p className="text-white/90 mb-2">
+      Arrives on or before {format(new Date(order.scheduled_delivery_date), 'MMMM d, yyyy')}
+    </p>
+    {giftMessage && (
+      <p className="text-sm italic text-white/80">"{giftMessage}"</p>
+    )}
+    <div className="mt-4 text-sm bg-white/20 rounded-lg p-3">
+      💳 Your card has been saved. Payment will process 7 days before delivery.
+    </div>
+  </div>
+)}
+```
+
+**Change 3: Show recipient shipping for scheduled gifts**
+```typescript
+{/* Shipping Address - Use recipient address for scheduled gifts */}
+{!isMultiRecipient && (isScheduledGift ? recipientShipping : order.shipping_address) && (
+  <Card className="p-6 mb-6">
+    <h2 className="text-xl font-semibold mb-4">
+      {isScheduledGift ? 'Delivery Address' : 'Shipping Address'}
+    </h2>
+    {isScheduledGift && recipientShipping ? (
+      <div className="text-sm">
+        <p className="font-medium">{recipientShipping.name}</p>
+        <p>{recipientShipping.address || recipientShipping.address_line1}</p>
+        {recipientShipping.addressLine2 && <p>{recipientShipping.addressLine2}</p>}
+        <p>
+          {recipientShipping.city}, {recipientShipping.state} {recipientShipping.zipCode || recipientShipping.postal_code}
+        </p>
+        <p>{recipientShipping.country || 'United States'}</p>
+      </div>
+    ) : (
+      // Existing sender address rendering
+    )}
+  </Card>
+)}
+```
+
+**Change 4: Improve pending_payment status badge**
+```typescript
+const getStatusBadge = (status: string) => {
+  // Special handling for pending_payment (scheduled gifts)
+  if (status === 'pending_payment') {
+    return (
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+        <Clock className="w-3 h-3 mr-1" />
+        SCHEDULED DELIVERY
+      </Badge>
+    );
+  }
+  // ... existing switch statement
+};
+```
+
+---
+
+## Also Fix: gift_options.isGift Should Be True
+
 ### File: `supabase/functions/stripe-webhook-v2/index.ts`
 
-**Location:** `fetchRecipientAddresses` function (lines 144-184)
+In `handleDeferredPaymentOrder` (around line 931), the `isGift` detection should also check for recipient presence:
 
-**Current Logic:**
 ```typescript
-const { data: connections } = await supabase
-  .from('user_connections')
-  .select('id, pending_recipient_name, pending_shipping_address, connected_user_id')
-  .in('id', recipientIds);
-
-// Only uses pending_shipping_address from connections table
-```
-
-**New Logic:**
-```typescript
-const { data: connections } = await supabase
-  .from('user_connections')
-  .select(`
-    id, 
-    pending_recipient_name, 
-    pending_shipping_address, 
-    pending_recipient_phone,
-    connected_user_id,
-    connected_profile:profiles!user_connections_connected_user_id_fkey(
-      name,
-      shipping_address
-    )
-  `)
-  .in('id', recipientIds);
-
-for (const conn of connections || []) {
-  // PRIORITY 1: Use connected profile's shipping address (recipient-owned)
-  if (conn.connected_profile?.shipping_address) {
-    const profileAddr = conn.connected_profile.shipping_address;
-    addressMap.set(conn.id, {
-      name: conn.connected_profile.name || conn.pending_recipient_name || '',
-      address_line1: profileAddr.address_line1 || profileAddr.street || '',
-      address_line2: profileAddr.address_line2 || '',
-      city: profileAddr.city || '',
-      state: profileAddr.state || '',
-      postal_code: profileAddr.zip_code || profileAddr.zipCode || '',
-      country: profileAddr.country || 'US',
-      phone: profileAddr.phone || '',  // ✅ CRITICAL: Phone from profile!
-    });
-    console.log(`✅ [FETCH] Using PROFILE address for ${conn.connected_profile.name}`);
-    continue;
-  }
-  
-  // PRIORITY 2: Fall back to pending_shipping_address (sender-provided)
-  if (conn.pending_shipping_address) {
-    const addr = conn.pending_shipping_address;
-    addressMap.set(conn.id, {
-      name: addr.name || conn.pending_recipient_name || '',
-      address_line1: addr.street || addr.address_line1 || '',
-      // ... existing logic ...
-      phone: addr.phone || conn.pending_recipient_phone || '',
-    });
-  }
+gift_options: {
+  isGift: !!metadata.gift_message || isAutoGift || transformedLineItems.some(item => item.recipient_id),
+  // ...
 }
 ```
-
-### File: `supabase/functions/process-order-v2/index.ts`
-
-**Location:** Line 261 - Add validation warning when phone is still missing
-
-**Add after line 260:**
-```typescript
-// CRITICAL: Warn if phone is missing (Zinc may reject)
-const finalPhoneNumber = shippingAddress.phone || shopperPhone || '';
-if (!finalPhoneNumber) {
-  console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - Zinc may reject for carrier notifications`);
-  // Log to orders table for admin visibility
-  await supabase.from('orders').update({
-    notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'
-  }).eq('id', orderId);
-}
-```
-
----
-
-## Data Flow After Fix
-
-```text
-Sender schedules gift for Charles Meeks
-    ↓
-create-checkout-session stores recipient_id in Stripe metadata
-    ↓
-stripe-webhook-v2 receives checkout.session.completed
-    ↓
-fetchRecipientAddresses(recipientIds):
-    ├── Fetches user_connections + JOIN profiles
-    ├── Priority 1: Use profiles.shipping_address (with phone!) ✅
-    └── Priority 2: Fall back to pending_shipping_address
-    ↓
-Order created with shipping_address.phone populated
-    ↓
-process-order-v2 builds Zinc request with phone_number ✅
-    ↓
-Zinc/Amazon delivery notification works
-```
-
----
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `supabase/functions/stripe-webhook-v2/index.ts` | Join to profiles table in `fetchRecipientAddresses`, prioritize profile address with phone |
-| `supabase/functions/process-order-v2/index.ts` | Add validation warning for missing phone |
-
----
-
-## Future Enhancement: Profile Phone Collection
-
-For new users, ensure phone is collected during address setup. The `UnifiedShippingForm` already validates phone (line 101), but we should ensure it's saved to `profiles.shipping_address.phone`:
-
-**File: `src/services/addressService.ts`** - Ensure phone is included when saving profile address
-
-This is a minor enhancement and can be done as a follow-up after confirming the core fix works.
-
----
-
-## Testing Plan
-
-After implementation:
-
-1. Run the SQL updates to add phone numbers to existing profiles
-2. Retry the Charles Meeks order (Ruidoso)
-3. Verify Zinc request includes populated `phone_number`
-4. Confirm order succeeds
 
 ---
 
 ## Summary
 
-- **No sender burden**: Phone comes from recipient's own profile
-- **Single source of truth**: Profile shipping address is authoritative for established connections
-- **Fallback preserved**: Sender-provided data still works for pending invitations
-- **Minimal code change**: ~25 lines added to webhook, ~10 lines to order processor
+| Component | Change |
+|-----------|--------|
+| OrderConfirmation.tsx | Add scheduled gift detection + hero card + recipient address display |
+| stripe-webhook-v2 | Fix isGift detection for deferred payment orders |
+| UI | Replace "PENDING PAYMENT" with "SCHEDULED DELIVERY" badge |
+
+This will make scheduled gifts show correctly on the confirmation page with the recipient's address, delivery date, and clear explanation of the payment timing.

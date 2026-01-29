@@ -18,8 +18,31 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
   let recipientName = "Customer";
   let isGiftRecipient = false;
 
-  // Check if this is a single-recipient gift order
-  if ((order as any).has_multiple_recipients === false && 
+  // Priority 1: Check for scheduled gift / modern line_items.items[0].recipient_shipping
+  const lineItems = (order as any).items || [];
+  const isScheduledGift = (order as any).isScheduledGift || (order as any).scheduled_delivery_date;
+  
+  if (lineItems.length > 0) {
+    const firstItem = lineItems[0];
+    const recipientAddr = firstItem?.recipient_shipping || firstItem?.shippingAddress;
+    
+    if (recipientAddr && (isScheduledGift || firstItem?.recipient_id)) {
+      shippingAddress = {
+        address_line1: recipientAddr.address_line1 || recipientAddr.address,
+        address_line2: recipientAddr.address_line2 || recipientAddr.addressLine2,
+        city: recipientAddr.city,
+        state: recipientAddr.state,
+        zip_code: recipientAddr.zip_code || recipientAddr.zipCode || recipientAddr.postal_code,
+        country: recipientAddr.country || 'US'
+      };
+      recipientName = recipientAddr.name || firstItem.recipient_name || "Recipient";
+      isGiftRecipient = true;
+    }
+  }
+
+  // Priority 2: Legacy delivery_groups pattern
+  if (!isGiftRecipient &&
+      (order as any).has_multiple_recipients === false && 
       (order as any).delivery_groups && 
       (order as any).delivery_groups.length > 0) {
     
@@ -42,7 +65,7 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
     }
   }
   
-  // Fallback to shipping_info if not a gift order
+  // Priority 3: Fallback to shipping_info if not a gift order
   if (!isGiftRecipient) {
     const shippingInfo = (order as any).shipping_info || {};
     recipientName = shippingInfo.name || order.customerName || "Customer";
@@ -60,12 +83,27 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
         </p>
         <div className="mb-4">
           <p className="font-medium">{recipientName}</p>
-          {shippingAddress.address_line1 && <p>{shippingAddress.address_line1}</p>}
-          {shippingAddress.address_line2 && <p>{shippingAddress.address_line2}</p>}
-          {shippingAddress.city && shippingAddress.state && shippingAddress.zip_code && (
-            <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code}</p>
+          {/* Privacy: Only show city/state for gift recipients */}
+          {isGiftRecipient ? (
+            <>
+              {shippingAddress.city && shippingAddress.state && (
+                <p>{shippingAddress.city}, {shippingAddress.state}</p>
+              )}
+              <p>{shippingAddress.country || 'United States'}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Full address securely stored for delivery
+              </p>
+            </>
+          ) : (
+            <>
+              {shippingAddress.address_line1 && <p>{shippingAddress.address_line1}</p>}
+              {shippingAddress.address_line2 && <p>{shippingAddress.address_line2}</p>}
+              {shippingAddress.city && shippingAddress.state && shippingAddress.zip_code && (
+                <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip_code}</p>
+              )}
+              {shippingAddress.country && <p>{shippingAddress.country}</p>}
+            </>
           )}
-          {shippingAddress.country && <p>{shippingAddress.country}</p>}
         </div>
         {(order.status === "shipped" || order.status === "delivered") && (() => {
           // Extract tracking info from merchant_tracking_data

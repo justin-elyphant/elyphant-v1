@@ -71,10 +71,6 @@ export const useAutoGiftTesting = () => {
             pending_recipient_email,
             budget_limit,
             payment_method_id
-          ),
-          profiles:user_id (
-            name,
-            email
           )
         `)
         .order('created_at', { ascending: false })

@@ -237,6 +237,18 @@ serve(async (req) => {
 
     console.log(`✅ All ${itemsArray.length} product IDs validated as Amazon ASINs`);
 
+    // STEP 6.5: Validate phone number (CRITICAL for Zinc/carrier delivery notifications)
+    const finalPhoneNumber = shippingAddress.phone || shopperPhone || '';
+    if (!finalPhoneNumber) {
+      console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - Zinc may reject for carrier notifications`);
+      // Log to orders table for admin visibility
+      await supabase.from('orders').update({
+        notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'
+      }).eq('id', orderId);
+    } else {
+      console.log(`✅ [PHONE] Phone number present for carrier notifications: ${finalPhoneNumber.substring(0, 3)}***`);
+    }
+
     // STEP 7: Build Zinc ZMA API request
     // ZMA (Zinc Managed Accounts) uses Zinc's Amazon credentials
     const zincRequest = {
@@ -257,8 +269,7 @@ serve(async (req) => {
         city: requiredShippingFields.city,
         state: requiredShippingFields.state,
         country: shippingAddress.country || 'US',
-        // Fallback chain: recipient phone → shopper phone → empty (for carrier delivery notifications)
-        phone_number: shippingAddress.phone || shopperPhone || '',
+        phone_number: finalPhoneNumber,  // Use validated phone from step 6.5
       },
       is_gift: !!(order.gift_options?.giftMessage),
       gift_message: order.gift_options?.giftMessage 

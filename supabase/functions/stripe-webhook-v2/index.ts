@@ -151,9 +151,20 @@ async function fetchRecipientAddresses(
   
   console.log(`📍 [FETCH] Looking up addresses for ${recipientIds.length} recipient(s)...`);
   
+  // ENHANCED: Join to profiles table to get recipient-owned shipping address with phone
   const { data: connections, error } = await supabase
     .from('user_connections')
-    .select('id, pending_recipient_name, pending_shipping_address, connected_user_id')
+    .select(`
+      id, 
+      pending_recipient_name, 
+      pending_shipping_address, 
+      pending_recipient_phone,
+      connected_user_id,
+      connected_profile:profiles!user_connections_connected_user_id_fkey(
+        name,
+        shipping_address
+      )
+    `)
     .in('id', recipientIds);
   
   if (error) {
@@ -162,6 +173,24 @@ async function fetchRecipientAddresses(
   }
   
   for (const conn of connections || []) {
+    // PRIORITY 1: Use connected profile's shipping address (recipient-owned with phone!)
+    if (conn.connected_profile?.shipping_address) {
+      const profileAddr = conn.connected_profile.shipping_address;
+      addressMap.set(conn.id, {
+        name: conn.connected_profile.name || conn.pending_recipient_name || '',
+        address_line1: profileAddr.address_line1 || profileAddr.street || '',
+        address_line2: profileAddr.address_line2 || '',
+        city: profileAddr.city || '',
+        state: profileAddr.state || '',
+        postal_code: profileAddr.zip_code || profileAddr.zipCode || profileAddr.postal_code || '',
+        country: profileAddr.country || 'US',
+        phone: profileAddr.phone || '',  // ✅ CRITICAL: Phone from recipient's profile!
+      });
+      console.log(`✅ [FETCH] Using PROFILE address for ${conn.connected_profile.name}: ${profileAddr.city}, ${profileAddr.state} | Phone: ${profileAddr.phone ? 'YES' : 'MISSING'}`);
+      continue;
+    }
+    
+    // PRIORITY 2: Fall back to pending_shipping_address (sender-provided)
     if (conn.pending_shipping_address) {
       const addr = conn.pending_shipping_address;
       // Normalize field names from user_connections format to order format
@@ -173,10 +202,11 @@ async function fetchRecipientAddresses(
         state: addr.state || '',
         postal_code: addr.zipCode || addr.zip_code || addr.postalCode || addr.postal_code || '',
         country: addr.country || 'US',
+        phone: addr.phone || conn.pending_recipient_phone || '',
       });
-      console.log(`✅ [FETCH] Found address for ${conn.pending_recipient_name}: ${addr.city}, ${addr.state}`);
+      console.log(`✅ [FETCH] Found pending address for ${conn.pending_recipient_name}: ${addr.city}, ${addr.state}`);
     } else {
-      console.warn(`⚠️ [FETCH] No pending_shipping_address for connection ${conn.id} (${conn.pending_recipient_name})`);
+      console.warn(`⚠️ [FETCH] No address found for connection ${conn.id} (${conn.pending_recipient_name}) - no profile or pending address`);
     }
   }
   

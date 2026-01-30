@@ -4,6 +4,10 @@ import {
   PAYMENT_LEAD_TIME_CONFIG, 
   getDaysUntil 
 } from '../shared/paymentLeadTime.ts';
+import { 
+  calculateHolidayDate, 
+  calculateNextBirthday 
+} from '../shared/holidayDates.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,52 +32,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
-    // Helper: Calculate next occurrence of birthday from DOB
-    const calculateNextBirthday = (dob: string | null, referenceDate: Date): string | null => {
+    // Helper: Wrap shared calculateNextBirthday to use reference date
+    const getNextBirthday = (dob: string | null): string | null => {
       if (!dob) return null;
-      try {
-        let month: number, day: number;
-        
-        if (dob.length === 5 && dob.includes('-')) {
-          const parts = dob.split('-').map(Number);
-          month = parts[0] - 1;
-          day = parts[1];
-        } else {
-          const dobDate = new Date(dob);
-          month = dobDate.getMonth();
-          day = dobDate.getDate();
-        }
-        
-        const currentYear = referenceDate.getFullYear();
-        const thisYearBirthday = new Date(currentYear, month, day);
-        const birthdayToUse = thisYearBirthday >= referenceDate 
-          ? thisYearBirthday 
-          : new Date(currentYear + 1, month, day);
-        return birthdayToUse.toISOString().split('T')[0];
-      } catch {
-        return null;
-      }
+      return calculateNextBirthday(dob, simulatedDate);
     };
 
-    // Helper: Calculate next holiday date
-    const calculateHolidayDate = (holidayKey: string, referenceDate: Date): string | null => {
-      const currentYear = referenceDate.getFullYear();
-      
-      const holidays: Record<string, { month: number; day: number }> = {
-        christmas: { month: 12, day: 25 },
-        valentine: { month: 2, day: 14 },
-        mothers_day: { month: 5, day: 12 },
-        fathers_day: { month: 6, day: 16 },
-      };
-      
-      const holiday = holidays[holidayKey];
-      if (!holiday) return null;
-      
-      const holidayDate = new Date(currentYear, holiday.month - 1, holiday.day);
-      if (holidayDate < referenceDate) {
-        holidayDate.setFullYear(currentYear + 1);
-      }
-      return holidayDate.toISOString().split('T')[0];
+    // Helper: Wrap shared calculateHolidayDate to use reference date
+    const getNextHolidayDate = (holidayKey: string): string | null => {
+      return calculateHolidayDate(holidayKey, simulatedDate);
     };
 
     // Find auto-gifting rules with upcoming events within notification window
@@ -106,9 +73,9 @@ serve(async (req) => {
       let resolvedDate: string | null = null;
       
       if (rule.date_type === 'birthday' && rule.recipient?.dob) {
-        resolvedDate = calculateNextBirthday(rule.recipient.dob, simulatedDate);
+        resolvedDate = getNextBirthday(rule.recipient.dob);
       } else if (['christmas', 'valentine', 'mothers_day', 'fathers_day'].includes(rule.date_type)) {
-        resolvedDate = calculateHolidayDate(rule.date_type, simulatedDate);
+        resolvedDate = getNextHolidayDate(rule.date_type);
       }
       
       if (resolvedDate) {
@@ -262,6 +229,44 @@ serve(async (req) => {
                 .limit(1);
               
               giftItem = items?.[0];
+            }
+          }
+
+          // Fallback: If no wishlist item, use get-products with gift_selection_criteria
+          if (!giftItem && rule.gift_selection_criteria) {
+            console.log('🔍 No wishlist item found, falling back to get-products search');
+            
+            const criteria = rule.gift_selection_criteria as any;
+            const searchQuery = criteria.preferred_brands?.[0] 
+              || criteria.categories?.[0] 
+              || 'gift';
+            
+            const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
+              body: {
+                query: searchQuery,
+                limit: 5,
+                filters: {
+                  maxPrice: rule.budget_limit || 100
+                }
+              }
+            });
+            
+            if (!searchError) {
+              const products = searchResult?.results || searchResult?.products || [];
+              if (products.length > 0) {
+                // Pick random from top 5 for variety
+                const randomIndex = Math.floor(Math.random() * Math.min(5, products.length));
+                const product = products[randomIndex];
+                giftItem = {
+                  product_id: product.product_id || product.asin,
+                  name: product.title,
+                  price: product.price,
+                  image_url: product.image || product.main_image
+                };
+                console.log(`✅ Found product via search: ${giftItem.name} at $${giftItem.price}`);
+              }
+            } else {
+              console.warn('⚠️ get-products search failed:', searchError);
             }
           }
 

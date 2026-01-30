@@ -1,177 +1,227 @@
 
 
-# Minimal Plan: Fix Recurring Gift Gaps by Reusing Existing Code
+# Wishlist Page Simplification Plan
 
 ## Overview
 
-This plan fixes the three critical gaps for the Father's Day + Recurring flow using **existing proven code** rather than building new systems. Total changes: ~40 lines across 3 files.
+Transform the current "workbench" wishlist UI into a clean, traditional e-commerce wishlist experience (Lululemon-inspired) while preserving iOS Capacitor best practices and reusing existing proven components.
 
----
+## Current Problems
+
+1. **340px Sidebar** - Takes significant space, contains duplicated controls (Share, Preview, Settings), analytics-style widgets (gift progress tracker, category breakdown), and repeats owner info already in header
+2. **Duplicated Actions** - Privacy toggle, Share, Preview as Guest appear in BOTH header AND sidebar
+3. **Dashboard Feel** - Progress trackers and stats feel like analytics, not e-commerce
+4. **3-Column Layout** - Sidebar + Items Grid + Shopping Panel creates visual complexity
+
+## Target State (Lululemon Pattern)
+
+- **Simple header** with title, item count, privacy toggle, share, and add button
+- **Full-width product grid** with clean item cards
+- **Mobile action bar** (existing) for touch-optimized controls
+- **No sidebar** for individual wishlist view
 
 ## Changes Summary
 
-| File | Change | Lines Modified |
-|------|--------|----------------|
-| `supabase/functions/shared/holidayDates.ts` | **NEW**: Copy from `src/constants/holidayDates.ts` | Copy existing file |
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Import shared holiday logic, add `get-products` fallback | ~15 lines |
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Fetch default payment method on open | ~8 lines |
+| File | Action | Purpose |
+|------|--------|---------|
+| `WishlistWorkspace.tsx` | Modify | Remove sidebar, simplify layout |
+| `WishlistWorkspaceHeader.tsx` | Modify | Consolidate all controls into header, remove redundancy |
+| `WishlistSidebar.tsx` | Keep (no changes) | May be used elsewhere, but not rendered |
+| `MobileWishlistActionBar.tsx` | Minor tweak | Ensure tablet support (<1024px) |
 
 ---
 
-## Change 1: Share Holiday Logic (Eliminate Hardcoded Dates)
+## Detailed Changes
 
-**Problem**: Orchestrator has hardcoded holiday dates that will drift (Father's Day 2025 = June 15, not June 16).
+### 1. WishlistWorkspace.tsx
 
-**Solution**: Copy the proven `holidayDates.ts` to `supabase/functions/shared/` and import it.
+**Remove:**
+- Sidebar rendering entirely (lines 296-307)
+- Category filtering state and logic (not needed without sidebar)
+- `selectedCategory` state and filtering
 
-**File**: `supabase/functions/shared/holidayDates.ts`
+**Simplify:**
+- Remove the `flex gap-8` layout with sidebar
+- Make content area full-width
+- Keep ShoppingPanel (slide-in drawer - works well)
+- Keep MobileWishlistActionBar (show for mobile AND tablet, <1024px)
 
-This is a direct copy of `src/constants/holidayDates.ts` (lines 1-121), adapted for Deno:
-- Same `HOLIDAY_DATES` config with floating holiday logic
-- Same `calculateHolidayDate()` with proper nth-weekday calculation
-- Same `calculateNextBirthday()` for DOB handling
+**Layout Change:**
+```
+BEFORE:
+┌──────────────────────────────────────────────────────┐
+│ Header (with duplicated controls)                    │
+├────────────┬─────────────────────────────────────────┤
+│  Sidebar   │  Product Grid                           │
+│  (340px)   │                                         │
+│  - Avatar  │                                         │
+│  - Stats   │                                         │
+│  - Actions │                                         │
+│  - Filters │                                         │
+└────────────┴─────────────────────────────────────────┘
 
-The orchestrator already has duplicate logic (lines 59-77) that can be replaced with an import.
-
----
-
-## Change 2: Add get-products Fallback in Orchestrator
-
-**Problem**: If wishlist is empty, orchestrator throws "No suitable gift found" and fails.
-
-**Solution**: Call existing `get-products` edge function as fallback using rule's `gift_selection_criteria`.
-
-**File**: `supabase/functions/auto-gift-orchestrator/index.ts`
-
-**Current Logic (lines 246-270)**:
-```typescript
-// Only checks wishlist - fails if empty
-if (!giftItem) {
-  throw new Error('No suitable gift found within budget');
-}
+AFTER:
+┌──────────────────────────────────────────────────────┐
+│ Header (clean: title, count, privacy, share, add)    │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│              Full-Width Product Grid                 │
+│                                                      │
+│                                                      │
+└──────────────────────────────────────────────────────┘
 ```
 
-**New Logic**:
-```typescript
-// Step 1: Try wishlist (existing code - unchanged)
-// ... existing wishlist query ...
+### 2. WishlistWorkspaceHeader.tsx
 
-// Step 2: If no wishlist item, use get-products with preferences
-if (!giftItem && rule.gift_selection_criteria) {
-  console.log('🔍 No wishlist item found, falling back to get-products search');
+**Consolidate Controls:**
+- Keep back button and wishlist switcher (useful)
+- Keep owner avatar + title + item count + total value
+- Move InlinePrivacyToggle next to title (already done for desktop, ensure visible)
+- Keep Share and Add Items buttons (desktop only)
+- Remove Settings button (not implemented anyway, shows "coming soon")
+- Remove "Preview as Guest" button (rarely used, confusing)
+
+**Tablet Optimization (<1024px):**
+- Show mobile action bar for tablets, not just phones
+- Header shows minimal info (title, back button)
+- Actions move to bottom action bar
+
+### 3. MobileWishlistActionBar.tsx
+
+**Extend to Tablets:**
+- Currently shown only when `isMobile` (default 768px)
+- Change to `isMobile(1024)` to include tablets
+- This aligns with the project's tablet-as-mobile-shell strategy
+
+### 4. WishlistItemsGrid.tsx
+
+**No major changes needed** - already clean
+
+Minor refinements:
+- Remove view mode toggle if categories not used (or keep as grouping is still useful)
+- Grid already handles responsive layout well
+
+---
+
+## iOS Capacitor Compliance (Already Present, Verified)
+
+- ✅ 44px minimum touch targets in MobileWishlistActionBar
+- ✅ `triggerHapticFeedback` on all interactions
+- ✅ Safe area padding (`env(safe-area-inset-bottom)`)
+- ✅ Backdrop blur on floating elements
+- ✅ `touch-manipulation` class for button responsiveness
+- ✅ `active:scale-95` feedback on buttons
+
+---
+
+## Component Reuse (Zero New Components)
+
+| Existing Component | Reused For |
+|--------------------|------------|
+| `InlinePrivacyToggle` | Privacy toggle in header + action bar |
+| `WishlistShareSheet` | Share drawer (mobile/tablet) |
+| `MobileWishlistActionBar` | Bottom action bar for mobile + tablet |
+| `WishlistItemsGrid` | Main product grid |
+| `EnhancedWishlistCard` | Individual product cards |
+| `ShoppingPanel` | Add items slide-in drawer |
+
+---
+
+## Safe Cleanup
+
+Files that can be reviewed for potential future cleanup (NOT deleted in this phase):
+- `WishlistSidebar.tsx` - No longer rendered but may be used elsewhere
+- `CategorySection.tsx` - Still used by WishlistItemsGrid for grouped view
+- `WishlistActionToolbar.tsx` - Appears unused (only guest preview banner)
+
+---
+
+## Technical Implementation
+
+### WishlistWorkspace.tsx Changes
+
+```typescript
+// REMOVE these lines:
+const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+// ... selectedCategory URL param handling
+
+// REMOVE sidebar rendering (lines 296-307)
+
+// CHANGE: Extend mobile action bar to tablets
+const isMobileOrTablet = useIsMobile(1024);
+
+// SIMPLIFIED LAYOUT:
+<div className="px-4 md:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
+  {/* Guest View Notice */}
+  {!isOwner && (
+    <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+      <p className="text-sm text-center font-medium">
+        You're viewing {ownerProfile?.name}'s wishlist
+      </p>
+    </div>
+  )}
   
-  const searchQuery = rule.gift_selection_criteria.preferred_brands?.[0] 
-    || rule.gift_selection_criteria.categories?.[0] 
-    || 'gift';
-  
-  const { data: searchResult } = await supabase.functions.invoke('get-products', {
-    body: {
-      query: searchQuery,
-      limit: 5,
-      filters: {
-        maxPrice: rule.budget_limit || 100
-      }
-    }
-  });
-  
-  const products = searchResult?.results || searchResult?.products || [];
-  if (products.length > 0) {
-    // Pick random from top 5 for variety
-    const randomIndex = Math.floor(Math.random() * Math.min(5, products.length));
-    const product = products[randomIndex];
-    giftItem = {
-      product_id: product.product_id || product.asin,
-      name: product.title,
-      price: product.price,
-      image_url: product.image || product.main_image
-    };
-    console.log(`✅ Found product via search: ${giftItem.name} at $${giftItem.price}`);
-  }
-}
+  <WishlistItemsGrid
+    items={wishlist.items}  // No filtering
+    onSaveItem={(item) => handleRemoveItem(item.id)}
+    savingItemId={isRemoving ? 'removing' : undefined}
+    isOwner={isOwner}
+    isGuestPreview={isGuestPreview}
+  />
+</div>
 
-if (!giftItem) {
-  throw new Error('No suitable gift found within budget');
-}
+// Mobile/Tablet action bar
+{isMobileOrTablet && isOwner && !isGuestPreview && (
+  <MobileWishlistActionBar ... />
+)}
 ```
 
-This reuses the proven `get-products` edge function rather than building new selection logic.
+### WishlistWorkspaceHeader.tsx Changes
 
----
-
-## Change 3: Auto-Populate Default Payment Method in Modal
-
-**Problem**: `paymentMethodId` starts empty and is only set if user explicitly selects one. Recurring rules fail at T-4 because `payment_method_id` is null.
-
-**Solution**: On modal open, fetch user's default payment method using the existing `unifiedPaymentService.getPaymentMethods()`.
-
-**File**: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
-
-**Add Import** (line ~23):
 ```typescript
-import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
+// REMOVE: Guest preview toggle button (lines 155-171)
+// REMOVE: Settings button (line 181-183)
+
+// KEEP: Back button, wishlist switcher, avatar, title, privacy toggle, share, add items
+
+// Simplified actions section (desktop only):
+{isOwner && !isMobile && !isGuestPreview && (
+  <div className="flex items-center gap-2">
+    <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
+      <Plus className="h-5 w-5" />
+      Add Items
+    </Button>
+    <Button 
+      variant="outline" 
+      size="icon"
+      onClick={handleShare}
+      className="min-h-[44px] min-w-[44px]"
+    >
+      <Share2 className="h-4 w-4" />
+    </Button>
+  </div>
+)}
 ```
 
-**Add useEffect** (after line 259, inside the existing `useEffect` for modal open):
-```typescript
-// Auto-populate default payment method for recurring rules
-if (user) {
-  unifiedPaymentService.getPaymentMethods().then(methods => {
-    const defaultMethod = methods.find(m => m.is_default);
-    if (defaultMethod) {
-      setPaymentMethodId(defaultMethod.id);
-      console.log('[Schedule Modal] Auto-set default payment method:', defaultMethod.id);
-    }
-  }).catch(err => console.warn('Could not fetch payment methods:', err));
-}
-```
+---
 
-This ensures when a user enables the recurring toggle, their default card is already attached.
+## Responsive Behavior Summary
+
+| Breakpoint | Layout |
+|------------|--------|
+| Desktop (≥1024px) | Full header with all controls, full-width grid |
+| Tablet (768-1023px) | Compact header (back + title), bottom action bar, full-width grid |
+| Mobile (<768px) | Minimal header, bottom action bar, stacked grid |
 
 ---
 
-## Technical Details
+## Testing Checklist
 
-### What We're Reusing (Zero New Logic)
-
-| Component | Already Proven | Location |
-|-----------|----------------|----------|
-| Holiday calculation | ✅ Used in frontend for 6+ months | `src/constants/holidayDates.ts` |
-| Product search | ✅ Powers entire marketplace | `get-products` edge function |
-| Payment methods | ✅ Used in checkout + settings | `unifiedPaymentService.getPaymentMethods()` |
-| Checkout flow | ✅ Production-proven | `create-checkout-session` |
-
-### What We're NOT Building (Avoided Over-Engineering)
-
-- ❌ New `nicole-gift-selector` edge function
-- ❌ Complex 4-tier selection algorithm backend port
-- ❌ New database tables or columns
-- ❌ New cron jobs or background workers
-
----
-
-## Deployment Order
-
-1. Create `supabase/functions/shared/holidayDates.ts` (copy from frontend)
-2. Update `auto-gift-orchestrator/index.ts` (import shared + add fallback)
-3. Deploy `auto-gift-orchestrator`
-4. Update `UnifiedGiftSchedulingModal.tsx` (add payment fetch)
-
----
-
-## Testing
-
-After deployment, test the Father's Day + Recurring flow:
-
-1. Open scheduling modal
-2. Select a recipient
-3. Choose "Father's Day" from presets
-4. Enable recurring toggle
-5. Verify payment method auto-populates (check console log)
-6. Complete checkout
-7. Verify `auto_gifting_rules` record has `payment_method_id` set
-
-To test the get-products fallback (if needed later):
-1. Create a rule for a recipient with empty wishlist
-2. Simulate T-4 using orchestrator's `simulatedDate` parameter
-3. Verify it falls back to product search instead of throwing error
+After implementation:
+1. Desktop: Verify header shows all controls, no sidebar, full-width grid
+2. Tablet: Verify bottom action bar appears, header is compact
+3. Mobile: Verify existing behavior preserved, action bar visible
+4. Privacy toggle: Test public/private switching with haptic feedback
+5. Share: Test native share sheet on mobile/tablet
+6. Add Items: Test shopping panel opens correctly
 

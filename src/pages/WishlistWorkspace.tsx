@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/auth";
 import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlistSkeleton";
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
 import WishlistWorkspaceHeader from "@/components/gifting/wishlist/workspace/WishlistWorkspaceHeader";
-import WishlistSidebar from "@/components/gifting/wishlist/workspace/WishlistSidebar";
 import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
 import MobileWishlistActionBar from "@/components/gifting/wishlist/workspace/MobileWishlistActionBar";
@@ -21,13 +20,12 @@ const WishlistWorkspace = () => {
   const { wishlistId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  // Use 1024px breakpoint for tablet-as-mobile-shell strategy
+  const isMobileOrTablet = useIsMobile(1024);
   
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [ownerProfile, setOwnerProfile] = useState<any | null>(null);
-  const [isGuestPreview, setIsGuestPreview] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isShoppingPanelOpen, setIsShoppingPanelOpen] = useState(false);
   
   // Privacy toggle state
@@ -36,15 +34,11 @@ const WishlistWorkspace = () => {
   
   const { removeFromWishlist, isRemoving, updateWishlistSharing } = useWishlist();
   
-  // Handle URL parameters for auto-opening shopping panel and category filtering
+  // Handle URL parameters for auto-opening shopping panel
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('openShopping') === 'true') {
       setIsShoppingPanelOpen(true);
-    }
-    const category = params.get('category');
-    if (category) {
-      setSelectedCategory(category);
     }
   }, []);
   
@@ -264,73 +258,43 @@ const WishlistWorkspace = () => {
     );
   }
 
-  const filteredItems = selectedCategory 
-    ? wishlist.items.filter(item => {
-        const itemBrand = item.brand?.toLowerCase() || '';
-        const itemName = (item.name || item.title || '').toLowerCase();
-        return itemBrand.includes(selectedCategory.toLowerCase()) || 
-               itemName.includes(selectedCategory.toLowerCase());
-      })
-    : wishlist.items;
-
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobile && isOwner && !isGuestPreview ? 'pb-32' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobileOrTablet && isOwner ? 'pb-32' : ''}`}>
       {/* Header */}
       <WishlistWorkspaceHeader
         wishlist={wishlist}
         ownerProfile={ownerProfile}
         isOwner={isOwner}
-        isGuestPreview={isGuestPreview}
-        onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
         onAddItems={() => setIsShoppingPanelOpen(true)}
         isPublic={isPublic}
         isUpdatingPrivacy={isUpdatingPrivacy}
         onPrivacyToggle={handlePrivacyToggle}
         onShare={handleShare}
+        isMobileOrTablet={isMobileOrTablet}
       />
 
-      {/* Main Content - Full Width Babylist-style Layout */}
-      <div className="px-4 md:px-6 py-6 md:py-8 max-w-[1600px] mx-auto">
-        <div className="flex gap-8">
-          {/* Sidebar - Wider, Babylist-style */}
-          {!isMobile && isOwner && !isGuestPreview && (
-            <div className="w-[340px] flex-shrink-0">
-              <WishlistSidebar
-                wishlist={wishlist}
-                ownerProfile={ownerProfile}
-                selectedCategory={selectedCategory}
-                onCategorySelect={setSelectedCategory}
-                isOwner={isOwner}
-                isGuestPreview={isGuestPreview}
-                onToggleGuestPreview={() => setIsGuestPreview(!isGuestPreview)}
-              />
-            </div>
-          )}
-
-          {/* Main Content Area - Spacious */}
-          <div className="flex-1 min-w-0">
-            {/* Guest View Notice */}
-            {!isOwner && (
-              <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-sm text-center font-medium">
-                  You're viewing {ownerProfile?.name}'s wishlist
-                </p>
-              </div>
-            )}
-            
-            <WishlistItemsGrid
-              items={filteredItems}
-              onSaveItem={(item) => handleRemoveItem(item.id)}
-              savingItemId={isRemoving ? 'removing' : undefined}
-              isOwner={isOwner}
-              isGuestPreview={isGuestPreview}
-            />
+      {/* Main Content - Full Width Clean Layout */}
+      <div className="px-4 md:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
+        {/* Guest View Notice */}
+        {!isOwner && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-sm text-center font-medium">
+              You're viewing {ownerProfile?.name}'s wishlist
+            </p>
           </div>
-        </div>
+        )}
+        
+        <WishlistItemsGrid
+          items={wishlist.items}
+          onSaveItem={(item) => handleRemoveItem(item.id)}
+          savingItemId={isRemoving ? 'removing' : undefined}
+          isOwner={isOwner}
+          isGuestPreview={false}
+        />
       </div>
 
       {/* Shopping Panel */}
-      {isOwner && !isGuestPreview && (
+      {isOwner && (
         <ShoppingPanel
           isOpen={isShoppingPanelOpen}
           onClose={() => setIsShoppingPanelOpen(false)}
@@ -339,8 +303,8 @@ const WishlistWorkspace = () => {
         />
       )}
 
-      {/* Mobile Action Bar - Fixed at bottom */}
-      {isMobile && isOwner && !isGuestPreview && (
+      {/* Mobile/Tablet Action Bar - Fixed at bottom */}
+      {isMobileOrTablet && isOwner && (
         <MobileWishlistActionBar
           wishlist={wishlist}
           isPublic={isPublic}

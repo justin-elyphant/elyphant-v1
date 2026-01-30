@@ -45,7 +45,7 @@ const InlinePrivacyToggle = ({
         "active:scale-95",
         sizeClasses[size],
         isPublic 
-          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400" 
+          ? "bg-muted text-foreground hover:bg-muted/80 border border-border" 
           : "bg-muted text-muted-foreground hover:bg-muted/80",
         (disabled || isUpdating) && "opacity-50 cursor-not-allowed",
         className

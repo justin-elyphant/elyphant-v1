@@ -67,7 +67,7 @@ const WishlistWorkspaceHeader = ({
   const currentIsPublic = isPublic !== undefined ? isPublic : wishlist.is_public;
 
   return (
-    <div className="border-b border-border bg-gradient-to-r from-background via-primary/5 to-background shadow-sm">
+    <div className="border-b border-border bg-background shadow-sm">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 md:py-6">
         {/* Back button and wishlist switcher */}
         <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
@@ -95,8 +95,8 @@ const WishlistWorkspaceHeader = ({
                 className="w-12 h-12 lg:w-14 lg:h-14 rounded-full object-cover border-2 border-border"
               />
             ) : (
-              <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border">
-                <span className="text-xl lg:text-2xl font-semibold text-primary">
+              <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                <span className="text-xl lg:text-2xl font-semibold text-muted-foreground">
                   {ownerProfile?.name?.charAt(0) || 'W'}
                 </span>
               </div>
@@ -138,7 +138,7 @@ const WishlistWorkspaceHeader = ({
           {/* Right: Actions - Desktop only (mobile/tablet uses action bar) */}
           {isOwner && !isMobileOrTablet && (
             <div className="flex items-center gap-2">
-              <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
+              <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md bg-elyphant-gradient text-white hover:opacity-90">
                 <Plus className="h-5 w-5" />
                 Add Items
               </Button>

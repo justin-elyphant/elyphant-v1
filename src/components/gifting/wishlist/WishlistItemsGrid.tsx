@@ -189,19 +189,25 @@ const WishlistItemsGrid = ({
             ) : (
               <div className="flex items-center gap-1 border border-border rounded-lg p-1">
                 <Button
-                  variant={viewMode === 'grouped' ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setViewMode('grouped')}
-                  className="gap-2"
+                  className={cn(
+                    "gap-2",
+                    viewMode === 'grouped' && "bg-background shadow-sm"
+                  )}
                 >
                   <LayoutGrid className="h-4 w-4" />
                   By Category
                 </Button>
                 <Button
-                  variant={viewMode === 'flat' ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setViewMode('flat')}
-                  className="gap-2"
+                  className={cn(
+                    "gap-2",
+                    viewMode === 'flat' && "bg-background shadow-sm"
+                  )}
                 >
                   <List className="h-4 w-4" />
                   All Items

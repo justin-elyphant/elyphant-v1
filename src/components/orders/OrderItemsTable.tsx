@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
+import { formatPrice } from "@/lib/utils";
 
 interface OrderItemsTableProps {
   order: ZincOrder;
@@ -48,10 +49,10 @@ const OrderItemsTable = ({ order }: OrderItemsTableProps) => {
                 </TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="text-right">
-                  ${((item as any).unit_price || item.price || 0).toFixed(2)}
+                  {formatPrice((item as any).unit_price || item.price || 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(((item as any).unit_price || item.price || 0) * item.quantity).toFixed(2)}
+                  {formatPrice(((item as any).unit_price || item.price || 0) * item.quantity)}
                 </TableCell>
               </TableRow>
             ))}
@@ -62,19 +63,19 @@ const OrderItemsTable = ({ order }: OrderItemsTableProps) => {
           <div className="w-full max-w-xs">
             <div className="flex justify-between py-2">
               <span className="text-muted-foreground">Subtotal:</span>
-              <span>${order.total?.toFixed(2)}</span>
+              <span>{formatPrice(order.total)}</span>
             </div>
             <div className="flex justify-between py-2">
               <span className="text-muted-foreground">Shipping:</span>
-              <span>$0.00</span>
+              <span>{formatPrice(0)}</span>
             </div>
             <div className="flex justify-between py-2">
               <span className="text-muted-foreground">Tax:</span>
-              <span>$0.00</span>
+              <span>{formatPrice(0)}</span>
             </div>
             <div className="flex justify-between py-2 font-bold">
               <span>Total:</span>
-              <span>${order.total?.toFixed(2)}</span>
+              <span>{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>

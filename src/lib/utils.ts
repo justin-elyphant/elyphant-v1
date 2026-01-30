@@ -124,6 +124,7 @@ export function formatPrice(
 
 /**
  * Validates and normalizes price data from various sources
+ * Database prices are stored in dollars - no cents detection needed.
  * @param {any} priceData - Raw price data from API/database
  * @returns {number | null} Normalized price in dollars or null if invalid
  */
@@ -136,15 +137,8 @@ export function validateAndNormalizePrice(priceData: any): number | null {
     return null;
   }
 
-  // Auto-detect cents vs dollars - improved logic
-  if (Number.isInteger(numPrice)) {
-    // If it's a whole number, it's likely in cents for values that make sense as cents
-    const dollarsAmount = numPrice / 100;
-    if (dollarsAmount >= 0.01 && dollarsAmount < 10000) { // Reasonable range for dollars
-      return dollarsAmount;
-    }
-  }
-
+  // Trust the database value - prices are stored in dollars
+  // REMOVED: Cents detection heuristic that caused $119 to become $1.19
   return numPrice;
 }
 

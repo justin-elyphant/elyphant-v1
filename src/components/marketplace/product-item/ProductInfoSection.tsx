@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductInfoSectionProps {
   product: Product;
@@ -21,7 +22,6 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
   discountPercent
 }) => {
   const getTitle = () => product.title || product.name || "";
-  const getPrice = () => product.price?.toFixed(2) || "0.00";
   const getRating = () => product.rating || product.stars || 0;
   const getReviewCount = () => product.reviewCount || product.num_reviews || 0;
   const isMobile = useIsMobile();
@@ -54,10 +54,10 @@ const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
         )}
       </div>
       <div className="mt-2 flex items-baseline">
-        <span className="font-bold">${getPrice()}</span>
+        <span className="font-bold">{formatPrice(product.price)}</span>
         {discountPercent && (product as any).original_price && (
           <span className="text-sm text-muted-foreground line-through ml-2">
-            ${(product as any).original_price.toFixed(2)}
+            {formatPrice((product as any).original_price)}
           </span>
         )}
       </div>

@@ -4,6 +4,7 @@ import { Product } from "@/contexts/ProductContext";
 import StandardProductGrid from "./components/StandardProductGrid";
 import GroupedProductSection from "./components/GroupedProductSection";
 import { useProductDisplay } from "./hooks/useProductDisplay";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductGridProps {
   products: Product[];
@@ -30,7 +31,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   const defaultRenderProductCard = (product: Product) => (
     <div key={product.id || product.product_id} className="bg-white p-4 rounded-lg shadow">
       <div>{product.title || product.name}</div>
-      <div>${product.price}</div>
+      <div>{formatPrice(product.price)}</div>
     </div>
   );
   

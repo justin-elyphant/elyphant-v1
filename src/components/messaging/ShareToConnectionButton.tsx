@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
 import ConnectionPickerModal from "./ConnectionPickerModal";
 import MessageTemplateSelector from "./MessageTemplateSelector";
+import { formatPrice } from "@/lib/utils";
 
 interface ShareToConnectionButtonProps {
   product: Product;
@@ -133,7 +134,7 @@ const ShareToConnectionButton = ({
                   <p className="text-xs text-muted-foreground">{product.brand}</p>
                 )}
                 <p className="text-sm font-semibold text-primary">
-                  ${product.price.toFixed(2)}
+                  {formatPrice(product.price)}
                 </p>
               </div>
             </div>

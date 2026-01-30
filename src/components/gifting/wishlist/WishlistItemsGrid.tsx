@@ -20,6 +20,8 @@ interface WishlistItemsGridProps {
   // Guest purchase mode props
   onAddToCart?: (item: WishlistItem) => void;
   purchasedItemIds?: Set<string>;
+  // Wishlist switcher - moved from header to filter row
+  wishlistSwitcher?: React.ReactNode;
 }
 
 const WishlistItemsGrid = ({ 
@@ -30,7 +32,8 @@ const WishlistItemsGrid = ({
   isOwner = true, 
   isGuestPreview = false,
   onAddToCart,
-  purchasedItemIds = new Set()
+  purchasedItemIds = new Set(),
+  wishlistSwitcher
 }: WishlistItemsGridProps) => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -138,24 +141,27 @@ const WishlistItemsGrid = ({
 
   return (
     <>
-      {/* Header with View Toggle */}
+      {/* Toolbar Row with Wishlist Switcher and View Toggles */}
       <div className={cn(
-        "flex justify-between items-center",
+        "flex justify-between items-center border-b border-border pb-4",
         isMobile ? "mb-4" : "mb-8"
       )}>
-        {/* Hide item count on mobile - already shown in header */}
-        {!isMobile && (
-          <div className="flex items-center gap-4">
-            <h3 className="text-2xl font-bold">
-              {items.length} item{items.length > 1 ? 's' : ''}
-            </h3>
-            {isSelectionMode && (
-              <span className="text-sm text-muted-foreground">
-                ({selectedItems.size} selected)
+        {/* Left: Wishlist Switcher and Item Count */}
+        <div className="flex items-center gap-4">
+          {wishlistSwitcher}
+          {!isMobile && (
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold">
+                {items.length} item{items.length > 1 ? 's' : ''}
               </span>
-            )}
-          </div>
-        )}
+              {isSelectionMode && (
+                <span className="text-sm text-muted-foreground">
+                  ({selectedItems.size} selected)
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         
         <div className={cn(
           "flex items-center gap-2",

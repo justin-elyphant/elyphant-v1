@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Calendar, DollarSign, X, AlertTriangle } from "lucide-react";
 import { useOrderActions } from "@/hooks/useOrderActions";
+import { formatPrice } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,7 +87,7 @@ const OrderCard = ({ order, onProcessOrder, onOrderUpdated }: OrderCardProps) =>
           </div>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span>${order.total.toFixed(2)}</span>
+            <span>{formatPrice(order.total)}</span>
           </div>
           <div className="text-muted-foreground">
             Customer: {order.customerName}
@@ -99,7 +100,7 @@ const OrderCard = ({ order, onProcessOrder, onOrderUpdated }: OrderCardProps) =>
             {order.items.map((item, index) => (
               <div key={index} className="text-sm text-muted-foreground flex justify-between">
                 <span>{item.name} x{item.quantity}</span>
-                <span>${item.price.toFixed(2)}</span>
+                <span>{formatPrice(item.price)}</span>
               </div>
             ))}
           </div>

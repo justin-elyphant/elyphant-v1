@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Gift, Heart, ShoppingBag, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface ChatGiftModalProps {
@@ -172,7 +172,7 @@ const ChatGiftModal = ({
                         />
                         <div className="flex-1">
                           <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-lg font-bold text-primary">${item.price}</p>
+                          <p className="text-lg font-bold text-primary">{formatPrice(item.price)}</p>
                           <Badge className={cn("text-xs", getPriorityColor(item.priority))}>
                             {item.priority} priority
                           </Badge>
@@ -207,7 +207,7 @@ const ChatGiftModal = ({
                         <div className="flex-1">
                           <h4 className="font-medium">{item.name}</h4>
                           <p className="text-sm text-muted-foreground">{item.description}</p>
-                          <p className="text-lg font-bold text-primary">${item.price}</p>
+                          <p className="text-lg font-bold text-primary">{formatPrice(item.price)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -232,10 +232,10 @@ const ChatGiftModal = ({
 
         {selectedItem && (
           <div className="border-t pt-4">
-            <div className="space-y-3">
+          <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Selected:</span>
-                <span className="text-primary font-bold">${selectedItem.price}</span>
+                <span className="text-primary font-bold">{formatPrice(selectedItem.price)}</span>
               </div>
               <p className="text-sm text-muted-foreground">{selectedItem.name}</p>
               

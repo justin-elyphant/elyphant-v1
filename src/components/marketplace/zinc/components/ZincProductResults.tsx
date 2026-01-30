@@ -8,7 +8,7 @@ import { getMockProducts } from "@/components/marketplace/services/mockProductSe
 import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { getOptimizedImageSrc, preloadCriticalImages } from "@/utils/imageOptimization";
 
 interface ZincProductResultsProps {
@@ -131,7 +131,7 @@ export const ZincProductResults = ({
               )}
             </div>
             
-            <p className="font-bold mb-2">${product.price.toFixed(2)}</p>
+            <p className="font-bold mb-2">{formatPrice(product.price)}</p>
             
             <div className="flex items-center text-xs text-slate-600 mb-3">
               <Truck className="h-3 w-3 mr-1 text-green-600" />

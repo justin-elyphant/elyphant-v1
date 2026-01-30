@@ -12,6 +12,7 @@ import SignUpDialog from "../SignUpDialog";
 import AddToCartButton from "@/components/marketplace/components/AddToCartButton";
 import ProductRating from "./ProductRating";
 import SocialShareButton from "../product-item/SocialShareButton";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductItemProps {
   product: Product;
@@ -71,11 +72,6 @@ const ProductItem = ({
   // Prevent cart button clicks from triggering product modal
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-  };
-
-  const formatPrice = (price: number | undefined) => {
-    if (!price) return "Price not available";
-    return `$${price.toFixed(2)}`;
   };
 
   const isListView = viewMode === "list";

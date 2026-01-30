@@ -8,6 +8,7 @@ import { Product } from "@/types/product";
 import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import SignUpDialog from "../SignUpDialog";
+import { formatPrice } from "@/lib/utils";
 
 interface ModernProductCardProps {
   product: Product;
@@ -130,7 +131,7 @@ const ModernProductCard = ({
           
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-gray-900">
-              ${product.price?.toFixed(2) || "0.00"}
+              {formatPrice(product.price)}
             </span>
           </div>
         </CardContent>

@@ -32,17 +32,7 @@ export function detectProductSource(product: {
     return 'zinc_api';
   }
   
-  const imageUrl = product.image_url || product.imageUrl || '';
-  const price = Number(product.price) || 0;
-  
-  // Detect Amazon/Zinc products by image URL patterns
-  if (imageUrl.includes('amazon') || 
-      imageUrl.includes('ssl-images-amazon') || 
-      imageUrl.includes('m.media-amazon')) {
-    return 'zinc_api';
-  }
-  
-  // Detect by vendor/retailer info
+  // Detect by vendor/retailer info (explicit labels only)
   if (product.vendor === 'Amazon' || product.retailer === 'Amazon') {
     return 'zinc_api';
   }
@@ -51,13 +41,9 @@ export function detectProductSource(product: {
     return 'shopify';
   }
   
-  // Detect by price patterns (Amazon products often stored in cents)
-  // Prices > $100 that are whole numbers are likely in cents format
-  if (price > 100 && price === Math.floor(price)) {
-    return 'zinc_api';
-  }
-  
-  // Default to manual for other products
+  // Default to manual - prices are stored in dollars, no conversion needed
+  // REMOVED: Image URL detection and price magnitude heuristics
+  // These caused false positives (e.g., $119 knife showing as $1.19)
   return 'manual';
 }
 

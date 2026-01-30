@@ -6,6 +6,7 @@ import { ShoppingBag, Check } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
 import CartItemImage from '@/components/cart/CartItemImage';
+import { formatPrice } from '@/lib/utils';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
@@ -63,7 +64,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                 <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</p>
+                <p className="font-medium">{formatPrice(item.product.price * item.quantity)}</p>
               </div>
             </div>
           ))}
@@ -75,7 +76,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </div>
           <div className="flex justify-between text-sm items-center">
             <span>Shipping</span>
@@ -87,7 +88,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                 Free Delivery
               </span>
             ) : (
-              <span>${shippingCost.toFixed(2)}</span>
+              <span>{formatPrice(shippingCost)}</span>
             )}
           </div>
           {giftingFee > 0 && (
@@ -116,12 +117,12 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
                   }
                 />
               </span>
-              <span>${giftingFee.toFixed(2)}</span>
+              <span>{formatPrice(giftingFee)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
             <span>Tax</span>
-            <span>${taxAmount.toFixed(2)}</span>
+            <span>{formatPrice(taxAmount)}</span>
           </div>
         </div>
 
@@ -129,7 +130,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
 
         <div className="flex justify-between font-semibold text-lg">
           <span>Total</span>
-          <span>${totalAmount.toFixed(2)}</span>
+          <span>{formatPrice(totalAmount)}</span>
         </div>
       </CardContent>
     </Card>

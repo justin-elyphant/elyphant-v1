@@ -1,227 +1,181 @@
 
 
-# Wishlist Page Simplification Plan
+# Wishlist Header Lululemon Design Alignment Plan
 
 ## Overview
 
-Transform the current "workbench" wishlist UI into a clean, traditional e-commerce wishlist experience (Lululemon-inspired) while preserving iOS Capacitor best practices and reusing existing proven components.
+Align the wishlist header and related components with the established Lululemon-inspired monochromatic design system. This means using a clean white/grey foundation with the brand gradient (`bg-elyphant-gradient`) reserved ONLY for primary CTAs.
 
-## Current Problems
+## Current Issues
 
-1. **340px Sidebar** - Takes significant space, contains duplicated controls (Share, Preview, Settings), analytics-style widgets (gift progress tracker, category breakdown), and repeats owner info already in header
-2. **Duplicated Actions** - Privacy toggle, Share, Preview as Guest appear in BOTH header AND sidebar
-3. **Dashboard Feel** - Progress trackers and stats feel like analytics, not e-commerce
-4. **3-Column Layout** - Sidebar + Items Grid + Shopping Panel creates visual complexity
+| Element | Current State | Problem |
+|---------|---------------|---------|
+| Header Background | `bg-gradient-to-r from-background via-primary/5 to-background` | Purple tint violates monochromatic rule |
+| Privacy Toggle (Public) | `bg-emerald-100 text-emerald-700` | Green color not in monochromatic palette |
+| Add Items Button | Default blue `primary` color | Should use `bg-elyphant-gradient` for primary CTA |
+| View Mode Toggles | `variant="default"` (blue) for active state | Should use monochromatic grey/white active state |
 
 ## Target State (Lululemon Pattern)
 
-- **Simple header** with title, item count, privacy toggle, share, and add button
-- **Full-width product grid** with clean item cards
-- **Mobile action bar** (existing) for touch-optimized controls
-- **No sidebar** for individual wishlist view
+- **Backgrounds**: Clean `bg-background` or `bg-white` - no colored tints
+- **Privacy Badge**: Monochromatic grey for both states (public/private) with subtle icon differentiation
+- **Primary CTA**: `bg-elyphant-gradient text-white` for Add Items button
+- **Functional Toggles**: `bg-background` with `shadow-sm` for active state (like iOS segmented controls)
+
+---
 
 ## Changes Summary
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `WishlistWorkspace.tsx` | Modify | Remove sidebar, simplify layout |
-| `WishlistWorkspaceHeader.tsx` | Modify | Consolidate all controls into header, remove redundancy |
-| `WishlistSidebar.tsx` | Keep (no changes) | May be used elsewhere, but not rendered |
-| `MobileWishlistActionBar.tsx` | Minor tweak | Ensure tablet support (<1024px) |
+| `WishlistWorkspaceHeader.tsx` | Modify | Remove purple tint, apply gradient to CTA |
+| `InlinePrivacyToggle.tsx` | Modify | Convert to monochromatic styling |
+| `WishlistItemsGrid.tsx` | Modify | Make view toggles monochromatic |
 
 ---
 
 ## Detailed Changes
 
-### 1. WishlistWorkspace.tsx
+### 1. WishlistWorkspaceHeader.tsx
 
-**Remove:**
-- Sidebar rendering entirely (lines 296-307)
-- Category filtering state and logic (not needed without sidebar)
-- `selectedCategory` state and filtering
+**Background Fix (Line 70):**
+```typescript
+// BEFORE:
+className="border-b border-border bg-gradient-to-r from-background via-primary/5 to-background shadow-sm"
 
-**Simplify:**
-- Remove the `flex gap-8` layout with sidebar
-- Make content area full-width
-- Keep ShoppingPanel (slide-in drawer - works well)
-- Keep MobileWishlistActionBar (show for mobile AND tablet, <1024px)
+// AFTER (clean monochromatic):
+className="border-b border-border bg-background shadow-sm"
+```
 
-**Layout Change:**
+**Add Items Button Fix (Line 141):**
+```typescript
+// BEFORE:
+<Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
+
+// AFTER (brand gradient for primary CTA):
+<Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md bg-elyphant-gradient text-white hover:opacity-90">
+```
+
+**Avatar Fallback Fix (Line 98):**
+```typescript
+// BEFORE:
+className="... bg-primary/10 ... text-primary"
+
+// AFTER (monochromatic):
+className="... bg-muted ... text-muted-foreground"
+```
+
+### 2. InlinePrivacyToggle.tsx
+
+Convert from green/grey to pure monochromatic with subtle visual differentiation:
+
+**Lines 47-49:**
+```typescript
+// BEFORE:
+isPublic 
+  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400" 
+  : "bg-muted text-muted-foreground hover:bg-muted/80"
+
+// AFTER (monochromatic - both states grey, public has subtle border):
+isPublic 
+  ? "bg-muted text-foreground hover:bg-muted/80 border border-border" 
+  : "bg-muted text-muted-foreground hover:bg-muted/80"
+```
+
+This makes both states monochromatic while keeping public visually distinct via:
+- **Public**: `text-foreground` (darker text) + visible border
+- **Private**: `text-muted-foreground` (lighter text) + no border
+
+### 3. WishlistItemsGrid.tsx
+
+**Desktop View Toggle (Lines 191-209):**
+```typescript
+// BEFORE:
+<Button
+  variant={viewMode === 'grouped' ? 'default' : 'ghost'}  // Blue when active
+  ...
+>
+
+// AFTER (monochromatic - white/shadow when active):
+<Button
+  variant="ghost"
+  size="sm"
+  onClick={() => setViewMode('grouped')}
+  className={cn(
+    "gap-2",
+    viewMode === 'grouped' && "bg-background shadow-sm"
+  )}
+>
+```
+
+**Mobile View Toggle (Lines 167-187):**
+Already monochromatic (`bg-background shadow-sm` for active) - no changes needed.
+
+---
+
+## Visual Comparison
+
+### Header
+
 ```
 BEFORE:
-┌──────────────────────────────────────────────────────┐
-│ Header (with duplicated controls)                    │
-├────────────┬─────────────────────────────────────────┤
-│  Sidebar   │  Product Grid                           │
-│  (340px)   │                                         │
-│  - Avatar  │                                         │
-│  - Stats   │                                         │
-│  - Actions │                                         │
-│  - Filters │                                         │
-└────────────┴─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  ← Back    [Switcher]           [+ Add Items]  │  ← Purple tint, blue button
+│  👤 Wishlist Title  [🌐 Public]   47 items     │  ← Green privacy badge
+└─────────────────────────────────────────────────┘
 
 AFTER:
-┌──────────────────────────────────────────────────────┐
-│ Header (clean: title, count, privacy, share, add)    │
-├──────────────────────────────────────────────────────┤
-│                                                      │
-│              Full-Width Product Grid                 │
-│                                                      │
-│                                                      │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  ← Back    [Switcher]           [+ Add Items]  │  ← Clean white, gradient button
+│  👤 Wishlist Title  [🌐 Public]   47 items     │  ← Grey privacy badge
+└─────────────────────────────────────────────────┘
 ```
 
-### 2. WishlistWorkspaceHeader.tsx
+### Privacy Toggle States
 
-**Consolidate Controls:**
-- Keep back button and wishlist switcher (useful)
-- Keep owner avatar + title + item count + total value
-- Move InlinePrivacyToggle next to title (already done for desktop, ensure visible)
-- Keep Share and Add Items buttons (desktop only)
-- Remove Settings button (not implemented anyway, shows "coming soon")
-- Remove "Preview as Guest" button (rarely used, confusing)
-
-**Tablet Optimization (<1024px):**
-- Show mobile action bar for tablets, not just phones
-- Header shows minimal info (title, back button)
-- Actions move to bottom action bar
-
-### 3. MobileWishlistActionBar.tsx
-
-**Extend to Tablets:**
-- Currently shown only when `isMobile` (default 768px)
-- Change to `isMobile(1024)` to include tablets
-- This aligns with the project's tablet-as-mobile-shell strategy
-
-### 4. WishlistItemsGrid.tsx
-
-**No major changes needed** - already clean
-
-Minor refinements:
-- Remove view mode toggle if categories not used (or keep as grouping is still useful)
-- Grid already handles responsive layout well
-
----
-
-## iOS Capacitor Compliance (Already Present, Verified)
-
-- ✅ 44px minimum touch targets in MobileWishlistActionBar
-- ✅ `triggerHapticFeedback` on all interactions
-- ✅ Safe area padding (`env(safe-area-inset-bottom)`)
-- ✅ Backdrop blur on floating elements
-- ✅ `touch-manipulation` class for button responsiveness
-- ✅ `active:scale-95` feedback on buttons
-
----
-
-## Component Reuse (Zero New Components)
-
-| Existing Component | Reused For |
-|--------------------|------------|
-| `InlinePrivacyToggle` | Privacy toggle in header + action bar |
-| `WishlistShareSheet` | Share drawer (mobile/tablet) |
-| `MobileWishlistActionBar` | Bottom action bar for mobile + tablet |
-| `WishlistItemsGrid` | Main product grid |
-| `EnhancedWishlistCard` | Individual product cards |
-| `ShoppingPanel` | Add items slide-in drawer |
-
----
-
-## Safe Cleanup
-
-Files that can be reviewed for potential future cleanup (NOT deleted in this phase):
-- `WishlistSidebar.tsx` - No longer rendered but may be used elsewhere
-- `CategorySection.tsx` - Still used by WishlistItemsGrid for grouped view
-- `WishlistActionToolbar.tsx` - Appears unused (only guest preview banner)
-
----
-
-## Technical Implementation
-
-### WishlistWorkspace.tsx Changes
-
-```typescript
-// REMOVE these lines:
-const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-// ... selectedCategory URL param handling
-
-// REMOVE sidebar rendering (lines 296-307)
-
-// CHANGE: Extend mobile action bar to tablets
-const isMobileOrTablet = useIsMobile(1024);
-
-// SIMPLIFIED LAYOUT:
-<div className="px-4 md:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
-  {/* Guest View Notice */}
-  {!isOwner && (
-    <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-      <p className="text-sm text-center font-medium">
-        You're viewing {ownerProfile?.name}'s wishlist
-      </p>
-    </div>
-  )}
-  
-  <WishlistItemsGrid
-    items={wishlist.items}  // No filtering
-    onSaveItem={(item) => handleRemoveItem(item.id)}
-    savingItemId={isRemoving ? 'removing' : undefined}
-    isOwner={isOwner}
-    isGuestPreview={isGuestPreview}
-  />
-</div>
-
-// Mobile/Tablet action bar
-{isMobileOrTablet && isOwner && !isGuestPreview && (
-  <MobileWishlistActionBar ... />
-)}
 ```
+BEFORE:
+┌──────────────┐    ┌──────────────┐
+│ 🌐 Public    │    │ 🔒 Private   │
+│ GREEN bg     │    │ GREY bg      │
+└──────────────┘    └──────────────┘
 
-### WishlistWorkspaceHeader.tsx Changes
-
-```typescript
-// REMOVE: Guest preview toggle button (lines 155-171)
-// REMOVE: Settings button (line 181-183)
-
-// KEEP: Back button, wishlist switcher, avatar, title, privacy toggle, share, add items
-
-// Simplified actions section (desktop only):
-{isOwner && !isMobile && !isGuestPreview && (
-  <div className="flex items-center gap-2">
-    <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md">
-      <Plus className="h-5 w-5" />
-      Add Items
-    </Button>
-    <Button 
-      variant="outline" 
-      size="icon"
-      onClick={handleShare}
-      className="min-h-[44px] min-w-[44px]"
-    >
-      <Share2 className="h-4 w-4" />
-    </Button>
-  </div>
-)}
+AFTER:
+┌──────────────┐    ┌──────────────┐
+│ 🌐 Public    │    │ 🔒 Private   │
+│ GREY + border│    │ GREY muted   │
+└──────────────┘    └──────────────┘
 ```
 
 ---
 
-## Responsive Behavior Summary
+## iOS Capacitor Compliance
 
-| Breakpoint | Layout |
-|------------|--------|
-| Desktop (≥1024px) | Full header with all controls, full-width grid |
-| Tablet (768-1023px) | Compact header (back + title), bottom action bar, full-width grid |
-| Mobile (<768px) | Minimal header, bottom action bar, stacked grid |
+All changes preserve existing iOS best practices:
+- ✅ 44px minimum touch targets maintained
+- ✅ `triggerHapticFeedback` calls unchanged
+- ✅ `active:scale-95` feedback preserved
+- ✅ Safe area padding unchanged
+- ✅ `touch-manipulation` class preserved
 
 ---
 
-## Testing Checklist
+## Component Dependencies
 
-After implementation:
-1. Desktop: Verify header shows all controls, no sidebar, full-width grid
-2. Tablet: Verify bottom action bar appears, header is compact
-3. Mobile: Verify existing behavior preserved, action bar visible
-4. Privacy toggle: Test public/private switching with haptic feedback
-5. Share: Test native share sheet on mobile/tablet
-6. Add Items: Test shopping panel opens correctly
+No new components created. Reusing existing design tokens:
+- `bg-elyphant-gradient` (tailwind.config.ts line 23)
+- `bg-muted`, `text-muted-foreground` (standard design system)
+- `bg-background`, `shadow-sm` (standard design system)
+
+---
+
+## Technical Implementation Summary
+
+| Component | Lines Changed | Change Type |
+|-----------|---------------|-------------|
+| `WishlistWorkspaceHeader.tsx` | 70, 98, 141 | Class name updates |
+| `InlinePrivacyToggle.tsx` | 47-49 | Class name updates |
+| `WishlistItemsGrid.tsx` | 191-209 | Variant to className conversion |
+
+Total: ~15 lines of styling changes across 3 files
 

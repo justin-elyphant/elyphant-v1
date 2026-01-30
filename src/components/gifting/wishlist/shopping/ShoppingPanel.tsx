@@ -36,9 +36,10 @@ const ShoppingPanel = ({
   const [searchQuery, setSearchQuery] = useState("");
   const { products } = useProducts();
   const { addToWishlist, isAdding } = useWishlist();
-  const { executeSearch, isLoading: isSearching, products: searchResults } = useMarketplace();
+  const { executeSearch, isLoading: isSearching } = useMarketplace();
   
   const [hasSearched, setHasSearched] = useState(false);
+  const [localSearchResults, setLocalSearchResults] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<WishlistItem[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState(false);
 
@@ -96,7 +97,12 @@ const ShoppingPanel = ({
     if (!searchQuery.trim()) return;
     
     setHasSearched(true);
-    await executeSearch(searchQuery);
+    const response = await executeSearch(searchQuery);
+    
+    // Store results in local state (modal shouldn't affect URL state)
+    if (response && response.products) {
+      setLocalSearchResults(response.products as Product[]);
+    }
   };
 
   const handleProductClick = (product: Product) => {
@@ -140,7 +146,7 @@ const ShoppingPanel = ({
     }
   };
 
-  const displayProducts = hasSearched ? searchResults : products.slice(0, 20);
+  const displayProducts = hasSearched ? localSearchResults : products.slice(0, 20);
 
   const content = (
     <div className="flex flex-col h-full">

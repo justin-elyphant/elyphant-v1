@@ -20,6 +20,7 @@ import { triggerHapticFeedback } from '@/utils/haptics';
 import Picker from 'react-mobile-picker';
 import { PAYMENT_LEAD_TIME } from '@/lib/constants/paymentLeadTime';
 import { calculateNextBirthday, PRESET_HOLIDAYS, calculateHolidayDate } from '@/constants/holidayDates';
+import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
 import PresetHolidaySelector from './PresetHolidaySelector';
@@ -255,8 +256,19 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       } else {
         setSelectedRecipient(null);
       }
+      
+      // Auto-populate default payment method for recurring rules
+      if (user) {
+        unifiedPaymentService.getPaymentMethods().then(methods => {
+          const defaultMethod = methods.find(m => m.is_default);
+          if (defaultMethod) {
+            setPaymentMethodId(defaultMethod.id);
+            console.log('[Schedule Modal] Auto-set default payment method:', defaultMethod.id);
+          }
+        }).catch(err => console.warn('Could not fetch payment methods:', err));
+      }
     }
-  }, [open, existingRecipient, product?.price]);
+  }, [open, existingRecipient, product?.price, user]);
 
   // Handle preset selection - updates picker to match
   const handlePresetSelect = (presetKey: string, date: Date) => {

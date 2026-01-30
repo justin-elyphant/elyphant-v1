@@ -1,126 +1,177 @@
 
 
-# Fix Incorrect Pricing Display: Remove Erroneous Cents-to-Dollars Conversion
+# Minimal Plan: Fix Recurring Gift Gaps by Reusing Existing Code
 
-## Problem Summary
+## Overview
 
-The order details page and email templates display impossibly low pricing values:
-
-| Field | Displayed | Actual (DB) | Expected |
-|-------|-----------|-------------|----------|
-| Subtotal | $0.27 | 26.97 | $26.97 |
-| Shipping | $0.07 | 6.99 | $6.99 |
-| Tax | $0.02 | 2.36 | $2.36 |
-| Gifting Fee | $0.04 | 3.697 | $3.70 |
-
-**Root Cause:** Two files incorrectly divide prices by 100, assuming values are stored in cents when they're actually stored in dollars.
+This plan fixes the three critical gaps for the Father's Day + Recurring flow using **existing proven code** rather than building new systems. Total changes: ~40 lines across 3 files.
 
 ---
 
-## Technical Analysis
+## Changes Summary
 
-### Data Flow (Verified)
-
-1. **Frontend checkout** sends `pricingBreakdown` in dollars (e.g., `subtotal: 26.97`)
-2. **create-checkout-session** stores these dollar values as strings in Stripe metadata
-3. **stripe-webhook-v2** reads metadata and stores as numbers in `line_items` JSONB:
-   ```json
-   {
-     "subtotal": 26.97,
-     "shipping": 6.99,
-     "tax": 2.36,
-     "gifting_fee": 3.697,
-     "items": [...]
-   }
-   ```
-4. **Bug location 1:** `orderPricingUtils.ts` divides by 100:
-   ```typescript
-   const subtotalFromLineItems = lineItems.subtotal ? lineItems.subtotal / 100 : null;
-   // Result: 26.97 / 100 = 0.2697 → displays as "$0.27"
-   ```
-5. **Bug location 2:** `ecommerce-email-orchestrator/index.ts` divides by 100:
-   ```typescript
-   subtotal: (order.line_items as any)?.subtotal / 100
-   // Result: 26.97 / 100 = 0.2697 → displays as "$0.27"
-   ```
+| File | Change | Lines Modified |
+|------|--------|----------------|
+| `supabase/functions/shared/holidayDates.ts` | **NEW**: Copy from `src/constants/holidayDates.ts` | Copy existing file |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Import shared holiday logic, add `get-products` fallback | ~15 lines |
+| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Fetch default payment method on open | ~8 lines |
 
 ---
 
-## Files to Modify
+## Change 1: Share Holiday Logic (Eliminate Hardcoded Dates)
 
-### 1. `src/utils/orderPricingUtils.ts`
+**Problem**: Orchestrator has hardcoded holiday dates that will drift (Father's Day 2025 = June 15, not June 16).
 
-**Current (buggy):**
+**Solution**: Copy the proven `holidayDates.ts` to `supabase/functions/shared/` and import it.
+
+**File**: `supabase/functions/shared/holidayDates.ts`
+
+This is a direct copy of `src/constants/holidayDates.ts` (lines 1-121), adapted for Deno:
+- Same `HOLIDAY_DATES` config with floating holiday logic
+- Same `calculateHolidayDate()` with proper nth-weekday calculation
+- Same `calculateNextBirthday()` for DOB handling
+
+The orchestrator already has duplicate logic (lines 59-77) that can be replaced with an import.
+
+---
+
+## Change 2: Add get-products Fallback in Orchestrator
+
+**Problem**: If wishlist is empty, orchestrator throws "No suitable gift found" and fails.
+
+**Solution**: Call existing `get-products` edge function as fallback using rule's `gift_selection_criteria`.
+
+**File**: `supabase/functions/auto-gift-orchestrator/index.ts`
+
+**Current Logic (lines 246-270)**:
 ```typescript
-// Line 24-30 - WRONG: Assumes cents when values are actually dollars
-const shippingFromLineItems = lineItems.shipping ? lineItems.shipping / 100 : null;
-const taxFromLineItems = lineItems.tax ? lineItems.tax / 100 : null;
-const subtotalFromLineItems = lineItems.subtotal ? lineItems.subtotal / 100 : null;
-const giftingFeeFromLineItems = lineItems.gifting_fee ? lineItems.gifting_fee / 100 : null;
+// Only checks wishlist - fails if empty
+if (!giftItem) {
+  throw new Error('No suitable gift found within budget');
+}
 ```
 
-**Fixed:**
+**New Logic**:
 ```typescript
-// Values in line_items JSONB are stored in DOLLARS (not cents)
-// Example: subtotal: 26.97 means $26.97
-const shippingFromLineItems = lineItems.shipping ?? null;
-const taxFromLineItems = lineItems.tax ?? null;
-const subtotalFromLineItems = lineItems.subtotal ?? null;
-const giftingFeeFromLineItems = lineItems.gifting_fee ?? null;
+// Step 1: Try wishlist (existing code - unchanged)
+// ... existing wishlist query ...
+
+// Step 2: If no wishlist item, use get-products with preferences
+if (!giftItem && rule.gift_selection_criteria) {
+  console.log('🔍 No wishlist item found, falling back to get-products search');
+  
+  const searchQuery = rule.gift_selection_criteria.preferred_brands?.[0] 
+    || rule.gift_selection_criteria.categories?.[0] 
+    || 'gift';
+  
+  const { data: searchResult } = await supabase.functions.invoke('get-products', {
+    body: {
+      query: searchQuery,
+      limit: 5,
+      filters: {
+        maxPrice: rule.budget_limit || 100
+      }
+    }
+  });
+  
+  const products = searchResult?.results || searchResult?.products || [];
+  if (products.length > 0) {
+    // Pick random from top 5 for variety
+    const randomIndex = Math.floor(Math.random() * Math.min(5, products.length));
+    const product = products[randomIndex];
+    giftItem = {
+      product_id: product.product_id || product.asin,
+      name: product.title,
+      price: product.price,
+      image_url: product.image || product.main_image
+    };
+    console.log(`✅ Found product via search: ${giftItem.name} at $${giftItem.price}`);
+  }
+}
+
+if (!giftItem) {
+  throw new Error('No suitable gift found within budget');
+}
 ```
 
-### 2. `supabase/functions/ecommerce-email-orchestrator/index.ts`
-
-**Current (buggy):**
-```typescript
-// Lines 696-699 and 703 - WRONG: Divides dollars by 100
-subtotal: (order.line_items as any)?.subtotal ? (order.line_items as any).subtotal / 100 : 0,
-shipping_cost: (order.line_items as any)?.shipping ? (order.line_items as any).shipping / 100 : 0,
-tax_amount: (order.line_items as any)?.tax ? (order.line_items as any).tax / 100 : 0,
-gifting_fee: (order.line_items as any)?.gifting_fee ? (order.line_items as any).gifting_fee / 100 : 0,
-...
-price: item.price ? item.price / 100 : 0,  // Line 703
-```
-
-**Fixed:**
-```typescript
-// Values in line_items JSONB are stored in DOLLARS (not cents)
-subtotal: (order.line_items as any)?.subtotal || 0,
-shipping_cost: (order.line_items as any)?.shipping || 0,
-tax_amount: (order.line_items as any)?.tax || 0,
-gifting_fee: (order.line_items as any)?.gifting_fee || 0,
-...
-price: item.price || 0,  // Already in dollars
-```
+This reuses the proven `get-products` edge function rather than building new selection logic.
 
 ---
 
-## Impact After Fix
+## Change 3: Auto-Populate Default Payment Method in Modal
 
-| Component | Before Fix | After Fix |
-|-----------|------------|-----------|
-| Order Detail page | $0.27 subtotal | $26.97 subtotal |
-| Order Confirmation | $0.27 subtotal | $26.97 subtotal |
-| Pending Payment emails | $0.27 subtotal | $26.97 subtotal |
-| Shipped/Delivered emails | $0.27 subtotal | $26.97 subtotal |
+**Problem**: `paymentMethodId` starts empty and is only set if user explicitly selects one. Recurring rules fail at T-4 because `payment_method_id` is null.
+
+**Solution**: On modal open, fetch user's default payment method using the existing `unifiedPaymentService.getPaymentMethods()`.
+
+**File**: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`
+
+**Add Import** (line ~23):
+```typescript
+import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
+```
+
+**Add useEffect** (after line 259, inside the existing `useEffect` for modal open):
+```typescript
+// Auto-populate default payment method for recurring rules
+if (user) {
+  unifiedPaymentService.getPaymentMethods().then(methods => {
+    const defaultMethod = methods.find(m => m.is_default);
+    if (defaultMethod) {
+      setPaymentMethodId(defaultMethod.id);
+      console.log('[Schedule Modal] Auto-set default payment method:', defaultMethod.id);
+    }
+  }).catch(err => console.warn('Could not fetch payment methods:', err));
+}
+```
+
+This ensures when a user enables the recurring toggle, their default card is already attached.
 
 ---
 
-## Verification Plan
+## Technical Details
 
-1. Deploy updated `ecommerce-email-orchestrator`
-2. Refresh the order detail page at `/orders/bd3c262e-34db-4faf-8849-c2e9a8cf4e1f`
-3. Confirm pricing displays correctly:
-   - Subtotal: $26.97
-   - Shipping: $6.99
-   - Tax: $2.36
-   - Gifting Fee: $3.70
-   - Total: $40.02
-4. Trigger a test email and verify pricing is correct in the email
+### What We're Reusing (Zero New Logic)
+
+| Component | Already Proven | Location |
+|-----------|----------------|----------|
+| Holiday calculation | ✅ Used in frontend for 6+ months | `src/constants/holidayDates.ts` |
+| Product search | ✅ Powers entire marketplace | `get-products` edge function |
+| Payment methods | ✅ Used in checkout + settings | `unifiedPaymentService.getPaymentMethods()` |
+| Checkout flow | ✅ Production-proven | `create-checkout-session` |
+
+### What We're NOT Building (Avoided Over-Engineering)
+
+- ❌ New `nicole-gift-selector` edge function
+- ❌ Complex 4-tier selection algorithm backend port
+- ❌ New database tables or columns
+- ❌ New cron jobs or background workers
 
 ---
 
-## Memory Update
+## Deployment Order
 
-Add a project memory entry documenting that **pricing values in `orders.line_items` JSONB are stored in dollars (not cents)** to prevent future confusion.
+1. Create `supabase/functions/shared/holidayDates.ts` (copy from frontend)
+2. Update `auto-gift-orchestrator/index.ts` (import shared + add fallback)
+3. Deploy `auto-gift-orchestrator`
+4. Update `UnifiedGiftSchedulingModal.tsx` (add payment fetch)
+
+---
+
+## Testing
+
+After deployment, test the Father's Day + Recurring flow:
+
+1. Open scheduling modal
+2. Select a recipient
+3. Choose "Father's Day" from presets
+4. Enable recurring toggle
+5. Verify payment method auto-populates (check console log)
+6. Complete checkout
+7. Verify `auto_gifting_rules` record has `payment_method_id` set
+
+To test the get-products fallback (if needed later):
+1. Create a rule for a recipient with empty wishlist
+2. Simulate T-4 using orchestrator's `simulatedDate` parameter
+3. Verify it falls back to product search instead of throwing error
 

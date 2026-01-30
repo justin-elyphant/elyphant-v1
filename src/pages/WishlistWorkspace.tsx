@@ -8,6 +8,7 @@ import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlist
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
 import WishlistWorkspaceHeader from "@/components/gifting/wishlist/workspace/WishlistWorkspaceHeader";
 import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
+import WishlistSwitcher from "@/components/gifting/wishlist/navigation/WishlistSwitcher";
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
 import MobileWishlistActionBar from "@/components/gifting/wishlist/workspace/MobileWishlistActionBar";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
@@ -290,6 +291,12 @@ const WishlistWorkspace = () => {
           savingItemId={isRemoving ? 'removing' : undefined}
           isOwner={isOwner}
           isGuestPreview={false}
+          wishlistSwitcher={
+            <WishlistSwitcher 
+              currentWishlistId={wishlist.id} 
+              currentWishlistTitle={wishlist.title} 
+            />
+          }
         />
       </div>
 

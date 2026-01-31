@@ -1,13 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Share2 } from "lucide-react";
+import { ArrowLeft, Plus, Share2, Globe, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Wishlist } from "@/types/profile";
-import WishlistSwitcher from "../navigation/WishlistSwitcher";
 import InlinePrivacyToggle from "../share/InlinePrivacyToggle";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { toast } from "sonner";
 import { getWishlistShareUrl } from "@/utils/urlUtils";
+import { formatPrice } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface WishlistWorkspaceHeaderProps {
   wishlist: Wishlist;
@@ -65,88 +68,108 @@ const WishlistWorkspaceHeader = ({
   };
 
   const currentIsPublic = isPublic !== undefined ? isPublic : wishlist.is_public;
+  const userInitials = ownerProfile?.name?.charAt(0).toUpperCase() || 'W';
 
   return (
-    <div className="border-b border-border bg-background">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-        {/* Back button only - minimal top row */}
-        <div className="flex items-center gap-3 py-3 border-b border-border/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/wishlists')}
-            className="gap-2 min-h-[44px] min-w-[44px]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {!isMobileOrTablet && "Back to Wishlists"}
-          </Button>
+    <>
+      {/* Gradient Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500">
+        {/* Decorative pattern overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
+                             radial-gradient(circle at 75% 75%, white 1px, transparent 1px)`,
+            backgroundSize: '40px 40px'
+          }} />
         </div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          {/* Back button */}
+          <div className="mb-4 lg:mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/wishlists')}
+              className="text-white/90 hover:text-white hover:bg-white/10 gap-2 min-h-[44px]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {!isMobileOrTablet && "Back to Wishlists"}
+            </Button>
+          </div>
 
-        {/* Hero Banner Section - Large avatar and title */}
-        <div className="py-8 md:py-12 lg:py-16">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-8">
-            {/* Left: Large Profile and info */}
-            <div className="flex items-center gap-4 md:gap-6">
-              {ownerProfile?.image ? (
-                <img 
-                  src={ownerProfile.image} 
-                  alt={ownerProfile.name || "Owner"} 
-                  className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full object-cover border-4 border-border shadow-lg"
-                />
-              ) : (
-                <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-muted flex items-center justify-center border-4 border-border shadow-lg">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold text-muted-foreground">
-                    {ownerProfile?.name?.charAt(0) || 'W'}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{wishlist.title}</h1>
-                  
-                  {/* Privacy Toggle - Desktop only (mobile/tablet uses action bar) */}
-                  {isOwner && !isMobileOrTablet && onPrivacyToggle && (
-                    <InlinePrivacyToggle
-                      isPublic={currentIsPublic}
-                      onToggle={onPrivacyToggle}
-                      isUpdating={isUpdatingPrivacy}
-                      size="sm"
-                    />
-                  )}
-                </div>
+          {/* Main header content */}
+          <div className="flex items-start gap-4 lg:gap-6">
+            {/* Avatar */}
+            <Avatar className="h-16 w-16 lg:h-24 lg:w-24 border-4 border-white/20 shadow-xl flex-shrink-0">
+              <AvatarImage src={ownerProfile?.image} alt={ownerProfile?.name || 'Owner'} />
+              <AvatarFallback className="text-xl lg:text-3xl bg-white/20 text-white">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Title & metadata */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 lg:gap-3 flex-wrap mb-1 lg:mb-2">
+                <h1 className="text-xl lg:text-3xl font-bold text-white truncate">
+                  {wishlist.title}
+                </h1>
                 
-                <div className="flex items-center gap-3 lg:gap-4 text-sm lg:text-base text-muted-foreground flex-wrap">
-                  <span className="font-medium">{wishlist.items.length} items</span>
-                  <span>•</span>
-                  <span className="font-medium">${totalValue.toFixed(2)} total</span>
-                  {wishlist.category && (
+                {/* Public/Private Badge */}
+                <Badge 
+                  variant="secondary" 
+                  className="bg-white/20 text-white border-0 backdrop-blur-sm gap-1.5"
+                >
+                  {currentIsPublic ? (
                     <>
-                      <span className="hidden lg:inline">•</span>
-                      <span className="hidden lg:inline capitalize">{wishlist.category}</span>
+                      <Globe className="h-3 w-3" />
+                      Public
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-3 w-3" />
+                      Private
                     </>
                   )}
-                </div>
-                
-                {wishlist.description && !isMobileOrTablet && (
-                  <p className="text-base text-muted-foreground mt-3 max-w-xl">{wishlist.description}</p>
-                )}
+                </Badge>
               </div>
+
+              {/* Stats line */}
+              <p className="text-white/80 text-sm lg:text-base">
+                {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
+                {totalValue > 0 && (
+                  <>
+                    <span className="mx-2">•</span>
+                    {formatPrice(totalValue)} total
+                  </>
+                )}
+              </p>
+
+              {/* Description - Desktop only */}
+              {wishlist.description && !isMobileOrTablet && (
+                <p className="text-white/70 mt-2 text-sm max-w-xl line-clamp-2">
+                  {wishlist.description}
+                </p>
+              )}
             </div>
 
-            {/* Right: Actions - Desktop only (mobile/tablet uses action bar) */}
+            {/* Action buttons - Desktop only */}
             {isOwner && !isMobileOrTablet && (
-              <div className="flex items-center gap-3">
-                <Button onClick={onAddItems} size="lg" className="gap-2 font-semibold shadow-md bg-elyphant-gradient text-white hover:opacity-90 px-6">
-                  <Plus className="h-5 w-5" />
-                  Add Items
-                </Button>
+              <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+                <motion.div whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={onAddItems}
+                    className="h-11 px-6 bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Items
+                  </Button>
+                </motion.div>
                 
                 <Button 
-                  variant="outline" 
+                  variant="ghost"
                   size="icon"
                   onClick={handleShare}
-                  className="min-h-[44px] min-w-[44px]"
+                  className="h-11 w-11 bg-white/20 hover:bg-white/30 text-white border-0"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
@@ -155,7 +178,7 @@ const WishlistWorkspaceHeader = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

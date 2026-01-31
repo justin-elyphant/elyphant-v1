@@ -16,6 +16,7 @@ import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { getWishlistShareUrl } from "@/utils/urlUtils";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const WishlistWorkspace = () => {
   const { wishlistId } = useParams();
@@ -245,81 +246,87 @@ const WishlistWorkspace = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <SharedWishlistSkeleton />
-      </div>
+      <SidebarLayout>
+        <div className="container mx-auto py-8 px-4">
+          <SharedWishlistSkeleton />
+        </div>
+      </SidebarLayout>
     );
   }
 
   if (!wishlist) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <NoWishlistFound />
-      </div>
+      <SidebarLayout>
+        <div className="container mx-auto py-8 px-4">
+          <NoWishlistFound />
+        </div>
+      </SidebarLayout>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-background via-background to-muted/20 ${isMobileOrTablet && isOwner ? 'pb-32' : ''}`}>
-      {/* Header */}
-      <WishlistWorkspaceHeader
-        wishlist={wishlist}
-        ownerProfile={ownerProfile}
-        isOwner={isOwner}
-        onAddItems={() => setIsShoppingPanelOpen(true)}
-        isPublic={isPublic}
-        isUpdatingPrivacy={isUpdatingPrivacy}
-        onPrivacyToggle={handlePrivacyToggle}
-        onShare={handleShare}
-        isMobileOrTablet={isMobileOrTablet}
-      />
-
-      {/* Main Content - Full Width Clean Layout */}
-      <div className="px-4 md:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
-        {/* Guest View Notice */}
-        {!isOwner && (
-          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-            <p className="text-sm text-center font-medium">
-              You're viewing {ownerProfile?.name}'s wishlist
-            </p>
-          </div>
-        )}
-        
-        <WishlistItemsGrid
-          items={wishlist.items}
-          onSaveItem={(item) => handleRemoveItem(item.id)}
-          savingItemId={isRemoving ? 'removing' : undefined}
-          isOwner={isOwner}
-          isGuestPreview={false}
-          wishlistSwitcher={
-            <WishlistSwitcher 
-              currentWishlistId={wishlist.id} 
-              currentWishlistTitle={wishlist.title} 
-            />
-          }
-        />
-      </div>
-
-      {/* Shopping Panel */}
-      {isOwner && (
-        <ShoppingPanel
-          isOpen={isShoppingPanelOpen}
-          onClose={() => setIsShoppingPanelOpen(false)}
-          wishlistId={wishlistId || ''}
-          onProductAdded={handleProductAdded}
-        />
-      )}
-
-      {/* Mobile/Tablet Action Bar - Fixed at bottom */}
-      {isMobileOrTablet && isOwner && (
-        <MobileWishlistActionBar
+    <SidebarLayout>
+      <div className={`min-h-screen bg-background ${isMobileOrTablet && isOwner ? 'pb-32' : ''}`}>
+        {/* Header */}
+        <WishlistWorkspaceHeader
           wishlist={wishlist}
-          isPublic={isPublic}
-          onPrivacyToggle={handlePrivacyToggle}
+          ownerProfile={ownerProfile}
+          isOwner={isOwner}
           onAddItems={() => setIsShoppingPanelOpen(true)}
+          isPublic={isPublic}
+          isUpdatingPrivacy={isUpdatingPrivacy}
+          onPrivacyToggle={handlePrivacyToggle}
+          onShare={handleShare}
+          isMobileOrTablet={isMobileOrTablet}
         />
-      )}
-    </div>
+
+        {/* Main Content - Full Width Clean Layout */}
+        <div className="px-4 md:px-6 py-6 md:py-8 max-w-[1400px] mx-auto">
+          {/* Guest View Notice */}
+          {!isOwner && (
+            <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm text-center font-medium">
+                You're viewing {ownerProfile?.name}'s wishlist
+              </p>
+            </div>
+          )}
+          
+          <WishlistItemsGrid
+            items={wishlist.items}
+            onSaveItem={(item) => handleRemoveItem(item.id)}
+            savingItemId={isRemoving ? 'removing' : undefined}
+            isOwner={isOwner}
+            isGuestPreview={false}
+            wishlistSwitcher={
+              <WishlistSwitcher 
+                currentWishlistId={wishlist.id} 
+                currentWishlistTitle={wishlist.title} 
+              />
+            }
+          />
+        </div>
+
+        {/* Shopping Panel */}
+        {isOwner && (
+          <ShoppingPanel
+            isOpen={isShoppingPanelOpen}
+            onClose={() => setIsShoppingPanelOpen(false)}
+            wishlistId={wishlistId || ''}
+            onProductAdded={handleProductAdded}
+          />
+        )}
+
+        {/* Mobile/Tablet Action Bar - Fixed at bottom */}
+        {isMobileOrTablet && isOwner && (
+          <MobileWishlistActionBar
+            wishlist={wishlist}
+            isPublic={isPublic}
+            onPrivacyToggle={handlePrivacyToggle}
+            onAddItems={() => setIsShoppingPanelOpen(true)}
+          />
+        )}
+      </div>
+    </SidebarLayout>
   );
 };
 

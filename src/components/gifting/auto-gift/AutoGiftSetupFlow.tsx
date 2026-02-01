@@ -538,8 +538,8 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     return <Icon className="h-6 w-6" />;
   };
 
-  // Content for the wizard
-  const WizardContent = () => (
+  // Content for the wizard - defined as JSX variable to maintain stable identity and prevent focus loss
+  const wizardContent = (
     <div 
       ref={scrollContainerRef}
       className="max-h-[calc(90vh-120px)] overflow-y-auto overflow-x-hidden w-full max-w-full mobile-container ios-smooth-scroll pb-safe-bottom"
@@ -1032,7 +1032,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
                 {ruleId ? 'Edit Recurring Gift' : 'Set Up Recurring Gifts'}
               </DrawerTitle>
             </DrawerHeader>
-            <WizardContent />
+            {wizardContent}
           </DrawerContent>
         </Drawer>
       );
@@ -1041,7 +1041,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden overflow-x-hidden">
-          <WizardContent />
+          {wizardContent}
         </DialogContent>
       </Dialog>
     );
@@ -1051,7 +1051,7 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden overflow-x-hidden">
-        <WizardContent />
+        {wizardContent}
       </DialogContent>
     </Dialog>
   );

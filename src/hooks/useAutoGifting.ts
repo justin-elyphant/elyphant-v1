@@ -14,7 +14,10 @@ export const useAutoGifting = () => {
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);

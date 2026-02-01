@@ -228,7 +228,14 @@ serve(async (req) => {
                 .order('price', { ascending: false })
                 .limit(1);
               
-              giftItem = items?.[0];
+              if (items?.[0]) {
+                giftItem = {
+                  ...items[0],
+                  wishlist_id: wishlist.id,         // Capture for "Purchased" badge tracking
+                  wishlist_item_id: items[0].id,    // Capture for wishlist_item_purchases
+                };
+                console.log(`✅ Found wishlist item: ${giftItem.name || giftItem.title} with tracking IDs`);
+              }
             }
           }
 
@@ -299,6 +306,8 @@ serve(async (req) => {
                   quantity: 1,
                   price: giftItem.price,
                   image_url: giftItem.image_url,
+                  wishlist_id: giftItem.wishlist_id || null,          // Pass for badge tracking
+                  wishlist_item_id: giftItem.wishlist_item_id || null, // Pass for badge tracking
                 }],
                 deliveryGroups: [{
                   recipient: {

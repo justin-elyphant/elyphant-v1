@@ -1,113 +1,146 @@
 
+# Variant Data Persistence: Product Page → Wishlist → Stripe → Zinc
 
-# Restore "Set Up Recurring Gift" CTA on /recurring-gifts Page
+## Problem Summary
 
-## Problem Identified
+When a user selects a product variant (e.g., "Red" phone case) and adds it to their wishlist, the **parent product ASIN** is stored instead of the **variant-specific ASIN**. This causes Zinc to fulfill with the wrong product.
 
-The `/recurring-gifts` page currently has:
-- **"Browse Products"** button → Navigates to `/marketplace`
-- **"How It Works"** button → Opens explanation modal
+**Current Flow (Broken)**:
+```
+User selects "Red" case (ASIN: B0FGCLY123) → Clicks "Add to Wishlist" 
+→ Wishlist stores parent ASIN (B0FGCLY8J2) → Stripe → Zinc orders wrong item
+```
 
-Previously, there was also a way to directly set up a recurring gift rule without needing to browse products first. This is important because:
-1. Users may want to set up automation first (recipient + occasion + budget) and let Nicole AI handle product selection later
-2. The `AutoGiftSetupFlow` modal is already imported and working (used for editing rules) but isn't accessible for new rule creation
+**Target Flow (Fixed)**:
+```
+User selects "Red" case (ASIN: B0FGCLY123) → Clicks "Add to Wishlist" 
+→ Wishlist stores variant ASIN (B0FGCLY123) → Stripe → Zinc orders correct item
+```
 
-## Solution
+---
 
-Add a "Set Up Recurring Gift" button alongside the existing "Browse Products" button in the hero section. This button will open the `AutoGiftSetupFlow` modal in creation mode (not edit mode).
+## Solution: Minimal Changes to Existing Code
+
+The fix follows e-commerce industry standards (Amazon, Shopify) where **each variant is treated as a distinct SKU**. No database migrations required.
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `WishlistSelectionPopoverButton.tsx` | Accept optional `selectedProductId` and `variationText` props |
+| `ProductDetailsActionsSection.tsx` | Pass variant data to `WishlistSelectionPopoverButton` |
+| `wishlistConversions.ts` | Preserve `description` field (already supports variant text) |
+
+---
 
 ## Implementation Details
 
-### File to Modify
+### 1. Update `WishlistSelectionPopoverButton` Interface
 
-**`src/pages/RecurringGifts.tsx`**
+Extend the product interface to optionally accept variant-specific data:
 
-### Changes
-
-1. **Add new state for opening setup flow in create mode**
-   - Currently `setupDialogOpen` is tied to `editingRule`, which means it only opens when editing
-   - Need to allow opening the dialog with `editingRule = null` for new rule creation
-
-2. **Add "Set Up Recurring Gift" button in hero section**
-   - Place it alongside or replace the "Browse Products" button
-   - Use the same styling (white button with purple text)
-   - Icon: `Gift` or `Plus` icon
-
-3. **Button placement options**
-   - **Option A**: Add as a secondary button next to "Browse Products"
-   - **Option B**: Replace "Browse Products" with "Set Up Recurring Gift" and move browse to secondary
-
-### Proposed Button Layout
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
-│  │  Set Up Recurring Gift   │  │  Browse Products                 │ │
-│  │  (Primary - Opens Modal) │  │  (Secondary - Links to Shop)     │ │
-│  └──────────────────────────┘  └──────────────────────────────────┘ │
-│                                                                     │
-│  How It Works →                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+```typescript
+interface WishlistSelectionPopoverButtonProps {
+  product: {
+    id: string;               // Parent product ASIN
+    name: string;
+    price?: number;
+    image?: string;
+    brand?: string;
+    // NEW: Variant-specific fields
+    selectedProductId?: string;  // Variant ASIN (overrides id)
+    variationText?: string;      // "Color: Red, Size: Large"
+  };
+  // ... existing props
+}
 ```
 
-### Code Changes (RecurringGifts.tsx)
-
-**Line 81-91 - Replace/augment the button section:**
-
-```tsx
-<div className="flex flex-col sm:flex-row gap-3">
-  {/* NEW: Primary CTA - Set Up Recurring Gift */}
-  <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
-    <Button 
-      onClick={() => {
-        triggerHapticFeedback('selection');
-        setEditingRule(null); // Ensure we're in create mode
-        setSetupDialogOpen(true);
-      }}
-      className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
-    >
-      <Gift className="h-4 w-4 mr-2" />
-      Set Up Recurring Gift
-    </Button>
-  </motion.div>
-  
-  {/* Existing: Browse Products (now secondary) */}
-  <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
-    <Button 
-      onClick={() => {
-        triggerHapticFeedback('selection');
-        navigate('/marketplace');
-      }}
-      variant="ghost"
-      className="text-white hover:bg-white/10 min-h-[44px]"
-    >
-      <ShoppingBag className="h-4 w-4 mr-2" />
-      Browse Products
-    </Button>
-  </motion.div>
-</div>
+When saving to wishlist, use `selectedProductId` if present:
+```typescript
+const handleAddToWishlist = async (wishlistId: string) => {
+  await addToWishlist(wishlistId, {
+    product_id: product.selectedProductId || product.id,  // Variant ASIN first
+    name: product.variationText 
+      ? `${product.name} (${product.variationText})` 
+      : product.name,
+    // ... rest unchanged
+  });
+};
 ```
 
-**Line 8 - Add Gift icon to imports:**
+### 2. Pass Variant Data from Product Details
 
-```tsx
-import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag, Gift } from "lucide-react";
+In `ProductDetailsActionsSection.tsx`, update the popover calls:
+
+```typescript
+<WishlistSelectionPopoverButton
+  product={{
+    id: product.product_id || product.id,
+    selectedProductId: selectedProductId,  // NEW: Variant ASIN
+    variationText: variationText,          // NEW: "Color: Red"
+    name: product.title || product.name || "",
+    image: product.image || "",
+    price: product.price,
+    brand: product.brand || "",
+  }}
+  // ... rest unchanged
+/>
 ```
 
-## User Flow After Implementation
+### 3. Display Variant Info in Wishlist
 
-1. User visits `/recurring-gifts`
-2. User clicks "Set Up Recurring Gift" in hero
-3. `AutoGiftSetupFlow` modal opens with 3-step wizard:
-   - Step 1: Choose Recipient & Events
-   - Step 2: Set Budget & Payment
-   - Step 3: Configure Notifications
-4. User completes setup → Rule created
-5. Nicole AI handles gift selection and fulfillment at the scheduled time
+The `wishlist_items.title` or existing `name` field will contain the variant description (e.g., "iPhone Case (Color: Red)"), providing clear visual feedback without database changes.
 
-## Alignment with Existing Memory
+---
 
-- **`memory/marketing/recurring-gifts-branding-standard`**: Uses "Recurring Gifts" terminology ✓
-- **`memory/features/recurring-gift-conversion-strategy`**: Supports "Set Up First" flow alongside "Buy Now + Recur Later" ✓
-- **`memory/architecture/recurring-gift-unified-pipeline`**: Uses same `auto_gifting_rules` table ✓
+## Data Flow After Fix
 
+```
+┌─────────────────┐     ┌─────────────────────────────────────┐
+│  Product Page   │────▶│  WishlistSelectionPopoverButton     │
+│  (User selects  │     │  - Receives selectedProductId       │
+│   "Red" variant)│     │  - Receives variationText           │
+└─────────────────┘     └─────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    wishlist_items table                     │
+│  ┌─────────────┬────────────────────────────────────────┐   │
+│  │ product_id  │ B0FGCLY123 (variant ASIN, not parent)  │   │
+│  │ name        │ "iPhone Case (Color: Red)"             │   │
+│  │ price       │ 29.99                                  │   │
+│  └─────────────┴────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Cart → Stripe → Zinc (No Changes)              │
+│  - Uses product_id from wishlist_items                      │
+│  - Zinc receives correct variant ASIN                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Why This Works
+
+1. **Industry Standard**: Amazon/Shopify treat each variant as a distinct product ID (SKU)
+2. **Zero Database Migration**: Uses existing `product_id` and `name` columns
+3. **Backward Compatible**: If `selectedProductId` is undefined, falls back to `id`
+4. **Minimal Code Changes**: Only 2 files need updates
+5. **Preserves Existing Logic**: Cart → Stripe → Zinc pipeline unchanged
+
+---
+
+## Testing Checklist
+
+After implementation, test this flow:
+
+1. Navigate to a product with variants (e.g., `/marketplace/product/B0FGCLY8J2`)
+2. Select a specific variant (e.g., "Black" color)
+3. Click the heart icon to add to wishlist
+4. Verify wishlist item shows variant name (e.g., "Case (Color: Black)")
+5. Query `wishlist_items` to confirm `product_id` is the **variant ASIN**, not parent
+6. Add wishlist item to cart → Proceed to checkout
+7. Verify Stripe metadata contains variant ASIN
+8. (If testing Zinc) Confirm order fulfillment is for correct variant

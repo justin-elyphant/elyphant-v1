@@ -1,108 +1,273 @@
 
-# Fix Gift Occasion Selector to Show Recipient's Important Dates
+# Complete Recurring Gift Email & Wishlist Badge Implementation Plan
 
-## Problem Identified
-The "Select Gift Occasions" screen in the recurring gift wizard shows generic event types (Birthday, Anniversary, etc.) but does NOT reference the selected recipient's actual "My Events" data (Justin's February 19 birthday, anniversaries, promotions, etc.).
+## Problem Summary
 
-**Current behavior:** Charles sees generic checkboxes for "Birthday", "Anniversary", etc.
-**Expected behavior:** Charles should see Justin's actual events with dates:
-- ✅ "Birthday - February 19"
-- ✅ "Promotion - [if Justin has one]"
-- ✅ "Anniversary - [if Justin has one]"
+Three critical gaps exist in the recurring gift notification and tracking system:
 
-## Root Cause
-- The `MultiEventSelector` component receives no recipient context
-- It doesn't fetch or display the recipient's `important_dates` or `dob` from their profile
-- The `AutoGiftSetupFlow` already has `formData.recipientDob` after selection, but doesn't pass it to `MultiEventSelector`
+1. **No Rule Creation Confirmation Email** - When a shopper (Charles) creates a recurring gift rule for a recipient (Justin), no email is sent confirming the setup
+2. **No Recipient Gift Purchased Notification** - When a gift is actually purchased, the recipient (Justin) receives no notification that a gift is on its way
+3. **Wishlist "Purchased" Badge Not Working for Auto-Gifts** - The `auto-gift-orchestrator` doesn't pass `wishlist_id` and `wishlist_item_id` to the checkout session, so items purchased via recurring gifts don't get marked as "Purchased" on the recipient's wishlist
 
-## Solution: Enhance MultiEventSelector with Recipient Context
+## Solution Architecture
 
-### Phase 1: Pass Recipient Data to MultiEventSelector
+### Part 1: Rule Creation Confirmation Email (Shopper Notification)
 
-**File: `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`**
-- Find the selected connection after recipient selection
-- Extract `profile_dob` and `profile_important_dates`
-- Pass them as new props to `MultiEventSelector`
+**New Email Type**: `recurring_gift_rule_created`
 
-### Phase 2: Update MultiEventSelector to Accept and Display Recipient Events
+**Trigger Point**: `UnifiedGiftManagementService.createBatchRulesForRecipient()` (after successful batch creation)
 
-**File: `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`**
+**Data Required**:
+- Shopper's first name and email
+- Recipient's name
+- List of configured events (Birthday, Valentine's Day, etc.) with dates
+- Budget per event
+- Auto-approve status
 
-1. Add new props interface:
-```typescript
-interface MultiEventSelectorProps {
-  value: SelectedEvent[];
-  onChange: (events: SelectedEvent[]) => void;
-  recipientDob?: string | null;          // MM-DD format
-  recipientImportantDates?: any[];       // Array of {title, date, type}
-  recipientName?: string;
-}
-```
+**Files to Modify**:
 
-2. Calculate and display recipient's birthday:
-   - If `recipientDob` exists, show "Birthday - [calculated date]" instead of generic "Birthday"
-   - Auto-calculate the next occurrence of the birthday
+1. **`supabase/functions/ecommerce-email-orchestrator/index.ts`**
+   - Add new template function `recurringGiftRuleCreatedTemplate()`
+   - Add case `'recurring_gift_rule_created'` to `getEmailTemplate()` router
+   - Template content: "You've set up recurring gifts for [Recipient]! Events: Birthday (Feb 19), Valentine's Day (Feb 14)..."
 
-3. Map recipient's important_dates to occasion options:
-   - Filter Justin's `important_dates` for relevant event types (Anniversary, Graduation, Promotion)
-   - Display them with their actual dates
-   - Allow selection to create rules tied to those specific dates
-
-4. Update the SelectedEvent type to include the calculated date:
-```typescript
-export interface SelectedEvent {
-  eventType: string;
-  specificHoliday?: string;
-  customDate?: Date;
-  calculatedDate?: string;  // ISO date string from recipient's profile
-}
-```
-
-### Phase 3: Update Rule Creation to Use Recipient Dates
-
-**File: `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`**
-
-In the `handleSubmit` function, enhance the `rulesToCreate` logic:
-- For "birthday" events: Already uses `calculateNextBirthday(formData.recipientDob)` ✅
-- For "anniversary"/"promotion": Use the date from recipient's `important_dates`
-- Store the specific date in the rule's `scheduled_date` field
-
-### Visual Changes
-
-| Before | After |
-|--------|-------|
-| ☐ Birthday | ☐ Birthday - Feb 19 🎂 |
-| ☐ Anniversary | ☐ Anniversary - [if exists] |
-| ☐ Promotion | ☐ Promotion - [if exists] |
-| ☐ Graduation | ☐ Graduation - [if exists] |
-
-Events that the recipient hasn't set up will show as "Not set" or be hidden/greyed out.
+2. **`src/services/UnifiedGiftManagementService.ts`**
+   - After `createBatchRulesForRecipient()` completes successfully (around line 808)
+   - Invoke email orchestrator with `eventType: 'recurring_gift_rule_created'`
 
 ---
 
-## Technical Details
+### Part 2: Gift Purchased Recipient Notification
 
-### Data Flow
+**New Email Type**: `gift_coming_your_way`
+
+**Trigger Point**: `supabase/functions/stripe-webhook-v2/index.ts` - after order creation, when `is_auto_gift === true` OR when a gift is detected (has `recipient_id`)
+
+**Data Required**:
+- Recipient's first name and email
+- Shopper's first name (the gift sender)
+- Estimated arrival date
+- Occasion (if auto-gift) - "Valentine's Day", "Birthday", etc.
+- **NOT included**: Product details (surprise gift!)
+
+**Files to Modify**:
+
+1. **`supabase/functions/ecommerce-email-orchestrator/index.ts`**
+   - Add new template function `giftComingYourWayTemplate()`
+   - Add case `'gift_coming_your_way'` to `getEmailTemplate()` router
+   - Template content: "Hey Justin! Charles just purchased a gift for you. It should arrive around February 14th. 🎁"
+
+2. **`supabase/functions/stripe-webhook-v2/index.ts`**
+   - After order creation (around line 608, after `triggerEmailOrchestrator`)
+   - Check if order has `recipient_id` and recipient is a different user
+   - Fetch recipient email from `profiles` table
+   - Invoke email orchestrator with `eventType: 'gift_coming_your_way'`
+
+---
+
+### Part 3: Wishlist "Purchased" Badge for Auto-Gifts
+
+**Problem**: The `auto-gift-orchestrator` fetches wishlist items but doesn't include `wishlist_id` and `wishlist_item_id` in the checkout session metadata. The webhook (stripe-webhook-v2) has the logic to track purchases (line 584-604) but never receives the wishlist IDs.
+
+**Solution**: Pass wishlist tracking metadata through the checkout session.
+
+**Files to Modify**:
+
+1. **`supabase/functions/auto-gift-orchestrator/index.ts`** (lines 214-232)
+   - When fetching wishlist item, capture `wishlist.id` and `item.id`
+   - Pass these in the `cartItems` array to `create-checkout-session`:
+   ```typescript
+   cartItems: [{
+     product_id: giftItem.product_id,
+     product_name: giftName,
+     quantity: 1,
+     price: giftItem.price,
+     image_url: giftItem.image_url,
+     wishlist_id: giftItem.wishlist_id,      // NEW
+     wishlist_item_id: giftItem.wishlist_item_id,  // NEW
+   }]
+   ```
+
+2. **`supabase/functions/create-checkout-session/index.ts`** (verify it passes these fields to Stripe product metadata)
+   - Confirm `wishlist_id` and `wishlist_item_id` are written to `product.metadata` for the line item
+
+3. **`supabase/functions/stripe-webhook-v2/index.ts`** (already implemented at line 584-604)
+   - No changes needed - existing logic will automatically track purchases if the IDs are present
+
+---
+
+## Implementation Details
+
+### Email Template: `recurring_gift_rule_created`
+
+```typescript
+const recurringGiftRuleCreatedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.shopper_name);
+  
+  const eventsHtml = props.events.map((event: any) => `
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+        <span style="font-size: 20px; margin-right: 8px;">${event.icon || '🎁'}</span>
+        <strong>${event.name}</strong>
+        <span style="color: #666; margin-left: 8px;">${event.date}</span>
+      </td>
+    </tr>
+  `).join('');
+
+  const content = `
+    <h2>Recurring Gifts Set Up! 🔄</h2>
+    <p>Hi ${firstName}, you've successfully configured recurring gifts for <strong>${props.recipient_name}</strong>.</p>
+    
+    <h3>Configured Events:</h3>
+    <table>${eventsHtml}</table>
+    
+    <div style="background: #faf5ff; padding: 16px; border-radius: 8px; margin: 24px 0;">
+      <p><strong>Budget per gift:</strong> $${props.budget}</p>
+      <p><strong>Auto-approve:</strong> ${props.auto_approve ? 'Enabled (gifts under $75)' : 'Disabled (you\'ll get approval emails)'}</p>
+    </div>
+    
+    <p>We'll notify you ${props.notification_days} days before each event so you can approve or skip the gift.</p>
+    
+    <a href="https://elyphant.ai/recurring-gifts">Manage Recurring Gifts</a>
+  `;
+  
+  return baseEmailTemplate({ content, preheader: `Recurring gifts configured for ${props.recipient_name}` });
+};
 ```
-RecipientSearchCombobox → selects recipient
-       ↓
-AutoGiftSetupFlow → finds connection, extracts profile_dob + profile_important_dates
-       ↓
-MultiEventSelector → receives recipient context as props
-       ↓
-Display: Shows actual dates instead of generic labels
-       ↓
-handleSubmit → uses dates to set scheduled_date on auto_gifting_rules
+
+### Email Template: `gift_coming_your_way`
+
+```typescript
+const giftComingYourWayTemplate = (props: any): string => {
+  const firstName = getFirstName(props.recipient_name);
+  
+  const content = `
+    <h2>A Gift Is On Its Way! 🎁</h2>
+    <p>Hey ${firstName}, exciting news!</p>
+    
+    <p><strong>${props.sender_name}</strong> just sent you a gift${props.occasion ? ` for ${props.occasion}` : ''}!</p>
+    
+    <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+      <p style="font-size: 14px; color: #666; margin-bottom: 8px;">Expected Arrival</p>
+      <p style="font-size: 24px; font-weight: 700; color: #1a1a1a;">${props.arrival_date}</p>
+    </div>
+    
+    <p style="color: #666; font-style: italic;">We're keeping the details a surprise! 🤫</p>
+    
+    <a href="https://elyphant.ai/gifting">View Your Gifts</a>
+  `;
+  
+  return baseEmailTemplate({ content, preheader: `${props.sender_name} sent you a gift!` });
+};
 ```
 
-### Files to Modify
-1. `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`
-2. `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`
+### Auto-Gift Orchestrator Update (Wishlist Tracking)
 
-### Edge Cases
-- Recipient has no birthday set → Show generic "Birthday" with helper text "(date not set)"
-- Recipient has no important_dates → Hide Anniversary/Promotion or show as unavailable
-- Multiple anniversaries → List each separately with description
+```typescript
+// Around line 220-232 in auto-gift-orchestrator/index.ts
+if (wishlist?.id) {
+  const { data: items } = await supabase
+    .from('wishlist_items')
+    .select('*, id as wishlist_item_id')  // Capture item ID
+    .eq('wishlist_id', wishlist.id)
+    .lte('price', rule.budget_limit || 9999)
+    .order('price', { ascending: false })
+    .limit(1);
+  
+  if (items?.[0]) {
+    giftItem = {
+      ...items[0],
+      wishlist_id: wishlist.id,           // Store wishlist ID
+      wishlist_item_id: items[0].id,      // Store item ID
+    };
+  }
+}
+```
 
-### Consistency with Scheduling Modal
-This change aligns the recurring gift wizard with the existing `PresetHolidaySelector` behavior in the scheduling modal (per memory: `features/gift-scheduling-important-dates-integration`), ensuring a unified experience across both flows.
+Then in the checkout session creation (line 296):
+```typescript
+cartItems: [{
+  product_id: giftItem.product_id,
+  product_name: giftName,
+  quantity: 1,
+  price: giftItem.price,
+  image_url: giftItem.image_url,
+  wishlist_id: giftItem.wishlist_id || null,      // NEW
+  wishlist_item_id: giftItem.wishlist_item_id || null,  // NEW
+}],
+```
+
+---
+
+## Data Flow Summary
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    RECURRING GIFT FLOW                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. RULE CREATION (Shopper creates rule)                        │
+│     AutoGiftSetupFlow → UnifiedGiftManagementService             │
+│           ↓                                                      │
+│     createBatchRulesForRecipient() → DB Insert                   │
+│           ↓                                                      │
+│     📧 EMAIL: "recurring_gift_rule_created" → Shopper            │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  2. T-7 NOTIFICATION (7 days before event)                       │
+│     auto-gift-orchestrator (cron)                                │
+│           ↓                                                      │
+│     📧 EMAIL: "auto_gift_approval" → Shopper (existing)          │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  3. T-4 PURCHASE (4 days before event)                           │
+│     auto-gift-orchestrator → create-checkout-session             │
+│           ↓ (includes wishlist_id, wishlist_item_id)             │
+│     stripe-webhook-v2 → Creates order                            │
+│           ↓                                                      │
+│     📧 EMAIL: "order_confirmation" → Shopper (existing)          │
+│     📧 EMAIL: "gift_coming_your_way" → Recipient (NEW)           │
+│           ↓                                                      │
+│     wishlist_item_purchases INSERT (badge appears)               │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  4. T-3 FULFILLMENT                                              │
+│     scheduled-order-processor → Zinc                             │
+│           ↓                                                      │
+│     📧 EMAIL: "order_shipped" → Shopper (existing)               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Files to Modify (Complete List)
+
+| File | Changes |
+|------|---------|
+| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Add 2 new templates + router cases |
+| `src/services/UnifiedGiftManagementService.ts` | Trigger rule confirmation email after batch creation |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Pass wishlist IDs through checkout session |
+| `supabase/functions/stripe-webhook-v2/index.ts` | Send recipient notification email for gift orders |
+
+---
+
+## Edge Cases Handled
+
+1. **Self-purchases** - Don't send "gift coming" email if recipient_id === user_id
+2. **No wishlist item** - If AI/product-search is used instead of wishlist, no badge needed (no wishlist context)
+3. **Fallback recipient email** - If recipient has no profile, use `pending_recipient_email` from connection
+4. **Occasion formatting** - Transform `valentine` → "Valentine's Day", `birthday` → "their Birthday"
+
+---
+
+## Testing Checklist
+
+- [ ] Create recurring gift rule → Verify shopper receives confirmation email
+- [ ] Trigger T-4 orchestrator with simulated date → Verify recipient receives "gift coming" email
+- [ ] Trigger auto-gift from wishlist item → Verify "Purchased ✓" badge appears on wishlist
+- [ ] Trigger auto-gift from AI/search fallback → Confirm no error (graceful no-op for badge)
+- [ ] Manual scheduled gift purchase → Verify recipient notification still works

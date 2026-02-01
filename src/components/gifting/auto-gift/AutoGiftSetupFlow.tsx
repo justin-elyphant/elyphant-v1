@@ -358,9 +358,12 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
       const emailFromInitial = initialData?.recipientEmail as string | undefined;
 
       // CRITICAL: For pending invitations, recipient_id MUST be null
+      // IMPORTANT: Prioritize display_user_id over connected_user_id
+      // display_user_id is computed by useEnhancedConnections to always represent "the other person"
+      // connected_user_id can be the current user in bidirectional connections
       const actualRecipientId = isPendingInvitation
         ? null
-        : (selectedConnection?.connected_user_id || selectedConnection?.display_user_id || null);
+        : (selectedConnection?.display_user_id || selectedConnection?.connected_user_id || null);
 
       const pendingEmail = isPendingInvitation
         ? (selectedConnection?.pending_recipient_email || (isEmail ? formData.recipientId : emailFromInitial))

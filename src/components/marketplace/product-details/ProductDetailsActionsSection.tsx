@@ -136,32 +136,20 @@ const ProductDetailsActionsSection = ({
             // Wishlist Context: Wishlist button primary, Cart secondary
             <>
               {user ? (
-                productIsWishlisted ? (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: product.title || product.name || "",
-                      image: product.image || "",
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName="flex-1 h-10 bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105 transition-all text-white border-0"
-                    onAdded={handleWishlistAdded}
-                    isWishlisted={productIsWishlisted}
-                  />
-                ) : (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: product.title || product.name || "",
-                      image: product.image || "",
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName="flex-1 h-10 bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105 transition-all text-white border-0"
-                    onAdded={handleWishlistAdded}
-                  />
-                )
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: product.product_id || product.id,
+                    selectedProductId: selectedProductId,
+                    variationText: variationText,
+                    name: product.title || product.name || "",
+                    image: product.image || "",
+                    price: product.price,
+                    brand: product.brand || "",
+                  }}
+                  triggerClassName="flex-1 h-10 bg-gradient-to-br from-pink-500 to-purple-600 hover:shadow-lg hover:scale-105 transition-all text-white border-0"
+                  onAdded={handleWishlistAdded}
+                  isWishlisted={productIsWishlisted}
+                />
               ) : (
                 <Button
                   variant="default"
@@ -196,32 +184,23 @@ const ProductDetailsActionsSection = ({
               </Button>
 
               {user ? (
-                productIsWishlisted ? (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: product.title || product.name || "",
-                      image: product.image || "",
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName="p-2 bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105 transition-all border-0"
-                    onAdded={handleWishlistAdded}
-                    isWishlisted={productIsWishlisted}
-                  />
-                ) : (
-                  <WishlistSelectionPopoverButton
-                    product={{
-                      id: productId,
-                      name: product.title || product.name || "",
-                      image: product.image || "",
-                      price: product.price,
-                      brand: product.brand || "",
-                    }}
-                    triggerClassName="p-2"
-                    onAdded={handleWishlistAdded}
-                  />
-                )
+                <WishlistSelectionPopoverButton
+                  product={{
+                    id: product.product_id || product.id,
+                    selectedProductId: selectedProductId,
+                    variationText: variationText,
+                    name: product.title || product.name || "",
+                    image: product.image || "",
+                    price: product.price,
+                    brand: product.brand || "",
+                  }}
+                  triggerClassName={productIsWishlisted 
+                    ? "p-2 bg-gradient-to-br from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105 transition-all border-0"
+                    : "p-2"
+                  }
+                  onAdded={handleWishlistAdded}
+                  isWishlisted={productIsWishlisted}
+                />
               ) : (
                 <Button
                   variant="outline"

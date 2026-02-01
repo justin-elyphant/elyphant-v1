@@ -1,218 +1,113 @@
 
-# Unified Pricing Architecture Plan
 
-## Executive Summary
+# Restore "Set Up Recurring Gift" CTA on /recurring-gifts Page
 
-You are correct - the current pricing implementation is **not e-commerce industry standard**. The codebase has **5 different pricing patterns** scattered across 109+ files, leading to inconsistent displays like the Made In knife showing $1.19 instead of $119.00.
+## Problem Identified
 
-## Current State: Pricing Chaos
+The `/recurring-gifts` page currently has:
+- **"Browse Products"** button → Navigates to `/marketplace`
+- **"How It Works"** button → Opens explanation modal
 
-### Pattern Audit Results
+Previously, there was also a way to directly set up a recurring gift rule without needing to browse products first. This is important because:
+1. Users may want to set up automation first (recipient + occasion + budget) and let Nicole AI handle product selection later
+2. The `AutoGiftSetupFlow` modal is already imported and working (used for editing rules) but isn't accessible for new rule creation
 
-| Pattern | Files Using | Example | Problem |
-|---------|-------------|---------|---------|
-| `formatPrice()` with source options | 27 files | `formatPrice(price, { productSource: 'zinc_api' })` | Correct but inconsistently applied |
-| `formatPriceWithDetection()` | 5 files | `formatPriceWithDetection(item)` | Uses flawed detection heuristic |
-| `$${price.toFixed(2)}` inline | 47 files | `<span>${item.price.toFixed(2)}</span>` | No conversion, no validation |
-| `validateAndNormalizePrice()` | 3 files | Wishlist totals | Has its own cents→dollars logic |
-| `$${price}` template literal | 30+ files | `<p>${item.price}</p>` | No formatting at all |
+## Solution
 
-### Root Causes
+Add a "Set Up Recurring Gift" button alongside the existing "Browse Products" button in the hero section. This button will open the `AutoGiftSetupFlow` modal in creation mode (not edit mode).
 
-1. **No single source of truth**: Three separate price functions with different logic
-2. **Detection heuristics fail**: `detectProductSource()` incorrectly assumes Amazon images or prices > $100 mean cents
-3. **Database NULL values**: 16 of 19 wishlist items have `product_source: NULL`
-4. **No enforcement layer**: Components choose any pattern they want
+## Implementation Details
 
-### Visual: Current Pricing Flow (Broken)
+### File to Modify
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        CURRENT PRICING FLOW (BROKEN)                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Database: price = 119, product_source = NULL                               │
-│                    │                                                        │
-│                    ├──► ProductCard.tsx uses formatPrice()                  │
-│                    │    └─► No source specified → no conversion → $119.00 ✓ │
-│                    │                                                        │
-│                    ├──► EnhancedWishlistCard uses formatPriceWithDetection()│
-│                    │    └─► detectProductSource() runs                      │
-│                    │        └─► Amazon image URL detected → 'zinc_api'      │
-│                    │            └─► price / 100 = $1.19 ✗                    │
-│                    │                                                        │
-│                    ├──► CheckoutSummary uses ${price.toFixed(2)}            │
-│                    │    └─► No conversion → $119.00 ✓                       │
-│                    │                                                        │
-│                    └──► PinterestStyleWishlistGrid uses validateAndNormalizePrice()
-│                         └─► Integer 119 → 119/100 = $1.19 ✗                 │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+**`src/pages/RecurringGifts.tsx`**
 
-## E-Commerce Industry Standard
+### Changes
 
-Modern e-commerce platforms (Shopify, Stripe, Amazon) follow these principles:
+1. **Add new state for opening setup flow in create mode**
+   - Currently `setupDialogOpen` is tied to `editingRule`, which means it only opens when editing
+   - Need to allow opening the dialog with `editingRule = null` for new rule creation
 
-1. **Single Price Type**: Store ALL prices in one format (dollars OR cents, not both)
-2. **Explicit Source Marking**: Products tagged at ingestion, not detected at display
-3. **One Formatting Function**: All components use the same utility
-4. **No Guessing**: Never infer price format from magnitude or image URLs
+2. **Add "Set Up Recurring Gift" button in hero section**
+   - Place it alongside or replace the "Browse Products" button
+   - Use the same styling (white button with purple text)
+   - Icon: `Gift` or `Plus` icon
 
-## Proposed Solution: Unified Pricing Service
+3. **Button placement options**
+   - **Option A**: Add as a secondary button next to "Browse Products"
+   - **Option B**: Replace "Browse Products" with "Set Up Recurring Gift" and move browse to secondary
 
-### Architecture: Single Source of Truth
+### Proposed Button Layout
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      PROPOSED PRICING FLOW (CORRECT)                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Database: price = 119, product_source = 'manual' (set at ingestion)        │
-│                    │                                                        │
-│                    ▼                                                        │
-│           ┌───────────────────────────────────────┐                         │
-│           │   formatPrice(price, { productSource })│   ← ONE FUNCTION       │
-│           │   src/lib/utils/pricing.ts             │                        │
-│           └───────────────────────────────────────┘                         │
-│                    │                                                        │
-│                    ▼                                                        │
-│           ┌───────────────────────────────────────┐                         │
-│           │  if source === 'zinc_api' → divide    │                         │
-│           │  if source === 'manual' → as-is       │   ← EXPLICIT RULES      │
-│           │  if source === null → as-is (safe)    │                         │
-│           └───────────────────────────────────────┘                         │
-│                    │                                                        │
-│                    ▼                                                        │
-│              All Components → $119.00 ✓                                     │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
+│  │  Set Up Recurring Gift   │  │  Browse Products                 │ │
+│  │  (Primary - Opens Modal) │  │  (Secondary - Links to Shop)     │ │
+│  └──────────────────────────┘  └──────────────────────────────────┘ │
+│                                                                     │
+│  How It Works →                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Implementation Plan
+### Code Changes (RecurringGifts.tsx)
 
-### Phase 1: Fix Detection Heuristics (Critical - Immediate)
+**Line 81-91 - Replace/augment the button section:**
 
-Stop the bleeding by removing dangerous auto-detection.
-
-| File | Change |
-|------|--------|
-| `src/utils/productSourceDetection.ts` | Remove image URL and price magnitude heuristics |
-| `src/lib/utils.ts` | Remove cents detection in `validateAndNormalizePrice()` |
-
-**Specific Changes:**
-
-**productSourceDetection.ts - Lines 38-58 (REMOVE):**
-```typescript
-// DELETE these heuristics entirely:
-if (imageUrl.includes('amazon') || 
-    imageUrl.includes('ssl-images-amazon') || 
-    imageUrl.includes('m.media-amazon')) {
-  return 'zinc_api';  // ❌ Causes false positives
-}
-
-if (price > 100 && price === Math.floor(price)) {
-  return 'zinc_api';  // ❌ Made In knife bug source
-}
+```tsx
+<div className="flex flex-col sm:flex-row gap-3">
+  {/* NEW: Primary CTA - Set Up Recurring Gift */}
+  <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+    <Button 
+      onClick={() => {
+        triggerHapticFeedback('selection');
+        setEditingRule(null); // Ensure we're in create mode
+        setSetupDialogOpen(true);
+      }}
+      className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
+    >
+      <Gift className="h-4 w-4 mr-2" />
+      Set Up Recurring Gift
+    </Button>
+  </motion.div>
+  
+  {/* Existing: Browse Products (now secondary) */}
+  <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+    <Button 
+      onClick={() => {
+        triggerHapticFeedback('selection');
+        navigate('/marketplace');
+      }}
+      variant="ghost"
+      className="text-white hover:bg-white/10 min-h-[44px]"
+    >
+      <ShoppingBag className="h-4 w-4 mr-2" />
+      Browse Products
+    </Button>
+  </motion.div>
+</div>
 ```
 
-**utils.ts - Lines 139-146 (SIMPLIFY):**
-```typescript
-// BEFORE: Guesses cents format
-if (Number.isInteger(numPrice)) {
-  const dollarsAmount = numPrice / 100;
-  if (dollarsAmount >= 0.01 && dollarsAmount < 10000) {
-    return dollarsAmount; // ❌ Converts $119 to $1.19
-  }
-}
+**Line 8 - Add Gift icon to imports:**
 
-// AFTER: Trust database values
-return numPrice; // ✓ $119 stays $119
+```tsx
+import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag, Gift } from "lucide-react";
 ```
 
-### Phase 2: Standardize Component Usage (Medium Priority)
+## User Flow After Implementation
 
-Replace all ad-hoc formatting with unified `formatPrice()`.
+1. User visits `/recurring-gifts`
+2. User clicks "Set Up Recurring Gift" in hero
+3. `AutoGiftSetupFlow` modal opens with 3-step wizard:
+   - Step 1: Choose Recipient & Events
+   - Step 2: Set Budget & Payment
+   - Step 3: Configure Notifications
+4. User completes setup → Rule created
+5. Nicole AI handles gift selection and fulfillment at the scheduled time
 
-| Category | Files | Current Pattern | Target Pattern |
-|----------|-------|-----------------|----------------|
-| Checkout | 2 files | `${price.toFixed(2)}` | `formatPrice(price)` |
-| Messaging | 3 files | `${item.price}` | `formatPrice(item.price)` |
-| Wishlists | 4 files | Mixed patterns | `formatPrice(price)` |
-| Products | 12 files | Various | Already correct |
-| Orders | 5 files | `toFixed(2)` | `formatPrice(price)` |
+## Alignment with Existing Memory
 
-**Example Component Fix (CheckoutSummary.tsx):**
-```typescript
-// BEFORE (line 30):
-<span>${(item.product.price * item.quantity).toFixed(2)}</span>
+- **`memory/marketing/recurring-gifts-branding-standard`**: Uses "Recurring Gifts" terminology ✓
+- **`memory/features/recurring-gift-conversion-strategy`**: Supports "Set Up First" flow alongside "Buy Now + Recur Later" ✓
+- **`memory/architecture/recurring-gift-unified-pipeline`**: Uses same `auto_gifting_rules` table ✓
 
-// AFTER:
-import { formatPrice } from "@/lib/utils";
-<span>{formatPrice(item.product.price * item.quantity)}</span>
-```
-
-### Phase 3: Database Migration (Low Priority - Future)
-
-Set `product_source` at ingestion time, not display time.
-
-```sql
--- One-time fix for existing wishlist items
-UPDATE wishlist_items 
-SET product_source = 'manual'
-WHERE product_source IS NULL;
-```
-
-Modify `addToWishlist()` to always set `product_source` explicitly based on where the product came from:
-- Zinc API products → 'zinc_api'
-- Shopify products → 'shopify'
-- Manual additions → 'manual'
-
-## Files to Modify
-
-### Phase 1 (Critical Fixes)
-
-| File | Lines | Action |
-|------|-------|--------|
-| `src/utils/productSourceDetection.ts` | 38-58 | Remove image URL and price heuristics |
-| `src/lib/utils.ts` | 139-146 | Simplify `validateAndNormalizePrice()` |
-
-### Phase 2 (Standardization)
-
-| File | Current Pattern | Action |
-|------|-----------------|--------|
-| `src/components/checkout/CheckoutSummary.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/checkout/CheckoutOrderSummary.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/messaging/ChatGiftModal.tsx` | `${item.price}` | Use `formatPrice()` |
-| `src/components/messaging/ShareToConnectionButton.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/marketplace/product-item/ProductItem.tsx` | Local `formatPrice` function | Use global `formatPrice()` |
-| `src/components/marketplace/product-item/ProductInfoSection.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/marketplace/ui/ModernProductCard.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/orders/OrderItemsTable.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/gifting/wishlists/CollectionsTab.tsx` | `${total.toFixed(0)}` | Use `formatPrice()` |
-| `src/components/marketplace/zinc/components/ZincProductResults.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/marketplace/zinc/components/OrderCard.tsx` | `${price.toFixed(2)}` | Use `formatPrice()` |
-| `src/components/marketplace/product-grid/ProductGrid.tsx` | `${price}` | Use `formatPrice()` |
-
-### Phase 3 (Database)
-
-| Action | Details |
-|--------|---------|
-| SQL migration | Set `product_source = 'manual'` for NULL values |
-| Update `addToWishlist()` | Explicit source assignment at ingestion |
-
-## Expected Outcome
-
-After implementation:
-- **Made In Bread Knife**: $119.00 (correct)
-- **HP Laptop**: $499.99 (correct)
-- **Levi's jeans**: $49.97 (correct)
-- **All checkout displays**: Consistent formatting
-- **Zero detection heuristics**: No more guessing game
-
-## Technical Considerations
-
-- **Phase 1 is zero-risk**: Removing bad heuristics can only fix problems
-- **Phase 2 is low-risk**: Replacing inline formatting with consistent function
-- **Phase 3 can wait**: Database migration is nice-to-have after display is fixed
-- **Memory constraint alignment**: Matches `memory/database/pricing-storage-standard-dollars`

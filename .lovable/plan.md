@@ -1,146 +1,108 @@
 
-# Variant Data Persistence: Product Page → Wishlist → Stripe → Zinc
+# Fix Gift Occasion Selector to Show Recipient's Important Dates
 
-## Problem Summary
+## Problem Identified
+The "Select Gift Occasions" screen in the recurring gift wizard shows generic event types (Birthday, Anniversary, etc.) but does NOT reference the selected recipient's actual "My Events" data (Justin's February 19 birthday, anniversaries, promotions, etc.).
 
-When a user selects a product variant (e.g., "Red" phone case) and adds it to their wishlist, the **parent product ASIN** is stored instead of the **variant-specific ASIN**. This causes Zinc to fulfill with the wrong product.
+**Current behavior:** Charles sees generic checkboxes for "Birthday", "Anniversary", etc.
+**Expected behavior:** Charles should see Justin's actual events with dates:
+- ✅ "Birthday - February 19"
+- ✅ "Promotion - [if Justin has one]"
+- ✅ "Anniversary - [if Justin has one]"
 
-**Current Flow (Broken)**:
-```
-User selects "Red" case (ASIN: B0FGCLY123) → Clicks "Add to Wishlist" 
-→ Wishlist stores parent ASIN (B0FGCLY8J2) → Stripe → Zinc orders wrong item
-```
+## Root Cause
+- The `MultiEventSelector` component receives no recipient context
+- It doesn't fetch or display the recipient's `important_dates` or `dob` from their profile
+- The `AutoGiftSetupFlow` already has `formData.recipientDob` after selection, but doesn't pass it to `MultiEventSelector`
 
-**Target Flow (Fixed)**:
-```
-User selects "Red" case (ASIN: B0FGCLY123) → Clicks "Add to Wishlist" 
-→ Wishlist stores variant ASIN (B0FGCLY123) → Stripe → Zinc orders correct item
-```
+## Solution: Enhance MultiEventSelector with Recipient Context
 
----
+### Phase 1: Pass Recipient Data to MultiEventSelector
 
-## Solution: Minimal Changes to Existing Code
+**File: `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`**
+- Find the selected connection after recipient selection
+- Extract `profile_dob` and `profile_important_dates`
+- Pass them as new props to `MultiEventSelector`
 
-The fix follows e-commerce industry standards (Amazon, Shopify) where **each variant is treated as a distinct SKU**. No database migrations required.
+### Phase 2: Update MultiEventSelector to Accept and Display Recipient Events
 
-### Files to Modify
+**File: `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`**
 
-| File | Change |
-|------|--------|
-| `WishlistSelectionPopoverButton.tsx` | Accept optional `selectedProductId` and `variationText` props |
-| `ProductDetailsActionsSection.tsx` | Pass variant data to `WishlistSelectionPopoverButton` |
-| `wishlistConversions.ts` | Preserve `description` field (already supports variant text) |
-
----
-
-## Implementation Details
-
-### 1. Update `WishlistSelectionPopoverButton` Interface
-
-Extend the product interface to optionally accept variant-specific data:
-
+1. Add new props interface:
 ```typescript
-interface WishlistSelectionPopoverButtonProps {
-  product: {
-    id: string;               // Parent product ASIN
-    name: string;
-    price?: number;
-    image?: string;
-    brand?: string;
-    // NEW: Variant-specific fields
-    selectedProductId?: string;  // Variant ASIN (overrides id)
-    variationText?: string;      // "Color: Red, Size: Large"
-  };
-  // ... existing props
+interface MultiEventSelectorProps {
+  value: SelectedEvent[];
+  onChange: (events: SelectedEvent[]) => void;
+  recipientDob?: string | null;          // MM-DD format
+  recipientImportantDates?: any[];       // Array of {title, date, type}
+  recipientName?: string;
 }
 ```
 
-When saving to wishlist, use `selectedProductId` if present:
+2. Calculate and display recipient's birthday:
+   - If `recipientDob` exists, show "Birthday - [calculated date]" instead of generic "Birthday"
+   - Auto-calculate the next occurrence of the birthday
+
+3. Map recipient's important_dates to occasion options:
+   - Filter Justin's `important_dates` for relevant event types (Anniversary, Graduation, Promotion)
+   - Display them with their actual dates
+   - Allow selection to create rules tied to those specific dates
+
+4. Update the SelectedEvent type to include the calculated date:
 ```typescript
-const handleAddToWishlist = async (wishlistId: string) => {
-  await addToWishlist(wishlistId, {
-    product_id: product.selectedProductId || product.id,  // Variant ASIN first
-    name: product.variationText 
-      ? `${product.name} (${product.variationText})` 
-      : product.name,
-    // ... rest unchanged
-  });
-};
+export interface SelectedEvent {
+  eventType: string;
+  specificHoliday?: string;
+  customDate?: Date;
+  calculatedDate?: string;  // ISO date string from recipient's profile
+}
 ```
 
-### 2. Pass Variant Data from Product Details
+### Phase 3: Update Rule Creation to Use Recipient Dates
 
-In `ProductDetailsActionsSection.tsx`, update the popover calls:
+**File: `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`**
 
-```typescript
-<WishlistSelectionPopoverButton
-  product={{
-    id: product.product_id || product.id,
-    selectedProductId: selectedProductId,  // NEW: Variant ASIN
-    variationText: variationText,          // NEW: "Color: Red"
-    name: product.title || product.name || "",
-    image: product.image || "",
-    price: product.price,
-    brand: product.brand || "",
-  }}
-  // ... rest unchanged
-/>
-```
+In the `handleSubmit` function, enhance the `rulesToCreate` logic:
+- For "birthday" events: Already uses `calculateNextBirthday(formData.recipientDob)` ✅
+- For "anniversary"/"promotion": Use the date from recipient's `important_dates`
+- Store the specific date in the rule's `scheduled_date` field
 
-### 3. Display Variant Info in Wishlist
+### Visual Changes
 
-The `wishlist_items.title` or existing `name` field will contain the variant description (e.g., "iPhone Case (Color: Red)"), providing clear visual feedback without database changes.
+| Before | After |
+|--------|-------|
+| ☐ Birthday | ☐ Birthday - Feb 19 🎂 |
+| ☐ Anniversary | ☐ Anniversary - [if exists] |
+| ☐ Promotion | ☐ Promotion - [if exists] |
+| ☐ Graduation | ☐ Graduation - [if exists] |
+
+Events that the recipient hasn't set up will show as "Not set" or be hidden/greyed out.
 
 ---
 
-## Data Flow After Fix
+## Technical Details
 
+### Data Flow
 ```
-┌─────────────────┐     ┌─────────────────────────────────────┐
-│  Product Page   │────▶│  WishlistSelectionPopoverButton     │
-│  (User selects  │     │  - Receives selectedProductId       │
-│   "Red" variant)│     │  - Receives variationText           │
-└─────────────────┘     └─────────────────────────────────────┘
-                                         │
-                                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    wishlist_items table                     │
-│  ┌─────────────┬────────────────────────────────────────┐   │
-│  │ product_id  │ B0FGCLY123 (variant ASIN, not parent)  │   │
-│  │ name        │ "iPhone Case (Color: Red)"             │   │
-│  │ price       │ 29.99                                  │   │
-│  └─────────────┴────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                                         │
-                                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Cart → Stripe → Zinc (No Changes)              │
-│  - Uses product_id from wishlist_items                      │
-│  - Zinc receives correct variant ASIN                       │
-└─────────────────────────────────────────────────────────────┘
+RecipientSearchCombobox → selects recipient
+       ↓
+AutoGiftSetupFlow → finds connection, extracts profile_dob + profile_important_dates
+       ↓
+MultiEventSelector → receives recipient context as props
+       ↓
+Display: Shows actual dates instead of generic labels
+       ↓
+handleSubmit → uses dates to set scheduled_date on auto_gifting_rules
 ```
 
----
+### Files to Modify
+1. `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`
+2. `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`
 
-## Why This Works
+### Edge Cases
+- Recipient has no birthday set → Show generic "Birthday" with helper text "(date not set)"
+- Recipient has no important_dates → Hide Anniversary/Promotion or show as unavailable
+- Multiple anniversaries → List each separately with description
 
-1. **Industry Standard**: Amazon/Shopify treat each variant as a distinct product ID (SKU)
-2. **Zero Database Migration**: Uses existing `product_id` and `name` columns
-3. **Backward Compatible**: If `selectedProductId` is undefined, falls back to `id`
-4. **Minimal Code Changes**: Only 2 files need updates
-5. **Preserves Existing Logic**: Cart → Stripe → Zinc pipeline unchanged
-
----
-
-## Testing Checklist
-
-After implementation, test this flow:
-
-1. Navigate to a product with variants (e.g., `/marketplace/product/B0FGCLY8J2`)
-2. Select a specific variant (e.g., "Black" color)
-3. Click the heart icon to add to wishlist
-4. Verify wishlist item shows variant name (e.g., "Case (Color: Black)")
-5. Query `wishlist_items` to confirm `product_id` is the **variant ASIN**, not parent
-6. Add wishlist item to cart → Proceed to checkout
-7. Verify Stripe metadata contains variant ASIN
-8. (If testing Zinc) Confirm order fulfillment is for correct variant
+### Consistency with Scheduling Modal
+This change aligns the recurring gift wizard with the existing `PresetHolidaySelector` behavior in the scheduling modal (per memory: `features/gift-scheduling-important-dates-integration`), ensuring a unified experience across both flows.

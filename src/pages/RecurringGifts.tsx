@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag, Gift } from "lucide-react";
+import { Heart, Calendar, ArrowRight, Settings, ShoppingBag, Gift, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -125,67 +125,79 @@ const RecurringGifts = () => {
             </CardContent>
           </Card>
 
-          {/* Right Side - Welcome Card with Benefits */}
+          {/* Right Side - Welcome Card with Quick Rules View */}
           <Card className="bg-background">
-            <CardContent className="p-8 lg:p-10">
-              <div className="space-y-5">
+            <CardContent className="p-6 lg:p-8">
+              <div className="space-y-4">
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">
+                  <h2 className="text-2xl font-bold mb-1">
                     Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     You have <span className="font-semibold text-foreground">{rules.length}</span> active recurring gift {rules.length === 1 ? 'rule' : 'rules'}
                   </p>
                 </div>
 
-                <div className="grid gap-3 pt-2">
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="p-2 rounded-lg bg-background">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm mb-0.5">Recurring Events</p>
-                      <p className="text-xs text-muted-foreground">
-                        Set up once for birthdays & anniversaries—we send the perfect gift every year
+                {/* Quick Rules Preview */}
+                <div className="space-y-2">
+                  {rules.length > 0 ? (
+                    <>
+                      {rules.slice(0, 3).map((rule) => (
+                        <motion.button
+                          key={rule.id}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            triggerHapticFeedback('selection');
+                            setEditingRule(rule);
+                            setSetupDialogOpen(true);
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left min-h-[44px]"
+                        >
+                          <div className="p-2 rounded-full bg-background">
+                            <Gift className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {rule.recipient?.name || rule.pending_recipient_name || rule.pending_recipient_email || 'Recipient'}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {rule.date_type?.replace('_', ' ')} • ${rule.budget_limit}
+                            </p>
+                          </div>
+                          <Badge variant={rule.is_active ? "default" : "secondary"} className="text-xs shrink-0">
+                            {rule.is_active ? 'Active' : 'Paused'}
+                          </Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        </motion.button>
+                      ))}
+                      {rules.length > 3 && (
+                        <p className="text-xs text-muted-foreground text-center pt-1">
+                          +{rules.length - 3} more {rules.length - 3 === 1 ? 'rule' : 'rules'} below
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-6">
+                      <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-3">
+                        <Gift className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        No recurring gifts set up yet
                       </p>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          triggerHapticFeedback('selection');
+                          setEditingRule(null);
+                          setSetupDialogOpen(true);
+                        }}
+                        className="min-h-[44px]"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Rule
+                      </Button>
                     </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="p-2 rounded-lg bg-background">
-                      <Heart className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm mb-0.5">Wishlist Intelligence</p>
-                      <p className="text-xs text-muted-foreground">
-                        We pull from their wishlists for guaranteed-to-love gifts
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="p-2 rounded-lg bg-background">
-                      <Brain className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm mb-0.5">Smart Budget Control</p>
-                      <p className="text-xs text-muted-foreground">
-                        Set spending limits and Nicole AI finds gifts within your budget
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <div className="p-2 rounded-lg bg-background">
-                      <Sparkles className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm mb-0.5">Set & Forget</p>
-                      <p className="text-xs text-muted-foreground">
-                        Create a rule once, we handle the rest forever
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </CardContent>

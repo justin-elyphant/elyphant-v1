@@ -576,6 +576,130 @@ const wishlistSharedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `${props.sender_name} shared a wishlist with you` });
 };
 
+// Recurring Gift Rule Created Template (sent to shopper when they create recurring gift rules)
+const recurringGiftRuleCreatedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.shopper_name);
+  
+  // Format events list
+  const eventsHtml = (props.events || []).map((event: any) => {
+    const occasionIcons: Record<string, string> = {
+      birthday: '🎂',
+      christmas: '🎄',
+      valentine: '❤️',
+      valentines_day: '❤️',
+      mothers_day: '💐',
+      fathers_day: '👔',
+      anniversary: '💍',
+    };
+    const icon = occasionIcons[event.date_type?.toLowerCase()] || '🎁';
+    const occasionName = event.occasion_name || event.date_type?.replace(/_/g, ' ') || 'Special Occasion';
+    return `<li style="margin: 8px 0; color: #374151;">${icon} <strong>${occasionName}</strong>${event.date ? ` - ${event.date}` : ''}</li>`;
+  }).join('');
+
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      Recurring Gifts Set Up! 🔄
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hi ${firstName}, you've successfully set up recurring gifts for <strong>${props.recipient_name || 'your friend'}</strong>.
+    </p>
+    
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #10b981;">
+      <tr><td>
+        <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Configured Events</p>
+        <ul style="margin: 0; padding-left: 20px; font-size: 16px;">
+          ${eventsHtml || '<li style="color: #374151;">Events configured</li>'}
+        </ul>
+      </td></tr>
+    </table>
+    
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
+      <tr><td>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Budget Per Gift</p>
+        <p style="margin: 0 0 20px 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">Up to $${props.budget || 50}</p>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Auto-Approve</p>
+        <p style="margin: 0; font-size: 16px; color: #374151;">${props.auto_approve ? '✅ Enabled - Gifts will be sent automatically' : '🔔 Disabled - You\'ll approve each gift'}</p>
+      </td></tr>
+    </table>
+    
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1d4ed8; font-size: 14px;">💡 How It Works</p>
+      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">We'll notify you 7 days before each event with gift suggestions from ${props.recipient_name || 'their'}'s wishlist. ${props.auto_approve ? 'Gifts will be purchased and shipped automatically.' : 'You\'ll review and approve before we purchase.'}</p>
+    </div>
+    
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          Manage Recurring Gifts
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Recurring gifts for ${props.recipient_name || 'your friend'} are all set!` });
+};
+
+// Gift Coming Your Way Template (sent to recipient when a gift is purchased for them)
+const giftComingYourWayTemplate = (props: any): string => {
+  const firstName = getFirstName(props.recipient_name);
+  
+  // Format occasion nicely
+  const getOccasionText = (occasion: string | null): string => {
+    if (!occasion) return '';
+    const occasionMap: Record<string, string> = {
+      birthday: ' for your Birthday',
+      christmas: ' for Christmas',
+      valentine: ' for Valentine\'s Day',
+      valentines_day: ' for Valentine\'s Day',
+      mothers_day: ' for Mother\'s Day',
+      fathers_day: ' for Father\'s Day',
+      anniversary: ' for your Anniversary',
+    };
+    return occasionMap[occasion.toLowerCase()] || ` for ${occasion.replace(/_/g, ' ')}`;
+  };
+
+  const occasionText = getOccasionText(props.occasion);
+  
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      A Gift Is On Its Way! 🎁
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hey ${firstName}, exciting news! <strong>${props.sender_name || 'Someone special'}</strong> just sent you a gift${occasionText}!
+    </p>
+    
+    ${props.arrival_date ? `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
+      <tr><td align="center">
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📦 Expected Arrival</p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.arrival_date)}</p>
+      </td></tr>
+    </table>
+    ` : ''}
+    
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
+      <tr><td align="center">
+        <p style="margin: 0 0 12px 0; font-size: 48px;">🤫</p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b21a8; font-style: italic;">
+          We're keeping the details a surprise!
+        </p>
+      </td></tr>
+    </table>
+    
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; text-align: center;">
+      Want to make sure ${props.sender_name?.split(' ')[0] || 'they'} knows exactly what you'd love? Keep your wishlist updated!
+    </p>
+    
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.lovable.app/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Your Dashboard
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `${props.sender_name || 'Someone special'} sent you a gift! 🎁` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -605,7 +729,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         subject: `Order Processing Issue - ${data.order_number || 'Action Required'}`
       };
     case 'connection_invitation':
-    case 'gift_invitation': // Both use the same template - gift_invitation includes gift context
+    case 'gift_invitation':
       return {
         html: connectionInvitationTemplate(data),
         subject: data.has_pending_gift 
@@ -626,6 +750,16 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
       return {
         html: autoGiftApprovalTemplate(data),
         subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
+      };
+    case 'recurring_gift_rule_created':
+      return {
+        html: recurringGiftRuleCreatedTemplate(data),
+        subject: `Recurring Gifts Set Up for ${data.recipient_name || 'Your Friend'}! 🔄`
+      };
+    case 'gift_coming_your_way':
+      return {
+        html: giftComingYourWayTemplate(data),
+        subject: `${data.sender_name || 'Someone special'} sent you a gift! 🎁`
       };
     case 'zma_low_balance_alert':
       return {

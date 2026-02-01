@@ -607,6 +607,18 @@ async function handleCheckoutSessionCompleted(
     // Send email and process
     await triggerEmailOrchestrator(newOrder.id, session, group.items, supabase);
     
+    // Send recipient notification for gift orders (single-recipient)
+    if ((group.giftMessage || isAutoGift) && group.recipientId && group.recipientId !== userId) {
+      await sendRecipientGiftNotification(
+        group.recipientId,
+        newOrder.id,
+        userId,
+        scheduledDate,
+        isAutoGift ? metadata.occasion || null : null,
+        supabase
+      );
+    }
+    
     if (!isScheduled && session.payment_status === 'paid') {
       await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
     }
@@ -733,6 +745,21 @@ async function handleCheckoutSessionCompleted(
     // Send single confirmation email to customer showing all recipients
     console.log(`📧 [STEP 7] Sending consolidated receipt email for parent order ${parentOrder.id}...`);
     await triggerEmailOrchestrator(parentOrder.id, session, lineItems, supabase);
+    
+    // Send recipient notifications for each delivery group (multi-recipient)
+    console.log(`📧 [STEP 7.1] Sending recipient notifications for ${deliveryGroups.length} delivery groups...`);
+    for (const group of deliveryGroups) {
+      if ((group.giftMessage || isAutoGift) && group.recipientId && group.recipientId !== userId) {
+        await sendRecipientGiftNotification(
+          group.recipientId,
+          parentOrder.id,
+          userId,
+          scheduledDate,
+          isAutoGift ? metadata.occasion || null : null,
+          supabase
+        );
+      }
+    }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`✅ [STEP 6] Multi-recipient order complete in ${elapsed}s: Parent ${parentOrder.id} + ${childOrderIds.length} children`);
@@ -801,6 +828,75 @@ async function triggerEmailOrchestrator(
     }
   } catch (err: any) {
     console.error(`❌ [${new Date().toISOString()}] Failed to trigger email orchestrator:`, err.message);
+  }
+}
+
+// ============================================================================
+// HELPER: Send gift notification email to recipient
+// ============================================================================
+async function sendRecipientGiftNotification(
+  recipientId: string | null,
+  orderId: string,
+  senderId: string,
+  scheduledDate: string | null,
+  occasion: string | null,
+  supabase: any
+) {
+  if (!recipientId) {
+    console.log(`⏭️ [RECIPIENT EMAIL] No recipient_id, skipping recipient notification`);
+    return;
+  }
+  
+  // Don't send if recipient is the same as sender (self-purchase)
+  if (recipientId === senderId) {
+    console.log(`⏭️ [RECIPIENT EMAIL] Recipient is sender (self-purchase), skipping notification`);
+    return;
+  }
+  
+  try {
+    console.log(`📧 [RECIPIENT EMAIL] Sending gift notification to recipient ${recipientId}...`);
+    
+    // Fetch recipient email and name from profiles
+    const { data: recipientProfile, error: recipientError } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', recipientId)
+      .single();
+    
+    if (recipientError || !recipientProfile?.email) {
+      console.warn(`⚠️ [RECIPIENT EMAIL] No recipient profile/email found for ${recipientId}:`, recipientError?.message);
+      return;
+    }
+    
+    // Fetch sender name
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', senderId)
+      .single();
+    
+    const senderName = senderProfile?.name?.split(' ')[0] || 'Someone special';
+    
+    const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      body: {
+        eventType: 'gift_coming_your_way',
+        recipientEmail: recipientProfile.email,
+        data: {
+          recipient_name: recipientProfile.name,
+          sender_name: senderName,
+          arrival_date: scheduledDate,
+          occasion: occasion,
+        }
+      }
+    });
+    
+    if (error) {
+      console.error(`❌ [RECIPIENT EMAIL] Failed to send:`, error);
+    } else {
+      console.log(`✅ [RECIPIENT EMAIL] Gift notification sent to ${recipientProfile.email}`);
+    }
+  } catch (err: any) {
+    console.error(`❌ [RECIPIENT EMAIL] Exception:`, err.message);
   }
 }
 

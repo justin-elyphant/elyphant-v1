@@ -14,6 +14,9 @@ interface WishlistSelectionPopoverButtonProps {
     price?: number;
     image?: string;
     brand?: string;
+    // Variant-specific fields for accurate SKU tracking
+    selectedProductId?: string;  // Variant ASIN (overrides id)
+    variationText?: string;      // "Color: Red, Size: Large"
   };
   triggerClassName?: string;
   variant?: "default" | "icon";
@@ -40,13 +43,20 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
 
   const handleAddToWishlist = async (wishlistId: string) => {
     try {
+      // Use variant ASIN if available, otherwise fall back to parent product ID
+      const productIdToSave = product.selectedProductId || product.id;
+      // Append variation text to name for clear wishlist display
+      const displayName = product.variationText 
+        ? `${product.name} (${product.variationText})` 
+        : product.name;
+
       await addToWishlist(wishlistId, {
-        name: product.name,
-        title: product.name,
+        name: displayName,
+        title: displayName,
         price: product.price,
         image_url: product.image,
         brand: product.brand,
-        product_id: product.id,
+        product_id: productIdToSave,
       });
       toast.success(`Added to wishlist!`);
       setOpen(false);

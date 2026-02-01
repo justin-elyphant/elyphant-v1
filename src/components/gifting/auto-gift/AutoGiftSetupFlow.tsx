@@ -689,6 +689,20 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
               <MultiEventSelector
                 value={formData.selectedEvents}
                 onChange={(events) => setFormData(prev => ({ ...prev, selectedEvents: events }))}
+                recipientDob={formData.recipientDob}
+                recipientImportantDates={
+                  // Get important_dates from selected connection
+                  (() => {
+                    const allConnections = [...connections, ...pendingInvitations];
+                    const conn = allConnections.find(c => 
+                      c.id === formData.recipientId || 
+                      c.display_user_id === formData.recipientId ||
+                      c.connected_user_id === formData.recipientId
+                    );
+                    return (conn as any)?.profile_important_dates || [];
+                  })()
+                }
+                recipientName={formData.recipientName}
               />
 
               {formData.eventType === "holiday" && formData.specificHoliday && (

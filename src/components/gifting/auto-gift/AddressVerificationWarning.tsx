@@ -25,7 +25,7 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
 
   useEffect(() => {
     const checkVerification = async () => {
-      // Try to find connection - recipientId could be connection.id, connected_user_id, or pending email
+      // Try to find connection - recipientId could be connection.id, connected_user_id, display_user_id, or pending email
       let connection = connections.find(c => 
         c.id === recipientId || 
         c.connected_user_id === recipientId ||
@@ -56,7 +56,23 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
         return;
       }
 
+      // CRITICAL: Determine the correct target user ID (the RECIPIENT, not the sender)
+      // display_user_id is specifically designed to show the "other" person in the connection
+      // For connections where current user is sender, display_user_id = connected_user_id
+      // For connections where current user is receiver, display_user_id = user_id (the sender)
+      const targetUserId = connection.display_user_id || connection.connected_user_id;
+      
+      // Use the profile name from the connection's display fields, which are already set correctly
       const connectionName = connection.profile_name || connection.pending_recipient_name || 'this recipient';
+
+      console.log('🔍 [AddressVerificationWarning] Checking recipient:', {
+        recipientId,
+        targetUserId,
+        connectionName,
+        connectionId: connection.id,
+        displayUserId: connection.display_user_id,
+        connectedUserId: connection.connected_user_id
+      });
 
       // For pending invitations, address is not verified yet
       if (connection.status === 'pending_invitation') {
@@ -71,8 +87,6 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
       // For outgoing pending requests (status: pending, user is sender)
       // Check the recipient's address verification status
       if (connection.status === 'pending') {
-        const targetUserId = connection.connected_user_id || connection.display_user_id;
-        
         if (targetUserId) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -80,9 +94,10 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
             .eq('id', targetUserId)
             .single();
 
+          // Use profile_name from connection first (already correctly mapped), fallback to fetched name
           setVerificationStatus({
             verified: profile?.address_verified || false,
-            connectionName: profile?.name || connectionName,
+            connectionName: connectionName,
             isPending: true // Connection is pending
           });
         } else {
@@ -96,9 +111,6 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
       }
 
       // For accepted connections, check profile address verification
-      // Use connected_user_id for bi-directional connections
-      const targetUserId = connection.connected_user_id || connection.display_user_id;
-      
       if (targetUserId) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -106,9 +118,10 @@ const AddressVerificationWarning: React.FC<AddressVerificationWarningProps> = ({
           .eq('id', targetUserId)
           .single();
 
+        // Use profile_name from connection (already correctly mapped for display)
         setVerificationStatus({
           verified: profile?.address_verified || false,
-          connectionName: profile?.name || connectionName,
+          connectionName: connectionName,
           isPending: false
         });
       } else {

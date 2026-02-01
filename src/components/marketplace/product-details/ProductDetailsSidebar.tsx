@@ -203,9 +203,11 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             <WishlistSelectionPopoverButton 
               product={{
                 id: productId,
+                selectedProductId: getEffectiveProductId(),
+                variationText: getVariationDisplayText(),
                 name: rawProductName,
                 image: productImage,
-                price: productPrice,
+                price: variantPrice || productPrice,
                 brand: product.brand || "",
               }}
               triggerClassName="w-full h-12 bg-elyphant-black text-white hover:bg-elyphant-black/90 font-medium transition-colors"

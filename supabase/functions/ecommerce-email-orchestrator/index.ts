@@ -752,6 +752,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
       };
     case 'recurring_gift_rule_created':
+    case 'auto_gift_rule_created': // Alias for backward compatibility
       return {
         html: recurringGiftRuleCreatedTemplate(data),
         subject: `Recurring Gifts Set Up for ${data.recipient_name || 'Your Friend'}! 🔄`

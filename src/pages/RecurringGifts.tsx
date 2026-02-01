@@ -125,10 +125,10 @@ const RecurringGifts = () => {
             </CardContent>
           </Card>
 
-          {/* Right Side - Welcome Card */}
+          {/* Right Side - Welcome Card with Benefits */}
           <Card className="bg-background">
             <CardContent className="p-8 lg:p-10">
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div>
                   <h2 className="text-2xl font-bold mb-2">
                     Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
@@ -138,37 +138,49 @@ const RecurringGifts = () => {
                   </p>
                 </div>
 
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1 p-2 rounded-lg bg-muted">
+                <div className="grid gap-3 pt-2">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-background">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm mb-0.5">Recurring Events</p>
+                      <p className="text-xs text-muted-foreground">
+                        Set up once for birthdays & anniversaries—we send the perfect gift every year
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-background">
                       <Heart className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm mb-1">Wishlist Intelligence</p>
+                      <p className="font-medium text-sm mb-0.5">Wishlist Intelligence</p>
                       <p className="text-xs text-muted-foreground">
-                        We pull from your friends' wishlists for guaranteed-to-love gifts
+                        We pull from their wishlists for guaranteed-to-love gifts
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1 p-2 rounded-lg bg-muted">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-background">
                       <Brain className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm mb-1">Preference Learning</p>
+                      <p className="font-medium text-sm mb-0.5">Smart Budget Control</p>
                       <p className="text-xs text-muted-foreground">
-                        Nicole AI learns interests, sizes, and styles for perfect matches
+                        Set spending limits and Nicole AI finds gifts within your budget
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1 p-2 rounded-lg bg-muted">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="p-2 rounded-lg bg-background">
                       <Sparkles className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm mb-1">Set & Forget</p>
+                      <p className="font-medium text-sm mb-0.5">Set & Forget</p>
                       <p className="text-xs text-muted-foreground">
                         Create a rule once, we handle the rest forever
                       </p>
@@ -178,63 +190,6 @@ const RecurringGifts = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Benefits Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <Card className="bg-background border h-full">
-              <CardContent className="p-6">
-                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                  <Calendar className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Recurring Events</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Set up once for birthdays and anniversaries. We'll send the perfect gift every year, automatically.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <Card className="bg-background border h-full">
-              <CardContent className="p-6">
-                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                  <Heart className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Wishlist-Powered</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Nicole AI prioritizes items from their wishlist, ensuring they get exactly what they want.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <Card className="bg-background border h-full">
-              <CardContent className="p-6">
-                <div className="mb-4 p-3 rounded-lg bg-muted w-fit">
-                  <Brain className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Smart Budget Control</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Set spending limits and let Nicole AI find the perfect gift within your budget range.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
         </div>
 
         {/* Active Rules Section */}

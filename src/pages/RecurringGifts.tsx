@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag } from "lucide-react";
+import { Heart, Brain, Sparkles, Calendar, ArrowRight, Settings, ShoppingBag, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -78,32 +78,50 @@ const RecurringGifts = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3">
+                {/* Primary CTA - Set Up Recurring Gift */}
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={() => {
+                      triggerHapticFeedback('selection');
+                      setEditingRule(null); // Ensure we're in create mode
+                      setSetupDialogOpen(true);
+                    }}
+                    className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    Set Up Recurring Gift
+                  </Button>
+                </motion.div>
+                
+                {/* Secondary - Browse Products */}
                 <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
                   <Button 
                     onClick={() => {
                       triggerHapticFeedback('selection');
                       navigate('/marketplace');
                     }}
-                    className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
+                    variant="ghost"
+                    className="text-white hover:bg-white/10 min-h-[44px]"
                   >
                     <ShoppingBag className="h-4 w-4 mr-2" />
                     Browse Products
                   </Button>
                 </motion.div>
-                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
-                  <Button 
-                    onClick={() => {
-                      triggerHapticFeedback('light');
-                      setHowItWorksOpen(true);
-                    }}
-                    variant="ghost" 
-                    className="text-white hover:bg-white/10 min-h-[44px]"
-                  >
-                    How It Works
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </motion.div>
               </div>
+              
+              <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} className="mt-2">
+                <Button 
+                  onClick={() => {
+                    triggerHapticFeedback('light');
+                    setHowItWorksOpen(true);
+                  }}
+                  variant="link" 
+                  className="text-white/80 hover:text-white p-0 h-auto"
+                >
+                  How It Works
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </motion.div>
             </CardContent>
           </Card>
 

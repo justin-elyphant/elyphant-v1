@@ -132,6 +132,15 @@ serve(async (req) => {
       );
     }
 
+    // Get the approving user's email for Stripe checkout
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userId)
+      .single();
+
+    const userEmail = userProfile?.email || '';
+
     console.log(`📦 Processing execution ${execution.id}, action: ${finalAction}`);
 
     // ===========================================
@@ -404,6 +413,15 @@ serve(async (req) => {
     // ===========================================
     console.log('💳 Creating Checkout Session (fallback flow)...');
 
+    // Validate user email before creating checkout session
+    if (!userEmail) {
+      console.error('❌ User email not found for checkout');
+      return new Response(
+        JSON.stringify({ success: false, error: 'User email required for payment. Please ensure your profile has a valid email address.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     const cartItems = productsToOrder.map((p: any) => ({
       product_id: p.product_id,
       product_name: p.name || p.title || 'Gift Item',
@@ -445,6 +463,7 @@ serve(async (req) => {
           },
           metadata: {
             user_id: userId,
+            user_email: userEmail,
             is_auto_gift: 'true',
             auto_gift_rule_id: execution.rule_id,
             auto_gift_execution_id: execution.id,

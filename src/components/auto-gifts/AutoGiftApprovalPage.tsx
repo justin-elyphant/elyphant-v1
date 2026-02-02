@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Gift, Check, X, Clock, AlertCircle } from "lucide-react";
+import { Gift, Check, X, Clock, AlertCircle, User, CalendarDays, DollarSign } from "lucide-react";
 
 interface ApprovalData {
   token: any;
@@ -18,6 +18,52 @@ interface ApprovalData {
   isExpired: boolean;
   isAlreadyProcessed: boolean;
 }
+
+// Helper functions for formatting display
+const formatOccasion = (occasion: string): string => {
+  if (!occasion) return 'Special Occasion';
+  const occasionMap: Record<string, string> = {
+    'birthday': 'Birthday',
+    'christmas': 'Christmas',
+    'mothers_day': "Mother's Day",
+    'fathers_day': "Father's Day",
+    'valentine': "Valentine's Day",
+    'valentines_day': "Valentine's Day",
+    'anniversary': 'Anniversary',
+    'graduation': 'Graduation',
+    'wedding': 'Wedding',
+    'housewarming': 'Housewarming',
+  };
+  return occasionMap[occasion.toLowerCase()] || 
+    occasion.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
+const formatDate = (dateStr: string): string => {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
+const getRecipientName = (rule: any, execution: any): string => {
+  // Try to get from rule.recipient (joined profile)
+  if (rule?.recipient?.first_name || rule?.recipient?.last_name) {
+    return `${rule.recipient.first_name || ''} ${rule.recipient.last_name || ''}`.trim();
+  }
+  // Fallback to pending recipient email name extraction
+  if (execution?.pending_recipient_email) {
+    const emailName = execution.pending_recipient_email.split('@')[0];
+    return emailName.replace(/[._]/g, ' ').split(' ')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+  return 'Your Recipient';
+};
 
 const AutoGiftApprovalPage = () => {
   const { token } = useParams<{ token: string }>();
@@ -271,44 +317,61 @@ const AutoGiftApprovalPage = () => {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Gift Selection Details</CardTitle>
-            <CardDescription>
-              Event: {approvalData.execution.rule_id} • 
-              Total Budget: ${approvalData.rule.budget_limit || 50}
+            <CardDescription className="space-y-2 mt-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-primary" />
+                <span className="font-medium">
+                  {getRecipientName(approvalData.rule, approvalData.execution)}'s {formatOccasion(approvalData.rule?.date_type)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span>{formatDate(approvalData.execution.execution_date)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <span>Budget: Up to ${approvalData.rule?.budget_limit || 50}</span>
+              </div>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {approvalData.products.map((product: any, index: number) => (
+              {approvalData.products.map((product: any) => (
                 <div key={product.product_id} className="flex items-center space-x-4 p-4 border rounded-lg">
                   <Checkbox
                     checked={selectedProducts.includes(product.product_id)}
                     onCheckedChange={() => toggleProduct(product.product_id)}
                   />
-                  {product.image && (
+                  {/* Support both image and image_url field names */}
+                  {(product.image || product.image_url) && (
                     <img
-                      src={product.image}
-                      alt={product.title}
+                      src={product.image || product.image_url}
+                      alt={product.title || product.name || 'Gift'}
                       className="w-16 h-16 object-cover rounded"
                     />
                   )}
                   <div className="flex-1">
-                    <h3 className="font-medium">{product.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {product.category} • {product.retailer}
-                    </p>
-                    {product.rating && (
+                    {/* Support both title and name field names */}
+                    <h3 className="font-medium">{product.title || product.name || 'Gift Item'}</h3>
+                    {/* Only show category/retailer if available */}
+                    {(product.category || product.retailer) && (
+                      <p className="text-sm text-muted-foreground">
+                        {[product.category, product.retailer].filter(Boolean).join(' • ')}
+                      </p>
+                    )}
+                    {(product.rating || product.stars) && (
                       <div className="flex items-center space-x-1 text-sm">
-                        <span>⭐ {product.rating}</span>
+                        <span>⭐ {product.rating || product.stars}</span>
                         {product.review_count && (
                           <span className="text-muted-foreground">
-                            ({product.review_count} reviews)
+                            ({product.review_count.toLocaleString()} reviews)
                           </span>
                         )}
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <Badge variant="secondary">${product.price}</Badge>
+                    <Badge variant="secondary">${product.price?.toFixed(2) || '0.00'}</Badge>
                   </div>
                 </div>
               ))}

@@ -197,6 +197,22 @@ serve(async (req) => {
             .single();
 
           if (userData?.email) {
+            // Calculate deadline date (T-5: 2 days before capture at T-4)
+            const deadlineDate = new Date(eventDate);
+            deadlineDate.setDate(deadlineDate.getDate() - 5);
+            const deadlineDateFormatted = deadlineDate.toLocaleDateString('en-US', { 
+              month: 'long', 
+              day: 'numeric',
+              year: 'numeric'
+            });
+            
+            // Format event date for display
+            const eventDateFormatted = eventDate.toLocaleDateString('en-US', { 
+              month: 'long', 
+              day: 'numeric',
+              year: 'numeric'
+            });
+
             await supabase.functions.invoke('ecommerce-email-orchestrator', {
               body: {
                 eventType: 'auto_gift_approval',
@@ -204,8 +220,9 @@ serve(async (req) => {
                 data: {
                   first_name: userData.name?.split(' ')[0] || 'there',
                   recipient_name: recipientName,
-                  occasion: rule.date_type.replace(/_/g, ' '),
-                  execution_date: eventDate.toLocaleDateString(),
+                  occasion: rule.date_type,
+                  event_date: eventDateFormatted,
+                  deadline_date: deadlineDateFormatted,
                   suggested_gifts: suggestedProducts.slice(0, 3),
                   budget: rule.budget_limit,
                   rule_id: rule.id,

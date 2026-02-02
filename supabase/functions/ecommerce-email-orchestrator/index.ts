@@ -420,39 +420,125 @@ const welcomeEmailTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Welcome to Elyphant, ${props.first_name}!` });
 };
 
-// Auto-gift Approval Template
+// Helper to format occasion names (birthday -> Birthday, mothers_day -> Mother's Day)
+const formatOccasion = (occasion: string): string => {
+  if (!occasion) return 'Special Occasion';
+  const occasionMap: Record<string, string> = {
+    'birthday': 'Birthday',
+    'christmas': 'Christmas',
+    'mothers_day': "Mother's Day",
+    'fathers_day': "Father's Day",
+    'valentine': "Valentine's Day",
+    'valentines_day': "Valentine's Day",
+    'anniversary': 'Anniversary',
+    'graduation': 'Graduation',
+    'wedding': 'Wedding',
+    'housewarming': 'Housewarming',
+    'baby_shower': 'Baby Shower',
+    'retirement': 'Retirement',
+  };
+  return occasionMap[occasion.toLowerCase()] || occasion.replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+// Auto-gift Approval Template - Enhanced with event context and next steps
 const autoGiftApprovalTemplate = (props: any): string => {
+  const formattedOccasion = formatOccasion(props.occasion);
+  const budgetDisplay = props.budget ? `$${Number(props.budget).toFixed(2)}` : 'Flexible';
+  
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Auto-Gift Approval Needed 🎁</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!</p>
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      Auto-Gift Approval Needed 🎁
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; line-height: 24px;">
+      Hi ${props.first_name}, it's time to approve your upcoming auto-gift for <strong>${props.recipient_name}</strong>!
+    </p>
+    
+    <!-- Upcoming Event Card -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
+      <tr><td style="padding: 24px;">
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #9333ea; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+          📅 UPCOMING EVENT
+        </p>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">
+          ${props.recipient_name}'s ${formattedOccasion}
+        </p>
+        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #1a1a1a; font-weight: 600;">
+          ${props.event_date || props.execution_date || 'Coming soon'}
+        </p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
+          Budget: Up to ${budgetDisplay}
+        </p>
+      </td></tr>
+    </table>
+    
     ${props.suggested_gifts && props.suggested_gifts.length > 0 ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Suggested Gifts:</h3>
+    <h3 style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+      Suggested Gifts from Wishlist:
+    </h3>
     ${props.suggested_gifts.map((gift: any) => `
-    <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 1px solid #e5e5e5; padding: 16px 0;">
       <tr>
-        <td style="padding-right: 16px;">
-          ${gift.image_url ? `<img src="${gift.image_url}" alt="${gift.name || 'Gift'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
+        <td style="padding-right: 16px; vertical-align: top; width: 80px;">
+          ${gift.image_url ? `<img src="${gift.image_url}" alt="${truncateProductTitle(gift.name || 'Gift')}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />` : '<div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 8px;"></div>'}
         </td>
-        <td>
-          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${gift.name || 'Gift Item'}</p>
-          <p style="margin: 0; color: #666666;">${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}</p>
+        <td style="vertical-align: top;">
+          <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; color: #1a1a1a; font-size: 14px;">
+            ${truncateProductTitle(gift.name || 'Gift Item')}
+          </p>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #666666; font-size: 14px;">
+            ${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : (gift.price || '')}
+          </p>
         </td>
       </tr>
     </table>
     `).join('')}
     ` : ''}
-    <table style="margin-top: 30px; width: 100%;">
-      <tr><td align="center">
-        <a href="${props.approve_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-right: 10px;">
-          ✅ Approve Gift
-        </a>
-        <a href="${props.reject_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          ❌ Reject
-        </a>
+    
+    <!-- What Happens Next Card -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; margin: 30px 0; border-left: 4px solid #0ea5e9;">
+      <tr><td style="padding: 24px;">
+        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+          🔔 WHAT HAPPENS NEXT
+        </p>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
+          ${props.deadline_date ? `• <strong>Approve by ${props.deadline_date}</strong> to ensure on-time delivery` : '• Approve soon to ensure on-time delivery'}
+        </p>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
+          • We'll order the gift and handle everything for you
+        </p>
+        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
+          • Payment charged 4 days before their special day
+        </p>
+        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
+          • Gift arrives right on time! 🎉
+        </p>
       </td></tr>
     </table>
+    
+    <!-- Action Buttons -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+      <tr>
+        <td align="center">
+          <a href="${props.approve_url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin-right: 12px;">
+            ✅ Approve Gift
+          </a>
+          <a href="${props.reject_url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600;">
+            ❌ Reject
+          </a>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Footer Help -->
+    <p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; text-align: center; line-height: 22px;">
+      Questions? Reply to this email or visit your<br>
+      <a href="https://elyphant.ai/auto-gifts" style="color: #9333ea; text-decoration: none; font-weight: 500;">Recurring Gifts Dashboard</a>
+    </p>
   `;
-  return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${props.occasion}` });
+  return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${props.recipient_name}'s ${formattedOccasion}` });
 };
 
 // Connection Established Template
@@ -749,7 +835,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'auto_gift_approval':
       return {
         html: autoGiftApprovalTemplate(data),
-        subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
+        subject: `Auto-Gift Approval Needed - ${data.recipient_name}'s ${formatOccasion(data.occasion)} 🎁`
       };
     case 'recurring_gift_rule_created':
     case 'auto_gift_rule_created': // Alias for backward compatibility

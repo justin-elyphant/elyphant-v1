@@ -424,18 +424,18 @@ const welcomeEmailTemplate = (props: any): string => {
 const autoGiftApprovalTemplate = (props: any): string => {
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Auto-Gift Approval Needed 🎁</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.recipient_name}, it's time to approve your upcoming auto-gift for ${props.occasion}!</p>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!</p>
     ${props.suggested_gifts && props.suggested_gifts.length > 0 ? `
     <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Suggested Gifts:</h3>
     ${props.suggested_gifts.map((gift: any) => `
     <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
       <tr>
         <td style="padding-right: 16px;">
-          ${gift.image_url ? `<img src="${gift.image_url}" alt="${gift.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
+          ${gift.image_url ? `<img src="${gift.image_url}" alt="${gift.name || 'Gift'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />` : ''}
         </td>
         <td>
-          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${gift.title}</p>
-          <p style="margin: 0; color: #666666;">${gift.price}</p>
+          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${gift.name || 'Gift Item'}</p>
+          <p style="margin: 0; color: #666666;">${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}</p>
         </td>
       </tr>
     </table>

@@ -765,6 +765,46 @@ async function handleCheckoutSessionCompleted(
     console.log(`✅ [STEP 6] Multi-recipient order complete in ${elapsed}s: Parent ${parentOrder.id} + ${childOrderIds.length} children`);
   }
 
+  // ===========================================
+  // STEP 8: Update auto-gift execution if this is an auto-gift order
+  // ===========================================
+  if (isAutoGift && metadata.auto_gift_execution_id) {
+    console.log(`📦 [STEP 8] Updating auto-gift execution: ${metadata.auto_gift_execution_id}`);
+    
+    const { error: execUpdateError } = await supabase
+      .from('automated_gift_executions')
+      .update({
+        status: 'approved',
+        order_id: parentOrder.id,
+        payment_status: 'paid',
+        payment_confirmed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', metadata.auto_gift_execution_id);
+
+    if (execUpdateError) {
+      console.error('⚠️ [STEP 8] Failed to update auto-gift execution:', execUpdateError);
+      // Don't throw - order is still created successfully
+    } else {
+      console.log('✅ [STEP 8] Auto-gift execution updated with order reference');
+    }
+
+    // Also update the approval token to mark as approved now that payment is confirmed
+    const { error: tokenError } = await supabase
+      .from('email_approval_tokens')
+      .update({
+        approved_at: new Date().toISOString(),
+        approved_via: metadata.approved_via || 'checkout',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('execution_id', metadata.auto_gift_execution_id)
+      .is('approved_at', null);
+
+    if (!tokenError) {
+      console.log('✅ [STEP 8] Approval token updated');
+    }
+  }
+
   console.log(`✅ [${new Date().toISOString()}] checkout.session.completed processing complete for ${sessionId}`);
 }
 

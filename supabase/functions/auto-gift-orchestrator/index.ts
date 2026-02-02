@@ -127,7 +127,7 @@ serve(async (req) => {
             if (wishlist?.id) {
               const { data: wishlistItems } = await supabase
                 .from('wishlist_items')
-                .select('product_id, name, title, price, image_url')
+                .select('id, product_id, name, title, price, image_url')
                 .eq('wishlist_id', wishlist.id)
                 .lte('price', rule.budget_limit || 9999)
                 .order('price', { ascending: false })
@@ -138,6 +138,8 @@ serve(async (req) => {
                 name: item.name || item.title || 'Gift Item',
                 price: item.price,
                 image_url: item.image_url,
+                wishlist_id: wishlist.id,         // For "Purchased" badge tracking
+                wishlist_item_id: item.id,        // For wishlist_item_purchases insert
               }));
             }
           }

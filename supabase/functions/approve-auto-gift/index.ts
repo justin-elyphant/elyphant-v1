@@ -361,7 +361,10 @@ serve(async (req) => {
                   shipping: Math.round(shippingCost * 100),
                   gifting_fee: Math.round(giftingFee * 100),
                 },
-                shipping_address: recipientProfile?.shipping_address,
+                shipping_address: recipientProfile?.shipping_address ? {
+                  ...recipientProfile.shipping_address,
+                  name: (recipientProfile.shipping_address as any).name || recipientName,
+                } : null,
                 gift_options: {
                   isGift: true,
                   giftMessage: rule?.gift_message || `Happy ${rule?.date_type?.replace(/_/g, ' ')}!`,
@@ -499,7 +502,10 @@ serve(async (req) => {
             recipient: {
               name: recipientName,
               email: recipientEmail || recipientProfile?.email,
-              address: recipientProfile?.shipping_address,
+              address: recipientProfile?.shipping_address ? {
+                ...recipientProfile.shipping_address,
+                name: recipientName,
+              } : null,
             },
             items: cartItems.map((item: any) => ({
               product_id: item.product_id,

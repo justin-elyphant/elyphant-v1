@@ -1,42 +1,37 @@
 
-# Fix: Add Recipient Name to Shipping Address in Auto-Gift Flow
+# Fix: Add Email Notifications to Auto-Gift Approval Flow
 
 ## Problem Summary
-Justin's auto-gift order failed Zinc submission with error:
-**"Incomplete shipping address. Missing: name"**
+After Charles approved Justin's auto-gift order and payment was processed via Stripe, no emails were sent to either:
+- **Charles (shopper)**: Should receive order confirmation
+- **Justin (recipient)**: Should receive "gift coming your way" notification
 
-The order's `shipping_address` has all address fields but is missing the recipient's name.
+## Root Cause
+The `approve-auto-gift` function processes payments off-session (direct Stripe PaymentIntent), which bypasses the Stripe webhook (`stripe-webhook-v2`) that normally triggers emails. The function creates in-app notifications but never invokes the `ecommerce-email-orchestrator`.
 
----
+## Solution Architecture
+Add email orchestrator calls directly in the `approve-auto-gift` function after successful off-session payment, following the single-source-of-truth pattern.
 
-## Root Cause Analysis
-
-### Data Structure Issue
-Justin's `profiles` table stores:
-```json
-{
-  "name": "Justin Meeks",                    // ← Name is separate column
-  "shipping_address": {
-    "address_line1": "309 Solana Hills Drive",
-    "city": "Solana Beach",
-    "state": "CA",
-    "zip_code": "92075"
-    // ❌ No "name" field inside shipping_address
-  }
-}
+```text
++----------------------------------+
+|     approve-auto-gift            |
+|    (off-session payment)         |
++----------------------------------+
+              |
+              v
+    Payment Succeeded?
+              |
+    +--------+--------+
+    |                 |
+    v                 v
+ [Order Created]  [Emails Triggered]
+    |                 |
+    v                 +-------+-------+
+ [In-app notification]        |       |
+                              v       v
+                    order_confirmation   gift_coming_your_way
+                    (to Charles)         (to Justin)
 ```
-
-### Bug Location
-**File**: `supabase/functions/approve-auto-gift/index.ts` (Line 364)
-
-Current code:
-```typescript
-shipping_address: recipientProfile?.shipping_address,
-```
-
-This copies the shipping address JSONB directly **without adding the recipient name**.
-
-The `process-order-v2` function validates that `shipping_address.name` exists (required for Zinc/carrier delivery), but it's never populated for auto-gift orders.
 
 ---
 
@@ -44,93 +39,115 @@ The `process-order-v2` function validates that `shipping_address.name` exists (r
 
 ### File: `supabase/functions/approve-auto-gift/index.ts`
 
-**Change 1**: Fix off-session payment order creation (around line 364)
+**Location**: After successful off-session payment and order creation (around line 442)
 
-Replace:
+**Change 1**: Send order confirmation to shopper (Charles)
 ```typescript
-shipping_address: recipientProfile?.shipping_address,
+// After: console.log('✅ Off-session auto-gift approval completed successfully');
+
+// Email 1: Order confirmation to shopper
+try {
+  console.log('📧 Sending order confirmation to shopper...');
+  await supabase.functions.invoke('ecommerce-email-orchestrator', {
+    body: {
+      eventType: 'order_confirmation',
+      orderId: newOrder.id,
+      // Let orchestrator fetch full order details from DB
+    }
+  });
+  console.log('✅ Order confirmation email triggered');
+} catch (emailErr: any) {
+  console.error('⚠️ Failed to send order confirmation:', emailErr.message);
+  // Non-blocking - don't fail the approval for email issues
+}
 ```
 
-With:
+**Change 2**: Send gift notification to recipient (Justin)
 ```typescript
-shipping_address: recipientProfile?.shipping_address ? {
-  ...recipientProfile.shipping_address,
-  name: recipientProfile.shipping_address.name || recipientName,
-} : null,
-```
-
-**Change 2**: Fix checkout fallback flow - ensure `deliveryGroups.recipient.address` includes name (around line 498-503)
-
-Update the delivery groups structure to include name in the address:
-```typescript
-deliveryGroups: [{
-  recipient: {
-    name: recipientName,
-    email: recipientEmail || recipientProfile?.email,
-    address: recipientProfile?.shipping_address ? {
-      ...recipientProfile.shipping_address,
-      name: recipientName,
-    } : null,
-  },
-  // ...
-}],
+// Email 2: Gift notification to recipient
+const recipientUserId = rule?.recipient_user_id;
+if (recipientUserId && recipientUserId !== userId) {
+  try {
+    console.log('📧 Sending gift notification to recipient...');
+    
+    // Get recipient profile for email
+    const { data: recipientProfile } = await supabase
+      .from('profiles')
+      .select('email, name')
+      .eq('id', recipientUserId)
+      .single();
+    
+    // Get sender (shopper) profile for name
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .single();
+    
+    if (recipientProfile?.email) {
+      await supabase.functions.invoke('ecommerce-email-orchestrator', {
+        body: {
+          eventType: 'gift_coming_your_way',
+          recipientEmail: recipientProfile.email,
+          data: {
+            recipient_name: recipientProfile.name,
+            sender_name: senderProfile?.name?.split(' ')[0] || 'Someone special',
+            arrival_date: execution.execution_date,
+            occasion: rule?.date_type,
+          }
+        }
+      });
+      console.log(`✅ Gift notification sent to recipient: ${recipientProfile.email}`);
+    }
+  } catch (emailErr: any) {
+    console.error('⚠️ Failed to send gift notification to recipient:', emailErr.message);
+  }
+}
 ```
 
 ---
 
-## Additional Fix: Update Existing Order
+## Data Flow
 
-After deploying the code fix, we need to fix Justin's existing order by adding the name to the shipping address.
+### Order Confirmation Email (to Shopper)
+The orchestrator will fetch complete order details from the database using the `orderId`:
+- Customer name (from `profiles.name` via `order.user_id`)
+- Order number
+- Line items with images and prices
+- Pricing breakdown (subtotal, shipping, gifting fee)
+- Scheduled delivery date (for auto-gifts)
 
-**SQL Fix**:
-```sql
-UPDATE orders 
-SET shipping_address = jsonb_set(
-  shipping_address, 
-  '{name}', 
-  '"Justin Meeks"'
-),
-status = 'payment_confirmed',
-funding_hold_reason = NULL,
-updated_at = NOW()
-WHERE id = '7cc03e10-0c00-458a-860a-e937a1850d8f';
-```
-
-This will:
-1. Add `"name": "Justin Meeks"` to the shipping_address JSONB
-2. Reset status from `requires_attention` back to `payment_confirmed`
-3. Clear the funding hold reason
-4. Allow the scheduler to retry Zinc submission
+### Gift Notification Email (to Recipient)
+Sent directly with data since no order lookup needed for recipient:
+- Recipient's first name
+- Sender's first name
+- Arrival date (execution_date)
+- Occasion (birthday, anniversary, etc.)
+- Content is deliberately vague to maintain the surprise
 
 ---
 
-## Technical Details
+## Technical Notes
 
-### Affected Flow
-1. User clicks "Approve & Order" on auto-gift approval page
-2. `approve-auto-gift` creates order with `shipping_address` from recipient profile
-3. **BUG**: Name not included in shipping_address
-4. `scheduled-order-processor` triggers `process-order-v2`
-5. `process-order-v2` validates required fields (name, address, city, state, zip)
-6. **FAILURE**: `name` field missing → status set to `requires_attention`
+1. **Non-Blocking Emails**: Email failures are logged but don't fail the approval flow. The order is already created and payment processed - emails are best-effort.
 
-### Why This Only Affects Auto-Gifts
-Regular checkout flows pass `session.shipping_details` from Stripe Checkout which includes the name. Auto-gift orders bypass Stripe Checkout's address collection and use the recipient profile directly.
+2. **Self-Purchase Check**: The recipient notification includes a guard (`recipientUserId !== userId`) to prevent sending "gift coming your way" if someone is buying for themselves.
+
+3. **First Name Extraction**: Sender name is split to extract first name only for a personal touch ("Charles sent you a gift" not "Charles Meeks sent you a gift").
+
+4. **Follows Single Source of Truth**: This establishes `approve-auto-gift` as the email trigger source for off-session auto-gift payments, consistent with `stripe-webhook-v2` being the trigger for checkout-based orders.
 
 ---
+
+## Verification After Deployment
+
+1. Re-run the scheduler with simulated date `2026-02-16`
+2. Check `process-email-queue` logs for queued emails
+3. Verify Charles receives order confirmation
+4. Verify Justin receives "gift coming your way" notification
 
 ## Summary of Changes
 
 | File | Change |
 |------|--------|
-| `approve-auto-gift/index.ts` | Add recipient name to shipping_address when creating orders |
-| Database (one-time fix) | Update Justin's order to include name in shipping_address |
-
----
-
-## Post-Fix Testing
-
-After deploying:
-1. Reset Justin's order status to `payment_confirmed`
-2. Run the scheduler again with simulated date `2026-02-16`
-3. Verify order status changes to `processing` with a `zinc_request_id`
+| `approve-auto-gift/index.ts` | Add email orchestrator calls for order confirmation (shopper) and gift notification (recipient) |

@@ -1,208 +1,121 @@
 
-# Fix Auto-Gift Approval Flow: Proper Payment Confirmation
+# Fix: Add Recipient Name to Shipping Address in Auto-Gift Flow
 
 ## Problem Summary
-When clicking "Approve & Order" redirects to Stripe Checkout, the execution is marked as `approved` immediately **before** the user actually pays. If the user abandons the checkout, the execution stays "approved" with no order, and subsequent attempts show "Already Approved" even though no gift was purchased.
+Justin's auto-gift order failed Zinc submission with error:
+**"Incomplete shipping address. Missing: name"**
 
-**Current State for Charles's execution:**
-- Status: `approved` 
-- Order ID: `null` (no order created)
-- Token: `approved_at` is set
+The order's `shipping_address` has all address fields but is missing the recipient's name.
 
 ---
 
 ## Root Cause Analysis
 
-### Current Broken Flow
-1. User clicks "Approve & Order"
-2. `approve-auto-gift` creates Stripe Checkout session
-3. Execution immediately marked `approved` (lines 527-535)
-4. User redirected to Stripe → abandons checkout
-5. No order created, but execution shows "approved"
-6. User tries again → "Already Approved" error
+### Data Structure Issue
+Justin's `profiles` table stores:
+```json
+{
+  "name": "Justin Meeks",                    // ← Name is separate column
+  "shipping_address": {
+    "address_line1": "309 Solana Hills Drive",
+    "city": "Solana Beach",
+    "state": "CA",
+    "zip_code": "92075"
+    // ❌ No "name" field inside shipping_address
+  }
+}
+```
 
-### Correct Flow Should Be
-1. User clicks "Approve & Order"
-2. `approve-auto-gift` creates Stripe Checkout session
-3. Execution marked `awaiting_payment` (new interim status)
-4. User completes payment on Stripe
-5. Webhook fires `checkout.session.completed`
-6. Webhook updates execution to `approved` and links order_id
+### Bug Location
+**File**: `supabase/functions/approve-auto-gift/index.ts` (Line 364)
+
+Current code:
+```typescript
+shipping_address: recipientProfile?.shipping_address,
+```
+
+This copies the shipping address JSONB directly **without adding the recipient name**.
+
+The `process-order-v2` function validates that `shipping_address.name` exists (required for Zinc/carrier delivery), but it's never populated for auto-gift orders.
 
 ---
 
 ## Implementation Plan
 
-### File 1: `supabase/functions/approve-auto-gift/index.ts`
+### File: `supabase/functions/approve-auto-gift/index.ts`
 
-**Change 1: Update status to `awaiting_payment` instead of `approved` (Lines 527-535)**
+**Change 1**: Fix off-session payment order creation (around line 364)
 
-Change the status update after creating checkout session:
+Replace:
 ```typescript
-// Update execution status to awaiting_payment (NOT approved yet)
-await supabase
-  .from('automated_gift_executions')
-  .update({
-    status: 'awaiting_payment',  // Changed from 'approved'
-    total_amount: grandTotal,
-    selected_products: productsToOrder,
-    stripe_checkout_session_id: checkoutData?.sessionId, // Store for webhook lookup
-    updated_at: new Date().toISOString(),
-  })
-  .eq('id', execution.id);
+shipping_address: recipientProfile?.shipping_address,
 ```
 
-**Change 2: Update token to `pending_payment` instead of `approved_at` (Lines 537-547)**
-
-Don't set `approved_at` yet since payment isn't confirmed:
+With:
 ```typescript
-// Update token to track checkout initiation (not approval yet)
-if (tokenRecord) {
-  await supabase
-    .from('email_approval_tokens')
-    .update({
-      checkout_initiated_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', tokenRecord.id);
-}
+shipping_address: recipientProfile?.shipping_address ? {
+  ...recipientProfile.shipping_address,
+  name: recipientProfile.shipping_address.name || recipientName,
+} : null,
 ```
 
-**Change 3: Update status check at the beginning (around line 175)**
+**Change 2**: Fix checkout fallback flow - ensure `deliveryGroups.recipient.address` includes name (around line 498-503)
 
-Allow re-processing of `awaiting_payment` executions:
+Update the delivery groups structure to include name in the address:
 ```typescript
-// Check for valid statuses (allow awaiting_payment to retry)
-if (execution.status === 'approved' || execution.status === 'completed') {
-  // Check if there's actually an order
-  if (execution.order_id) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'This auto-gift has already been approved and ordered.' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    );
-  }
-  // No order exists - allow retry
-  console.log('ℹ️ Execution marked approved but no order - allowing retry');
-}
+deliveryGroups: [{
+  recipient: {
+    name: recipientName,
+    email: recipientEmail || recipientProfile?.email,
+    address: recipientProfile?.shipping_address ? {
+      ...recipientProfile.shipping_address,
+      name: recipientName,
+    } : null,
+  },
+  // ...
+}],
 ```
 
 ---
 
-### File 2: `supabase/functions/stripe-webhook-v2/index.ts`
+## Additional Fix: Update Existing Order
 
-**Change: Add execution update after order creation**
+After deploying the code fix, we need to fix Justin's existing order by adding the name to the shipping address.
 
-After successfully creating an order with `is_auto_gift: true`, update the corresponding execution record. Add this logic after order creation (around line 724):
-
-```typescript
-// Update automated_gift_execution if this is an auto-gift order
-if (isAutoGift && metadata.auto_gift_execution_id) {
-  console.log(`📦 Updating auto-gift execution: ${metadata.auto_gift_execution_id}`);
-  
-  const { error: execUpdateError } = await supabase
-    .from('automated_gift_executions')
-    .update({
-      status: 'approved',
-      order_id: parentOrder.id,
-      payment_status: 'paid',
-      payment_confirmed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', metadata.auto_gift_execution_id);
-
-  if (execUpdateError) {
-    console.error('⚠️ Failed to update auto-gift execution:', execUpdateError);
-    // Don't throw - order is still created successfully
-  } else {
-    console.log('✅ Auto-gift execution updated with order reference');
-  }
-
-  // Also update the approval token
-  const { error: tokenError } = await supabase
-    .from('email_approval_tokens')
-    .update({
-      approved_at: new Date().toISOString(),
-      approved_via: metadata.approved_via || 'checkout',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('execution_id', metadata.auto_gift_execution_id)
-    .is('approved_at', null);
-
-  if (!tokenError) {
-    console.log('✅ Approval token updated');
-  }
-}
-```
-
----
-
-### File 3: `src/components/auto-gifts/AutoGiftApprovalPage.tsx`
-
-**Change: Handle `awaiting_payment` status in the UI**
-
-Update the status check to allow retry for `awaiting_payment`:
-```typescript
-// Allow retry if status is awaiting_payment (user abandoned checkout)
-if (data.status === 'approved' && data.order_id) {
-  setAlreadyApproved(true);
-} else if (data.status === 'awaiting_payment') {
-  // Allow user to retry checkout
-  setApprovalData(data);
-}
-```
-
----
-
-## Database Column Addition (Optional)
-
-Add `stripe_checkout_session_id` column to `automated_gift_executions` to track the pending checkout:
-
+**SQL Fix**:
 ```sql
-ALTER TABLE automated_gift_executions 
-ADD COLUMN IF NOT EXISTS stripe_checkout_session_id TEXT;
+UPDATE orders 
+SET shipping_address = jsonb_set(
+  shipping_address, 
+  '{name}', 
+  '"Justin Meeks"'
+),
+status = 'payment_confirmed',
+funding_hold_reason = NULL,
+updated_at = NOW()
+WHERE id = '7cc03e10-0c00-458a-860a-e937a1850d8f';
 ```
+
+This will:
+1. Add `"name": "Justin Meeks"` to the shipping_address JSONB
+2. Reset status from `requires_attention` back to `payment_confirmed`
+3. Clear the funding hold reason
+4. Allow the scheduler to retry Zinc submission
 
 ---
 
-## Flow Diagram
+## Technical Details
 
-```text
-User clicks "Approve & Order"
-        │
-        ▼
-┌─────────────────────────────────┐
-│   approve-auto-gift             │
-│   Creates Checkout Session      │
-│   Status → 'awaiting_payment'   │
-└─────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────┐
-│   Stripe Checkout Page          │
-│   User enters payment           │
-└─────────────────────────────────┘
-        │
-    ┌───┴───┐
-    │       │
-    ▼       ▼
-  Pays    Abandons
-    │       │
-    ▼       ▼
-┌─────────┐ ┌─────────────────────┐
-│ Webhook │ │ Status stays        │
-│ Fires   │ │ 'awaiting_payment'  │
-└─────────┘ │ User can retry      │
-    │       └─────────────────────┘
-    ▼
-┌─────────────────────────────────┐
-│   stripe-webhook-v2             │
-│   Creates Order                 │
-│   Updates execution:            │
-│   - status → 'approved'         │
-│   - order_id → new order        │
-│   - payment_status → 'paid'     │
-└─────────────────────────────────┘
-```
+### Affected Flow
+1. User clicks "Approve & Order" on auto-gift approval page
+2. `approve-auto-gift` creates order with `shipping_address` from recipient profile
+3. **BUG**: Name not included in shipping_address
+4. `scheduled-order-processor` triggers `process-order-v2`
+5. `process-order-v2` validates required fields (name, address, city, state, zip)
+6. **FAILURE**: `name` field missing → status set to `requires_attention`
+
+### Why This Only Affects Auto-Gifts
+Regular checkout flows pass `session.shipping_details` from Stripe Checkout which includes the name. Auto-gift orders bypass Stripe Checkout's address collection and use the recipient profile directly.
 
 ---
 
@@ -210,20 +123,14 @@ User clicks "Approve & Order"
 
 | File | Change |
 |------|--------|
-| `approve-auto-gift/index.ts` | Use `awaiting_payment` status instead of `approved` for checkout flow |
-| `approve-auto-gift/index.ts` | Allow retry if execution has no order_id |
-| `stripe-webhook-v2/index.ts` | Update execution record when auto-gift checkout completes |
-| `AutoGiftApprovalPage.tsx` | Handle `awaiting_payment` status in UI |
+| `approve-auto-gift/index.ts` | Add recipient name to shipping_address when creating orders |
+| Database (one-time fix) | Update Justin's order to include name in shipping_address |
 
-## Immediate Fix for Charles
+---
 
-Before deploying the full fix, reset Charles's execution to allow retry:
-```sql
-UPDATE automated_gift_executions 
-SET status = 'pending_approval', updated_at = NOW() 
-WHERE id = '74ccdab5-06f7-42e5-9ef2-fa347bbee23b';
+## Post-Fix Testing
 
-UPDATE email_approval_tokens 
-SET approved_at = NULL, approved_via = NULL, updated_at = NOW() 
-WHERE execution_id = '74ccdab5-06f7-42e5-9ef2-fa347bbee23b';
-```
+After deploying:
+1. Reset Justin's order status to `payment_confirmed`
+2. Run the scheduler again with simulated date `2026-02-16`
+3. Verify order status changes to `processing` with a `zinc_request_id`

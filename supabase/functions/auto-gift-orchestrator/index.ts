@@ -144,7 +144,52 @@ serve(async (req) => {
 
           console.log(`🎁 Found ${suggestedProducts.length} suggested products within $${rule.budget_limit} budget`);
 
-          // Trigger notification email
+          // Create execution record for approval tracking
+          const { data: execution, error: execError } = await supabase
+            .from('automated_gift_executions')
+            .insert({
+              rule_id: rule.id,
+              user_id: rule.user_id,
+              execution_date: rule.scheduled_date,
+              status: 'pending_approval',
+              selected_products: suggestedProducts,
+              total_amount: suggestedProducts.reduce((sum: number, p: any) => sum + (p.price || 0), 0),
+            })
+            .select('id')
+            .single();
+
+          if (execError) {
+            console.error('❌ Failed to create execution record:', execError.message);
+            throw new Error(`Failed to create execution record: ${execError.message}`);
+          }
+          console.log(`✅ Created execution record: ${execution.id}`);
+
+          // Generate secure approval token (same pattern as gift preview tokens)
+          const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
+          const expiresAt = new Date(simulatedDate);
+          expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
+
+          const { error: tokenError } = await supabase
+            .from('email_approval_tokens')
+            .insert({
+              execution_id: execution.id,
+              user_id: rule.user_id,
+              token: token,
+              expires_at: expiresAt.toISOString(),
+            });
+
+          if (tokenError) {
+            console.error('❌ Failed to create approval token:', tokenError.message);
+            throw new Error(`Failed to create approval token: ${tokenError.message}`);
+          }
+          console.log(`✅ Generated approval token: ${token.substring(0, 10)}...`);
+
+          // Build approval URLs
+          const baseUrl = 'https://elyphant.ai';
+          const approve_url = `${baseUrl}/auto-gifts/approve/${token}`;
+          const reject_url = `${baseUrl}/auto-gifts/approve/${token}?action=reject`;
+
+          // Trigger notification email with approval URLs
           const { data: userData } = await supabase
             .from('profiles')
             .select('email, name')
@@ -164,10 +209,13 @@ serve(async (req) => {
                   suggested_gifts: suggestedProducts.slice(0, 3),
                   budget: rule.budget_limit,
                   rule_id: rule.id,
+                  execution_id: execution.id,
+                  approve_url,
+                  reject_url,
                 }
               }
             });
-            console.log(`📧 Notification email sent to ${userData.email}`);
+            console.log(`📧 Notification email sent to ${userData.email} with approval links`);
           }
 
           // Log the notification event

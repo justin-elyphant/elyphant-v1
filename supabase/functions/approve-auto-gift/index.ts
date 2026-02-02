@@ -77,12 +77,12 @@ serve(async (req) => {
       }
 
       // Check if already processed - but allow retry if awaiting_payment with no order
-      const execution = tokenData.automated_gift_executions;
-      const hasCompletedOrder = execution?.order_id;
+      const tokenExecution = tokenData.automated_gift_executions;
+      const hasCompletedOrder = tokenExecution?.order_id;
       
       if (tokenData.approved_at || tokenData.rejected_at) {
         // Allow retry if approved but no order yet (user abandoned checkout)
-        if (tokenData.approved_at && !hasCompletedOrder && execution?.status !== 'approved') {
+        if (tokenData.approved_at && !hasCompletedOrder && tokenExecution?.status !== 'approved') {
           console.log('ℹ️ Token marked approved but no order exists - allowing retry');
         } else if (tokenData.approved_at && hasCompletedOrder) {
           console.log('ℹ️ Token already processed with order');

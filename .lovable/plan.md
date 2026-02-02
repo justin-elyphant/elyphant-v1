@@ -1,213 +1,96 @@
 
-# Complete Recurring Gift Email & Wishlist Badge Implementation
+# Fix Auto-Gift Approval Email Template Bugs
 
-## Overview
-This implementation adds three critical missing features to the recurring gift system:
-1. Shopper confirmation email when recurring rules are created
-2. Recipient notification email when a gift is purchased for them  
-3. Wishlist "Purchased" badge for auto-gift purchases
+## Problem Summary
+The auto-gift approval email sent to Charles contains two bugs:
+1. **Wrong greeting name**: Says "Hi Justin" instead of "Hi Charles"
+2. **Missing product title**: Shows "undefined" instead of the product name
+
+## Root Cause Analysis
+
+### Bug 1: Greeting Uses Wrong Name
+- **Location**: `supabase/functions/ecommerce-email-orchestrator/index.ts` line 427
+- **Issue**: Template uses `props.recipient_name` (the gift recipient - Justin) instead of `props.first_name` (the shopper - Charles)
+- **Data available**: The orchestrator correctly passes both `first_name: "Charles"` and `recipient_name: "Justin Meeks"`
+
+### Bug 2: Product Title Shows "undefined"
+- **Location**: `supabase/functions/ecommerce-email-orchestrator/index.ts` lines 434, 437
+- **Issue**: Template references `gift.title` but the orchestrator sends the field as `gift.name`
+- **Data mapping mismatch**:
+  - Orchestrator sends: `{ name: "TORRAS iPhone Case...", price: 42.74, image_url: "..." }`
+  - Template expects: `{ title: "...", price: "...", image_url: "..." }`
+
+## Implementation Plan
+
+### Step 1: Fix Greeting (Line 427)
+Change from:
+```html
+Hi ${props.recipient_name}, it's time to approve...
+```
+To:
+```html
+Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!
+```
+
+This makes the greeting address Charles (the shopper) and clarifies whose gift is being approved.
+
+### Step 2: Fix Product Title Display (Lines 434, 437)
+Change from:
+```html
+alt="${gift.title}"
+...
+${gift.title}
+```
+To:
+```html
+alt="${gift.name}"
+...
+${gift.name}
+```
+
+### Step 3: Format Price Display (Line 438)
+The price is passed as a number but displayed without currency formatting. Update to:
+```html
+${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}
+```
 
 ## Files to Modify
-
 | File | Changes |
 |------|---------|
-| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Add 2 new email templates + router cases |
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Pass wishlist IDs through checkout session |
-| `supabase/functions/stripe-webhook-v2/index.ts` | Send recipient notification email for gift orders |
+| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Fix 3 lines (427, 434, 437-438) |
 
-Note: `UnifiedGiftManagementService.ts` already triggers `auto_gift_rule_created` email - we just need the template.
+## Expected Result
+After fixing, the email will display:
+- **Greeting**: "Hi Charles, it's time to approve your upcoming auto-gift for Justin Meeks's birthday!"
+- **Product**: "TORRAS iPhone 16 Pro Max Case..." with $42.74 price
 
----
-
-## Part 1: Add Email Templates to Orchestrator
-
-### Template 1: `recurring_gift_rule_created`
-Email sent to shopper (Charles) when they create recurring gift rules.
-
-Content includes:
-- Personalized greeting using first name
-- Recipient's name and events configured
-- Budget per event
-- Auto-approve status
-- Link to manage recurring gifts
-
-### Template 2: `gift_coming_your_way`
-Email sent to recipient (Justin) when a gift is purchased for them.
-
-Content includes:
-- Personalized greeting using first name
-- Sender's first name (who sent the gift)
-- Estimated arrival date
-- Occasion (if auto-gift: "Valentine's Day", "Birthday")
-- No product details (keep it a surprise!)
-
-### Router Updates
-Add both templates to the `getEmailTemplate()` switch statement.
+## Testing
+After deployment, re-run the orchestrator with simulated date 02/12/2026 to verify the corrected email content.
 
 ---
 
-## Part 2: Pass Wishlist Metadata in Auto-Gift Orchestrator
+## Technical Details
 
-### Current Gap
-Lines 223-232 in `auto-gift-orchestrator/index.ts` fetch wishlist items but don't capture:
-- `wishlist.id` (the wishlist containing the item)
-- `item.id` (the wishlist item ID)
-
-### Fix
-When fetching the best wishlist item within budget, capture both IDs:
+### Current Code (Lines 424-442)
 ```typescript
-if (wishlist?.id) {
-  const { data: items } = await supabase
-    .from('wishlist_items')
-    .select('*')
-    .eq('wishlist_id', wishlist.id)
-    .lte('price', rule.budget_limit || 9999)
-    .order('price', { ascending: false })
-    .limit(1);
-  
-  if (items?.[0]) {
-    giftItem = {
-      ...items[0],
-      wishlist_id: wishlist.id,         // NEW: Capture wishlist ID
-      wishlist_item_id: items[0].id,    // NEW: Capture item ID
-    };
-  }
-}
+const autoGiftApprovalTemplate = (props: any): string => {
+  const content = `
+    <h2>Auto-Gift Approval Needed 🎁</h2>
+    <p>Hi ${props.recipient_name}, it's time to approve...</p>  // BUG: wrong name
+    ...
+    <img alt="${gift.title}" .../>  // BUG: undefined
+    <p>${gift.title}</p>  // BUG: undefined
+    <p>${gift.price}</p>  // Minor: no currency format
 ```
 
-Then in checkout session creation (line 296):
+### Fixed Code
 ```typescript
-cartItems: [{
-  product_id: giftItem.product_id,
-  product_name: giftName,
-  quantity: 1,
-  price: giftItem.price,
-  image_url: giftItem.image_url,
-  wishlist_id: giftItem.wishlist_id || null,      // NEW
-  wishlist_item_id: giftItem.wishlist_item_id || null,  // NEW
-}],
+const autoGiftApprovalTemplate = (props: any): string => {
+  const content = `
+    <h2>Auto-Gift Approval Needed 🎁</h2>
+    <p>Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!</p>
+    ...
+    <img alt="${gift.name}" .../>
+    <p>${gift.name}</p>
+    <p>${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}</p>
 ```
-
-The existing logic in `create-checkout-session` (lines 180-181) and `stripe-webhook-v2` (lines 583-604) will automatically flow these through to the `wishlist_item_purchases` table.
-
----
-
-## Part 3: Add Recipient Notification in stripe-webhook-v2
-
-### Trigger Point
-After order creation in `handleCheckoutSessionCompleted()`, when:
-- Order has a `recipient_id` that differs from `user_id` (shopper)
-- Order is a gift (has `isGift: true` or `is_auto_gift`)
-
-### Implementation
-After line 608 (`await triggerEmailOrchestrator(...)` - shopper email), add:
-
-```typescript
-// Send recipient notification for gift orders
-if (recipientId && recipientId !== userId) {
-  await sendRecipientGiftNotification(
-    recipientId, 
-    newOrder.id, 
-    userId, 
-    scheduledDate, 
-    isAutoGift ? metadata.occasion : null,
-    supabase
-  );
-}
-```
-
-New helper function fetches recipient email from `profiles` table and invokes email orchestrator with `gift_coming_your_way` event type.
-
----
-
-## Email Template Details
-
-### `recurring_gift_rule_created` Template
-
-```
-Subject: Recurring Gifts Set Up for {recipient_name}! 🔄
-
-Hi {firstName},
-
-You've successfully configured recurring gifts for {recipient_name}.
-
-Configured Events:
-🎂 Birthday - Feb 19
-❤️ Valentine's Day - Feb 14
-🎄 Christmas - Dec 25
-
-Budget: Up to ${budget} per gift
-Auto-approve: {Enabled/Disabled} - {explanation}
-
-We'll notify you 7 days before each event with gift suggestions.
-
-[Manage Recurring Gifts Button]
-```
-
-### `gift_coming_your_way` Template
-
-```
-Subject: {sender_name} sent you a gift! 🎁
-
-Hey {firstName}, exciting news!
-
-{sender_name} just sent you a gift{for occasion}!
-
-┌─────────────────────────┐
-│   Expected Arrival      │
-│   February 14, 2026     │
-└─────────────────────────┘
-
-We're keeping the details a surprise! 🤫
-
-[View Your Gifts Button]
-```
-
----
-
-## Data Flow Summary
-
-```
-RULE CREATION:
-AutoGiftSetupFlow → UnifiedGiftManagementService.createRule()
-     ↓
-📧 EMAIL: "recurring_gift_rule_created" → Shopper (already triggered, template added)
-
-T-4 PURCHASE:
-auto-gift-orchestrator → create-checkout-session (now includes wishlist_id, wishlist_item_id)
-     ↓
-stripe-webhook-v2 → Creates order
-     ↓
-📧 EMAIL: "order_confirmation" → Shopper (existing)
-📧 EMAIL: "gift_coming_your_way" → Recipient (NEW)
-     ↓
-wishlist_item_purchases INSERT (badge appears) ✓
-```
-
----
-
-## Testing Checklist
-
-- [ ] Create recurring gift rule → Verify shopper receives confirmation email
-- [ ] Trigger T-4 orchestrator → Verify checkout session includes `wishlist_id` and `wishlist_item_id`
-- [ ] Complete checkout for gift order → Verify recipient receives "gift coming" email
-- [ ] Verify "Purchased" badge appears on recipient's wishlist for auto-gifted items
-- [ ] Edge case: Self-purchase (recipient_id === user_id) → No duplicate email sent
-- [ ] Edge case: AI/search fallback (no wishlist item) → Graceful handling (no badge needed)
-
----
-
-## Technical Notes
-
-### Occasion Formatting Helper
-Transform date_type to display-friendly text:
-- `birthday` → "their Birthday"
-- `valentine` → "Valentine's Day"
-- `christmas` → "Christmas"
-- `mothers_day` → "Mother's Day"
-
-### Edge Cases Handled
-1. **Self-purchases**: Don't send "gift coming" if recipient_id === user_id
-2. **No wishlist item**: If AI/search fallback is used, wishlist_id will be null - no badge (correct behavior)
-3. **Pending invitations**: Recipient email comes from `pending_recipient_email` if not yet a user
-4. **No recipient profile**: Skip recipient notification gracefully with warning log

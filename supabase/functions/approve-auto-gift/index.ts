@@ -387,6 +387,36 @@ serve(async (req) => {
 
               console.log(`✅ Order created: ${newOrder.id} | Order #${newOrder.order_number}`);
 
+              // ===========================================
+              // INSERT WISHLIST PURCHASE RECORDS (for "Purchased" badge)
+              // ===========================================
+              for (const p of productsToOrder) {
+                if (p.wishlist_id && p.wishlist_item_id) {
+                  try {
+                    const { error: purchaseError } = await supabase
+                      .from('wishlist_item_purchases')
+                      .insert({
+                        wishlist_id: p.wishlist_id,
+                        item_id: p.wishlist_item_id,
+                        product_id: p.product_id,
+                        purchaser_user_id: userId,
+                        is_anonymous: false,
+                        order_id: newOrder.id,
+                        quantity: 1,
+                        price_paid: p.price,
+                      });
+                    
+                    if (purchaseError) {
+                      console.warn(`⚠️ Failed to record wishlist purchase for ${p.product_id}:`, purchaseError.message);
+                    } else {
+                      console.log(`✅ Recorded wishlist purchase for item ${p.wishlist_item_id}`);
+                    }
+                  } catch (err: any) {
+                    console.warn(`⚠️ Error recording wishlist purchase:`, err.message);
+                  }
+                }
+              }
+
               // Update execution with order reference
               await supabase.from('automated_gift_executions').update({
                 status: 'approved',

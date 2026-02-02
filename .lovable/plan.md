@@ -1,148 +1,136 @@
 
 
-# Fix Auto-Gift Approval Flow: Token and Execution Creation
+# Enhance Auto-Gift Approval Email Template
 
 ## Problem Summary
-When Charles clicks "Approve Gift" in the email, the link goes to `undefined` because:
-1. **No execution record exists** - The orchestrator doesn't create an `automated_gift_executions` record at T-7
-2. **No approval token exists** - The orchestrator doesn't generate a token in `email_approval_tokens`
-3. **No URLs passed to email** - The orchestrator doesn't send `approve_url` and `reject_url` to the email template
+The current auto-gift approval email has several UX issues:
+1. **Subject line is generic** - "Auto-Gift Approval Needed - birthday" doesn't include the recipient's name
+2. **No scheduled date shown** - Charles doesn't know when Justin's birthday is
+3. **No context or next steps** - Just a product list and buttons
+4. **Missing urgency indicator** - No mention of when they need to respond
 
-## Current Flow (Broken)
+## Proposed Improvements
+
+### 1. Subject Line Enhancement
+**Current:** `Auto-Gift Approval Needed - birthday`
+**Proposed:** `Auto-Gift Approval Needed - Justin Meeks's Birthday 🎁`
+
+This includes the recipient's name and capitalizes the occasion for better readability.
+
+### 2. Enhanced Email Body Structure
+
+**Add a "Scheduled Delivery" info card** (similar to order confirmation style):
+- Event date (e.g., "February 19, 2026")
+- Recipient name
+- Budget limit
+
+**Add a "Next Steps" section:**
+- Explain what happens when they approve
+- Explain the timeline (payment processed closer to date)
+- Provide deadline context (approve by X date)
+
+**Add a "Budget Summary" line:**
+- Show the total cost of suggested gifts vs. budget
+
+### Visual Mockup (Text Representation)
 ```
-Orchestrator (T-7) → Email sent with rule_id only → No token → "undefined" links
-```
-
-## Fixed Flow
-```
-Orchestrator (T-7) → Create execution → Generate token → Pass URLs to email → Working links
-```
-
----
-
-## Implementation Plan
-
-### Single File Change: `supabase/functions/auto-gift-orchestrator/index.ts`
-
-All fixes are contained within the T-7 notification block (lines 113-188). No new files, no new functions.
-
-#### Change 1: Create Execution Record (Before Email)
-After gathering suggested products, create an `automated_gift_executions` record with status `pending_approval`:
-
-```typescript
-// Create execution record for approval tracking
-const { data: execution, error: execError } = await supabase
-  .from('automated_gift_executions')
-  .insert({
-    rule_id: rule.id,
-    user_id: rule.user_id,
-    execution_date: rule.scheduled_date,
-    status: 'pending_approval',
-    selected_products: suggestedProducts,
-    total_amount: suggestedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
-  })
-  .select('id')
-  .single();
-```
-
-#### Change 2: Generate Approval Token
-Using the same pattern as `generate-gift-preview-token`, create a secure token:
-
-```typescript
-// Generate secure approval token (same pattern as gift preview tokens)
-const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
-const expiresAt = new Date();
-expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
-
-const { error: tokenError } = await supabase
-  .from('email_approval_tokens')
-  .insert({
-    execution_id: execution.id,
-    user_id: rule.user_id,
-    token: token,
-    expires_at: expiresAt.toISOString(),
-  });
-```
-
-#### Change 3: Build and Pass URLs to Email Template
-Construct the approval/reject URLs and add them to the email data:
-
-```typescript
-const baseUrl = 'https://elyphant.ai';
-const approve_url = `${baseUrl}/auto-gifts/approve/${token}`;
-const reject_url = `${baseUrl}/auto-gifts/approve/${token}?action=reject`;
-
-// Add to email data
-await supabase.functions.invoke('ecommerce-email-orchestrator', {
-  body: {
-    eventType: 'auto_gift_approval',
-    recipientEmail: userData.email,
-    data: {
-      // ...existing fields...
-      approve_url,   // NEW
-      reject_url,    // NEW
-      execution_id: execution.id,  // NEW (for logging)
-    }
-  }
-});
+┌────────────────────────────────────────────┐
+│ 🎁 Auto-Gift Approval Needed               │
+├────────────────────────────────────────────┤
+│ Hi Charles, it's time to approve your      │
+│ upcoming auto-gift for Justin Meeks!       │
+│                                            │
+│ ┌──────────────────────────────────────┐  │
+│ │ 📅 UPCOMING EVENT                     │  │
+│ │ Justin Meeks's Birthday              │  │
+│ │ February 19, 2026                     │  │
+│ │ Budget: Up to $75.00                  │  │
+│ └──────────────────────────────────────┘  │
+│                                            │
+│ Suggested Gifts from Wishlist:             │
+│ [Product Image] TORRAS iPhone Case $42.74  │
+│                                            │
+│ ┌──────────────────────────────────────┐  │
+│ │ 🔔 WHAT HAPPENS NEXT                  │  │
+│ │ • Approve by Feb 12 to ensure delivery│  │
+│ │ • We'll order the gift for you        │  │
+│ │ • Payment charged 7 days before       │  │
+│ │ • Gift arrives on their special day!  │  │
+│ └──────────────────────────────────────┘  │
+│                                            │
+│ [✅ Approve Gift]  [❌ Reject]             │
+│                                            │
+│ Questions? Reply to this email or visit    │
+│ your Recurring Gifts dashboard.            │
+└────────────────────────────────────────────┘
 ```
 
 ---
 
-## Files to Modify
+## Implementation Details
+
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Add 3 blocks in T-7 section (~30 lines) |
+| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Update subject line (line 752) + rewrite template (lines 424-456) |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Add `deadline_date` field to email data (line ~207) |
 
-## Existing Infrastructure Reused
+### Change 1: Update Subject Line (Line 752)
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| `email_approval_tokens` table | Exists | Database |
-| `automated_gift_executions` table | Exists | Database |
-| `AutoGiftApprovalPage` component | Exists | `src/components/auto-gifts/AutoGiftApprovalPage.tsx` |
-| `approve-auto-gift` function | Exists | `supabase/functions/approve-auto-gift/index.ts` |
-| Token lookup logic | Exists | Both use `.eq('token', token)` pattern |
-
-## Expected Result
-
-After fix, the email will contain working links:
-- **Approve URL**: `https://elyphant.ai/auto-gifts/approve/abc123...`
-- **Reject URL**: `https://elyphant.ai/auto-gifts/approve/abc123...?action=reject`
-
-The existing `AutoGiftApprovalPage` will:
-1. Look up the token in `email_approval_tokens`
-2. Load the execution and products
-3. Allow Charles to approve/reject
-
----
-
-## Technical Details
-
-### Insertion Point
-The changes go inside the existing T-7 block, after line 145 (after suggested products are gathered) and before line 155 (before the email is sent).
-
-### Current Code Structure (Lines 113-170)
 ```typescript
-// T-7: Notification stage
-if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS) {
-  // ... get wishlist items (existing)
-  
-  // === INSERT: Create execution record ===
-  // === INSERT: Generate approval token ===
-  
-  // ... send email (existing, but add URLs to data)
-  // ... log event (existing)
+// Current
+subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
+
+// Updated
+subject: `Auto-Gift Approval Needed - ${data.recipient_name}'s ${formatOccasion(data.occasion)} 🎁`
+```
+
+Add a helper function to capitalize the occasion:
+```typescript
+const formatOccasion = (occasion: string): string => {
+  if (!occasion) return 'Special Occasion';
+  return occasion.replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+```
+
+### Change 2: Add Deadline Date to Orchestrator Payload
+
+Calculate the approval deadline (e.g., 2 days before the scheduled checkout at T-4):
+```typescript
+// In auto-gift-orchestrator, add to email data:
+const deadlineDate = new Date(eventDate);
+deadlineDate.setDate(deadlineDate.getDate() - 5); // Approve by T-5 to process at T-4
+
+data: {
+  // ...existing fields
+  deadline_date: deadlineDate.toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric' 
+  }),
 }
 ```
 
-### Error Handling
-If execution or token creation fails, the orchestrator will log the error and add the rule to `results.failed`, maintaining existing error handling patterns.
+### Change 3: Rewrite Email Template
 
-## Testing
-After deployment:
-1. Re-run orchestrator with date **02/12/2026**
-2. Check Charles's email for working approve/reject links
-3. Click "Approve Gift" to verify the `AutoGiftApprovalPage` loads correctly
+The new template will include:
+1. **Event Info Card** - Purple gradient card with occasion, date, and budget
+2. **Suggested Gifts Section** - Existing product display (already working)
+3. **What Happens Next Card** - Light blue card explaining the flow
+4. **Action Buttons** - Existing approve/reject buttons
+5. **Footer Help Text** - Link to dashboard
+
+## Expected Result
+
+**Subject:** `Auto-Gift Approval Needed - Justin Meeks's Birthday 🎁`
+
+**Body:**
+- Clear event context (who, when, budget)
+- Deadline urgency (approve by Feb 12)
+- Next steps explanation
+- Same product display and action buttons
 

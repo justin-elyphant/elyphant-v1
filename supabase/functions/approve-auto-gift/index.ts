@@ -441,6 +441,56 @@ serve(async (req) => {
 
               console.log('✅ Off-session auto-gift approval completed successfully');
 
+              // ===========================================
+              // TRIGGER EMAIL NOTIFICATIONS
+              // ===========================================
+              
+              // Email 1: Order confirmation to shopper
+              try {
+                console.log('📧 Sending order confirmation to shopper...');
+                await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                  body: {
+                    eventType: 'order_confirmation',
+                    orderId: newOrder.id,
+                  }
+                });
+                console.log('✅ Order confirmation email triggered');
+              } catch (emailErr: any) {
+                console.error('⚠️ Failed to send order confirmation:', emailErr.message);
+                // Non-blocking - don't fail the approval for email issues
+              }
+
+              // Email 2: Gift notification to recipient (if different from shopper)
+              const recipientUserId = rule?.recipient_id;
+              if (recipientUserId && recipientUserId !== userId && recipientProfile?.email) {
+                try {
+                  console.log('📧 Sending gift notification to recipient...');
+                  
+                  // Get sender (shopper) profile for name
+                  const { data: senderProfile } = await supabase
+                    .from('profiles')
+                    .select('name')
+                    .eq('id', userId)
+                    .single();
+                  
+                  await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                    body: {
+                      eventType: 'gift_coming_your_way',
+                      recipientEmail: recipientProfile.email,
+                      data: {
+                        recipient_name: recipientName,
+                        sender_name: senderProfile?.name?.split(' ')[0] || 'Someone special',
+                        arrival_date: execution.execution_date,
+                        occasion: rule?.date_type,
+                      }
+                    }
+                  });
+                  console.log(`✅ Gift notification sent to recipient: ${recipientProfile.email}`);
+                } catch (emailErr: any) {
+                  console.error('⚠️ Failed to send gift notification to recipient:', emailErr.message);
+                }
+              }
+
               // Return success - NO checkout redirect needed
               // scheduled-order-processor Stage 2 will pick this up on execution_date
               return new Response(

@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/dashboard/tabs/OverviewTab";
 import AutoGiftsTab from "@/components/dashboard/tabs/AutoGiftsTab";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { user, signOut, isLoading } = useAuth();
@@ -148,23 +148,25 @@ const Dashboard = () => {
                 <TabsTrigger value="auto-gifts" className="flex-1 rounded-full min-h-[40px]">AI Gifting</TabsTrigger>
               </TabsList>
               
-              <AnimatePresence mode="wait">
+              <TabsContent value="overview" className="mt-0">
                 <motion.div
-                  key={activeTab}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
-                  <TabsContent value="overview" forceMount={activeTab === 'overview' ? true : undefined} className={activeTab !== 'overview' ? 'hidden' : ''}>
-                    <OverviewTab />
-                  </TabsContent>
-                  
-                  <TabsContent value="auto-gifts" forceMount={activeTab === 'auto-gifts' ? true : undefined} className={activeTab !== 'auto-gifts' ? 'hidden' : ''}>
-                    <AutoGiftsTab />
-                  </TabsContent>
+                  <OverviewTab />
                 </motion.div>
-              </AnimatePresence>
+              </TabsContent>
+              
+              <TabsContent value="auto-gifts" className="mt-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <AutoGiftsTab />
+                </motion.div>
+              </TabsContent>
             </Tabs>
           </ResponsiveContainer>
         </div>
@@ -211,23 +213,25 @@ const Dashboard = () => {
                 <TabsTrigger value="auto-gifts" className="flex-1 rounded-full min-h-[40px]">AI Gifting</TabsTrigger>
               </TabsList>
               
-              <AnimatePresence mode="wait">
+              <TabsContent value="overview" className="mt-0">
                 <motion.div
-                  key={activeTab}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
-                  <TabsContent value="overview" forceMount={activeTab === 'overview' ? true : undefined} className={activeTab !== 'overview' ? 'hidden' : ''}>
-                    <OverviewTab />
-                  </TabsContent>
-                  
-                  <TabsContent value="auto-gifts" forceMount={activeTab === 'auto-gifts' ? true : undefined} className={activeTab !== 'auto-gifts' ? 'hidden' : ''}>
-                    <AutoGiftsTab />
-                  </TabsContent>
+                  <OverviewTab />
                 </motion.div>
-              </AnimatePresence>
+              </TabsContent>
+              
+              <TabsContent value="auto-gifts" className="mt-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <AutoGiftsTab />
+                </motion.div>
+              </TabsContent>
             </Tabs>
           </ResponsiveContainer>
         </div>
@@ -263,23 +267,25 @@ const Dashboard = () => {
             <TabsTrigger value="auto-gifts" className="flex-1 rounded-full min-h-[40px]">AI Gifting</TabsTrigger>
           </TabsList>
           
-          <AnimatePresence mode="wait">
+          <TabsContent value="overview" className="mt-0">
             <motion.div
-              key={activeTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-              <TabsContent value="overview" forceMount={activeTab === 'overview' ? true : undefined} className={activeTab !== 'overview' ? 'hidden' : ''}>
-                <OverviewTab />
-              </TabsContent>
-              
-              <TabsContent value="auto-gifts" forceMount={activeTab === 'auto-gifts' ? true : undefined} className={activeTab !== 'auto-gifts' ? 'hidden' : ''}>
-                <AutoGiftsTab />
-              </TabsContent>
+              <OverviewTab />
             </motion.div>
-          </AnimatePresence>
+          </TabsContent>
+          
+          <TabsContent value="auto-gifts" className="mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              <AutoGiftsTab />
+            </motion.div>
+          </TabsContent>
         </Tabs>
       </div>
     </SidebarLayout>

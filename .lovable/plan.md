@@ -1,96 +1,148 @@
 
-# Fix Auto-Gift Approval Email Template Bugs
+
+# Fix Auto-Gift Approval Flow: Token and Execution Creation
 
 ## Problem Summary
-The auto-gift approval email sent to Charles contains two bugs:
-1. **Wrong greeting name**: Says "Hi Justin" instead of "Hi Charles"
-2. **Missing product title**: Shows "undefined" instead of the product name
+When Charles clicks "Approve Gift" in the email, the link goes to `undefined` because:
+1. **No execution record exists** - The orchestrator doesn't create an `automated_gift_executions` record at T-7
+2. **No approval token exists** - The orchestrator doesn't generate a token in `email_approval_tokens`
+3. **No URLs passed to email** - The orchestrator doesn't send `approve_url` and `reject_url` to the email template
 
-## Root Cause Analysis
+## Current Flow (Broken)
+```
+Orchestrator (T-7) → Email sent with rule_id only → No token → "undefined" links
+```
 
-### Bug 1: Greeting Uses Wrong Name
-- **Location**: `supabase/functions/ecommerce-email-orchestrator/index.ts` line 427
-- **Issue**: Template uses `props.recipient_name` (the gift recipient - Justin) instead of `props.first_name` (the shopper - Charles)
-- **Data available**: The orchestrator correctly passes both `first_name: "Charles"` and `recipient_name: "Justin Meeks"`
+## Fixed Flow
+```
+Orchestrator (T-7) → Create execution → Generate token → Pass URLs to email → Working links
+```
 
-### Bug 2: Product Title Shows "undefined"
-- **Location**: `supabase/functions/ecommerce-email-orchestrator/index.ts` lines 434, 437
-- **Issue**: Template references `gift.title` but the orchestrator sends the field as `gift.name`
-- **Data mapping mismatch**:
-  - Orchestrator sends: `{ name: "TORRAS iPhone Case...", price: 42.74, image_url: "..." }`
-  - Template expects: `{ title: "...", price: "...", image_url: "..." }`
+---
 
 ## Implementation Plan
 
-### Step 1: Fix Greeting (Line 427)
-Change from:
-```html
-Hi ${props.recipient_name}, it's time to approve...
-```
-To:
-```html
-Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!
+### Single File Change: `supabase/functions/auto-gift-orchestrator/index.ts`
+
+All fixes are contained within the T-7 notification block (lines 113-188). No new files, no new functions.
+
+#### Change 1: Create Execution Record (Before Email)
+After gathering suggested products, create an `automated_gift_executions` record with status `pending_approval`:
+
+```typescript
+// Create execution record for approval tracking
+const { data: execution, error: execError } = await supabase
+  .from('automated_gift_executions')
+  .insert({
+    rule_id: rule.id,
+    user_id: rule.user_id,
+    execution_date: rule.scheduled_date,
+    status: 'pending_approval',
+    selected_products: suggestedProducts,
+    total_amount: suggestedProducts.reduce((sum, p) => sum + (p.price || 0), 0),
+  })
+  .select('id')
+  .single();
 ```
 
-This makes the greeting address Charles (the shopper) and clarifies whose gift is being approved.
+#### Change 2: Generate Approval Token
+Using the same pattern as `generate-gift-preview-token`, create a secure token:
 
-### Step 2: Fix Product Title Display (Lines 434, 437)
-Change from:
-```html
-alt="${gift.title}"
-...
-${gift.title}
-```
-To:
-```html
-alt="${gift.name}"
-...
-${gift.name}
+```typescript
+// Generate secure approval token (same pattern as gift preview tokens)
+const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
+const expiresAt = new Date();
+expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
+
+const { error: tokenError } = await supabase
+  .from('email_approval_tokens')
+  .insert({
+    execution_id: execution.id,
+    user_id: rule.user_id,
+    token: token,
+    expires_at: expiresAt.toISOString(),
+  });
 ```
 
-### Step 3: Format Price Display (Line 438)
-The price is passed as a number but displayed without currency formatting. Update to:
-```html
-${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}
+#### Change 3: Build and Pass URLs to Email Template
+Construct the approval/reject URLs and add them to the email data:
+
+```typescript
+const baseUrl = 'https://elyphant.ai';
+const approve_url = `${baseUrl}/auto-gifts/approve/${token}`;
+const reject_url = `${baseUrl}/auto-gifts/approve/${token}?action=reject`;
+
+// Add to email data
+await supabase.functions.invoke('ecommerce-email-orchestrator', {
+  body: {
+    eventType: 'auto_gift_approval',
+    recipientEmail: userData.email,
+    data: {
+      // ...existing fields...
+      approve_url,   // NEW
+      reject_url,    // NEW
+      execution_id: execution.id,  // NEW (for logging)
+    }
+  }
+});
 ```
+
+---
 
 ## Files to Modify
+
 | File | Changes |
 |------|---------|
-| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Fix 3 lines (427, 434, 437-438) |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Add 3 blocks in T-7 section (~30 lines) |
+
+## Existing Infrastructure Reused
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| `email_approval_tokens` table | Exists | Database |
+| `automated_gift_executions` table | Exists | Database |
+| `AutoGiftApprovalPage` component | Exists | `src/components/auto-gifts/AutoGiftApprovalPage.tsx` |
+| `approve-auto-gift` function | Exists | `supabase/functions/approve-auto-gift/index.ts` |
+| Token lookup logic | Exists | Both use `.eq('token', token)` pattern |
 
 ## Expected Result
-After fixing, the email will display:
-- **Greeting**: "Hi Charles, it's time to approve your upcoming auto-gift for Justin Meeks's birthday!"
-- **Product**: "TORRAS iPhone 16 Pro Max Case..." with $42.74 price
 
-## Testing
-After deployment, re-run the orchestrator with simulated date 02/12/2026 to verify the corrected email content.
+After fix, the email will contain working links:
+- **Approve URL**: `https://elyphant.ai/auto-gifts/approve/abc123...`
+- **Reject URL**: `https://elyphant.ai/auto-gifts/approve/abc123...?action=reject`
+
+The existing `AutoGiftApprovalPage` will:
+1. Look up the token in `email_approval_tokens`
+2. Load the execution and products
+3. Allow Charles to approve/reject
 
 ---
 
 ## Technical Details
 
-### Current Code (Lines 424-442)
+### Insertion Point
+The changes go inside the existing T-7 block, after line 145 (after suggested products are gathered) and before line 155 (before the email is sent).
+
+### Current Code Structure (Lines 113-170)
 ```typescript
-const autoGiftApprovalTemplate = (props: any): string => {
-  const content = `
-    <h2>Auto-Gift Approval Needed 🎁</h2>
-    <p>Hi ${props.recipient_name}, it's time to approve...</p>  // BUG: wrong name
-    ...
-    <img alt="${gift.title}" .../>  // BUG: undefined
-    <p>${gift.title}</p>  // BUG: undefined
-    <p>${gift.price}</p>  // Minor: no currency format
+// T-7: Notification stage
+if (daysUntil === PAYMENT_LEAD_TIME_CONFIG.NOTIFICATION_LEAD_DAYS) {
+  // ... get wishlist items (existing)
+  
+  // === INSERT: Create execution record ===
+  // === INSERT: Generate approval token ===
+  
+  // ... send email (existing, but add URLs to data)
+  // ... log event (existing)
+}
 ```
 
-### Fixed Code
-```typescript
-const autoGiftApprovalTemplate = (props: any): string => {
-  const content = `
-    <h2>Auto-Gift Approval Needed 🎁</h2>
-    <p>Hi ${props.first_name}, it's time to approve your upcoming auto-gift for ${props.recipient_name}'s ${props.occasion}!</p>
-    ...
-    <img alt="${gift.name}" .../>
-    <p>${gift.name}</p>
-    <p>${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : gift.price}</p>
-```
+### Error Handling
+If execution or token creation fails, the orchestrator will log the error and add the rule to `results.failed`, maintaining existing error handling patterns.
+
+## Testing
+After deployment:
+1. Re-run orchestrator with date **02/12/2026**
+2. Check Charles's email for working approve/reject links
+3. Click "Approve Gift" to verify the `AutoGiftApprovalPage` loads correctly
+

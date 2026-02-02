@@ -76,18 +76,37 @@ serve(async (req) => {
         );
       }
 
-      // Check if already processed
+      // Check if already processed - but allow retry if awaiting_payment with no order
+      const execution = tokenData.automated_gift_executions;
+      const hasCompletedOrder = execution?.order_id;
+      
       if (tokenData.approved_at || tokenData.rejected_at) {
-        console.log('ℹ️ Token already processed');
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'This approval has already been processed',
-            alreadyProcessed: true,
-            wasApproved: !!tokenData.approved_at
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
+        // Allow retry if approved but no order yet (user abandoned checkout)
+        if (tokenData.approved_at && !hasCompletedOrder && execution?.status !== 'approved') {
+          console.log('ℹ️ Token marked approved but no order exists - allowing retry');
+        } else if (tokenData.approved_at && hasCompletedOrder) {
+          console.log('ℹ️ Token already processed with order');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'This approval has already been processed',
+              alreadyProcessed: true,
+              wasApproved: true
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        } else if (tokenData.rejected_at) {
+          console.log('ℹ️ Token was rejected');
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'This approval has already been rejected',
+              alreadyProcessed: true,
+              wasApproved: false
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+          );
+        }
       }
     }
 
@@ -523,24 +542,26 @@ serve(async (req) => {
 
     console.log('✅ Checkout session created:', checkoutData);
 
-    // Update execution status
+    // Update execution status to awaiting_payment (NOT approved yet - wait for webhook)
     await supabase
       .from('automated_gift_executions')
       .update({
-        status: 'approved',
+        status: 'awaiting_payment',  // Changed from 'approved' - wait for checkout completion
         total_amount: grandTotal,
         selected_products: productsToOrder,
+        stripe_payment_intent_id: checkoutData?.sessionId, // Store session ID for webhook lookup
         updated_at: new Date().toISOString(),
       })
       .eq('id', execution.id);
 
-    // Update token if exists
+    // Update token to track checkout initiation (not approval yet - wait for payment)
+    // Don't set approved_at until webhook confirms payment
     if (tokenRecord) {
       await supabase
         .from('email_approval_tokens')
         .update({
-          approved_at: new Date().toISOString(),
-          approved_via: token ? 'email_link' : 'dashboard',
+          // approved_at: null - don't set yet, wait for webhook
+          // Store that checkout was initiated
           updated_at: new Date().toISOString(),
         })
         .eq('id', tokenRecord.id);

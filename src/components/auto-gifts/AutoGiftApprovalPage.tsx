@@ -153,7 +153,15 @@ const AutoGiftApprovalPage = () => {
       const products = Array.isArray(execution.selected_products) ? execution.selected_products : [];
 
       const isExpired = new Date(tokenData.expires_at) < new Date();
-      const isAlreadyProcessed = !!tokenData.approved_at || !!tokenData.rejected_at;
+      
+      // Allow retry if:
+      // - Token rejected → truly processed
+      // - Token approved AND order exists → truly processed
+      // - Token approved but no order (awaiting_payment or abandoned checkout) → allow retry
+      const hasCompletedOrder = !!execution.order_id;
+      const isAwaitingPayment = execution.status === 'awaiting_payment';
+      const isAlreadyProcessed = !!tokenData.rejected_at || 
+        (!!tokenData.approved_at && hasCompletedOrder && !isAwaitingPayment);
 
       setApprovalData({
         token: tokenData,

@@ -74,15 +74,47 @@ const AutoGiftApprovalPage = () => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // Check for action parameter from email links
   const actionParam = searchParams.get('action');
 
+  // Check authentication status first
   useEffect(() => {
-    if (token) {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Save current URL to redirect back after login
+        const currentPath = window.location.pathname + window.location.search;
+        navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+        return;
+      }
+      
+      setIsAuthenticated(true);
+    };
+    
+    checkAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setIsAuthenticated(true);
+      } else if (event === 'SIGNED_OUT') {
+        const currentPath = window.location.pathname + window.location.search;
+        navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Only load approval data after authentication confirmed
+  useEffect(() => {
+    if (token && isAuthenticated) {
       loadApprovalData();
     }
-  }, [token]);
+  }, [token, isAuthenticated]);
 
   // Auto-scroll to rejection section if action=reject in URL
   useEffect(() => {
@@ -235,13 +267,14 @@ const AutoGiftApprovalPage = () => {
     );
   };
 
-  if (loading) {
+  // Show loading while checking auth or loading data
+  if (loading || isAuthenticated === null) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-spin" />
-            <p>Loading approval details...</p>
+            <p>{isAuthenticated === null ? 'Checking authentication...' : 'Loading approval details...'}</p>
           </div>
         </div>
       </div>

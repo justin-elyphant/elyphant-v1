@@ -244,25 +244,67 @@ serve(async (req) => {
       // Fetch the stripe payment method details
       const { data: paymentMethod, error: pmError } = await supabase
         .from('payment_methods')
-        .select('stripe_payment_method_id, stripe_customer_id')
+        .select('id, stripe_payment_method_id, stripe_customer_id')
         .eq('id', rule.payment_method_id)
         .single();
 
-      if (!pmError && paymentMethod?.stripe_payment_method_id && paymentMethod?.stripe_customer_id) {
-        console.log('💳 Found saved payment method, attempting off-session payment...');
-        
+      if (!pmError && paymentMethod?.stripe_payment_method_id) {
         const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
         if (stripeSecretKey) {
           const stripe = new Stripe(stripeSecretKey, {
             apiVersion: '2023-10-16',
           });
 
+          let stripeCustomerId = paymentMethod.stripe_customer_id;
+          
+          // If no customer ID stored, try to get it from Stripe or create one
+          if (!stripeCustomerId) {
+            console.log('ℹ️ No stripe_customer_id in DB, checking Stripe...');
+            
+            try {
+              // Retrieve the payment method from Stripe to check if it's attached to a customer
+              const stripePm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
+              
+              if (stripePm.customer) {
+                stripeCustomerId = stripePm.customer as string;
+                console.log(`✅ Found customer from Stripe PM: ${stripeCustomerId}`);
+              } else {
+                // Payment method not attached to a customer - create one and attach
+                console.log('ℹ️ PM not attached to customer, creating new customer...');
+                const newCustomer = await stripe.customers.create({
+                  email: userEmail,
+                  metadata: { user_id: userId },
+                });
+                
+                // Attach payment method to customer
+                await stripe.paymentMethods.attach(paymentMethod.stripe_payment_method_id, {
+                  customer: newCustomer.id,
+                });
+                
+                stripeCustomerId = newCustomer.id;
+                console.log(`✅ Created and attached customer: ${stripeCustomerId}`);
+              }
+              
+              // Update our DB with the customer ID for future use
+              await supabase.from('payment_methods').update({
+                stripe_customer_id: stripeCustomerId,
+              }).eq('id', paymentMethod.id);
+              
+            } catch (customerError: any) {
+              console.error('⚠️ Failed to resolve Stripe customer:', customerError.message);
+              // Fall through to checkout
+            }
+          }
+          
+          if (stripeCustomerId) {
+            console.log('💳 Found saved payment method, attempting off-session payment...');
+
           try {
             // Create PaymentIntent with confirm: true, off_session: true
             const paymentIntent = await stripe.paymentIntents.create({
               amount: Math.round(grandTotal * 100), // cents
               currency: 'usd',
-              customer: paymentMethod.stripe_customer_id,
+              customer: stripeCustomerId,
               payment_method: paymentMethod.stripe_payment_method_id,
               confirm: true,
               off_session: true,
@@ -402,9 +444,8 @@ serve(async (req) => {
             console.error('⚠️ Off-session payment failed:', stripeError.message);
             // Fall through to Checkout Session flow
           }
+          }
         }
-      } else {
-        console.log('ℹ️ No saved payment method with customer ID, using Checkout Session');
       }
     }
 

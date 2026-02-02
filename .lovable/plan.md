@@ -1,93 +1,92 @@
 
-
-# Enhance Auto-Gift Approval Email Template
+# Fix Auto-Gift Approval Page: Product Display & Event Context
 
 ## Problem Summary
-The current auto-gift approval email has several UX issues:
-1. **Subject line is generic** - "Auto-Gift Approval Needed - birthday" doesn't include the recipient's name
-2. **No scheduled date shown** - Charles doesn't know when Justin's birthday is
-3. **No context or next steps** - Just a product list and buttons
-4. **Missing urgency indicator** - No mention of when they need to respond
+The Auto-Gift Approval Page displays incomplete product information:
+1. **No product image** - Component looks for `product.image` but data has `image_url`
+2. **No product name** - Shows bullet point because component looks for `product.title` but data has `name`
+3. **Shows raw UUID** - "Event: b37b3dc8-ac3a..." instead of "Justin Meeks's Birthday - February 19, 2026"
+4. **Missing recipient context** - No indication of who the gift is for
 
-## Proposed Improvements
+## Root Cause: Field Name Mismatch
 
-### 1. Subject Line Enhancement
-**Current:** `Auto-Gift Approval Needed - birthday`
-**Proposed:** `Auto-Gift Approval Needed - Justin Meeks's Birthday 🎁`
+| Orchestrator Stores | Approval Page Expects |
+|---------------------|----------------------|
+| `product.name` | `product.title` |
+| `product.image_url` | `product.image` |
+| `product.product_id` | `product.product_id` ✓ |
+| `product.price` | `product.price` ✓ |
+| (not stored) | `product.category` |
+| (not stored) | `product.retailer` |
 
-This includes the recipient's name and capitalizes the occasion for better readability.
-
-### 2. Enhanced Email Body Structure
-
-**Add a "Scheduled Delivery" info card** (similar to order confirmation style):
-- Event date (e.g., "February 19, 2026")
-- Recipient name
-- Budget limit
-
-**Add a "Next Steps" section:**
-- Explain what happens when they approve
-- Explain the timeline (payment processed closer to date)
-- Provide deadline context (approve by X date)
-
-**Add a "Budget Summary" line:**
-- Show the total cost of suggested gifts vs. budget
-
-### Visual Mockup (Text Representation)
-```
-┌────────────────────────────────────────────┐
-│ 🎁 Auto-Gift Approval Needed               │
-├────────────────────────────────────────────┤
-│ Hi Charles, it's time to approve your      │
-│ upcoming auto-gift for Justin Meeks!       │
-│                                            │
-│ ┌──────────────────────────────────────┐  │
-│ │ 📅 UPCOMING EVENT                     │  │
-│ │ Justin Meeks's Birthday              │  │
-│ │ February 19, 2026                     │  │
-│ │ Budget: Up to $75.00                  │  │
-│ └──────────────────────────────────────┘  │
-│                                            │
-│ Suggested Gifts from Wishlist:             │
-│ [Product Image] TORRAS iPhone Case $42.74  │
-│                                            │
-│ ┌──────────────────────────────────────┐  │
-│ │ 🔔 WHAT HAPPENS NEXT                  │  │
-│ │ • Approve by Feb 12 to ensure delivery│  │
-│ │ • We'll order the gift for you        │  │
-│ │ • Payment charged 7 days before       │  │
-│ │ • Gift arrives on their special day!  │  │
-│ └──────────────────────────────────────┘  │
-│                                            │
-│ [✅ Approve Gift]  [❌ Reject]             │
-│                                            │
-│ Questions? Reply to this email or visit    │
-│ your Recurring Gifts dashboard.            │
-└────────────────────────────────────────────┘
-```
+Additionally, the page only displays `execution.rule_id` (a UUID) instead of using the rule's `date_type` and recipient info.
 
 ---
 
-## Implementation Details
+## Implementation Plan
 
-### Files to Modify
+### File to Modify
+`src/components/auto-gifts/AutoGiftApprovalPage.tsx`
 
-| File | Changes |
-|------|---------|
-| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Update subject line (line 752) + rewrite template (lines 424-456) |
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Add `deadline_date` field to email data (line ~207) |
+### Change 1: Fix Field Name Mapping in Product Display (Lines 287-314)
 
-### Change 1: Update Subject Line (Line 752)
+Update the product rendering to check for both old and new field names:
 
-```typescript
-// Current
-subject: `Auto-Gift Approval Needed - ${data.occasion || 'Special Occasion'}`
-
-// Updated
-subject: `Auto-Gift Approval Needed - ${data.recipient_name}'s ${formatOccasion(data.occasion)} 🎁`
+```tsx
+{approvalData.products.map((product: any) => (
+  <div key={product.product_id} className="flex items-center space-x-4 p-4 border rounded-lg">
+    <Checkbox ... />
+    {/* Support both image and image_url */}
+    {(product.image || product.image_url) && (
+      <img
+        src={product.image || product.image_url}
+        alt={product.title || product.name || 'Gift'}
+        className="w-16 h-16 object-cover rounded"
+      />
+    )}
+    <div className="flex-1">
+      {/* Support both title and name */}
+      <h3 className="font-medium">{product.title || product.name || 'Gift Item'}</h3>
+      {/* Only show category/retailer if available */}
+      {(product.category || product.retailer) && (
+        <p className="text-sm text-muted-foreground">
+          {[product.category, product.retailer].filter(Boolean).join(' • ')}
+        </p>
+      )}
+      ...
+    </div>
+  </div>
+))}
 ```
 
-Add a helper function to capitalize the occasion:
-```typescript
+### Change 2: Add Recipient Event Context Card (Before Product List)
+
+Replace the generic "Event: UUID" with human-readable context. The `approvalData.rule` contains `date_type` and `approvalData.rule.recipient` has the name:
+
+```tsx
+<CardHeader>
+  <CardTitle>Gift Selection Details</CardTitle>
+  <CardDescription className="space-y-1">
+    <div className="flex items-center gap-2">
+      <User className="h-4 w-4" />
+      <span className="font-medium">{recipientName}'s {formatOccasion(rule.date_type)}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <CalendarIcon className="h-4 w-4" />
+      <span>{formatDate(execution.execution_date)}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <span>Budget: Up to ${rule.budget_limit || 50}</span>
+    </div>
+  </CardDescription>
+</CardHeader>
+```
+
+### Change 3: Add Helper Functions
+
+Add simple formatters at the top of the component:
+
+```tsx
 const formatOccasion = (occasion: string): string => {
   if (!occasion) return 'Special Occasion';
   return occasion.replace(/_/g, ' ')
@@ -95,42 +94,64 @@ const formatOccasion = (occasion: string): string => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+
+const formatDate = (dateStr: string): string => {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch {
+    return dateStr;
+  }
+};
 ```
 
-### Change 2: Add Deadline Date to Orchestrator Payload
+### Change 4: Add Missing Imports
 
-Calculate the approval deadline (e.g., 2 days before the scheduled checkout at T-4):
-```typescript
-// In auto-gift-orchestrator, add to email data:
-const deadlineDate = new Date(eventDate);
-deadlineDate.setDate(deadlineDate.getDate() - 5); // Approve by T-5 to process at T-4
-
-data: {
-  // ...existing fields
-  deadline_date: deadlineDate.toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
-  }),
-}
+```tsx
+import { User, CalendarDays } from "lucide-react";
 ```
 
-### Change 3: Rewrite Email Template
+---
 
-The new template will include:
-1. **Event Info Card** - Purple gradient card with occasion, date, and budget
-2. **Suggested Gifts Section** - Existing product display (already working)
-3. **What Happens Next Card** - Light blue card explaining the flow
-4. **Action Buttons** - Existing approve/reject buttons
-5. **Footer Help Text** - Link to dashboard
+## Visual Comparison
+
+### Before (Current)
+```
+Gift Selection Details
+Event: b37b3dc8-ac3a-4549-a978-399ec6ae8ad5 • Total Budget: $50
+
+[✓] •                                    $42.74
+```
+
+### After (Fixed)
+```
+Gift Selection Details
+👤 Justin Meeks's Birthday
+📅 Wednesday, February 19, 2026
+Budget: Up to $50
+
+[✓] [PRODUCT IMAGE] TORRAS iPhone Case...  $42.74
+    ⭐ 4.5 (1,234 reviews)
+```
+
+---
+
+## Summary of Changes
+
+| Location | Change |
+|----------|--------|
+| Line 11 | Add `User, Calendar` imports |
+| Lines 22-35 | Add `formatOccasion` and `formatDate` helpers |
+| Lines 272-277 | Replace UUID with recipient/event info |
+| Lines 287-314 | Fix field mapping (`image`→`image_url`, `title`→`name`) |
 
 ## Expected Result
-
-**Subject:** `Auto-Gift Approval Needed - Justin Meeks's Birthday 🎁`
-
-**Body:**
-- Clear event context (who, when, budget)
-- Deadline urgency (approve by Feb 12)
-- Next steps explanation
-- Same product display and action buttons
-
+After this fix:
+- Product images will display correctly
+- Product names will show instead of bullet points
+- Header shows "Justin Meeks's Birthday - February 19, 2026" instead of UUID
+- Budget context is preserved

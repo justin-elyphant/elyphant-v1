@@ -50,6 +50,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const [products, setProducts] = useState<ProductWithSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [purchasedItemIds, setPurchasedItemIds] = useState<Set<string>>(new Set());
   
   // Extract display name for personalized headings
   const displayName = profile?.display_name || profile?.full_name || profile?.username || "Their";
@@ -60,7 +61,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
   const { generateRecommendations, recommendations } = useEnhancedGiftRecommendations();
   const { executeSearch } = useMarketplace();
 
-  // Fetch wishlist items directly from database
+  // Fetch wishlist items and purchased status directly from database
   useEffect(() => {
     const fetchWishlistItems = async () => {
       if (!profile?.id) return;
@@ -93,12 +94,13 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
         }
 
         console.log('📋 Found wishlists:', wishlists);
+        const wishlistIds = wishlists.map(w => w.id);
 
         // Get items from all these wishlists
         const { data: items, error: itemsError } = await supabase
           .from('wishlist_items')
           .select('*')
-          .in('wishlist_id', wishlists.map(w => w.id))
+          .in('wishlist_id', wishlistIds)
           .order('created_at', { ascending: false })
           .limit(12); // Get more items than we need for variety
 
@@ -109,13 +111,27 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
 
         console.log('🎁 Found wishlist items:', items);
         setWishlistItems(items || []);
+
+        // Fetch purchased items for these wishlists
+        const { data: purchasedData, error: purchasedError } = await supabase
+          .from('wishlist_item_purchases')
+          .select('item_id')
+          .in('wishlist_id', wishlistIds);
+
+        if (purchasedError) {
+          console.error('Error fetching purchased items:', purchasedError);
+        } else {
+          const purchasedIds = new Set(purchasedData?.map(p => p.item_id) || []);
+          console.log('✅ Purchased item IDs:', purchasedIds);
+          setPurchasedItemIds(purchasedIds);
+        }
       } catch (error) {
         console.error('Error in fetchWishlistItems:', error);
       }
     };
 
     fetchWishlistItems();
-  }, [profile?.id]);
+  }, [profile?.id, isOwnProfile]);
 
   // State for categorized products
   const [wishlistProducts, setWishlistProducts] = useState<ProductWithSource[]>([]);
@@ -489,6 +505,7 @@ const SocialProductGrid: React.FC<SocialProductGridProps> = ({ profile, isOwnPro
                 onWishlistAction={handleWishlistAction}
                 onRemoveFromWishlist={handleRemoveFromWishlist}
                 wishlistedProducts={wishlistedProducts}
+                purchasedItemIds={purchasedItemIds}
               />
             </div>
           )}

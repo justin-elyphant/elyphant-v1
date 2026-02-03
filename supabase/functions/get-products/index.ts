@@ -1282,8 +1282,10 @@ serve(async (req) => {
         filteredResults = filteredProducts;
       }
 
-      // Normalize prices
+      // Normalize prices BEFORE caching (Zinc returns cents, we store dollars)
+      // This MUST happen before processAndReturnResults which caches the data
       filteredResults = normalizePrices(filteredResults);
+      console.log(`💰 Normalized ${filteredResults.length} product prices from cents to dollars`);
 
       // Handle zero results with fallbacks
       if (!filteredResults || filteredResults.length === 0) {

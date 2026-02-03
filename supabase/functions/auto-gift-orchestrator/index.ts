@@ -202,17 +202,29 @@ serve(async (req) => {
                     });
                   }
                   
+                  // Filter out zero-price products (Zinc sometimes returns null/0)
+                  products = products.filter((p: any) => {
+                    const price = p.price;
+                    return price && price > 0;
+                  });
+                  
                   // Take 1 product per interest for diversity
                   if (products.length > 0) {
+                    // Safety net: normalize price for legacy cached data in cents
+                    const rawPrice = products[0].price;
+                    const normalizedPrice = typeof rawPrice === 'number' && rawPrice > 200 
+                      ? rawPrice / 100 
+                      : rawPrice;
+                    
                     const mapped = {
                       product_id: products[0].product_id || products[0].asin,
                       name: products[0].title || products[0].name,
-                      price: products[0].price,
+                      price: normalizedPrice,
                       image_url: products[0].image || products[0].main_image,
                       interest_source: interest
                     };
                     suggestedProducts.push(mapped);
-                    console.log(`✅ Found product from "${interest}": ${mapped.name?.substring(0, 50)}...`);
+                    console.log(`✅ Found product from "${interest}": ${mapped.name?.substring(0, 50)}... @ $${normalizedPrice}`);
                   }
                 } else {
                   console.warn(`⚠️ Search for "${interest}" failed:`, searchError);

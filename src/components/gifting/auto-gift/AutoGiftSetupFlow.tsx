@@ -135,6 +135,17 @@ const AutoGiftSetupFlow: React.FC<AutoGiftSetupFlowProps> = ({
     }
   }, [embedded, initialRecipient]);
 
+  // Sync autoApprove with user's global settings when settings load
+  useEffect(() => {
+    if (settings && !initialData) {
+      // Only update if this is a new rule (not editing existing)
+      setFormData(prev => ({
+        ...prev,
+        autoApprove: settings.auto_approve_gifts ?? prev.autoApprove
+      }));
+    }
+  }, [settings?.auto_approve_gifts]);
+
   // Helper to calculate next birthday from MM-DD format
   const calculateNextBirthday = (dobMMDD: string | undefined): string | null => {
     if (!dobMMDD || dobMMDD.length < 5) return null;

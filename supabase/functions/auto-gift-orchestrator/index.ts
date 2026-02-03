@@ -65,7 +65,7 @@ serve(async (req) => {
     // Include interests for 4-tier gift selection fallback
     const { data: unscheduledRules } = await supabase
       .from('auto_gifting_rules')
-      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob, interests)')
+      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob, interests, gender)')
       .eq('is_active', true)
       .is('scheduled_date', null);
 
@@ -169,32 +169,60 @@ serve(async (req) => {
             }
           }
 
-          // Tier 3 Fallback: If no wishlist items, try recipient profile interests
+          // Tier 3 Fallback: If no wishlist items, diversify across recipient profile interests
           if (suggestedProducts.length === 0 && rule.recipient_id) {
             const recipientInterests = rule.recipient?.interests as string[] | null;
+            const recipientGender = rule.recipient?.gender as string | null;
+            
             if (recipientInterests?.length) {
               console.log(`🎯 Using recipient interests for search: ${recipientInterests.slice(0, 3).join(', ')}`);
               
-              const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
-                body: {
-                  query: recipientInterests[0],
-                  limit: 5,
-                  filters: { maxPrice: rule.budget_limit || 100 }
+              // Search up to 3 different interests for variety (1 product per interest)
+              for (const interest of recipientInterests.slice(0, 3)) {
+                const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
+                  body: {
+                    query: interest,
+                    limit: 3, // Get a few to allow filtering
+                    filters: { max_price: rule.budget_limit || 100 }
+                  }
+                });
+                
+                if (!searchError) {
+                  let products = searchResult?.results || searchResult?.products || [];
+                  
+                  // Gender-aware filtering: exclude products for opposite gender
+                  if (recipientGender && products.length > 0) {
+                    const excludeTerms = recipientGender.toLowerCase() === 'male' 
+                      ? ['women', 'womens', "women's", 'ladies', 'female', 'girl']
+                      : ['men', 'mens', "men's", 'male', 'boy'];
+                    
+                    products = products.filter((p: any) => {
+                      const title = (p.title || p.name || '').toLowerCase();
+                      return !excludeTerms.some(term => title.includes(term));
+                    });
+                  }
+                  
+                  // Take 1 product per interest for diversity
+                  if (products.length > 0) {
+                    const mapped = {
+                      product_id: products[0].product_id || products[0].asin,
+                      name: products[0].title || products[0].name,
+                      price: products[0].price,
+                      image_url: products[0].image || products[0].main_image,
+                      interest_source: interest
+                    };
+                    suggestedProducts.push(mapped);
+                    console.log(`✅ Found product from "${interest}": ${mapped.name?.substring(0, 50)}...`);
+                  }
+                } else {
+                  console.warn(`⚠️ Search for "${interest}" failed:`, searchError);
                 }
-              });
-              
-              if (!searchError) {
-                const products = searchResult?.results || searchResult?.products || [];
-                suggestedProducts = products.slice(0, 3).map((p: any) => ({
-                  product_id: p.product_id || p.asin,
-                  name: p.title,
-                  price: p.price,
-                  image_url: p.image || p.main_image,
-                }));
-                console.log(`✅ Found ${suggestedProducts.length} products via interests search`);
-              } else {
-                console.warn('⚠️ Interests-based search failed:', searchError);
+                
+                // Stop if we have enough products
+                if (suggestedProducts.length >= 3) break;
               }
+              
+              console.log(`✅ Found ${suggestedProducts.length} products across ${Math.min(recipientInterests.length, 3)} interests`);
             }
           }
 

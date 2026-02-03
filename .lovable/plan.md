@@ -1,120 +1,92 @@
 
+# Recipient Address Privacy on Checkout Page
 
-## Fix "Purchased" Badge for Recurring Gift Items
+## Problem Statement
 
-### Problem Summary
-When a recurring gift is purchased from a recipient's wishlist, the purchased badge doesn't appear on the wishlist because the `wishlist_item_purchases` table is never populated for auto-gift orders.
+When scheduling a gift for a connection (e.g., Justin Meeks), the checkout page displays the full street address, city, state, and ZIP code. This violates the established platform privacy standard where **recipient addresses should only show city and state** to protect their privacy.
 
-### Root Cause Analysis (3 Missing Links)
-
-**Link 1: T-7 Notification Stage**
-In `auto-gift-orchestrator/index.ts` (lines 128-141), when building the `suggestedProducts` array from wishlist items, the `wishlist_id` and the wishlist item's database `id` are not captured:
-
-```text
-Current: { product_id, name, price, image_url }
-Missing: { wishlist_id, wishlist_item_id (the item's DB id) }
+**Current Behavior (Screenshot):**
+```
+Justin Meeks ✓
+309 Solana Hills Drive
+Solana Beach, CA 92075
 ```
 
-**Link 2: Approval Flow**
-In `approve-auto-gift/index.ts` (lines 352-359), when creating the order's `line_items`, these tracking fields aren't passed through.
+**Expected Behavior:**
+```
+Justin Meeks ✓
+Solana Beach, CA
+🔒 Full address securely stored for delivery
+```
 
-**Link 3: Purchase Tracking Insert**
-The `approve-auto-gift` function creates orders directly but doesn't insert into `wishlist_item_purchases` like `stripe-webhook-v2` does (lines 584-604).
+## Architectural Context
 
-### Solution: 2-Part Fix
+The project already has this privacy pattern implemented in two places:
+
+1. **Order Confirmation Page** (`src/pages/OrderConfirmation.tsx`, lines 710-722): Correctly shows only city/state with a Lock icon and privacy message for scheduled gifts.
+
+2. **Wishlist Purchase Banner** (`src/components/checkout/CheckoutShippingReview.tsx`, lines 143-146): Shows "🔒 Their full address is kept private for security" for wishlist purchases.
+
+The issue is that `CheckoutShippingReview.tsx` lines 236-252 still displays full addresses for non-wishlist gift recipients when `isPrivateAddress` is not explicitly set.
+
+## Root Cause
+
+The `isPrivateAddress` flag is only set to `true` for pending invitations (Cart.tsx line 162):
+```typescript
+isPrivateAddress: recipient.status === 'pending_invitation' || recipient.source === 'pending'
+```
+
+For **accepted connections** (like Justin), this flag is `false`, causing the full address to display.
+
+## Solution: Apply Privacy to All Gift Recipients
+
+Instead of relying on the `isPrivateAddress` flag, we should **always hide full addresses for gift recipients** and only show city/state. This aligns with the established "City & State Only (Always)" privacy standard documented in project memory.
 
 ---
 
-**Part 1: Capture Wishlist Metadata at T-7**
+## Technical Implementation
 
-Update `auto-gift-orchestrator/index.ts` to include tracking fields when building `suggestedProducts`:
+### File 1: `src/components/checkout/CheckoutShippingReview.tsx`
 
-```text
-File: supabase/functions/auto-gift-orchestrator/index.ts
-Location: Lines 128-141 (T-7 wishlist fetch)
+**Change:** Modify the delivery group address display (lines 236-252) to **always show the privacy-protected view** for gift recipients, matching the Order Confirmation pattern.
 
-Change SELECT to include: id, wishlist_id (already known)
+**Before (lines 236-252):**
+- Shows full address including street and ZIP code
+- Only uses privacy view when `isPrivateAddress` is true
 
-Then map to include:
-- wishlist_id: wishlist.id
-- wishlist_item_id: item.id  (the wishlist_items table primary key)
+**After:**
+- Always shows only city/state for gift recipients
+- Adds Lock icon with privacy message
+- Keeps the edit button functional (shopper can still modify address via QuickEditModal if needed)
+
+**UI Layout:**
 ```
+[Recipient Name] [Verification Badge]
+[City], [State]
+🔒 Full address securely stored for delivery  [Edit Icon]
+```
+
+### Why Keep the Edit Button?
+
+The QuickEditModal should remain functional because:
+1. Sometimes shoppers need to correct a recipient's address
+2. The address is still stored and sent to fulfillment
+3. Privacy is about display, not data access for the sender
 
 ---
 
-**Part 2: Insert Purchase Record on Approval**
-
-Update `approve-auto-gift/index.ts` to insert into `wishlist_item_purchases` after order creation (similar to `stripe-webhook-v2`):
-
-```text
-File: supabase/functions/approve-auto-gift/index.ts
-Location: After order creation (~line 388)
-
-For each item in productsToOrder:
-  If item has wishlist_id AND wishlist_item_id:
-    Insert into wishlist_item_purchases:
-      - wishlist_id
-      - item_id (= wishlist_item_id)
-      - product_id
-      - purchaser_user_id (= userId, the shopper)
-      - is_anonymous: false
-      - order_id
-      - quantity: 1
-      - price_paid
-```
-
----
-
-### Files to Modify
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `supabase/functions/auto-gift-orchestrator/index.ts` | Add `id` to SELECT, include `wishlist_id` and `wishlist_item_id` in suggestedProducts |
-| `supabase/functions/approve-auto-gift/index.ts` | Pass through tracking fields to `line_items`, add `wishlist_item_purchases` insert loop |
+| `src/components/checkout/CheckoutShippingReview.tsx` | Update lines 236-252 to always show city/state only for gift recipients, add Lock icon with privacy message |
 
-### Technical Details
+## Testing Recommendations
 
-**T-7 Orchestrator Change:**
-```typescript
-// Line 129-134: Update SELECT
-.select('id, product_id, name, title, price, image_url')
-
-// Line 136-141: Include in map
-suggestedProducts = (wishlistItems || []).map(item => ({
-  product_id: item.product_id,
-  name: item.name || item.title || 'Gift Item',
-  price: item.price,
-  image_url: item.image_url,
-  wishlist_id: wishlist.id,        // ADD
-  wishlist_item_id: item.id,       // ADD
-}));
-```
-
-**Approve Function Change:**
-```typescript
-// After line 388 (order created)
-for (const p of productsToOrder) {
-  if (p.wishlist_id && p.wishlist_item_id) {
-    await supabase.from('wishlist_item_purchases').insert({
-      wishlist_id: p.wishlist_id,
-      item_id: p.wishlist_item_id,
-      product_id: p.product_id,
-      purchaser_user_id: userId,
-      is_anonymous: false,
-      order_id: newOrder.id,
-      quantity: 1,
-      price_paid: p.price,
-    });
-  }
-}
-```
-
-### Outcome
-After this fix, when Charles approves an auto-gift from Justin's wishlist:
-1. The wishlist item's IDs flow through the execution record
-2. On approval, `wishlist_item_purchases` gets populated
-3. Justin's wishlist immediately shows the "Purchased" badge
-
-### Note on Current Order
-The existing order (`7cc03e10-0c00-458a-860a-e937a1850d8f`) was created before this fix. If needed, a manual SQL insert can add the purchase record for Justin's iPhone case.
-
+After implementation:
+1. Schedule a gift for a connection (e.g., Justin Meeks)
+2. Proceed to checkout
+3. Verify only city/state displays (not street/ZIP)
+4. Verify Lock icon and "Full address securely stored" message appears
+5. Test the Edit button still opens QuickEditModal with full address fields
+6. Verify the address still flows correctly to payment/fulfillment

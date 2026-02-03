@@ -21,6 +21,7 @@ import WishlistShareButton from "@/components/gifting/wishlist/share/WishlistSha
 import StandardBackButton from "@/components/shared/StandardBackButton";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
+import { useWishlistPurchasedItems } from "@/hooks/useWishlistPurchasedItems";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -38,6 +39,7 @@ const WishlistDetail = () => {
   const { profile } = useProfile();
   const { wishlists, loading, deleteWishlist, loadWishlists } = useUnifiedWishlistSystem();
   const { removeFromWishlist, updateWishlistSharing } = useWishlist();
+  const { purchasedItemIds } = useWishlistPurchasedItems(id);
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -304,6 +306,7 @@ const WishlistDetail = () => {
             items={wishlist.items || []}
             onSaveItem={handleRemoveItem}
             savingItemId={removingItemId}
+            purchasedItemIds={purchasedItemIds}
           />
         </div>
 

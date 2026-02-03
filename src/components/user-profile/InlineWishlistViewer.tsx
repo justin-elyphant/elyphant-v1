@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Calendar, Gift, ShoppingCart, ExternalLink, Heart } from "lucide-react";
+import { X, Calendar, Gift, ShoppingCart, ExternalLink, Heart, CheckCircle2 } from "lucide-react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlistPurchasedItems } from "@/hooks/useWishlistPurchasedItems";
 import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
 import { format, addYears, isWithinInterval } from "date-fns";
 import { motion } from "framer-motion";
@@ -46,6 +47,7 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
 }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { purchasedItemIds } = useWishlistPurchasedItems(wishlist.id);
   const [upcomingEvent, setUpcomingEvent] = useState<UpcomingEvent | null>(null);
   const [lastGiftDate, setLastGiftDate] = useState<string | null>(null);
   const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
@@ -302,72 +304,100 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
 
         {/* Wishlist Items Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {wishlist.items?.map((item) => (
-            <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-              <div className="relative aspect-square">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.title || item.name || 'Product'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <Gift className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <motion.div whileTap={{ scale: 0.9 }}>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(item);
-                      }}
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
+          {wishlist.items?.map((item) => {
+            const isPurchased = purchasedItemIds.has(item.id);
+            
+            return (
+              <Card 
+                key={item.id} 
+                className={`overflow-hidden group hover:shadow-lg transition-shadow ${isPurchased ? 'opacity-60' : ''}`}
+              >
+                <div className="relative aspect-square">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.title || item.name || 'Product'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Gift className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  
+                  {/* Purchased Badge */}
+                  {isPurchased && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <Badge className="text-xs bg-green-500 text-white border-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Purchased
+                      </Badge>
+                    </div>
+                  )}
+                  
+                  {/* Add to cart overlay - only show if not purchased */}
+                  {!isPurchased && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <motion.div whileTap={{ scale: 0.9 }}>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(item);
+                          }}
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="p-3 space-y-2">
-                <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
-                  {item.title || item.name || 'Product'}
-                </h3>
-                {item.price && (
-                  <p className="text-lg font-bold text-primary">
-                    ${item.price.toFixed(2)}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full min-h-[44px]"
-                      onClick={() => handleViewProduct(item.product_id)}
-                    >
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                  </motion.div>
-                  <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="w-full min-h-[44px]"
-                      onClick={() => handleAddToCart(item)}
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
-                  </motion.div>
+                <div className="p-3 space-y-2">
+                  <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
+                    {item.title || item.name || 'Product'}
+                  </h3>
+                  {item.price && (
+                    <p className="text-lg font-bold text-primary">
+                      ${item.price.toFixed(2)}
+                    </p>
+                  )}
+                  {isPurchased ? (
+                    <div className="flex items-center justify-center py-2 text-sm text-green-600 font-medium">
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                      Someone bought this!
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full min-h-[44px]"
+                          onClick={() => handleViewProduct(item.product_id)}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      </motion.div>
+                      <motion.div whileTap={{ scale: 0.97 }} className="flex-1">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="w-full min-h-[44px]"
+                          onClick={() => handleAddToCart(item)}
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      </motion.div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
 
         {/* Empty State */}

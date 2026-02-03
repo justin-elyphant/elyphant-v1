@@ -1246,25 +1246,27 @@ serve(async (req) => {
       
       let filteredResults = data.results || [];
       
-      // Price filtering
+      // Price filtering - Zinc returns prices in CENTS, so convert filter thresholds
       if ((filters?.min_price || filters?.max_price) && filteredResults.length > 0) {
-        const minPrice = filters.min_price;
-        const maxPrice = filters.max_price;
+        // Convert dollar thresholds to cents to match Zinc API response format
+        const minPriceInCents = filters.min_price ? filters.min_price * 100 : null;
+        const maxPriceInCents = filters.max_price ? filters.max_price * 100 : null;
         
         filteredResults = filteredResults.filter(product => {
           const price = product.price;
           if (!price) return true;
           
-          const priceInDollars = typeof price === 'number' ? price : parseFloat(price) || 0;
+          // Zinc prices are in cents (e.g., 3374 = $33.74)
+          const priceInCents = typeof price === 'number' ? price : parseFloat(price) || 0;
           
           let passesFilter = true;
-          if (minPrice && priceInDollars < minPrice) passesFilter = false;
-          if (maxPrice && priceInDollars > maxPrice) passesFilter = false;
+          if (minPriceInCents && priceInCents < minPriceInCents) passesFilter = false;
+          if (maxPriceInCents && priceInCents > maxPriceInCents) passesFilter = false;
           
           return passesFilter;
         });
         
-        console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products`);
+        console.log(`🎯 Post-search price filtering: ${data.results.length} → ${filteredResults.length} products (max: $${filters.max_price || 'none'})`);
       }
       
       // Apply brand-aware filter using shared module (NO DUPLICATE CODE)

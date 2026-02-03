@@ -1,140 +1,151 @@
 
-# Desktop Wishlist "Purchased" Badge & Progress Ring Implementation
+# Fix: Exclude Purchased Wishlist Items from Auto-Gift Orchestrator
 
 ## Problem Summary
 
-Based on the screenshots and code analysis, there are **two distinct missing features** on desktop:
+The `auto-gift-orchestrator` currently queries wishlist items **without excluding already-purchased items**. In Justin's test case:
 
-1. **Missing "Purchased" Badge on Profile Page** - The "My Wishlist Items" section (`SocialProductGrid.tsx` → `ResponsiveProductGrid.tsx`) doesn't display the "Purchased" badge for items that have been bought
-2. **Missing Per-Wishlist Progress Ring on Wishlists Page** - The individual wishlist cards (`UnifiedWishlistCollectionCard.tsx`) don't show the circular progress ring indicating purchase percentage that appears on mobile/tablet
+- **Wishlist**: 1 item (iPhone case at $42.74)
+- **Purchase Status**: Already purchased ✅
+- **Current Behavior**: Orchestrator would suggest/buy the same item again ❌
+- **Expected Behavior**: Should detect all items are purchased → fall back to `get-products` search
 
----
+## Root Cause
 
-## Technical Analysis
-
-### Issue 1: Profile Page "My Wishlist Items" - No Purchase Status
-
-**Files Affected:**
-- `src/components/user-profile/SocialProductGrid.tsx`
-- `src/components/user-profile/ResponsiveProductGrid.tsx`
-
-**Root Cause:**
-- `SocialProductGrid.tsx` fetches wishlist items directly from the database (lines 64-118)
-- It converts them to `ProductWithSource` objects (lines 170-194)
-- `ResponsiveProductGrid.tsx` receives these products but has **no awareness of purchase status**
-- The component only displays source badges (Wishlist, AI, Trending) but not purchased status
-
-**Fix Required:**
-1. Fetch purchased item IDs in `SocialProductGrid.tsx` using the existing `useWishlistPurchasedItems` hook pattern
-2. Pass `purchasedItemIds` to `ResponsiveProductGrid.tsx`
-3. Add "Purchased" badge rendering in `ResponsiveProductGrid.tsx` for items where `purchasedItemIds.has(item.product_id)`
-
-### Issue 2: Wishlists Page - No Progress Ring on Desktop Cards
-
-**Files Affected:**
-- `src/components/gifting/wishlist/UnifiedWishlistCollectionCard.tsx`
-
-**Root Cause:**
-- The `UnifiedWishlistCollectionCard` component displays:
-  - 2x2 image grid
-  - Item count badge
-  - Privacy toggle
-  - Title and description
-- It does **NOT** include any purchase progress indicator
-- The circular "100% gifted" ring visible in screenshots is not implemented in the code
-
-**Fix Required:**
-1. Calculate purchase percentage per wishlist using `WishlistPurchaseTrackingService`
-2. Add a circular progress ring around the image area showing gift completion percentage
-3. Show this on all variants (mobile, tablet, desktop)
+Both the **T-7 notification stage** (lines 128-134) and **T-4 payment capture stage** (lines 290-296) query `wishlist_items` without joining/filtering against `wishlist_item_purchases`.
 
 ---
 
-## Implementation Plan
+## Technical Implementation
 
-### Part 1: Add "Purchased" Badge to Profile Page Wishlist Items
+### File: `supabase/functions/auto-gift-orchestrator/index.ts`
 
-#### Step 1.1: Update SocialProductGrid.tsx
-- Import the `WishlistPurchaseTrackingService` or query `wishlist_item_purchases` directly
-- Fetch purchased item IDs for all visible wishlist items
-- Extend the `ProductWithSource` interface to include `isPurchased` flag
-- Map the flag when extracting wishlist products
+**Two locations need the same fix:**
 
-#### Step 1.2: Update ResponsiveProductGrid.tsx
-- Accept `purchasedItemIds` prop (Set of item IDs)
-- Add "Purchased" badge rendering for wishlist items
-- Add reduced opacity styling for purchased items
-- Desktop: Badge positioned at top-left with green CheckCircle icon
-- Mobile: Same positioning with smaller badge
+### Change 1: T-7 Notification Stage (lines 127-144)
 
-**UI Pattern (matching EnhancedWishlistCard):**
-```tsx
-{isPurchased && (
-  <Badge className="absolute top-2 left-2 z-10 text-xs bg-green-500 text-white border-green-600">
-    <CheckCircle2 className="h-3 w-3 mr-1" />
-    Purchased
-  </Badge>
-)}
+**Before:**
+```typescript
+const { data: wishlistItems } = await supabase
+  .from('wishlist_items')
+  .select('id, product_id, name, title, price, image_url')
+  .eq('wishlist_id', wishlist.id)
+  .lte('price', rule.budget_limit || 9999)
+  .order('price', { ascending: false })
+  .limit(3);
 ```
 
-### Part 2: Add Circular Progress Ring to Wishlist Cards
+**After:**
+```typescript
+// First get purchased item IDs
+const { data: purchasedItems } = await supabase
+  .from('wishlist_item_purchases')
+  .select('item_id')
+  .eq('wishlist_id', wishlist.id);
 
-#### Step 2.1: Create WishlistProgressRing Component
-- New file: `src/components/gifting/wishlist/WishlistProgressRing.tsx`
-- SVG-based circular progress indicator
-- Accepts `percentage` (0-100) and `size` props
-- Uses purple/pink gradient for the progress arc
-- Shows percentage text in center when > 0%
+const purchasedItemIds = (purchasedItems || []).map(p => p.item_id);
 
-#### Step 2.2: Update UnifiedWishlistCollectionCard.tsx
-- Fetch purchase stats per wishlist using the existing service
-- Wrap the image grid area with the progress ring
-- Ring shows purchase completion percentage
-- "100% Gifted" indicator when all items purchased
+// Query wishlist items excluding purchased ones
+let itemsQuery = supabase
+  .from('wishlist_items')
+  .select('id, product_id, name, title, price, image_url')
+  .eq('wishlist_id', wishlist.id)
+  .lte('price', rule.budget_limit || 9999)
+  .order('price', { ascending: false })
+  .limit(3);
 
-**UI Pattern:**
-```tsx
-<div className="relative aspect-square">
-  {/* Progress Ring - wraps the entire image area */}
-  <WishlistProgressRing percentage={purchasePercentage} className="absolute inset-0" />
-  
-  {/* Existing image grid content */}
-  {renderImageGrid()}
-</div>
+// Exclude purchased items if any exist
+if (purchasedItemIds.length > 0) {
+  itemsQuery = itemsQuery.not('id', 'in', `(${purchasedItemIds.join(',')})`);
+}
+
+const { data: wishlistItems } = await itemsQuery;
+```
+
+### Change 2: T-4 Payment Capture Stage (lines 289-306)
+
+**Apply same pattern:**
+```typescript
+// First get purchased item IDs
+const { data: purchasedItems } = await supabase
+  .from('wishlist_item_purchases')
+  .select('item_id')
+  .eq('wishlist_id', wishlist.id);
+
+const purchasedItemIds = (purchasedItems || []).map(p => p.item_id);
+
+// Query unpurchased wishlist items
+let itemsQuery = supabase
+  .from('wishlist_items')
+  .select('*')
+  .eq('wishlist_id', wishlist.id)
+  .lte('price', rule.budget_limit || 9999)
+  .order('price', { ascending: false })
+  .limit(1);
+
+if (purchasedItemIds.length > 0) {
+  itemsQuery = itemsQuery.not('id', 'in', `(${purchasedItemIds.join(',')})`);
+}
+
+const { data: items } = await itemsQuery;
+```
+
+### Enhanced Logging
+
+Add logging to show when fallback occurs:
+
+```typescript
+if (purchasedItemIds.length > 0) {
+  console.log(`🔍 Excluding ${purchasedItemIds.length} already-purchased item(s) from wishlist`);
+}
+
+// After wishlist query returns empty
+if (!items?.length) {
+  console.log('📋 No unpurchased wishlist items available, will try fallback search');
+}
 ```
 
 ---
 
-## Files to Create/Modify
+## Files Modified
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/gifting/wishlist/WishlistProgressRing.tsx` | **Create** | SVG circular progress ring component |
-| `src/components/user-profile/SocialProductGrid.tsx` | Modify | Fetch purchased item IDs, pass to ResponsiveProductGrid |
-| `src/components/user-profile/ResponsiveProductGrid.tsx` | Modify | Add purchasedItemIds prop, render "Purchased" badge |
-| `src/components/gifting/wishlist/UnifiedWishlistCollectionCard.tsx` | Modify | Add progress ring and per-wishlist purchase tracking |
+| File | Change |
+|------|--------|
+| `supabase/functions/auto-gift-orchestrator/index.ts` | Add purchased item exclusion to both T-7 and T-4 stages |
 
 ---
 
-## Testing Checklist
+## Test Plan for Justin's Case
 
 After implementation:
-1. **Profile Page Test:**
-   - Navigate to `/profile`
-   - Find "My Wishlist Items" section
-   - Verify purchased items show green "Purchased" badge
-   - Verify non-purchased items don't show badge
 
-2. **Wishlists Page Test:**
-   - Navigate to `/wishlists`
-   - Verify each wishlist card shows circular progress ring
-   - Verify "Test wishlist for recourring gifting" shows 100% (purple ring)
-   - Check mobile, tablet, and desktop views
+1. **Setup** (Charles creates rule):
+   - Navigate to Auto-Gifts section
+   - Add new rule for Justin with date_type: `christmas`
+   - Set budget (e.g., $50)
+   - Save with `gift_selection_criteria` containing preferred categories
 
-3. **Wishlist Detail Test:**
-   - Navigate to `/wishlist/df35823f-84f3-4804-a816-21b6e8cb1b26`
-   - Verify the iPhone case shows "Purchased" badge
+2. **Trigger T-7 via Trunkline**:
+   - Go to Admin → Auto-Gift Testing
+   - Set simulated date to 7 days before Christmas (e.g., `2025-12-18`)
+   - Click "Run Orchestrator"
+   - **Expected**: Logs show "Excluding 1 already-purchased item(s)" → "No unpurchased wishlist items" → Falls back to `get-products` search
 
-4. **Public Profile Test:**
-   - View the wishlist as a guest/connection
-   - Verify purchased items show status and prevent duplicate purchase
+3. **Verify Suggestion Email**:
+   - Check Charles's email for approval request
+   - Suggested product should be from marketplace search (NOT the iPhone case)
+
+4. **Trigger T-4 Payment Capture**:
+   - Set simulated date to 4 days before Christmas (e.g., `2025-12-21`)
+   - **Expected**: Same fallback logic, checkout created for marketplace product
+
+## Expected Log Output
+
+```
+🎁 Processing rule abc123: Justin's christmas in 7 days
+📬 Sending 7-day notification...
+🔍 Excluding 1 already-purchased item(s) from wishlist
+📋 No unpurchased wishlist items available, will try fallback search
+🔍 No wishlist item found, falling back to get-products search
+✅ Found product via search: [Product Name] at $XX.XX
+```

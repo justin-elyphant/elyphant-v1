@@ -1,139 +1,162 @@
 
-# Plan: Add Recipient Profile Interests Fallback to Auto-Gift Orchestrator
+# Plan: Fix Auto-Gift Orchestrator Product Selection Quality
 
-## Problem Summary
-When the recipient's wishlist is empty (or all items purchased) AND the auto-gift rule has no `gift_selection_criteria`, the orchestrator falls back to a generic `'gift'` search. This ignores valuable personalization data that exists in the recipient's profile.
+## Issues Identified
 
-**Current State:**
-- Justin's profile has interests: `["Dallas Cowboys", "Lululemon", "Adidas ultra boost", "MadeIn"]`
-- Charles's auto-gift rule for Justin has empty `gift_selection_criteria`
-- Justin's wishlist iPhone case was already purchased
-- Result: The system would search for generic "gift" instead of "Dallas Cowboys gear"
+Based on the screenshot and code analysis, there are 3 bugs affecting gift suggestions:
 
-## Solution: 4-Tier Gift Selection Hierarchy
+| Issue | Screenshot Evidence | Root Cause |
+|-------|---------------------|------------|
+| **$3,374 water bottle** | Shows $3374.00 instead of ~$33.74 | Price filtering happens BEFORE normalization in `get-products` |
+| **Women's jersey for male** | CeeDee Lamb Women's Jersey suggested | No gender-aware filtering for recipients |
+| **Products over $50 budget** | $97.49 jersey shown despite $50 limit | Same price normalization bug - cents treated as dollars |
+| **All gifts from one interest** | All 3 products are Dallas Cowboys | Only `recipientInterests[0]` is used |
+
+## Root Cause Analysis
+
+### Bug #1 & #3: Price Filtering on Raw Cents
+
+In `supabase/functions/get-products/index.ts`, the filtering flow is:
 
 ```text
-CURRENT LOGIC:
-┌─────────────────────────────────────────┐
-│ Tier 1: Unpurchased Wishlist Items      │ ← Check first
-├─────────────────────────────────────────┤
-│ Tier 2: Rule's gift_selection_criteria  │ ← Fallback if no wishlist
-├─────────────────────────────────────────┤
-│ Tier 3: Generic "gift" search           │ ← Last resort (too broad!)
-└─────────────────────────────────────────┘
-
-PROPOSED LOGIC:
-┌─────────────────────────────────────────┐
-│ Tier 1: Unpurchased Wishlist Items      │ ← Check first
-├─────────────────────────────────────────┤
-│ Tier 2: Rule's gift_selection_criteria  │ ← Fallback if no wishlist
-├─────────────────────────────────────────┤
-│ Tier 3: Recipient's Profile Interests   │ ← NEW! Use personalization
-├─────────────────────────────────────────┤
-│ Tier 4: Generic "gift" search           │ ← Last resort
-└─────────────────────────────────────────┘
+Zinc API Response (prices in CENTS: 3374, 4999, 9749)
+    ↓
+Price Filter: maxPrice=50 → 3374 > 50? YES, passes filter ❌
+    ↓  
+normalizePrices() → 3374/100 = $33.74
+    ↓
+Returns $33.74 BUT should have been filtered
 ```
 
-## Technical Implementation
+The filter at lines 1254-1264 treats raw Zinc prices as dollars, but Zinc returns cents.
 
-### File: `supabase/functions/auto-gift-orchestrator/index.ts`
+### Bug #2: No Gender-Aware Search
 
-**Change 1: Expand unscheduled rules query to include interests (line 67)**
+The orchestrator searches "Dallas Cowboys" without considering recipient gender. Results include women's jerseys because they match the search term.
 
-Currently fetches limited profile fields. Add `interests` to ensure it's available:
+### Bug #4: Single Interest Only
 
+Current code (line 180):
 ```typescript
-// Before
-.select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob)')
-
-// After
-.select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob, interests)')
+query: recipientInterests[0], // Only uses first interest
 ```
 
-**Change 2: Update search query logic in T-7 notification stage (around line 171)**
+## Solution
 
-After checking wishlist, if `suggestedProducts` is empty, use recipient interests for the search:
+### Change 1: Fix Price Filtering (Pre-Normalize Before Filter)
+
+**File:** `supabase/functions/get-products/index.ts`
+
+Move price normalization BEFORE the price filter, or convert the filter threshold to cents for comparison:
 
 ```typescript
-// If no wishlist items, try recipient profile interests
+// Before filtering, normalize filter values to match Zinc's cent-based pricing
+const maxPriceInCents = maxPrice ? maxPrice * 100 : null;
+const minPriceInCents = minPrice ? minPrice * 100 : null;
+
+filteredResults = filteredResults.filter(product => {
+  const price = product.price;
+  if (!price) return true;
+  
+  let passesFilter = true;
+  if (minPriceInCents && price < minPriceInCents) passesFilter = false;
+  if (maxPriceInCents && price > maxPriceInCents) passesFilter = false;
+  
+  return passesFilter;
+});
+```
+
+### Change 2: Diversify Across Multiple Interests
+
+**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
+
+Instead of searching ONE interest 3 times, search EACH interest once:
+
+```typescript
+// Tier 3 Fallback: Diversify across recipient interests
 if (suggestedProducts.length === 0 && rule.recipient_id) {
   const recipientInterests = rule.recipient?.interests as string[] | null;
-  if (recipientInterests?.length > 0) {
+  if (recipientInterests?.length) {
     console.log(`🎯 Using recipient interests for search: ${recipientInterests.slice(0, 3).join(', ')}`);
     
-    // Search using first interest
-    const { data: searchResult } = await supabase.functions.invoke('get-products', {
-      body: {
-        query: recipientInterests[0],
-        limit: 5,
-        filters: { maxPrice: rule.budget_limit || 100 }
+    // Search up to 3 different interests for variety
+    for (const interest of recipientInterests.slice(0, 3)) {
+      const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
+        body: {
+          query: interest,
+          limit: 2, // Get 1-2 products per interest
+          filters: { maxPrice: rule.budget_limit || 100 }
+        }
+      });
+      
+      if (!searchError) {
+        const products = searchResult?.results || searchResult?.products || [];
+        const mapped = products.slice(0, 1).map((p: any) => ({ // Take 1 per interest
+          product_id: p.product_id || p.asin,
+          name: p.title,
+          price: p.price,
+          image_url: p.image || p.main_image,
+          interest_source: interest // Track which interest this came from
+        }));
+        suggestedProducts.push(...mapped);
       }
-    });
+      
+      // Stop if we have enough products
+      if (suggestedProducts.length >= 3) break;
+    }
     
-    const products = searchResult?.results || searchResult?.products || [];
-    suggestedProducts = products.slice(0, 3).map((p: any) => ({
-      product_id: p.product_id || p.asin,
-      name: p.title,
-      price: p.price,
-      image_url: p.image || p.main_image,
-    }));
+    console.log(`✅ Found ${suggestedProducts.length} products across ${Math.min(recipientInterests.length, 3)} interests`);
   }
 }
 ```
 
-**Change 3: Update fallback logic in T-4 purchase stage (lines 357-392)**
+### Change 3: Add Gender Filter for Recipients (Optional Enhancement)
 
-Modify the search query construction to include recipient interests as a tier:
+**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
+
+If the recipient has gender in their profile, exclude products that don't match:
 
 ```typescript
-// Before (lines 360-363):
-const criteria = rule.gift_selection_criteria as any;
-const searchQuery = criteria.preferred_brands?.[0] 
-  || criteria.categories?.[0] 
-  || 'gift';
+// Fetch recipient gender for filtering
+const recipientGender = rule.recipient?.gender; // Requires adding 'gender' to the select query
 
-// After:
-const criteria = rule.gift_selection_criteria as any;
-const recipientInterests = rule.recipient?.interests as string[] | null;
-
-const searchQuery = criteria?.preferred_brands?.[0] 
-  || criteria?.categories?.[0] 
-  || recipientInterests?.[0]  // NEW: Use recipient's interests
-  || 'gift';
-
-console.log(`🔍 Search query source: ${
-  criteria?.preferred_brands?.[0] ? 'rule.preferred_brands' :
-  criteria?.categories?.[0] ? 'rule.categories' :
-  recipientInterests?.[0] ? 'recipient.interests' :
-  'generic fallback'
-}`);
+// Post-filter: Remove gender-mismatched products
+if (recipientGender && suggestedProducts.length > 0) {
+  const genderTerms = recipientGender === 'male' 
+    ? ['women', 'womens', "women's", 'ladies', 'female'] 
+    : ['men', 'mens', "men's", 'male'];
+  
+  suggestedProducts = suggestedProducts.filter(p => {
+    const title = (p.name || '').toLowerCase();
+    return !genderTerms.some(term => title.includes(term));
+  });
+}
 ```
 
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/auto-gift-orchestrator/index.ts` | 3 changes: query expansion, T-7 interests fallback, T-4 interests fallback |
+| `supabase/functions/get-products/index.ts` | Fix price filtering to account for Zinc's cent-based pricing |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | 1) Diversify across multiple interests, 2) Add gender mismatch filtering, 3) Add recipient gender to profile query |
 
 ## Expected Behavior After Fix
 
-When Charles's rule triggers for Justin's Christmas gift:
+When Charles's rule triggers for Justin (male, interests: Dallas Cowboys, Lululemon, Adidas Ultra Boost):
 
-1. **Tier 1**: Check Justin's wishlist - iPhone case already purchased, skip
-2. **Tier 2**: Check rule's `gift_selection_criteria` - empty, skip
-3. **Tier 3 (NEW)**: Check Justin's profile interests - finds "Dallas Cowboys"
-4. **Search**: Call `get-products` with query "Dallas Cowboys" under $50
-5. **Result**: Suggest Dallas Cowboys merchandise instead of generic gifts
+1. **Price Filtering**: Only products ≤ $50 are returned (filter correctly applied on normalized prices)
+2. **Diversity**: Suggestions include:
+   - 1 Dallas Cowboys product (e.g., hat, flag, mug)
+   - 1 Lululemon product (e.g., headband, socks)
+   - 1 Adidas Ultra Boost product (if under $50, or skip)
+3. **Gender Filtering**: Women's jerseys excluded because Justin is male
 
 ## Test Plan
 
-1. Deploy the updated orchestrator
-2. Re-run with simulated date `2026-12-18`
-3. Verify logs show: `🎯 Using recipient interests for search: Dallas Cowboys, Lululemon, Adidas ultra boost`
-4. Verify Charles receives approval email with Dallas Cowboys-related gift suggestions
-
-## Logging Improvements
-
-The implementation adds clear logging to trace which tier was used:
-- `🎯 Using recipient interests for search: ...` - when profile interests are used
-- `🔍 Search query source: recipient.interests` - when interests drive the T-4 purchase
+1. Deploy updated edge functions
+2. Re-run orchestrator with simulated date `2026-12-18`
+3. Verify:
+   - [ ] All suggested products are ≤ $50
+   - [ ] Products come from different interests (not all Cowboys)
+   - [ ] No women's products suggested for male recipient
+   - [ ] Prices display correctly in email ($33.74, not $3374)

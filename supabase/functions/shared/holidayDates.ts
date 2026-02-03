@@ -52,6 +52,11 @@ export const calculateNextBirthday = (dob: string, referenceDate?: Date): string
   return thisYearBirthday.toISOString().split('T')[0];
 };
 
+// Format date as YYYY-MM-DD without timezone conversion (avoids UTC shift bug)
+const formatLocalDate = (year: number, month: number, day: number): string => {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+
 /**
  * Calculate the next occurrence of a holiday
  * Handles both fixed dates (Christmas) and floating dates (Mother's Day, Father's Day)
@@ -64,16 +69,15 @@ export const calculateHolidayDate = (holidayKey: string, referenceDate?: Date): 
   const targetYear = currentDate.getFullYear();
   
   if (holiday.type === 'fixed') {
-    // Set time to end of day so holiday remains visible throughout the day
-    const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
+    // Use noon to avoid any timezone edge cases for comparison
+    const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!, 12, 0, 0);
     
     // If the holiday has passed this year, return next year
     if (holidayDate < currentDate) {
-      const nextYearDate = new Date(targetYear + 1, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
-      return nextYearDate.toISOString().split('T')[0];
+      return formatLocalDate(targetYear + 1, holiday.month, holiday.day!);
     }
     
-    return holidayDate.toISOString().split('T')[0];
+    return formatLocalDate(targetYear, holiday.month, holiday.day!);
   }
 
   if (holiday.type === 'floating' && holiday.week && holiday.weekday !== undefined) {
@@ -85,14 +89,15 @@ export const calculateHolidayDate = (holidayKey: string, referenceDate?: Date): 
     
     // Calculate the date for the nth occurrence
     const targetDate = firstTarget + (holiday.week - 1) * 7;
-    const holidayDate = new Date(targetYear, holiday.month - 1, targetDate, 23, 59, 59, 999);
+    // Use noon to avoid any timezone edge cases for comparison
+    const holidayDate = new Date(targetYear, holiday.month - 1, targetDate, 12, 0, 0);
     
     // If the holiday has passed this year, calculate for next year
     if (holidayDate < currentDate) {
       return calculateHolidayDate(holidayKey, new Date(targetYear + 1, 0, 1));
     }
     
-    return holidayDate.toISOString().split('T')[0];
+    return formatLocalDate(targetYear, holiday.month, targetDate);
   }
 
   return null;

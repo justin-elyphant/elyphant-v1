@@ -246,8 +246,12 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                                       showText={false}
                                     />
                                   </p>
-                                  <p className="break-words">{group.shippingAddress.address}</p>
-                                  <p className="break-words">{group.shippingAddress.city}, {group.shippingAddress.state} {group.shippingAddress.zipCode}</p>
+                                  <p className="text-muted-foreground">
+                                    {group.shippingAddress.city}, {group.shippingAddress.state}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    🔒 Full address securely stored for delivery
+                                  </p>
                                 </div>
                               )}
                             </div>

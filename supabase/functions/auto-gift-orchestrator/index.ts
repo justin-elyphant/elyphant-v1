@@ -124,14 +124,38 @@ serve(async (req) => {
               .eq('user_id', rule.recipient_id)
               .single();
 
-            if (wishlist?.id) {
-              const { data: wishlistItems } = await supabase
+          if (wishlist?.id) {
+              // First get purchased item IDs to exclude
+              const { data: purchasedItems } = await supabase
+                .from('wishlist_item_purchases')
+                .select('item_id')
+                .eq('wishlist_id', wishlist.id);
+
+              const purchasedItemIds = (purchasedItems || []).map(p => p.item_id);
+              
+              if (purchasedItemIds.length > 0) {
+                console.log(`🔍 Excluding ${purchasedItemIds.length} already-purchased item(s) from wishlist`);
+              }
+
+              // Query wishlist items excluding purchased ones
+              let itemsQuery = supabase
                 .from('wishlist_items')
                 .select('id, product_id, name, title, price, image_url')
                 .eq('wishlist_id', wishlist.id)
                 .lte('price', rule.budget_limit || 9999)
                 .order('price', { ascending: false })
                 .limit(3);
+
+              // Exclude purchased items if any exist
+              if (purchasedItemIds.length > 0) {
+                itemsQuery = itemsQuery.not('id', 'in', `(${purchasedItemIds.join(',')})`);
+              }
+
+              const { data: wishlistItems } = await itemsQuery;
+
+              if (!wishlistItems?.length && purchasedItemIds.length > 0) {
+                console.log('📋 No unpurchased wishlist items available, will try fallback search');
+              }
 
               suggestedProducts = (wishlistItems || []).map(item => ({
                 product_id: item.product_id,
@@ -287,13 +311,36 @@ serve(async (req) => {
               .single();
 
             if (wishlist?.id) {
-              const { data: items } = await supabase
+              // First get purchased item IDs to exclude
+              const { data: purchasedItems } = await supabase
+                .from('wishlist_item_purchases')
+                .select('item_id')
+                .eq('wishlist_id', wishlist.id);
+
+              const purchasedItemIds = (purchasedItems || []).map(p => p.item_id);
+              
+              if (purchasedItemIds.length > 0) {
+                console.log(`🔍 Excluding ${purchasedItemIds.length} already-purchased item(s) from wishlist`);
+              }
+
+              // Query unpurchased wishlist items
+              let itemsQuery = supabase
                 .from('wishlist_items')
                 .select('*')
                 .eq('wishlist_id', wishlist.id)
                 .lte('price', rule.budget_limit || 9999)
                 .order('price', { ascending: false })
                 .limit(1);
+
+              if (purchasedItemIds.length > 0) {
+                itemsQuery = itemsQuery.not('id', 'in', `(${purchasedItemIds.join(',')})`);
+              }
+
+              const { data: items } = await itemsQuery;
+
+              if (!items?.length && purchasedItemIds.length > 0) {
+                console.log('📋 No unpurchased wishlist items available, will try fallback search');
+              }
               
               if (items?.[0]) {
                 giftItem = {

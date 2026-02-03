@@ -62,11 +62,17 @@ serve(async (req) => {
 
     for (const order of allOrders) {
       try {
-        // Use zinc_request_id if zinc_order_id is missing (webhook timeout case)
-        const zincIdentifier = order.zinc_order_id || order.zinc_request_id;
-        const isWebhookTimeout = !order.zinc_order_id && order.zinc_request_id;
+        // Zinc API requires zinc_request_id (not zinc_order_id which is Amazon's merchant order ID)
+        // zinc_request_id: Zinc's internal request ID (e.g., '4421915eeffeacacd596eea63c2ac85a')
+        // zinc_order_id: Amazon's merchant order ID (e.g., '113-7307475-6287460')
+        if (!order.zinc_request_id) {
+          console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
+          continue;
+        }
+        const zincIdentifier = order.zinc_request_id;
+        const isWebhookTimeout = !order.zinc_order_id;
 
-        console.log(`🔍 Checking Zinc status for order: ${order.id} (${zincIdentifier}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
+        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
 
         // Check Zinc API for order status
         const zincResponse = await fetch(

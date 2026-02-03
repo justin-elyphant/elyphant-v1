@@ -62,9 +62,10 @@ serve(async (req) => {
     if (rulesError) throw rulesError;
 
     // Fallback: Resolve dates for rules with NULL scheduled_date
+    // Include interests for 4-tier gift selection fallback
     const { data: unscheduledRules } = await supabase
       .from('auto_gifting_rules')
-      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob)')
+      .select('*, recipient:profiles!auto_gifting_rules_recipient_id_fkey(id, name, email, dob, interests)')
       .eq('is_active', true)
       .is('scheduled_date', null);
 
@@ -165,6 +166,35 @@ serve(async (req) => {
                 wishlist_id: wishlist.id,         // For "Purchased" badge tracking
                 wishlist_item_id: item.id,        // For wishlist_item_purchases insert
               }));
+            }
+          }
+
+          // Tier 3 Fallback: If no wishlist items, try recipient profile interests
+          if (suggestedProducts.length === 0 && rule.recipient_id) {
+            const recipientInterests = rule.recipient?.interests as string[] | null;
+            if (recipientInterests?.length) {
+              console.log(`🎯 Using recipient interests for search: ${recipientInterests.slice(0, 3).join(', ')}`);
+              
+              const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
+                body: {
+                  query: recipientInterests[0],
+                  limit: 5,
+                  filters: { maxPrice: rule.budget_limit || 100 }
+                }
+              });
+              
+              if (!searchError) {
+                const products = searchResult?.results || searchResult?.products || [];
+                suggestedProducts = products.slice(0, 3).map((p: any) => ({
+                  product_id: p.product_id || p.asin,
+                  name: p.title,
+                  price: p.price,
+                  image_url: p.image || p.main_image,
+                }));
+                console.log(`✅ Found ${suggestedProducts.length} products via interests search`);
+              } else {
+                console.warn('⚠️ Interests-based search failed:', searchError);
+              }
             }
           }
 
@@ -353,14 +383,24 @@ serve(async (req) => {
             }
           }
 
-          // Fallback: If no wishlist item, use get-products with gift_selection_criteria
-          if (!giftItem && rule.gift_selection_criteria) {
-            console.log('🔍 No wishlist item found, falling back to get-products search');
+          // Fallback: If no wishlist item, use 4-tier search hierarchy
+          if (!giftItem) {
+            console.log('🔍 No wishlist item found, falling back to tiered search');
             
             const criteria = rule.gift_selection_criteria as any;
-            const searchQuery = criteria.preferred_brands?.[0] 
-              || criteria.categories?.[0] 
+            const recipientInterests = rule.recipient?.interests as string[] | null;
+            
+            // 4-tier search query: rule criteria → recipient interests → generic
+            const searchQuery = criteria?.preferred_brands?.[0] 
+              || criteria?.categories?.[0] 
+              || recipientInterests?.[0]  // NEW: Tier 3 - Use recipient's profile interests
               || 'gift';
+
+            const searchSource = criteria?.preferred_brands?.[0] ? 'rule.preferred_brands' :
+              criteria?.categories?.[0] ? 'rule.categories' :
+              recipientInterests?.[0] ? 'recipient.interests' :
+              'generic fallback';
+            console.log(`🔍 Search query: "${searchQuery}" (source: ${searchSource})`);
             
             const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
               body: {

@@ -1,62 +1,101 @@
 
-# Fix: Auto-Approve Toggle Not Syncing with User Settings
+# Fix: Email Wrong Recipient + Holiday Date Off-by-One Bug
 
-## Problem
+## Summary of Issues
 
-The "Auto-approve gifts" toggle in the Recurring Gift wizard always shows as **OFF** (unchecked) even when the user has previously enabled it. The toggle is not disabled - it can be toggled - but it doesn't reflect the user's saved preference.
+### Issue 1: Approval Email Sent to Wrong Person
+The approval email went to **Justin** (asking him to approve a gift for Charles) instead of **Charles** (asking him to approve a gift for Justin).
 
-## Root Cause
+**Root Cause**: The orchestrator processed an **old rule** (Justin → Charles created Jan 13) instead of the **new rule** (Charles → Justin created just now). This happened because:
+- Old rule: `scheduled_date: 2026-12-25` → T-7 = `2026-12-18` ✅ (triggered)
+- New rule: `scheduled_date: 2026-12-26` → T-7 = `2026-12-19` ❌ (not triggered)
 
-In `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx` (line 120):
+The email logic itself is correct - it emails `rule.user_id` (the gift-giver) about `rule.recipient_id` (the gift receiver).
 
-```typescript
-const [formData, setFormData] = useLocalStorage('autoGiftDraft', {
-  // ...other fields...
-  autoApprove: false,  // ❌ Hardcoded to false
-  // ...
-});
-```
+### Issue 2: Holiday Date Calculation Off-by-One
+Charles's new Christmas rule saved `2026-12-26` instead of `2026-12-25`. This is a **timezone bug** in the frontend date calculation.
 
-The `autoApprove` field is hardcoded to `false` instead of reading from `settings?.auto_approve_gifts`. Since `useLocalStorage` persists this value, subsequent opens of the wizard will read the stored `false` value.
-
-**Key insight**: The `settings` object (from `useAutoGifting` hook) contains `auto_approve_gifts`, but this is never used to initialize the form state.
+**Root Cause**: In `src/constants/holidayDates.ts`, the `calculateHolidayDate()` function:
+1. Creates a `Date` object at **23:59:59.999 local time**
+2. Calls `toISOString()` which converts to **UTC**
+3. For US Pacific users (UTC-8), `Dec 25, 2026 23:59:59 PST` → `Dec 26, 2026 07:59:59 UTC`
+4. The `.split('T')[0]` then extracts `2026-12-26` (wrong!)
 
 ---
 
-## Solution
+## Technical Solution
 
-Initialize the `autoApprove` form field from the user's global settings, similar to how `budgetLimit` already uses `settings?.default_budget_limit`.
+### Fix: Use UTC-safe Date String Formatting
 
-### Technical Changes
+**File: `src/constants/holidayDates.ts`**
 
-**File: `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx`**
+Instead of using `toISOString()` (which converts to UTC), manually format the date components to preserve the local date:
 
-**Change 1: Update form initialization (line 120)**
-
-| Before | After |
-|--------|-------|
-| `autoApprove: false` | `autoApprove: settings?.auto_approve_gifts ?? false` |
-
-**Change 2: Add effect to sync when settings load (new effect after line 136)**
-
-Since `settings` loads asynchronously (after the component mounts), we need an effect to update the form when settings become available:
-
+**Before (lines 87-97):**
 ```typescript
-// Sync autoApprove with settings when settings load
-useEffect(() => {
-  if (settings && !initialData) {
-    // Only update if this is a new rule (not editing existing)
-    setFormData(prev => ({
-      ...prev,
-      autoApprove: settings.auto_approve_gifts ?? prev.autoApprove
-    }));
+if (holiday.type === 'fixed') {
+  const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
+  
+  if (holidayDate < currentDate && !year) {
+    const nextYearDate = new Date(targetYear + 1, holiday.month - 1, holiday.day!, 23, 59, 59, 999);
+    return nextYearDate.toISOString().split('T')[0];
   }
-}, [settings?.auto_approve_gifts]);
+  
+  return holidayDate.toISOString().split('T')[0];
+}
 ```
 
-This ensures:
-- New rules inherit the user's global auto-approve preference
-- Editing existing rules still respects the initialData (though auto-approve is global, not per-rule)
+**After:**
+```typescript
+if (holiday.type === 'fixed') {
+  // Use noon to avoid any timezone edge cases for comparison
+  const holidayDate = new Date(targetYear, holiday.month - 1, holiday.day!, 12, 0, 0);
+  
+  if (holidayDate < currentDate && !year) {
+    // Return next year's date using local date components (not UTC)
+    const nextYear = targetYear + 1;
+    return `${nextYear}-${String(holiday.month).padStart(2, '0')}-${String(holiday.day!).padStart(2, '0')}`;
+  }
+  
+  // Return date string using local date components (not UTC conversion)
+  return `${targetYear}-${String(holiday.month).padStart(2, '0')}-${String(holiday.day!).padStart(2, '0')}`;
+}
+```
+
+**Same fix for floating holidays (lines 100-117):**
+```typescript
+if (holiday.type === 'floating' && holiday.week && holiday.weekday !== undefined) {
+  const firstOfMonth = new Date(targetYear, holiday.month - 1, 1);
+  const firstWeekday = firstOfMonth.getDay();
+  const firstTarget = 1 + (holiday.weekday - firstWeekday + 7) % 7;
+  const targetDate = firstTarget + (holiday.week - 1) * 7;
+  
+  // Use noon for comparison
+  const holidayDate = new Date(targetYear, holiday.month - 1, targetDate, 12, 0, 0);
+  
+  if (holidayDate < currentDate && !year) {
+    return calculateHolidayDate(holidayKey, targetYear + 1);
+  }
+  
+  // Return using local date components
+  return `${targetYear}-${String(holiday.month).padStart(2, '0')}-${String(targetDate).padStart(2, '0')}`;
+}
+```
+
+---
+
+## Helper Function (Optional but Cleaner)
+
+Add a helper at the top of the file:
+
+```typescript
+// Format date as YYYY-MM-DD without timezone conversion
+const formatLocalDate = (year: number, month: number, day: number): string => {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+```
+
+Then use `formatLocalDate(targetYear, holiday.month, holiday.day!)` throughout.
 
 ---
 
@@ -64,21 +103,35 @@ This ensures:
 
 | File | Change |
 |------|--------|
-| `src/components/gifting/auto-gift/AutoGiftSetupFlow.tsx` | Initialize `autoApprove` from settings; add sync effect |
+| `src/constants/holidayDates.ts` | Fix `calculateHolidayDate()` to use local date formatting instead of `toISOString()` |
 
 ---
 
-## Testing
+## Cleanup Required After Fix
 
-After implementation:
+Once the fix is deployed, Charles's existing Christmas rule needs to be updated:
 
-1. **Navigate to `/recurring-gifts`**
-2. **Click "Set Up Recurring Gift"**
-3. **Go to Step 3 (Notifications & Approval)**
-4. **Verify the "Auto-approve gifts" toggle reflects the user's saved preference**
-5. **Toggle it and save - verify it persists on next open**
+```sql
+-- Fix the incorrect scheduled_date for Charles's Christmas rule
+UPDATE auto_gifting_rules 
+SET scheduled_date = '2026-12-25' 
+WHERE id = '983de552-45b9-4f1d-a7e8-e9394852f629';
+```
 
-Expected behavior for Charles (current user):
-- If Charles has `auto_approve_gifts: false` in settings, toggle should be OFF
-- If Charles has `auto_approve_gifts: true` in settings, toggle should be ON
-- Toggling and saving should update the global setting
+Or Charles can delete and recreate the rule through the UI.
+
+---
+
+## Test Plan
+
+1. **Deploy the fix** to `src/constants/holidayDates.ts`
+2. **Fix Charles's existing rule** (SQL update or recreate)
+3. **Optional: Deactivate old Justin→Charles rule** to avoid confusion:
+   ```sql
+   UPDATE auto_gifting_rules SET is_active = false WHERE id = '4e7973f4-ab40-48e4-8068-5337161f5606';
+   ```
+4. **Re-run orchestrator** with simulated date `2026-12-18`
+5. **Verify**:
+   - Email goes to **Charles** (justincmeeks@hotmail.com)
+   - Subject mentions "Justin Meeks's Christmas"
+   - Body says "Hi Charles, approve your gift for Justin Meeks"

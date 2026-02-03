@@ -1,142 +1,118 @@
 
+# Plan: Fix Order Monitor Misinterpreting "request_processing" as Failure
 
-# Plan: Fix Product Pricing Normalization Chain
+## Issue Summary
 
-## Issues Identified
+The `order-monitor-v2` edge function is incorrectly marking orders as `failed` when Zinc returns a `request_processing` status. This is a critical bug because `request_processing` means **the order is still being worked on** - it's NOT a failure.
 
-Based on investigation, there are two core bugs causing the pricing problems in the auto-gift emails:
-
-| Issue | Evidence | Root Cause |
-|-------|----------|------------|
-| **$3,374 water bottle** | `products` table has `price: 3374.00` for product `B0DJCJ9DB7` | Raw Zinc cents cached BEFORE `normalizePrices()` is called |
-| **$0 Adidas shoes** | `products` table has `price: 0.00` for product `B09VCPFG24` | Zinc API returns null/0 for some products (no fix available) |
-| **$97 jersey passed $50 filter** | Appeared in previous run | Already fixed in prior update; filter now converts to cents |
-
-## Root Cause Deep Dive
-
-In `get-products/index.ts`, the execution order is problematic:
-
-```text
-1. Zinc API returns prices in CENTS (3374 = $33.74)
-2. Price filtering runs (NOW FIXED - converts max_price to cents)
-3. processAndReturnResults() is called (line 1308)
-   → Inside: cacheSearchResults() runs with RAW CENTS ❌
-   → Products cached with price: 3374
-4. normalizePrices() is called (line 1286) - but ONLY on filteredResults
-   → processedResults in cacheSearchResults still had raw cents
+### Evidence from Logs:
+```
+❌ Order db697d76-dd5e-4ab0-9389-b91996b60ee9 failed in Zinc: 
+   Request is currently processing and will complete soon.
 ```
 
-The `cacheSearchResults` at line 582 receives `processedResults` BEFORE any price normalization occurs.
+## Root Cause
+
+In `supabase/functions/order-monitor-v2/index.ts` at lines 124-125:
+
+```javascript
+const isFailed = zincData.code === 'failed' || 
+                 zincData.code === 'cancelled' ||
+                 zincData._type === 'error';  // ← Too broad!
+```
+
+The check `zincData._type === 'error'` catches ALL error types, but Zinc uses `_type: 'error'` for both:
+- **Actual failures**: `code: 'failed'`, `code: 'out_of_stock'`, etc.
+- **In-progress states**: `code: 'request_processing'` (not a failure!)
 
 ## Solution
 
-### Fix 1: Normalize Prices BEFORE Caching
+Update the failure detection logic to explicitly exclude `request_processing`:
 
-Move `normalizePrices()` to run BEFORE `processAndReturnResults()` so cached data has correct dollar values.
-
-**File:** `supabase/functions/get-products/index.ts`
-
-Current order (around lines 1280-1320):
 ```javascript
-// Current (WRONG ORDER):
-filteredResults = normalizePrices(filteredResults);  // Line 1286
-const searchResponse = await processAndReturnResults(...);  // Line 1308
-// cacheSearchResults inside processAndReturnResults uses raw cents!
+// Check for failed status - but NOT request_processing (still in progress)
+const isFailed = zincData.code === 'failed' || 
+                 zincData.code === 'cancelled' ||
+                 (zincData._type === 'error' && zincData.code !== 'request_processing');
 ```
 
-Fixed order:
-```javascript
-// Move normalization EARLIER in the pipeline
-// 1. Apply price filter (already using cents comparison)
-// 2. Apply brand filter
-// 3. Apply unsupported filter
-// 4. Normalize prices ← BEFORE processAndReturnResults
-// 5. processAndReturnResults (which caches the normalized data)
-```
-
-### Fix 2: Handle Zero-Price Products Gracefully
-
-Add validation in the orchestrator to skip products with `price === 0` or `price === null`:
-
-**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
+Additionally, add explicit handling for `request_processing` to log it as "still in progress" instead of silently falling through:
 
 ```javascript
-// After gender filtering, also filter out zero-price products
-if (products.length > 0) {
-  products = products.filter((p: any) => {
-    const price = p.price;
-    return price && price > 0;
-  });
+// Handle request_processing explicitly - NOT a failure
+if (zincData._type === 'error' && zincData.code === 'request_processing') {
+  console.log(`⏳ Order ${order.id} still processing in Zinc (request_processing state)`);
+  continue;  // Skip to next order, no status update needed
 }
 ```
 
-### Fix 3: Update Historical Cached Data
+## Implementation
 
-Run a one-time update to normalize existing cached prices in the `products` table:
+### File: `supabase/functions/order-monitor-v2/index.ts`
 
-```sql
--- Fix products with prices that appear to be in cents (> $200)
-UPDATE products 
-SET price = price / 100 
-WHERE price > 200 
-  AND retailer = 'amazon';
-```
+**Change 1: Add explicit request_processing handling (after line 97)**
 
-This converts values like `3374` → `33.74` for obviously-cents prices.
-
-### Fix 4: Add Fallback Normalization in Orchestrator
-
-As a safety net, normalize prices when mapping products in the orchestrator:
-
-**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
+Insert a check to recognize `request_processing` as a valid in-progress state:
 
 ```javascript
-// Normalize price (safety net for legacy cached data)
-const rawPrice = products[0].price;
-const normalizedPrice = typeof rawPrice === 'number' && rawPrice > 200 
-  ? rawPrice / 100 
-  : rawPrice;
-
-const mapped = {
-  product_id: products[0].product_id || products[0].asin,
-  name: products[0].title || products[0].name,
-  price: normalizedPrice,  // Use normalized value
-  image_url: products[0].image || products[0].main_image,
-  interest_source: interest
-};
+// Handle request_processing - this means Zinc is actively working on it
+if (zincData._type === 'error' && zincData.code === 'request_processing') {
+  console.log(`⏳ Order ${order.id} still processing in Zinc queue (request_processing)`);
+  continue; // Don't mark as failed, just wait for next poll
+}
 ```
+
+**Change 2: Update isFailed condition (lines 124-125)**
+
+Make the failure detection more precise:
+
+```javascript
+// Check for actual failed status - exclude request_processing
+const isFailed = zincData.code === 'failed' || 
+                 zincData.code === 'cancelled' ||
+                 zincData.code === 'out_of_stock' ||
+                 zincData.code === 'payment_failed' ||
+                 (zincData._type === 'error' && 
+                  zincData.code !== 'request_processing' &&
+                  zincData.code !== 'pending');
+```
+
+## Data Fix
+
+After deploying the fix, we need to restore the incorrectly-marked order:
+
+```sql
+UPDATE orders 
+SET status = 'processing',
+    notes = NULL
+WHERE id = 'db697d76-dd5e-4ab0-9389-b91996b60ee9';
+```
+
+## Test Verification
+
+After deployment:
+1. Re-run the scheduler/monitor
+2. Verify the order stays in `processing` status (not `failed`)
+3. Wait for Zinc webhook OR next monitor poll to update to `shipped`
+
+## Technical Notes
+
+| Zinc `_type` | Zinc `code` | Meaning | Our Action |
+|--------------|-------------|---------|------------|
+| `error` | `request_processing` | Order in Zinc queue, actively processing | Keep polling, stay `processing` |
+| `error` | `failed` | Order failed | Mark as `failed` |
+| `error` | `out_of_stock` | Product unavailable | Mark as `failed` |
+| `order_response` | - | Order completed successfully | Update to `shipped` |
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `supabase/functions/get-products/index.ts` | Move `normalizePrices()` call earlier in pipeline (before `processAndReturnResults`) |
-| `supabase/functions/auto-gift-orchestrator/index.ts` | 1) Filter out zero-price products, 2) Add fallback price normalization |
+| File | Change |
+|------|--------|
+| `supabase/functions/order-monitor-v2/index.ts` | Add `request_processing` handling, refine `isFailed` logic |
 
-## Test Plan
+## Deployment
 
-After deployment:
-
-1. **Re-run orchestrator** with simulated date `2026-12-18`
-2. Verify in email:
-   - [ ] Water bottle shows ~$33.74 (not $3,374)
-   - [ ] No $0.00 products appear
-   - [ ] All products under $50 budget
-   - [ ] No women's products for male recipients (after gender column is added)
-3. Check database:
-   - [ ] New cached products have normalized prices
-
-## Technical Details
-
-### Price Normalization Heuristic
-
-The existing heuristic `price > 100 ? price / 100 : price` works for most cases but has edge cases:
-
-| Raw Value | Interpretation | Normalized |
-|-----------|----------------|------------|
-| 3374 | $33.74 in cents | 33.74 ✅ |
-| 35.9 | $35.90 in dollars | 35.9 ✅ |
-| 150 | Ambiguous ($1.50 or $150?) | 1.50 ⚠️ |
-
-For safety, I'll use a higher threshold (`> 200`) in the orchestrator fallback to avoid misinterpreting $150 products as $1.50.
-
+1. Update the edge function code
+2. Deploy `order-monitor-v2`
+3. Run SQL to fix the incorrectly-marked order
+4. Verify by checking order status in database

@@ -96,6 +96,12 @@ serve(async (req) => {
         const zincData = await zincResponse.json();
         console.log(`📋 Zinc response for ${order.id}:`, JSON.stringify(zincData).substring(0, 500));
         
+        // Handle request_processing - this means Zinc is actively working on it (NOT a failure!)
+        if (zincData._type === 'error' && zincData.code === 'request_processing') {
+          console.log(`⏳ Order ${order.id} still processing in Zinc queue (request_processing state)`);
+          continue; // Don't mark as failed, just wait for next poll
+        }
+        
         // Update order based on Zinc status
         const updates: any = {
           updated_at: new Date().toISOString(),
@@ -120,9 +126,14 @@ serve(async (req) => {
         
         const trackingNumber = zincData.tracking?.tracking_number;
         
-        // Check for failed status
-        const isFailed = zincData.code === 'failed' || zincData.code === 'cancelled' ||
-          zincData._type === 'error';
+        // Check for actual failed status - exclude request_processing (still in progress)
+        const isFailed = zincData.code === 'failed' || 
+          zincData.code === 'cancelled' ||
+          zincData.code === 'out_of_stock' ||
+          zincData.code === 'payment_failed' ||
+          (zincData._type === 'error' && 
+           zincData.code !== 'request_processing' &&
+           zincData.code !== 'pending');
 
         // NEW: If we found the order via polling (webhook timeout), populate zinc_order_id
         if (isWebhookTimeout && merchantOrderId) {

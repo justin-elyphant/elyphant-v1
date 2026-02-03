@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Trash2 } from "lucide-react";
+import { Heart, Trash2, CheckCircle2 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -25,6 +25,7 @@ interface ResponsiveProductGridProps {
   onWishlistAction: (e: React.MouseEvent, product: ProductWithSource) => void;
   onRemoveFromWishlist: (e: React.MouseEvent, product: ProductWithSource) => void;
   wishlistedProducts: string[];
+  purchasedItemIds?: Set<string>;
 }
 
 const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
@@ -34,7 +35,8 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
   onProductClick,
   onWishlistAction,
   onRemoveFromWishlist,
-  wishlistedProducts
+  wishlistedProducts,
+  purchasedItemIds = new Set()
 }) => {
   const isMobile = useIsMobile();
 
@@ -47,12 +49,16 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
       >
         {products.map((product) => {
           const isWishlisted = wishlistedProducts.includes(product.product_id);
+          const isPurchased = product.source === 'wishlist' && purchasedItemIds.has(product.product_id);
           const SourceIcon = product.sourceIcon;
 
           return (
             <div
               key={product.product_id}
-              className="group relative aspect-square cursor-pointer min-w-0"
+              className={cn(
+                "group relative aspect-square cursor-pointer min-w-0",
+                isPurchased && "opacity-70"
+              )}
               onClick={() => onProductClick(product)}
             >
               {/* Product Image */}
@@ -62,17 +68,27 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
                   alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
-                  
-                {/* Source Badge */}
-                <Badge
-                  className={cn(
-                    "absolute top-1 left-1 text-xs px-1.5 py-0.5 scale-90",
-                    product.sourceColor
-                  )}
-                >
-                  <SourceIcon className="w-2.5 h-2.5 mr-0.5" />
-                  <span className="hidden sm:inline">{product.sourceLabel}</span>
-                </Badge>
+                
+                {/* Purchased Badge - Top Left Priority */}
+                {isPurchased ? (
+                  <Badge
+                    className="absolute top-1 left-1 text-xs px-1.5 py-0.5 scale-90 bg-green-500 text-white border-green-600 z-20"
+                  >
+                    <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />
+                    Purchased
+                  </Badge>
+                ) : (
+                  /* Source Badge */
+                  <Badge
+                    className={cn(
+                      "absolute top-1 left-1 text-xs px-1.5 py-0.5 scale-90",
+                      product.sourceColor
+                    )}
+                  >
+                    <SourceIcon className="w-2.5 h-2.5 mr-0.5" />
+                    <span className="hidden sm:inline">{product.sourceLabel}</span>
+                  </Badge>
+                )}
 
                 {/* Price Badge */}
                 {product.price > 0 && (
@@ -138,12 +154,16 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
       {products.map((product) => {
         const isWishlisted = wishlistedProducts.includes(product.product_id);
+        const isPurchased = product.source === 'wishlist' && purchasedItemIds.has(product.product_id);
         const SourceIcon = product.sourceIcon;
 
         return (
           <Card
             key={product.product_id}
-            className="group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+            className={cn(
+              "group cursor-pointer overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1",
+              isPurchased && "opacity-70"
+            )}
             onClick={() => onProductClick(product)}
           >
             <CardContent className="p-0">
@@ -154,16 +174,26 @@ const ResponsiveProductGrid: React.FC<ResponsiveProductGridProps> = ({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
                 
-                {/* Source Badge */}
-                <Badge
-                  className={cn(
-                    "absolute top-2 left-2 text-xs backdrop-blur-md",
-                    product.sourceColor
-                  )}
-                >
-                  <SourceIcon className="w-3 h-3 mr-1" />
-                  {product.sourceLabel}
-                </Badge>
+                {/* Purchased Badge - Top Left Priority */}
+                {isPurchased ? (
+                  <Badge
+                    className="absolute top-2 left-2 text-xs bg-green-500 text-white border-green-600 z-20"
+                  >
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Purchased
+                  </Badge>
+                ) : (
+                  /* Source Badge */
+                  <Badge
+                    className={cn(
+                      "absolute top-2 left-2 text-xs backdrop-blur-md",
+                      product.sourceColor
+                    )}
+                  >
+                    <SourceIcon className="w-3 h-3 mr-1" />
+                    {product.sourceLabel}
+                  </Badge>
+                )}
 
                 {/* Price Badge */}
                 {product.price > 0 && (

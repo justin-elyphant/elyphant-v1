@@ -27,6 +27,8 @@ import {
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import WishlistShareButton from "./share/WishlistShareButton";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
+import WishlistProgressRing from "./WishlistProgressRing";
+import { useWishlistPurchaseStats } from "@/hooks/useWishlistPurchaseStats";
 import {
   Tooltip,
   TooltipContent,
@@ -57,6 +59,9 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   const [isPressed, setIsPressed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
+  
+  // Fetch purchase stats for this wishlist
+  const { stats: purchaseStats } = useWishlistPurchaseStats(wishlist.id);
 
   // Get preview images for 2x2 grid display
   const previewImages = wishlist.items
@@ -332,6 +337,14 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
     >
       {/* Square Image Area */}
       <div className="relative aspect-square bg-muted rounded-t-lg">
+        {/* Progress Ring - wraps the entire image area */}
+        <WishlistProgressRing 
+          percentage={purchaseStats.percentage} 
+          size={100}
+          strokeWidth={4}
+          showLabel={purchaseStats.percentage > 0}
+        />
+        
         {/* Privacy Toggle - Always visible top-left */}
         <PrivacyToggle />
 

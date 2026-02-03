@@ -1,162 +1,142 @@
 
-# Plan: Fix Auto-Gift Orchestrator Product Selection Quality
+
+# Plan: Fix Product Pricing Normalization Chain
 
 ## Issues Identified
 
-Based on the screenshot and code analysis, there are 3 bugs affecting gift suggestions:
+Based on investigation, there are two core bugs causing the pricing problems in the auto-gift emails:
 
-| Issue | Screenshot Evidence | Root Cause |
-|-------|---------------------|------------|
-| **$3,374 water bottle** | Shows $3374.00 instead of ~$33.74 | Price filtering happens BEFORE normalization in `get-products` |
-| **Women's jersey for male** | CeeDee Lamb Women's Jersey suggested | No gender-aware filtering for recipients |
-| **Products over $50 budget** | $97.49 jersey shown despite $50 limit | Same price normalization bug - cents treated as dollars |
-| **All gifts from one interest** | All 3 products are Dallas Cowboys | Only `recipientInterests[0]` is used |
+| Issue | Evidence | Root Cause |
+|-------|----------|------------|
+| **$3,374 water bottle** | `products` table has `price: 3374.00` for product `B0DJCJ9DB7` | Raw Zinc cents cached BEFORE `normalizePrices()` is called |
+| **$0 Adidas shoes** | `products` table has `price: 0.00` for product `B09VCPFG24` | Zinc API returns null/0 for some products (no fix available) |
+| **$97 jersey passed $50 filter** | Appeared in previous run | Already fixed in prior update; filter now converts to cents |
 
-## Root Cause Analysis
+## Root Cause Deep Dive
 
-### Bug #1 & #3: Price Filtering on Raw Cents
-
-In `supabase/functions/get-products/index.ts`, the filtering flow is:
+In `get-products/index.ts`, the execution order is problematic:
 
 ```text
-Zinc API Response (prices in CENTS: 3374, 4999, 9749)
-    ↓
-Price Filter: maxPrice=50 → 3374 > 50? YES, passes filter ❌
-    ↓  
-normalizePrices() → 3374/100 = $33.74
-    ↓
-Returns $33.74 BUT should have been filtered
+1. Zinc API returns prices in CENTS (3374 = $33.74)
+2. Price filtering runs (NOW FIXED - converts max_price to cents)
+3. processAndReturnResults() is called (line 1308)
+   → Inside: cacheSearchResults() runs with RAW CENTS ❌
+   → Products cached with price: 3374
+4. normalizePrices() is called (line 1286) - but ONLY on filteredResults
+   → processedResults in cacheSearchResults still had raw cents
 ```
 
-The filter at lines 1254-1264 treats raw Zinc prices as dollars, but Zinc returns cents.
-
-### Bug #2: No Gender-Aware Search
-
-The orchestrator searches "Dallas Cowboys" without considering recipient gender. Results include women's jerseys because they match the search term.
-
-### Bug #4: Single Interest Only
-
-Current code (line 180):
-```typescript
-query: recipientInterests[0], // Only uses first interest
-```
+The `cacheSearchResults` at line 582 receives `processedResults` BEFORE any price normalization occurs.
 
 ## Solution
 
-### Change 1: Fix Price Filtering (Pre-Normalize Before Filter)
+### Fix 1: Normalize Prices BEFORE Caching
+
+Move `normalizePrices()` to run BEFORE `processAndReturnResults()` so cached data has correct dollar values.
 
 **File:** `supabase/functions/get-products/index.ts`
 
-Move price normalization BEFORE the price filter, or convert the filter threshold to cents for comparison:
-
-```typescript
-// Before filtering, normalize filter values to match Zinc's cent-based pricing
-const maxPriceInCents = maxPrice ? maxPrice * 100 : null;
-const minPriceInCents = minPrice ? minPrice * 100 : null;
-
-filteredResults = filteredResults.filter(product => {
-  const price = product.price;
-  if (!price) return true;
-  
-  let passesFilter = true;
-  if (minPriceInCents && price < minPriceInCents) passesFilter = false;
-  if (maxPriceInCents && price > maxPriceInCents) passesFilter = false;
-  
-  return passesFilter;
-});
+Current order (around lines 1280-1320):
+```javascript
+// Current (WRONG ORDER):
+filteredResults = normalizePrices(filteredResults);  // Line 1286
+const searchResponse = await processAndReturnResults(...);  // Line 1308
+// cacheSearchResults inside processAndReturnResults uses raw cents!
 ```
 
-### Change 2: Diversify Across Multiple Interests
+Fixed order:
+```javascript
+// Move normalization EARLIER in the pipeline
+// 1. Apply price filter (already using cents comparison)
+// 2. Apply brand filter
+// 3. Apply unsupported filter
+// 4. Normalize prices ← BEFORE processAndReturnResults
+// 5. processAndReturnResults (which caches the normalized data)
+```
+
+### Fix 2: Handle Zero-Price Products Gracefully
+
+Add validation in the orchestrator to skip products with `price === 0` or `price === null`:
 
 **File:** `supabase/functions/auto-gift-orchestrator/index.ts`
 
-Instead of searching ONE interest 3 times, search EACH interest once:
-
-```typescript
-// Tier 3 Fallback: Diversify across recipient interests
-if (suggestedProducts.length === 0 && rule.recipient_id) {
-  const recipientInterests = rule.recipient?.interests as string[] | null;
-  if (recipientInterests?.length) {
-    console.log(`🎯 Using recipient interests for search: ${recipientInterests.slice(0, 3).join(', ')}`);
-    
-    // Search up to 3 different interests for variety
-    for (const interest of recipientInterests.slice(0, 3)) {
-      const { data: searchResult, error: searchError } = await supabase.functions.invoke('get-products', {
-        body: {
-          query: interest,
-          limit: 2, // Get 1-2 products per interest
-          filters: { maxPrice: rule.budget_limit || 100 }
-        }
-      });
-      
-      if (!searchError) {
-        const products = searchResult?.results || searchResult?.products || [];
-        const mapped = products.slice(0, 1).map((p: any) => ({ // Take 1 per interest
-          product_id: p.product_id || p.asin,
-          name: p.title,
-          price: p.price,
-          image_url: p.image || p.main_image,
-          interest_source: interest // Track which interest this came from
-        }));
-        suggestedProducts.push(...mapped);
-      }
-      
-      // Stop if we have enough products
-      if (suggestedProducts.length >= 3) break;
-    }
-    
-    console.log(`✅ Found ${suggestedProducts.length} products across ${Math.min(recipientInterests.length, 3)} interests`);
-  }
-}
-```
-
-### Change 3: Add Gender Filter for Recipients (Optional Enhancement)
-
-**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
-
-If the recipient has gender in their profile, exclude products that don't match:
-
-```typescript
-// Fetch recipient gender for filtering
-const recipientGender = rule.recipient?.gender; // Requires adding 'gender' to the select query
-
-// Post-filter: Remove gender-mismatched products
-if (recipientGender && suggestedProducts.length > 0) {
-  const genderTerms = recipientGender === 'male' 
-    ? ['women', 'womens', "women's", 'ladies', 'female'] 
-    : ['men', 'mens', "men's", 'male'];
-  
-  suggestedProducts = suggestedProducts.filter(p => {
-    const title = (p.name || '').toLowerCase();
-    return !genderTerms.some(term => title.includes(term));
+```javascript
+// After gender filtering, also filter out zero-price products
+if (products.length > 0) {
+  products = products.filter((p: any) => {
+    const price = p.price;
+    return price && price > 0;
   });
 }
+```
+
+### Fix 3: Update Historical Cached Data
+
+Run a one-time update to normalize existing cached prices in the `products` table:
+
+```sql
+-- Fix products with prices that appear to be in cents (> $200)
+UPDATE products 
+SET price = price / 100 
+WHERE price > 200 
+  AND retailer = 'amazon';
+```
+
+This converts values like `3374` → `33.74` for obviously-cents prices.
+
+### Fix 4: Add Fallback Normalization in Orchestrator
+
+As a safety net, normalize prices when mapping products in the orchestrator:
+
+**File:** `supabase/functions/auto-gift-orchestrator/index.ts`
+
+```javascript
+// Normalize price (safety net for legacy cached data)
+const rawPrice = products[0].price;
+const normalizedPrice = typeof rawPrice === 'number' && rawPrice > 200 
+  ? rawPrice / 100 
+  : rawPrice;
+
+const mapped = {
+  product_id: products[0].product_id || products[0].asin,
+  name: products[0].title || products[0].name,
+  price: normalizedPrice,  // Use normalized value
+  image_url: products[0].image || products[0].main_image,
+  interest_source: interest
+};
 ```
 
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/get-products/index.ts` | Fix price filtering to account for Zinc's cent-based pricing |
-| `supabase/functions/auto-gift-orchestrator/index.ts` | 1) Diversify across multiple interests, 2) Add gender mismatch filtering, 3) Add recipient gender to profile query |
-
-## Expected Behavior After Fix
-
-When Charles's rule triggers for Justin (male, interests: Dallas Cowboys, Lululemon, Adidas Ultra Boost):
-
-1. **Price Filtering**: Only products ≤ $50 are returned (filter correctly applied on normalized prices)
-2. **Diversity**: Suggestions include:
-   - 1 Dallas Cowboys product (e.g., hat, flag, mug)
-   - 1 Lululemon product (e.g., headband, socks)
-   - 1 Adidas Ultra Boost product (if under $50, or skip)
-3. **Gender Filtering**: Women's jerseys excluded because Justin is male
+| `supabase/functions/get-products/index.ts` | Move `normalizePrices()` call earlier in pipeline (before `processAndReturnResults`) |
+| `supabase/functions/auto-gift-orchestrator/index.ts` | 1) Filter out zero-price products, 2) Add fallback price normalization |
 
 ## Test Plan
 
-1. Deploy updated edge functions
-2. Re-run orchestrator with simulated date `2026-12-18`
-3. Verify:
-   - [ ] All suggested products are ≤ $50
-   - [ ] Products come from different interests (not all Cowboys)
-   - [ ] No women's products suggested for male recipient
-   - [ ] Prices display correctly in email ($33.74, not $3374)
+After deployment:
+
+1. **Re-run orchestrator** with simulated date `2026-12-18`
+2. Verify in email:
+   - [ ] Water bottle shows ~$33.74 (not $3,374)
+   - [ ] No $0.00 products appear
+   - [ ] All products under $50 budget
+   - [ ] No women's products for male recipients (after gender column is added)
+3. Check database:
+   - [ ] New cached products have normalized prices
+
+## Technical Details
+
+### Price Normalization Heuristic
+
+The existing heuristic `price > 100 ? price / 100 : price` works for most cases but has edge cases:
+
+| Raw Value | Interpretation | Normalized |
+|-----------|----------------|------------|
+| 3374 | $33.74 in cents | 33.74 ✅ |
+| 35.9 | $35.90 in dollars | 35.9 ✅ |
+| 150 | Ambiguous ($1.50 or $150?) | 1.50 ⚠️ |
+
+For safety, I'll use a higher threshold (`> 200`) in the orchestrator fallback to avoid misinterpreting $150 products as $1.50.
+

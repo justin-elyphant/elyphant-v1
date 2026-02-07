@@ -31,7 +31,7 @@ const PhaseCompletionStatus = ({ className }: PhaseCompletionStatusProps) => {
       checks: [
         {
           name: "Manual Setup UI Available",
-          status: true, // GiftPathSelector and AutoGiftSetupFlow exist
+          status: true, // GiftPathSelector and UnifiedGiftSchedulingModal exist
           message: "✓ Manual control path implemented"
         },
         {

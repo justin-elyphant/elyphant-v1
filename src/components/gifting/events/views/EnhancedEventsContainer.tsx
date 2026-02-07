@@ -1,7 +1,7 @@
 
 import React, { useMemo } from "react";
 import ExportImportDialog from "../export-import/ExportImportDialog";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+// AutoGiftSetupFlow removed - consolidated into UnifiedGiftSchedulingModal
 import EmptyEventsState from "../components/EmptyEventsState";
 import EnhancedEventsToolbar from "./enhanced/EnhancedEventsToolbar";
 import EnhancedEventsFilters from "./enhanced/EnhancedEventsFilters";

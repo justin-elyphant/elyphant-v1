@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import PastEventsContainer from "@/components/gifting/events/past-events/PastEventsContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+// AutoGiftSetupFlow removed - consolidated into UnifiedGiftSchedulingModal
 import AutomatedGiftingTabContent from "@/components/gifting/events/automated-tab/AutomatedGiftingTabContent";
 import AutoGiftExecutionMonitor from "@/components/gifting/auto-gift/AutoGiftExecutionMonitor";
 import UnifiedGiftTimingDashboard from "@/components/gifting/unified/UnifiedGiftTimingDashboard";

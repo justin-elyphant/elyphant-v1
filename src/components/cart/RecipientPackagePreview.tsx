@@ -9,7 +9,7 @@ import { detectHolidayFromDate } from '@/constants/holidayDates';
 import { useAutoGifting } from '@/hooks/useAutoGifting';
 import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 import RecurringGiftUpsellBanner from './RecurringGiftUpsellBanner';
-import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
+import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;
@@ -200,12 +200,11 @@ const RecipientPackagePreview: React.FC<RecipientPackagePreviewProps> = ({
       />
       
       {/* Recurring Gift Setup (from banner conversion) */}
-      <AutoGiftSetupFlow
+      <UnifiedGiftSchedulingModal
         open={showRecurringSetup}
         onOpenChange={setShowRecurringSetup}
-        embedded={false}
-        recipientId={deliveryGroup.connectionId}
-        eventType={detectedHoliday?.key}
+        standaloneMode={true}
+        initialRecipient={{ type: 'connection', connectionId: deliveryGroup.connectionId, connectionName: deliveryGroup.connectionName }}
         onComplete={handleRecurringSetupComplete}
         productHints={buildProductHints()}
       />

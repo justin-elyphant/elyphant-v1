@@ -1,13 +1,19 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Gift, Sparkles, GraduationCap, TrendingUp, Heart } from "lucide-react";
 import MultiHolidaySelector from "./MultiHolidaySelector";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DropdownDatePicker } from "@/components/ui/dropdown-date-picker";
+import Picker from "react-mobile-picker";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { calculateNextBirthday, formatBirthdayForChip } from "@/constants/holidayDates";
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 export interface SelectedEvent {
   eventType: string;
   specificHoliday?: string;
@@ -40,6 +46,52 @@ const MultiEventSelector = ({
 }: MultiEventSelectorProps) => {
   const [showHolidaySelector, setShowHolidaySelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const isMobile = useIsMobile(1024);
+
+  // Picker state for Just Because date (matches product-level Specific Date pattern)
+  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const [pickerValue, setPickerValue] = useState<{ month: string; day: string; year: string }>({
+    month: MONTHS[now.getMonth()],
+    day: String(now.getDate()),
+    year: String(now.getFullYear())
+  });
+
+  // Generate days based on selected month/year
+  const pickerDays = useMemo(() => {
+    const monthIndex = MONTHS.indexOf(pickerValue.month);
+    if (monthIndex === -1) return Array.from({ length: 31 }, (_, i) => String(i + 1));
+    const daysInMonth = new Date(parseInt(pickerValue.year), monthIndex + 1, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
+  }, [pickerValue.month, pickerValue.year]);
+
+  const pickerYears = useMemo(() => [String(currentYear), String(currentYear + 1)], [currentYear]);
+
+  // Sync picker → parent date when picker changes
+  const syncPickerToDate = useCallback((pv: { month: string; day: string; year: string }) => {
+    const monthIndex = MONTHS.indexOf(pv.month);
+    if (monthIndex === -1) return;
+    const maxDay = new Date(parseInt(pv.year), monthIndex + 1, 0).getDate();
+    const day = Math.min(parseInt(pv.day), maxDay);
+    const newDate = new Date(parseInt(pv.year), monthIndex, day, 12, 0, 0);
+    if (!isNaN(newDate.getTime())) {
+      const filtered = value.filter(e => e.eventType !== "other");
+      onChange([...filtered, { eventType: "other", customDate: newDate }]);
+    }
+  }, [value, onChange]);
+
+  // Handle dropdown picker change (desktop)
+  const handleDropdownPickerChange = useCallback((newVal: { month: string; day: string; year: string }) => {
+    setPickerValue(newVal);
+    syncPickerToDate(newVal);
+  }, [syncPickerToDate]);
+
+  // Handle scroll picker change (mobile)
+  const handleScrollPickerChange = useCallback((newVal: Record<string, string>) => {
+    const typed = { month: newVal.month, day: newVal.day, year: newVal.year };
+    setPickerValue(typed);
+    syncPickerToDate(typed);
+  }, [syncPickerToDate]);
 
   // Calculate next birthday display string
   const birthdayDisplay = useMemo(() => {
@@ -281,7 +333,12 @@ const MultiEventSelector = ({
     if (!date) return;
     const filtered = value.filter(e => e.eventType !== "other");
     onChange([...filtered, { eventType: "other", customDate: date }]);
-    setShowDatePicker(false);
+    // Sync picker state to match
+    setPickerValue({
+      month: MONTHS[date.getMonth()],
+      day: String(date.getDate()),
+      year: String(date.getFullYear())
+    });
   };
 
   const handleSelectAll = () => {
@@ -392,15 +449,47 @@ const MultiEventSelector = ({
                 </div>
               )}
 
-              {/* Date Picker for Just Because */}
+              {/* Date Picker for Just Because - uses same pattern as product-level Specific Date */}
               {option.value === "other" && showDatePicker && (
                 <div className="mt-2 p-3 border rounded-lg bg-background">
                   <Label className="mb-2 block">Select Gift Date</Label>
-                  <DatePicker
-                    date={value.find(e => e.eventType === "other")?.customDate}
-                    setDate={handleDateSelected}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
+                  {isMobile ? (
+                    <div className="scroll-date-picker select-none">
+                      <Picker
+                        value={pickerValue as Record<string, string>}
+                        onChange={handleScrollPickerChange}
+                        wheelMode="normal"
+                        height={180}
+                      >
+                        <Picker.Column name="month">
+                          {MONTHS.map(month => (
+                            <Picker.Item key={month} value={month}>
+                              {month}
+                            </Picker.Item>
+                          ))}
+                        </Picker.Column>
+                        <Picker.Column name="day">
+                          {pickerDays.map(day => (
+                            <Picker.Item key={day} value={day}>
+                              {day}
+                            </Picker.Item>
+                          ))}
+                        </Picker.Column>
+                        <Picker.Column name="year">
+                          {pickerYears.map(year => (
+                            <Picker.Item key={year} value={year}>
+                              {year}
+                            </Picker.Item>
+                          ))}
+                        </Picker.Column>
+                      </Picker>
+                    </div>
+                  ) : (
+                    <DropdownDatePicker
+                      value={pickerValue}
+                      onChange={handleDropdownPickerChange}
+                    />
+                  )}
                 </div>
               )}
             </div>

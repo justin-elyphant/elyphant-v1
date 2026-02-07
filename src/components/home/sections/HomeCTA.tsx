@@ -18,13 +18,7 @@ const HomeCTA = () => {
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
   
   const handleStartGifting = () => {
-    if (user) {
-      // Authenticated user: navigate to auto-gifts tab on dashboard
-      navigate("/dashboard?tab=auto-gifts");
-    } else {
-      // Not logged in: navigate to auth with gifting redirect
-      navigate("/auth?redirect=/gifting");
-    }
+    navigate("/marketplace");
   };
 
   // Legacy intent handlers removed - using Nicole unified interface

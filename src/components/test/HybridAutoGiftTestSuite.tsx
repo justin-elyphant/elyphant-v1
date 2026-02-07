@@ -187,7 +187,7 @@ const HybridAutoGiftTestSuite = () => {
         // Test GiftPathSelector is present
         const pathSelector = document.querySelector('[data-testid="gift-path-selector"]');
         if (!pathSelector) {
-          // Check if the AutoGiftSetupFlow component is accessible
+          // Check if the UnifiedGiftSchedulingModal component is accessible
           setShowManualSetup(true);
           await new Promise(resolve => setTimeout(resolve, 500));
           const setupFlow = document.querySelector('[role="dialog"]');

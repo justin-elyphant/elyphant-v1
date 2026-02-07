@@ -1,6 +1,6 @@
 /**
- * Bridge service for passing context from Nicole conversations to AutoGiftSetupFlow
- * Transforms Nicole's conversational context into the format expected by the setup modal
+ * Bridge service for passing context from Nicole conversations to UnifiedGiftSchedulingModal
+ * Transforms Nicole's conversational context into the format expected by the recurring gift modal
  */
 
 interface NicoleAutoGiftContext {
@@ -26,7 +26,7 @@ interface AutoGiftSetupData {
 
 export class NicoleAutoGiftBridge {
   /**
-   * Transform Nicole's conversational context to AutoGiftSetupFlow initial data
+   * Transform Nicole's conversational context to UnifiedGiftSchedulingModal initial data
    */
   static transformContext(nicoleContext: NicoleAutoGiftContext): AutoGiftSetupData {
     const setupData: AutoGiftSetupData = {};
@@ -64,7 +64,7 @@ export class NicoleAutoGiftBridge {
   }
 
   /**
-   * Map Nicole's occasion strings to AutoGiftSetupFlow event types
+   * Map Nicole's occasion strings to recurring gift event types
    */
   private static mapOccasionToEventType(occasion: string): string {
     const occasionLower = occasion.toLowerCase();

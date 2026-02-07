@@ -30,15 +30,9 @@ const Hero = () => {
   const [showGiftWizard, setShowGiftWizard] = useState(false);
   const [showCreateWishlist, setShowCreateWishlist] = useState(false);
 
-  // Handler for Start Gifting: routes to gifting approach selection
+  // Handler for Start Gifting: navigate to marketplace
   const handleStartGifting = () => {
-    if (user) {
-      // Navigate directly to auto-gifts tab on dashboard
-      navigate('/dashboard?tab=auto-gifts');
-    } else {
-      // Redirect to auth with gifting as the next destination
-      navigate('/auth?redirect=/gifting');
-    }
+    navigate('/marketplace');
   };
 
   // Enhanced handler for Create Wishlist CTA

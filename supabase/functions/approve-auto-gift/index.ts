@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import Stripe from 'https://esm.sh/stripe@14.21.0';
+import { calculateHolidayDate, calculateNextBirthday } from '../shared/holidayDates.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -469,6 +470,42 @@ serve(async (req) => {
                 },
               });
 
+              // ===========================================
+              // YEAR ROLLOVER: Advance scheduled_date to next year
+              // ===========================================
+              if (rule) {
+                try {
+                  const dateType = rule.date_type;
+                  let nextDate: string | null = null;
+                  // Use a reference date 1 day after current event to force next-year calculation
+                  const afterEvent = new Date(execution.execution_date);
+                  afterEvent.setDate(afterEvent.getDate() + 1);
+
+                  if (dateType === 'birthday' && rule.recipient_id) {
+                    const { data: recipientDob } = await supabase
+                      .from('profiles')
+                      .select('dob')
+                      .eq('id', rule.recipient_id)
+                      .single();
+                    if (recipientDob?.dob) {
+                      nextDate = calculateNextBirthday(recipientDob.dob, afterEvent);
+                    }
+                  } else {
+                    nextDate = calculateHolidayDate(dateType, afterEvent);
+                  }
+
+                  if (nextDate) {
+                    await supabase.from('auto_gifting_rules').update({
+                      scheduled_date: nextDate,
+                      updated_at: new Date().toISOString(),
+                    }).eq('id', rule.id);
+                    console.log(`📅 Year rollover: advanced ${dateType} scheduled_date to ${nextDate}`);
+                  }
+                } catch (rolloverErr: any) {
+                  console.warn('⚠️ Year rollover failed (non-blocking):', rolloverErr.message);
+                }
+              }
+
               console.log('✅ Off-session auto-gift approval completed successfully');
 
               // ===========================================
@@ -544,6 +581,46 @@ serve(async (req) => {
             
           } catch (stripeError: any) {
             console.error('⚠️ Off-session payment failed:', stripeError.message);
+
+            // Record payment failure details on execution
+            const retryCount = (execution.payment_retry_count || 0) + 1;
+            await supabase.from('automated_gift_executions').update({
+              payment_error_message: stripeError.message,
+              payment_retry_count: retryCount,
+              last_payment_attempt_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }).eq('id', execution.id);
+
+            // Notify user of payment failure
+            await supabase.from('auto_gift_notifications').insert({
+              user_id: userId,
+              execution_id: execution.id,
+              notification_type: 'auto_gift_payment_failed',
+              title: 'Payment failed for auto-gift',
+              message: `Your saved card was declined for ${recipientName}'s gift. Please update your payment method.`,
+              is_read: false,
+              email_sent: false,
+            });
+
+            // Send payment failure email
+            try {
+              await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                body: {
+                  eventType: 'auto_gift_payment_failed',
+                  recipientEmail: userEmail,
+                  data: {
+                    recipient_name: recipientName,
+                    occasion: rule?.date_type?.replace(/_/g, ' ') || 'upcoming event',
+                    error_summary: stripeError.message,
+                    execution_id: execution.id,
+                  }
+                }
+              });
+              console.log('📧 Payment failure notification email sent');
+            } catch (emailErr: any) {
+              console.warn('⚠️ Failed to send payment failure email:', emailErr.message);
+            }
+
             // Fall through to Checkout Session flow
           }
           }

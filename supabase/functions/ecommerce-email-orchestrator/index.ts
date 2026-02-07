@@ -786,6 +786,40 @@ const giftComingYourWayTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `${props.sender_name || 'Someone special'} sent you a gift! 🎁` });
 };
 
+// Auto-Gift Payment Failed Template
+const autoGiftPaymentFailedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name || props.recipient_name);
+  const occasion = props.occasion?.replace(/_/g, ' ') || 'upcoming event';
+  
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      Payment Issue ⚠️
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hi ${firstName}, we tried to process payment for <strong>${props.recipient_name || 'your recipient'}</strong>'s ${occasion} gift, but your saved card was declined.
+    </p>
+    
+    <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #dc2626; font-size: 14px;">❌ Payment Declined</p>
+      <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">${props.error_summary || 'Your card could not be charged. Please update your payment method.'}</p>
+    </div>
+    
+    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1d4ed8; font-size: 14px;">💡 What To Do</p>
+      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">Update your payment method and we'll retry. If no action is taken, you'll be redirected to a checkout page to complete the purchase manually.</p>
+    </div>
+    
+    <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          Update Payment Method
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Action needed: Payment failed for ${props.recipient_name || 'your'}'s gift` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -854,6 +888,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         subject: data.is_critical 
           ? `🚨 CRITICAL: ZMA Balance Alert - Orders Blocked`
           : `⚠️ ZMA Low Balance Alert - Transfer Recommended`
+      };
+    case 'auto_gift_payment_failed':
+      return {
+        html: autoGiftPaymentFailedTemplate(data),
+        subject: `⚠️ Payment Failed for ${data.recipient_name || 'Your'}'s Gift - Action Needed`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

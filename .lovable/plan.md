@@ -1,89 +1,86 @@
 
 
-# Plan: Fix Order Monitor Using Wrong Zinc Identifier
+# Plan: Close Recurring Gift Production Gaps
 
-## Problem Summary
+Three targeted additions to the existing auto-gift pipeline, reusing existing tables, services, and patterns wherever possible. No new edge functions, no new database tables.
 
-The `order-monitor-v2` edge function incorrectly uses `zinc_order_id` (Amazon's merchant order ID like `113-7307475-6287460`) when querying Zinc's API, but Zinc expects `zinc_request_id` (the actual Zinc request ID like `4421915eeffeacacd596eea63c2ac85a`).
+---
 
-This caused your order to be incorrectly marked as `failed` with the error "The provided request_id is invalid."
+## Gap 1: Duplicate Rule Prevention
 
-## Root Cause
+**Problem:** Creating a new rule for the same user + recipient + occasion leaves the old rule active, causing duplicate executions.
 
-Line 66 in `supabase/functions/order-monitor-v2/index.ts`:
-```javascript
-const zincIdentifier = order.zinc_order_id || order.zinc_request_id;
-```
+**Solution:** Add deactivation logic to the existing `UnifiedGiftManagementService.createRule()` method (the single entry point for all rule creation).
 
-This prioritizes the wrong field. The Zinc API endpoint `/v1/orders/{id}` expects the request_id, not the merchant order ID.
+**Where:** `src/services/UnifiedGiftManagementService.ts` -- inside `createRule()`, before the INSERT.
 
-## Solution
+**What changes:**
+- After the existing validation phases (1-4), add a query: find any active rules where `user_id`, `recipient_id` (or `pending_recipient_email`), and `date_type` all match.
+- If found, set `is_active = false` on the old rule(s) and log the deactivation to `auto_gift_event_logs` (already used throughout the codebase).
+- This is ~15 lines of code in one file, using the same Supabase client and logging pattern already in place.
 
-Change the identifier logic to always use `zinc_request_id` for API queries:
+**No backend changes needed** -- this runs client-side in the service layer before the insert.
 
-```javascript
-// Always use zinc_request_id for Zinc API queries (not zinc_order_id which is Amazon's ID)
-const zincIdentifier = order.zinc_request_id;
-const isWebhookTimeout = !order.zinc_order_id && order.zinc_request_id;
-```
+---
 
-## Implementation Details
+## Gap 2: Year Rollover After Successful Execution
 
-### File Changes
+**Problem:** After a recurring gift order is placed, `scheduled_date` stays on the current year's date. The orchestrator won't pick it up again next year.
 
-**supabase/functions/order-monitor-v2/index.ts**
+**Solution:** Add a post-success hook in `approve-auto-gift/index.ts` that advances `scheduled_date` to the next year using the existing shared holiday utilities.
 
-1. **Fix identifier selection (line 66-67)**: Use `zinc_request_id` exclusively for API calls
-2. **Skip orders without zinc_request_id**: If no request_id exists, skip the order
-3. **Maintain webhook timeout detection**: Still track whether zinc_order_id was populated via webhook or polling
+**Where:** `supabase/functions/approve-auto-gift/index.ts` -- after a successful order is created (both off-session and checkout flows), before the final return.
 
-### Code Changes
+**What changes:**
+- After order creation succeeds, import and call `calculateHolidayDate()` or `calculateNextBirthday()` from `../shared/holidayDates.ts` (already imported by the orchestrator -- same shared module).
+- Update the rule's `scheduled_date` to the next year's occurrence.
+- This reuses the exact same date resolution logic the orchestrator already uses for unscheduled rules, just applied proactively.
+- ~20 lines added to the existing approval handler, no new functions.
 
-```javascript
-// Before (incorrect)
-const zincIdentifier = order.zinc_order_id || order.zinc_request_id;
-const isWebhookTimeout = !order.zinc_order_id && order.zinc_request_id;
+**Why here instead of the orchestrator?** The orchestrator already resolves NULL `scheduled_date` values, but that only works if we clear the date. Advancing it here is cleaner -- the rule always has a valid next date, and the orchestrator's existing `>=now AND <=lookAhead` window query works without modification.
 
-// After (correct)
-// Zinc API requires the request_id, not the Amazon merchant order ID
-if (!order.zinc_request_id) {
-  console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
-  continue;
-}
-const zincIdentifier = order.zinc_request_id;
-const isWebhookTimeout = !order.zinc_order_id;
-```
+---
 
-## Data Recovery
+## Gap 3: Payment Failure Notifications
 
-After deployment, restore the incorrectly-failed order:
+**Problem:** If the saved card fails during T-4 off-session payment, the system silently falls through to a Checkout Session (which the user may never see since it's automated).
 
-```sql
-UPDATE orders 
-SET status = 'processing',
-    notes = NULL
-WHERE id = 'db697d76-dd5e-4ab0-9389-b91996b60ee9';
-```
+**Solution:** Add failure notification logic to the existing catch block in `approve-auto-gift/index.ts`, using the existing `ecommerce-email-orchestrator` and `auto_gift_notifications` table.
 
-## Verification Steps
+**Where:** `supabase/functions/approve-auto-gift/index.ts` -- in the `catch (stripeError)` block around line 545.
 
-1. Deploy the updated edge function
-2. Run the SQL to restore order status
-3. Manually trigger order-monitor-v2
-4. Verify order updates to `shipped` status with correct data from Zinc
+**What changes:**
+- When off-session payment fails, update the execution record with `payment_error_message` and `payment_retry_count` (columns already exist on `automated_gift_executions`).
+- Insert a row into `auto_gift_notifications` (same pattern used for approvals/rejections already in this file).
+- Call `ecommerce-email-orchestrator` with a new event type `auto_gift_payment_failed` containing: recipient name, occasion, error summary, and a link to update payment method.
+- The email orchestrator already handles unknown event types gracefully, and the template can be added as a simple conditional in the existing orchestrator.
+- ~25 lines in the catch block, plus ~15 lines in the email orchestrator template.
 
-## Technical Notes
+**Reused infrastructure:**
+- `automated_gift_executions.payment_error_message` column (already exists)
+- `automated_gift_executions.payment_retry_count` column (already exists)
+- `auto_gift_notifications` table (same INSERT pattern used 3x in this file already)
+- `ecommerce-email-orchestrator` invocation (same pattern used 2x in this file already)
 
-| Field | Purpose | Example |
-|-------|---------|---------|
-| `zinc_request_id` | Zinc's internal request ID - used for API queries | `4421915eeffeacacd596eea63c2ac85a` |
-| `zinc_order_id` | Amazon's merchant order ID - for customer reference | `113-7307475-6287460` |
+---
 
-The naming is a bit confusing since `zinc_order_id` sounds like it should be used with Zinc, but it's actually the downstream merchant's order ID that Zinc populates after successful placement.
+## Technical Summary
 
-## Files Modified
+| Gap | File(s) Modified | Lines Added | New Tables/Functions | Reused Components |
+|-----|------------------|-------------|---------------------|-------------------|
+| Duplicate Prevention | `UnifiedGiftManagementService.ts` | ~15 | None | `auto_gift_event_logs`, existing Supabase client |
+| Year Rollover | `approve-auto-gift/index.ts` | ~20 | None | `shared/holidayDates.ts` (calculateHolidayDate, calculateNextBirthday) |
+| Payment Failure Notifications | `approve-auto-gift/index.ts`, `ecommerce-email-orchestrator/index.ts` | ~40 | None | `auto_gift_notifications`, `automated_gift_executions` payment columns, email orchestrator |
 
-| File | Change |
-|------|--------|
-| `supabase/functions/order-monitor-v2/index.ts` | Fix identifier selection to use `zinc_request_id` |
+**Total: ~75 lines across 3 files, zero new tables, zero new edge functions.**
+
+---
+
+## Implementation Order
+
+1. **Duplicate Prevention** (standalone, no dependencies)
+2. **Year Rollover** (standalone, uses shared holiday utils)
+3. **Payment Failure Notifications** (standalone, uses existing notification infra)
+
+All three can be deployed independently and tested via the Trunkline auto-gift testing tool with simulated dates.
 

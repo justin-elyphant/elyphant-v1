@@ -1089,7 +1089,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className={cn("max-h-[90vh] flex flex-col", standaloneMode ? "sm:max-w-lg" : "sm:max-w-md")}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Gift className="h-5 w-5" />

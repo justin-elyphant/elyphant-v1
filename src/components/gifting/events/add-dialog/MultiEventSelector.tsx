@@ -342,7 +342,7 @@ const MultiEventSelector = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-2">
         {eventOptions.map((option) => {
           const Icon = option.icon;
           const selected = isEventSelected(option.value);
@@ -351,7 +351,7 @@ const MultiEventSelector = ({
           return (
             <div key={option.value}>
               <div
-                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
+                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all min-h-[56px] ${
                   isDisabled 
                     ? "border-border/50 bg-muted/30 opacity-60 cursor-not-allowed" 
                     : "cursor-pointer hover:border-muted/80"
@@ -366,9 +366,9 @@ const MultiEventSelector = ({
                   onClick={(e) => e.stopPropagation()}
                   disabled={isDisabled}
                 />
-                <Icon className={`h-5 w-5 ${selected ? "text-purple-600" : "text-muted-foreground"}`} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <Icon className={`h-5 w-5 flex-shrink-0 ${selected ? "text-purple-600" : "text-muted-foreground"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium">{option.label}</p>
                     {option.sublabel && option.hasData && (
                       <Badge variant="outline" className="text-xs font-normal">
@@ -377,7 +377,7 @@ const MultiEventSelector = ({
                     )}
                   </div>
                   {option.sublabel && !option.hasData && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{option.sublabel}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{option.sublabel}</p>
                   )}
                 </div>
               </div>

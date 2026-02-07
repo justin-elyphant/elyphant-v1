@@ -1,77 +1,79 @@
 
-
-# Improve Desktop Layout for Recurring Gift Modal
+# Fix "Just Because" Date Picker in Multi-Event Selector
 
 ## Problem
 
-The "Set Up Recurring Gift" modal uses `sm:max-w-md` (448px max-width) on desktop. This is fine for the simpler product-mode scheduling flow (single date picker), but in **standalone mode** the `MultiEventSelector` renders a 2-column grid (`grid-cols-1 md:grid-cols-2`) of 6 occasion cards inside that narrow container. At 448px, each card column gets only ~200px, causing text to wrap awkwardly ("Justin Meeks hasn't set a date" breaks to 3 lines) and the cards look cramped/bunched up.
+When selecting "Just Because" in the standalone recurring gift modal, the date picker button ("Pick a date") doesn't respond to clicks on desktop. This happens because the current `DatePicker` component (Popover + Calendar) is nested inside a Dialog, and the Popover's click events are intercepted by the parent Dialog layer -- a known interactivity issue with nested Radix UI components.
+
+Additionally, the "Just Because" date picker uses a completely different component (`DatePicker` = Popover + Calendar popup) than the product-level "Specific Date" flow (which uses `DropdownDatePicker` on desktop / scroll wheel on mobile). This creates an inconsistent experience.
 
 ## Solution
 
-Widen the desktop Dialog container **only** when in standalone mode, where the multi-event grid needs room. The product-mode dialog stays at `sm:max-w-md` since its single-event UI fits perfectly.
+Replace the broken `DatePicker` in the "Just Because" section with the same proven date selection pattern used by the product-level "Specific Date" flow: `DropdownDatePicker` on desktop, `react-mobile-picker` on mobile/tablet.
 
-### Changes
+This simultaneously:
+1. Fixes the broken click handling (no Popover nesting issues)
+2. Creates a consistent date selection experience across the app
+3. Reuses battle-tested components that already work inside Dialogs
 
-**File: `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx`**
+## Changes
 
-1. **Widen the desktop Dialog for standalone mode** (line 1092):
-   - Change `sm:max-w-md` to `sm:max-w-lg` (512px) when `standaloneMode` is true
-   - This gives each card column ~232px instead of ~200px -- enough room for occasion labels + date badges + disabled sublabels without excessive wrapping
+### File: `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`
 
-2. **Improve the MultiEventSelector card layout for desktop** -- in the `MultiEventSelector.tsx` component, optimize the card internals for wider containers:
+**Remove**: Import of `DatePicker` from `@/components/ui/date-picker`
 
-**File: `src/components/gifting/events/add-dialog/MultiEventSelector.tsx`**
+**Add**: Imports for `DropdownDatePicker`, `react-mobile-picker` (Picker), and `useIsMobile` hook -- matching the pattern in `UnifiedGiftSchedulingModal.tsx`
 
-3. **Tighten card padding on desktop**: The cards currently use `p-4` universally. On desktop where touch targets are less constrained, reduce to `p-3` while keeping `p-4` on mobile/tablet via responsive classes (`p-3 lg:p-3`). Actually, `p-4` is fine -- the real issue is text layout inside each card.
+**Replace the "Just Because" date section** (lines 396-404):
 
-4. **Fix the card internal layout**:
-   - The sublabel (date badge or "hasn't set a date" text) currently sits inline beside the label with `flex items-center gap-2`, which forces horizontal cramming. On desktop, stack the sublabel below the label for disabled items so the "(hasn't set a date)" text doesn't compete for horizontal space.
-   - For enabled items with date badges, keep them inline since badges are compact.
+Currently renders:
+```text
+<DatePicker
+  date={...}
+  setDate={handleDateSelected}
+  disabled={(date) => date < today}
+/>
+```
 
-5. **Adjust the grid gap**: Reduce `gap-3` to `gap-2` on desktop to use space more efficiently, keeping `gap-3` on mobile.
+New rendering (same pattern as the product "Specific Date" flow):
+- Add local state for picker values (`pickerValue` with month/day/year)
+- On desktop (1024px+): Render `DropdownDatePicker` with three inline Select dropdowns (Month, Day, Year)
+- On mobile/tablet (below 1024px): Render `Picker` scroll wheel with three columns
+- When picker value changes, convert to a `Date` and call the existing `handleDateSelected` function
+- Past dates are naturally prevented since the picker only offers the current year and next year, and the submit validation already checks minimum lead time
 
-6. **Add `min-h-[56px]` to each card** to prevent height inconsistency between cards that have sublabels and those that don't.
+**Update `handleDateSelected`** to also accept the converted picker date and set picker values when a date is programmatically changed.
 
 ### Visual Result
 
 ```text
-Before (448px dialog, 2-col grid):
-+--[~200px card]--+  +--[~200px card]--+
-| [] Birthday Feb  |  | [] Anniversary  |
-|              19  |  | (Justin Meeks   |
-|                  |  |  hasn't set a   |
-|                  |  |  date)          |
-+------------------+  +-----------------+
+Before (broken):
++-- Just Because [x] --+
+| Select Gift Date     |
+| [Pick a date]  <-- doesn't respond to clicks
++----------------------+
 
-After (512px dialog, 2-col grid):
-+----[~232px card]----+  +----[~232px card]----+
-| [] Birthday  Feb 19 |  | [] Anniversary      |
-|                      |  | (hasn't set a date) |
-+----------------------+  +---------------------+
+After (desktop):
++-- Just Because [x] -----+
+| Select Gift Date         |
+| [February] [14] [2026]   |
++--------------------------+
+
+After (mobile/tablet):
++-- Just Because [x] --+
+| Select Gift Date     |
+|  January      13     |
+| >February<   >14<    |
+|  March        15     |
++----------------------+
 ```
 
-### Technical Details
-
-**UnifiedGiftSchedulingModal.tsx** (line 1092):
-- Current: `className="sm:max-w-md max-h-[90vh] flex flex-col"`
-- New: Use `cn()` to conditionally apply `sm:max-w-lg` when `standaloneMode` is true, otherwise keep `sm:max-w-md`
-
-**MultiEventSelector.tsx** (lines 345-408):
-- Add `lg:gap-2` to the grid container for tighter desktop spacing
-- Add `min-h-[56px]` to each card for consistent heights
-- Ensure sublabel text for disabled items wraps gracefully with `line-clamp-2` or `text-xs leading-tight`
-- The date badge for enabled items stays inline (`flex-wrap` handles overflow naturally)
-
-### Files Modified
-| File | Change |
-|------|--------|
-| `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` | Widen desktop dialog to `sm:max-w-lg` in standalone mode |
-| `src/components/gifting/events/add-dialog/MultiEventSelector.tsx` | Optimize card layout density for desktop: consistent heights, tighter sublabel text |
-
 ### What Stays the Same
-- Mobile/tablet Drawer rendering (below 1024px) -- completely unchanged
-- Product-mode dialog width (`sm:max-w-md`) -- unchanged
-- iOS Capacitor compliance (44px touch targets, haptic feedback, safe areas) -- all preserved
-- The `MultiHolidaySelector` sub-component -- no changes needed
-- All backend logic -- zero changes
 
+- All other occasion cards (Birthday, Anniversary, Holiday, etc.) -- unchanged
+- The `handleDateSelected` callback and `SelectedEvent` data shape -- unchanged
+- The `DatePicker` component itself (other parts of the app may use it) -- unchanged
+- Product-level "Specific Date" flow -- unchanged
+- Mobile/tablet Drawer rendering -- unchanged
+- iOS Capacitor compliance (44px targets, haptic feedback) -- preserved
+- Backend logic -- zero changes

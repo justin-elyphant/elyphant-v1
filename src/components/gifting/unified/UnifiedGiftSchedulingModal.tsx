@@ -66,7 +66,7 @@ export interface EditingRuleData {
   auto_approve?: boolean;
   gift_message?: string;
   scheduled_date?: string;
-  // Legacy fields from AutoGiftSetupFlow initialData format
+  // Legacy fields from initialData format (backward compatibility)
   recipientId?: string;
   recipientName?: string;
   eventType?: string;

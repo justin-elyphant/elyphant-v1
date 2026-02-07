@@ -93,7 +93,7 @@ const SimpleNicolePopup = ({
     
     switch (button.action) {
       case 'setup_auto_gift':
-        // Transform Nicole context to AutoGiftSetupFlow format
+        // Transform Nicole context to UnifiedGiftSchedulingModal format
         const conversationHistory = messages.filter(m => m.content).map(m => ({
           role: m.role,
           content: m.content!
@@ -110,7 +110,7 @@ const SimpleNicolePopup = ({
         };
         
         const initialData = NicoleAutoGiftBridge.transformContext(bridgeContext);
-        console.log('🔄 Transformed Nicole context for AutoGiftSetup:', initialData);
+        console.log('🔄 Transformed Nicole context for recurring gift setup:', initialData);
         
         setAutoGiftInitialData(initialData);
         setAutoGiftFlowOpen(true);

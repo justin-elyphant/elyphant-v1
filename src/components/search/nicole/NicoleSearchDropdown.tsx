@@ -66,7 +66,7 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
     console.log('🎯 CTA Clicked:', ctaButton);
     
     if (ctaButton.action === 'setup_auto_gift') {
-      // Pass data directly in the format AutoGiftSetupFlow expects
+      // Pass data directly in the format UnifiedGiftSchedulingModal expects
       const initialData = {
         recipientName: ctaButton.data?.recipientName || context.recipient,
         eventType: ctaButton.data?.occasion || context.occasion,
@@ -76,7 +76,7 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
         giftMessage: ctaButton.data?.message || `Happy ${ctaButton.data?.occasion || context.occasion || 'celebration'}!`
       };
       
-      console.log('🎁 Opening AutoGiftSetupFlow with data:', initialData);
+      console.log('🎁 Opening recurring gift modal with data:', initialData);
       setAutoGiftInitialData(initialData);
       setAutoGiftModalOpen(true);
     } else if (ctaButton.action === 'show_gift_recommendations') {

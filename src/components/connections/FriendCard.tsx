@@ -256,7 +256,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
         open={showAutoGiftSetup}
         onOpenChange={setShowAutoGiftSetup}
         standaloneMode={true}
-        initialRecipient={{ type: 'connection', connectionId: friend.id, connectionName: friend.profile_name || '' }}
+        initialRecipient={{ type: 'connection', connectionId: friend.id, connectionName: friend.name || '' }}
       />
     </>
   );

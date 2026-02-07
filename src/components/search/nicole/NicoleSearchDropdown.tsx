@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Maximize2, X, Send, Loader2 } from "lucide-react";
 import { useNicoleDropdown } from "./NicoleDropdownContext";
 import { Textarea } from "@/components/ui/textarea";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 
 interface NicoleSearchDropdownProps {
   onExpand: () => void;
@@ -232,11 +232,12 @@ export const NicoleSearchDropdown: React.FC<NicoleSearchDropdownProps> = ({
       </div>
       </div>
 
-      {/* Auto-Gift Setup Modal */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup Modal */}
+      <UnifiedGiftSchedulingModal
         open={autoGiftModalOpen}
         onOpenChange={setAutoGiftModalOpen}
-        initialData={autoGiftInitialData}
+        standaloneMode={true}
+        editingRule={autoGiftInitialData}
       />
     </>
   );

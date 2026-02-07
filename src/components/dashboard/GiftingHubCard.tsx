@@ -22,7 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GiftPathSelector } from "@/components/gifting/unified/GiftPathSelector";
 import { MyGiftsDashboardSimplified } from "@/components/gifting/unified/MyGiftsDashboardSimplified";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -157,14 +157,12 @@ const SmartGiftingTab = () => {
         maxEvents={5}
       />
       
-      {/* Auto-Gift Setup Flow */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup */}
+      <UnifiedGiftSchedulingModal
         open={autoGiftSetupOpen}
         onOpenChange={setAutoGiftSetupOpen}
-        eventId={selectedEvent?.id}
-        eventType={selectedEvent?.initialData?.eventType}
-        recipientId={selectedEvent?.initialData?.recipientId}
-        initialData={selectedEvent?.initialData}
+        standaloneMode={true}
+        editingRule={selectedEvent?.initialData}
         ruleId={selectedEvent?.autoGiftRuleId}
       />
 
@@ -208,9 +206,10 @@ const MyGiftsTab = () => {
         onSwitchToSmartGifting={handleSwitchToSmartGifting}
       />
       
-      <AutoGiftSetupFlow
+      <UnifiedGiftSchedulingModal
         open={autoGiftSetupOpen}
         onOpenChange={setAutoGiftSetupOpen}
+        standaloneMode={true}
         ruleId={editingRule}
       />
     </div>

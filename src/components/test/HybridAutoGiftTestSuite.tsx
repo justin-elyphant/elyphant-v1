@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { useAutoGifting } from '@/hooks/useAutoGifting';
 import { useAutoGiftTrigger } from '@/hooks/useAutoGiftTrigger';
-import AutoGiftSetupFlow from '@/components/gifting/auto-gift/AutoGiftSetupFlow';
+import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 import GiftAdvisorBot from '@/components/ai-gift-advisor/GiftAdvisorBot';
 import PhaseCompletionStatus from './PhaseCompletionStatus';
 
@@ -516,9 +516,10 @@ const HybridAutoGiftTestSuite = () => {
       </Card>
 
       {/* Manual Setup Flow */}
-      <AutoGiftSetupFlow
+      <UnifiedGiftSchedulingModal
         open={showManualSetup}
         onOpenChange={setShowManualSetup}
+        standaloneMode={true}
       />
 
       {/* Nicole Chat Flow */}

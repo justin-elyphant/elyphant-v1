@@ -11,7 +11,7 @@ import DefaultGiftSourceSection from "./DefaultGiftSourceSection";
 import { GroupedRulesSection } from "@/components/gifting/unified/GroupedRulesSection";
 import AutoGiftExecutionDashboard from "../../auto-execution/AutoGiftExecutionDashboard";
 import AutoGiftExecutionProcessor from "@/components/auto-gifting/AutoGiftExecutionProcessor";
-import AutoGiftSetupFlow from "../../auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import EnhancedCancellationTest from "@/components/auto-gifts/EnhancedCancellationTest";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -155,8 +155,8 @@ const AutomatedGiftingTabContent = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Auto-Gift Setup Dialog */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup Dialog */}
+      <UnifiedGiftSchedulingModal
         open={setupDialogOpen}
         onOpenChange={(open) => {
           setSetupDialogOpen(open);
@@ -164,7 +164,8 @@ const AutomatedGiftingTabContent = () => {
             setEditingRule(null);
           }
         }}
-        initialData={editingRule?.initialData}
+        standaloneMode={true}
+        editingRule={editingRule?.initialData}
         ruleId={editingRule?.id}
       />
     </div>

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Bot, Zap, Users, Gift, Plus, Settings, TrendingUp, Calendar, DollarSign } from "lucide-react";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 
 const AutoGiftingDashboard = () => {
   const { user } = useAuth();
@@ -219,10 +219,11 @@ const AutoGiftingDashboard = () => {
         </div>
       )}
 
-      {/* Auto-Gift Setup Flow */}
-      <AutoGiftSetupFlow 
+      {/* Recurring Gift Setup */}
+      <UnifiedGiftSchedulingModal 
         open={showSetup}
-        onOpenChange={setShowSetup} 
+        onOpenChange={setShowSetup}
+        standaloneMode={true}
       />
     </div>
   );

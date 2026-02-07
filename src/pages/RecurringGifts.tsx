@@ -11,7 +11,7 @@ import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { GroupedRulesSection } from "@/components/gifting/unified/GroupedRulesSection";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import HowItWorksModal from "@/components/gifting/auto-gift/HowItWorksModal";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { triggerHapticFeedback } from "@/utils/haptics";
@@ -269,8 +269,8 @@ const RecurringGifts = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog (for editing existing rules) */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup Dialog */}
+      <UnifiedGiftSchedulingModal
         open={setupDialogOpen}
         onOpenChange={(open) => {
           setSetupDialogOpen(open);
@@ -278,25 +278,20 @@ const RecurringGifts = () => {
             setEditingRule(null);
           }
         }}
+        standaloneMode={true}
         ruleId={editingRule?.id}
-        initialData={editingRule ? {
+        editingRule={editingRule ? {
+          id: editingRule.id,
           recipientId: editingRule.recipient_id || editingRule.pending_recipient_email,
+          recipientName: editingRule.recipient?.name || editingRule.pending_recipient_name || editingRule.pending_recipient_email,
           eventType: editingRule.date_type,
           budgetLimit: editingRule.budget_limit,
           selectedPaymentMethodId: editingRule.payment_method_id,
-          emailNotifications: editingRule.notification_preferences?.email ?? true,
           notificationDays: editingRule.notification_preferences?.days_before || [7, 3, 1],
           autoApprove: false,
-          giftMessage: editingRule.gift_message || ""
+          giftMessage: editingRule.gift_message || "",
+          date_type: editingRule.date_type,
         } : undefined}
-        onRequestEditRule={(rule) => {
-          // Close current dialog and reopen with the selected rule
-          setSetupDialogOpen(false);
-          setEditingRule(rule);
-          setTimeout(() => {
-            setSetupDialogOpen(true);
-          }, 100);
-        }}
       />
 
       {/* How It Works Modal */}

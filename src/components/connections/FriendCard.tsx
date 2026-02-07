@@ -14,7 +14,7 @@ import { AutoGiftToggle } from "./AutoGiftToggle";
 import { Sparkles } from "lucide-react";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
 import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import { AutoGiftStatusBadge } from "./AutoGiftStatusBadge";
 import { useAutoGiftPermission } from "@/hooks/useAutoGiftPermission";
 
@@ -251,11 +251,12 @@ const FriendCard: React.FC<FriendCardProps> = ({ friend, onRelationshipChange, o
         connection={friend}
       />
 
-      {/* Auto-Gift Setup Flow */}
-      <AutoGiftSetupFlow 
+      {/* Recurring Gift Setup */}
+      <UnifiedGiftSchedulingModal 
         open={showAutoGiftSetup}
         onOpenChange={setShowAutoGiftSetup}
-        recipientId={friend.id}
+        standaloneMode={true}
+        initialRecipient={{ type: 'connection', connectionId: friend.id, connectionName: friend.profile_name || '' }}
       />
     </>
   );

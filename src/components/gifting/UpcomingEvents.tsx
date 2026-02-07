@@ -2,7 +2,7 @@
 import React from "react";
 import { EventsProvider } from "./events/context/EventsContext";
 import EnhancedEventsContainer from "./events/views/EnhancedEventsContainer";
-import AutoGiftSetupFlow from "./auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "./unified/UnifiedGiftSchedulingModal";
 import { useEvents } from "./events/context/EventsContext";
 import { ExtendedEventData } from "./events/types";
 
@@ -48,9 +48,10 @@ const UpcomingEventsContent = ({ onAddEvent, events: filteredEvents }: UpcomingE
         onAddEvent={onAddEvent} 
         events={eventsToDisplay}
       />
-      <AutoGiftSetupFlow
+      <UnifiedGiftSchedulingModal
         open={isAutoGiftSetupOpen}
         onOpenChange={handleAutoGiftSetupClose}
+        standaloneMode={true}
       />
     </div>
   );

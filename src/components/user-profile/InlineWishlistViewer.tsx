@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlistPurchasedItems } from "@/hooks/useWishlistPurchasedItems";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import { format, addYears, isWithinInterval } from "date-fns";
 import { motion } from "framer-motion";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
@@ -412,11 +412,12 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
         )}
       </Card>
 
-      {/* Auto-Gift Setup Dialog */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup Dialog */}
+      <UnifiedGiftSchedulingModal
         open={showAutoGiftSetup}
         onOpenChange={setShowAutoGiftSetup}
-        initialData={autoGiftInitialData}
+        standaloneMode={true}
+        editingRule={autoGiftInitialData}
       />
     </>
   );

@@ -19,7 +19,7 @@ import { RecipientAssignment } from '@/types/recipient';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import Picker from 'react-mobile-picker';
 import { PAYMENT_LEAD_TIME } from '@/lib/constants/paymentLeadTime';
-import { calculateNextBirthday, PRESET_HOLIDAYS, calculateHolidayDate } from '@/constants/holidayDates';
+import { calculateNextBirthday, PRESET_HOLIDAYS, calculateHolidayDate, isKnownHoliday } from '@/constants/holidayDates';
 import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementService';
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
@@ -27,7 +27,9 @@ import PresetHolidaySelector from './PresetHolidaySelector';
 import RecurringToggleSection from './RecurringToggleSection';
 import { DropdownDatePicker } from '@/components/ui/dropdown-date-picker';
 import DeliveryTypeSelector, { DeliveryType } from './DeliveryTypeSelector';
+import MultiEventSelector, { SelectedEvent } from '@/components/gifting/events/add-dialog/MultiEventSelector';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocalStorage } from '@/components/gifting/hooks/useLocalStorage';
 
 
 // Product context for saving hints when creating recurring rules
@@ -40,7 +42,41 @@ export interface ProductContext {
   image: string;
 }
 
+// Product hints for AI gift suggestions (re-exported for backward compatibility)
+export interface ProductHints {
+  productId: string;
+  title: string;
+  brand?: string;
+  category?: string;
+  priceRange: [number, number];
+  image: string;
+}
+
 export type SchedulingMode = 'one-time' | 'recurring';
+
+// Editing rule data shape for pre-populating the form
+export interface EditingRuleData {
+  id: string;
+  recipient_id?: string | null;
+  pending_recipient_email?: string | null;
+  date_type: string;
+  budget_limit?: number;
+  payment_method_id?: string;
+  notification_preferences?: { days_before: number[]; email: boolean };
+  auto_approve?: boolean;
+  gift_message?: string;
+  scheduled_date?: string;
+  // Legacy fields from AutoGiftSetupFlow initialData format
+  recipientId?: string;
+  recipientName?: string;
+  eventType?: string;
+  budgetLimit?: number;
+  selectedPaymentMethodId?: string;
+  emailNotifications?: boolean;
+  notificationDays?: number[];
+  autoApprove?: boolean;
+  giftMessage?: string;
+}
 
 interface UnifiedGiftSchedulingModalProps {
   open: boolean;
@@ -59,6 +95,15 @@ interface UnifiedGiftSchedulingModalProps {
   isVariationComplete?: () => boolean;
   // Callbacks
   onComplete?: (result: SchedulingResult) => void;
+  // Standalone mode (no product, rule-only)
+  standaloneMode?: boolean;
+  // Rule editing
+  editingRule?: EditingRuleData | null;
+  ruleId?: string;
+  // Pre-select recipient
+  initialRecipient?: SelectedRecipient | null;
+  // Product hints for AI
+  productHints?: ProductHints;
 }
 
 export interface SchedulingResult {
@@ -84,14 +129,19 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   getEffectiveProductId,
   getVariationDisplayText,
   isVariationComplete,
-  onComplete
+  onComplete,
+  standaloneMode = false,
+  editingRule,
+  ruleId,
+  initialRecipient,
+  productHints: externalProductHints
 }) => {
   const isMobile = useIsMobile(1024);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useProfile();
   const { addToCart, assignItemToRecipient } = useCart();
-  const { createRule, rules: existingRules } = useAutoGifting();
+  const { createRule, updateRule, rules: existingRules, settings, updateSettings } = useAutoGifting();
 
   // Core state
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
@@ -99,13 +149,13 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const [isInviting, setIsInviting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Preset/Holiday selection
+  // Preset/Holiday selection (used in product mode)
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Delivery type coaching state
+  // Delivery type coaching state (used in product mode)
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('holiday');
-  const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false); // Track explicit user choice
+  const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);
 
   // Recurring toggle state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -113,6 +163,18 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const [paymentMethodId, setPaymentMethodId] = useState('');
   const [autoApprove, setAutoApprove] = useState(false);
   const [notificationDays, setNotificationDays] = useState([7, 3, 1]);
+
+  // Multi-event state (standalone mode only)
+  const [selectedEvents, setSelectedEvents] = useState<SelectedEvent[]>([]);
+
+  // Draft persistence for standalone mode
+  const [savedDraft, setSavedDraft] = useLocalStorage('recurringGiftDraft', {
+    selectedEvents: [] as SelectedEvent[],
+    budget: 50,
+    giftMessage: '',
+    autoApprove: false,
+    notificationDays: [7, 3, 1],
+  });
 
   // iOS scroll wheel state for custom date
   const months = [
@@ -158,11 +220,12 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     );
   }, [pickerValue]);
 
-  // Get the effective selected date (from picker or preset)
+  // Get the effective selected date (from picker or preset) - only for product mode
   const effectiveDate = useMemo(() => {
+    if (standaloneMode) return null; // Standalone mode uses multi-event dates
     if (selectedDate) return selectedDate;
     return getPickerDate();
-  }, [selectedDate, getPickerDate]);
+  }, [selectedDate, getPickerDate, standaloneMode]);
 
   // Calculate recipient's next birthday if available
   const recipientBirthdayDate = useMemo(() => {
@@ -175,18 +238,15 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     return null;
   }, [selectedRecipient, userDob]);
 
-  // Determine the recipient's DOB string to pass to PresetHolidaySelector
+  // Determine the recipient's DOB string to pass to selectors
   const recipientDobForPresets = useMemo(() => {
     if (selectedRecipient?.type === 'self') return userDob || undefined;
     return selectedRecipient?.recipientDob;
   }, [selectedRecipient, userDob]);
 
-  // Determine the recipient's important dates to pass to PresetHolidaySelector
+  // Determine the recipient's important dates
   const recipientImportantDatesForPresets = useMemo(() => {
-    if (selectedRecipient?.type === 'self') {
-      // For self, we could potentially use profile.important_dates if needed
-      return [];
-    }
+    if (selectedRecipient?.type === 'self') return [];
     return selectedRecipient?.recipientImportantDates || [];
   }, [selectedRecipient]);
 
@@ -197,13 +257,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     const now = new Date();
     const futureWindow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
     
-    // Check birthday
     if (recipientDobForPresets) {
       const birthday = calculateNextBirthday(recipientDobForPresets);
       if (birthday && birthday <= futureWindow) return true;
     }
     
-    // Check important dates
     return recipientImportantDatesForPresets.some(date => {
       const nextDate = new Date(date.date);
       return nextDate <= futureWindow;
@@ -212,69 +270,137 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   // Set initial delivery type when recipient changes - only if user hasn't explicitly chosen
   useEffect(() => {
-    if (selectedRecipient && !deliveryTypeUserSet) {
+    if (!standaloneMode && selectedRecipient && !deliveryTypeUserSet) {
       setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
     }
-  }, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet]);
+  }, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet, standaloneMode]);
 
   // Check if recurring rule already exists for this recipient+occasion
   const hasExistingRule = useMemo(() => {
+    if (standaloneMode) return false; // Standalone mode handles duplicates via batch service
     if (!selectedRecipient?.connectionId || !selectedPreset) return false;
     return existingRules.some(
       rule => rule.recipient_id === selectedRecipient.connectionId && 
               rule.date_type === selectedPreset &&
               rule.is_active
     );
-  }, [existingRules, selectedRecipient, selectedPreset]);
+  }, [existingRules, selectedRecipient, selectedPreset, standaloneMode]);
 
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
-      setGiftMessage('');
-      setSelectedPreset(null);
-      setSelectedDate(null);
-      setIsRecurring(false);
-      setDeliveryTypeUserSet(false); // Reset explicit choice flag
-      setBudget(product?.price ? Math.round(product.price * 1.2) : 50);
-      setPaymentMethodId('');
-      setAutoApprove(false);
-      setNotificationDays([7, 3, 1]);
-      setPickerValue(getInitialPickerValues());
-      
-      // Pre-populate recipient if editing from cart
-      if (existingRecipient) {
-        setSelectedRecipient({
-          type: existingRecipient.connectionId === 'self' ? 'self' : 'connection',
-          connectionId: existingRecipient.connectionId,
-          connectionName: existingRecipient.connectionName,
-          shippingAddress: existingRecipient.shippingAddress,
-          addressVerified: existingRecipient.address_verified
-        });
-        if (existingRecipient.giftMessage) {
-          setGiftMessage(existingRecipient.giftMessage);
+      // If editing, populate from editingRule
+      if (editingRule) {
+        const recipientId = editingRule.recipientId || editingRule.recipient_id;
+        const recipientName = editingRule.recipientName;
+        
+        if (recipientId) {
+          setSelectedRecipient({
+            type: 'connection',
+            connectionId: recipientId,
+            connectionName: recipientName,
+          });
+        }
+        
+        setGiftMessage(editingRule.giftMessage || editingRule.gift_message || '');
+        setBudget(editingRule.budgetLimit || editingRule.budget_limit || 50);
+        setPaymentMethodId(editingRule.selectedPaymentMethodId || editingRule.payment_method_id || '');
+        setAutoApprove(editingRule.autoApprove ?? editingRule.auto_approve ?? false);
+        setNotificationDays(editingRule.notificationDays || editingRule.notification_preferences?.days_before || [7, 3, 1]);
+        
+        // For standalone editing, pre-populate the event
+        if (standaloneMode) {
+          const dateType = editingRule.eventType || editingRule.date_type;
+          if (dateType) {
+            setSelectedEvents([{ eventType: dateType }]);
+          }
+          setIsRecurring(true);
+        } else {
+          setIsRecurring(false);
         }
       } else {
-        setSelectedRecipient(null);
+        // Fresh form
+        setGiftMessage('');
+        setSelectedPreset(null);
+        setSelectedDate(null);
+        setDeliveryTypeUserSet(false);
+        setPickerValue(getInitialPickerValues());
+        
+        if (standaloneMode) {
+          // Restore draft in standalone mode
+          setSelectedEvents(savedDraft.selectedEvents || []);
+          setBudget(savedDraft.budget || 50);
+          setGiftMessage(savedDraft.giftMessage || '');
+          setAutoApprove(savedDraft.autoApprove ?? false);
+          setNotificationDays(savedDraft.notificationDays || [7, 3, 1]);
+          setIsRecurring(true); // Always recurring in standalone mode
+        } else {
+          setIsRecurring(false);
+          setBudget(product?.price ? Math.round(product.price * 1.2) : 50);
+          setSelectedEvents([]);
+        }
+        
+        setPaymentMethodId('');
+
+        // Pre-populate recipient
+        if (initialRecipient && initialRecipient.type !== 'later') {
+          setSelectedRecipient({
+            type: initialRecipient.type || 'connection',
+            connectionId: initialRecipient.connectionId,
+            connectionName: initialRecipient.connectionName,
+            shippingAddress: initialRecipient.shippingAddress,
+            addressVerified: initialRecipient.addressVerified
+          });
+        } else if (existingRecipient) {
+          setSelectedRecipient({
+            type: existingRecipient.connectionId === 'self' ? 'self' : 'connection',
+            connectionId: existingRecipient.connectionId,
+            connectionName: existingRecipient.connectionName,
+            shippingAddress: existingRecipient.shippingAddress,
+            addressVerified: existingRecipient.address_verified
+          });
+          if (existingRecipient.giftMessage) {
+            setGiftMessage(existingRecipient.giftMessage);
+          }
+        } else {
+          setSelectedRecipient(null);
+        }
       }
       
-      // Auto-populate default payment method for recurring rules
+      // Auto-populate default payment method
       if (user) {
         unifiedPaymentService.getPaymentMethods().then(methods => {
           const defaultMethod = methods.find(m => m.is_default);
-          if (defaultMethod) {
+          if (defaultMethod && !editingRule?.payment_method_id && !editingRule?.selectedPaymentMethodId) {
             setPaymentMethodId(defaultMethod.id);
-            console.log('[Schedule Modal] Auto-set default payment method:', defaultMethod.id);
           }
         }).catch(err => console.warn('Could not fetch payment methods:', err));
       }
+
+      // Sync autoApprove with global settings for new rules
+      if (!editingRule && settings) {
+        setAutoApprove(settings.auto_approve_gifts ?? false);
+      }
     }
-  }, [open, existingRecipient, product?.price, user]);
+  }, [open, existingRecipient, product?.price, user, editingRule, initialRecipient, standaloneMode, settings]);
+
+  // Save draft when standalone mode state changes
+  useEffect(() => {
+    if (standaloneMode && open && !editingRule) {
+      setSavedDraft({
+        selectedEvents,
+        budget,
+        giftMessage,
+        autoApprove,
+        notificationDays,
+      });
+    }
+  }, [selectedEvents, budget, giftMessage, autoApprove, notificationDays, standaloneMode, open, editingRule]);
 
   // Handle preset selection - updates picker to match
   const handlePresetSelect = (presetKey: string, date: Date) => {
     setSelectedPreset(presetKey);
     setSelectedDate(date);
-    // Sync picker to match the selected holiday date
     setPickerValue({
       month: months[date.getMonth()],
       day: String(date.getDate()),
@@ -286,7 +412,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const handlePickerChange = (value: { month: string; day: string; year: string }) => {
     setPickerValue(value);
     setSelectedPreset(null);
-    setSelectedDate(null); // Will use getPickerDate() via effectiveDate
+    setSelectedDate(null);
   };
 
   // Handle clearing preset from dropdown
@@ -327,8 +453,10 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     }
   };
 
-  // Validate date meets minimum lead time
+  // Validate date meets minimum lead time (product mode only)
   const validateDate = (): boolean => {
+    if (standaloneMode) return true; // Standalone uses event dates
+    
     if (!effectiveDate) {
       toast.error('Please select a delivery date');
       return false;
@@ -347,6 +475,8 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
   // Build product hints for recurring rules
   const buildProductHints = () => {
+    if (externalProductHints) return externalProductHints;
+    
     const ctx = productContext || (product ? {
       productId: String(product.product_id || product.id),
       title: product.title || product.name || '',
@@ -368,12 +498,154 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     };
   };
 
-  // Unified submit handler
-  const handleSchedule = async () => {
+  // Standalone mode submit handler
+  const handleStandaloneSubmit = async () => {
+    if (!selectedRecipient?.connectionId) {
+      toast.error('Please select a recipient');
+      return;
+    }
+
+    if (selectedEvents.length === 0) {
+      toast.error('Please select at least one gift occasion');
+      return;
+    }
+
+    // Validate holiday events have specific holiday selected
+    const hasIncompleteHoliday = selectedEvents.some(
+      e => e.eventType === 'holiday' && !e.specificHoliday
+    );
+    if (hasIncompleteHoliday) {
+      toast.error('Please select a specific holiday for all holiday events');
+      return;
+    }
+
+    // Validate "Just Because" events have dates
+    const hasIncompleteDate = selectedEvents.some(
+      e => e.eventType === 'other' && !e.customDate
+    );
+    if (hasIncompleteDate) {
+      toast.error("Please select dates for all 'Just Because' gifts");
+      return;
+    }
+
+    if (!paymentMethodId) {
+      toast.error('Please select a payment method for recurring gifts');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Build product hints
+      const hints = buildProductHints();
+
+      // Calculate scheduled dates for each event
+      const rulesToCreate = selectedEvents.map(event => {
+        let scheduledDate: string | null = null;
+
+        if (event.eventType === 'other' && event.customDate) {
+          scheduledDate = event.customDate.toISOString().split('T')[0];
+        } else if (event.eventType === 'birthday') {
+          const dob = recipientDobForPresets;
+          if (dob) {
+            const bd = calculateNextBirthday(dob);
+            scheduledDate = bd ? bd.toISOString().split('T')[0] : null;
+          }
+        } else if (event.eventType === 'holiday' && event.specificHoliday) {
+          scheduledDate = calculateHolidayDate(event.specificHoliday);
+        } else if (isKnownHoliday(event.eventType)) {
+          scheduledDate = calculateHolidayDate(event.eventType);
+        } else if (event.calculatedDate) {
+          scheduledDate = event.calculatedDate;
+        }
+
+        return {
+          user_id: '',
+          recipient_id: selectedRecipient.connectionId,
+          pending_recipient_email: null as string | null,
+          date_type: event.eventType === 'holiday' ? event.specificHoliday! : event.eventType,
+          scheduled_date: scheduledDate,
+          is_active: true,
+          budget_limit: budget,
+          notification_preferences: {
+            enabled: true,
+            days_before: notificationDays,
+            email: true,
+            push: false,
+          },
+          gift_selection_criteria: {
+            source: hints ? 'specific' as const : 'both' as const,
+            specific_product_id: hints?.productId,
+            preferred_brands: hints?.brand ? [hints.brand] : [],
+            categories: hints?.category ? [hints.category] : [],
+            max_price: budget,
+            min_price: Math.max(1, budget * 0.1),
+            exclude_items: [],
+            original_product_reference: hints ? {
+              title: hints.title,
+              image: hints.image,
+              price: hints.priceRange[0]
+            } : undefined,
+          },
+          payment_method_id: paymentMethodId,
+          gift_message: giftMessage,
+        };
+      });
+
+      if (ruleId) {
+        // Update existing rule
+        toast.info('Updating recurring gift rule...', { duration: 2000 });
+        await updateRule(ruleId, rulesToCreate[0]);
+        toast.success('Recurring gift rule updated!');
+      } else {
+        // Batch create
+        toast.info(`Creating ${rulesToCreate.length} recurring gift rules...`, { duration: 2000 });
+        const recipientIdentifier = rulesToCreate[0].recipient_id || '';
+        await unifiedGiftManagementService.createBatchRulesForRecipient(
+          recipientIdentifier,
+          rulesToCreate
+        );
+        toast.success('Recurring gifts set up!', {
+          description: `${rulesToCreate.length} occasion${rulesToCreate.length > 1 ? 's' : ''} configured`
+        });
+      }
+
+      // Update global auto-approve setting if changed
+      if (settings) {
+        await updateSettings({ auto_approve_gifts: autoApprove });
+      }
+
+      // Clear draft
+      localStorage.removeItem('recurringGiftDraft');
+
+      triggerHapticFeedback('success');
+
+      onComplete?.({
+        mode: 'recurring',
+        recipientId: selectedRecipient.connectionId,
+        recipientName: selectedRecipient.connectionName,
+        giftMessage,
+        ruleId: ruleId || undefined,
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error in recurring gift setup:', error);
+      const e: any = error;
+      const errorMessage = e?.message || e?.error?.message || 'Unknown error occurred';
+      toast.error('Failed to create recurring gift rules', {
+        description: errorMessage
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Product mode submit handler (original logic)
+  const handleProductSubmit = async () => {
     if (!validateDate()) return;
     if (!effectiveDate) return;
 
-    // Validate variation selection if product page
     if (product && hasVariations && isVariationComplete && !isVariationComplete()) {
       toast.error('Please select all product options');
       return;
@@ -387,7 +659,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         : String(product?.product_id || product?.id);
       const variationText = getVariationDisplayText ? getVariationDisplayText() : undefined;
 
-      // Step 1: ALWAYS add to cart (if product exists)
+      // Step 1: Add to cart (if product exists)
       if (product) {
         const cartProduct = {
           ...product,
@@ -398,7 +670,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         };
         addToCart(cartProduct);
 
-        // Assign recipient
         if (selectedRecipient && selectedRecipient.type !== 'later') {
           const recipientAssignment: RecipientAssignment = {
             connectionId: selectedRecipient.type === 'self' ? 'self' : (selectedRecipient.connectionId || ''),
@@ -417,7 +688,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       let createdRuleId: string | undefined;
       if (isRecurring && selectedRecipient?.connectionId && !hasExistingRule) {
         const dateType = selectedPreset || 'custom';
-        const productHints = buildProductHints();
+        const productHintsData = buildProductHints();
         
         const ruleData = {
           recipient_id: selectedRecipient.connectionId,
@@ -433,10 +704,10 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           },
           gift_selection_criteria: {
             source: 'ai' as const,
-            categories: productHints?.category ? [productHints.category] : [],
+            categories: productHintsData?.category ? [productHintsData.category] : [],
             max_price: budget,
             exclude_items: [],
-            preferred_brands: productHints?.brand ? [productHints.brand] : []
+            preferred_brands: productHintsData?.brand ? [productHintsData.brand] : []
           },
           is_active: true
         };
@@ -488,14 +759,43 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     }
   };
 
+  // Unified submit dispatcher
+  const handleSchedule = () => {
+    if (standaloneMode) {
+      handleStandaloneSubmit();
+    } else {
+      handleProductSubmit();
+    }
+  };
+
+  // Get dynamic title
+  const getTitle = () => {
+    if (standaloneMode) {
+      return ruleId ? 'Edit Recurring Gift' : 'Set Up Recurring Gift';
+    }
+    return 'Schedule Gift';
+  };
+
   // Get submit button text
   const getSubmitButtonText = () => {
-    if (isSubmitting) return 'Scheduling...';
+    if (isSubmitting) return standaloneMode ? 'Saving...' : 'Scheduling...';
+    if (standaloneMode) {
+      return ruleId ? 'Save Changes' : 'Create Recurring Rule';
+    }
     if (isRecurring && !hasExistingRule) return 'Schedule & Set Recurring';
     return 'Schedule Gift';
   };
 
-  // Modal content - defined as JSX variable (not function) to prevent remounting on state changes
+  // Check if submit is disabled
+  const isSubmitDisabled = () => {
+    if (isSubmitting) return true;
+    if (standaloneMode) {
+      return !selectedRecipient?.connectionId || selectedEvents.length === 0 || !paymentMethodId || budget < 5;
+    }
+    return !effectiveDate;
+  };
+
+  // Modal content
   const modalContent = (
     <div className="space-y-5">
       {/* Recipient Selection - First */}
@@ -538,117 +838,128 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
       <Separator />
 
-      {/* Delivery Date Section - Second */}
-      <div className="space-y-3">
-        <label className="text-sm font-semibold text-foreground block">
-          When should this gift arrive?
-        </label>
-        
-        {/* Step 1: Coaching Question */}
-        <DeliveryTypeSelector
-          selectedType={deliveryType}
-          onTypeChange={(type) => {
-            setDeliveryType(type);
-            setDeliveryTypeUserSet(true); // Mark as explicit user choice
-            if (type === 'specific') {
-              setSelectedPreset(null);
-              setSelectedDate(null);
-            }
-          }}
-        />
-        
-        {/* Step 2: Conditional content based on selection */}
-        <AnimatePresence mode="wait">
-          {deliveryType === 'holiday' ? (
-            <motion.div
-              key="holiday-flow"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-3"
-            >
-              {/* Holiday dropdown - date is handled automatically */}
-              <PresetHolidaySelector
-                selectedPreset={selectedPreset}
-                recipientDob={recipientDobForPresets}
-                recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
-                recipientImportantDates={recipientImportantDatesForPresets}
-                onPresetSelect={handlePresetSelect}
-                onClear={handlePresetClear}
-              />
-              
-              {/* Helper text for edge cases - only show when no holiday selected */}
-              {!selectedPreset && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Don't see your date? Switch to{' '}
-                  <button 
-                    type="button"
-                    onClick={() => setDeliveryType('specific')}
-                    className="text-primary underline underline-offset-2 font-medium"
-                  >
-                    Specific Date
-                  </button>
-                </p>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="specific-flow"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {/* Specific date: Just show date picker */}
-              <div className="bg-muted/30 rounded-lg py-3 px-2">
-                {isMobile ? (
-                  <Picker
-                    value={pickerValue}
-                    onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
-                    wheelMode="natural"
-                    height={160}
-                  >
-                    <Picker.Column name="month">
-                      {months.map((month) => (
-                        <Picker.Item key={month} value={month}>
-                          {month}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                    <Picker.Column name="day">
-                      {days.map((day) => (
-                        <Picker.Item key={day} value={day}>
-                          {day}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                    <Picker.Column name="year">
-                      {years.map((year) => (
-                        <Picker.Item key={year} value={year}>
-                          {year}
-                        </Picker.Item>
-                      ))}
-                    </Picker.Column>
-                  </Picker>
-                ) : (
-                  <DropdownDatePicker
-                    value={pickerValue}
-                    onChange={handlePickerChange}
-                  />
+      {/* Date Section - Different based on mode */}
+      {standaloneMode ? (
+        /* Multi-Event Selector for standalone mode */
+        <div className="space-y-3">
+          <MultiEventSelector
+            value={selectedEvents}
+            onChange={setSelectedEvents}
+            recipientDob={recipientDobForPresets}
+            recipientImportantDates={recipientImportantDatesForPresets}
+            recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
+          />
+        </div>
+      ) : (
+        /* Delivery Date Section for product mode */
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-foreground block">
+            When should this gift arrive?
+          </label>
+          
+          {/* Step 1: Coaching Question */}
+          <DeliveryTypeSelector
+            selectedType={deliveryType}
+            onTypeChange={(type) => {
+              setDeliveryType(type);
+              setDeliveryTypeUserSet(true);
+              if (type === 'specific') {
+                setSelectedPreset(null);
+                setSelectedDate(null);
+              }
+            }}
+          />
+          
+          {/* Step 2: Conditional content based on selection */}
+          <AnimatePresence mode="wait">
+            {deliveryType === 'holiday' ? (
+              <motion.div
+                key="holiday-flow"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                <PresetHolidaySelector
+                  selectedPreset={selectedPreset}
+                  recipientDob={recipientDobForPresets}
+                  recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
+                  recipientImportantDates={recipientImportantDatesForPresets}
+                  onPresetSelect={handlePresetSelect}
+                  onClear={handlePresetClear}
+                />
+                
+                {!selectedPreset && (
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Don't see your date? Switch to{' '}
+                    <button 
+                      type="button"
+                      onClick={() => setDeliveryType('specific')}
+                      className="text-primary underline underline-offset-2 font-medium"
+                    >
+                      Specific Date
+                    </button>
+                  </p>
                 )}
-              </div>
-            </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="specific-flow"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="bg-muted/30 rounded-lg py-3 px-2">
+                  {isMobile ? (
+                    <Picker
+                      value={pickerValue}
+                      onChange={(value) => handlePickerChange(value as { month: string; day: string; year: string })}
+                      wheelMode="natural"
+                      height={160}
+                    >
+                      <Picker.Column name="month">
+                        {months.map((month) => (
+                          <Picker.Item key={month} value={month}>
+                            {month}
+                          </Picker.Item>
+                        ))}
+                      </Picker.Column>
+                      <Picker.Column name="day">
+                        {days.map((day) => (
+                          <Picker.Item key={day} value={day}>
+                            {day}
+                          </Picker.Item>
+                        ))}
+                      </Picker.Column>
+                      <Picker.Column name="year">
+                        {years.map((year) => (
+                          <Picker.Item key={year} value={year}>
+                            {year}
+                          </Picker.Item>
+                        ))}
+                      </Picker.Column>
+                    </Picker>
+                  ) : (
+                    <DropdownDatePicker
+                      value={pickerValue}
+                      onChange={handlePickerChange}
+                    />
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Selected Date Preview */}
+          {effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
+            <p className="text-xs text-muted-foreground text-center">
+              Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
+            </p>
           )}
-        </AnimatePresence>
-        
-        {/* Selected Date Preview - only show when date is meaningful */}
-        {effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
-          <p className="text-xs text-muted-foreground text-center">
-            Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
-          </p>
-        )}
-      </div>
+        </div>
+      )}
 
       <Separator />
 
@@ -670,15 +981,12 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         </p>
       </div>
 
-      {/* Recurring Toggle Section */}
-      {allowModeSwitch && selectedRecipient?.type === 'connection' && selectedPreset && (
+      {/* Recurring Settings */}
+      {standaloneMode ? (
+        /* In standalone mode, show recurring settings inline (always expanded, no toggle) */
         <RecurringToggleSection
-          isRecurring={isRecurring}
-          onToggle={setIsRecurring}
-          detectedHoliday={selectedPreset && PRESET_HOLIDAYS[selectedPreset] 
-            ? { key: selectedPreset, label: PRESET_HOLIDAYS[selectedPreset].label } 
-            : null
-          }
+          isRecurring={true}
+          onToggle={() => {}} // No-op, always on
           budget={budget}
           onBudgetChange={setBudget}
           paymentMethodId={paymentMethodId}
@@ -687,20 +995,43 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           onAutoApproveChange={setAutoApprove}
           notificationDays={notificationDays}
           onNotificationDaysChange={setNotificationDays}
+          className="[&>hr]:hidden" // Hide the separator since we already have one
         />
-      )}
+      ) : (
+        /* In product mode, show toggle only when conditions are met */
+        <>
+          {allowModeSwitch && selectedRecipient?.type === 'connection' && selectedPreset && (
+            <RecurringToggleSection
+              isRecurring={isRecurring}
+              onToggle={setIsRecurring}
+              detectedHoliday={selectedPreset && PRESET_HOLIDAYS[selectedPreset] 
+                ? { key: selectedPreset, label: PRESET_HOLIDAYS[selectedPreset].label } 
+                : null
+              }
+              budget={budget}
+              onBudgetChange={setBudget}
+              paymentMethodId={paymentMethodId}
+              onPaymentMethodChange={setPaymentMethodId}
+              autoApprove={autoApprove}
+              onAutoApproveChange={setAutoApprove}
+              notificationDays={notificationDays}
+              onNotificationDaysChange={setNotificationDays}
+            />
+          )}
 
-      {/* Existing Rule Notice */}
-      {hasExistingRule && isRecurring && (
-        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-          A recurring gift is already set up for this recipient and occasion. 
-          This gift will be added to cart only.
-        </div>
+          {/* Existing Rule Notice */}
+          {hasExistingRule && isRecurring && (
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              A recurring gift is already set up for this recipient and occasion. 
+              This gift will be added to cart only.
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 
-  // Footer buttons - helper function for className support
+  // Footer buttons
   const renderFooterButtons = (className?: string) => (
     <div className={cn("flex flex-row gap-3 w-full", className)}>
       <Button
@@ -714,7 +1045,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       <Button
         className="flex-1 h-11 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground"
         onClick={handleSchedule}
-        disabled={isSubmitting || !effectiveDate}
+        disabled={isSubmitDisabled()}
       >
         {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
         {getSubmitButtonText()}
@@ -731,7 +1062,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
             <div className="flex items-center justify-between">
               <DrawerTitle className="flex items-center gap-2 text-lg font-bold">
                 <Gift className="h-5 w-5" />
-                Schedule Gift
+                {getTitle()}
               </DrawerTitle>
               <Button
                 variant="ghost"
@@ -744,7 +1075,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
             </div>
           </DrawerHeader>
 
-          <div className="p-4 overflow-y-auto flex-1">
+          <div className="p-4 overflow-y-auto flex-1 ios-smooth-scroll">
             {modalContent}
           </div>
 
@@ -762,7 +1093,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Gift className="h-5 w-5" />
-            Schedule Gift
+            {getTitle()}
           </DialogTitle>
         </DialogHeader>
 

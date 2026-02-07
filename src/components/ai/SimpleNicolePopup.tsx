@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Sparkles, X, Bot, Minimize2 } from "lucide-react";
 import { useSimpleNicole } from "@/hooks/useSimpleNicole";
 import { toast } from "sonner";
-import AutoGiftSetupFlow from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import { NicoleAutoGiftBridge } from "@/services/ai/NicoleAutoGiftBridge";
 import { useAuth } from "@/contexts/auth";
 
@@ -280,11 +280,12 @@ const SimpleNicolePopup = ({
         </DialogContent>
       </Dialog>
 
-      {/* Auto-Gift Setup Flow Integration */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup */}
+      <UnifiedGiftSchedulingModal
         open={autoGiftFlowOpen}
         onOpenChange={setAutoGiftFlowOpen}
-        initialData={autoGiftInitialData}
+        standaloneMode={true}
+        editingRule={autoGiftInitialData}
       />
     </>
   );

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import AutoGiftSetupFlow, { ProductHints } from "@/components/gifting/auto-gift/AutoGiftSetupFlow";
+import UnifiedGiftSchedulingModal, { ProductHints } from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import { useCart } from "@/contexts/CartContext";
 import { getOrderLineItems, getOrderLineItemsPricing } from "@/lib/utils/orderUtils";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
@@ -787,11 +787,12 @@ const OrderConfirmation = () => {
         </div>
       </div>
 
-      {/* Auto-Gift Setup Dialog - Pass productHints for AI suggestions */}
-      <AutoGiftSetupFlow
+      {/* Recurring Gift Setup Dialog */}
+      <UnifiedGiftSchedulingModal
         open={showAutoGiftUpsell}
         onOpenChange={setShowAutoGiftUpsell}
-        initialData={autoGiftInitialData}
+        standaloneMode={true}
+        editingRule={autoGiftInitialData}
         productHints={autoGiftInitialData?.productHints}
       />
     </SidebarLayout>

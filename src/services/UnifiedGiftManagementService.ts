@@ -867,6 +867,40 @@ class UnifiedGiftManagementService {
     await this.validateUserConsent(rule.user_id);
     await this.validateBudgetLimits(rule.user_id, rule.budget_limit || 0);
 
+    // Phase 4b: Deactivate duplicate rules (same user + recipient + occasion)
+    const duplicateFilter: Record<string, any> = {
+      user_id: rule.user_id,
+      date_type: rule.date_type,
+      is_active: true,
+    };
+    if (rule.recipient_id) {
+      duplicateFilter.recipient_id = rule.recipient_id;
+    } else if (rule.pending_recipient_email) {
+      duplicateFilter.pending_recipient_email = rule.pending_recipient_email;
+    }
+
+    const { data: existingDuplicates } = await supabase
+      .from('auto_gifting_rules')
+      .select('id')
+      .match(duplicateFilter);
+
+    if (existingDuplicates && existingDuplicates.length > 0) {
+      const oldRuleIds = existingDuplicates.map(r => r.id);
+      console.log(`🔄 Deactivating ${oldRuleIds.length} duplicate rule(s):`, oldRuleIds);
+
+      await supabase
+        .from('auto_gifting_rules')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .in('id', oldRuleIds);
+
+      await this.logAutoGiftEvent(
+        rule.user_id,
+        'duplicate_rules_deactivated',
+        { deactivated_rule_ids: oldRuleIds, new_date_type: rule.date_type },
+        { count: oldRuleIds.length }
+      );
+    }
+
     // Phase 5: Generate secure setup token
     const setupToken = await this.generateSetupToken(rule.user_id);
     

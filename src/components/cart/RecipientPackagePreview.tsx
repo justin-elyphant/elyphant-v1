@@ -9,7 +9,6 @@ import { detectHolidayFromDate } from '@/constants/holidayDates';
 import { useAutoGifting } from '@/hooks/useAutoGifting';
 import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 import RecurringGiftUpsellBanner from './RecurringGiftUpsellBanner';
-import UnifiedGiftSchedulingModal from '@/components/gifting/unified/UnifiedGiftSchedulingModal';
 
 interface RecipientPackagePreviewProps {
   deliveryGroup: DeliveryGroup;

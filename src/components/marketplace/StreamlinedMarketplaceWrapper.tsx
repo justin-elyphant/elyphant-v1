@@ -5,7 +5,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
 import PopularBrands from "./PopularBrands";
 import MarketplaceLandingHero from "./landing/MarketplaceLandingHero";
-import CuratedCollectionTiles from "./landing/CuratedCollectionTiles";
+import CuratedCollectionTiles, { TILES } from "./landing/CuratedCollectionTiles";
+import CategoryLandingHeader from "./landing/CategoryLandingHeader";
 import ShopByOccasion from "./landing/ShopByOccasion";
 import CategoryBrowseGrid from "./landing/CategoryBrowseGrid";
 import TrendingProductsSection from "./landing/TrendingProductsSection";
@@ -604,108 +605,85 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </div>
       )}
 
-      {/* Search Results Header - Enhanced for active searches */}
+      {/* Unified Category / Search Header */}
       {showSearchInfo && !brandCategories && !isPersonalizedActive && (() => {
-        // Prioritize search term display for active searches
-        if (urlSearchTerm) {
-          // Check if this is a category search and get the clean display name
-          const displayTitle = isCategorySearchTerm(urlSearchTerm) 
-            ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
-            : urlSearchTerm;
-            
-          // Also check for category parameter
-          const categoryParam = searchParams.get('category');
-          const categoryDisplayName = categoryParam ? getCategoryDisplayNameFromValue(categoryParam) : null;
-          
-          // Use category name if available, otherwise use the cleaned search term
-          const finalTitle = categoryDisplayName || displayTitle;
-          
-          return (
-            <div className="mb-8 pt-6">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-foreground mb-2 capitalize">
-                  {finalTitle}
-                </h1>
-                <p className="text-lg text-muted-foreground mb-4">
-                  {categoryDisplayName ? `Browse ${finalTitle.toLowerCase()}` : `Search results for "${finalTitle}"`}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-                </p>
-              </div>
-            </div>
-          );
-        }
+        const quickPickMap: Record<string, { title: string; subtitle: string; tileId: string }> = {
+          giftsForHer: { title: 'Gifts for Her', subtitle: "Thoughtfully curated for the special women in your life", tileId: 'gifts-for-her' },
+          giftsForHim: { title: 'Gifts for Him', subtitle: "Discover the perfect gift for every guy", tileId: 'gifts-for-him' },
+          giftsUnder50: { title: 'Gifts Under $50', subtitle: "Great gifts that won't break the bank", tileId: 'under-50' },
+          luxury: { title: 'Luxury Gifts', subtitle: "Premium selections for extraordinary moments", tileId: 'luxury' },
+        };
 
-        // Quick pick categories
+        const lifestyleMap: Record<string, { title: string; subtitle: string }> = {
+          'movie-buff': { title: 'Movie Buff', subtitle: "Perfect gifts for cinema lovers and entertainment enthusiasts" },
+          'on-the-go': { title: 'On the Go', subtitle: "Essential items for busy, active lifestyles" },
+          'work-from-home': { title: 'Work From Home', subtitle: "Everything you need for productive remote work" },
+          'the-traveler': { title: 'The Traveler', subtitle: "Adventure-ready gear for wanderers" },
+          'the-home-chef': { title: 'The Home Chef', subtitle: "Culinary tools for kitchen enthusiasts" },
+          'teens': { title: 'Teens', subtitle: "Trendy picks for young adults" },
+        };
+
         const quick = currentQuickPickCategory || (giftsForHer ? 'giftsForHer' : giftsForHim ? 'giftsForHim' : giftsUnder50 ? 'giftsUnder50' : luxuryCategories ? 'luxury' : null);
 
-        if (quick) {
-          const map = {
-            giftsForHer: { title: 'Gifts for Her', subtitle: "Thoughtfully curated for the special women in your life" },
-            giftsForHim: { title: 'Gifts for Him', subtitle: "Discover the perfect gift for every guy" },
-            giftsUnder50: { title: 'Gifts Under $50', subtitle: "Great gifts that won't break the bank" },
-            luxury: { title: 'Luxury Gifts', subtitle: "Premium selections for extraordinary moments" },
-          } as const;
-          const { title, subtitle } = map[quick];
-          return (
-            <div className="mb-8 pt-6">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>
-                <p className="text-lg text-muted-foreground mb-4">{subtitle}</p>
-                <p className="text-sm text-muted-foreground">
-                  {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-                </p>
-              </div>
-            </div>
-          );
+        // Build header props based on category type
+        let headerTitle: string;
+        let headerSubtitle: string | undefined;
+        let breadcrumbs: { label: string; href?: string; isCurrentPage?: boolean }[];
+        let siblingCollections: typeof TILES | undefined;
+        let currentTileId: string | undefined;
+
+        if (quick && quickPickMap[quick]) {
+          const info = quickPickMap[quick];
+          headerTitle = info.title;
+          headerSubtitle = info.subtitle;
+          currentTileId = info.tileId;
+          siblingCollections = TILES;
+          breadcrumbs = [
+            { label: 'Marketplace', href: '/marketplace' },
+            { label: 'Gift Ideas', href: '/marketplace' },
+            { label: info.title, isCurrentPage: true },
+          ];
+        } else if (urlSearchTerm) {
+          const displayTitle = isCategorySearchTerm(urlSearchTerm)
+            ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
+            : urlSearchTerm;
+          const categoryParam = searchParams.get('category');
+          const categoryDisplayName = categoryParam ? getCategoryDisplayNameFromValue(categoryParam) : null;
+          const finalTitle = categoryDisplayName || displayTitle;
+          headerTitle = finalTitle;
+          headerSubtitle = categoryDisplayName ? `Browse ${finalTitle.toLowerCase()}` : `Search results for "${finalTitle}"`;
+          breadcrumbs = [
+            { label: 'Marketplace', href: '/marketplace' },
+            { label: 'Search Results', isCurrentPage: true },
+          ];
+        } else if (currentLifestyleCategory && lifestyleMap[currentLifestyleCategory]) {
+          const info = lifestyleMap[currentLifestyleCategory];
+          headerTitle = info.title;
+          headerSubtitle = info.subtitle;
+          breadcrumbs = [
+            { label: 'Marketplace', href: '/marketplace' },
+            { label: info.title, isCurrentPage: true },
+          ];
+        } else {
+          const categoryParam = searchParams.get('category');
+          const category = categoryParam ? getCategoryByValue(categoryParam) : null;
+          headerTitle = category ? (category.displayName || category.name) : 'Browse Products';
+          headerSubtitle = category ? category.description : 'Browse our curated selection';
+          breadcrumbs = [
+            { label: 'Marketplace', href: '/marketplace' },
+            { label: headerTitle, isCurrentPage: true },
+          ];
         }
 
-        // Handle lifestyle categories
-        if (currentLifestyleCategory) {
-          const lifestyleMap: Record<string, { title: string; subtitle: string }> = {
-            'movie-buff': { title: 'Movie Buff', subtitle: "Perfect gifts for cinema lovers and entertainment enthusiasts" },
-            'on-the-go': { title: 'On the Go', subtitle: "Essential items for busy, active lifestyles" },
-            'work-from-home': { title: 'Work From Home', subtitle: "Everything you need for productive remote work" },
-            'the-traveler': { title: 'The Traveler', subtitle: "Adventure-ready gear for wanderers" },
-            'the-home-chef': { title: 'The Home Chef', subtitle: "Culinary tools for kitchen enthusiasts" },
-            'teens': { title: 'Teens', subtitle: "Trendy picks for young adults" }
-          };
-          
-          const categoryInfo = lifestyleMap[currentLifestyleCategory];
-          if (categoryInfo) {
-            return (
-              <div className="mb-8">
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-foreground mb-2">{categoryInfo.title}</h1>
-                  <p className="text-lg text-muted-foreground mb-4">{categoryInfo.subtitle}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-                  </p>
-                </div>
-              </div>
-            );
-          }
-        }
-
-        // Category-based results
-        const categoryParam = searchParams.get("category");
-        const category = categoryParam ? getCategoryByValue(categoryParam) : null;
-        
         return (
-          <div className="mb-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                {category ? (category.displayName || category.name) : "Browse Products"}
-              </h1>
-              <p className="text-lg text-muted-foreground mb-4">
-                {category ? category.description : "Browse our curated selection"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {totalCount} {totalCount === 1 ? 'product' : 'products'} found
-              </p>
-            </div>
-          </div>
+          <CategoryLandingHeader
+            title={headerTitle}
+            subtitle={headerSubtitle}
+            productCount={totalCount}
+            breadcrumbs={breadcrumbs}
+            siblingCollections={siblingCollections}
+            currentCollectionId={currentTileId}
+          />
         );
       })()}
 

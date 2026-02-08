@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
 
-interface CollectionTile {
+export interface CollectionTile {
   id: string;
   title: string;
   subtitle: string;
@@ -11,7 +11,7 @@ interface CollectionTile {
   navigateTo: string;
 }
 
-const TILES: CollectionTile[] = [
+export const TILES: CollectionTile[] = [
   {
     id: "gifts-for-her",
     title: "Gifts for Her",

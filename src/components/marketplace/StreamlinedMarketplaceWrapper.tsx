@@ -655,18 +655,32 @@ const StreamlinedMarketplaceWrapper = memo(() => {
             { label: info.title, isCurrentPage: true },
           ];
         } else if (urlSearchTerm) {
-          const displayTitle = isCategorySearchTerm(urlSearchTerm)
-            ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
-            : urlSearchTerm;
+          const urlTitleParam = searchParams.get('title');
           const categoryParam = searchParams.get('category');
           const categoryDisplayName = categoryParam ? getCategoryDisplayNameFromValue(categoryParam) : null;
-          const finalTitle = categoryDisplayName || displayTitle;
-          headerTitle = finalTitle;
-          headerSubtitle = categoryDisplayName ? `Browse ${finalTitle.toLowerCase()}` : `Search results for "${finalTitle}"`;
-          breadcrumbs = [
-            { label: 'Marketplace', href: '/marketplace' },
-            { label: 'Search Results', isCurrentPage: true },
-          ];
+
+          if (urlTitleParam) {
+            // Sub-collection tile was clicked — show its title
+            headerTitle = urlTitleParam;
+            headerSubtitle = `Browse ${urlTitleParam.toLowerCase()}`;
+            const parentLabel = categoryDisplayName || (categoryParam ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1) : 'Results');
+            breadcrumbs = [
+              { label: 'Marketplace', href: '/marketplace' },
+              { label: parentLabel, href: `/marketplace?category=${categoryParam}` },
+              { label: urlTitleParam, isCurrentPage: true },
+            ];
+          } else {
+            const displayTitle = isCategorySearchTerm(urlSearchTerm)
+              ? getCategoryDisplayNameFromSearchTerm(urlSearchTerm)
+              : urlSearchTerm;
+            const finalTitle = categoryDisplayName || displayTitle;
+            headerTitle = finalTitle;
+            headerSubtitle = categoryDisplayName ? `Browse ${finalTitle.toLowerCase()}` : `Search results for "${finalTitle}"`;
+            breadcrumbs = [
+              { label: 'Marketplace', href: '/marketplace' },
+              { label: 'Search Results', isCurrentPage: true },
+            ];
+          }
         } else if (currentLifestyleCategory && lifestyleMap[currentLifestyleCategory]) {
           const info = lifestyleMap[currentLifestyleCategory];
           headerTitle = info.title;

@@ -1,88 +1,58 @@
 
 
-# Make the Marketplace Landing Product-Forward
+# Fix Empty Product Discovery Rows
 
-## The Ask
+## Problem
 
-Right now the landing page is mostly navigation tiles and links -- it tells users *where* to go but doesn't show them *what* to buy. The Lululemon reference is clear: surface real products with images, titles, and prices so the page itself is a product discovery experience.
+The three product rows (Trending, New Arrivals, Top Rated) are nearly empty because they send vague multi-word text queries like `"best selling top rated popular trending"` to the `get-products` edge function. The relevance filter strips out almost everything -- only 1 product survives for "Trending" and "Top Rated", and 0 for "New Arrivals."
 
-## Changes Overview
+## Root Cause
 
-Two changes, both to existing files:
+The `get-products` edge function tries to match these words against product titles in the cache. "best selling top rated popular trending" doesn't appear in any product title, so the cache returns almost nothing. When it falls through to Zinc API, the brand-aware filter also strips results because the query words don't match product attributes.
 
-### 1. Remove Hero Category Pills (MarketplaceLandingHero)
+## Solution
 
-Strip the category pills from the hero, leaving only the clean headline and subtitle. This eliminates the redundancy with Browse All Categories and lets the curated collection tiles be the first actionable element below the hero.
+Query the `products` table directly using the Supabase client instead of going through the `get-products` edge function. This approach:
 
-### 2. Add Multiple Themed Product Rows (TrendingProductsSection)
+- Costs zero Zinc API calls (uses 100% cached data from the 2,772 products already in the database)
+- Guarantees each row shows different products by sorting on different dimensions
+- Eliminates the text-matching problem entirely
+- Respects the existing product catalog caching logic (products table IS the cache)
+- Clicking a product from these rows will still use `get-product-detail` edge function as normal, which checks cache first before calling Zinc
 
-Transform the single "Trending Right Now" section into **3 product discovery rows**, each loading real products from the Zinc/cache pipeline with different search queries. This is the Lululemon pattern -- clean horizontal product carousels with actual product images, titles, and prices.
+## Three Rows, Three Sort Dimensions
 
-The three rows:
-- **"Trending Right Now"** -- best selling/popular products (already exists)
-- **"New Arrivals"** -- fresh finds and new products
-- **"Top Rated"** -- highest rated products with best reviews
+| Row | Sort Logic | What it shows |
+|-----|-----------|---------------|
+| **Trending Right Now** | `view_count DESC` | Most-viewed products (real user engagement data) |
+| **New Arrivals** | `created_at DESC` | Most recently added to catalog |
+| **Top Rated** | `metadata->>'review_count' DESC` where review_count > 10 | Products with the most verified reviews |
 
-Each row reuses the existing `CategorySection` component (which already renders `UnifiedProductCard` with image, title, price, rating, and add-to-cart) and loads products via `productCatalogService.searchProducts()` -- the same Zinc-powered pipeline used everywhere else.
+Each query returns 8 products, totaling 24 products across all three rows -- all from cache, zero API cost.
 
-The product cards already display in the Lululemon-inspired style: clean image, title + price on one line, star rating, share/cart buttons. No changes to the card itself.
+## Product Click / Detail View Caching
 
-## Revised Page Flow
+When a user clicks a product from these rows, the existing `get-product-detail` edge function handles it. That function already checks the products table cache first before calling Zinc. Since all products shown here are already in the cache (they came from the products table), clicking them will NOT trigger a Zinc API charge. The caching logic is fully preserved.
 
-```text
-+----------------------------------------------------------+
-|  [Nav Bar with Search]                                    |
-+----------------------------------------------------------+
-|                                                           |
-|           Find the Perfect Gift                           |
-|    Discover curated gifts for every person and occasion   |
-|                                                           |
-+----------------------------------------------------------+
-|  Shop by Collection                                       |
-|  [Gifts for Her] [Gifts for Him] [Under $50] [Luxury]    |
-+----------------------------------------------------------+
-|  Popular Brands                                           |
-|  [Apple] [Samsung] [Nike] [Adidas] [Sony] [Lego]         |
-+----------------------------------------------------------+
-|  Trending Right Now                    [See All ->]       |
-|  [Product+Price] [Product+Price] [Product+Price] >>>      |
-+----------------------------------------------------------+
-|  New Arrivals                          [See All ->]       |
-|  [Product+Price] [Product+Price] [Product+Price] >>>      |
-+----------------------------------------------------------+
-|  Top Rated                             [See All ->]       |
-|  [Product+Price] [Product+Price] [Product+Price] >>>      |
-+----------------------------------------------------------+
-|  Shop by Occasion                                         |
-|  [Birthday] [Anniversary] [Wedding] [Baby] [Holiday]     |
-+----------------------------------------------------------+
-|  Browse All Categories                                    |
-|  [Electronics] [Fashion] [Beauty] [Home] ...              |
-+----------------------------------------------------------+
-```
-
-Each product row shows real product cards with images, titles, prices, ratings, and cart buttons -- exactly like the Lululemon screenshot but horizontally scrollable.
-
-## Technical Details
-
-### File: `src/components/marketplace/landing/MarketplaceLandingHero.tsx`
-- Remove `getQuickAccessCategories` import and the entire category pills `div`
-- Keep only the `h1` headline and `p` subtitle
-- Remove unused `useNavigate`, `triggerHapticFeedback`, and `motion` imports
+## Technical Changes
 
 ### File: `src/components/marketplace/landing/TrendingProductsSection.tsx`
-- Add two more product rows alongside the existing "Trending Right Now":
-  - **"New Arrivals"** using search query: `"new arrivals latest products fresh finds"`
-  - **"Top Rated"** using search query: `"top rated best reviewed highest rated"`
-- Each row uses `productCatalogService.searchProducts()` with `limit: 8` (same Zinc/cache pipeline)
-- Each row renders via the existing `CategorySection` component (same product cards with pricing)
-- Progressive loading: "Trending" loads immediately, the other two load after a short delay to avoid API contention
-- "See All" buttons navigate to appropriate search results
-- All product data flows through the existing Zinc pricing pipeline (no price format changes)
-- Horizontal scroll containers use `ios-smooth-scroll` class for native iOS momentum
+
+Replace the `productCatalogService.searchProducts()` calls with direct Supabase queries on the `products` table. Each row gets its own optimized query:
+
+- **Trending**: `supabase.from('products').select('*').order('view_count', { ascending: false }).limit(8)`
+- **New Arrivals**: `supabase.from('products').select('*').order('created_at', { ascending: false }).limit(8)`
+- **Top Rated**: `supabase.from('products').select('*').not('metadata->review_count', 'is', null).order('view_count', { ascending: false }).limit(8)` with client-side sort by review_count (since Supabase can't sort on JSONB fields directly via the client)
+
+The product mapping logic stays the same -- we just need to map from the `products` table column names (e.g., `image_url` instead of `image`) to the `Product` type. The `metadata` JSONB field provides stars, review_count, images, and other enrichment data.
+
+Progressive loading with staggered delays is kept to avoid overwhelming the database with simultaneous queries.
 
 ### No other files change
-- `StreamlinedMarketplaceWrapper.tsx` already renders `TrendingProductsSection` in the right spot
-- Product cards (`AirbnbStyleProductCard`) already show image, title, price, rating
-- `CategorySection` already handles the horizontal carousel layout
-- All Zinc cataloging, caching, and pricing logic stays untouched
+
+- `StreamlinedMarketplaceWrapper.tsx` -- already renders TrendingProductsSection correctly
+- `CategorySection` component -- already handles the product card rendering
+- `get-products` edge function -- untouched, still handles all search/category requests
+- `get-product-detail` edge function -- untouched, still handles product clicks with cache-first lookup
+- Product cards and pricing logic -- untouched
+

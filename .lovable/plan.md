@@ -1,77 +1,78 @@
 
 
-# Fix Sub-Collection Titles and Search Relevance for Baby and Wedding
+# Add "All Items" Product Grid Below Sub-Collection Carousel
 
-## Problems
+## What This Does
 
-1. **Wrong page title**: When clicking any sub-collection tile (e.g., "Diapers & Wipes"), the results page shows the parent category name ("Baby" or "Wedding") instead of the tile's title. This happens because the header logic in `StreamlinedMarketplaceWrapper.tsx` (line 657-669) reads the `category` URL param and uses its display name, ignoring the specific sub-collection.
+Inspired by Lululemon's category landing pages, this adds a curated product grid section below the "Shop the Collection" carousel on both the Baby and Wedding landing pages. The grid shows 20-30 mixed products from across the sub-categories, giving users immediate browsing without needing to click into a specific tile first.
 
-2. **Poor product relevance**: Search terms like `"baby diapers wipes pampers huggies"` mix generic terms with brand names, producing weak Zinc API matches and confusing the relevance filter.
+## Layout (Matching Lululemon Reference)
 
-## Solution
-
-### Part 1: Pass tile title via URL parameter
-
-Add a `title` URL parameter when navigating from tile clicks so the header can display the correct sub-collection name.
-
-**File: `src/components/marketplace/landing/LifeEventLandingPage.tsx`**
-
-- Update `handleTileClick` to append `&title={collection.title}` to the URL
-- Update `handleCtaClick` to append `&title={ctaLabel text}` to the URL
-
-Example resulting URL:
+```text
++--------------------------------------------+
+|             HERO (existing)                 |
++--------------------------------------------+
+|       Shop the Collection (carousel)        |
+|  [Tile] [Tile] [Tile] [Tile] [Tile] [Tile] |
++--------------------------------------------+
+|           All Items  ·  24 products         |  <-- NEW
+|  +---------+  +---------+  +---------+      |
+|  |         |  |         |  |         |      |
+|  | Product |  | Product |  | Product |      |
+|  |  Card   |  |  Card   |  |  Card   |      |
+|  +---------+  +---------+  +---------+      |
+|  +---------+  +---------+  +---------+      |
+|  |         |  |         |  |         |      |
+|  | Product |  | Product |  | Product |      |
+|  |  Card   |  |  Card   |  |  Card   |      |
+|  +---------+  +---------+  +---------+      |
+|       [ Shop All Baby/Wedding Gifts ]       |
++--------------------------------------------+
 ```
-/marketplace?search=diapers+and+wipes&category=baby&title=Diapers+%26+Wipes
-```
 
-### Part 2: Read title param in header logic
+## How It Works
 
-**File: `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx`**
+- Queries the `products` table directly (zero Zinc API cost) for products matching the category
+- Baby: searches titles/category for baby, diaper, nursery, infant, newborn keywords (~51 cached products available)
+- Wedding: searches titles/category for wedding, bridal, bride, groom, honeymoon keywords (~118 cached products available)
+- Sorts by view_count (most popular first) to surface the best products
+- Displays up to 24 products in a responsive grid (2 cols mobile, 3 cols tablet, 4 cols desktop)
+- Includes a "Shop All" CTA button at the bottom that navigates to the full search results page
+- Shows skeleton loading states while products load
 
-- In the header block (around line 657), check for a `title` URL param first
-- When present, use it as `headerTitle` instead of the category display name
-- Update subtitle to say "Browse [title]" and breadcrumbs to show the tile title as the current page with the parent category as a clickable ancestor
+## Technical Details
 
-Example breadcrumb: **Marketplace > Baby > Diapers & Wipes**
+### File 1: `src/components/marketplace/landing/LifeEventLandingPage.tsx`
 
-### Part 3: Simplify search terms for better product matches
+**Changes:**
+- Add search keywords config per category (used for the DB query)
+- Add a new `LifeEventAllItems` section component below the carousel that:
+  - Queries `supabase.from('products')` with `or()` filters matching category-specific keywords in `title` and `category` columns
+  - Maps DB rows to the `Product` type using the same `mapDbProductToProduct` pattern from `TrendingProductsSection`
+  - Renders products using `UnifiedProductCard` (the same card component used everywhere else)
+  - Includes a section header ("All Items" with product count)
+  - Shows a "Shop All [Category] Gifts" button at the bottom
+  - Has skeleton loading states (8 placeholder cards)
 
-**File: `src/components/marketplace/landing/LifeEventLandingPage.tsx`**
+**New imports:**
+- `supabase` from integrations
+- `UnifiedProductCard` for consistent product cards
+- `useState`, `useEffect` for data fetching
+- `Product` type from types
+- `Skeleton` for loading state
 
-Clean up all search terms across both Wedding and Baby configs:
+**Data fetching approach:**
+- Same pattern as `TrendingProductsSection`: direct Supabase query in a `useEffect`
+- Baby query: `.or('category.ilike.%baby%,title.ilike.%baby%,title.ilike.%diaper%,title.ilike.%nursery%,title.ilike.%infant%')`
+- Wedding query: `.or('category.ilike.%wedding%,title.ilike.%wedding%,title.ilike.%bridal%,title.ilike.%bride%,title.ilike.%honeymoon%')`
+- Order by `view_count DESC` (popular first), limit 24
+- Maps results through same `mapDbProductToProduct` helper
 
-**Baby tiles:**
+**No changes to:**
+- `StreamlinedMarketplaceWrapper.tsx` (the landing page is self-contained)
+- Any edge functions or backend
+- The hero or carousel sections
 
-| Tile | Current Search Term | New Search Term |
-|------|-------------------|-----------------|
-| All Items | baby gifts | baby gifts |
-| Baby Essentials | baby essentials must haves | baby essentials |
-| Diapers & Wipes | baby diapers wipes pampers huggies | diapers and wipes |
-| Top Baby Brands | baby products fisher price graco | top baby products |
-| Nursery Decor | baby nursery decor crib bedding | nursery decor |
-| Baby Clothing | baby clothes onesies shoes | baby clothing |
+### Cost Impact
 
-**Wedding tiles:**
-
-| Tile | Current Search Term | New Search Term |
-|------|-------------------|-----------------|
-| All Items | wedding gifts | wedding gifts |
-| Bride & Groom | wedding gifts bride groom | wedding gifts for couple |
-| Bridal Party | bridesmaid groomsmen gifts | bridal party gifts |
-| Registry Favorites | wedding registry kitchen home | wedding registry gifts |
-| Wedding Decor | wedding decorations centerpieces | wedding decorations |
-| Honeymoon | honeymoon travel luggage couples | honeymoon essentials |
-
-## Files Changed
-
-| File | Changes |
-|------|---------|
-| `src/components/marketplace/landing/LifeEventLandingPage.tsx` | Add `title` param to navigation URLs; simplify all 12 search terms |
-| `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx` | Read `title` URL param in header logic; update breadcrumbs to show parent category link |
-
-## What stays the same
-
-- No backend or edge function changes
-- No new files or components
-- Hero section, images, and carousel layout unchanged
-- Click-to-search flow unchanged (just cleaner search terms)
+Zero additional cost -- queries only the local `products` table (already cached data). No Zinc API calls.

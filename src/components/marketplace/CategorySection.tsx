@@ -33,7 +33,6 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   // Memoize product cards for better performance - respect maxItems per section
   const memoizedProducts = useMemo(() => {
     const limitedProducts = products.slice(0, maxItems);
-    console.log(`CategorySection "${title}": Rendering ${limitedProducts.length} of ${products.length} products (maxItems=${maxItems})`);
     return limitedProducts.map((product, index) => ({ 
       product, 
       index,
@@ -103,12 +102,11 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           {memoizedProducts.map(({ product, index, key }) => (
             <div 
               key={key}
-              className="flex-shrink-0 w-52 h-80 transition-transform duration-200 hover:scale-105"
+              className="flex-shrink-0 w-52 transition-transform duration-200 hover:scale-105"
               style={{ 
-                animationDelay: `${index * 50}ms`,
                 willChange: 'transform',
-                minWidth: '208px', // Ensures minimum width is maintained
-                maxWidth: '208px'  // Prevents expansion
+                minWidth: '208px',
+                maxWidth: '208px'
               }}
             >
               <UnifiedProductCard

@@ -1,90 +1,142 @@
 
-# Unify Category Landing Pages with Cache-First Product Discovery
 
-## Summary
+# Registry-Style Landing Pages for Wedding and Baby
 
-Three changes: (1) export TILES data for reuse, (2) create `CategoryLandingHeader` component, (3) consolidate the inline header blocks in `StreamlinedMarketplaceWrapper`. All changes prioritize cached products and maintain zero extra Zinc API cost.
+## What We're Building
 
-## Cache-First Strategy
+When a user clicks "Wedding" or "Baby" in the top navigation, instead of seeing a plain product grid, they'll land on a curated, registry-style experience with:
 
-The `get-products` edge function already has two distinct paths:
+1. A full-width hero image with headline and CTA (bleed-first, edge-to-edge)
+2. A "Shop by Collection" carousel of 4-5 sub-category tiles (lifestyle images with titles)
+3. The product grid below (populated from whichever sub-category they click)
 
-- **Regular search path** (line 1164): Does cache-first lookup via `getCachedProductsForQuery()` -- checks `products` table first, only calls Zinc on cache miss. This is the cost-efficient path.
-- **Category registry path** (line 1100): Always calls `searchCategoryBatch()` which hits Zinc API directly, then caches afterward. This is the expensive path.
+This mirrors the main landing page's curated feel but is purpose-built for life-event gifting.
 
-Both the new `CategoryLandingHeader` sibling tiles and the existing category page loads already go through `useMarketplace` -> `productCatalogService.searchProducts()` -> `get-products` edge function. The cache-first logic is already handled server-side. No client-side changes needed to respect the cache.
+## How It Works (No New Routes)
 
-**What the plan does NOT change**: The edge function routing logic, the cache-first lookup, the Zinc API fallback, or any pricing normalization. All of that stays untouched.
+The existing flow stays intact. When a user navigates to `/marketplace?category=wedding`, the wrapper already sets `showSearchInfo = true` and renders the `CategoryLandingHeader`. We'll add a detection layer: if the category is `wedding` or `baby`, render the new `LifeEventLandingPage` component instead of the standard header + grid. When the user clicks a sub-collection tile (e.g., "Diapers"), it navigates to `/marketplace?search=baby+diapers&category=baby` -- the standard marketplace search flow with cache-first product loading.
 
-**Products already cached get promoted automatically**: The `get-products` edge function calculates a `popularity_score` for cached products (line 48-107) and sorts by it (line 595). Cached products with views, reviews, and best seller badges score higher, so they naturally appear first. Products that came from the landing page discovery rows (Trending, New Arrivals, Top Rated) are already in the cache, so clicking into a category that overlaps with those products will show them first.
+## Visual Layout
 
-## Changes
+```text
+/marketplace?category=wedding
+---------------------------------------------------------------
+[                                                             ]
+[   Full-width hero image (wedding scene, Unsplash)           ]
+[   "Wedding Gift Shop"                                       ]
+[   "Find the perfect gift for every wedding moment"          ]
+[   [Shop All Wedding Gifts]  (CTA button)                    ]
+[                                                             ]
+---------------------------------------------------------------
 
-### 1. Export TILES data from `CuratedCollectionTiles.tsx`
+  Shop the Collection
 
-Add `export` to the `CollectionTile` interface and `TILES` array so the new header component can import them for sibling navigation. Zero visual changes.
+  [ Bride & Groom ] [ Bridal Party ] [ Registry ]  [ Decor  ] [ Honeymoon ]
+  [ wedding photo  ] [ bridesmaids ] [ gifts     ]  [ table  ] [ travel    ]
+    Title + desc     Title + desc    Title + desc   Title+desc  Title+desc
 
-**Lines changed**: ~2 (add `export` keyword to two declarations)
+---------------------------------------------------------------
+(Clicking a tile navigates to /marketplace?search=wedding+bridal+party&category=wedding)
+(Standard product grid loads below via useMarketplace)
+```
 
-### 2. New Component: `CategoryLandingHeader.tsx`
+```text
+/marketplace?category=baby
+---------------------------------------------------------------
+[                                                             ]
+[   Full-width hero image (baby scene, Unsplash)              ]
+[   "Baby Gift Shop"                                          ]
+[   "Everything for the newest arrival"                       ]
+[   [Shop All Baby Gifts]  (CTA button)                       ]
+[                                                             ]
+---------------------------------------------------------------
 
-A lightweight presentational component (~100 lines) that consolidates ALL category header rendering. Receives:
+  Shop the Collection
 
-- `title` -- page title (e.g., "Gifts for Her", "Sony Headphones")
-- `subtitle` -- description text
-- `productCount` -- total products found
-- `breadcrumbs` -- array for `StandardBreadcrumb` (reuses existing component)
-- `siblingCollections` -- optional array of collection tiles for horizontal carousel (Quick Pick categories only)
-- `currentCollectionId` -- to exclude the active tile from siblings
+  [ Essentials  ] [ Diapers &  ] [ Top Baby  ] [ Nursery  ] [ Clothing  ]
+  [ baby photo  ] [ Wipes      ] [ Brands    ] [ Decor    ] [ & Shoes   ]
+    Title + desc   Title + desc   Title+desc   Title+desc   Title+desc
 
-Renders:
-- `StandardBreadcrumb` component (already exists, just imported)
-- Left-aligned title + product count (Lululemon style: bold title, muted count inline)
-- Subtitle below title
-- Horizontal scrollable sibling collection tiles (only for Quick Pick categories) using the same `motion.button` + image + gradient overlay pattern from `CuratedCollectionTiles`
+---------------------------------------------------------------
+(Clicking a tile navigates to /marketplace?search=baby+essentials&category=baby)
+(Standard product grid loads below via useMarketplace)
+```
+
+## Sub-Collection Tile Definitions
+
+### Baby (5 tiles)
+| Tile | Search Term | Image Theme |
+|------|-------------|-------------|
+| Baby Essentials | baby essentials must haves | Soft nursery items |
+| Diapers and Wipes | baby diapers wipes pampers huggies | Diaper packs |
+| Top Baby Brands | baby products fisher price graco | Brand variety |
+| Nursery Decor | baby nursery decor crib bedding | Decorated nursery |
+| Baby Clothing | baby clothes onesies shoes | Tiny outfits |
+
+### Wedding (5 tiles)
+| Tile | Search Term | Image Theme |
+|------|-------------|-------------|
+| Bride and Groom | wedding gifts bride groom | Couple-focused |
+| Bridal Party | bridesmaid groomsmen gifts | Group gifts |
+| Registry Favorites | wedding registry kitchen home | Classic registry |
+| Wedding Decor | wedding decorations centerpieces | Table settings |
+| Honeymoon | honeymoon travel luggage couples | Travel gear |
+
+Each tile navigates to `/marketplace?search={searchTerm}&category={wedding|baby}`, which flows through the existing `useMarketplace` -> `get-products` cache-first pipeline. Zero new API endpoints needed.
+
+## Technical Changes
+
+### New File: `src/components/marketplace/landing/LifeEventLandingPage.tsx`
+
+A single component (~180 lines) that renders:
+
+1. **Hero Section**: Uses the existing `FullBleedSection` component with an Unsplash background image, gradient overlay (matching hero-image-standards: `from-black/60 via-black/40 to-black/25`), headline, subtitle, and a CTA button that navigates to the full category search.
+
+2. **Sub-Collection Carousel**: Reuses the exact `motion.button` + image + gradient overlay pattern from `CuratedCollectionTiles.tsx` (same aspect ratio, same animation, same text placement). Data comes from a config object defined within the component.
+
+Props:
+- `category: 'wedding' | 'baby'` -- determines which config to render
 
 Reuses:
-- `StandardBreadcrumb` from `@/components/shared/StandardBreadcrumb`
-- `CollectionTile` type and `TILES` array from `CuratedCollectionTiles`
-- `triggerHapticFeedback` from `@/utils/haptics` (same as landing page tiles)
-- `motion.button` from framer-motion (same whileTap/transition as landing page tiles)
+- `FullBleedSection` from `@/components/layout/FullBleedSection`
+- `motion.button` pattern from `CuratedCollectionTiles` (same styling)
+- `triggerHapticFeedback` from `@/utils/haptics`
 - `useNavigate` from react-router-dom
+- `CollectionTile` type from `CuratedCollectionTiles` (reuse the same interface for tile data)
 
-No data fetching, no state, no hooks beyond `useNavigate`. Pure presentation.
+No data fetching, no hooks beyond `useNavigate`. Pure presentation.
 
-### 3. Simplify `StreamlinedMarketplaceWrapper.tsx` header section
+### Edit: `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx`
 
-Replace lines 607-710 (four inline header render blocks: search term, Quick Pick, lifestyle, generic category) with a single `CategoryLandingHeader` component.
+Add a detection check before the existing header/grid rendering. When `category === 'wedding'` or `category === 'baby'` AND there is no search term active (user just landed on the category, hasn't clicked a sub-collection yet):
 
-The mapping logic stays in the wrapper but becomes a simple config object:
+- Render `LifeEventLandingPage` instead of the standard `CategoryLandingHeader` + product grid
+- Once the user clicks a sub-collection tile, the URL gains a `search` param, `showSearchInfo` triggers the normal product grid flow, and the landing page is no longer shown
 
-| Category Type | Title Source | Breadcrumbs | Sibling Tiles |
-|---------------|-------------|-------------|---------------|
-| Quick Pick (giftsForHer, etc.) | Existing map (line 644-649) | Marketplace > Gift Ideas > title | TILES minus current |
-| Search term | URL search term (capitalized) | Marketplace > Search Results | None |
-| Lifestyle category | lifestyleMap (line 666-673) | Marketplace > title | None |
-| Generic category | getCategoryByValue (line 693) | Marketplace > title | None |
+This requires:
+- Import `LifeEventLandingPage`
+- Add a `isLifeEventLanding` check (~3 lines) in the `useMemo` that computes `hideHeroBanner`
+- Add a conditional render (~5 lines) before the curated landing sections that shows `LifeEventLandingPage` when the category is `wedding` or `baby` but no search is active yet
 
-This removes ~100 lines of repetitive centered-text JSX and replaces with ~20 lines of config + one component render.
+Changes are minimal -- roughly 10 lines added to the wrapper.
 
-## What Stays the Same
+### No Other Files Change
 
-- `useMarketplace` hook -- untouched, still drives all product data loading
-- `SubCategoryTabs` -- untouched, still renders below the header
-- Filter/sort controls -- untouched
-- Product grid and cards -- untouched
-- `BrandHeroSection` -- untouched (brands keep their custom hero)
-- `FeaturedProductHero` -- untouched
-- Landing page `CuratedCollectionTiles` -- untouched visually
-- `TrendingProductsSection` -- untouched (already uses zero-cost DB queries)
+- `useMarketplace` -- untouched (URL-driven, already handles `category` + `search` combos)
 - `get-products` edge function -- untouched (cache-first logic preserved)
-- `get-product-detail` edge function -- untouched (cache-first detail lookup preserved)
-- All pricing logic -- untouched
+- `CategoryLandingHeader` -- untouched (still used for Quick Pick and other categories)
+- `CuratedCollectionTiles` -- untouched (landing page tiles stay as-is)
+- Navigation links (`CategoryLinks.tsx`) -- untouched (already link to `/marketplace?category=wedding`)
+- Product cards, pricing, filters -- all untouched
 
-## Files Changed
+### Cache-First Behavior
+
+When a user clicks a sub-collection tile like "Diapers and Wipes", the URL becomes `/marketplace?search=baby+diapers+wipes+pampers+huggies&category=baby`. This triggers `useMarketplace`, which calls `get-products` with that search term. The edge function checks the `products` table cache first via `getCachedProductsForQuery()`. If matching products exist in cache (from previous searches or the Nicole weekly curator), they're returned at zero Zinc API cost. Only on cache miss does Zinc get called, and results are cached for next time.
+
+## Files Summary
 
 | File | Action | Scope |
 |------|--------|-------|
-| `src/components/marketplace/landing/CuratedCollectionTiles.tsx` | Edit | Add `export` to 2 declarations |
-| `src/components/marketplace/landing/CategoryLandingHeader.tsx` | New | ~100 lines, presentational only |
-| `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx` | Edit | Replace lines 607-710 with ~20 lines |
+| `src/components/marketplace/landing/LifeEventLandingPage.tsx` | New | ~180 lines -- hero + sub-collection tiles |
+| `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx` | Edit | ~10 lines -- detect wedding/baby category, render landing page |
+

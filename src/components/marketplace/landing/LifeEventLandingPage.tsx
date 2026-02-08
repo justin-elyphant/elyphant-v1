@@ -178,7 +178,7 @@ const LifeEventLandingPage: React.FC<LifeEventLandingPageProps> = ({
         {/* Gradient overlay – stronger on left for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/25" />
 
-        <div className="relative z-10 flex flex-col justify-end h-full px-6 pb-12 md:px-12 md:pb-16 max-w-[1400px] mx-auto">
+        <div className="relative z-10 flex flex-col justify-end h-full pt-20 px-6 pb-12 md:px-12 md:pb-16 max-w-[1400px] mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 tracking-tight">
             {config.heroTitle}
           </h1>

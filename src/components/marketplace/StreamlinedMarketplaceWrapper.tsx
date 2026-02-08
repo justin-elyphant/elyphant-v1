@@ -7,6 +7,7 @@ import PopularBrands from "./PopularBrands";
 import MarketplaceLandingHero from "./landing/MarketplaceLandingHero";
 import CuratedCollectionTiles, { TILES } from "./landing/CuratedCollectionTiles";
 import CategoryLandingHeader from "./landing/CategoryLandingHeader";
+import LifeEventLandingPage from "./landing/LifeEventLandingPage";
 import ShopByOccasion from "./landing/ShopByOccasion";
 import CategoryBrowseGrid from "./landing/CategoryBrowseGrid";
 import TrendingProductsSection from "./landing/TrendingProductsSection";
@@ -440,7 +441,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   }, [giftsUnder50, showSearchInfo, products, paginatedProducts, isLoading, error]);
 
   // Check if user came from homepage category navigation and determine Quick Pick type
-  const { hideHeroBanner, currentQuickPickCategory, currentLifestyleCategory } = useMemo(() => {
+  const { hideHeroBanner, currentQuickPickCategory, currentLifestyleCategory, lifeEventCategory } = useMemo(() => {
     // Check router state first (most reliable)
     const isFromHome = Boolean(location.state?.fromHome) || searchParams.get('diversity') === 'true';
     
@@ -452,8 +453,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     
     // Check for lifestyle categories (simplified - any category not in the excluded list)
     const categoryParam = searchParams.get('category');
-    const excludedCategories = ['best-selling', 'electronics', 'luxury', 'gifts-for-her', 'gifts-for-him', 'gifts-under-50', 'brand-categories'];
+    const lifeEventCategories = ['wedding', 'baby'];
+    const excludedCategories = ['best-selling', 'electronics', 'luxury', 'gifts-for-her', 'gifts-for-him', 'gifts-under-50', 'brand-categories', ...lifeEventCategories];
     const isLifestyleCategory = categoryParam && !excludedCategories.includes(categoryParam);
+    const isLifeEvent = categoryParam ? lifeEventCategories.includes(categoryParam) : false;
     
     // Determine if we should hide the hero banner
     const shouldHide = isFromHome && (categoryParam || giftsForHerParam || giftsForHimParam || giftsUnder50Param || luxuryCategoriesParam) ||
@@ -480,7 +483,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     return { 
       hideHeroBanner: shouldHide, 
       currentQuickPickCategory: quickPickType,
-      currentLifestyleCategory: isLifestyleCategory ? categoryParam : null
+      currentLifestyleCategory: isLifestyleCategory ? categoryParam : null,
+      lifeEventCategory: isLifeEvent ? (categoryParam as 'wedding' | 'baby') : null,
     };
   }, [location.state, searchParams]);
 
@@ -605,8 +609,13 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </div>
       )}
 
-      {/* Unified Category / Search Header */}
-      {showSearchInfo && !brandCategories && !isPersonalizedActive && (() => {
+      {/* Life Event Landing Pages (Wedding / Baby) */}
+      {lifeEventCategory && !urlSearchTerm && !isPersonalizedActive && (
+        <LifeEventLandingPage category={lifeEventCategory} />
+      )}
+
+      {/* Unified Category / Search Header — skip for life event landing */}
+      {showSearchInfo && !brandCategories && !isPersonalizedActive && !(lifeEventCategory && !urlSearchTerm) && (() => {
         const quickPickMap: Record<string, { title: string; subtitle: string; tileId: string }> = {
           giftsForHer: { title: 'Gifts for Her', subtitle: "Thoughtfully curated for the special women in your life", tileId: 'gifts-for-her' },
           giftsForHim: { title: 'Gifts for Him', subtitle: "Discover the perfect gift for every guy", tileId: 'gifts-for-him' },
@@ -687,8 +696,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         );
       })()}
 
-      {/* Quick Filters - Only for non-personalized, hidden on desktop when showing sidebar */}
-      {!isPersonalizedActive && (
+      {/* Quick Filters - Only for non-personalized, hidden on life event landing */}
+      {!isPersonalizedActive && !(lifeEventCategory && !urlSearchTerm) && (
         <>
           {/* Sub-Category Tabs - Below hero, above filters */}
           {showSearchInfo && (

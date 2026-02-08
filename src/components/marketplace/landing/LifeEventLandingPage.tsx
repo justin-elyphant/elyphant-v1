@@ -32,6 +32,14 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
     ctaSearchTerm: "wedding gifts",
     collections: [
       {
+        id: "all-wedding",
+        title: "All Items",
+        subtitle: "Browse everything",
+        image:
+          "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&q=80",
+        searchTerm: "wedding gifts",
+      },
+      {
         id: "bride-groom",
         title: "Bride & Groom",
         subtitle: "Gifts for the happy couple",
@@ -81,6 +89,14 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
     ctaLabel: "Shop All Baby Gifts",
     ctaSearchTerm: "baby gifts",
     collections: [
+      {
+        id: "all-baby",
+        title: "All Items",
+        subtitle: "Browse everything",
+        image:
+          "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=80",
+        searchTerm: "baby gifts",
+      },
       {
         id: "baby-essentials",
         title: "Baby Essentials",

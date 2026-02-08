@@ -588,8 +588,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </>
       )}
       
-      {/* Only show MarketplaceHeader for non-personalized */}
-      {!isPersonalizedActive && (
+      {/* Only show MarketplaceHeader for non-personalized, non-life-event-landing */}
+      {!isPersonalizedActive && !isLifeEventLanding && (
         <MarketplaceHeader
           totalResults={filteredPaginatedProducts.length}
           filteredProducts={filteredPaginatedProducts}

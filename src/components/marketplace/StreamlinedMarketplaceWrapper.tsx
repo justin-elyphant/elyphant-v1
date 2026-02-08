@@ -3,7 +3,12 @@ import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useMarketplace } from "@/hooks/useMarketplace";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MarketplaceHeader from "./MarketplaceHeader";
-import { ProgressiveAirbnbStyleCategorySections } from "./ProgressiveAirbnbStyleCategorySections";
+import PopularBrands from "./PopularBrands";
+import MarketplaceLandingHero from "./landing/MarketplaceLandingHero";
+import CuratedCollectionTiles from "./landing/CuratedCollectionTiles";
+import ShopByOccasion from "./landing/ShopByOccasion";
+import CategoryBrowseGrid from "./landing/CategoryBrowseGrid";
+import TrendingProductsSection from "./landing/TrendingProductsSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -570,13 +575,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               />
             )
           ) : (currentQuickPickCategory || giftsForHer || giftsForHim || giftsUnder50 || luxuryCategories) ? null : (
-            hideHeroBanner ? null : (
-              <MarketplaceHeroBanner 
-                category={searchParams.get("category") || undefined} 
-                hideFromCategoryNavigation={false}
-                quickPickCategory={currentQuickPickCategory}
-              />
-            )
+            /* Show curated hero on the default landing page (no search, no category) */
+            showSearchInfo ? null : <MarketplaceLandingHero />
           )}
         </>
       )}
@@ -986,9 +986,15 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </>
       )}
 
-      {/* Category Sections (when no search active) */}
+      {/* Curated Landing Sections (when no search active) */}
       {!showSearchInfo && !isPersonalizedActive && (
-        <ProgressiveAirbnbStyleCategorySections onProductClick={handleProductClick} onAddToCart={handleAddToCart} />
+        <>
+          <CuratedCollectionTiles />
+          <PopularBrands />
+          <TrendingProductsSection onProductClick={handleProductClick} onAddToCart={handleAddToCart} />
+          <ShopByOccasion />
+          <CategoryBrowseGrid />
+        </>
       )}
       
       {/* Dynamic Mobile Filter Drawer */}

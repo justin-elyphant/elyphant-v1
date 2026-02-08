@@ -110,7 +110,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         title: "Diapers & Wipes",
         subtitle: "Stock up on the basics",
         image:
-          "https://images.unsplash.com/photo-1584839404054-c29ddb387edf?w=800&q=80",
+          "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=800&q=80",
         searchTerm: "baby diapers wipes pampers huggies",
       },
       {

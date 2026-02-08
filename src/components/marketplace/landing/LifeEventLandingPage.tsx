@@ -45,7 +45,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Gifts for the happy couple",
         image:
           "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&q=80",
-        searchTerm: "wedding gifts bride groom",
+        searchTerm: "wedding gifts for couple",
       },
       {
         id: "bridal-party",
@@ -53,7 +53,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Thank your wedding crew",
         image:
           "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800&q=80",
-        searchTerm: "bridesmaid groomsmen gifts",
+        searchTerm: "bridal party gifts",
       },
       {
         id: "registry-favorites",
@@ -61,7 +61,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Classic registry picks",
         image:
           "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
-        searchTerm: "wedding registry kitchen home",
+        searchTerm: "wedding registry gifts",
       },
       {
         id: "wedding-decor",
@@ -69,7 +69,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Elegant touches & details",
         image:
           "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=800&q=80",
-        searchTerm: "wedding decorations centerpieces",
+        searchTerm: "wedding decorations",
       },
       {
         id: "honeymoon",
@@ -77,7 +77,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Travel-ready essentials",
         image:
           "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
-        searchTerm: "honeymoon travel luggage couples",
+        searchTerm: "honeymoon essentials",
       },
     ],
   },
@@ -103,7 +103,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Must-haves for new parents",
         image:
           "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80",
-        searchTerm: "baby essentials must haves",
+        searchTerm: "baby essentials",
       },
       {
         id: "diapers-wipes",
@@ -111,7 +111,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Stock up on the basics",
         image:
           "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=800&q=80",
-        searchTerm: "baby diapers wipes pampers huggies",
+        searchTerm: "diapers and wipes",
       },
       {
         id: "top-baby-brands",
@@ -119,7 +119,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Trusted names parents love",
         image:
           "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=80",
-        searchTerm: "baby products fisher price graco",
+        searchTerm: "top baby products",
       },
       {
         id: "nursery-decor",
@@ -127,7 +127,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Create a cozy space",
         image:
           "https://images.unsplash.com/photo-1586105449897-20b5efeb3233?w=800&q=80",
-        searchTerm: "baby nursery decor crib bedding",
+        searchTerm: "nursery decor",
       },
       {
         id: "baby-clothing",
@@ -135,7 +135,7 @@ const LIFE_EVENT_CONFIGS: Record<"wedding" | "baby", LifeEventConfig> = {
         subtitle: "Tiny outfits & shoes",
         image:
           "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=800&q=80",
-        searchTerm: "baby clothes onesies shoes",
+        searchTerm: "baby clothing",
       },
     ],
   },
@@ -153,12 +153,14 @@ const LifeEventLandingPage: React.FC<LifeEventLandingPageProps> = ({
 
   const handleCtaClick = () => {
     triggerHapticFeedback("light");
-    navigate(`/marketplace?search=${encodeURIComponent(config.ctaSearchTerm)}&category=${category}`);
+    const titleParam = encodeURIComponent(config.ctaLabel.replace('Shop All ', ''));
+    navigate(`/marketplace?search=${encodeURIComponent(config.ctaSearchTerm)}&category=${category}&title=${titleParam}`);
   };
 
   const handleTileClick = (collection: SubCollection) => {
     triggerHapticFeedback("light");
-    navigate(`/marketplace?search=${encodeURIComponent(collection.searchTerm)}&category=${category}`);
+    const titleParam = encodeURIComponent(collection.title);
+    navigate(`/marketplace?search=${encodeURIComponent(collection.searchTerm)}&category=${category}&title=${titleParam}`);
   };
 
   return (

@@ -8,7 +8,6 @@ interface DiscoveryRowConfig {
   title: string;
   subtitle: string;
   seeAllUrl: string;
-  delayMs: number;
   queryFn: () => Promise<any[]>;
 }
 
@@ -41,7 +40,6 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
     title: "Trending Right Now",
     subtitle: "Popular picks loved by shoppers",
     seeAllUrl: "/marketplace?search=best+selling&category=best-selling",
-    delayMs: 0,
     queryFn: async () => {
       // Most-viewed products = real user engagement
       const { data, error } = await supabase
@@ -72,7 +70,6 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
     title: "New Arrivals",
     subtitle: "Fresh finds and latest products",
     seeAllUrl: "/marketplace?search=new+arrivals",
-    delayMs: 200,
     queryFn: async () => {
       // Most recently added to the catalog
       const { data, error } = await supabase
@@ -88,7 +85,6 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
     title: "Top Rated",
     subtitle: "Highest rated gifts with rave reviews",
     seeAllUrl: "/marketplace?search=top+rated",
-    delayMs: 400,
     queryFn: async () => {
       // Products with the most verified reviews, then sort client-side by stars
       const { data, error } = await supabase
@@ -142,36 +138,26 @@ const TrendingProductsSection: React.FC<TrendingProductsSectionProps> = ({
   useEffect(() => {
     cancelledRef.current = false;
 
-    const loadRow = async (index: number, config: DiscoveryRowConfig) => {
-      if (config.delayMs > 0) {
-        await new Promise((r) => setTimeout(r, config.delayMs));
-      }
+    const loadAllRows = async () => {
+      // Fire all DB queries in parallel - no staggering needed for local DB reads
+      const results = await Promise.allSettled(
+        rowConfigs.map((config) => config.queryFn())
+      );
+
       if (cancelledRef.current) return;
 
-      try {
-        const rawProducts = await config.queryFn();
-        if (cancelledRef.current) return;
-
-        const mapped = rawProducts.map(mapDbProductToProduct);
-
-        setRows((prev) => {
-          const next = [...prev];
-          next[index] = { products: mapped, isLoading: false };
-          return next;
-        });
-      } catch (err) {
-        console.error(`[TrendingProductsSection] Failed to load "${config.title}":`, err);
-        if (!cancelledRef.current) {
-          setRows((prev) => {
-            const next = [...prev];
-            next[index] = { products: [], isLoading: false };
-            return next;
-          });
-        }
-      }
+      setRows(
+        results.map((result) => ({
+          products:
+            result.status === "fulfilled"
+              ? result.value.map(mapDbProductToProduct)
+              : [],
+          isLoading: false,
+        }))
+      );
     };
 
-    rowConfigs.forEach((config, index) => loadRow(index, config));
+    loadAllRows();
 
     return () => {
       cancelledRef.current = true;

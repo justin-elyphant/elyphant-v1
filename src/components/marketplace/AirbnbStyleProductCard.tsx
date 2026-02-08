@@ -268,7 +268,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
             console.log('Image failed to load:', getProductImage());
             (e.target as HTMLImageElement).src = '/placeholder.svg';
           }}
-          onLoad={() => console.log('Image loaded successfully:', getProductImage())}
+          onLoad={() => {}}
         />
         
         
@@ -313,8 +313,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
 
       {/* Content Section - Clean Airbnb Style */}
       <div className={cn(
-        "p-3 flex-1 flex flex-col justify-between",
-        isInCategorySection && "max-h-36",
+        "p-3 flex-1 flex flex-col",
         isMobile && "p-2"
       )}>
         {/* Vendor Info for Local Products */}
@@ -358,8 +357,11 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           className="mb-2"
         />
 
+        {/* Spacer to push buttons to bottom */}
+        <div className="flex-1" />
+
         {/* Bottom Section: Action Buttons */}
-        <div className="flex items-center justify-end pt-1 mt-auto">
+        <div className="flex items-center justify-end pt-1">
 
           {/* Action Buttons - Bottom Right - Context Aware */}
           <div className="flex items-center gap-1 relative z-30">

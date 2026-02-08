@@ -4,6 +4,7 @@ import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
 import { FullBleedSection } from "@/components/layout/FullBleedSection";
 import { Button } from "@/components/ui/button";
+import LifeEventAllItems from "./LifeEventAllItems";
 
 interface SubCollection {
   id: string;
@@ -235,6 +236,9 @@ const LifeEventLandingPage: React.FC<LifeEventLandingPageProps> = ({
           </div>
         </div>
       </section>
+
+      {/* All Items Product Grid */}
+      <LifeEventAllItems category={category} />
     </div>
   );
 };

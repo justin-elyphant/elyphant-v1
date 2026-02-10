@@ -1,78 +1,40 @@
 
 
-# Add "All Items" Product Grid Below Sub-Collection Carousel
+# Fix Horizontal Scroll on Tablet When Signed Out
 
-## What This Does
+## Root Cause
 
-Inspired by Lululemon's category landing pages, this adds a curated product grid section below the "Shop the Collection" carousel on both the Baby and Wedding landing pages. The grid shows 20-30 mixed products from across the sub-categories, giving users immediate browsing without needing to click into a specific tile first.
+The header's "Desktop Right Utilities" section uses `hidden md:flex`, meaning it shows the full-width `AuthButtons` component (containing both "Sign In" and "Get Started" text buttons) at the 768px tablet breakpoint. Combined with the logo, 4 category links, Heart icon, Cart icon, and flex gaps, the total width exceeds the viewport at 768-1024px -- causing horizontal scroll.
 
-## Layout (Matching Lululemon Reference)
+When signed in, `UserButton` (a single avatar icon, ~40px) replaces `AuthButtons` (~200px), which is why the layout fits fine after login.
 
-```text
-+--------------------------------------------+
-|             HERO (existing)                 |
-+--------------------------------------------+
-|       Shop the Collection (carousel)        |
-|  [Tile] [Tile] [Tile] [Tile] [Tile] [Tile] |
-+--------------------------------------------+
-|           All Items  ·  24 products         |  <-- NEW
-|  +---------+  +---------+  +---------+      |
-|  |         |  |         |  |         |      |
-|  | Product |  | Product |  | Product |      |
-|  |  Card   |  |  Card   |  |  Card   |      |
-|  +---------+  +---------+  +---------+      |
-|  +---------+  +---------+  +---------+      |
-|  |         |  |         |  |         |      |
-|  | Product |  | Product |  | Product |      |
-|  |  Card   |  |  Card   |  |  Card   |      |
-|  +---------+  +---------+  +---------+      |
-|       [ Shop All Baby/Wedding Gifts ]       |
-+--------------------------------------------+
-```
+## Fix
 
-## How It Works
+Shift the breakpoint for the desktop/mobile right-side sections from `md` (768px) to `lg` (1024px):
 
-- Queries the `products` table directly (zero Zinc API cost) for products matching the category
-- Baby: searches titles/category for baby, diaper, nursery, infant, newborn keywords (~51 cached products available)
-- Wedding: searches titles/category for wedding, bridal, bride, groom, honeymoon keywords (~118 cached products available)
-- Sorts by view_count (most popular first) to surface the best products
-- Displays up to 24 products in a responsive grid (2 cols mobile, 3 cols tablet, 4 cols desktop)
-- Includes a "Shop All" CTA button at the bottom that navigates to the full search results page
-- Shows skeleton loading states while products load
+- **Desktop Right Utilities**: Change `hidden md:flex` to `hidden lg:flex` -- only shows full AuthButtons on 1024px+ screens
+- **Mobile Right Side**: Change `md:hidden` to `lg:hidden` -- shows compact MobileAuthMenu (hamburger drawer) on tablets
 
-## Technical Details
+This aligns with the existing tablet-as-mobile strategy documented in project memory.
 
-### File 1: `src/components/marketplace/landing/LifeEventLandingPage.tsx`
+Additionally, add `overflow-x-hidden` to the header's nav container as a safety net.
 
-**Changes:**
-- Add search keywords config per category (used for the DB query)
-- Add a new `LifeEventAllItems` section component below the carousel that:
-  - Queries `supabase.from('products')` with `or()` filters matching category-specific keywords in `title` and `category` columns
-  - Maps DB rows to the `Product` type using the same `mapDbProductToProduct` pattern from `TrendingProductsSection`
-  - Renders products using `UnifiedProductCard` (the same card component used everywhere else)
-  - Includes a section header ("All Items" with product count)
-  - Shows a "Shop All [Category] Gifts" button at the bottom
-  - Has skeleton loading states (8 placeholder cards)
+## What Changes
 
-**New imports:**
-- `supabase` from integrations
-- `UnifiedProductCard` for consistent product cards
-- `useState`, `useEffect` for data fetching
-- `Product` type from types
-- `Skeleton` for loading state
+**File: `src/components/navigation/ModernHeaderManager.tsx`**
 
-**Data fetching approach:**
-- Same pattern as `TrendingProductsSection`: direct Supabase query in a `useEffect`
-- Baby query: `.or('category.ilike.%baby%,title.ilike.%baby%,title.ilike.%diaper%,title.ilike.%nursery%,title.ilike.%infant%')`
-- Wedding query: `.or('category.ilike.%wedding%,title.ilike.%wedding%,title.ilike.%bridal%,title.ilike.%bride%,title.ilike.%honeymoon%')`
-- Order by `view_count DESC` (popular first), limit 24
-- Maps results through same `mapDbProductToProduct` helper
+| Line | Current | New |
+|------|---------|-----|
+| 105 | `hidden md:flex items-center gap-2 md:gap-3` | `hidden lg:flex items-center gap-3` |
+| 119 | `md:hidden flex items-center ml-auto gap-2` | `lg:hidden flex items-center ml-auto gap-2` |
+| 75 | Container div | Add `overflow-x-hidden` |
 
-**No changes to:**
-- `StreamlinedMarketplaceWrapper.tsx` (the landing page is self-contained)
-- Any edge functions or backend
-- The hero or carousel sections
+## Result
 
-### Cost Impact
+On tablet (768-1024px), users see:
+- Logo + 4 category links + Heart + Cart + Hamburger menu (compact)
 
-Zero additional cost -- queries only the local `products` table (already cached data). No Zinc API calls.
+On desktop (1024px+), users see:
+- Logo + 7 category links + Search bar + Heart + Cart + Sign In / Get Started buttons (full)
+
+No changes to mobile behavior.

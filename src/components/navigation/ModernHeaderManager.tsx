@@ -72,7 +72,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       )}
     >
       <nav className="bg-transparent">
-        <div className="w-full px-4 md:px-8" style={{ width: '100%', maxWidth: 'none' }}>
+        <div className="w-full px-4 md:px-8 overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
             "flex items-center gap-6 md:gap-8",
             config.height
@@ -102,7 +102,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             )}
 
             {/* Desktop Right Utilities */}
-            <div className="hidden md:flex items-center gap-2 md:gap-3 flex-shrink-0 justify-end">
+            <div className="hidden lg:flex items-center gap-3 flex-shrink-0 justify-end">
               <Button
                 variant="ghost"
                 size="icon"
@@ -116,7 +116,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
 
             {/* Mobile Right Side - always consistent */}
-            <div className="md:hidden flex items-center ml-auto gap-2">
+            <div className="lg:hidden flex items-center ml-auto gap-2">
               <Button
                 variant="ghost"
                 size="icon"

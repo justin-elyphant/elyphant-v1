@@ -25,8 +25,8 @@ import { unifiedGiftManagementService } from '@/services/UnifiedGiftManagementSe
 import SimpleRecipientSelector, { SelectedRecipient } from '@/components/marketplace/product-details/SimpleRecipientSelector';
 import PresetHolidaySelector from './PresetHolidaySelector';
 import RecurringToggleSection from './RecurringToggleSection';
+import SchedulingModeToggle from './SchedulingModeToggle';
 import { DropdownDatePicker } from '@/components/ui/dropdown-date-picker';
-import DeliveryTypeSelector, { DeliveryType } from './DeliveryTypeSelector';
 import MultiEventSelector, { SelectedEvent } from '@/components/gifting/events/add-dialog/MultiEventSelector';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocalStorage } from '@/components/gifting/hooks/useLocalStorage';
@@ -153,9 +153,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Delivery type coaching state (used in product mode)
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>('holiday');
-  const [deliveryTypeUserSet, setDeliveryTypeUserSet] = useState(false);
+  // Delivery type state removed - replaced by unified occasion selector
 
   // Recurring toggle state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -268,12 +266,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     });
   }, [recipientDobForPresets, recipientImportantDatesForPresets, selectedRecipient]);
 
-  // Set initial delivery type when recipient changes - only if user hasn't explicitly chosen
-  useEffect(() => {
-    if (!standaloneMode && selectedRecipient && !deliveryTypeUserSet) {
-      setDeliveryType(hasUpcomingEvents ? 'holiday' : 'specific');
-    }
-  }, [hasUpcomingEvents, selectedRecipient, deliveryTypeUserSet, standaloneMode]);
+  // Smart default removed - unified occasion selector handles this directly
 
   // Check if recurring rule already exists for this recipient+occasion
   const hasExistingRule = useMemo(() => {
@@ -323,7 +316,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         setGiftMessage('');
         setSelectedPreset(null);
         setSelectedDate(null);
-        setDeliveryTypeUserSet(false);
         setPickerValue(getInitialPickerValues());
         
         if (standaloneMode) {
@@ -798,7 +790,15 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   // Modal content
   const modalContent = (
     <div className="space-y-5">
-      {/* Recipient Selection - First */}
+      {/* Mode Toggle - Product mode only */}
+      {!standaloneMode && (
+        <SchedulingModeToggle
+          mode={isRecurring ? 'recurring' : 'one-time'}
+          onModeChange={(mode) => setIsRecurring(mode === 'recurring')}
+        />
+      )}
+
+      {/* Recipient Selection */}
       <div>
         <label className="text-sm font-semibold text-foreground mb-2 block">
           Who is this gift for?
@@ -851,64 +851,24 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           />
         </div>
       ) : (
-        /* Delivery Date Section for product mode */
+        /* Unified Occasion Selector for product mode */
         <div className="space-y-3">
-          <label className="text-sm font-semibold text-foreground block">
-            When should this gift arrive?
-          </label>
-          
-          {/* Step 1: Coaching Question */}
-          <DeliveryTypeSelector
-            selectedType={deliveryType}
-            onTypeChange={(type) => {
-              setDeliveryType(type);
-              setDeliveryTypeUserSet(true);
-              if (type === 'specific') {
-                setSelectedPreset(null);
-                setSelectedDate(null);
-              }
-            }}
+          <PresetHolidaySelector
+            selectedPreset={selectedPreset}
+            recipientDob={recipientDobForPresets}
+            recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
+            recipientImportantDates={recipientImportantDatesForPresets}
+            onPresetSelect={handlePresetSelect}
+            onClear={handlePresetClear}
           />
           
-          {/* Step 2: Conditional content based on selection */}
-          <AnimatePresence mode="wait">
-            {deliveryType === 'holiday' ? (
+          {/* Inline date picker when "Just Because" is selected */}
+          <AnimatePresence>
+            {selectedPreset === 'just_because' && (
               <motion.div
-                key="holiday-flow"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3"
-              >
-                <PresetHolidaySelector
-                  selectedPreset={selectedPreset}
-                  recipientDob={recipientDobForPresets}
-                  recipientName={selectedRecipient?.type === 'connection' ? selectedRecipient.connectionName : undefined}
-                  recipientImportantDates={recipientImportantDatesForPresets}
-                  onPresetSelect={handlePresetSelect}
-                  onClear={handlePresetClear}
-                />
-                
-                {!selectedPreset && (
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Don't see your date? Switch to{' '}
-                    <button 
-                      type="button"
-                      onClick={() => setDeliveryType('specific')}
-                      className="text-primary underline underline-offset-2 font-medium"
-                    >
-                      Specific Date
-                    </button>
-                  </p>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="specific-flow"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <div className="bg-muted/30 rounded-lg py-3 px-2">
@@ -953,7 +913,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           </AnimatePresence>
           
           {/* Selected Date Preview */}
-          {effectiveDate && (deliveryType === 'specific' || selectedPreset) && (
+          {effectiveDate && selectedPreset && (
             <p className="text-xs text-muted-foreground text-center">
               Gift will arrive on or before <span className="font-medium text-foreground">{format(effectiveDate, 'PPP')}</span>
             </p>
@@ -998,12 +958,13 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           className="[&>hr]:hidden" // Hide the separator since we already have one
         />
       ) : (
-        /* In product mode, show toggle only when conditions are met */
+        /* In product mode, show recurring settings when recurring mode is selected */
         <>
-          {allowModeSwitch && selectedRecipient?.type === 'connection' && selectedPreset && (
+          {isRecurring && (
             <RecurringToggleSection
-              isRecurring={isRecurring}
-              onToggle={setIsRecurring}
+              isRecurring={true}
+              onToggle={() => {}}
+              hideToggle={true}
               detectedHoliday={selectedPreset && PRESET_HOLIDAYS[selectedPreset] 
                 ? { key: selectedPreset, label: PRESET_HOLIDAYS[selectedPreset].label } 
                 : null

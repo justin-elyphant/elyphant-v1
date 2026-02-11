@@ -28,6 +28,7 @@ interface RecurringToggleSectionProps {
   onAutoApproveChange: (enabled: boolean) => void;
   notificationDays: number[];
   onNotificationDaysChange: (days: number[]) => void;
+  hideToggle?: boolean;
   className?: string;
 }
 
@@ -45,6 +46,7 @@ const RecurringToggleSection: React.FC<RecurringToggleSectionProps> = ({
   onAutoApproveChange,
   notificationDays,
   onNotificationDaysChange,
+  hideToggle = false,
   className
 }) => {
   const [customBudget, setCustomBudget] = useState('');
@@ -80,48 +82,52 @@ const RecurringToggleSection: React.FC<RecurringToggleSectionProps> = ({
 
   const isPresetSelected = (amount: number) => budget === amount && !showCustomInput;
 
+  // When hideToggle is true, show settings directly without the toggle card
+  const showSettings = hideToggle ? true : isRecurring;
+
   return (
     <div className={cn("space-y-4", className)}>
       <Separator />
       
-      {/* Toggle Header */}
-      <div 
-        className={cn(
-          "flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer min-h-[56px]",
-          isRecurring ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border"
-        )}
-        onClick={() => handleToggle(!isRecurring)}
-      >
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full",
-            isRecurring ? "bg-primary/10" : "bg-muted"
-          )}>
-            <RefreshCw className={cn(
-              "h-4 w-4",
-              isRecurring ? "text-primary" : "text-muted-foreground"
-            )} />
+      {/* Toggle Header - hidden when controlled externally */}
+      {!hideToggle && (
+        <div 
+          className={cn(
+            "flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer min-h-[56px]",
+            isRecurring ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border"
+          )}
+          onClick={() => handleToggle(!isRecurring)}
+        >
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-full",
+              isRecurring ? "bg-primary/10" : "bg-muted"
+            )}>
+              <RefreshCw className={cn(
+                "h-4 w-4",
+                isRecurring ? "text-primary" : "text-muted-foreground"
+              )} />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Make this a recurring gift</p>
+              <p className="text-xs text-muted-foreground">
+                {detectedHoliday 
+                  ? `Automatically send a gift every ${detectedHoliday.label}`
+                  : "Automatically send a gift for this occasion yearly"
+                }
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-sm">Make this a recurring gift</p>
-            <p className="text-xs text-muted-foreground">
-              {detectedHoliday 
-                ? `Automatically send a gift every ${detectedHoliday.label}`
-                : "Automatically send a gift for this occasion yearly"
-              }
-            </p>
-          </div>
+          <Switch 
+            checked={isRecurring} 
+            onCheckedChange={handleToggle}
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
-        <Switch 
-          checked={isRecurring} 
-          onCheckedChange={handleToggle}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
+      )}
 
-      {/* Expandable Options */}
       <AnimatePresence>
-        {isRecurring && (
+        {showSettings && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}

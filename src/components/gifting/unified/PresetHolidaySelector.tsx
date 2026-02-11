@@ -159,10 +159,19 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
       }
     });
     
-    // Sort by date (soonest first)
+    // Sort by date (soonest first), then add "Just Because" at the end
     options.sort((a, b) => {
       if (!a.date || !b.date) return 0;
       return a.date.getTime() - b.date.getTime();
+    });
+
+    // Add "Just Because" option at the bottom (specific date fallback)
+    options.push({
+      key: 'just_because',
+      label: 'Just Because',
+      icon: '🎁',
+      date: null,
+      dateLabel: 'Pick a date'
     });
     
     return options;
@@ -177,8 +186,9 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
     }
     
     const option = holidayOptions.find(o => o.key === value);
-    if (option?.date) {
-      onPresetSelect(option.key, option.date);
+    if (option) {
+      // For "Just Because", pass today as placeholder; parent will show date picker
+      onPresetSelect(option.key, option.date || new Date());
     }
   };
 
@@ -188,7 +198,7 @@ const PresetHolidaySelector: React.FC<PresetHolidaySelectorProps> = ({
   return (
     <div className={cn("space-y-2", className)}>
       <label className="text-sm font-semibold text-foreground block">
-        Popular Holidays/Events
+        What's the occasion?
       </label>
       
       <Select 

@@ -279,9 +279,19 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     );
   }, [existingRules, selectedRecipient, selectedPreset, standaloneMode]);
 
-  // Reset form when modal opens
+  // Track whether the modal was previously open to detect open transitions
+  const prevOpenRef = React.useRef(false);
+
+  // Sync autoApprove with global settings (separate effect, won't reset form)
   useEffect(() => {
-    if (open) {
+    if (open && !editingRule && settings) {
+      setAutoApprove(settings.auto_approve_gifts ?? false);
+    }
+  }, [open, settings, editingRule]);
+
+  // Reset form ONLY when modal transitions from closed -> open
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
       // If editing, populate from editingRule
       if (editingRule) {
         const recipientId = editingRule.recipientId || editingRule.recipient_id;
@@ -368,13 +378,9 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
           }
         }).catch(err => console.warn('Could not fetch payment methods:', err));
       }
-
-      // Sync autoApprove with global settings for new rules
-      if (!editingRule && settings) {
-        setAutoApprove(settings.auto_approve_gifts ?? false);
-      }
     }
-  }, [open, existingRecipient, product?.price, user, editingRule, initialRecipient, standaloneMode, settings]);
+    prevOpenRef.current = open;
+  }, [open]);
 
   // Save draft when standalone mode state changes
   useEffect(() => {

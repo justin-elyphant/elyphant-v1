@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingCart, Calendar, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
@@ -15,9 +15,12 @@ import TrustBadges from "@/components/marketplace/TrustBadges";
 
 import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import BuyNowDrawer from "./BuyNowDrawer";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useViewport } from "@/hooks/useViewport";
 import { getDisplayTitle, cleanTitle } from "@/utils/productTitleUtils";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ProductDetailsSidebarProps {
   product: Product;
@@ -51,7 +54,9 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   const isMobile = useIsMobile();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showScheduleGiftModal, setShowScheduleGiftModal] = useState(false);
+  const [showBuyNowDrawer, setShowBuyNowDrawer] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
+  const { isLargeScreen } = useViewport();
   
   // Get user's saved sizes from profile.metadata.sizes (cast to any for JSONB access)
   const userSizes = (profile as any)?.metadata?.sizes;
@@ -136,6 +141,25 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
     }
     setShowScheduleGiftModal(true);
   };
+
+  // 4. Buy Now click handler — drawer on mobile, checkout on desktop
+  const handleBuyNowClick = () => {
+    if (hasVariations && !isVariationComplete()) {
+      toast.error("Please select all product options", {
+        description: "Choose size, color, and other options before purchase"
+      });
+      return;
+    }
+    
+    // Mobile/tablet + authenticated → open drawer
+    if (!isLargeScreen && user) {
+      triggerHapticFeedback("light");
+      setShowBuyNowDrawer(true);
+    } else {
+      // Desktop or guest → standard add-to-cart + checkout
+      handleBuyNow();
+    }
+  };
   
   return (
     <>
@@ -198,6 +222,15 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         
         {/* 4 CTA BUTTONS - Wishlist-first hierarchy */}
         <div className="space-y-3">
+          {/* Position 0: Buy Now - INSTANT PURCHASE (Red accent) */}
+          <Button
+            className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium h-12"
+            onClick={handleBuyNowClick}
+          >
+            <Zap className="h-5 w-5 mr-2" />
+            Buy Now
+          </Button>
+
           {/* Position 1: Add to Wishlist - PRIMARY (Black filled) */}
           {user && (
             <WishlistSelectionPopoverButton 
@@ -260,6 +293,16 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         getEffectiveProductId={getEffectiveProductId}
         getVariationDisplayText={getVariationDisplayText}
         isVariationComplete={isVariationComplete}
+      />
+
+      {/* Buy Now Drawer (mobile/tablet) */}
+      <BuyNowDrawer
+        open={showBuyNowDrawer}
+        onOpenChange={setShowBuyNowDrawer}
+        product={product}
+        effectiveProductId={getEffectiveProductId()}
+        variationText={getVariationDisplayText()}
+        price={variantPrice || productPrice}
       />
     </>
   );

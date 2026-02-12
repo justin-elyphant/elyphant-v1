@@ -121,12 +121,15 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               giftingFeeDescription: pricing.giftingFeeDescription,
               taxAmount: 0,
             },
+            // Pass saved payment method so Stripe pre-selects it
+            paymentMethod: activePayment?.stripe_payment_method_id || undefined,
             metadata: {
               user_id: user?.id,
               order_type: "standard",
               item_count: 1,
               source: "buy_now_drawer",
               delivery_scenario: "self",
+              payment_method_id: activePayment?.stripe_payment_method_id || "",
             },
           },
         }

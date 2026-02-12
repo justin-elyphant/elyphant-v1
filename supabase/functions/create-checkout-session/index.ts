@@ -445,15 +445,15 @@ serve(async (req) => {
       logStep("Configured for scheduled delivery (manual capture, within 7 days)");
     }
 
-    // For auto-gifts with saved payment method
-    if (isAutoGift && paymentMethod && !useDeferredPayment) {
+    // For saved payment method (auto-gift or buy-now with saved card)
+    if (paymentMethod && !useDeferredPayment) {
       sessionParams.payment_method_types = ['card'];
       sessionParams.payment_intent_data = {
         ...(sessionParams.payment_intent_data || {}),
         payment_method: paymentMethod,
-        setup_future_usage: 'off_session',
+        setup_future_usage: isAutoGift ? 'off_session' : undefined,
       };
-      logStep("Configured for auto-gift with saved payment method");
+      logStep("Configured with saved payment method", { paymentMethod, isAutoGift });
     }
 
     // Create the Checkout Session

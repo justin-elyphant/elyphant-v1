@@ -1,68 +1,38 @@
 
 
-# Fix: Buy Now Drawer Must Send Complete Data for Stripe/Webhook/Zinc Pipeline
+# Fix: Address/Payment Taps Should Navigate to Settings, Not Checkout
 
 ## Problem
 
-The Buy Now drawer's `handlePlaceOrder` call to `create-checkout-session` is missing critical fields that the edge function requires. Specifically:
+Tapping the "Ship to" or "Pay with" rows in the Buy Now drawer calls `handleChange()`, which navigates to `/checkout`. But the Buy Now flow is independent of the cart -- there are no cart items, so `/checkout` shows "Your cart is empty."
 
-1. **`pricingBreakdown` is missing entirely** -- the edge function throws an error at line 119: `if (!pricingBreakdown) throw new Error("Pricing breakdown is required")`
-2. **`cartItems` field names don't match** -- the drawer sends `title` and `image`, but the edge function and webhook expect `name` and `image_url`
-3. **No `user_id` in metadata** -- the standard checkout always includes this for the webhook to create orders correctly
+## Solution
 
-Without these fields, tapping "Place your order" would fail immediately with a server error, and even if it somehow got through, the webhook wouldn't have the data it needs to create the order and trigger Zinc fulfillment.
+Change the tap destination from `/checkout` to `/settings` (where users can manage addresses and payment methods). This is consistent with the "Go to Settings" button already shown when no address/payment is saved (line 237).
 
-## What the Standard Checkout Sends (proven working)
+## Change: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
 
-```text
-{
-  cartItems: [{ product_id, name, price, quantity, image_url, recipientAssignment }],
-  shippingInfo: { name, address_line1, city, state, zip_code, country },
-  pricingBreakdown: { subtotal, shippingCost, giftingFee, giftingFeeName, giftingFeeDescription, taxAmount },
-  metadata: { user_id, order_type, item_count }
-}
+**Line 126-129** -- rename `handleChange` to `handleGoToSettings` and navigate to `/settings` instead of `/checkout`:
+
+```ts
+const handleGoToSettings = () => {
+  onOpenChange(false);
+  navigate("/settings");
+};
 ```
 
-## What the Buy Now Drawer Currently Sends (broken)
-
-```text
-{
-  cartItems: [{ product_id, title, price, quantity, image, retailer, variationText }],
-  shippingInfo: { name, address_line1, city, state, zip_code, country },
-  metadata: { source, delivery_scenario }
-}
-```
-
-## Changes to `BuyNowDrawer.tsx`
-
-### 1. Fix cartItems field names
-- `title` --> `name` (matches edge function expectation)
-- `image` --> `image_url` (matches edge function line 173)
-- Keep `retailer` and `variationText` (harmless extra fields)
-
-### 2. Add pricingBreakdown
-Use `calculateDynamicPricingBreakdown(price)` (already imported) to build:
-```text
-pricingBreakdown: {
-  subtotal: price,
-  shippingCost: 0,
-  giftingFee: (price * 0.10) + 1.00,
-  giftingFeeName: "Elyphant Gifting Fee",
-  giftingFeeDescription: "Our Gifting Fee covers...",
-  taxAmount: 0
-}
-```
-
-### 3. Add user_id to metadata
-Query the current user from Supabase auth and include `user_id` and `order_type` in the metadata, matching the standard checkout pattern.
+**Lines 186 and 201** -- update both `onClick` handlers from `handleChange` to `handleGoToSettings`.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/marketplace/product-details/BuyNowDrawer.tsx` | Fix cartItems field names, add pricingBreakdown, add user_id to metadata |
+| `BuyNowDrawer.tsx` | Change address/payment tap handler to navigate to `/settings` instead of `/checkout` |
 
-## Backend Impact
+## Technical Details
 
-**Zero.** No edge function changes needed. This simply sends the data the existing pipeline already expects, ensuring the full Stripe --> Webhook --> Order Creation --> Zinc fulfillment chain works correctly.
+- The `handleChange` function on line 126 currently does `navigate("/checkout")` which is incorrect for the Buy Now flow
+- Both the "Ship to" button (line 186) and "Pay with" button (line 201) use this same handler
+- The fix simply redirects to `/settings` where address and payment management already exists
+- No cart clearing, no side effects -- just a destination change
 

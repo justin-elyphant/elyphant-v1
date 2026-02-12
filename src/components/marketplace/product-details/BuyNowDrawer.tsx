@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, CreditCard, ChevronRight } from "lucide-react";
+import { MapPin, CreditCard, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,8 +11,10 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDefaultAddress } from "@/hooks/useDefaultAddress";
-import { useDefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
+import { useDefaultPaymentMethod, DefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { calculateDynamicPricingBreakdown } from "@/utils/orderPricingUtils";
@@ -37,12 +39,38 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   price,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { defaultAddress, loading: addressLoading } = useDefaultAddress();
   const { defaultPaymentMethod, loading: paymentLoading } = useDefaultPaymentMethod();
   const [placing, setPlacing] = useState(false);
+  const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
+  const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<DefaultPaymentMethod | null>(null);
+
+  // Sync default payment method
+  useEffect(() => {
+    if (defaultPaymentMethod && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(defaultPaymentMethod);
+    }
+  }, [defaultPaymentMethod]);
+
+  // Fetch all saved payment methods when picker opens
+  useEffect(() => {
+    if (!paymentPickerOpen || !user) return;
+    const fetchAll = async () => {
+      const { data } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false });
+      if (data) setAllPaymentMethods(data as DefaultPaymentMethod[]);
+    };
+    fetchAll();
+  }, [paymentPickerOpen, user]);
 
   const isLoading = addressLoading || paymentLoading;
-  const hasRequiredData = defaultAddress && defaultPaymentMethod;
+  const activePayment = selectedPaymentMethod || defaultPaymentMethod;
+  const hasRequiredData = defaultAddress && activePayment;
 
   const productName = product.title || product.name || "";
   const productImage = product.image || "";
@@ -135,10 +163,17 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     return `${defaultAddress.name}, ${shortStreet}, ${city}, ${state} ${zipCode}`;
   };
 
-  const formatCard = () => {
-    if (!defaultPaymentMethod) return "";
-    const type = defaultPaymentMethod.card_type.charAt(0).toUpperCase() + defaultPaymentMethod.card_type.slice(1);
-    return `${type} ····${defaultPaymentMethod.last_four}`;
+  const formatCard = (method?: DefaultPaymentMethod | null) => {
+    const pm = method || activePayment;
+    if (!pm) return "";
+    const type = pm.card_type.charAt(0).toUpperCase() + pm.card_type.slice(1);
+    return `${type} ····${pm.last_four}`;
+  };
+
+  const handleSelectCard = (method: DefaultPaymentMethod) => {
+    setSelectedPaymentMethod(method);
+    setPaymentPickerOpen(false);
+    triggerHapticFeedback("light");
   };
 
   return (
@@ -196,20 +231,55 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
               </button>
 
-              {/* Pay with */}
-              <button
-                onClick={handleGoToSettings}
-                className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Pay with</p>
-                    <p className="text-sm">{formatCard()}</p>
+              {/* Pay with - inline collapsible picker */}
+              <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Pay with</p>
+                        <p className="text-sm">{formatCard()}</p>
+                      </div>
+                    </div>
+                    {paymentPickerOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="py-2 space-y-1 border-b border-border">
+                    {allPaymentMethods.map((method) => (
+                      <button
+                        key={method.id}
+                        onClick={() => handleSelectCard(method)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left"
+                      >
+                        <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm flex-1">{formatCard(method)}</span>
+                        {activePayment?.id === method.id && (
+                          <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setPaymentPickerOpen(false);
+                        onOpenChange(false);
+                        navigate("/settings");
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left text-muted-foreground"
+                    >
+                      <span className="text-sm">Manage payment methods</span>
+                      <ChevronRight className="h-3.5 w-3.5 ml-auto" />
+                    </button>
                   </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-              </button>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Total */}
               <div className="flex items-center justify-between py-3">

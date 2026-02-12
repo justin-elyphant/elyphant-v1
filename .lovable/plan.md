@@ -1,43 +1,68 @@
 
 
-# Add All-In Pricing to Buy Now Drawer
+# Fix: Buy Now Drawer Must Send Complete Data for Stripe/Webhook/Zinc Pipeline
 
 ## Problem
 
-The "Total" in the Buy Now drawer currently shows only the base product price. It does not include the Elyphant Gifting Fee (10% markup + $1.00 Zinc fee), shipping, or tax.
+The Buy Now drawer's `handlePlaceOrder` call to `create-checkout-session` is missing critical fields that the edge function requires. Specifically:
 
-## Solution
+1. **`pricingBreakdown` is missing entirely** -- the edge function throws an error at line 119: `if (!pricingBreakdown) throw new Error("Pricing breakdown is required")`
+2. **`cartItems` field names don't match** -- the drawer sends `title` and `image`, but the edge function and webhook expect `name` and `image_url`
+3. **No `user_id` in metadata** -- the standard checkout always includes this for the webhook to create orders correctly
 
-Calculate the complete total using the existing `calculateDynamicPricingBreakdown` utility and display it with an Amazon-style "(includes fees)" note underneath.
+Without these fields, tapping "Place your order" would fail immediately with a server error, and even if it somehow got through, the webhook wouldn't have the data it needs to create the order and trigger Zinc fulfillment.
 
-## Change: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
+## What the Standard Checkout Sends (proven working)
 
-1. **Import** `calculateDynamicPricingBreakdown` from `@/utils/orderPricingUtils`
-2. **Compute** the all-in total using `calculateDynamicPricingBreakdown(price)` which returns `grandTotal` including the 10% markup + $1.00 Zinc fee
-3. **Update the Total display** (lines 198-201) from:
-   ```
-   Total       $22.00
-   ```
-   To:
-   ```
-   Total       $24.20
-   (includes fees)
-   ```
-4. **Pass `grandTotal`** instead of `price` to the `create-checkout-session` call so the checkout session amount matches what the user sees
+```text
+{
+  cartItems: [{ product_id, name, price, quantity, image_url, recipientAssignment }],
+  shippingInfo: { name, address_line1, city, state, zip_code, country },
+  pricingBreakdown: { subtotal, shippingCost, giftingFee, giftingFeeName, giftingFeeDescription, taxAmount },
+  metadata: { user_id, order_type, item_count }
+}
+```
 
-### Pricing math example (for a $22.00 product)
-- Base price: $22.00
-- Gifting fee: ($22.00 x 10%) + $1.00 = $3.20
-- Total shown: $25.20
-- Note below: "(includes fees)"
+## What the Buy Now Drawer Currently Sends (broken)
+
+```text
+{
+  cartItems: [{ product_id, title, price, quantity, image, retailer, variationText }],
+  shippingInfo: { name, address_line1, city, state, zip_code, country },
+  metadata: { source, delivery_scenario }
+}
+```
+
+## Changes to `BuyNowDrawer.tsx`
+
+### 1. Fix cartItems field names
+- `title` --> `name` (matches edge function expectation)
+- `image` --> `image_url` (matches edge function line 173)
+- Keep `retailer` and `variationText` (harmless extra fields)
+
+### 2. Add pricingBreakdown
+Use `calculateDynamicPricingBreakdown(price)` (already imported) to build:
+```text
+pricingBreakdown: {
+  subtotal: price,
+  shippingCost: 0,
+  giftingFee: (price * 0.10) + 1.00,
+  giftingFeeName: "Elyphant Gifting Fee",
+  giftingFeeDescription: "Our Gifting Fee covers...",
+  taxAmount: 0
+}
+```
+
+### 3. Add user_id to metadata
+Query the current user from Supabase auth and include `user_id` and `order_type` in the metadata, matching the standard checkout pattern.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `BuyNowDrawer.tsx` | Import pricing util, compute all-in total, add "(includes fees)" subtitle |
+| `src/components/marketplace/product-details/BuyNowDrawer.tsx` | Fix cartItems field names, add pricingBreakdown, add user_id to metadata |
 
 ## Backend Impact
 
-**Zero.** The `create-checkout-session` edge function already handles pricing server-side. The drawer total is a display-only change to set correct expectations before the user taps "Place your order."
+**Zero.** No edge function changes needed. This simply sends the data the existing pipeline already expects, ensuring the full Stripe --> Webhook --> Order Creation --> Zinc fulfillment chain works correctly.
 

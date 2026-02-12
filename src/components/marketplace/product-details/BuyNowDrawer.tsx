@@ -123,9 +123,9 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     }
   };
 
-  const handleChange = () => {
+  const handleGoToSettings = () => {
     onOpenChange(false);
-    navigate("/checkout");
+    navigate("/settings");
   };
 
   const formatAddress = () => {
@@ -183,7 +183,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
             <>
               {/* Ship to */}
               <button
-                onClick={handleChange}
+                onClick={handleGoToSettings}
                 className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -198,7 +198,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
               {/* Pay with */}
               <button
-                onClick={handleChange}
+                onClick={handleGoToSettings}
                 className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">

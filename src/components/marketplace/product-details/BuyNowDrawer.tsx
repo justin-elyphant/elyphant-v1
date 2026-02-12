@@ -54,12 +54,15 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     setPlacing(true);
 
     try {
+      // Get current user for metadata
+      const { data: { user } } = await supabase.auth.getUser();
+
       const cartItem = {
         product_id: effectiveProductId,
-        title: productName,
+        name: productName,
         price,
         quantity: 1,
-        image: productImage,
+        image_url: productImage,
         retailer: product.retailer || "amazon",
         variationText: variationText || undefined,
       };
@@ -74,13 +77,26 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         country: defaultAddress.address.country || "US",
       };
 
+      const pricing = calculateDynamicPricingBreakdown(price);
+
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
         {
           body: {
             cartItems: [cartItem],
             shippingInfo,
+            pricingBreakdown: {
+              subtotal: pricing.basePrice,
+              shippingCost: pricing.shippingCost,
+              giftingFee: pricing.giftingFee,
+              giftingFeeName: pricing.giftingFeeName,
+              giftingFeeDescription: pricing.giftingFeeDescription,
+              taxAmount: 0,
+            },
             metadata: {
+              user_id: user?.id,
+              order_type: "standard",
+              item_count: 1,
               source: "buy_now_drawer",
               delivery_scenario: "self",
             },

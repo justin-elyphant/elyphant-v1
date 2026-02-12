@@ -15,6 +15,7 @@ import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 import { useDefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { calculateDynamicPricingBreakdown } from "@/utils/orderPricingUtils";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 
@@ -197,7 +198,10 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               {/* Total */}
               <div className="flex items-center justify-between py-3">
                 <span className="text-sm font-medium">Total</span>
-                <span className="text-lg font-bold">${price.toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold">${calculateDynamicPricingBreakdown(price).grandTotal.toFixed(2)}</span>
+                  <p className="text-xs text-muted-foreground">(includes fees)</p>
+                </div>
               </div>
             </>
           ) : (

@@ -33,64 +33,48 @@ export const useDefaultAddress = () => {
       setLoading(true);
       setError(null);
 
-      const { data: defaultData, error: fetchError } = await supabase
+      const parseAddress = (addr: any, id: string, name: string) => ({
+        id,
+        name,
+        address: {
+          street: addr?.street || addr?.address_line1 || addr?.address || '',
+          address_line2: addr?.address_line2 || addr?.line2 || '',
+          city: addr?.city || '',
+          state: addr?.state || '',
+          zipCode: addr?.zipCode || addr?.zip_code || '',
+          country: addr?.country || 'US'
+        }
+      });
+
+      // 1. Try user_addresses table (default first, then any)
+      const { data: defaultData } = await supabase
         .from('user_addresses')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_default', true)
-        .single();
+        .order('is_default', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (fetchError) {
-        // If no default found, try to get any address
-        const { data: anyAddress, error: anyAddressError } = await supabase
-          .from('user_addresses')
-          .select('*')
-          .eq('user_id', user.id)
-          .limit(1)
-          .single();
-
-        if (anyAddressError) {
-          setError('No addresses found');
-          setDefaultAddress(null);
-          return;
-        }
-
-        // Use the first available address
-        if (anyAddress) {
-          setDefaultAddress({
-            id: anyAddress.id,
-            name: anyAddress.name,
-            address: {
-              street: (anyAddress.address as any)?.street || (anyAddress.address as any)?.address_line1 || (anyAddress.address as any)?.address || '',
-              address_line2: (anyAddress.address as any)?.address_line2 || '',
-              city: (anyAddress.address as any)?.city || '',
-              state: (anyAddress.address as any)?.state === 'CA' ? 'California' : ((anyAddress.address as any)?.state || ''),
-              zipCode: (anyAddress.address as any)?.zipCode || (anyAddress.address as any)?.zip_code || '',
-              country: (anyAddress.address as any)?.country || 'United States'
-            }
-          });
-        } else {
-          setDefaultAddress(null);
-        }
+      if (defaultData) {
+        setDefaultAddress(parseAddress(defaultData.address, defaultData.id, defaultData.name));
         return;
       }
 
-      if (defaultData) {
-          setDefaultAddress({
-            id: defaultData.id,
-            name: defaultData.name,
-            address: {
-              street: (defaultData.address as any)?.street || (defaultData.address as any)?.address_line1 || (defaultData.address as any)?.address || '',
-              address_line2: (defaultData.address as any)?.address_line2 || '',
-              city: (defaultData.address as any)?.city || '',
-              state: (defaultData.address as any)?.state === 'CA' ? 'California' : ((defaultData.address as any)?.state || ''),
-              zipCode: (defaultData.address as any)?.zipCode || (defaultData.address as any)?.zip_code || '',
-              country: (defaultData.address as any)?.country || 'United States'
-            }
-          });
-      } else {
-        setDefaultAddress(null);
+      // 2. Fallback to profiles.shipping_address
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, shipping_address')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData?.shipping_address) {
+        const name = [profileData.first_name, profileData.last_name].filter(Boolean).join(' ') || 'Home';
+        setDefaultAddress(parseAddress(profileData.shipping_address, profileData.id, name));
+        return;
       }
+
+      setError('No addresses found');
+      setDefaultAddress(null);
     } catch (err) {
       console.error('Error fetching default address:', err);
       setError(err instanceof Error ? err.message : 'Failed to load default address');

@@ -1,63 +1,63 @@
 
 
-## Fix: Zinc Retry Idempotency + max_price Unit Bug
+## Fix: zinc-webhook Can't Parse Zinc's Payload Format
 
-### Problem 1: Retries Never Create New Zinc Orders
+### What's Happening
 
-The `idempotency_key` is set to `orderId` (a fixed UUID). Zinc caches the original request and returns the same cached `max_price_exceeded` error on every retry. The edge function logs confirm both retry attempts received the same `request_id: a1b92762524f77104d2ecf8af1077418`.
+When Zinc calls our webhook after completing an order, it sends the event type in a field called `_type` (with an underscore). Our webhook code looks for `type` (without underscore), so it sees `undefined` and skips all processing. This means:
 
-**Fix:** Append a retry timestamp to the idempotency key so each retry creates a fresh Zinc request:
+- The Amazon order ID (`112-4824932-0694615`) never gets saved
+- The tracking URL never gets saved
+- The order stays stuck as "processing" in Trunkline forever
+- The webhook log entry fails because `event_type` is null (database requires it)
 
-```
-idempotency_key: `${orderId}-retry-${Date.now()}`
-```
+### What's Changing
 
-For the initial submission (from webhook), keep the plain `orderId` for deduplication safety. Only use the timestamped key when the order is already in `processing` or `failed` status (i.e., a retry).
+**File: `supabase/functions/zinc-webhook/index.ts`**
 
-### Problem 2: max_price Unit Mismatch
-
-The `line_items.subtotal` in the database is `1200` (cents, from Zinc). But `order.total_amount` is `14.20` (dollars). The current formula treats both the same way:
-
-```
-Math.ceil((order.line_items?.subtotal || order.total_amount) * 100 * 1.20) + 1500
-```
-
-- With subtotal (1200 cents): `1200 * 100 * 1.20 = 144,000` -- $1,440 (way too high)
-- With total_amount (14.20 dollars): `14.20 * 100 * 1.20 = 1,704` -- $17.04 + $15 = $32.04 (correct)
-
-**Fix:** Since `line_items.subtotal` is already in cents, skip the `* 100` for it:
+1. **Detect event type from `_type` field** -- Zinc uses `_type: "order_response"` for success and `_type: "error"` for failures. Add a mapping function at the top:
 
 ```typescript
-// Determine product subtotal in cents
-// line_items.subtotal is already in cents (from Zinc data), total_amount is in dollars
-const hasLineItemSubtotal = order.line_items?.subtotal != null;
-const productSubtotalCents = hasLineItemSubtotal
-  ? order.line_items.subtotal          // Already cents (e.g., 1200 = $12.00)
-  : order.total_amount * 100;          // Convert dollars to cents
-
-// Hybrid max_price: 20% buffer + $15 fixed shipping/tax allowance
-max_price: Math.ceil(productSubtotalCents * 1.20) + 1500,
+function resolveEventType(payload: any): string {
+  // Zinc sends _type, not type
+  if (payload.type) return payload.type;
+  
+  if (payload._type === 'order_response') return 'request_succeeded';
+  if (payload._type === 'error') return 'request_failed';
+  if (payload.tracking) return 'tracking_obtained';
+  
+  return payload._type || 'unknown';
+}
 ```
 
-For Order #6387: `Math.ceil(1200 * 1.20) + 1500 = 1440 + 1500 = 2940` ($29.40), which covers Amazon's $20.65 total.
+2. **Use resolved event type everywhere** -- Replace all `payload.type` references with the resolved value so the switch statement, logging, and idempotency checks all work correctly.
 
-### Changes
+3. **Extract merchant order data from Zinc's nested structure** -- In `handleRequestSucceeded`, Zinc sends the Amazon order ID inside `merchant_order_ids[0].merchant_order_id` and the tracking URL in `merchant_order_ids[0].tracking_url`. Update the handler to extract these:
 
-**File: `supabase/functions/process-order-v2/index.ts`**
+```typescript
+// Extract from Zinc's nested structure
+const merchantInfo = payload.merchant_order_ids?.[0];
+const merchantOrderId = merchantInfo?.merchant_order_id 
+  || payload.merchant_order_id 
+  || payload.order_id;
+const trackingUrl = merchantInfo?.tracking_url;
+const deliveryDates = payload.delivery_dates;
+```
 
-1. Around line 291-301: Fix the `max_price` calculation to handle cents vs dollars correctly, and make the idempotency key retry-aware.
+4. **Save delivery estimate** -- The Zinc response includes `delivery_dates[0].date: "2026-02-16"`. Save this to the order's `estimated_delivery` field.
 
-2. Detect retry scenario: if order status is already `processing` or `failed`, append timestamp to idempotency key.
+### Technical Summary
 
-### Expected Result After Fix
+| Line Area | Current | Fixed |
+|---|---|---|
+| Event type detection | `payload.type` (undefined) | `resolveEventType(payload)` maps `_type` |
+| Merchant order ID | `payload.merchant_order_id` (undefined) | `payload.merchant_order_ids[0].merchant_order_id` |
+| Tracking URL | Not captured on success | Saved from `merchant_order_ids[0].tracking_url` |
+| Delivery estimate | Not captured | Saved from `delivery_dates[0].date` |
+| Webhook log | Fails (null event_type) | Uses resolved type, falls back to "unknown" |
 
-- Clicking **Retry** on Order #6387 will send a **new** Zinc request (fresh idempotency key) with `max_price: 2940` ($29.40)
-- Amazon's total of $20.65 will be under the limit
-- Future orders will also calculate max_price correctly regardless of whether subtotal is in cents or dollars
+### After Deployment
 
-### Deployment
-
-- Edit and deploy `process-order-v2` edge function
-- Retry Order #6387 from Trunkline
-- Verify new request appears in Zinc dashboard with `max_price: 2940`
+- The webhook will correctly process Zinc's success/failure callbacks going forward
+- For Order #6387 specifically, we'll manually update the database with the Amazon order data since the webhook already fired and won't re-fire
 

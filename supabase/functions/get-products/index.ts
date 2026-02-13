@@ -1221,6 +1221,7 @@ serve(async (req) => {
             total: sortedProducts.length,
             originalTotal: sortedProducts.length,
             fromCache: true,
+            hasMore: true, // Cache is always a subset — more exist on Amazon
             fuzzyMatched: cacheResult.fuzzyMatched || false,
             suggestedCorrection: cacheResult.suggestedCorrection,
             cacheStats: { hits: sortedProducts.length, misses: 0 },

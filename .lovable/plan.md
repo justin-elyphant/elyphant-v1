@@ -1,69 +1,71 @@
 
 
-# Inline "Add New Card" in Buy Now Drawer
+# Add "Ship to a Connection" in Buy Now Drawer
 
 ## What Changes
 
-Replace the "Manage payment methods" link at the bottom of the card picker with an "Add new card" option that reveals a Stripe card input form directly inside the drawer — no navigation away.
+Transform the "Ship to" row from a static button (that redirects to /settings) into a collapsible inline picker -- identical in pattern to the existing "Pay with" card picker. Users can quickly switch between shipping to themselves or to a connection with a verified address.
 
 ## How It Works
 
-1. User taps "Pay with" to expand the card picker
-2. Below the list of saved cards, they see "+ Add new card" instead of "Manage payment methods"
-3. Tapping it reveals the Stripe CardElement form inline (cardholder name + card input + "Save Card" button)
-4. On success, the new card is saved via the existing `save-payment-method` edge function, added to the list, and auto-selected
-5. User can tap "Cancel" to collapse the form and go back to the card list
+1. User taps the "Ship to" row to expand the address picker
+2. First option: "Ship to Myself" (user's default address) -- pre-selected
+3. Below: Top 3 accepted connections **that have a verified shipping address** (no address = not shown)
+4. Each connection shows their name and privacy-masked address (City, State only)
+5. Selecting a connection updates the shipping info passed to `create-checkout-session`
+6. No gift message, no scheduling -- that remains the "Schedule Gift" flow
 
 ## Visual Flow
 
 ```text
 +----------------------------------+
-| Pay with                         |
-|  Visa ····4242              [v]  |
+| Ship to                          |
+|  John, 123 Main St, NYC, NY [v]  |
 |----------------------------------|
-|  > Visa ····4242            [✓]  |
-|  > Mastercard ····5555           |
-|  + Add new card                  |
+|  > Ship to Myself           [check]  |
+|    John, 123 Main..., NYC, NY    |
+|  > Sarah                         |
+|    Denver, CO                    |
+|  > Mike                          |
+|    Austin, TX                    |
 |----------------------------------|
 ```
 
-After tapping "+ Add new card":
+## What This Does NOT Do
 
-```text
-|----------------------------------|
-|  Cardholder Name                 |
-|  [___________________________]   |
-|  Card Information                |
-|  [Card Element from Stripe]      |
-|  [Save Card]        [Cancel]     |
-|----------------------------------|
-```
+- No gift messages (use Schedule Gift for that)
+- No delivery scheduling (use Schedule Gift for that)
+- No invite new recipient (too complex for quick Buy Now)
+- No pending/unverified connections shown
+- Does not change the "Schedule Gift" button behavior
 
 ## Technical Details
 
-### File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
+### File: `BuyNowDrawer.tsx`
 
-1. **New imports**: Add `Elements` from `@stripe/react-stripe-js`, `stripeClientManager`, and `UnifiedPaymentForm`
+1. **New state**:
+   - `addressPickerOpen` (boolean) -- controls collapsible
+   - `selectedRecipient` (object) -- tracks who we're shipping to: `{ type: 'self' | 'connection', name, address, connectionId }`
 
-2. **New state**: `showAddCardForm` boolean to toggle between card list and inline form
+2. **New hook usage**: Import and use `useEnhancedConnections` to fetch accepted connections with addresses
 
-3. **Replace "Manage payment methods" button** with two elements:
-   - "+ Add new card" button that sets `showAddCardForm = true`
-   - When `showAddCardForm` is true, render the `UnifiedPaymentForm` wrapped in `<Elements>` in `mode="setup"`
+3. **Filter connections**: Only show connections where `profile_shipping_address` exists and has at least `city` and `state` populated (verified address requirement)
 
-4. **Success handler**: When a card is saved successfully:
-   - Call `save-payment-method` edge function (already handled by `UnifiedPaymentForm`)
-   - Re-fetch payment methods from the database
-   - Auto-select the newly added card
-   - Collapse the form back to the card list
+4. **Replace "Ship to" button**: Convert from a `<button onClick={handleGoToSettings}>` to a `<Collapsible>` with:
+   - Trigger: Same visual row (MapPin icon, address text, chevron)
+   - Content: List of options (self + connections with verified addresses)
 
-5. **Cancel handler**: Simply sets `showAddCardForm = false` to return to the card list
+5. **Update shipping info resolution**: When `selectedRecipient.type === 'connection'`, the `handlePlaceOrder` function uses the connection's address instead of `defaultAddress` in the `shippingInfo` object and sets `delivery_scenario: "gift"` in metadata
 
-### No new dependencies needed
-- `Elements` provider and `UnifiedPaymentForm` already exist in the codebase
-- `stripeClientManager` singleton already initialized
-- `save-payment-method` edge function already deployed
+6. **Privacy masking**: Connection addresses display as "Name, City, State" only (no street/ZIP per existing privacy standard)
+
+7. **Limit to 3 connections**: Match the SimpleRecipientSelector pattern of showing top 3 most recently added
+
+### No new components needed
+- Reuses existing `Collapsible` pattern already in the drawer
+- Reuses `useEnhancedConnections` hook already in the codebase
+- Reuses `EnhancedConnection` type with `profile_shipping_address`
 
 ### No backend changes
-- The existing `save-payment-method` edge function handles everything (Stripe attach + DB insert)
+- `create-checkout-session` already accepts arbitrary `shippingInfo` -- we just pass the connection's address instead of the user's
 

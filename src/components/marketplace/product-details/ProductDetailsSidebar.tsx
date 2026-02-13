@@ -303,6 +303,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         effectiveProductId={getEffectiveProductId()}
         variationText={getVariationDisplayText()}
         price={variantPrice || productPrice}
+        onOpenScheduleGift={() => setShowScheduleGiftModal(true)}
       />
     </>
   );

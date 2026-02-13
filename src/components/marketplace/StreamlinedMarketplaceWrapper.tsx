@@ -122,8 +122,33 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [isFindingMore, setIsFindingMore] = useState(false);
   const { addToCart } = useCart();
 
+  // Derive friendly category display name from URL param
+  const categoryParam = searchParams.get('category');
+  const categoryDisplayName = useMemo(() => {
+    return categoryParam ? getCategoryDisplayNameFromValue(categoryParam) : '';
+  }, [categoryParam]);
+
   // Clear appended products when search term changes
   useEffect(() => { setExtraProducts([]); }, [urlSearchTerm]);
+
+  // Auto-backfill: when a category search returns sparse cache results, auto-fetch more
+  const [hasAutoBackfilled, setHasAutoBackfilled] = useState(false);
+  useEffect(() => { setHasAutoBackfilled(false); }, [urlSearchTerm]);
+  useEffect(() => {
+    if (
+      categoryParam &&
+      fromCache &&
+      displayProducts.length > 0 &&
+      displayProducts.length < 24 &&
+      !isFindingMore &&
+      !isLoading &&
+      !hasAutoBackfilled
+    ) {
+      console.log(`🔄 Auto-backfill: category "${categoryParam}" has only ${displayProducts.length} cached products, fetching more...`);
+      setHasAutoBackfilled(true);
+      handleFindMoreResults();
+    }
+  }, [categoryParam, fromCache, displayProducts.length, isFindingMore, isLoading, hasAutoBackfilled]);
 
   // Performance monitoring
   const { 
@@ -880,7 +905,9 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                         ) : (
                           <>
                             <Search className="h-4 w-4" />
-                            Find more "{urlSearchTerm}" results
+                            {categoryParam
+                              ? `Find more ${categoryDisplayName} gifts`
+                              : `Find more "${urlSearchTerm}" results`}
                           </>
                         )}
                       </Button>
@@ -1050,7 +1077,9 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                       ) : (
                         <>
                           <Search className="h-4 w-4" />
-                          Find more "{urlSearchTerm}" results
+                          {categoryParam
+                            ? `Find more ${categoryDisplayName} gifts`
+                            : `Find more "${urlSearchTerm}" results`}
                         </>
                       )}
                     </Button>

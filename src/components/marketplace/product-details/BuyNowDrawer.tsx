@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, CreditCard, ChevronRight, ChevronDown, Check } from "lucide-react";
+import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus } from "lucide-react";
+import { Elements } from "@stripe/react-stripe-js";
+import stripeClientManager from "@/services/payment/StripeClientManager";
+import UnifiedPaymentForm from "@/components/payments/UnifiedPaymentForm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -46,6 +49,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
   const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<DefaultPaymentMethod | null>(null);
+  const [showAddCardForm, setShowAddCardForm] = useState(false);
 
   // Sync default payment method
   useEffect(() => {
@@ -269,17 +273,52 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                         )}
                       </button>
                     ))}
-                    <button
-                      onClick={() => {
-                        setPaymentPickerOpen(false);
-                        onOpenChange(false);
-                        navigate("/settings");
-                      }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left text-muted-foreground"
-                    >
-                      <span className="text-sm">Manage payment methods</span>
-                      <ChevronRight className="h-3.5 w-3.5 ml-auto" />
-                    </button>
+                    {!showAddCardForm ? (
+                      <button
+                        onClick={() => setShowAddCardForm(true)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left text-muted-foreground"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span className="text-sm">Add new card</span>
+                      </button>
+                    ) : (
+                      <div className="px-2 py-3">
+                        <Elements stripe={stripeClientManager.getStripePromise()}>
+                          <UnifiedPaymentForm
+                            mode="setup"
+                            amount={0}
+                            onSuccess={async () => {
+                              setShowAddCardForm(false);
+                              // Re-fetch payment methods and auto-select newest
+                              if (user) {
+                                const { data } = await supabase
+                                  .from('payment_methods')
+                                  .select('*')
+                                  .eq('user_id', user.id)
+                                  .order('created_at', { ascending: false });
+                                if (data && data.length > 0) {
+                                  setAllPaymentMethods(data as DefaultPaymentMethod[]);
+                                  setSelectedPaymentMethod(data[0] as DefaultPaymentMethod);
+                                }
+                              }
+                              toast.success("Card saved successfully");
+                            }}
+                            onError={(error) => {
+                              toast.error("Failed to save card", { description: error });
+                            }}
+                            buttonText="Save Card"
+                          />
+                        </Elements>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-2 text-muted-foreground"
+                          onClick={() => setShowAddCardForm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>

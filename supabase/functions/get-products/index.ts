@@ -1042,7 +1042,8 @@ serve(async (req) => {
       bestSelling = false,
       electronics = false,
       brandCategories = false,
-      filters = {}
+      filters = {},
+      skip_cache = false
     } = requestBody;
     
     let activeCategory: string | null = requestedCategory || null;
@@ -1161,8 +1162,12 @@ serve(async (req) => {
       
       const userId = requestBody.user_id;
       
-      // CACHE-FIRST LOOKUP
-      const cacheResult = await getCachedProductsForQuery(supabase, query, limit);
+      // CACHE-FIRST LOOKUP (skip if explicitly requested)
+      const cacheResult = skip_cache ? null : await getCachedProductsForQuery(supabase, query, limit);
+      
+      if (skip_cache) {
+        console.log(`⏭️ Cache bypassed for "${query}" (skip_cache=true)`);
+      }
       
       if (cacheResult && cacheResult.products && cacheResult.products.length > 0) {
         console.log(`🎯 Cache hit: ${cacheResult.products.length} products for "${query}"`);
@@ -1307,6 +1312,7 @@ serve(async (req) => {
       }
 
       // Use unified processor for regular search results
+      const zincTotal = data.total || 0;
       const searchResponse = await processAndReturnResults(
         supabase,
         filteredResults,
@@ -1314,7 +1320,8 @@ serve(async (req) => {
         sortBy,
         {
           total: filteredResults.length,
-          originalTotal: data.total || 0,
+          originalTotal: zincTotal,
+          hasMore: zincTotal > filteredResults.length,
           priceFiltered: !!(filters?.min_price || filters?.max_price)
         }
       );

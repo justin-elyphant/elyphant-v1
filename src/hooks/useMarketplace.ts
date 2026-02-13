@@ -53,12 +53,17 @@ const extractStateFromURL = (searchParams: URLSearchParams): MarketplaceState =>
 /**
  * Convert URL state to search options for the service
  */
-const stateToSearchOptions = (state: MarketplaceState, limit: number): SearchOptions => {
+const stateToSearchOptions = (state: MarketplaceState, limit: number, searchParams?: URLSearchParams): SearchOptions => {
   const options: SearchOptions = {
     page: 1,
     limit,
     filters: {},
   };
+  
+  // Support skip_cache from URL
+  if (searchParams?.get('skipCache') === 'true') {
+    options.skipCache = true;
+  }
 
   if (state.category) {
     options.category = state.category;
@@ -128,7 +133,7 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
   } = useQuery<SearchResponse>({
     queryKey,
     queryFn: async () => {
-      const searchOptions = stateToSearchOptions(urlState, defaultLimit);
+      const searchOptions = stateToSearchOptions(urlState, defaultLimit, searchParams);
       console.log('[useMarketplace] Fetching with options:', searchOptions);
       return productCatalogService.searchProducts(urlState.query, searchOptions);
     },
@@ -223,6 +228,10 @@ export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
     // Cache stats from server
     cacheStats: data?.cacheStats,
     facets: data?.facets,
+    
+    // Server pagination signals
+    fromCache: data?.fromCache || false,
+    serverHasMore: data?.hasMore || false,
     
     // Phase 2: Typo tolerance
     fuzzyMatched: data?.fuzzyMatched,

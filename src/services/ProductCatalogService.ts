@@ -30,6 +30,7 @@ export interface SearchOptions {
   filters?: SearchFilters;
   page?: number;
   limit?: number;
+  skipCache?: boolean;
 }
 
 export interface SearchResponse {
@@ -52,6 +53,9 @@ export interface SearchResponse {
   zeroResults?: boolean;
   suggestedQueries?: string[];
   fallbackProducts?: any[];
+  // Server pagination
+  fromCache?: boolean;
+  hasMore?: boolean;
   error?: string;
 }
 
@@ -92,6 +96,11 @@ class ProductCatalogServiceClass {
       // Map category to server-side handler
       if (options.category) {
         requestBody.category = options.category;
+      }
+      
+      // Skip cache for fresh Zinc results
+      if (options.skipCache) {
+        requestBody.skip_cache = true;
       }
 
       // Add price filters
@@ -136,7 +145,10 @@ class ProductCatalogServiceClass {
         // Phase 3: Zero results
         zeroResults: data?.zeroResults || (products.length === 0),
         suggestedQueries: data?.suggestedQueries,
-        fallbackProducts: data?.fallbackProducts
+        fallbackProducts: data?.fallbackProducts,
+        // Server pagination
+        fromCache: data?.fromCache || false,
+        hasMore: data?.hasMore || false,
       };
 
     } catch (error) {

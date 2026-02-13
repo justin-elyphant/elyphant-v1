@@ -127,6 +127,39 @@ export const calculateRelevanceScore = (
     }
   }
   
+  // PRODUCT-TYPE ENFORCEMENT: For multi-word searches, penalize results missing
+  // the product-type keyword (e.g., "socks" in "adidas mens socks")
+  const GENERIC_MODIFIERS = [
+    "mens", "womens", "women", "men", "kids", "boys", "girls", "unisex",
+    "adult", "junior", "youth", "small", "medium", "large", "new", "best",
+    "top", "rated", "popular", "cheap", "premium", "luxury", "pro"
+  ];
+  
+  if (searchTerms.length >= 2) {
+    // Find product-type keywords: non-brand, non-generic terms
+    const productTypeTerms = searchTerms.filter(t => {
+      const nt = normalizeBrandTerm(t);
+      const isBrand = searchBrands.includes(t) || searchBrands.includes(nt) ||
+                      COMMON_BRANDS.includes(t) || COMMON_BRANDS.includes(nt);
+      const isGeneric = GENERIC_MODIFIERS.includes(t);
+      const isModelNumber = /^\d{3,4}$/.test(t);
+      return !isBrand && !isGeneric && !isModelNumber && t.length >= 3;
+    });
+    
+    if (productTypeTerms.length > 0) {
+      const hasProductTypeMatch = productTypeTerms.some(pt => {
+        const nt = normalizeBrandTerm(pt);
+        return title.includes(pt) || title.includes(nt) || 
+               category.includes(pt) || category.includes(nt);
+      });
+      
+      if (!hasProductTypeMatch) {
+        score -= 200; // Heavy penalty: product doesn't match what the user is looking for
+        console.log(`[Relevance] Product-type penalty: "${title.substring(0, 50)}" missing [${productTypeTerms.join(',')}]`);
+      }
+    }
+  }
+  
   return score;
 };
 

@@ -1,68 +1,63 @@
 
 
-## Fix Two Trunkline Order Recovery Issues
+## Fix: Zinc Retry Idempotency + max_price Unit Bug
 
-### Issue 1: Manual Recovery "Order not found"
+### Problem 1: Retries Never Create New Zinc Orders
 
-**Root Cause:** In `src/components/admin/OrderRecoveryTool.tsx` line 84, the query uses:
+The `idempotency_key` is set to `orderId` (a fixed UUID). Zinc caches the original request and returns the same cached `max_price_exceeded` error on every retry. The edge function logs confirm both retry attempts received the same `request_id: a1b92762524f77104d2ecf8af1077418`.
+
+**Fix:** Append a retry timestamp to the idempotency key so each retry creates a fresh Zinc request:
+
 ```
-.or(`id.eq.${manualOrderId},order_number.eq.${manualOrderId}`)
-```
-When entering `ORD-20260213-6387`, PostgREST tries to cast it to UUID for `id.eq.` and the entire query fails -- so `fetchError` is truthy and the toast shows "Order not found."
-
-**Fix:** Detect if input is a UUID. If not, query only by `order_number`:
-```typescript
-const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(manualOrderId.trim());
-
-let query = supabase
-  .from('orders')
-  .select('id, order_number, status, zinc_order_id, payment_status, scheduled_delivery_date')
-
-if (isUuid) {
-  query = query.or(`id.eq.${manualOrderId.trim()},order_number.eq.${manualOrderId.trim()}`);
-} else {
-  query = query.eq('order_number', manualOrderId.trim());
-}
-
-const { data: order, error: fetchError } = await query.maybeSingle();
+idempotency_key: `${orderId}-retry-${Date.now()}`
 ```
 
-**File:** `src/components/admin/OrderRecoveryTool.tsx` (lines 81-85)
+For the initial submission (from webhook), keep the plain `orderId` for deduplication safety. Only use the timestamped key when the order is already in `processing` or `failed` status (i.e., a retry).
 
----
+### Problem 2: max_price Unit Mismatch
 
-### Issue 2: Retry Button Not Reaching Zinc
+The `line_items.subtotal` in the database is `1200` (cents, from Zinc). But `order.total_amount` is `14.20` (dollars). The current formula treats both the same way:
 
-**Root Cause:** In `src/components/trunkline/orders/OrdersTable.tsx` line 93, the retry uses `supabase.functions.invoke` directly. Edge function logs show no call arrived, suggesting the invocation failed silently (possibly auth/token issue). The error handling on line 97 only checks `if (error) throw error` but `supabase.functions.invoke` can return errors in ways that don't always throw.
+```
+Math.ceil((order.line_items?.subtotal || order.total_amount) * 100 * 1.20) + 1500
+```
 
-**Fix:** Replace the direct `supabase.functions.invoke` with `invokeWithAuthRetry` (already exists at `src/utils/supabaseWithAuthRetry.ts`), which handles token refresh on 401s. Also improve error logging to surface what's actually happening:
+- With subtotal (1200 cents): `1200 * 100 * 1.20 = 144,000` -- $1,440 (way too high)
+- With total_amount (14.20 dollars): `14.20 * 100 * 1.20 = 1,704` -- $17.04 + $15 = $32.04 (correct)
+
+**Fix:** Since `line_items.subtotal` is already in cents, skip the `* 100` for it:
 
 ```typescript
-import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
+// Determine product subtotal in cents
+// line_items.subtotal is already in cents (from Zinc data), total_amount is in dollars
+const hasLineItemSubtotal = order.line_items?.subtotal != null;
+const productSubtotalCents = hasLineItemSubtotal
+  ? order.line_items.subtotal          // Already cents (e.g., 1200 = $12.00)
+  : order.total_amount * 100;          // Convert dollars to cents
 
-// In handleRetryOrder:
-const { data, error } = await invokeWithAuthRetry('process-order-v2', {
-  body: { orderId: order.id }
-});
-
-if (error) {
-  console.error('Retry error details:', error);
-  throw error;
-}
-
-console.log('Retry response:', data);
+// Hybrid max_price: 20% buffer + $15 fixed shipping/tax allowance
+max_price: Math.ceil(productSubtotalCents * 1.20) + 1500,
 ```
 
-**File:** `src/components/trunkline/orders/OrdersTable.tsx` (lines 88-108)
+For Order #6387: `Math.ceil(1200 * 1.20) + 1500 = 1440 + 1500 = 2940` ($29.40), which covers Amazon's $20.65 total.
 
----
+### Changes
 
-### Summary of Changes
+**File: `supabase/functions/process-order-v2/index.ts`**
 
-| File | Change |
-|---|---|
-| `src/components/admin/OrderRecoveryTool.tsx` | UUID-detect before querying to prevent PostgREST cast error |
-| `src/components/trunkline/orders/OrdersTable.tsx` | Use `invokeWithAuthRetry` for retry + better error logging |
+1. Around line 291-301: Fix the `max_price` calculation to handle cents vs dollars correctly, and make the idempotency key retry-aware.
 
-After these fixes, both the Manual Recovery input and the Retry button will work for Order #6387.
+2. Detect retry scenario: if order status is already `processing` or `failed`, append timestamp to idempotency key.
+
+### Expected Result After Fix
+
+- Clicking **Retry** on Order #6387 will send a **new** Zinc request (fresh idempotency key) with `max_price: 2940` ($29.40)
+- Amazon's total of $20.65 will be under the limit
+- Future orders will also calculate max_price correctly regardless of whether subtotal is in cents or dollars
+
+### Deployment
+
+- Edit and deploy `process-order-v2` edge function
+- Retry Order #6387 from Trunkline
+- Verify new request appears in Zinc dashboard with `max_price: 2940`
 

@@ -178,19 +178,22 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
       if (error) throw error;
 
       if (data?.url) {
+        // Keep placing=true so the UI stays in "redirecting" state
+        // Don't reset it — the browser is navigating away
+        toast.success("Redirecting to payment...");
         window.location.href = data.url;
+        return; // Skip finally's setPlacing(false)
       } else {
         throw new Error("No checkout URL returned");
       }
     } catch (err) {
       console.error("Buy Now error:", err);
+      setPlacing(false);
       toast.error("Something went wrong", {
         description: "Redirecting to full checkout...",
       });
       // Fallback to standard checkout
       navigate("/checkout");
-    } finally {
-      setPlacing(false);
     }
   };
 

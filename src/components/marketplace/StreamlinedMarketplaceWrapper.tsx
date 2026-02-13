@@ -194,7 +194,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // Server-side pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 24; // Divisible by 2, 3, and 4 to fill all grid layouts evenly
   const isPaginationLoading = false; // Server handles loading via isLoading
   
   // Calculate pagination from displayProducts (server returns sorted products)

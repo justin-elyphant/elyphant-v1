@@ -103,7 +103,7 @@ const stateToSearchOptions = (state: MarketplaceState, limit: number, searchPara
 };
 
 export const useMarketplace = (options: UseMarketplaceOptions = {}) => {
-  const { autoLoadOnMount = true, defaultLimit = 20 } = options;
+  const { autoLoadOnMount = true, defaultLimit = 24 } = options;
   
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();

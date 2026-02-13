@@ -78,11 +78,19 @@ const OrderRecoveryTool = () => {
     
     try {
       // Try to find the order by ID or order_number
-      const { data: order, error: fetchError } = await supabase
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(manualOrderId.trim());
+      
+      let query = supabase
         .from('orders')
-        .select('id, order_number, status, zinc_order_id, payment_status, scheduled_delivery_date')
-        .or(`id.eq.${manualOrderId},order_number.eq.${manualOrderId}`)
-        .maybeSingle();
+        .select('id, order_number, status, zinc_order_id, payment_status, scheduled_delivery_date');
+
+      if (isUuid) {
+        query = query.or(`id.eq.${manualOrderId.trim()},order_number.eq.${manualOrderId.trim()}`);
+      } else {
+        query = query.eq('order_number', manualOrderId.trim());
+      }
+
+      const { data: order, error: fetchError } = await query.maybeSingle();
 
       const typedOrder = order as ManualRecoveryOrder | null;
 

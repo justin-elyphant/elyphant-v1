@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Eye, ExternalLink, Package, CreditCard, Clock, CheckCircle, XCircle, AlertTriangle, X, RefreshCw } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
 import { useOrderActions } from "@/hooks/useOrderActions";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuthRetry } from "@/utils/supabaseWithAuthRetry";
 import { toast } from "sonner";
 import TrunklineCancelDialog from "./TrunklineCancelDialog";
 
@@ -89,12 +89,17 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
     setRetryingOrderId(order.id);
     
     try {
-      // Re-invoke process-order-v2 to retry processing
-      const { error } = await supabase.functions.invoke('process-order-v2', {
+      // Re-invoke process-order-v2 with auth retry to handle token expiry
+      const { data, error } = await invokeWithAuthRetry('process-order-v2', {
         body: { orderId: order.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Retry error details:', error);
+        throw error;
+      }
+      
+      console.log('Retry response:', data);
       
       toast.success(`Order ${order.order_number} submitted for retry`);
       

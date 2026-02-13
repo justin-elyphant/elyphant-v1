@@ -105,7 +105,15 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     const isPersonalizedRoute = routePath.includes('/marketplace/for/');
     return isPersonalizedRoute || Boolean(personalizedContext?.isPersonalized) || (personalizedProducts.length > 0);
   }, [personalizedProducts.length, personalizedContext]);
-  const displayProducts = personalizedProducts.length > 0 ? personalizedProducts : products;
+  const [extraProducts, setExtraProducts] = useState<any[]>([]);
+  const displayProducts = useMemo(() => {
+    const base = personalizedProducts.length > 0 ? personalizedProducts : products;
+    if (extraProducts.length === 0) return base;
+    // Deduplicate by product_id/asin
+    const existingIds = new Set(base.map((p: any) => p.product_id || p.asin));
+    const newOnes = extraProducts.filter((p: any) => !existingIds.has(p.product_id || p.asin));
+    return [...base, ...newOnes];
+  }, [personalizedProducts, products, extraProducts]);
   
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
@@ -113,8 +121,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
   const [isFindingMore, setIsFindingMore] = useState(false);
   const { addToCart } = useCart();
-  
-  
+
+  // Clear appended products when search term changes
+  useEffect(() => { setExtraProducts([]); }, [urlSearchTerm]);
+
   // Performance monitoring
   const { 
     startTimer, 
@@ -203,6 +213,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   const refreshPagination = useCallback(() => {
     setCurrentPage(1);
+    setExtraProducts([]);
   }, []);
 
   // "Find more results" handler - bypasses cache for fresh Zinc API results
@@ -212,13 +223,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     try {
       const result = await executeSearch(urlSearchTerm, { skipCache: true, limit: 20 });
       if (result.products && result.products.length > 0) {
+        setExtraProducts(prev => [...prev, ...result.products]);
         toast.success(`Found ${result.products.length} more products`);
-        // Trigger a URL-based re-search with skip_cache
-        const newParams = new URLSearchParams(window.location.search);
-        newParams.set('skipCache', 'true');
-        newParams.set('_t', Date.now().toString()); // force refetch
-        window.history.replaceState({}, '', `${window.location.pathname}?${newParams.toString()}`);
-        window.location.reload();
       } else {
         toast.info('No additional results found');
       }

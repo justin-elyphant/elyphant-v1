@@ -32,6 +32,7 @@ interface BuyNowDrawerProps {
   effectiveProductId: string;
   variationText: string;
   price: number;
+  onOpenScheduleGift?: () => void;
 }
 
 interface SelectedRecipient {
@@ -48,6 +49,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   effectiveProductId,
   variationText,
   price,
+  onOpenScheduleGift,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -345,6 +347,20 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+
+              {/* Schedule Gift nudge - only when shipping to a connection */}
+              {selectedRecipient?.type === 'connection' && onOpenScheduleGift && (
+                <p className="text-xs text-muted-foreground mt-1 mb-1 px-1">
+                  Want to schedule delivery?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { onOpenChange(false); onOpenScheduleGift(); }}
+                    className="underline hover:text-foreground transition-colors"
+                  >
+                    Use Schedule Gift →
+                  </button>
+                </p>
+              )}
 
               {/* Pay with - inline collapsible picker */}
               <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>

@@ -448,12 +448,15 @@ serve(async (req) => {
     // For saved payment method (auto-gift or buy-now with saved card)
     if (paymentMethod && !useDeferredPayment) {
       sessionParams.payment_method_types = ['card'];
-      sessionParams.payment_intent_data = {
-        ...(sessionParams.payment_intent_data || {}),
-        payment_method: paymentMethod,
-        setup_future_usage: isAutoGift ? 'off_session' : undefined,
-      };
-      logStep("Configured with saved payment method", { paymentMethod, isAutoGift });
+      // Note: Checkout Sessions don't support pre-selecting a payment_method in payment_intent_data.
+      // Instead, set setup_future_usage if needed, and let the customer's saved methods appear via their Stripe customer record.
+      if (isAutoGift) {
+        sessionParams.payment_intent_data = {
+          ...(sessionParams.payment_intent_data || {}),
+          setup_future_usage: 'off_session',
+        };
+      }
+      logStep("Configured with saved payment method hint", { paymentMethod, isAutoGift });
     }
 
     // Create the Checkout Session

@@ -185,7 +185,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
           <DrawerTitle className="sr-only">Buy Now</DrawerTitle>
           {/* Product summary */}
@@ -214,7 +214,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         </DrawerHeader>
 
         {/* Order details */}
-        <div className="px-4 py-2 space-y-0">
+        <div className="px-4 py-2 space-y-0 flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="space-y-3 py-2">
               <Skeleton className="h-10 w-full" />

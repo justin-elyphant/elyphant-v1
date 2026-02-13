@@ -1,46 +1,68 @@
 
 
-## Fix: max_price_exceeded Error in Zinc Order Submission
+## Fix Two Trunkline Order Recovery Issues
 
-### Root Cause
-In `supabase/functions/process-order-v2/index.ts` (line 299), the `max_price` sent to Zinc is:
+### Issue 1: Manual Recovery "Order not found"
 
+**Root Cause:** In `src/components/admin/OrderRecoveryTool.tsx` line 84, the query uses:
 ```
-max_price = Math.ceil(order.total_amount * 100 * 1.30)
+.or(`id.eq.${manualOrderId},order_number.eq.${manualOrderId}`)
+```
+When entering `ORD-20260213-6387`, PostgREST tries to cast it to UUID for `id.eq.` and the entire query fails -- so `fetchError` is truthy and the toast shows "Order not found."
+
+**Fix:** Detect if input is a UUID. If not, query only by `order_number`:
+```typescript
+const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(manualOrderId.trim());
+
+let query = supabase
+  .from('orders')
+  .select('id, order_number, status, zinc_order_id, payment_status, scheduled_delivery_date')
+
+if (isUuid) {
+  query = query.or(`id.eq.${manualOrderId.trim()},order_number.eq.${manualOrderId.trim()}`);
+} else {
+  query = query.eq('order_number', manualOrderId.trim());
+}
+
+const { data: order, error: fetchError } = await query.maybeSingle();
 ```
 
-This uses `order.total_amount` ($14.20 = product + gifting fee) with a 30% buffer. But Amazon adds its own shipping ($6.99) and tax ($1.66) on top of the product price. For inexpensive items, shipping alone can be 50-60% of the product cost, easily blowing past a 30% buffer.
+**File:** `src/components/admin/OrderRecoveryTool.tsx` (lines 81-85)
 
-### The Fix
+---
 
-**File:** `supabase/functions/process-order-v2/index.ts` (line 299)
+### Issue 2: Retry Button Not Reaching Zinc
 
-Replace the single-multiplier approach with a hybrid formula that uses the **product subtotal** (from `line_items`) plus a fixed shipping/tax allowance:
+**Root Cause:** In `src/components/trunkline/orders/OrdersTable.tsx` line 93, the retry uses `supabase.functions.invoke` directly. Edge function logs show no call arrived, suggesting the invocation failed silently (possibly auth/token issue). The error handling on line 97 only checks `if (error) throw error` but `supabase.functions.invoke` can return errors in ways that don't always throw.
 
+**Fix:** Replace the direct `supabase.functions.invoke` with `invokeWithAuthRetry` (already exists at `src/utils/supabaseWithAuthRetry.ts`), which handles token refresh on 401s. Also improve error logging to surface what's actually happening:
+
+```typescript
+import { invokeWithAuthRetry } from '@/utils/supabaseWithAuthRetry';
+
+// In handleRetryOrder:
+const { data, error } = await invokeWithAuthRetry('process-order-v2', {
+  body: { orderId: order.id }
+});
+
+if (error) {
+  console.error('Retry error details:', error);
+  throw error;
+}
+
+console.log('Retry response:', data);
 ```
-// Extract product subtotal from line_items (what Amazon actually charges for products)
-const productSubtotalCents = (order.line_items?.subtotal || order.total_amount) * 100;
 
-// Hybrid max_price: 20% buffer for price fluctuation/tax + $15 fixed shipping allowance
-max_price: Math.ceil(productSubtotalCents * 1.20) + 1500
-```
+**File:** `src/components/trunkline/orders/OrdersTable.tsx` (lines 88-108)
 
-**Why this works for all price ranges:**
+---
 
-| Item Price | Old max_price (1.3x total) | New max_price (1.2x + $15) | Amazon Total (example) |
-|---|---|---|---|
-| $12.00 | $18.46 (FAIL) | $29.40 | $20.65 |
-| $50.00 | $78.00 | $75.00 | $62.00 |
-| $200.00 | $286.00 | $255.00 | $230.00 |
-| $500.00 | $702.00 | $615.00 | $560.00 |
+### Summary of Changes
 
-The fixed $15 buffer handles shipping on cheap items where percentage-only buffers fail, while the 20% multiplier scales naturally for expensive items.
+| File | Change |
+|---|---|
+| `src/components/admin/OrderRecoveryTool.tsx` | UUID-detect before querying to prevent PostgREST cast error |
+| `src/components/trunkline/orders/OrdersTable.tsx` | Use `invokeWithAuthRetry` for retry + better error logging |
 
-### Deployment
-- Edit `process-order-v2/index.ts` line ~295-299
-- Deploy the `process-order-v2` edge function
-- Retry Order #6387 after deployment
-
-### Order #6387 Recovery
-After deploying the fix, the order can be retried. The new max_price for this order would be: `Math.ceil(1200 * 1.20) + 1500 = 2940 cents ($29.40)`, which comfortably covers Amazon's $20.65 total.
+After these fixes, both the Manual Recovery input and the Retry button will work for Order #6387.
 

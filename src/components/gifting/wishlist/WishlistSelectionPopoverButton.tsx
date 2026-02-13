@@ -75,7 +75,7 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
           className={triggerClassName}
         >
           <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
-          {(variant !== "icon" || showText) && <span className="ml-1">Save</span>}
+          {(variant !== "icon" || showText) && <span className="ml-1">Save to Wishlist</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2" align="end">

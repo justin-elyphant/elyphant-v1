@@ -288,17 +288,36 @@ serve(async (req) => {
     const effectiveIsGift = isGiftOrder || hasGiftMessage;
     const giftMessageContent = firstItem?.gift_message || order.gift_options?.giftMessage || '';
     
+    // Detect retry scenario: if order already attempted Zinc submission, use timestamped idempotency key
+    // so Zinc creates a fresh request instead of returning cached error
+    const isRetry = order.status === 'processing' || order.status === 'failed' || 
+                    order.status === 'requires_attention' || order.zinc_request_id;
+    const idempotencyKey = isRetry ? `${orderId}-retry-${Date.now()}` : orderId;
+    
+    if (isRetry) {
+      console.log(`🔄 Retry detected (status: ${order.status}) - using fresh idempotency key: ${idempotencyKey}`);
+    }
+
+    // Determine product subtotal in cents
+    // line_items.subtotal from Zinc is already in cents (e.g., 1200 = $12.00)
+    // total_amount is in dollars (e.g., 14.20)
+    const hasLineItemSubtotal = order.line_items?.subtotal != null;
+    const productSubtotalCents = hasLineItemSubtotal
+      ? order.line_items.subtotal          // Already cents
+      : Math.round(order.total_amount * 100);  // Convert dollars to cents
+
+    console.log(`💰 max_price calc: subtotal=${hasLineItemSubtotal ? order.line_items.subtotal + ' (cents)' : order.total_amount + ' (dollars)'} → ${productSubtotalCents} cents → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
+
     const zincRequest = {
       addax: true, // CRITICAL: Enables ZMA processing
-      idempotency_key: orderId,
+      idempotency_key: idempotencyKey,
       retailer: 'amazon',
       products: itemsArray.map((item: any) => ({
         product_id: item.product_id || item.productId || item.id,
         quantity: item.quantity || 1,
       })),
-      // Hybrid max_price: use product subtotal (what Amazon charges) with 20% buffer + $15 fixed shipping/tax allowance
-      // This handles cheap items where shipping can be 50%+ of product cost
-      max_price: Math.ceil((order.line_items?.subtotal || order.total_amount) * 100 * 1.20) + 1500,
+      // Hybrid max_price: 20% buffer + $15 fixed shipping/tax allowance
+      max_price: Math.ceil(productSubtotalCents * 1.20) + 1500,
       shipping_address: {
         first_name: requiredShippingFields.name.split(' ')[0] || requiredShippingFields.name,
         last_name: requiredShippingFields.name.split(' ').slice(1).join(' ') || '',

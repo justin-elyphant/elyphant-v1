@@ -12,7 +12,7 @@ import ShopByOccasion from "./landing/ShopByOccasion";
 import CategoryBrowseGrid from "./landing/CategoryBrowseGrid";
 import TrendingProductsSection from "./landing/TrendingProductsSection";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Search } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
@@ -59,7 +59,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     zeroResults,
     suggestedQueries,
     fallbackProducts,
+    fromCache,
+    serverHasMore,
     search,
+    executeSearch,
   } = useMarketplace();
 
   const [searchParams] = useSearchParams();
@@ -108,6 +111,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [viewMode, setViewMode] = useState<"grid" | "list" | "modern">("grid");
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
+  const [isFindingMore, setIsFindingMore] = useState(false);
   const { addToCart } = useCart();
   
   
@@ -200,6 +204,31 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const refreshPagination = useCallback(() => {
     setCurrentPage(1);
   }, []);
+
+  // "Find more results" handler - bypasses cache for fresh Zinc API results
+  const handleFindMoreResults = useCallback(async () => {
+    if (!urlSearchTerm || isFindingMore) return;
+    setIsFindingMore(true);
+    try {
+      const result = await executeSearch(urlSearchTerm, { skipCache: true, limit: 20 });
+      if (result.products && result.products.length > 0) {
+        toast.success(`Found ${result.products.length} more products`);
+        // Trigger a URL-based re-search with skip_cache
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.set('skipCache', 'true');
+        newParams.set('_t', Date.now().toString()); // force refetch
+        window.history.replaceState({}, '', `${window.location.pathname}?${newParams.toString()}`);
+        window.location.reload();
+      } else {
+        toast.info('No additional results found');
+      }
+    } catch (error) {
+      console.error('Find more results failed:', error);
+      toast.error('Failed to find more results');
+    } finally {
+      setIsFindingMore(false);
+    }
+  }, [urlSearchTerm, isFindingMore, executeSearch]);
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted
@@ -827,6 +856,30 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                       </Button>
                     </div>
                   )}
+                  
+                  {/* Find More Results Button - when cache results are sparse */}
+                  {showSearchInfo && urlSearchTerm && fromCache && displayProducts.length < 20 && displayProducts.length > 0 && (
+                    <div className="flex justify-center mt-6">
+                      <Button 
+                        onClick={handleFindMoreResults}
+                        disabled={isFindingMore}
+                        variant="outline"
+                        className="min-w-[200px] gap-2"
+                      >
+                        {isFindingMore ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            Searching...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="h-4 w-4" />
+                            Find more "{urlSearchTerm}" results
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </>
               )}
               
@@ -969,6 +1022,30 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                         </>
                       ) : (
                         `Load More Products`
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Mobile: Find More Results Button */}
+                {showSearchInfo && urlSearchTerm && fromCache && displayProducts.length < 20 && displayProducts.length > 0 && (
+                  <div className="flex justify-center mt-6">
+                    <Button 
+                      onClick={handleFindMoreResults}
+                      disabled={isFindingMore}
+                      variant="outline"
+                      className="min-w-[200px] gap-2"
+                    >
+                      {isFindingMore ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4" />
+                          Find more "{urlSearchTerm}" results
+                        </>
                       )}
                     </Button>
                   </div>

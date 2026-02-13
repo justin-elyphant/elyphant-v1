@@ -1,70 +1,41 @@
 
+## Fix Category Search Grid Fill + Friendly "Find More" Button Labels
 
-# Improve Search Relevance and Product Discovery
+### Problem 1: Sparse Category Results (Only 3 products for "Pets")
+When clicking a category like "Pets," the system navigates with the full Zinc search string (e.g., `"best selling pet products dog cat supplies toys treats"`) as the URL `search` param. The cache may only have 2-3 matches for that exact long query, leaving the grid nearly empty -- unprofessional for an e-commerce site.
 
-## Problems Identified
+**Fix:** When the initial category search returns fewer than 24 products (the grid-aligned page size), automatically trigger a supplementary Zinc API fetch to backfill the grid. This ensures every category landing always shows a full, professional grid.
 
-1. **"Adidas mens socks" returns running shoes** -- The cache has zero Adidas socks. The OR-fallback query in `getCachedProductsForQuery` matches products containing "adidas" OR "mens" (ignoring "socks" entirely). The brand-aware filter then passes them because "adidas" brand match (+100) plus "mens" title match (+50) = 150, meeting the threshold. The critical product-type keyword ("socks") has no special weight.
+### Problem 2: Raw Query String in "Find More" Button
+The button currently reads: `Find more "best selling pet products dog cat supplies toys treats" results` -- exposing the internal Zinc search string to users.
 
-2. **No "Load More" / "See More" button** -- The server returns all matching products in one batch (e.g., 13). Client-side pagination uses `pageSize=20`, so all 13 fit on page 1 and `hasMore` is `false`. No mechanism exists to fetch additional results from Zinc when the cache is sparse.
+**Fix:** Detect when the current search is a category-based search (via the `category` URL param) and display a friendly label instead, e.g., **"Find more Pets gifts"** or **"Find more Electronics gifts"**.
 
-## Solution: 3 Industry-Standard Improvements
+---
 
-### 1. Enforce Product-Type Keywords in Relevance Scoring
+### Technical Details
 
-**File:** `supabase/functions/shared/brandAwareFilter.ts`
+**Files to modify:**
 
-Currently, all non-brand search terms are weighted equally (50 points for title match). For "adidas mens socks," the word "socks" is the product-type differentiator but gets the same score as "mens."
+1. **`src/components/marketplace/StreamlinedMarketplaceWrapper.tsx`**
+   - Add a `categoryDisplayName` derived value that checks the `category` URL param and maps it to a friendly name using `getCategoryDisplayNameFromValue()`
+   - Update both desktop and mobile "Find more" button labels (lines ~883 and ~1053):
+     - If `categoryParam` exists: `Find more {categoryDisplayName} gifts`
+     - Otherwise (freeform search): `Find more "{urlSearchTerm}" results` (current behavior)
+   - Add a `useEffect` that auto-triggers `handleFindMoreResults()` when the initial load returns fewer than 24 products AND a `category` param is present AND `fromCache` is true. This ensures category landings always attempt to fill the grid.
 
-**Changes:**
-- After scoring, add a **product-type enforcement check**: if a multi-word search has non-brand, non-generic terms (not "mens", "womens", "kids", etc.), at least ONE of those terms must appear in the product title/category. If none appear, apply a heavy penalty (-200).
-- Define a small set of generic/modifier words to exclude from enforcement: `["mens", "womens", "women", "men", "kids", "boys", "girls", "unisex", "adult", "junior", "youth", "small", "medium", "large", "new", "best"]`
-- This ensures "socks" must appear somewhere in the product data, otherwise the product gets filtered out regardless of brand match.
+2. **`src/utils/categoryDisplayMapper.ts`** (no change needed, already has `getCategoryDisplayNameFromValue`)
 
-This is a **universal** solution (no product-specific mappings) that scales to any query like "Nike running shorts," "Sony wireless earbuds," etc.
+**Button label examples:**
+- Pets category: "Find more Pets gifts"  
+- Electronics category: "Find more Electronics gifts"
+- Freeform search "nike shoes": `Find more "nike shoes" results`
 
-### 2. Add "Search for More" Button When Results Are Sparse
-
-**File:** `src/components/marketplace/StreamlinedMarketplaceWrapper.tsx`
-
-When the initial result set is small (under 20 products) and came from cache, add a "Search for more [query] on Amazon" button below the grid. Clicking it triggers a fresh Zinc API call that bypasses the cache.
-
-**Changes:**
-- Below the existing "Load More Products" button, add a new conditional block: if `fromCache === true` and `total < 20` and there's an active search term, show a "Find more results" button.
-- On click, re-invoke the product search with a `skipCache: true` parameter.
-- In `get-products/index.ts`, respect a new `skip_cache` body parameter to bypass `getCachedProductsForQuery` and go directly to the Zinc API.
-
-### 3. Show "Load More Products" When Server Has More Pages
-
-**File:** `supabase/functions/get-products/index.ts` and `StreamlinedMarketplaceWrapper.tsx`
-
-The Zinc API returns a `total` count that can be much larger than the returned page. Currently this information is passed through but the frontend doesn't use it to offer pagination.
-
-**Changes:**
-- In the edge function response, ensure `hasMore: true` is set when `total > products.length`.
-- In `StreamlinedMarketplaceWrapper`, update `hasMore` to also check the server's `hasMore` flag (from the API response), not just client-side array length.
-- Wire the existing `handleLoadMore` callback (already implemented) to actually trigger when the server signals more pages exist.
-
-## Technical Summary
-
+**Auto-backfill logic (pseudocode):**
 ```text
-File Changes:
-1. supabase/functions/shared/brandAwareFilter.ts
-   - Add GENERIC_MODIFIERS list
-   - Add product-type enforcement penalty in calculateRelevanceScore()
-
-2. supabase/functions/get-products/index.ts  
-   - Add skip_cache parameter support
-   - Ensure hasMore flag reflects Zinc API total
-
-3. src/components/marketplace/StreamlinedMarketplaceWrapper.tsx
-   - Add "Find more results" button for sparse cache results
-   - Update hasMore to use server-side flag
-   - Wire server-side pagination into loadMore
+useEffect:
+  if (category param exists AND fromCache AND products.length < 24 AND not already finding more):
+    auto-trigger handleFindMoreResults()
 ```
 
-## Expected Outcomes
-
-- "Adidas mens socks" will return zero results from cache (shoes get penalized for missing "socks"), triggering a fresh Zinc API call that returns actual socks
-- Sparse results always show a path to find more products
-- Users see a "Load More Products" button when the Zinc API has additional pages beyond the initial 20
+This ensures that sparse cache categories always attempt to pull fresh results from Zinc to fill the grid, while keeping costs low (only triggers when cache is insufficient).

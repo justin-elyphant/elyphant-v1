@@ -7,10 +7,23 @@ const corsHeaders = {
 };
 
 interface ZincWebhookPayload {
-  type: 'request_succeeded' | 'request_failed' | 'tracking_obtained' | 'tracking_updated' | 'status_updated' | 'case_updated' | 'order.cancelled';
+  type?: string;
+  _type?: string;
   request_id: string;
   order_id?: string;
   merchant_order_id?: string;
+  merchant_order_ids?: Array<{
+    merchant_order_id: string;
+    tracking_url?: string;
+    merchant?: string;
+    placed_at?: string;
+    product_ids?: string[];
+  }>;
+  delivery_dates?: Array<{
+    date: string;
+    days?: number;
+    delivery_date?: string;
+  }>;
   tracking?: {
     tracking_number: string;
     carrier: string;
@@ -39,6 +52,26 @@ interface ZincWebhookPayload {
     user_id: string;
     cancellation_source?: string;
   };
+  price_components?: any;
+}
+
+/**
+ * Resolves the event type from Zinc's payload.
+ * Zinc sends `_type` (with underscore), not `type`.
+ * Maps Zinc's internal types to our expected event names.
+ */
+function resolveEventType(payload: ZincWebhookPayload): string {
+  // If standard `type` field exists, use it directly
+  if (payload.type) return payload.type;
+
+  // Map Zinc's `_type` to our event names
+  if (payload._type === 'order_response') return 'request_succeeded';
+  if (payload._type === 'error') return 'request_failed';
+
+  // Fallback: infer from payload shape
+  if (payload.tracking) return 'tracking_obtained';
+
+  return payload._type || 'unknown';
 }
 
 serve(async (req) => {
@@ -52,6 +85,10 @@ serve(async (req) => {
 
   try {
     const payload: ZincWebhookPayload = await req.json();
+    
+    // Resolve the event type early (handles Zinc's _type field)
+    const eventType = resolveEventType(payload);
+    console.log(`🔔 Zinc webhook received: resolved type="${eventType}" (_type="${payload._type}", type="${payload.type}")`);
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -70,15 +107,17 @@ serve(async (req) => {
     }
 
     // 🔒 IDEMPOTENCY CHECK: Prevent duplicate processing
+    const logEventType = isTestMode ? `test_${eventType}` : eventType;
+    
     const { data: existingLog, error: checkError } = await supabase
       .from('webhook_delivery_log')
       .select('id, delivery_status')
       .eq('event_id', payload.request_id)
-      .eq('event_type', isTestMode ? `test_${payload.type}` : payload.type)
+      .eq('event_type', logEventType)
       .maybeSingle();
 
     if (existingLog && existingLog.delivery_status === 'completed') {
-      console.log(`⚠️ Duplicate webhook detected: ${payload.type} for ${payload.request_id} - already processed`);
+      console.log(`⚠️ Duplicate webhook detected: ${eventType} for ${payload.request_id} - already processed`);
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -91,7 +130,7 @@ serve(async (req) => {
 
     // 📊 DATABASE LOGGING: Log webhook receipt (idempotent)
     const logEntry = {
-      event_type: isTestMode ? `test_${payload.type}` : payload.type,
+      event_type: logEventType,
       event_id: payload.request_id,
       order_id: internalOrderId || null,
       delivery_status: 'received',
@@ -114,7 +153,7 @@ serve(async (req) => {
       // Continue processing even if logging fails
     }
     
-    console.log(`📊 Webhook logged to database: ${payload.type} for order ${internalOrderId || 'unknown'}`);
+    console.log(`📊 Webhook logged to database: ${eventType} for order ${internalOrderId || 'unknown'}`);
     
     if (isTestMode) {
       console.log('🧪 TEST MODE: Webhook received and logged, skipping processing');
@@ -128,8 +167,8 @@ serve(async (req) => {
       );
     }
     
-    console.log('🔔 Zinc webhook received:', {
-      type: payload.type,
+    console.log('🔔 Zinc webhook details:', {
+      type: eventType,
       request_id: payload.request_id,
       order_id: payload.order_id,
     });
@@ -139,7 +178,7 @@ serve(async (req) => {
       
       // Log failure to database
       await supabase.from('webhook_delivery_log').insert({
-        event_type: payload.type,
+        event_type: eventType,
         event_id: payload.request_id,
         order_id: null,
         delivery_status: 'failed',
@@ -156,8 +195,8 @@ serve(async (req) => {
 
     console.log(`📦 Processing webhook for order: ${internalOrderId}`);
 
-    // Handle different webhook types
-    switch (payload.type) {
+    // Handle different webhook types using resolved eventType
+    switch (eventType) {
       case 'request_succeeded':
         console.log('✅ Zinc order succeeded');
         await handleRequestSucceeded(supabase, internalOrderId, payload);
@@ -190,13 +229,13 @@ serve(async (req) => {
         break;
 
       default:
-        console.log('⚠️ Unknown webhook type:', payload.type);
+        console.log('⚠️ Unknown webhook type:', eventType);
     }
 
     // Handle cancellation-specific logic if this is a cancellation webhook
     if (payload.client_notes?.cancellation_source === 'admin_trunkline') {
       console.log('🚫 Detected cancellation webhook');
-      await handleCancellationWebhook(supabase, internalOrderId, payload);
+      await handleCancellationWebhook(supabase, internalOrderId, payload, eventType);
     }
 
     // 📊 DATABASE LOGGING: Mark webhook as completed
@@ -207,7 +246,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString() 
       })
       .eq('event_id', payload.request_id)
-      .eq('event_type', payload.type);
+      .eq('event_type', logEventType);
 
     // ✅ Mark webhook as successfully received in orders table
     await supabase
@@ -234,15 +273,24 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
       );
       
-      const payload: ZincWebhookPayload = await req.json();
+      // Try to parse the body again for logging - may fail if already consumed
+      let errorEventType = 'unknown';
+      let errorEventId = 'unknown';
+      try {
+        const errorPayload = await req.json();
+        errorEventType = resolveEventType(errorPayload);
+        errorEventId = errorPayload.request_id || 'unknown';
+      } catch (_) {
+        // Body already consumed, use defaults
+      }
       
       await supabase.from('webhook_delivery_log').insert({
-        event_type: payload.type || 'unknown',
-        event_id: payload.request_id || 'unknown',
+        event_type: errorEventType,
+        event_id: errorEventId,
         order_id: null,
         delivery_status: 'failed',
         error_message: error.message,
-        metadata: payload || {},
+        metadata: {},
         created_at: new Date().toISOString(),
       });
     } catch (logError) {
@@ -257,19 +305,55 @@ serve(async (req) => {
 });
 
 async function handleRequestSucceeded(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+  // Extract from Zinc's nested structure (merchant_order_ids array)
+  const merchantInfo = payload.merchant_order_ids?.[0];
+  const merchantOrderId = merchantInfo?.merchant_order_id 
+    || payload.merchant_order_id 
+    || payload.order_id;
+  const trackingUrl = merchantInfo?.tracking_url;
+  const estimatedDelivery = payload.delivery_dates?.[0]?.date;
+
+  console.log(`📦 Extracted merchant data: order_id=${merchantOrderId}, tracking_url=${trackingUrl ? 'yes' : 'no'}, delivery=${estimatedDelivery}`);
+
+  const updateData: any = {
+    zinc_order_id: merchantOrderId,
+    status: 'processing',
+    updated_at: new Date().toISOString(),
+  };
+
+  // Save tracking URL in notes (no tracking_url column exists)
+  // tracking_url will be stored in notes.zinc_tracking_url
+
+  // Save estimated delivery date if available
+  if (estimatedDelivery) {
+    updateData.estimated_delivery = estimatedDelivery;
+  }
+
+  // Save tracking URL, price components, and merchant info in notes
+  {
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('notes')
+      .eq('id', orderId)
+      .single();
+
+    updateData.notes = {
+      ...(existingOrder?.notes || {}),
+      ...(trackingUrl ? { zinc_tracking_url: trackingUrl } : {}),
+      ...(payload.price_components ? { zinc_price_components: payload.price_components } : {}),
+      ...(merchantInfo ? { zinc_merchant_info: merchantInfo } : {}),
+    };
+  }
+
   const { error } = await supabase
     .from('orders')
-    .update({
-      zinc_order_id: payload.merchant_order_id || payload.order_id,
-      status: 'processing',
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', orderId);
 
   if (error) {
     console.error('❌ Failed to update order on request_succeeded:', error);
   } else {
-    console.log(`✅ Order ${orderId} marked as placed with Zinc order ID: ${payload.merchant_order_id || payload.order_id}`);
+    console.log(`✅ Order ${orderId} marked as placed with merchant order ID: ${merchantOrderId}, tracking: ${trackingUrl || 'none'}, delivery: ${estimatedDelivery || 'unknown'}`);
   }
 }
 
@@ -611,13 +695,13 @@ async function createPendingRefund(supabase: any, orderId: string, payload: Zinc
   console.log(`📧 Admin approval email queued for refund on order ${order.order_number}`);
 }
 
-async function handleCancellationWebhook(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+async function handleCancellationWebhook(supabase: any, orderId: string, payload: ZincWebhookPayload, eventType: string) {
   /**
    * Handles cancellation-specific webhook responses from Zinc.
-   * Updates order status based on success/failure of cancellation.
+   * Uses resolved eventType instead of payload.type directly.
    */
   
-  if (payload.type === 'request_succeeded') {
+  if (eventType === 'request_succeeded') {
     console.log('✅ Cancellation succeeded for order:', orderId);
     
     const { error } = await supabase
@@ -635,7 +719,7 @@ async function handleCancellationWebhook(supabase: any, orderId: string, payload
       console.error('Failed to update cancelled order:', error);
     }
     
-  } else if (payload.type === 'request_failed') {
+  } else if (eventType === 'request_failed') {
     console.log('❌ Cancellation failed for order:', orderId);
     
     // Get current order to preserve existing data

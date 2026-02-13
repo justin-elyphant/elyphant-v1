@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus } from "lucide-react";
+import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus, User } from "lucide-react";
 import { Elements } from "@stripe/react-stripe-js";
 import stripeClientManager from "@/services/payment/StripeClientManager";
 import UnifiedPaymentForm from "@/components/payments/UnifiedPaymentForm";
@@ -17,6 +17,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 import { useDefaultPaymentMethod, DefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
+import { useEnhancedConnections, EnhancedConnection } from "@/hooks/profile/useEnhancedConnections";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerHapticFeedback } from "@/utils/haptics";
@@ -33,6 +34,13 @@ interface BuyNowDrawerProps {
   price: number;
 }
 
+interface SelectedRecipient {
+  type: 'self' | 'connection';
+  name: string;
+  address: any;
+  connectionId?: string;
+}
+
 const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   open,
   onOpenChange,
@@ -45,11 +53,24 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const { user } = useAuth();
   const { defaultAddress, loading: addressLoading } = useDefaultAddress();
   const { defaultPaymentMethod, loading: paymentLoading } = useDefaultPaymentMethod();
+  const { connections: allConnections, loading: connectionsLoading } = useEnhancedConnections();
   const [placing, setPlacing] = useState(false);
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
   const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<DefaultPaymentMethod | null>(null);
   const [showAddCardForm, setShowAddCardForm] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
+
+  // Filter connections: only accepted with verified shipping address (city + state)
+  const connectionsWithAddress = useMemo(() => {
+    return allConnections
+      .filter(conn => {
+        const addr = conn.profile_shipping_address;
+        return addr && addr.city && addr.state;
+      })
+      .slice(0, 3); // Top 3 most recent
+  }, [allConnections]);
 
   // Sync default payment method
   useEffect(() => {
@@ -99,7 +120,19 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         variationText: variationText || undefined,
       };
 
-      const shippingInfo = {
+      // Resolve shipping address based on selected recipient
+      const isGift = selectedRecipient?.type === 'connection';
+      const recipientAddr = selectedRecipient?.address;
+
+      const shippingInfo = isGift && recipientAddr ? {
+        name: selectedRecipient.name,
+        address_line1: recipientAddr.address_line1 || recipientAddr.street || "",
+        address_line2: recipientAddr.address_line2 || "",
+        city: recipientAddr.city,
+        state: recipientAddr.state,
+        zip_code: recipientAddr.zip_code || recipientAddr.zipCode || "",
+        country: recipientAddr.country || "US",
+      } : {
         name: defaultAddress.name,
         address_line1: defaultAddress.address.street,
         address_line2: defaultAddress.address.address_line2 || "",
@@ -132,8 +165,9 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               order_type: "standard",
               item_count: 1,
               source: "buy_now_drawer",
-              delivery_scenario: "self",
+              delivery_scenario: isGift ? "gift" : "self",
               payment_method_id: activePayment?.stripe_payment_method_id || "",
+              ...(isGift && selectedRecipient?.connectionId ? { recipient_connection_id: selectedRecipient.connectionId } : {}),
             },
           },
         }
@@ -164,10 +198,20 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   };
 
   const formatAddress = () => {
+    if (selectedRecipient?.type === 'connection') {
+      const addr = selectedRecipient.address;
+      return `${selectedRecipient.name}, ${addr.city}, ${addr.state}`;
+    }
     if (!defaultAddress) return "";
     const { street, city, state, zipCode } = defaultAddress.address;
     const shortStreet = street.length > 25 ? street.slice(0, 25) + "..." : street;
     return `${defaultAddress.name}, ${shortStreet}, ${city}, ${state} ${zipCode}`;
+  };
+
+  const handleSelectRecipient = (recipient: SelectedRecipient) => {
+    setSelectedRecipient(recipient);
+    setAddressPickerOpen(false);
+    triggerHapticFeedback("light");
   };
 
   const formatCard = (method?: DefaultPaymentMethod | null) => {
@@ -223,20 +267,84 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
             </div>
           ) : hasRequiredData ? (
             <>
-              {/* Ship to */}
-              <button
-                onClick={handleGoToSettings}
-                className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Ship to</p>
-                    <p className="text-sm truncate">{formatAddress()}</p>
+              {/* Ship to - collapsible address picker */}
+              <Collapsible open={addressPickerOpen} onOpenChange={setAddressPickerOpen}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Ship to</p>
+                        <p className="text-sm truncate">{formatAddress()}</p>
+                      </div>
+                    </div>
+                    {addressPickerOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="py-2 space-y-1 border-b border-border">
+                    {/* Ship to Myself */}
+                    <button
+                      onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left"
+                    >
+                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium">Ship to Myself</span>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {defaultAddress.name}, {defaultAddress.address.city}, {defaultAddress.address.state}
+                        </p>
+                      </div>
+                      {(!selectedRecipient || selectedRecipient.type === 'self') && (
+                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      )}
+                    </button>
+
+                    {/* Connections with verified addresses */}
+                    {connectionsWithAddress.length > 0 && (
+                      <>
+                        <p className="text-xs text-muted-foreground px-3 pt-1">Send to a connection</p>
+                        {connectionsWithAddress.map((conn) => {
+                          const addr = conn.profile_shipping_address;
+                          return (
+                            <button
+                              key={conn.id}
+                              onClick={() => handleSelectRecipient({
+                                type: 'connection',
+                                name: conn.profile_name || 'Connection',
+                                address: addr,
+                                connectionId: conn.display_user_id || conn.connected_user_id || conn.id,
+                              })}
+                              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left"
+                            >
+                              <img
+                                src={conn.profile_image || '/placeholder.svg'}
+                                alt={conn.profile_name || ''}
+                                className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium">{conn.profile_name}</span>
+                                <p className="text-xs text-muted-foreground">
+                                  {addr.city}, {addr.state}
+                                </p>
+                              </div>
+                              {selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === (conn.display_user_id || conn.connected_user_id || conn.id) && (
+                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-              </button>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Pay with - inline collapsible picker */}
               <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>

@@ -545,10 +545,10 @@ async function handleCheckoutSessionCompleted(
       currency: session.currency || 'usd',
       line_items: {
         items: group.items,
-        subtotal: subtotalAmount,
-        shipping: shippingAmount,
-        tax: taxAmount,
-        gifting_fee: giftingFeeAmount
+        subtotal: subtotalAmount / 100,
+        shipping: shippingAmount / 100,
+        tax: taxAmount / 100,
+        gifting_fee: giftingFeeAmount / 100
       },
       shipping_address: group.shippingAddress,
       gift_options: {
@@ -675,11 +675,12 @@ async function handleCheckoutSessionCompleted(
       console.log(`💾 [STEP 6.${i + 2}] Creating child order ${groupLabel} for recipient: ${group.recipientName || 'Self'}...`);
       
       // Calculate proportional pricing for this group
-      const groupSubtotal = group.items.reduce((sum, item) => sum + (item.unit_price * item.quantity * 100), 0);
-      const groupProportion = subtotalAmount > 0 ? groupSubtotal / subtotalAmount : 1;
-      const groupShipping = Math.round(shippingAmount * groupProportion);
-      const groupTax = Math.round(taxAmount * groupProportion);
-      const groupGiftingFee = Math.round(giftingFeeAmount * groupProportion);
+      // Calculate proportional pricing for this group (in cents, then convert to dollars)
+      const groupSubtotalCents = group.items.reduce((sum, item) => sum + (item.unit_price * item.quantity * 100), 0);
+      const groupProportion = subtotalAmount > 0 ? groupSubtotalCents / subtotalAmount : 1;
+      const groupShippingCents = Math.round(shippingAmount * groupProportion);
+      const groupTaxCents = Math.round(taxAmount * groupProportion);
+      const groupGiftingFeeCents = Math.round(giftingFeeAmount * groupProportion);
       
       const childOrderData = {
         user_id: userId,
@@ -693,10 +694,10 @@ async function handleCheckoutSessionCompleted(
         currency: session.currency || 'usd',
         line_items: {
           items: group.items,
-          subtotal: groupSubtotal,
-          shipping: groupShipping,
-          tax: groupTax,
-          gifting_fee: groupGiftingFee
+          subtotal: groupSubtotalCents / 100,
+          shipping: groupShippingCents / 100,
+          tax: groupTaxCents / 100,
+          gifting_fee: groupGiftingFeeCents / 100
         },
         shipping_address: group.shippingAddress,
         gift_options: {

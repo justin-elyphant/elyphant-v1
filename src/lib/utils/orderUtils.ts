@@ -70,15 +70,15 @@ export function getOrderLineItemsPricing(order: any): {
   
   // Object wrapper format with pricing (current format)
   if (typeof lineItems === 'object' && !Array.isArray(lineItems)) {
-    // Values are stored in CENTS from Stripe
+    // Values are stored in DOLLARS (converted from cents at write time in stripe-webhook-v2)
     const hasPricing = lineItems.subtotal !== undefined || lineItems.shipping !== undefined;
     
     if (hasPricing) {
       return {
-        subtotal: (lineItems.subtotal || 0) / 100,
-        shipping: (lineItems.shipping || 0) / 100,
-        tax: (lineItems.tax || 0) / 100,
-        giftingFee: (lineItems.gifting_fee || 0) / 100,
+        subtotal: lineItems.subtotal || 0,
+        shipping: lineItems.shipping || 0,
+        tax: lineItems.tax || 0,
+        giftingFee: lineItems.gifting_fee || 0,
         hasStoredPricing: true
       };
     }

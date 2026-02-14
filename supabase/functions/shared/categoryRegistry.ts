@@ -26,8 +26,7 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
       "cozy sweaters and cardigans", 
       "candles and home fragrance",
       "books and reading accessories",
-      "yoga and fitness accessories",
-      "coffee and tea gifts"
+      "yoga and fitness accessories"
     ]
   },
   'gifts-for-him': {
@@ -54,7 +53,6 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
       "home decor items under 50",
       "tech accessories under 50",
       "books under 50",
-      "coffee accessories under 50",
       "fitness accessories under 50"
     ],
     priceMax: 50,

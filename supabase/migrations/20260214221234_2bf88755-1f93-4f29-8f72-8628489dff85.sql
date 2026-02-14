@@ -1,0 +1,1 @@
+DELETE FROM products WHERE product_id IN ('B08W28BM7D', 'B0CHXWX2JN');

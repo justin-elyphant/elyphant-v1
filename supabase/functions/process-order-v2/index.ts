@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { isUnsupportedProduct } from '../shared/unsupportedProductFilter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -267,6 +268,51 @@ serve(async (req) => {
     }
 
     console.log(`✅ All ${itemsArray.length} product IDs validated as Amazon ASINs`);
+
+    // STEP 6.3: Pre-submission unsupported product check (Whole Foods, grocery, digital, etc.)
+    console.log('🔍 Checking for unsupported products (Whole Foods, grocery, digital)...');
+    const productIds = itemsArray.map((item: any) => item.product_id || item.productId || item.id);
+    const { data: cachedProducts } = await supabase
+      .from('products')
+      .select('product_id, title, category, metadata')
+      .in('product_id', productIds);
+
+    const blockedItems: string[] = [];
+    for (const item of itemsArray) {
+      const pid = item.product_id || item.productId || item.id;
+      const cached = cachedProducts?.find((p: any) => p.product_id === pid);
+      const checkObj = {
+        title: item.title || cached?.title || '',
+        category: cached?.category || '',
+        categories: cached?.metadata?.categories || [],
+        seller_name: cached?.metadata?.seller_name,
+        sold_by: cached?.metadata?.sold_by,
+        fulfilled_by: cached?.metadata?.fulfilled_by,
+        digital: cached?.metadata?.digital,
+        fresh: cached?.metadata?.fresh,
+        pantry: cached?.metadata?.pantry,
+        metadata: cached?.metadata || {},
+      };
+      if (isUnsupportedProduct(checkObj)) {
+        blockedItems.push(`${pid} (${checkObj.title || 'unknown'})`);
+      }
+    }
+
+    if (blockedItems.length > 0) {
+      const reason = `Unsupported products detected: ${blockedItems.join(', ')}. These items cannot be fulfilled via standard shipping (e.g. Whole Foods, grocery, digital).`;
+      console.error(`❌ ${reason}`);
+      await markOrderRequiresAttention(supabase, orderId, reason);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'This order contains items that cannot be fulfilled via our standard shipping',
+          blocked_items: blockedItems,
+          requires_attention: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+    console.log(`✅ All products passed unsupported product check`);
 
     // STEP 6.5: Validate phone number (CRITICAL for Zinc/carrier delivery notifications)
     // Priority: recipient phone (for gifts) > shipping address phone > shopper profile phone

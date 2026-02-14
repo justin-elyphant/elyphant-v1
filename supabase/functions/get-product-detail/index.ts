@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { isUnsupportedProduct } from '../shared/unsupportedProductFilter.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -369,6 +370,18 @@ serve(async (req) => {
         }
       };
       
+      // LAYER 3: Check if product is unsupported for Zinc fulfillment
+      const unsupportedCheck = {
+        ...enhancedData,
+        categories: enhancedData.categories || data.categories || [],
+        metadata: productPayload.metadata,
+      };
+      if (isUnsupportedProduct(unsupportedCheck)) {
+        enhancedData.fulfillment_blocked = true;
+        enhancedData.blocked_reason = 'This item is not available for purchase through our platform (grocery, Whole Foods, or digital product).';
+        console.log(`🚫 Product ${product_id} flagged as fulfillment_blocked`);
+      }
+
       // Return response immediately, then cache in background
       const response = new Response(JSON.stringify(enhancedData), {
         status: 200,

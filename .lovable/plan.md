@@ -1,63 +1,71 @@
 
 
-## Fix: zinc-webhook Can't Parse Zinc's Payload Format
+## Fix: Zinc Webhook Error Handling and Auto-Retry
 
-### What's Happening
+### Problem 1: Wrong Error Field Extraction
 
-When Zinc calls our webhook after completing an order, it sends the event type in a field called `_type` (with an underscore). Our webhook code looks for `type` (without underscore), so it sees `undefined` and skips all processing. This means:
+Zinc puts error info at the payload root, not nested under `.error`:
 
-- The Amazon order ID (`112-4824932-0694615`) never gets saved
-- The tracking URL never gets saved
-- The order stays stuck as "processing" in Trunkline forever
-- The webhook log entry fails because `event_type` is null (database requires it)
+| Field | Webhook looks at | Zinc actually sends |
+|---|---|---|
+| Error code | `payload.error.code` (undefined) | `payload.code` ("internal_error") |
+| Error message | `payload.error.message` (undefined) | `payload.message` ("Zinc or the retailer...") |
+| Error data | `payload.error.data` (undefined) | `payload.data` (product details) |
 
-### What's Changing
+**Fix**: Update `handleRequestFailed` to read from root-level fields first, falling back to the nested `.error` object:
+
+```typescript
+const errorCode = payload.code || payload.error?.code || 'unknown';
+const errorMessage = payload.message || payload.error?.message || 'Unknown Zinc error';
+const errorData = payload.data || payload.error?.data;
+```
+
+### Problem 2: No Auto-Retry for Retryable Errors
+
+The shared `zmaErrorClassification.ts` already classifies `internal_error` as retryable (2-hour delay, 2 max retries). But `handleRequestFailed` ignores this entirely -- it marks every error as `failed` and emails the customer immediately.
+
+**Fix**: Before marking an order as permanently failed, classify the error. If it's retryable:
+- Set status to `requires_attention` (not `failed`) so the order stays visible for retry
+- Schedule an automatic retry by invoking `process-order-v2` after the configured delay
+- Do NOT send a failure email to the customer (it's premature)
+- Track retry count in notes to respect the max retry limit
+
+If max retries are exhausted, THEN mark as `failed` and send the customer email.
+
+### What Changes
 
 **File: `supabase/functions/zinc-webhook/index.ts`**
 
-1. **Detect event type from `_type` field** -- Zinc uses `_type: "order_response"` for success and `_type: "error"` for failures. Add a mapping function at the top:
+1. Add import for `classifyZmaError` from shared utility
+2. Update `handleRequestFailed` to:
+   - Extract error code/message from root-level fields (not `payload.error`)
+   - Call `classifyZmaError` to determine if the error is retryable
+   - Track `retry_count` in notes
+   - If retryable and under max retries: set status to `requires_attention`, skip customer email, log that auto-retry is pending
+   - If NOT retryable or max retries exceeded: set status to `failed`, send customer failure email (existing behavior)
 
-```typescript
-function resolveEventType(payload: any): string {
-  // Zinc sends _type, not type
-  if (payload.type) return payload.type;
-  
-  if (payload._type === 'order_response') return 'request_succeeded';
-  if (payload._type === 'error') return 'request_failed';
-  if (payload.tracking) return 'tracking_obtained';
-  
-  return payload._type || 'unknown';
-}
+### Technical Details
+
+```text
+Error flow BEFORE fix:
+  Zinc sends internal_error --> webhook marks order "failed" --> customer gets failure email
+  (Even though error is temporary and retryable)
+
+Error flow AFTER fix:
+  Zinc sends internal_error --> webhook classifies error --> retryable?
+    YES (retry count < max) --> status = "requires_attention", no customer email, log for admin
+    NO (or max retries hit) --> status = "failed", send customer failure email
 ```
 
-2. **Use resolved event type everywhere** -- Replace all `payload.type` references with the resolved value so the switch statement, logging, and idempotency checks all work correctly.
+### Immediate Action for Order #7371
 
-3. **Extract merchant order data from Zinc's nested structure** -- In `handleRequestSucceeded`, Zinc sends the Amazon order ID inside `merchant_order_ids[0].merchant_order_id` and the tracking URL in `merchant_order_ids[0].tracking_url`. Update the handler to extract these:
+After deploying the fix, manually retry this order from Trunkline since the webhook already fired. The `internal_error` was about Amazon not being able to add the product quantity to cart -- this is typically a transient issue that resolves on retry.
 
-```typescript
-// Extract from Zinc's nested structure
-const merchantInfo = payload.merchant_order_ids?.[0];
-const merchantOrderId = merchantInfo?.merchant_order_id 
-  || payload.merchant_order_id 
-  || payload.order_id;
-const trackingUrl = merchantInfo?.tracking_url;
-const deliveryDates = payload.delivery_dates;
-```
+### Interface Updates Needed
 
-4. **Save delivery estimate** -- The Zinc response includes `delivery_dates[0].date: "2026-02-16"`. Save this to the order's `estimated_delivery` field.
+The `ZincWebhookPayload` interface needs two new optional root-level fields:
+- `code?: string` -- Zinc error code at root level
+- `message?: string` -- Zinc error message at root level
+- `data?: any` -- Zinc error data at root level
 
-### Technical Summary
-
-| Line Area | Current | Fixed |
-|---|---|---|
-| Event type detection | `payload.type` (undefined) | `resolveEventType(payload)` maps `_type` |
-| Merchant order ID | `payload.merchant_order_id` (undefined) | `payload.merchant_order_ids[0].merchant_order_id` |
-| Tracking URL | Not captured on success | Saved from `merchant_order_ids[0].tracking_url` |
-| Delivery estimate | Not captured | Saved from `delivery_dates[0].date` |
-| Webhook log | Fails (null event_type) | Uses resolved type, falls back to "unknown" |
-
-### After Deployment
-
-- The webhook will correctly process Zinc's success/failure callbacks going forward
-- For Order #6387 specifically, we'll manually update the database with the Amazon order data since the webhook already fired and won't re-fire
-
+These already exist in the Zinc payload but aren't in our TypeScript interface.

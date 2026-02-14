@@ -1,119 +1,69 @@
 
 
-## Fix: Cents vs Dollars Inconsistency Across the Entire Platform
+## Fix: Block Whole Foods / Grocery Items from Zinc Fulfillment
 
-### The Core Problem
+### The Problem
 
-Stripe returns pricing in **cents**. Our platform standard is to store everything in **dollars**. But `stripe-webhook-v2` stores cents in two of its three order-creation paths, causing every downstream consumer to display prices 100x too high.
+Product B08W28BM7D ("Bobo's Oat Bars") is sold exclusively by **Whole Foods Market** on Amazon. Zinc cannot fulfill Whole Foods, Amazon Fresh, or Prime Pantry orders -- they require special grocery logistics that Zinc's automation doesn't support.
 
-### Where the Bug Lives (Source of Truth)
+The existing `unsupportedProductFilter.ts` only checks three Zinc boolean flags (`digital`, `fresh`, `pantry`), but many grocery/Whole Foods items don't have these flags set. The Bobo's product slipped through because Zinc's search API didn't mark it with `fresh: true`.
 
-**File: `supabase/functions/stripe-webhook-v2/index.ts`**
+### The Fix (Two Layers of Defense)
 
-The webhook captures pricing from Stripe line items in cents (e.g., `shippingAmount = 699` for $6.99). It correctly converts `total_amount` with `/ 100` but forgets to convert the `line_items` pricing fields.
+**Layer 1: Strengthen the search filter** so grocery items never appear in results.
 
-| Order Path | Lines | Bug? | What Happens |
-|---|---|---|---|
-| Single-recipient | 546-551 | YES -- stores cents | `subtotal: 2098` instead of `20.98` |
-| Multi-recipient child | 694-699 | YES -- stores cents | `groupSubtotal: unit_price * qty * 100` |
-| Deferred/setup (card-save) | 1041-1046 | No -- reads from metadata in dollars | Correct |
+**Layer 2: Add a pre-submission check** in `process-order-v2` so if a grocery item somehow reaches checkout, it's caught before Zinc submission.
 
-### All Affected Downstream Consumers
+---
 
-Every component and function that reads `order.line_items.subtotal/shipping/tax/gifting_fee` is impacted:
+### Changes
 
-**Frontend Pages:**
-1. `src/pages/OrderConfirmation.tsx` -- Order confirmation page (the screenshot you saw)
-2. `src/pages/OrderDetail.tsx` -- Order detail page
-3. `src/components/orders/EnhancedOrderItemsTable.tsx` -- Admin order items table
-4. `src/components/orders/mobile/MobileOrderItemsList.tsx` -- Mobile order items view
+**File 1: `supabase/functions/shared/unsupportedProductFilter.ts`**
 
-All four use `getOrderPricingBreakdown()` which trusts the values as dollars.
+Expand `isUnsupportedProduct()` to detect Whole Foods / grocery items via:
 
-**Email Orchestrator:**
-5. `supabase/functions/ecommerce-email-orchestrator/index.ts` (lines 957-960) -- Reads `line_items.subtotal`, `line_items.shipping`, etc. directly and formats them as dollars. Customer emails show $2,098.00 instead of $20.98.
+- **Category matching**: Block items in "Grocery & Gourmet Food" category (the breadcrumb for this product)
+- **Seller/fulfillment detection**: Check `seller_name`, `sold_by`, or `fulfilled_by` fields for "Whole Foods"
+- **Title heuristics**: Detect common grocery quantity patterns (e.g., "4 Count, 3 OZ", "Pack of 12", "Fl Oz")
+- **Sub-department matching**: Block "Prime Pantry", "Amazon Fresh", "Whole Foods Market" in any category or sub-category field
 
-**Conflicting Utility (separate bug):**
-6. `src/lib/utils/orderUtils.ts` -- `getOrderLineItemsPricing()` divides by 100 (assumes cents). This function gives correct results for the buggy data but will be WRONG once we fix the source. This function needs updating too.
-
-### The Fix (Single Source Fix + Cleanup)
-
-**1. Fix the source: `supabase/functions/stripe-webhook-v2/index.ts`**
-
-Convert cents to dollars when storing line_items pricing:
-
-Single-recipient path (lines 546-551):
-```typescript
-line_items: {
-  items: group.items,
-  subtotal: subtotalAmount / 100,
-  shipping: shippingAmount / 100,
-  tax: taxAmount / 100,
-  gifting_fee: giftingFeeAmount / 100
-},
+New patterns added:
+```
+- Category: /grocery.*gourmet|amazon\s*fresh|prime\s*pantry/i
+- Seller: /whole\s*foods/i on seller_name, sold_by, fulfilled_by fields
+- Subcategory array: check all categories[] entries for grocery signals
 ```
 
-Multi-recipient child path (lines 694-699):
-```typescript
-// Also fix line 678 which multiplies by 100 unnecessarily
-const groupSubtotal = group.items.reduce(
-  (sum, item) => sum + (item.unit_price * item.quantity), 0
-);
-// ... proportional calculations stay the same but use dollar-based subtotalAmount
-line_items: {
-  items: group.items,
-  subtotal: groupSubtotal,
-  shipping: groupShipping / 100,
-  tax: groupTax / 100,
-  gifting_fee: groupGiftingFee / 100
-},
-```
+**File 2: `supabase/functions/process-order-v2/index.ts`**
 
-**2. Fix the conflicting utility: `src/lib/utils/orderUtils.ts`**
+Add a pre-submission product validation step (after line 79, before Zinc API call). For each product in `line_items.items`:
+- Look up the product in the `products` table to get cached category/metadata
+- Run `isUnsupportedProduct()` against the cached data
+- If any item is unsupported, fail the order with a clear error message ("This order contains items that cannot be fulfilled via our standard shipping") instead of submitting to Zinc and getting a confusing `internal_error`
 
-Remove the `/ 100` division in `getOrderLineItemsPricing()` since values will now be stored in dollars:
+**File 3: `supabase/functions/get-product-detail/index.ts`**
 
-```typescript
-// BEFORE (wrong after fix):
-subtotal: (lineItems.subtotal || 0) / 100,
+After fetching product detail from Zinc (around line 261), run the unsupported product check. If the product is unsupported, include a `fulfillment_blocked: true` flag and `blocked_reason` in the response. This allows the frontend to show a warning on the product page before add-to-cart.
 
-// AFTER (correct):
-subtotal: lineItems.subtotal || 0,
-```
+### Frontend Enhancement (Optional but Recommended)
 
-Also update the comment from "Values are stored in CENTS from Stripe" to "Values are stored in DOLLARS".
+On the product detail page, if `fulfillment_blocked: true` is present, show a banner: "This item is not available for purchase through our platform" and disable the Add to Cart / Buy Now buttons.
 
-**3. No changes needed for these (they already assume dollars):**
-- `src/utils/orderPricingUtils.ts` -- `getOrderPricingBreakdown()` already correct
-- `supabase/functions/ecommerce-email-orchestrator/index.ts` -- already reads as dollars
-- All frontend components using `getOrderPricingBreakdown()` -- already correct
-
-### Files Changed
+### Technical Details
 
 | File | Change |
 |---|---|
-| `supabase/functions/stripe-webhook-v2/index.ts` | Divide pricing fields by 100 before storing (lines 548-551, 678, 696-699) |
-| `src/lib/utils/orderUtils.ts` | Remove `/ 100` division in `getOrderLineItemsPricing` (lines 78-81) |
+| `supabase/functions/shared/unsupportedProductFilter.ts` | Add category, seller, and grocery pattern detection |
+| `supabase/functions/process-order-v2/index.ts` | Add pre-submission unsupported product validation |
+| `supabase/functions/get-product-detail/index.ts` | Return `fulfillment_blocked` flag for blocked items |
+| `supabase/functions/get-products/index.ts` | Already uses the filter -- will benefit from expanded rules automatically |
 
-### Data Correction for Existing Orders
+### What This Prevents
 
-Any orders created through paths 1 or 2 currently have inflated values. Run this SQL to fix them:
+- Whole Foods Market items reaching checkout
+- Amazon Fresh items being ordered
+- Prime Pantry items being submitted to Zinc
+- Grocery & Gourmet Food category items that lack `fresh`/`pantry` flags
+- Wasted Zinc API calls and confusing `internal_error` responses
+- Customer confusion from failed fulfillment
 
-```sql
-UPDATE orders 
-SET line_items = jsonb_set(
-  jsonb_set(
-    jsonb_set(
-      jsonb_set(line_items, '{subtotal}', to_jsonb(((line_items->>'subtotal')::numeric) / 100)),
-      '{shipping}', to_jsonb(((line_items->>'shipping')::numeric) / 100)
-    ),
-    '{tax}', to_jsonb(((line_items->>'tax')::numeric) / 100)
-  ),
-  '{gifting_fee}', to_jsonb(((line_items->>'gifting_fee')::numeric) / 100)
-)
-WHERE line_items->>'subtotal' IS NOT NULL
-  AND (line_items->>'subtotal')::numeric > 1000
-  AND status != 'pending_payment';
-```
-
-The `WHERE` clause targets only orders stored in cents (subtotal > 1000 means > $10 in cents) and excludes deferred orders which are already correct.

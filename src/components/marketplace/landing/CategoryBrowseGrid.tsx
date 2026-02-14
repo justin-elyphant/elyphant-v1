@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 const BROWSE_CATEGORIES = UNIVERSAL_CATEGORIES.filter((cat) =>
   [
     "electronics", "fashion", "beauty", "home", "sports", "books",
-    "toys", "food", "jewelry", "kitchen", "baby", "pets",
+    "toys", "jewelry", "kitchen", "baby", "pets",
   ].includes(cat.value)
 );
 

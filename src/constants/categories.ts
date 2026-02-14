@@ -7,7 +7,7 @@ import {
   Dumbbell, 
   BookOpen, 
   Gamepad2, 
-  Coffee, 
+   
   Palette, 
   Pill, 
   Flower,
@@ -119,14 +119,6 @@ export const UNIVERSAL_CATEGORIES: Category[] = [
     searchTerm: "toys games kids children educational puzzles building blocks dolls action figures", // Optimized for toy products
     icon: Gamepad2,
     description: "Fun for all ages"
-  },
-  {
-    id: 10,
-    name: "Food & Drinks",
-    value: "food",
-    searchTerm: "best gourmet food specialty snacks organic coffee tea chocolate wine cheese gift baskets", // Enhanced for variety
-    icon: Coffee,
-    description: "Gourmet and specialty items"
   },
   {
     id: 11,
@@ -244,7 +236,7 @@ export const getFeaturedCategories = (): Category[] => {
   // Return 15 featured categories in alphabetical order
   return UNIVERSAL_CATEGORIES
     .filter(cat => 
-      ['arts', 'athleisure', 'baby', 'beauty', 'best-selling', 'books', 'electronics', 'fashion', 'flowers', 'food', 'home', 'pets', 'sports', 'tech', 'toys', 'wedding'].includes(cat.value)
+      ['arts', 'athleisure', 'baby', 'beauty', 'best-selling', 'books', 'electronics', 'fashion', 'flowers', 'home', 'pets', 'sports', 'tech', 'toys', 'wedding'].includes(cat.value)
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 };

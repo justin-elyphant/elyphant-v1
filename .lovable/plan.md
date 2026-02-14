@@ -1,46 +1,33 @@
 
 
-## Clean Up: Remove Food-Related Categories and Cached Products
+## Remove Food & Drinks Category from Browse and Discovery
 
-### What We're Removing
+### The Problem
 
-**1. Category Registry queries (`supabase/functions/shared/categoryRegistry.ts`)**
+The "Food & Drinks" category in `UNIVERSAL_CATEGORIES` has a search term that actively pulls grocery and gourmet items from Zinc -- the exact products our new fulfillment filter blocks. This wastes Zinc API calls on items we'll discard and risks edge cases slipping through.
 
-| Category | Query to Remove | Reason |
-|---|---|---|
-| gifts-for-her | `"coffee and tea gifts"` | Pulls consumable food/beverage items |
-| gifts-under-50 | `"coffee accessories under 50"` | Pulls consumable coffee/tea products |
+### Changes
 
-The `madein` brand (cookware) and `"kitchen gadgets under 50"` are safe -- they're kitchen tools, not food. `"best selling home kitchen essentials"` is also borderline safe since it targets kitchen tools.
+**File: `src/constants/categories.ts`**
 
-**2. Cached products to delete from `products` table (2 items)**
+Remove the "Food & Drinks" entry (id: 10) from the `UNIVERSAL_CATEGORIES` array. This removes it from:
+- The "Browse All Categories" grid on the marketplace landing page (where you spotted it)
+- The "Shop by Category" section on the home page (via `getFeaturedCategories()`)
+- Any category-based search routing
 
-| Product ID | Title | Why |
-|---|---|---|
-| B08W28BM7D | Bobo's Oat Bars Lemon Poppyseed | Grocery & Gourmet Food category (the Whole Foods item that caused the Zinc error) |
-| B0CHXWX2JN | MTN OPS Ammo Meal Replacement Shake | Has "Whole Foods" in title, food/supplement |
+**File: `src/components/marketplace/landing/CategoryBrowseGrid.tsx`**
 
-### Files Changed
+Remove `"food"` from the `BROWSE_CATEGORIES` filter list (line 11) so it no longer appears in the browse grid even if the constant were somehow retained.
 
-| File | Change |
-|---|---|
-| `supabase/functions/shared/categoryRegistry.ts` | Remove 2 coffee/tea queries from gifts-for-her and gifts-under-50 |
+### What We're NOT Changing
 
-### Database Change
+- **Gift preferences utility** (`utils.ts`): The "Food & Beverage" option there is a user preference tag for AI recommendations, not a product search trigger. Safe to keep.
+- **Category names mapping** (`categoryNames.ts`): No "food" entry exists there already.
+- **Navigation links** (`CategoryLinks.tsx`): No food category listed there.
 
-```sql
-DELETE FROM products 
-WHERE product_id IN ('B08W28BM7D', 'B0CHXWX2JN');
-```
+### Impact
 
-### What We're Keeping (Safe)
-
-- `madein` brand mappings (cookware/pans/knives -- kitchen tools, not food)
-- `"kitchen gadgets under 50"` (gadgets, not consumables)
-- `"best selling home kitchen essentials"` (tools, not food)
-- `"candles and home fragrance"` (not food)
-
-### Why This Is Enough
-
-The enhanced `unsupportedProductFilter.ts` we just deployed will catch any future grocery/Whole Foods items at the search, product detail, and order submission layers. This cleanup just removes the queries that actively attract food items and purges the 2 cached food products.
+- One fewer category tile in the browse grid and home page
+- Eliminates wasted Zinc API calls for unfulfillable grocery products
+- No visual gap -- the grid will reflow naturally with one fewer tile
 

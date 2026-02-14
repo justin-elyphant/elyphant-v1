@@ -71,7 +71,13 @@ function resolveEventType(payload: ZincWebhookPayload): string {
 
   // Map Zinc's `_type` to our event names
   if (payload._type === 'order_response') return 'request_succeeded';
-  if (payload._type === 'error') return 'request_failed';
+  
+  // _type: 'error' can be a real failure OR just 'request_processing' (in-progress)
+  if (payload._type === 'error') {
+    // request_processing is NOT a failure — order is still being placed
+    if (payload.code === 'request_processing') return 'request_processing';
+    return 'request_failed';
+  }
 
   // Fallback: infer from payload shape
   if (payload.tracking) return 'tracking_obtained';
@@ -210,6 +216,12 @@ serve(async (req) => {
       case 'request_failed':
         console.log('❌ Zinc order failed');
         await handleRequestFailed(supabase, internalOrderId, payload);
+        break;
+
+      case 'request_processing':
+        console.log('⏳ Zinc order still processing (not a failure). No action needed.');
+        // This is an in-progress state — Zinc will send a final callback later.
+        // Do NOT change order status or send any emails.
         break;
 
       case 'tracking_obtained':

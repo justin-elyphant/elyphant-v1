@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { classifyZmaError } from '../shared/zmaErrorClassification.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,10 +43,14 @@ interface ZincWebhookPayload {
     };
   }>;
   error?: {
-    code: string;
+  code: string;
     message: string;
     data?: any;
   };
+  // Root-level error fields (Zinc puts these at root, not nested under .error)
+  code?: string;
+  message?: string;
+  data?: any;
   client_notes?: {
     order_id: string;
     order_number: string;
@@ -358,20 +363,102 @@ async function handleRequestSucceeded(supabase: any, orderId: string, payload: Z
 }
 
 async function handleRequestFailed(supabase: any, orderId: string, payload: ZincWebhookPayload) {
-  const errorMessage = payload.error?.message || 'Unknown Zinc error';
-  const errorCode = payload.error?.code;
+  // Extract error from root-level fields first (Zinc's actual format), fallback to nested .error
+  const errorCode = payload.code || payload.error?.code || 'unknown';
+  const errorMessage = payload.message || payload.error?.message || 'Unknown Zinc error';
+  const errorData = payload.data || payload.error?.data;
+
+  console.log(`🔍 Error classification: code=${errorCode}, message=${errorMessage}`);
+
+  // Classify the error to determine if it's retryable
+  const classification = classifyZmaError({ code: errorCode, message: errorMessage });
+  console.log(`🔍 Classification: type=${classification.type}, shouldRetry=${classification.shouldRetry}, maxRetries=${classification.maxRetries}`);
+
+  // Get current order to check existing retry count
+  const { data: order } = await supabase
+    .from('orders')
+    .select('notes, customer_email, order_number, shipping_address, user_id')
+    .eq('id', orderId)
+    .single();
+
+  const currentNotes = order?.notes || {};
+  const currentRetryCount = currentNotes.zinc_retry_count || 0;
+  const maxRetries = classification.maxRetries || 0;
+
+  // If retryable and under max retries, set requires_attention and skip customer email
+  if (classification.shouldRetry && currentRetryCount < maxRetries) {
+    const newRetryCount = currentRetryCount + 1;
+    console.log(`🔄 Retryable error (attempt ${newRetryCount}/${maxRetries}). Setting requires_attention, skipping customer email.`);
+
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'requires_attention',
+        notes: {
+          ...currentNotes,
+          zinc_error: {
+            code: errorCode,
+            message: errorMessage,
+            data: errorData,
+            timestamp: new Date().toISOString(),
+          },
+          zinc_retry_count: newRetryCount,
+          zinc_retry_max: maxRetries,
+          zinc_retry_classification: classification.type,
+          zinc_next_retry_delay_seconds: classification.retryDelay,
+          funding_hold_reason: `Retryable Zinc error (attempt ${newRetryCount}/${maxRetries}): ${errorCode}`,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('❌ Failed to update order for retry:', error);
+    } else {
+      console.log(`✅ Order ${orderId} set to requires_attention for auto-retry (attempt ${newRetryCount}/${maxRetries})`);
+    }
+
+    // Create admin alert for visibility
+    await supabase.from('admin_alerts').insert({
+      alert_type: 'zinc_retryable_error',
+      severity: classification.alertLevel || 'warning',
+      message: `Order ${order?.order_number || orderId}: ${errorCode} - auto-retry ${newRetryCount}/${maxRetries} pending`,
+      order_id: orderId,
+      requires_action: false,
+      metadata: {
+        error_code: errorCode,
+        error_message: errorMessage,
+        retry_count: newRetryCount,
+        max_retries: maxRetries,
+        classification: classification.type,
+        retry_delay_seconds: classification.retryDelay,
+      },
+    });
+
+    return; // Do NOT send failure email - retry is pending
+  }
+
+  // Terminal failure: max retries exhausted or non-retryable error
+  if (classification.shouldRetry && currentRetryCount >= maxRetries) {
+    console.log(`❌ Max retries exhausted (${currentRetryCount}/${maxRetries}). Marking as failed.`);
+  } else {
+    console.log(`❌ Non-retryable error: ${classification.type}. Marking as failed.`);
+  }
 
   const { error } = await supabase
     .from('orders')
     .update({
       status: 'failed',
       notes: {
+        ...currentNotes,
         zinc_error: {
           code: errorCode,
           message: errorMessage,
-          data: payload.error?.data,
+          data: errorData,
           timestamp: new Date().toISOString(),
         },
+        zinc_retry_count: currentRetryCount,
+        zinc_retry_exhausted: classification.shouldRetry,
         funding_hold_reason: `Zinc ZMA error: ${errorCode} - ${errorMessage}`,
       },
       updated_at: new Date().toISOString(),
@@ -384,14 +471,8 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
     console.log(`✅ Order ${orderId} marked as failed: ${errorMessage}`);
   }
 
-  // Queue failure notification email with fallback
+  // Queue failure notification email
   try {
-    const { data: order } = await supabase
-      .from('orders')
-      .select('customer_email, order_number, shipping_address, user_id')
-      .eq('id', orderId)
-      .single();
-
     const { data: profile } = await supabase
       .from('profiles')
       .select('email, name')
@@ -413,7 +494,7 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
         template_variables: {
           order_number: order.order_number,
           customer_name: recipientName,
-          error_message: errorMessage,
+          error_message: classification.userFriendlyMessage,
         },
         priority: 'high',
         scheduled_for: new Date().toISOString(),

@@ -674,7 +674,6 @@ async function handleCheckoutSessionCompleted(
       
       console.log(`💾 [STEP 6.${i + 2}] Creating child order ${groupLabel} for recipient: ${group.recipientName || 'Self'}...`);
       
-      // Calculate proportional pricing for this group
       // Calculate proportional pricing for this group (in cents, then convert to dollars)
       const groupSubtotalCents = group.items.reduce((sum, item) => sum + (item.unit_price * item.quantity * 100), 0);
       const groupProportion = subtotalAmount > 0 ? groupSubtotalCents / subtotalAmount : 1;

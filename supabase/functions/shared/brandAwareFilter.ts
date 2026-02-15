@@ -54,6 +54,24 @@ export const normalizeBrandTerm = (term: string): string => {
 };
 
 /**
+ * Basic plural stemming for search term matching.
+ * Converts common English plurals to their singular form.
+ */
+export const stemWord = (word: string): string => {
+  const w = word.toLowerCase();
+  // ves → f (knives→knife, wolves→wolf)
+  if (w.endsWith('ves')) return w.slice(0, -3) + 'f';
+  // ies → y (batteries→battery)
+  if (w.endsWith('ies')) return w.slice(0, -3) + 'y';
+  // ses, xes, zes, ches, shes → drop "es"
+  if (w.endsWith('ses') || w.endsWith('xes') || w.endsWith('zes') || w.endsWith('ches') || w.endsWith('shes'))
+    return w.slice(0, -2);
+  // s (but not ss) → drop "s"
+  if (w.endsWith('s') && !w.endsWith('ss') && w.length > 3) return w.slice(0, -1);
+  return w;
+};
+
+/**
  * Calculate relevance score for a product based on search query
  * Enhanced with model number detection for apparel searches
  */
@@ -72,32 +90,37 @@ export const calculateRelevanceScore = (
   
   for (const term of searchTerms) {
     const normalizedTerm = normalizeBrandTerm(term);
+    const stemmedTerm = stemWord(term);
     const isModelNumber = /^\d{3,4}$/.test(term);
     
     // Brand match = highest priority (100 points)
     if (brand.includes(term) || brand.includes(normalizedTerm)) score += 100;
     
-    // Title match scoring
-    if (title.includes(term) || title.includes(normalizedTerm)) {
+    // Title match scoring (includes stemmed matching)
+    const titleMatch = title.includes(term) || title.includes(normalizedTerm) ||
+      title.split(/\s+/).some(w => stemWord(w) === stemmedTerm);
+    if (titleMatch) {
       if (isModelNumber) {
-        // BOOST: Model numbers get 150 points (vs 50 for generic terms)
-        // This ensures "512" in title ranks higher than generic "jeans" matches
         score += 150;
       } else {
         score += 50;
       }
     }
     
-    // Category match = decent (20 points)
-    if (category.includes(term)) score += 20;
+    // Category match = decent (20 points) - also with stemming
+    const categoryMatch = category.includes(term) ||
+      category.split(/\s+/).some(w => stemWord(w) === stemmedTerm);
+    if (categoryMatch) score += 20;
   }
   
   // Bonus for matching ALL search terms
   const allMatch = searchTerms.every(t => {
     const nt = normalizeBrandTerm(t);
+    const st = stemWord(t);
     return title.includes(t) || title.includes(nt) || 
+           title.split(/\s+/).some(w => stemWord(w) === st) ||
            brand.includes(t) || brand.includes(nt) || 
-           category.includes(t);
+           category.includes(t) || category.split(/\s+/).some(w => stemWord(w) === st);
   });
   if (allMatch) score += 200;
   
@@ -149,8 +172,11 @@ export const calculateRelevanceScore = (
     if (productTypeTerms.length > 0) {
       const hasProductTypeMatch = productTypeTerms.some(pt => {
         const nt = normalizeBrandTerm(pt);
+        const st = stemWord(pt);
         return title.includes(pt) || title.includes(nt) || 
-               category.includes(pt) || category.includes(nt);
+               title.split(/\s+/).some(w => stemWord(w) === st) ||
+               category.includes(pt) || category.includes(nt) ||
+               category.split(/\s+/).some(w => stemWord(w) === st);
       });
       
       if (!hasProductTypeMatch) {

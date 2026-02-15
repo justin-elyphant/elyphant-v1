@@ -3,19 +3,20 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, TrendingUp, Package, Users } from "lucide-react";
+import { Search, X, TrendingUp, Package, Users, UserPlus, Clock, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchSuggestionsLive } from "@/hooks/useSearchSuggestionsLive";
 import { useAuth } from "@/contexts/auth";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { supabase } from "@/integrations/supabase/client";
 import RecentSearches from "../RecentSearches";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatPrice } from "@/lib/utils";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
+import { searchFriendsWithPrivacy, type FilteredProfile } from "@/services/search/privacyAwareFriendSearch";
+import { sendConnectionRequest } from "@/services/connections/connectionService";
 
 interface UnifiedSearchBarProps {
   onNavigateToResults?: (searchQuery: string) => void;
@@ -23,12 +24,7 @@ interface UnifiedSearchBarProps {
   mobile?: boolean;
 }
 
-interface ConnectionResult {
-  id: string;
-  name: string;
-  username: string | null;
-  profile_image: string | null;
-}
+// ConnectionResult replaced by FilteredProfile from privacyAwareFriendSearch
 
 // Skeleton loading component for suggestions
 const SuggestionsSkeleton: React.FC = () => (
@@ -99,10 +95,10 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   } = useSearchSuggestionsLive(query, 300);
 
   // Connection search state
-  const [connectionResults, setConnectionResults] = useState<ConnectionResult[]>([]);
+  const [connectionResults, setConnectionResults] = useState<FilteredProfile[]>([]);
   const connectionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Search connections when query changes
+  // Search people (all profiles) when query changes
   useEffect(() => {
     if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
     
@@ -113,43 +109,12 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
 
     connectionTimerRef.current = setTimeout(async () => {
       try {
-        // Search accepted connections by name/username
-        const { data: connections } = await supabase
-          .from('user_connections')
-          .select('connected_user_id, user_id')
-          .eq('status', 'accepted')
-          .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
-
-        if (!connections || connections.length === 0) {
-          setConnectionResults([]);
-          return;
-        }
-
-        const otherIds = connections.map(c => 
-          c.user_id === user.id ? c.connected_user_id : c.user_id
-        );
-
-        const searchLower = query.trim().toLowerCase();
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, name, first_name, last_name, username, profile_image')
-          .in('id', otherIds);
-
-        if (profiles) {
-          const matched = profiles.filter(p => {
-            const fullName = (p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim()).toLowerCase();
-            const uname = (p.username || '').toLowerCase();
-            return fullName.includes(searchLower) || uname.includes(searchLower);
-          }).slice(0, 4).map(p => ({
-            id: p.id,
-            name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'User',
-            username: p.username,
-            profile_image: p.profile_image
-          }));
-          setConnectionResults(matched);
-        }
+        const results = await searchFriendsWithPrivacy(query.trim(), user.id, 6);
+        // Filter out blocked and self
+        const filtered = results.filter(r => r.connectionStatus !== 'blocked' && r.id !== user.id);
+        setConnectionResults(filtered.slice(0, 4));
       } catch (err) {
-        console.error('[UnifiedSearchBar] Connection search error:', err);
+        console.error('[UnifiedSearchBar] People search error:', err);
       }
     }, 350);
 
@@ -157,6 +122,22 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
     };
   }, [query, user]);
+
+  // Handle sending connection request inline
+  const handleSendConnectionRequest = async (personId: string, personName: string) => {
+    try {
+      if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
+      await sendConnectionRequest(personId);
+      // Optimistic update
+      setConnectionResults(prev => prev.map(p => 
+        p.id === personId ? { ...p, connectionStatus: 'pending' as const } : p
+      ));
+      toast.success(`Connection request sent to ${personName}`);
+    } catch (err) {
+      console.error('[UnifiedSearchBar] Send connection request error:', err);
+      toast.error("Failed to send connection request");
+    }
+  };
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -379,28 +360,59 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             </div>
             <div className="space-y-1">
               {connectionResults.map((person) => (
-                <button
+                <div
                   key={person.id}
-                  onClick={() => {
-                    if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-                    setShowSuggestions(false);
-                    navigate(`/profile/${person.username || person.id}`);
-                  }}
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation"
                 >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={person.profile_image || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {person.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{person.name}</p>
-                    {person.username && (
-                      <p className="text-xs text-muted-foreground">@{person.username}</p>
-                    )}
-                  </div>
-                </button>
+                  <button
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                    onClick={() => {
+                      if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
+                      setShowSuggestions(false);
+                      navigate(`/profile/${person.username || person.id}`);
+                    }}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={person.profile_image || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {person.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium truncate">{person.name}</p>
+                      {person.username && (
+                        <p className="text-xs text-muted-foreground">@{person.username}</p>
+                      )}
+                    </div>
+                  </button>
+                  {/* Connection status / action */}
+                  {person.connectionStatus === 'connected' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
+                      <UserCheck className="h-3 w-3" />
+                      Connected
+                    </span>
+                  )}
+                  {person.connectionStatus === 'pending' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+                      <Clock className="h-3 w-3" />
+                      Pending
+                    </span>
+                  )}
+                  {person.connectionStatus === 'none' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 shrink-0 touch-manipulation"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSendConnectionRequest(person.id, person.name);
+                      }}
+                    >
+                      <UserPlus className="h-3.5 w-3.5 mr-1" />
+                      Connect
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           </div>

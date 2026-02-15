@@ -141,7 +141,7 @@ const UserButton = () => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
-            <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+            <Avatar className="h-9 w-9 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
               <AvatarImage 
                 src={normalizeImageUrl(
                   profile?.profile_image || 
@@ -213,7 +213,7 @@ const UserButton = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
-          <Avatar className="h-8 w-8 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+          <Avatar className="h-9 w-9 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
             <AvatarImage 
               src={normalizeImageUrl(
                 profile?.profile_image || 

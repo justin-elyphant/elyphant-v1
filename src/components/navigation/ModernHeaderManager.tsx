@@ -105,7 +105,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
                 onClick={() => navigate("/wishlists")}
                 aria-label="Wishlists"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-6 w-6" />
               </Button>
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <AuthButtons />}
@@ -119,7 +119,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
                 onClick={() => navigate("/wishlists")}
                 aria-label="Wishlists"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-6 w-6" />
               </Button>
               {config.showCart && <OptimizedShoppingCartButton />}
               {user ? <UserButton /> : <MobileAuthMenu />}

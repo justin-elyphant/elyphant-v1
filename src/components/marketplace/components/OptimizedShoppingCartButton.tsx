@@ -42,7 +42,7 @@ const OptimizedShoppingCartButton: React.FC<OptimizedShoppingCartButtonProps> = 
       aria-label={`Shopping cart with ${itemCount} items`}
       onClick={handleCartClick}
     >
-      <ShoppingCart className="h-5 w-5" />
+      <ShoppingCart className="h-6 w-6" />
       {itemCount > 0 && (
         <Badge 
           variant="destructive" 

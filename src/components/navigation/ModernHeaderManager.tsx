@@ -82,17 +82,15 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Left Spacer to center category links */}
-            <div className="hidden md:flex flex-1" />
-
-            {/* Tablet Category Links - 4 strategic links */}
+            {/* Tablet Category Links (tablet only, stays in main row) */}
             <TabletCategoryLinks />
 
-            {/* Desktop Category Links - All 7 links */}
-            <CategoryLinks />
-
-            {/* Right Spacer to center category links */}
-            <div className="hidden md:flex flex-1" />
+            {/* Desktop Search Bar - Etsy-style in main row */}
+            {config.showSearch && (
+              <div className="hidden lg:flex flex-1 max-w-2xl mx-4">
+                <AIEnhancedSearchBar />
+              </div>
+            )}
 
             {/* Desktop Right Utilities */}
             <div className="hidden lg:flex items-center gap-3 flex-shrink-0 justify-end">
@@ -123,14 +121,10 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
           </div>
 
-          {/* Desktop Search Bar - full-width second row below categories */}
-          {config.showSearch && (
-            <div className="hidden lg:block border-t border-gray-100 py-2.5">
-              <div className="max-w-2xl mx-auto">
-                <AIEnhancedSearchBar />
-              </div>
-            </div>
-          )}
+          {/* Desktop Category Strip - Etsy-style second row */}
+          <div className="hidden lg:flex items-center justify-center border-t border-gray-100 py-2">
+            <CategoryLinks />
+          </div>
 
           {/* Mobile + Tablet Search Bar - second layer */}
           {config.showSearch && (

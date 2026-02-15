@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus, User } from "lucide-react";
+import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Elements } from "@stripe/react-stripe-js";
 import stripeClientManager from "@/services/payment/StripeClientManager";
 import UnifiedPaymentForm from "@/components/payments/UnifiedPaymentForm";
@@ -58,11 +59,13 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const { connections: allConnections, loading: connectionsLoading } = useEnhancedConnections();
   const [placing, setPlacing] = useState(false);
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
-  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(true);
   const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<DefaultPaymentMethod | null>(null);
   const [showAddCardForm, setShowAddCardForm] = useState(false);
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
+  const [giftNote, setGiftNote] = useState("");
+  const [giftNoteOpen, setGiftNoteOpen] = useState(false);
 
   // Filter connections: only accepted with verified shipping address (city + state)
   const connectionsWithAddress = useMemo(() => {
@@ -97,7 +100,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   const isLoading = addressLoading || paymentLoading;
   const activePayment = selectedPaymentMethod || defaultPaymentMethod;
-  const hasRequiredData = defaultAddress && activePayment;
+  const hasRequiredData = defaultAddress && activePayment && selectedRecipient !== null;
 
   const productName = product.title || product.name || "";
   const productImage = product.image || "";
@@ -170,6 +173,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               delivery_scenario: isGift ? "gift" : "self",
               payment_method_id: activePayment?.stripe_payment_method_id || "",
               ...(isGift && selectedRecipient?.connectionId ? { recipient_connection_id: selectedRecipient.connectionId } : {}),
+              ...(giftNote.trim() ? { gift_message: giftNote.trim() } : {}),
             },
           },
         }
@@ -217,6 +221,10 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     setSelectedRecipient(recipient);
     setAddressPickerOpen(false);
     triggerHapticFeedback("light");
+    // Auto-expand gift note when a connection is selected
+    if (recipient.type === 'connection') {
+      setGiftNoteOpen(true);
+    }
   };
 
   const formatCard = (method?: DefaultPaymentMethod | null) => {
@@ -270,7 +278,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : hasRequiredData ? (
+          ) : (defaultAddress && activePayment) ? (
             <>
               {/* Ship to - collapsible address picker */}
               <Collapsible open={addressPickerOpen} onOpenChange={setAddressPickerOpen}>
@@ -281,8 +289,8 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Ship to</p>
-                        <p className="text-sm truncate">{formatAddress()}</p>
+                        <p className="text-xs text-muted-foreground">{selectedRecipient ? 'Ship to' : 'Who is this for?'}</p>
+                        <p className="text-sm truncate">{selectedRecipient ? formatAddress() : 'Choose a recipient'}</p>
                       </div>
                     </div>
                     {addressPickerOpen ? (
@@ -306,7 +314,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                           {defaultAddress.name}, {defaultAddress.address.city}, {defaultAddress.address.state}
                         </p>
                       </div>
-                      {(!selectedRecipient || selectedRecipient.type === 'self') && (
+                      {selectedRecipient?.type === 'self' && (
                         <Check className="h-4 w-4 text-primary flex-shrink-0" />
                       )}
                     </button>
@@ -364,6 +372,39 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                   </button>
                 </p>
               )}
+
+              {/* Gift note - collapsible */}
+              <Collapsible open={giftNoteOpen} onOpenChange={setGiftNoteOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
+                    <div className="flex items-center gap-2">
+                      <Gift className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">
+                        {giftNote.trim() ? 'Gift note added' : 'Add a gift note'}
+                      </span>
+                    </div>
+                    {giftNoteOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="py-2 border-b border-border">
+                    <Textarea
+                      value={giftNote}
+                      onChange={(e) => setGiftNote(e.target.value.slice(0, 240))}
+                      placeholder="Write a personal message to include with the gift..."
+                      className="text-sm min-h-[72px] resize-none"
+                      maxLength={240}
+                    />
+                    <p className="text-xs text-muted-foreground text-right mt-1">
+                      {giftNote.length}/240
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Pay with - inline collapsible picker */}
               <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>
@@ -483,12 +524,12 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         </div>
 
         {/* Footer CTA */}
-        {hasRequiredData && !isLoading && (
+        {defaultAddress && activePayment && !isLoading && (
           <DrawerFooter className="pb-safe">
             <Button
               className="w-full bg-red-600 hover:bg-red-700 text-white font-medium min-h-[48px] text-base"
               onClick={handlePlaceOrder}
-              disabled={placing}
+              disabled={placing || !selectedRecipient}
             >
               {placing ? "Placing order..." : "Place your order"}
             </Button>

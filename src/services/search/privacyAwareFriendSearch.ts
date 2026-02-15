@@ -59,34 +59,6 @@ export const searchFriendsWithPrivacy = async (
   try {
     console.log(`🔍 [PRIVACY SEARCH] Starting search for: "${searchTerm}"`);
     
-    // First try enhanced search for better results
-    const { enhancedFriendSearch } = await import('./enhancedFriendSearch');
-    const enhancedResults = await enhancedFriendSearch(searchTerm, currentUserId, limit);
-    
-    console.log(`🔍 [ENHANCED SEARCH] Enhanced search returned ${enhancedResults.length} results`);
-    
-    if (enhancedResults.length > 0) {
-      console.log(`🔍 [ENHANCED SEARCH] Found ${enhancedResults.length} results, using enhanced search`);
-      enhancedResults.forEach((result, index) => {
-        console.log(`🔍 [ENHANCED RESULT ${index + 1}] ${result.name} (@${result.username}) - Score: ${result.searchScore}, Type: ${result.matchType}`);
-      });
-      return enhancedResults;
-    }
-    
-    // Test direct query for "Dua Lipa" case to verify data exists
-    if (searchTerm.toLowerCase().includes('dua lipa') || (searchTerm.toLowerCase().includes('dua') && searchTerm.toLowerCase().includes('lipa'))) {
-      console.log(`🔍 [DEBUG] Testing direct query for Dua Lipa case`);
-      const { data: debugQuery } = await supabase
-        .from('profiles')
-        .select('id, name, username, first_name, last_name, email')
-        .or(`first_name.ilike.%dua%,last_name.ilike.%lipa%,name.ilike.%dua lipa%`)
-        .limit(5);
-      console.log(`🔍 [DEBUG] Direct query results:`, debugQuery);
-    }
-    
-    // Fallback to original search logic
-    console.log(`🔍 [FALLBACK SEARCH] No enhanced results, using original search logic`);
-    
     // Clean and process the search term
     const cleanedSearchTerm = searchTerm.startsWith('@') ? searchTerm.slice(1) : searchTerm;
     const isEmailSearch = searchTerm.includes('@') && !searchTerm.startsWith('@');

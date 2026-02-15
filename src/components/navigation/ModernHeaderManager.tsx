@@ -14,7 +14,7 @@ import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 import MobileAuthMenu from "./MobileAuthMenu";
 import DesktopHorizontalNav from "./DesktopHorizontalNav";
-import SearchIconTrigger from "./SearchIconTrigger";
+
 import CategoryLinks from "./CategoryLinks";
 import TabletCategoryLinks from "./TabletCategoryLinks";
 

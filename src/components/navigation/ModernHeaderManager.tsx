@@ -74,26 +74,31 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
       <nav className="bg-transparent">
         <div className="w-full px-4 md:px-8 overflow-x-hidden" style={{ width: '100%', maxWidth: 'none' }}>
           <div className={cn(
-            "flex items-center gap-6 md:gap-8",
+            "flex items-center",
             config.height
           )}>
-            {/* Logo */}
-            <div className="flex-shrink-0 w-24 md:w-40">
+            {/* Logo - fixed width for consistent alignment */}
+            <div className="flex-shrink-0 mr-4 lg:mr-6">
               <Logo />
             </div>
 
             {/* Tablet Category Links (tablet only, stays in main row) */}
             <TabletCategoryLinks />
 
-            {/* Desktop Search Bar - Etsy-style in main row */}
+            {/* Desktop Search Bar - Etsy-style centered in main row */}
             {config.showSearch && (
-              <div className="hidden lg:flex flex-1 max-w-2xl mx-4">
-                <AIEnhancedSearchBar />
+              <div className="hidden lg:flex flex-1 justify-center">
+                <div className="w-full max-w-2xl">
+                  <AIEnhancedSearchBar />
+                </div>
               </div>
             )}
 
+            {/* Spacer for mobile/tablet to push utilities right */}
+            <div className="flex-1 lg:hidden" />
+
             {/* Desktop Right Utilities */}
-            <div className="hidden lg:flex items-center gap-3 flex-shrink-0 justify-end">
+            <div className="hidden lg:flex items-center gap-1 flex-shrink-0 ml-6">
               <Button
                 variant="ghost"
                 size="icon"
@@ -106,8 +111,8 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
-            {/* Mobile Right Side - always consistent */}
-            <div className="lg:hidden flex items-center ml-auto gap-2">
+            {/* Mobile Right Side */}
+            <div className="lg:hidden flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"

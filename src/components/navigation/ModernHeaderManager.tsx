@@ -133,7 +133,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
 
           {/* Mobile + Tablet Search Bar - second layer */}
           {config.showSearch && (
-            <div className="lg:hidden bg-gray-50/80 border-t border-gray-200 py-2">
+            <div className="lg:hidden py-2">
               <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>

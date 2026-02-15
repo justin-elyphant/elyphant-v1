@@ -209,9 +209,6 @@ body {
     touch-action: manipulation;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
-    will-change: scroll-position;
-    contain: layout style paint;
-    overscroll-behavior: contain;
   }
 
   .intersection-target {

@@ -1,54 +1,47 @@
 
 
-## Fix: Search Bar Returns Too Few Products
+## Etsy-Inspired Header: Search Above Categories
 
-### The Problem
+### Concept
 
-When users search multi-word queries like "tactical knives" from the header search bar, only 1 product shows up -- even though Amazon has hundreds. This same issue affected "Levis 511 jeans" and will affect many multi-word searches.
+Taking inspiration from Etsy's layout, the search bar moves **into the main header row** between the logo and utility icons, and the category links drop to a dedicated second row below. This gives the search bar prime real estate (like Etsy) while keeping categories visible as a horizontal nav strip.
 
-### Root Cause (Two Issues)
+### Current Layout (Desktop)
 
-**Issue 1: OR cache returns junk, then strict filter removes it all**
+```text
+| Logo | --- Categories --- | Heart | Cart | Auth |
+|--------------- Search Bar ------------------|
+```
 
-The cache lookup uses OR logic: find products matching "tactical" OR "knives". This pulls in tactical flashlights, knife sharpeners, cutting boards -- 24 products that are mostly irrelevant. The brand-aware filter then correctly requires BOTH terms (minScore 150), leaving only 1 product.
+### New Layout (Desktop)
 
-**Issue 2: Sparse results fallback only triggers for brand searches**
+```text
+| Logo | -------- Search Bar -------- | Heart | Cart | Auth |
+|      Beauty | Electronics | Fashion | Under $50 | Wedding | Baby | Shop All      |
+```
 
-There's a "smart threshold" that falls back to the Zinc API when results are sparse (fewer than 8). But it only activates for brand searches (Nike, Sony, etc.). For generic multi-word searches like "tactical knives", it sees 1 result and serves it -- instead of calling Zinc for a full set.
+### Changes
 
-### The Fix
+**File: `src/components/navigation/ModernHeaderManager.tsx`**
 
-**File: `supabase/functions/get-products/index.ts`** (lines 1184-1193)
+1. Move the `AIEnhancedSearchBar` from the second-row block back into the main header row, positioned between the logo and the right utility icons (Heart, Cart, Auth). Give it `flex-1` with `max-w-2xl` so it stretches to fill available space -- much wider than the old 256px.
 
-Extend the sparse results threshold to apply to ALL multi-word searches, not just brand searches:
+2. Move the `CategoryLinks` component out of the main row and into a new second row (where the search bar currently sits). Center them with a subtle top border separator, similar to Etsy's category strip.
 
-- Current: `hasBrandSearch && sortedProducts.length < 8` triggers Zinc fallback
-- New: `(hasBrandSearch || isMultiWordSearch) && sortedProducts.length < 8` triggers Zinc fallback
-- Where `isMultiWordSearch` is derived from `searchTerms.length >= 2` (already parsed)
+3. The `TabletCategoryLinks` stay in the main row for the tablet breakpoint (768-1024px) since tablets don't show the desktop search bar.
 
-This means "tactical knives" (1 cached result) will fall through to Zinc and return a full page of actual tactical knives.
+**File: `src/components/navigation/CategoryLinks.tsx`**
 
-**File: `supabase/functions/shared/brandAwareFilter.ts`** (relevance scoring)
+No structural changes needed -- just the container in the parent moves it to the second row.
 
-Add basic plural stemming so "knives" matches "knife", "jeans" matches "jean", etc.:
+### What Stays the Same
 
-- Add a small stemming utility that strips common English suffixes (s, es, ves to f/fe, ing, etc.)
-- Apply stemming to both search terms and product title/category during scoring
-- This improves cache hit quality for future searches so the OR-to-AND pipeline works better
+- Mobile layout (search bar below header, no category strip)
+- Tablet layout (4 category links in main row, search below)
+- All existing category links and their routing
+- Logo, Heart, Cart, Auth positioning on the right side
 
-### What This Changes
+### Visual Result
 
-| Search | Before | After |
-|---|---|---|
-| "tactical knives" | 1 product (cached) | 20+ products (Zinc API call) |
-| "leather wallets" | Likely sparse | Full results via Zinc fallback |
-| "wireless earbuds" | Likely sparse | Full results via Zinc fallback |
-
-### Cost Impact
-
-Slightly more Zinc API calls ($0.01 each) for multi-word searches that have sparse cache coverage. This is the correct tradeoff -- showing 1 irrelevant product costs more in lost customers than $0.01. As the catalog grows organically, the cache will fill and these fallbacks will decrease.
-
-### Technical Details
-
-The sparse threshold change is a one-line edit expanding the condition. The stemming utility is ~15 lines. Both changes are in the edge function, so a redeploy is required.
+The search bar gets prominent, Etsy-like placement in the main header row with generous width. Categories become a clean horizontal strip below -- easy to scan, always visible, and clearly separated from the search interaction area.
 

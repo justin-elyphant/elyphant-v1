@@ -127,13 +127,13 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
           </div>
 
           {/* Desktop Category Strip - Etsy-style second row */}
-          <div className="hidden lg:flex items-center justify-center border-t border-gray-100 py-2">
+          <div className="hidden lg:flex items-center justify-center py-1">
             <CategoryLinks />
           </div>
 
           {/* Mobile + Tablet Search Bar - second layer */}
           {config.showSearch && (
-            <div className="lg:hidden bg-gray-50/80 border-t border-gray-200 py-3">
+            <div className="lg:hidden bg-gray-50/80 border-t border-gray-200 py-2">
               <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>

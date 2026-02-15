@@ -13,10 +13,8 @@ import UserButton from "@/components/auth/UserButton";
 import AIEnhancedSearchBar from "@/components/search/AIEnhancedSearchBar";
 import OptimizedShoppingCartButton from "@/components/marketplace/components/OptimizedShoppingCartButton";
 import MobileAuthMenu from "./MobileAuthMenu";
-import DesktopHorizontalNav from "./DesktopHorizontalNav";
 
 import CategoryLinks from "./CategoryLinks";
-import TabletCategoryLinks from "./TabletCategoryLinks";
 
 interface ModernHeaderManagerProps {
   mode?: "main" | "minimal" | "marketplace-focused";

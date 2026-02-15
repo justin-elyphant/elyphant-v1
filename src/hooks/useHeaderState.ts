@@ -18,7 +18,7 @@ export const useHeaderState = () => {
   const config: HeaderStateConfig = {
     showSearch: true,
     showCart: true,
-    height: 'h-16 md:h-20',
+    height: 'h-12 md:h-14',
     logoSize: 'w-32 md:w-48',
     searchWidth: 'flex-1 mx-6'
   };

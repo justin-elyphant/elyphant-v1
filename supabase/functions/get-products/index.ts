@@ -1181,13 +1181,14 @@ serve(async (req) => {
         // 2. Brand-specific search returns sparse results (< 8 products)
         // This accelerates organic catalog growth for brand searches
         // ============================================================
-        const MIN_BRAND_RESULTS_THRESHOLD = 8;
-        const { hasBrandSearch } = parseSearchQuery(query);
-        const isSparseResults = hasBrandSearch && sortedProducts.length > 0 && sortedProducts.length < MIN_BRAND_RESULTS_THRESHOLD;
+        const MIN_RESULTS_THRESHOLD = 8;
+        const { hasBrandSearch, searchTerms } = parseSearchQuery(query);
+        const isMultiWordSearch = searchTerms.length >= 2;
+        const isSparseResults = (hasBrandSearch || isMultiWordSearch) && sortedProducts.length > 0 && sortedProducts.length < MIN_RESULTS_THRESHOLD;
         
         if (sortedProducts.length === 0 || isSparseResults) {
           if (isSparseResults) {
-            console.log(`🎯 Brand search "${query}" has only ${sortedProducts.length} results (threshold: ${MIN_BRAND_RESULTS_THRESHOLD}) - supplementing with Zinc API`);
+            console.log(`🎯 Search "${query}" has only ${sortedProducts.length} results (threshold: ${MIN_RESULTS_THRESHOLD}, brand: ${hasBrandSearch}, multiWord: ${isMultiWordSearch}) - supplementing with Zinc API`);
           } else {
             console.log(`🎯 Brand filter removed all ${cacheResult.products.length} cached products for "${query}" - falling back to Zinc API`);
           }

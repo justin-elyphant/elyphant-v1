@@ -102,6 +102,8 @@ interface UnifiedGiftSchedulingModalProps {
   ruleId?: string;
   // Pre-select recipient
   initialRecipient?: SelectedRecipient | null;
+  // Pre-populate gift message (from Buy Now drawer)
+  initialGiftMessage?: string;
   // Product hints for AI
   productHints?: ProductHints;
 }
@@ -134,6 +136,7 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
   editingRule,
   ruleId,
   initialRecipient,
+  initialGiftMessage,
   productHints: externalProductHints
 }) => {
   const isMobile = useIsMobile(1024);
@@ -343,6 +346,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
         }
         
         setPaymentMethodId('');
+
+        // Pre-populate gift message from Buy Now drawer
+        if (initialGiftMessage) {
+          setGiftMessage(initialGiftMessage);
+        }
 
         // Pre-populate recipient
         if (initialRecipient && initialRecipient.type !== 'later') {

@@ -33,7 +33,7 @@ interface BuyNowDrawerProps {
   effectiveProductId: string;
   variationText: string;
   price: number;
-  onOpenScheduleGift?: () => void;
+  onOpenScheduleGift?: (data: { recipientName: string; connectionId: string; address: any; giftNote: string }) => void;
 }
 
 interface SelectedRecipient {
@@ -328,7 +328,15 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                     Want to schedule delivery?{' '}
                     <button
                       type="button"
-                      onClick={() => { onOpenChange(false); onOpenScheduleGift(); }}
+                      onClick={() => {
+                        onOpenChange(false);
+                        onOpenScheduleGift({
+                          recipientName: selectedRecipient!.name,
+                          connectionId: selectedRecipient!.connectionId!,
+                          address: selectedRecipient!.address,
+                          giftNote: giftNote.trim(),
+                        });
+                      }}
                       className="underline hover:text-foreground transition-colors"
                     >
                       Schedule Gift →

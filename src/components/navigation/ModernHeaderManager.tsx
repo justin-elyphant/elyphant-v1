@@ -82,23 +82,20 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Logo />
             </div>
 
-            {/* Tablet Category Links (tablet only, stays in main row) */}
-            <TabletCategoryLinks />
-
-            {/* Desktop Search Bar - Etsy-style centered in main row */}
+            {/* Desktop + Tablet Search Bar - centered in main row */}
             {config.showSearch && (
-              <div className="hidden lg:flex flex-1 justify-center">
+              <div className="hidden md:flex flex-1 justify-center">
                 <div className="w-full max-w-2xl">
                   <AIEnhancedSearchBar />
                 </div>
               </div>
             )}
 
-            {/* Spacer for mobile/tablet to push utilities right */}
-            <div className="flex-1 lg:hidden" />
+            {/* Spacer for mobile to push utilities right */}
+            <div className="flex-1 md:hidden" />
 
-            {/* Desktop Right Utilities */}
-            <div className="hidden lg:flex items-center gap-1 flex-shrink-0 ml-6">
+            {/* Desktop + Tablet Right Utilities */}
+            <div className="hidden md:flex items-center gap-1 flex-shrink-0 ml-6">
               <Button
                 variant="ghost"
                 size="icon"
@@ -111,8 +108,8 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               {user ? <UserButton /> : <AuthButtons />}
             </div>
 
-            {/* Mobile Right Side */}
-            <div className="lg:hidden flex items-center gap-1">
+            {/* Mobile Right Side (phone only) */}
+            <div className="md:hidden flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -126,14 +123,14 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
           </div>
 
-          {/* Desktop Category Strip - Etsy-style second row */}
-          <div className="hidden lg:flex items-center justify-center py-1">
+          {/* Desktop + Tablet Category Strip - second row */}
+          <div className="hidden md:flex items-center justify-center py-1">
             <CategoryLinks />
           </div>
 
-          {/* Mobile + Tablet Search Bar - second layer */}
+          {/* Mobile-only Search Bar */}
           {config.showSearch && (
-            <div className="lg:hidden py-2">
+            <div className="md:hidden py-2">
               <div className="px-4">
                 <AIEnhancedSearchBar mobile />
               </div>

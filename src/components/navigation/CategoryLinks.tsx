@@ -27,7 +27,7 @@ const CategoryLinks: React.FC = () => {
   };
 
   return (
-    <nav className="hidden lg:flex items-center gap-6">
+    <nav className="hidden md:flex items-center gap-4 lg:gap-6 overflow-x-auto scrollbar-hide">
       {categories.map((category) => (
         <Link
           key={category.label}

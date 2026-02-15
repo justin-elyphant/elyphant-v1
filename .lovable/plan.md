@@ -1,46 +1,51 @@
 
+## Fix: Bottom Navigation Floating on iOS Safari
 
-## Enhance Buy Now Drawer: Gift Note + Open Address Discovery
+### Problem
+When Safari's bottom toolbar hides during scrolling, the nav bar "floats" above the screen edge because:
+- The safe area spacer collapses to 0px when Safari's toolbar disappears
+- `rounded-t-3xl` on the container shows page content peeking beneath the rounded corners
+- `shadow-floating` adds a visible drop shadow underneath, reinforcing the floating look
 
-### Overview
-Two changes to the BuyNowDrawer to improve the gifting experience without disrupting the fast-checkout flow.
+When Safari's toolbar IS visible, it covers the gap so everything looks fine.
 
-### Change 1: Gift Note Section
-Add an optional "Add a gift note" toggle between the address picker and payment picker. When tapped, it expands to reveal a textarea (max 240 chars to fit Zinc gift message limits). The note gets passed through to `create-checkout-session` metadata so it can be printed on the Amazon gift receipt.
+### Solution
+Restructure the component so a solid white background always extends to the absolute bottom of the viewport, with the rounded/blurred visual treatment applied only to an inner wrapper.
 
-- Collapsed by default: just a subtle row with a Gift icon and "Add a gift note" text
-- Expanding reveals a textarea with character counter
-- The gift note is included in the checkout session metadata as `gift_message`
-- When a connection is selected as recipient, the note toggle auto-expands as a nudge
+### Scope
+This is a single shared component (`MobileBottomNavigation.tsx`) rendered once in `App.tsx` at the root level. The fix automatically applies to every page -- no per-page changes needed.
 
-### Change 2: Address Picker Starts Open (No Pre-Selection)
-Instead of pre-selecting "Ship to Myself" and collapsing the picker, the drawer will:
+### Technical Changes
 
-- Start with `addressPickerOpen = true` (expanded)
-- Start with `selectedRecipient = null` (nothing pre-checked)
-- Show a brief prompt: "Who is this for?" above the options
-- The "Place your order" button stays disabled until a recipient is explicitly chosen
-- Once selected, the picker collapses as it does today
+**File: `src/components/navigation/MobileBottomNavigation.tsx`**
 
-This creates a natural decision point without adding friction -- users must make one tap to choose themselves or a connection, which surfaces the gifting option organically.
+Restructure from one container to two layers:
 
-### What Stays the Same
-- Payment picker behavior unchanged
-- Total pricing display unchanged
-- Schedule Gift nudge still appears when a connection is selected
-- All existing connection filtering logic (top 3, verified addresses)
-- Desktop flow unchanged (desktop uses full /checkout page, not the drawer)
+1. **Outer `nav`** -- keeps `fixed bottom-0 left-0 right-0` positioning. Gets a solid `bg-white` background that extends all the way to the screen edge. No rounded corners on bottom. Padding-bottom uses `env(safe-area-inset-bottom)` so the white fill always covers the gap.
 
-### Technical Details
+2. **Inner wrapper** -- the visual "pill" with `backdrop-blur-xl`, `border-t`, and `rounded-t-2xl`. Contains only the tab row (`h-14`). This is the part users see.
 
-**File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`**
+3. **Remove `shadow-floating`** -- replace with just `border-t` for separation. The shadow underneath contributes to the floating illusion.
 
-1. Add `giftNote` state (`useState("")`) and `giftNoteOpen` state
-2. Change `addressPickerOpen` default from `false` to `true`
-3. Remove the auto-selection of self -- keep `selectedRecipient` as `null` initially
-4. Add a "Who is this for?" label above the address options when nothing is selected
-5. Insert a new Collapsible section between address and payment for the gift note
-6. Update `hasRequiredData` to also require `selectedRecipient !== null`
-7. Pass `gift_message: giftNote` in the checkout session metadata body
-8. Auto-expand gift note when a connection is selected
+4. **Remove the separate safe-area spacer div** -- the outer container's `pb-[env(safe-area-inset-bottom)]` handles this instead, and since it has a solid white background, there is never a visible gap.
 
+```text
+Before:
++---------------------------+
+|  rounded-t-3xl container  |  <-- bg-white/80 + blur
+|  [tab row h-14]           |
+|  [safe-area spacer div]   |  <-- collapses to 0 = gap
++---------------------------+
+    ^ gap visible here when Safari toolbar hides
+
+After:
++---------------------------+
+|  inner pill (rounded-t)   |  <-- backdrop-blur + border-t
+|  [tab row h-14]           |
++---------------------------+
+|  outer solid bg-white     |  <-- pb-[env(safe-area-inset-bottom)]
+|  (no rounding, no gap)    |
++===========================+  <-- screen edge, always flush
+```
+
+This ensures the navigation is always flush with the bottom of the screen regardless of Safari toolbar state, while preserving the rounded iOS-style appearance on top.

@@ -96,10 +96,10 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] mobile-bottom-nav" data-mobile-nav>
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] mobile-bottom-nav" style={{ transform: 'none' }} data-mobile-nav>
       {/* iOS-style rounded container with backdrop blur */}
       <div className="bg-white/80 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-floating">
-        <div className="flex items-center justify-around h-14 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-14 px-2">
           {tabs.map((tab) => {
             const isActive = isTabActive(tab);
             
@@ -111,10 +111,9 @@ const MobileBottomNavigation: React.FC = () => {
                 className={cn(
                   "flex flex-col items-center justify-center h-full flex-1 rounded-xl transition-all px-2",
                   isActive ? "bg-gradient-to-r from-purple-600 to-sky-500 text-white" : "text-muted-foreground",
-                  "active:scale-95" // Spring animation
+                  "active:scale-95"
                 )}
               >
-                {/* Icon with badge */}
                 <div className="relative">
                   {React.cloneElement(tab.icon as React.ReactElement, {
                     className: cn(
@@ -128,8 +127,6 @@ const MobileBottomNavigation: React.FC = () => {
                     </span>
                   )}
                 </div>
-                
-                {/* Label */}
                 <span className="text-xs font-medium mt-1 whitespace-nowrap">
                   {tab.label}
                 </span>
@@ -137,6 +134,8 @@ const MobileBottomNavigation: React.FC = () => {
             );
           })}
         </div>
+        {/* Safe area spacer — separate div so it never collapses the tab row */}
+        <div className="w-full" style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
       </div>
     </nav>
   );

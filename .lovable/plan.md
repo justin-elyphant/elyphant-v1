@@ -1,40 +1,28 @@
 
 
-## Header Cleanup: Remove Dead Components
+## Make "Who is this for?" Collapsible and Scrollable
 
-### Files to Delete (7 files, zero active imports)
+### Problem
+The recipient list in the Buy Now drawer renders all connections in a flat, always-visible list. With 10+ connections, it dominates the drawer and pushes the gift note, payment, and "Place your order" button off-screen.
 
-1. **`src/components/home/components/NavigationBar.tsx`** -- Old header bar, only imported by `Header.tsx` (which itself is being replaced)
-2. **`src/components/home/Header.tsx`** -- Old header wrapper. Still imported by 4 pages (PaymentCancel, PaymentSuccess, OrderDetail, Crowdfunding) and AdminLayout. These need to be migrated to `UnifiedShopperHeader` first.
-3. **`src/components/marketplace/components/MarketplaceTopNav.tsx`** -- Zero imports anywhere. Duplicates cart + favorites already in the unified header.
-4. **`src/components/navigation/DesktopHorizontalNav.tsx`** -- Imported in ModernHeaderManager but never rendered in JSX. Dead.
-5. **`src/components/navigation/TabletCategoryLinks.tsx`** -- Same situation: imported but never rendered. Dead.
-6. **`src/components/layout/navigation/MobileMenu.tsx`** -- Zero imports anywhere. Legacy mobile menu.
-7. **`src/components/navigation/components/AuthButtons.tsx`** and **`src/components/navigation/components/NavigationLogo.tsx`** -- Zero imports. Duplicate versions of components that live in `src/components/home/components/`.
+### Solution
+Wrap the recipient list in a `Collapsible` component (matching the gift note and payment sections) and add a max-height with overflow scroll to the content area.
 
-### Files to Edit (5 files)
+### Technical Changes
 
-The old `Header.tsx` is still imported by 4 pages and 1 layout. These need to swap to `UnifiedShopperHeader`:
+**File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`**
 
-- `src/pages/PaymentCancel.tsx` -- replace `Header` with `UnifiedShopperHeader`
-- `src/pages/PaymentSuccess.tsx` -- same
-- `src/pages/OrderDetail.tsx` -- same
-- `src/pages/Crowdfunding.tsx` -- same
-- `src/components/layout/AdminLayout.tsx` -- same
+1. Add a new `recipientOpen` state (default `true` since a recipient must be selected)
+2. Replace the static `div` container (lines 265-346) with a `Collapsible` that:
+   - Shows the trigger as "Who is this for?" with the selected recipient name (or "Select recipient") and a chevron icon, matching the style of the gift note and payment collapsible rows
+   - Wraps the connections list in `CollapsibleContent` with `max-h-[200px] overflow-y-auto` so it scrolls when there are many connections
+3. Auto-collapse after a recipient is selected (set `recipientOpen` to `false` on selection) to keep the drawer compact
+4. The trigger row shows the currently selected name (e.g., "Curt Davidson" or "Myself") as a summary when collapsed
 
-After these swaps, `Header.tsx` and `NavigationBar.tsx` become zero-import and get deleted.
-
-### File to Clean Up (1 file)
-
-- `src/components/navigation/ModernHeaderManager.tsx` -- Remove the unused imports of `DesktopHorizontalNav` and `TabletCategoryLinks` (lines 16, 19)
-
-### Summary
-
-| Action | Files | Lines removed (approx) |
-|--------|-------|----------------------|
-| Delete dead components | 8 files | ~400 lines |
-| Migrate old Header imports | 5 files | ~5 lines each (import swap) |
-| Clean unused imports | 1 file | 2 lines |
-
-No visual or functional changes. Every page will use the same unified header after this cleanup.
+### User Experience
+- Drawer opens with the recipient section expanded (since no one is selected yet)
+- User taps a recipient -- section auto-collapses, showing "Curt Davidson" as the summary
+- User can re-expand to change their selection
+- If 10+ connections exist, the expanded list scrolls within a fixed height
+- Gift note and payment sections remain consistent in style
 

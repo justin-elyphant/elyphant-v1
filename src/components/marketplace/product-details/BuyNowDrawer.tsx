@@ -65,7 +65,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
   const [giftNote, setGiftNote] = useState("");
   const [giftNoteOpen, setGiftNoteOpen] = useState(false);
-  const [recipientOpen, setRecipientOpen] = useState(true);
+  const [recipientOpen, setRecipientOpen] = useState(false);
 
   // Filter connections: only accepted with verified shipping address (city + state)
   const connectionsWithAddress = useMemo(() => {

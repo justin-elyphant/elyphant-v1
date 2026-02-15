@@ -65,6 +65,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [selectedRecipient, setSelectedRecipient] = useState<SelectedRecipient | null>(null);
   const [giftNote, setGiftNote] = useState("");
   const [giftNoteOpen, setGiftNoteOpen] = useState(false);
+  const [recipientOpen, setRecipientOpen] = useState(true);
 
   // Filter connections: only accepted with verified shipping address (city + state)
   const connectionsWithAddress = useMemo(() => {
@@ -209,6 +210,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const handleSelectRecipient = (recipient: SelectedRecipient) => {
     setSelectedRecipient(recipient);
     triggerHapticFeedback("light");
+    setRecipientOpen(false);
     // Auto-expand gift note when a connection is selected
     if (recipient.type === 'connection') {
       setGiftNoteOpen(true);
@@ -261,89 +263,107 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
             </div>
           ) : (defaultAddress && activePayment) ? (
             <>
-              {/* Step 1: Who is this for? — flat list */}
-              <div className="border-b border-border pb-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide pt-2 pb-1 px-1">
-                  Who is this for?
-                </p>
-
-                {/* Myself */}
-                <button
-                  onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
-                    selectedRecipient?.type === 'self' ? 'bg-accent' : 'hover:bg-accent/50'
-                  }`}
-                >
-                  <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium">Myself</span>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {defaultAddress.address.city}, {defaultAddress.address.state}
-                    </p>
-                  </div>
-                  {selectedRecipient?.type === 'self' && (
-                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                  )}
-                </button>
-
-                {/* Connections */}
-                {connectionsWithAddress.map((conn) => {
-                  const addr = conn.profile_shipping_address;
-                  const connId = conn.display_user_id || conn.connected_user_id || conn.id;
-                  const isSelected = selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === connId;
-                  return (
-                    <button
-                      key={conn.id}
-                      onClick={() => handleSelectRecipient({
-                        type: 'connection',
-                        name: conn.profile_name || 'Connection',
-                        address: addr,
-                        connectionId: connId,
-                      })}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
-                        isSelected ? 'bg-accent' : 'hover:bg-accent/50'
-                      }`}
-                    >
-                      <img
-                        src={conn.profile_image || '/placeholder.svg'}
-                        alt={conn.profile_name || ''}
-                        className="h-6 w-6 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium">{conn.profile_name}</span>
-                        <p className="text-xs text-muted-foreground">
-                          {addr.city}, {addr.state}
+              {/* Step 1: Who is this for? — collapsible */}
+              <Collapsible open={recipientOpen} onOpenChange={setRecipientOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Who is this for?</p>
+                        <p className="text-sm">
+                          {selectedRecipient ? selectedRecipient.name : 'Select recipient'}
                         </p>
                       </div>
-                      {isSelected && (
+                    </div>
+                    {recipientOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="py-1 border-b border-border max-h-[200px] overflow-y-auto">
+                    {/* Myself */}
+                    <button
+                      onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
+                        selectedRecipient?.type === 'self' ? 'bg-accent' : 'hover:bg-accent/50'
+                      }`}
+                    >
+                      <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium">Myself</span>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {defaultAddress.address.city}, {defaultAddress.address.state}
+                        </p>
+                      </div>
+                      {selectedRecipient?.type === 'self' && (
                         <Check className="h-4 w-4 text-primary flex-shrink-0" />
                       )}
                     </button>
-                  );
-                })}
 
-                {/* Schedule Gift nudge */}
-                {selectedRecipient?.type === 'connection' && onOpenScheduleGift && (
-                  <p className="text-xs text-muted-foreground mt-1 px-3 pb-1">
-                    Want to schedule delivery?{' '}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenChange(false);
-                        onOpenScheduleGift({
-                          recipientName: selectedRecipient!.name,
-                          connectionId: selectedRecipient!.connectionId!,
-                          address: selectedRecipient!.address,
-                          giftNote: giftNote.trim(),
-                        });
-                      }}
-                      className="underline hover:text-foreground transition-colors"
-                    >
-                      Schedule Gift →
-                    </button>
-                  </p>
-                )}
-              </div>
+                    {/* Connections */}
+                    {connectionsWithAddress.map((conn) => {
+                      const addr = conn.profile_shipping_address;
+                      const connId = conn.display_user_id || conn.connected_user_id || conn.id;
+                      const isSelected = selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === connId;
+                      return (
+                        <button
+                          key={conn.id}
+                          onClick={() => handleSelectRecipient({
+                            type: 'connection',
+                            name: conn.profile_name || 'Connection',
+                            address: addr,
+                            connectionId: connId,
+                          })}
+                          className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
+                            isSelected ? 'bg-accent' : 'hover:bg-accent/50'
+                          }`}
+                        >
+                          <img
+                            src={conn.profile_image || '/placeholder.svg'}
+                            alt={conn.profile_name || ''}
+                            className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium">{conn.profile_name}</span>
+                            <p className="text-xs text-muted-foreground">
+                              {addr.city}, {addr.state}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+
+                    {/* Schedule Gift nudge */}
+                    {selectedRecipient?.type === 'connection' && onOpenScheduleGift && (
+                      <p className="text-xs text-muted-foreground mt-1 px-3 pb-1">
+                        Want to schedule delivery?{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onOpenChange(false);
+                            onOpenScheduleGift({
+                              recipientName: selectedRecipient!.name,
+                              connectionId: selectedRecipient!.connectionId!,
+                              address: selectedRecipient!.address,
+                              giftNote: giftNote.trim(),
+                            });
+                          }}
+                          className="underline hover:text-foreground transition-colors"
+                        >
+                          Schedule Gift →
+                        </button>
+                      </p>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Step 2: Gift note - collapsible */}
               <Collapsible open={giftNoteOpen} onOpenChange={setGiftNoteOpen}>

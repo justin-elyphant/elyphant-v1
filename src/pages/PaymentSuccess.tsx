@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
 
 const PaymentSuccess = () => {
@@ -140,7 +140,7 @@ const PaymentSuccess = () => {
   if (isProcessing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <UnifiedShopperHeader />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin mx-auto" />
@@ -162,7 +162,7 @@ const PaymentSuccess = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <UnifiedShopperHeader />
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <div className="space-y-4">

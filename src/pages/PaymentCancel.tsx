@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { XCircle, ShoppingCart, ArrowLeft } from "lucide-react";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
 
 const PaymentCancel = () => {
@@ -11,7 +11,7 @@ const PaymentCancel = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <UnifiedShopperHeader />
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <div className="space-y-4">

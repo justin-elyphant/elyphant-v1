@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 import { Product } from "@/types/product";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 
 // Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";
@@ -239,7 +239,7 @@ const OrderDetail = () => {
 
   return (
     <>
-      <Header />
+      <UnifiedShopperHeader />
       <div 
         className="container max-w-6xl mx-auto px-4 pb-20 lg:pb-8 overflow-x-hidden"
         style={{ 

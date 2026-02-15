@@ -2,7 +2,7 @@
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/home/Header";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Heart, TrendingUp } from "lucide-react";
@@ -23,7 +23,7 @@ const Crowdfunding = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <UnifiedShopperHeader />
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Group Gifting & Crowdfunding</h1>

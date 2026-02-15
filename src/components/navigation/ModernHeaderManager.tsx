@@ -94,13 +94,6 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             {/* Right Spacer to center category links */}
             <div className="hidden md:flex flex-1" />
 
-            {/* Desktop Search Bar - Right aligned, compact */}
-            {config.showSearch && (
-              <div className="hidden lg:block w-64">
-                <AIEnhancedSearchBar />
-              </div>
-            )}
-
             {/* Desktop Right Utilities */}
             <div className="hidden lg:flex items-center gap-3 flex-shrink-0 justify-end">
               <Button
@@ -129,6 +122,15 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               {user ? <UserButton /> : <MobileAuthMenu />}
             </div>
           </div>
+
+          {/* Desktop Search Bar - full-width second row below categories */}
+          {config.showSearch && (
+            <div className="hidden lg:block border-t border-gray-100 py-2.5">
+              <div className="max-w-2xl mx-auto">
+                <AIEnhancedSearchBar />
+              </div>
+            </div>
+          )}
 
           {/* Mobile + Tablet Search Bar - second layer */}
           {config.showSearch && (

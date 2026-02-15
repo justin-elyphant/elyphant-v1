@@ -3,15 +3,17 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, TrendingUp, Package } from "lucide-react";
+import { Search, X, TrendingUp, Package, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchSuggestionsLive } from "@/hooks/useSearchSuggestionsLive";
 import { useAuth } from "@/contexts/auth";
 import { useUserSearchHistory } from "@/hooks/useUserSearchHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { supabase } from "@/integrations/supabase/client";
 import RecentSearches from "../RecentSearches";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatPrice } from "@/lib/utils";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
@@ -19,6 +21,13 @@ interface UnifiedSearchBarProps {
   onNavigateToResults?: (searchQuery: string) => void;
   className?: string;
   mobile?: boolean;
+}
+
+interface ConnectionResult {
+  id: string;
+  name: string;
+  username: string | null;
+  profile_image: string | null;
 }
 
 // Skeleton loading component for suggestions
@@ -88,6 +97,66 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     products: suggestedProducts,
     isLoading: suggestionsLoading 
   } = useSearchSuggestionsLive(query, 300);
+
+  // Connection search state
+  const [connectionResults, setConnectionResults] = useState<ConnectionResult[]>([]);
+  const connectionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Search connections when query changes
+  useEffect(() => {
+    if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+    
+    if (!user || !query || query.trim().length < 2) {
+      setConnectionResults([]);
+      return;
+    }
+
+    connectionTimerRef.current = setTimeout(async () => {
+      try {
+        // Search accepted connections by name/username
+        const { data: connections } = await supabase
+          .from('user_connections')
+          .select('connected_user_id, user_id')
+          .eq('status', 'accepted')
+          .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
+
+        if (!connections || connections.length === 0) {
+          setConnectionResults([]);
+          return;
+        }
+
+        const otherIds = connections.map(c => 
+          c.user_id === user.id ? c.connected_user_id : c.user_id
+        );
+
+        const searchLower = query.trim().toLowerCase();
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, first_name, last_name, username, profile_image')
+          .in('id', otherIds);
+
+        if (profiles) {
+          const matched = profiles.filter(p => {
+            const fullName = (p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim()).toLowerCase();
+            const uname = (p.username || '').toLowerCase();
+            return fullName.includes(searchLower) || uname.includes(searchLower);
+          }).slice(0, 4).map(p => ({
+            id: p.id,
+            name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'User',
+            username: p.username,
+            profile_image: p.profile_image
+          }));
+          setConnectionResults(matched);
+        }
+      } catch (err) {
+        console.error('[UnifiedSearchBar] Connection search error:', err);
+      }
+    }, 350);
+
+    return () => {
+      if (connectionTimerRef.current) clearTimeout(connectionTimerRef.current);
+    };
+  }, [query, user]);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -271,7 +340,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     }
 
     // Show live suggestions for query
-    const hasSuggestions = liveSuggestions.length > 0 || suggestedProducts.length > 0;
+    const hasSuggestions = liveSuggestions.length > 0 || suggestedProducts.length > 0 || connectionResults.length > 0;
     
     if (!hasSuggestions) {
       return null;
@@ -295,6 +364,42 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 >
                   {suggestion.type === 'trending' && <TrendingUp className="h-3 w-3 text-orange-500" />}
                   <span>{suggestion.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* People / Connections */}
+        {connectionResults.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2 px-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground uppercase">People</span>
+            </div>
+            <div className="space-y-1">
+              {connectionResults.map((person) => (
+                <button
+                  key={person.id}
+                  onClick={() => {
+                    if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
+                    setShowSuggestions(false);
+                    navigate(`/profile/${person.username || person.id}`);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={person.profile_image || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {person.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{person.name}</p>
+                    {person.username && (
+                      <p className="text-xs text-muted-foreground">@{person.username}</p>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>

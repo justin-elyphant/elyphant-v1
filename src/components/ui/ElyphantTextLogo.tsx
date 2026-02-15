@@ -6,7 +6,7 @@ const ElyphantTextLogo = () => {
       <img 
         src="/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" 
         alt="Elyphant logo" 
-        className="h-7 lg:h-9 w-auto"
+        className="h-9 lg:h-11 w-auto"
       />
       <span
         className="text-lg lg:text-xl font-bold tracking-tight"

@@ -1,51 +1,34 @@
 
-## Fix: Bottom Navigation Floating on iOS Safari
+
+## Fix: Expand Header Search to Discover New People
 
 ### Problem
-When Safari's bottom toolbar hides during scrolling, the nav bar "floats" above the screen edge because:
-- The safe area spacer collapses to 0px when Safari's toolbar disappears
-- `rounded-t-3xl` on the container shows page content peeking beneath the rounded corners
-- `shadow-floating` adds a visible drop shadow underneath, reinforcing the floating look
-
-When Safari's toolbar IS visible, it covers the gap so everything looks fine.
+The header search bar's "People" section only shows existing accepted connections. It queries `user_connections` where `status = 'accepted'` and filters profiles from that set, so users you're NOT connected with never appear in results.
 
 ### Solution
-Restructure the component so a solid white background always extends to the absolute bottom of the viewport, with the rounded/blurred visual treatment applied only to an inner wrapper.
-
-### Scope
-This is a single shared component (`MobileBottomNavigation.tsx`) rendered once in `App.tsx` at the root level. The fix automatically applies to every page -- no per-page changes needed.
+Replace the manual connection-only query in `UnifiedSearchBar.tsx` with the existing `searchFriendsWithPrivacy` service, which already searches ALL profiles (respecting privacy settings) and returns connection status (connected, pending, or none). Then update the People results section to show a "Connect" button for non-connected users.
 
 ### Technical Changes
 
-**File: `src/components/navigation/MobileBottomNavigation.tsx`**
+**File: `src/components/search/unified/UnifiedSearchBar.tsx`**
 
-Restructure from one container to two layers:
+1. Import `searchFriendsWithPrivacy` and `sendConnectionRequest` from existing services
+2. Replace the `ConnectionResult` interface with `FilteredProfile` from the privacy-aware search
+3. Replace the connection search logic (lines 106-159) that queries only accepted connections with a call to `searchFriendsWithPrivacy(query, user.id)` -- this already handles:
+   - Searching by name and username across ALL profiles
+   - Privacy filtering (blocked users, private profiles)
+   - Returning `connectionStatus` as `'connected' | 'pending' | 'none'`
+4. Update the People results section (lines 373-407) to:
+   - Show a "Connected" badge for existing connections
+   - Show a "Pending" badge for pending requests
+   - Show a "Connect" button (with UserPlus icon) for non-connected users
+   - Keep the existing "View Profile" tap behavior on the name/avatar area
+5. Add a `handleSendConnectionRequest` function that calls `sendConnectionRequest` and updates local state to show "Pending" immediately
 
-1. **Outer `nav`** -- keeps `fixed bottom-0 left-0 right-0` positioning. Gets a solid `bg-white` background that extends all the way to the screen edge. No rounded corners on bottom. Padding-bottom uses `env(safe-area-inset-bottom)` so the white fill always covers the gap.
+### User Experience After Fix
+- Type a name in the header search bar
+- "People" section shows ALL matching users on the platform (not just your connections)
+- Each result shows their connection status: Connected (green badge), Pending (amber badge), or a Connect button
+- Tapping "Connect" sends a request and updates to "Pending" inline
+- Tapping the person's name/avatar navigates to their profile (same as current behavior)
 
-2. **Inner wrapper** -- the visual "pill" with `backdrop-blur-xl`, `border-t`, and `rounded-t-2xl`. Contains only the tab row (`h-14`). This is the part users see.
-
-3. **Remove `shadow-floating`** -- replace with just `border-t` for separation. The shadow underneath contributes to the floating illusion.
-
-4. **Remove the separate safe-area spacer div** -- the outer container's `pb-[env(safe-area-inset-bottom)]` handles this instead, and since it has a solid white background, there is never a visible gap.
-
-```text
-Before:
-+---------------------------+
-|  rounded-t-3xl container  |  <-- bg-white/80 + blur
-|  [tab row h-14]           |
-|  [safe-area spacer div]   |  <-- collapses to 0 = gap
-+---------------------------+
-    ^ gap visible here when Safari toolbar hides
-
-After:
-+---------------------------+
-|  inner pill (rounded-t)   |  <-- backdrop-blur + border-t
-|  [tab row h-14]           |
-+---------------------------+
-|  outer solid bg-white     |  <-- pb-[env(safe-area-inset-bottom)]
-|  (no rounding, no gap)    |
-+===========================+  <-- screen edge, always flush
-```
-
-This ensures the navigation is always flush with the bottom of the screen regardless of Safari toolbar state, while preserving the rounded iOS-style appearance on top.

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift } from "lucide-react";
+import { CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Elements } from "@stripe/react-stripe-js";
 import stripeClientManager from "@/services/payment/StripeClientManager";
@@ -59,7 +59,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const { connections: allConnections, loading: connectionsLoading } = useEnhancedConnections();
   const [placing, setPlacing] = useState(false);
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
-  const [addressPickerOpen, setAddressPickerOpen] = useState(true);
   const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<DefaultPaymentMethod | null>(null);
   const [showAddCardForm, setShowAddCardForm] = useState(false);
@@ -112,7 +111,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     setPlacing(true);
 
     try {
-      // Get current user for metadata
       const { data: { user } } = await supabase.auth.getUser();
 
       const cartItem = {
@@ -125,7 +123,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         variationText: variationText || undefined,
       };
 
-      // Resolve shipping address based on selected recipient
       const isGift = selectedRecipient?.type === 'connection';
       const recipientAddr = selectedRecipient?.address;
 
@@ -138,13 +135,13 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         zip_code: recipientAddr.zip_code || recipientAddr.zipCode || "",
         country: recipientAddr.country || "US",
       } : {
-        name: defaultAddress.name,
-        address_line1: defaultAddress.address.street,
-        address_line2: defaultAddress.address.address_line2 || "",
-        city: defaultAddress.address.city,
-        state: defaultAddress.address.state,
-        zip_code: defaultAddress.address.zipCode,
-        country: defaultAddress.address.country || "US",
+        name: defaultAddress!.name,
+        address_line1: defaultAddress!.address.street,
+        address_line2: defaultAddress!.address.address_line2 || "",
+        city: defaultAddress!.address.city,
+        state: defaultAddress!.address.state,
+        zip_code: defaultAddress!.address.zipCode,
+        country: defaultAddress!.address.country || "US",
       };
 
       const pricing = calculateDynamicPricingBreakdown(price);
@@ -163,7 +160,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               giftingFeeDescription: pricing.giftingFeeDescription,
               taxAmount: 0,
             },
-            // Pass saved payment method so Stripe pre-selects it
             paymentMethod: activePayment?.stripe_payment_method_id || undefined,
             metadata: {
               user_id: user?.id,
@@ -182,11 +178,9 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
       if (error) throw error;
 
       if (data?.url) {
-        // Keep placing=true so the UI stays in "redirecting" state
-        // Don't reset it — the browser is navigating away
         toast.success("Redirecting to payment...");
         window.location.href = data.url;
-        return; // Skip finally's setPlacing(false)
+        return;
       } else {
         throw new Error("No checkout URL returned");
       }
@@ -196,7 +190,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
       toast.error("Something went wrong", {
         description: "Redirecting to full checkout...",
       });
-      // Fallback to standard checkout
       navigate("/checkout");
     }
   };
@@ -206,32 +199,20 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     navigate("/settings");
   };
 
-  const formatAddress = () => {
-    if (selectedRecipient?.type === 'connection') {
-      const addr = selectedRecipient.address;
-      return `${selectedRecipient.name}, ${addr.city}, ${addr.state}`;
-    }
-    if (!defaultAddress) return "";
-    const { street, city, state, zipCode } = defaultAddress.address;
-    const shortStreet = street.length > 25 ? street.slice(0, 25) + "..." : street;
-    return `${defaultAddress.name}, ${shortStreet}, ${city}, ${state} ${zipCode}`;
-  };
-
-  const handleSelectRecipient = (recipient: SelectedRecipient) => {
-    setSelectedRecipient(recipient);
-    setAddressPickerOpen(false);
-    triggerHapticFeedback("light");
-    // Auto-expand gift note when a connection is selected
-    if (recipient.type === 'connection') {
-      setGiftNoteOpen(true);
-    }
-  };
-
   const formatCard = (method?: DefaultPaymentMethod | null) => {
     const pm = method || activePayment;
     if (!pm) return "";
     const type = pm.card_type.charAt(0).toUpperCase() + pm.card_type.slice(1);
     return `${type} ····${pm.last_four}`;
+  };
+
+  const handleSelectRecipient = (recipient: SelectedRecipient) => {
+    setSelectedRecipient(recipient);
+    triggerHapticFeedback("light");
+    // Auto-expand gift note when a connection is selected
+    if (recipient.type === 'connection') {
+      setGiftNoteOpen(true);
+    }
   };
 
   const handleSelectCard = (method: DefaultPaymentMethod) => {
@@ -280,100 +261,83 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
             </div>
           ) : (defaultAddress && activePayment) ? (
             <>
-              {/* Ship to - collapsible address picker */}
-              <Collapsible open={addressPickerOpen} onOpenChange={setAddressPickerOpen}>
-                <CollapsibleTrigger asChild>
-                  <button
-                    className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">{selectedRecipient ? 'Ship to' : 'Who is this for?'}</p>
-                        <p className="text-sm truncate">{selectedRecipient ? formatAddress() : 'Choose a recipient'}</p>
-                      </div>
-                    </div>
-                    {addressPickerOpen ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                    )}
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="py-2 space-y-1 border-b border-border">
-                    {/* Ship to Myself */}
+              {/* Step 1: Who is this for? — flat list */}
+              <div className="border-b border-border pb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide pt-2 pb-1 px-1">
+                  Who is this for?
+                </p>
+
+                {/* Myself */}
+                <button
+                  onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
+                    selectedRecipient?.type === 'self' ? 'bg-accent' : 'hover:bg-accent/50'
+                  }`}
+                >
+                  <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium">Myself</span>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {defaultAddress.address.city}, {defaultAddress.address.state}
+                    </p>
+                  </div>
+                  {selectedRecipient?.type === 'self' && (
+                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                  )}
+                </button>
+
+                {/* Connections */}
+                {connectionsWithAddress.map((conn) => {
+                  const addr = conn.profile_shipping_address;
+                  const connId = conn.display_user_id || conn.connected_user_id || conn.id;
+                  const isSelected = selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === connId;
+                  return (
                     <button
-                      onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left"
+                      key={conn.id}
+                      onClick={() => handleSelectRecipient({
+                        type: 'connection',
+                        name: conn.profile_name || 'Connection',
+                        address: addr,
+                        connectionId: connId,
+                      })}
+                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
+                        isSelected ? 'bg-accent' : 'hover:bg-accent/50'
+                      }`}
                     >
-                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <img
+                        src={conn.profile_image || '/placeholder.svg'}
+                        alt={conn.profile_name || ''}
+                        className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium">Ship to Myself</span>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {defaultAddress.name}, {defaultAddress.address.city}, {defaultAddress.address.state}
+                        <span className="text-sm font-medium">{conn.profile_name}</span>
+                        <p className="text-xs text-muted-foreground">
+                          {addr.city}, {addr.state}
                         </p>
                       </div>
-                      {selectedRecipient?.type === 'self' && (
+                      {isSelected && (
                         <Check className="h-4 w-4 text-primary flex-shrink-0" />
                       )}
                     </button>
+                  );
+                })}
 
-                    {/* Connections with verified addresses */}
-                    {connectionsWithAddress.length > 0 && (
-                      <>
-                        <p className="text-xs text-muted-foreground px-3 pt-1">Send to a connection</p>
-                        {connectionsWithAddress.map((conn) => {
-                          const addr = conn.profile_shipping_address;
-                          return (
-                            <button
-                              key={conn.id}
-                              onClick={() => handleSelectRecipient({
-                                type: 'connection',
-                                name: conn.profile_name || 'Connection',
-                                address: addr,
-                                connectionId: conn.display_user_id || conn.connected_user_id || conn.id,
-                              })}
-                              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-accent/50 transition-colors min-h-[44px] text-left"
-                            >
-                              <img
-                                src={conn.profile_image || '/placeholder.svg'}
-                                alt={conn.profile_name || ''}
-                                className="h-6 w-6 rounded-full object-cover flex-shrink-0"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-medium">{conn.profile_name}</span>
-                                <p className="text-xs text-muted-foreground">
-                                  {addr.city}, {addr.state}
-                                </p>
-                              </div>
-                              {selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === (conn.display_user_id || conn.connected_user_id || conn.id) && (
-                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                {/* Schedule Gift nudge */}
+                {selectedRecipient?.type === 'connection' && onOpenScheduleGift && (
+                  <p className="text-xs text-muted-foreground mt-1 px-3 pb-1">
+                    Want to schedule delivery?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { onOpenChange(false); onOpenScheduleGift(); }}
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Schedule Gift →
+                    </button>
+                  </p>
+                )}
+              </div>
 
-              {/* Schedule Gift nudge - only when shipping to a connection */}
-              {selectedRecipient?.type === 'connection' && onOpenScheduleGift && (
-                <p className="text-xs text-muted-foreground mt-1 mb-1 px-1">
-                  Want to schedule delivery?{' '}
-                  <button
-                    type="button"
-                    onClick={() => { onOpenChange(false); onOpenScheduleGift(); }}
-                    className="underline hover:text-foreground transition-colors"
-                  >
-                    Use Schedule Gift →
-                  </button>
-                </p>
-              )}
-
-              {/* Gift note - collapsible */}
+              {/* Step 2: Gift note - collapsible */}
               <Collapsible open={giftNoteOpen} onOpenChange={setGiftNoteOpen}>
                 <CollapsibleTrigger asChild>
                   <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
@@ -406,12 +370,10 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Pay with - inline collapsible picker */}
+              {/* Step 3: Pay with */}
               <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>
                 <CollapsibleTrigger asChild>
-                  <button
-                    className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left"
-                  >
+                  <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0">
@@ -457,7 +419,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                             amount={0}
                             onSuccess={async () => {
                               setShowAddCardForm(false);
-                              // Re-fetch payment methods and auto-select newest
                               if (user) {
                                 const { data } = await supabase
                                   .from('payment_methods')
@@ -491,7 +452,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Total */}
+              {/* Step 4: Total */}
               <div className="flex items-center justify-between py-3">
                 <span className="text-sm font-medium">Total</span>
                 <div className="text-right">

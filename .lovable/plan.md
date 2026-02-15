@@ -1,47 +1,54 @@
 
 
-## Etsy-Inspired Header: Search Above Categories
+## Compact Unified Header (Etsy-Inspired)
 
-### Concept
+### Goal
+Reduce the overall header height by ~30% and make both rows feel like one seamless component, matching Etsy's compact, unified aesthetic.
 
-Taking inspiration from Etsy's layout, the search bar moves **into the main header row** between the logo and utility icons, and the category links drop to a dedicated second row below. This gives the search bar prime real estate (like Etsy) while keeping categories visible as a horizontal nav strip.
+### What Changes
 
-### Current Layout (Desktop)
+**1. Shrink the logo (ElyphantTextLogo.tsx)**
+- Reduce container from `h-16 lg:h-20` to `h-10 lg:h-12`
+- Reduce icon from `h-10 lg:h-16` to `h-7 lg:h-9`
+- Reduce text from `text-xl lg:text-3xl` to `text-lg lg:text-xl`
+- This alone saves ~20-30px of vertical space
 
-```text
-| Logo | --- Categories --- | Heart | Cart | Auth |
-|--------------- Search Bar ------------------|
-```
+**2. Reduce main row height (useHeaderState.ts)**
+- Change `height` from `h-16 md:h-20` to `h-12 md:h-14`
+- This trims the primary row from 64-80px down to 48-56px
 
-### New Layout (Desktop)
+**3. Tighten the category strip (ModernHeaderManager.tsx)**
+- Change category row from `py-2` to `py-1`
+- Remove or soften the `border-t border-gray-100` divider to make it feel continuous (use a very subtle one or remove entirely)
+- The two rows will read as one unified band rather than stacked sections
 
-```text
-| Logo | -------- Search Bar -------- | Heart | Cart | Auth |
-|      Beauty | Electronics | Fashion | Under $50 | Wedding | Baby | Shop All      |
-```
-
-### Changes
-
-**File: `src/components/navigation/ModernHeaderManager.tsx`**
-
-1. Move the `AIEnhancedSearchBar` from the second-row block back into the main header row, positioned between the logo and the right utility icons (Heart, Cart, Auth). Give it `flex-1` with `max-w-2xl` so it stretches to fill available space -- much wider than the old 256px.
-
-2. Move the `CategoryLinks` component out of the main row and into a new second row (where the search bar currently sits). Center them with a subtle top border separator, similar to Etsy's category strip.
-
-3. The `TabletCategoryLinks` stay in the main row for the tablet breakpoint (768-1024px) since tablets don't show the desktop search bar.
-
-**File: `src/components/navigation/CategoryLinks.tsx`**
-
-No structural changes needed -- just the container in the parent moves it to the second row.
+**4. Compact the mobile search row**
+- Reduce mobile search row padding from `py-3` to `py-2` for consistency
 
 ### What Stays the Same
+- All functionality (search, categories, heart, cart, auth)
+- Etsy-style layout (search in top row, categories below)
+- Mobile and tablet layouts (just slightly tighter)
+- All routing and component logic
 
-- Mobile layout (search bar below header, no category strip)
-- Tablet layout (4 category links in main row, search below)
-- All existing category links and their routing
-- Logo, Heart, Cart, Auth positioning on the right side
+### Visual Comparison
 
-### Visual Result
+```text
+BEFORE (estimated ~120px total):
+| Logo(80px row) | ---Search--- | Heart Cart Auth |   ← h-20
+|--- border-t ---|                                     
+|  Beauty | Electronics | ... | Shop All |             ← py-2 (~44px)
 
-The search bar gets prominent, Etsy-like placement in the main header row with generous width. Categories become a clean horizontal strip below -- easy to scan, always visible, and clearly separated from the search interaction area.
+AFTER (estimated ~80px total):
+| Logo(56px row) | ---Search--- | Heart Cart Auth |   ← h-14
+| Beauty | Electronics | Fashion | ... | Shop All |   ← py-1 (~32px)
+```
+
+### Technical Details
+
+**Files to modify:**
+
+1. **`src/components/ui/ElyphantTextLogo.tsx`** - Shrink container, icon, and text sizes
+2. **`src/hooks/useHeaderState.ts`** - Reduce `height` config from `h-16 md:h-20` to `h-12 md:h-14`
+3. **`src/components/navigation/ModernHeaderManager.tsx`** - Tighten category strip padding, soften/remove divider border, compact mobile search padding
 

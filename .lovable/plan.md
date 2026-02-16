@@ -1,28 +1,47 @@
 
 
-## Make "Who is this for?" Collapsible and Scrollable
+## Fix: Buy Now Drawer Missing Shipping and Tax
 
 ### Problem
-The recipient list in the Buy Now drawer renders all connections in a flat, always-visible list. With 10+ connections, it dominates the drawer and pushes the gift note, payment, and "Place your order" button off-screen.
+The Buy Now drawer calls `calculateDynamicPricingBreakdown(price)` with only the base price, which defaults `shippingCost` to `$0.00`. The `/checkout` page explicitly fetches `$6.99` flat shipping via `getShippingCost()` and passes it into the pricing breakdown. The drawer skips this step entirely, resulting in:
+- **$0.00 shipping** instead of $6.99
+- **$0.00 tax** (same as /checkout currently, so this is consistent -- but worth noting)
+- **Total is $6.99 too low** ($31.79 should have been $38.78)
 
-### Solution
-Wrap the recipient list in a `Collapsible` component (matching the gift note and payment sections) and add a max-height with overflow scroll to the content area.
+The pricing display ("Total" row) and the data sent to `create-checkout-session` both use the same broken calculation.
 
-### Technical Changes
+### Root Cause
+
+```text
+BuyNowDrawer (line 148):
+  calculateDynamicPricingBreakdown(price)
+    --> shippingCost defaults to 0
+
+/checkout (UnifiedCheckoutForm):
+  getShippingCost() --> returns 6.99
+  then passes shippingCost into pricingBreakdown
+```
+
+### Fix (1 file, ~5 lines)
 
 **File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`**
 
-1. Add a new `recipientOpen` state (default `true` since a recipient must be selected)
-2. Replace the static `div` container (lines 265-346) with a `Collapsible` that:
-   - Shows the trigger as "Who is this for?" with the selected recipient name (or "Select recipient") and a chevron icon, matching the style of the gift note and payment collapsible rows
-   - Wraps the connections list in `CollapsibleContent` with `max-h-[200px] overflow-y-auto` so it scrolls when there are many connections
-3. Auto-collapse after a recipient is selected (set `recipientOpen` to `false` on selection) to keep the drawer compact
-4. The trigger row shows the currently selected name (e.g., "Curt Davidson" or "Myself") as a summary when collapsed
+1. **Line 148**: Change `calculateDynamicPricingBreakdown(price)` to `calculateDynamicPricingBreakdown(price, 6.99)` so the pricing sent to `create-checkout-session` includes $6.99 shipping.
 
-### User Experience
-- Drawer opens with the recipient section expanded (since no one is selected yet)
-- User taps a recipient -- section auto-collapses, showing "Curt Davidson" as the summary
-- User can re-expand to change their selection
-- If 10+ connections exist, the expanded list scrolls within a fixed height
-- Gift note and payment sections remain consistent in style
+2. **Line 487** (the Total display): The same `calculateDynamicPricingBreakdown(price)` call renders the displayed total. Change it to `calculateDynamicPricingBreakdown(price, 6.99)` so the shopper sees the correct total before placing the order.
+
+3. **Add a shipping line** to the "Step 4: Total" summary section (around line 484) so the shopper can see the shipping cost broken out, matching the order confirmation email format:
+   - Subtotal: $27.99
+   - Shipping: $6.99
+   - Gifting Fee: $3.80
+   - **Total: $38.78**
+
+### Why $6.99 Hardcoded Is OK
+The `/checkout` page's `getShippingCost()` function already returns a hardcoded `6.99` (see `useCheckoutState.tsx` line 337). Both paths use the same flat rate. If/when shipping logic becomes dynamic, both should reference the same utility.
+
+### Result
+- Orders from the Buy Now drawer will include $6.99 shipping in the Stripe checkout session metadata
+- The drawer will display the correct total before the shopper taps "Place your order"
+- The order confirmation email will show the correct shipping line item
+- Zinc `max_price` will also benefit since the higher `line_items.subtotal` flows downstream
 

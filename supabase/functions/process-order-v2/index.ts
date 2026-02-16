@@ -345,14 +345,12 @@ serve(async (req) => {
     }
 
     // Determine product subtotal in cents
-    // line_items.subtotal from Zinc is already in cents (e.g., 1200 = $12.00)
-    // total_amount is in dollars (e.g., 14.20)
-    const hasLineItemSubtotal = order.line_items?.subtotal != null;
-    const productSubtotalCents = hasLineItemSubtotal
-      ? order.line_items.subtotal          // Already cents
-      : Math.round(order.total_amount * 100);  // Convert dollars to cents
+    // Both line_items.subtotal and total_amount are stored in DOLLARS (Unified Pricing Standard)
+    // Must convert to cents for Zinc's max_price parameter
+    const subtotalDollars = order.line_items?.subtotal ?? order.total_amount;
+    const productSubtotalCents = Math.round(subtotalDollars * 100);
 
-    console.log(`💰 max_price calc: subtotal=${hasLineItemSubtotal ? order.line_items.subtotal + ' (cents)' : order.total_amount + ' (dollars)'} → ${productSubtotalCents} cents → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
+    console.log(`💰 max_price calc: subtotal=${subtotalDollars} (dollars) → ${productSubtotalCents} cents → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
 
     const zincRequest = {
       addax: true, // CRITICAL: Enables ZMA processing

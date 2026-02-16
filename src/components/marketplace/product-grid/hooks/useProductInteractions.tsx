@@ -6,7 +6,6 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import ProductItem from "../../product-item/ProductItem";
 import UnifiedProductCard from "../../UnifiedProductCard";
 
 export const useProductInteractions = (
@@ -87,11 +86,12 @@ export const useProductInteractions = (
               {product.tags[0]}
             </Badge>
           )}
-          <ProductItem
+          <UnifiedProductCard
+            cardType="airbnb"
             product={product}
             viewMode={viewMode}
-            onProductClick={handleProductClick}
-            onWishlistClick={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
+            onProductClick={() => handleProductClick(product.product_id || product.id || "")}
+            onToggleFavorite={(e) => handleWishlistClick(e, product.product_id || product.id || "")}
             isFavorited={userData ? isFavorited(product.product_id || product.id || "") : false}
           />
         </div>

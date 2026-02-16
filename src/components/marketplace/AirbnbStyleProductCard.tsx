@@ -278,6 +278,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           <div className="absolute top-3 right-3 z-50" onClick={e => e.stopPropagation()}>
             {user ? (
               <WishlistSelectionPopoverButton
+                variant="icon"
                 product={{
                   id: productId,
                   name: getProductTitle(),
@@ -395,6 +396,7 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
                     onPointerDown={(e) => e.stopPropagation()}
                   >
                     <WishlistSelectionPopoverButton
+                      variant="icon"
                       product={{
                         id: productId,
                         name: getProductTitle(),

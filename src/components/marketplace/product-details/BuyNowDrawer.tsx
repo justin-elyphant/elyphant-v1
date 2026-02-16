@@ -145,7 +145,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         country: defaultAddress!.address.country || "US",
       };
 
-      const pricing = calculateDynamicPricingBreakdown(price);
+      const pricing = calculateDynamicPricingBreakdown(price, 6.99);
 
       const { data, error } = await supabase.functions.invoke(
         "create-checkout-session",
@@ -480,13 +480,32 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Step 4: Total */}
-              <div className="flex items-center justify-between py-3">
-                <span className="text-sm font-medium">Total</span>
-                <div className="text-right">
-                  <span className="text-lg font-bold">${calculateDynamicPricingBreakdown(price).grandTotal.toFixed(2)}</span>
-                  <p className="text-xs text-muted-foreground">(includes fees)</p>
-                </div>
+              {/* Step 4: Order Summary */}
+              <div className="py-3 space-y-1.5">
+                {(() => {
+                  const breakdown = calculateDynamicPricingBreakdown(price, 6.99);
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>${breakdown.basePrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Shipping</span>
+                        <span>${breakdown.shippingCost.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>{breakdown.giftingFeeName}</span>
+                        <span>${breakdown.giftingFee.toFixed(2)}</span>
+                      </div>
+                      <div className="border-t border-muted my-1" />
+                      <div className="flex justify-between font-medium">
+                        <span>Total</span>
+                        <span className="text-lg font-bold">${breakdown.grandTotal.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </>
           ) : (

@@ -112,6 +112,7 @@ const MobileProductCard = ({
           <div className="absolute top-2 right-2 z-10">
             {user ? (
               <WishlistSelectionPopoverButton
+                variant="icon"
                 product={{
                   id: productId,
                   name: productName,

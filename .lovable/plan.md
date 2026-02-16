@@ -1,47 +1,23 @@
 
 
-## Fix: Buy Now Drawer Missing Shipping and Tax
+## Fix: Oversized Wishlist Badge and Broken Click on Product Tiles
 
 ### Problem
-The Buy Now drawer calls `calculateDynamicPricingBreakdown(price)` with only the base price, which defaults `shippingCost` to `$0.00`. The `/checkout` page explicitly fetches `$6.99` flat shipping via `getShippingCost()` and passes it into the pricing breakdown. The drawer skips this step entirely, resulting in:
-- **$0.00 shipping** instead of $6.99
-- **$0.00 tax** (same as /checkout currently, so this is consistent -- but worth noting)
-- **Total is $6.99 too low** ($31.79 should have been $38.78)
-
-The pricing display ("Total" row) and the data sent to `create-checkout-session` both use the same broken calculation.
+1. The wishlist button on product grid tiles shows full "Save to Wishlist" text, covering product photos on mobile and tablet
+2. Clicking the wishlist button on both mobile AND desktop navigates to the product page instead of opening the wishlist popover -- the click event propagates up to the card's navigation handler
 
 ### Root Cause
+In `ProductItem.tsx`:
+- Line 108: `WishlistSelectionPopoverButton` is rendered without `variant="icon"`, so it defaults to showing "Save to Wishlist" text
+- Line 106: The wrapper `<div>` around the wishlist button has no `onClick stopPropagation`, so the card's `onClick={handleProductClick}` fires and navigates away before the popover can open
 
-```text
-BuyNowDrawer (line 148):
-  calculateDynamicPricingBreakdown(price)
-    --> shippingCost defaults to 0
+### Fix (1 file: `src/components/marketplace/product-item/ProductItem.tsx`)
 
-/checkout (UnifiedCheckoutForm):
-  getShippingCost() --> returns 6.99
-  then passes shippingCost into pricingBreakdown
-```
-
-### Fix (1 file, ~5 lines)
-
-**File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`**
-
-1. **Line 148**: Change `calculateDynamicPricingBreakdown(price)` to `calculateDynamicPricingBreakdown(price, 6.99)` so the pricing sent to `create-checkout-session` includes $6.99 shipping.
-
-2. **Line 487** (the Total display): The same `calculateDynamicPricingBreakdown(price)` call renders the displayed total. Change it to `calculateDynamicPricingBreakdown(price, 6.99)` so the shopper sees the correct total before placing the order.
-
-3. **Add a shipping line** to the "Step 4: Total" summary section (around line 484) so the shopper can see the shipping cost broken out, matching the order confirmation email format:
-   - Subtotal: $27.99
-   - Shipping: $6.99
-   - Gifting Fee: $3.80
-   - **Total: $38.78**
-
-### Why $6.99 Hardcoded Is OK
-The `/checkout` page's `getShippingCost()` function already returns a hardcoded `6.99` (see `useCheckoutState.tsx` line 337). Both paths use the same flat rate. If/when shipping logic becomes dynamic, both should reference the same utility.
+1. **Add `onClick={e => e.stopPropagation()}` to the wrapper div** (line 106) so clicks on the heart icon don't trigger product navigation
+2. **Add `variant="icon"`** to `WishlistSelectionPopoverButton` (line 108) so only a compact heart icon renders instead of the full "Save to Wishlist" text
 
 ### Result
-- Orders from the Buy Now drawer will include $6.99 shipping in the Stripe checkout session metadata
-- The drawer will display the correct total before the shopper taps "Place your order"
-- The order confirmation email will show the correct shipping line item
-- Zinc `max_price` will also benefit since the higher `line_items.subtotal` flows downstream
+- Product tiles show a small circular heart icon in the top-right corner (standard e-commerce pattern)
+- Clicking the heart opens the wishlist selection popover on both mobile and desktop without navigating away
+- Product photos are no longer obscured
 

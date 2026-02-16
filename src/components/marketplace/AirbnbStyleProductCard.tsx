@@ -271,7 +271,12 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
           onLoad={() => {}}
         />
         
-        
+        {/* Status Badge - Top Left */}
+        {statusBadge && (
+          <Badge className={cn("absolute top-3 left-3 z-10 text-xs font-medium", statusBadge.color)}>
+            {statusBadge.badge}
+          </Badge>
+        )}
 
         {/* Heart Icon - Top Right (Lululemon Style - Simple Outline) - Hide in wishlist context since heart is at bottom */}
         {!hideTopRightAction && context !== 'wishlist' && (

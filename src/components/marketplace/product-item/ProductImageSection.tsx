@@ -46,6 +46,7 @@ const ProductImageSection: React.FC<ProductImageSectionProps> = ({
           onClick={e => e.stopPropagation()}
         >
           <WishlistSelectionPopoverButton
+            variant="icon"
             product={{
               id: String(product.product_id || product.id),
               name: product.title || product.name || "",

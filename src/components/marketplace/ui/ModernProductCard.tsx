@@ -78,6 +78,7 @@ const ModernProductCard = ({
             <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()}>
               {user ? (
                 <WishlistSelectionPopoverButton
+                  variant="icon"
                   product={{
                     id: productId,
                     name: productName,

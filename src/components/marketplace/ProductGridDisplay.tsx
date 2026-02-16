@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Product } from "@/types/product";
-import ProductItem from "./product-item/ProductItem";
+import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
 import MobileProductGrid from "./mobile/MobileProductGrid";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 
@@ -56,12 +56,11 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
             
             return (
               <div key={productId} className="flex" style={{ contentVisibility: index > 10 ? 'auto' : 'visible' }}>
-                <ProductItem
+                <AirbnbStyleProductCard
                   product={product}
                   viewMode="grid"
                   onProductClick={() => handleProductClick(productId)}
                   onWishlistClick={handleWishlistUpdate}
-                  isFavorited={isProductWishlisted(productId)}
                   statusBadge={statusBadge}
                 />
               </div>
@@ -87,12 +86,11 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
         
         return (
           <div key={productId} className="intersection-target">
-            <ProductItem
+            <AirbnbStyleProductCard
               product={product}
               viewMode={viewMode}
               onProductClick={() => handleProductClick(productId)}
               onWishlistClick={handleWishlistUpdate}
-              isFavorited={isProductWishlisted(productId)}
               statusBadge={statusBadge}
             />
           </div>

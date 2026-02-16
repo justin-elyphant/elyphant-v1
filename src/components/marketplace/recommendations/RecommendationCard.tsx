@@ -7,7 +7,10 @@ import { Product } from "@/types/product";
 import { useLazyImage } from "@/hooks/useLazyImage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import QuickWishlistButton from "../product-item/QuickWishlistButton";
+import { useAuth } from "@/contexts/auth";
+import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
 
 interface RecommendationCardProps {
   product: Product;
@@ -23,18 +26,20 @@ const RecommendationCard = ({
   const navigate = useNavigate();
   const { src: imageSrc } = useLazyImage(product.image);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const [showSignUpDialog, setShowSignUpDialog] = React.useState(false);
   
   const handleClick = () => {
     navigate(`/marketplace?productId=${product.id || product.product_id}`);
   };
   
-  // Helper functions to improve code readability
-  const getTitle = () => product.title || product.name || "";
+  const productId = String(product.id || product.product_id || "");
+  const productName = product.title || product.name || "";
+  
   const getPrice = () => product.price.toFixed(2);
   const isBestSeller = () => product.isBestSeller || false;
   const getRating = () => product.rating || product.stars || 0;
   
-  // Safe type checking for free_shipping which isn't in the Product type
   const isFreeShipping = () => {
     return product.prime || (product as any).free_shipping || false;
   };
@@ -45,7 +50,6 @@ const RecommendationCard = ({
       onClick={handleClick}
     >
       <div className="relative">
-        {/* Status badges for better scannability */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
           {isBestSeller() && (
             <Badge className="bg-amber-500 text-white border-0">
@@ -55,22 +59,40 @@ const RecommendationCard = ({
           )}
         </div>
         
-        {/* Quick wishlist button */}
-        <div className="absolute top-2 right-2 z-10">
-          <QuickWishlistButton
-            productId={product.id || product.product_id || ""}
-            isFavorited={isFavorited}
-            onClick={onFavoriteToggle}
-            size="md"
-            variant="default"
-          />
+        {/* Wishlist button - using WishlistSelectionPopoverButton directly */}
+        <div className="absolute top-2 right-2 z-10" onClick={e => e.stopPropagation()}>
+          {user ? (
+            <WishlistSelectionPopoverButton
+              product={{
+                id: productId,
+                name: productName,
+                image: product.image,
+                price: product.price,
+                brand: product.brand,
+              }}
+              variant="icon"
+              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm"
+              isWishlisted={isFavorited}
+            />
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full p-1.5 shadow-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onFavoriteToggle(e);
+              }}
+            >
+              <Heart className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         
-        {/* Product image with consistent aspect ratio */}
         <div className="aspect-square overflow-hidden">
           <img
             src={imageSrc}
-            alt={getTitle()}
+            alt={productName}
             className="w-full h-full object-cover transition-transform hover:scale-105"
             loading="lazy"
           />
@@ -78,15 +100,12 @@ const RecommendationCard = ({
       </div>
       
       <CardContent className={`${isMobile ? 'p-2' : 'p-3'}`}>
-        {/* Product title with line clamping */}
         <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-primary">
-          {getTitle()}
+          {productName}
         </h3>
         
-        {/* Price with prominent styling */}
         <p className="font-bold text-base mt-2">${getPrice()}</p>
         
-        {/* Rating stars for visual evaluation */}
         {getRating() > 0 && (
           <div className="flex items-center mt-1">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -101,7 +120,6 @@ const RecommendationCard = ({
           </div>
         )}
         
-        {/* Free shipping indicator */}
         {isFreeShipping() && (
           <div className="flex items-center text-xs text-green-600 mt-1">
             <Truck className="h-3 w-3 mr-1" />

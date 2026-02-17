@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gift, DollarSign, Users, Calendar, Package } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { GroupGiftProject } from "@/services/groupGiftService";
+import { formatPrice } from "@/lib/utils";
 
 interface GroupGiftProjectCardProps {
   project: GroupGiftProject;
@@ -98,7 +99,7 @@ const GroupGiftProjectCard = ({
                 <p className="font-medium text-sm">{project.target_product_name}</p>
                 {project.target_product_price && (
                   <p className="text-sm text-muted-foreground">
-                    ${project.target_product_price.toFixed(2)}
+                    {formatPrice(project.target_product_price)}
                   </p>
                 )}
               </div>
@@ -110,14 +111,14 @@ const GroupGiftProjectCard = ({
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Progress</span>
               <span className="text-muted-foreground">
-                ${project.current_amount.toFixed(2)} / ${project.target_amount.toFixed(2)}
+                {formatPrice(project.current_amount)} / {formatPrice(project.target_amount)}
               </span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{progressPercentage.toFixed(0)}% funded</span>
               {remainingAmount > 0 && (
-                <span>${remainingAmount.toFixed(2)} remaining</span>
+                <span>{formatPrice(remainingAmount)} remaining</span>
               )}
             </div>
           </div>

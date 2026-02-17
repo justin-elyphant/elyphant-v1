@@ -273,7 +273,7 @@ const MobileProductSheet: React.FC<MobileProductSheetProps> = ({
               if (isMobile) triggerHapticFeedback(HapticPatterns.addToCart);
             }}
           >
-            Add to Cart • ${(product.price * quantity).toFixed(2)}
+            Add to Cart • {formatPrice(product.price * quantity)}
           </Button>
         </div>
       </SheetContent>

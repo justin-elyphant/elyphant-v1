@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMockReturns } from "./returnService";
 
@@ -94,7 +95,7 @@ const ZincCreditsTab = () => {
     setSelectedReturn(null);
     setNewCreditAmount("");
     
-    toast.success(`Credit of $${amount.toFixed(2)} issued to ${returnToCredit.customerName}`);
+    toast.success(`Credit of ${formatPrice(amount)} issued to ${returnToCredit.customerName}`);
   };
 
   return (
@@ -132,7 +133,7 @@ const ZincCreditsTab = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Amount:</span>
-                      <span className="font-medium">${credit.amount.toFixed(2)}</span>
+                      <span className="font-medium">{formatPrice(credit.amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Issued:</span>
@@ -174,7 +175,7 @@ const ZincCreditsTab = () => {
                     ) : (
                       pendingReturns.map(ret => (
                         <option key={ret.id} value={ret.id}>
-                          {ret.id.slice(-6)} - {ret.customerName} - ${ret.item.price.toFixed(2)}
+                          {ret.id.slice(-6)} - {ret.customerName} - {formatPrice(ret.item.price)}
                         </option>
                       ))
                     )}
@@ -238,7 +239,7 @@ const ZincCreditsTab = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Amount:</span>
-                    <span className="font-medium">${credit.amount.toFixed(2)}</span>
+                    <span className="font-medium">{formatPrice(credit.amount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Issued:</span>

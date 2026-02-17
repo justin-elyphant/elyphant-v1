@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { usePricingSettings } from "@/hooks/usePricingSettings";
+import { formatPrice } from "@/lib/utils";
 
 const PricingControlsCard = () => {
   const { settings, loading, updateSetting, getDefaultGiftingFee } = usePricingSettings();
@@ -178,16 +179,16 @@ const PricingControlsCard = () => {
                 <span className="text-xs text-muted-foreground">ℹ️</span>
               </span>
               <div className="text-right">
-                <div>${((10 * markupPercentage) / 100 + zincFee).toFixed(2)}</div>
+                <div>{formatPrice((10 * markupPercentage) / 100 + zincFee)}</div>
                 <div className="text-xs text-muted-foreground">
-                  ({markupPercentage}% + ${zincFee.toFixed(2)} fulfillment)
+                  ({markupPercentage}% + {formatPrice(zincFee)} fulfillment)
                 </div>
               </div>
             </div>
             <hr className="my-2" />
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span>${(10 + 6.99 + (10 * markupPercentage) / 100 + zincFee).toFixed(2)}</span>
+              <span>{formatPrice(10 + 6.99 + (10 * markupPercentage) / 100 + zincFee)}</span>
             </div>
           </div>
         </div>

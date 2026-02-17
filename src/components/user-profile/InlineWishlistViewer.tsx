@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { formatPrice } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -360,7 +361,7 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
                   </h3>
                   {item.price && (
                     <p className="text-lg font-bold text-primary">
-                      ${item.price.toFixed(2)}
+                      {formatPrice(item.price)}
                     </p>
                   )}
                   {isPurchased ? (

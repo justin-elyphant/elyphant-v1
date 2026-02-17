@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Heart, ArrowLeft } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 
 const WishlistAdd = () => {
   const [searchParams] = useSearchParams();
@@ -121,7 +122,7 @@ const WishlistAdd = () => {
           <div className="text-center space-y-2">
             <h3 className="font-semibold text-lg">{productData.title}</h3>
             {productData.price > 0 && (
-              <p className="text-2xl font-bold text-primary">${productData.price.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-primary">{formatPrice(productData.price)}</p>
             )}
           </div>
 

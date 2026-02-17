@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DollarSign, TrendingUp, Calendar, PiggyBank } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 import { UnifiedGiftSettings } from "@/services/UnifiedGiftManagementService";
 
 interface BudgetTrackingSectionProps {
@@ -57,8 +58,8 @@ const BudgetTrackingSection = ({ settings, onUpdateSettings }: BudgetTrackingSec
                   This Month
                 </Label>
                 <span className="text-sm font-medium">
-                  ${spentThisMonth.toFixed(2)}
-                  {monthlyLimitNum > 0 && ` / $${monthlyLimitNum.toFixed(2)}`}
+                  {formatPrice(spentThisMonth)}
+                  {monthlyLimitNum > 0 && ` / ${formatPrice(monthlyLimitNum)}`}
                 </span>
               </div>
               {monthlyLimitNum > 0 && (
@@ -77,8 +78,8 @@ const BudgetTrackingSection = ({ settings, onUpdateSettings }: BudgetTrackingSec
                   This Year
                 </Label>
                 <span className="text-sm font-medium">
-                  ${spentThisYear.toFixed(2)}
-                  {annualLimitNum > 0 && ` / $${annualLimitNum.toFixed(2)}`}
+                  {formatPrice(spentThisYear)}
+                  {annualLimitNum > 0 && ` / ${formatPrice(annualLimitNum)}`}
                 </span>
               </div>
               {annualLimitNum > 0 && (

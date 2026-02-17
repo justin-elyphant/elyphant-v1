@@ -1,6 +1,7 @@
 
 import React, { useMemo } from "react";
 import { Product } from "@/types/product";
+import { formatPrice } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart } from "lucide-react";
@@ -203,8 +204,8 @@ const MobileProductGrid = ({
             )}
 
             {/* Price */}
-            <div className="font-semibold text-lg text-green-600 mb-2" aria-label={`Price: $${product.price?.toFixed(2)}`}>
-              ${product.price?.toFixed(2)}
+            <div className="font-semibold text-lg text-green-600 mb-2" aria-label={`Price: ${formatPrice(product.price)}`}>
+              {formatPrice(product.price)}
             </div>
 
             {/* Add to Cart Button - keeping existing implementation */}

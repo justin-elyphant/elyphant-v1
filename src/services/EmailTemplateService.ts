@@ -1,4 +1,5 @@
 import { UnifiedGiftExecution } from '@/services/UnifiedGiftManagementService';
+import { formatPrice } from '@/lib/utils';
 
 export interface EmailTemplateData {
   recipientEmail: string;
@@ -149,7 +150,7 @@ export class EmailTemplateService {
             
             <div class="order-summary">
               <h3>Order Summary</h3>
-              <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> ${formatPrice(totalAmount)}</p>
               ${orderNumber ? `<p><strong>Order Number:</strong> ${orderNumber}</p>` : ''}
               <p><strong>Recipient:</strong> ${recipientName}</p>
               <p><strong>Occasion:</strong> ${giftDetails.occasion}</p>
@@ -163,7 +164,7 @@ export class EmailTemplateService {
       </html>
     `;
 
-    const text = `Auto-Gift Approved!\n\nYour ${giftDetails.occasion} gift for ${recipientName} has been approved and is being processed.\n\nTotal: $${totalAmount.toFixed(2)}\n${orderNumber ? `Order: ${orderNumber}\n` : ''}`;
+    const text = `Auto-Gift Approved!\n\nYour ${giftDetails.occasion} gift for ${recipientName} has been approved and is being processed.\n\nTotal: ${formatPrice(totalAmount)}\n${orderNumber ? `Order: ${orderNumber}\n` : ''}`;
 
     return { subject, html, text };
   }
@@ -261,7 +262,7 @@ export class EmailTemplateService {
           <p><strong>Recipient:</strong> ${recipientName}</p>
           <p><strong>Occasion:</strong> ${giftDetails.occasion}</p>
           <p><strong>Budget:</strong> $${giftDetails.budget}</p>
-          <p><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+          <p><strong>Total Amount:</strong> ${formatPrice(totalAmount)}</p>
           ${deliveryDate ? `<p><strong>Delivery Date:</strong> ${deliveryDate}</p>` : ''}
         </div>
     `;
@@ -278,7 +279,7 @@ export class EmailTemplateService {
             <div class="product-item">
               <img src="${product.image}" alt="${product.title}" class="product-image">
               <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">${product.title}</div>
-              <div style="color: #10b981; font-weight: 600;">$${product.price.toFixed(2)}</div>
+              <div style="color: #10b981; font-weight: 600;">${formatPrice(product.price)}</div>
               <div style="font-size: 10px; color: #64748b;">${product.marketplace}</div>
             </div>
           `).join('')}
@@ -331,10 +332,10 @@ GIFT DETAILS:
 - Recipient: ${recipientName}
 - Occasion: ${giftDetails.occasion}
 - Budget: $${giftDetails.budget}
-- Total Amount: $${totalAmount.toFixed(2)}
+- Total Amount: ${formatPrice(totalAmount)}
 
 SELECTED GIFTS:
-${giftDetails.selectedProducts.map(p => `- ${p.title} - $${p.price.toFixed(2)} (${p.marketplace})`).join('\n')}
+${giftDetails.selectedProducts.map(p => `- ${p.title} - ${formatPrice(p.price)} (${p.marketplace})`).join('\n')}
 
 ACTIONS:
 Approve & Send: ${approveUrl}
@@ -390,7 +391,7 @@ Questions? Reply to this email or check your dashboard.
               <div class="product-item">
                 <img src="${itemImage}" alt="${itemName}" class="product-image">
                 <div style="font-size: 14px; font-weight: 600; margin-top: 8px;">${itemName}</div>
-                <div style="color: #10b981; font-weight: 600; margin-top: 4px;">$${itemPrice.toFixed(2)}</div>
+                <div style="color: #10b981; font-weight: 600; margin-top: 4px;">${formatPrice(itemPrice)}</div>
               </div>
             </div>
             
@@ -405,7 +406,7 @@ Questions? Reply to this email or check your dashboard.
       </html>
     `;
 
-    const text = `Someone purchased "${itemName}" from your wishlist!\n\nPrice: $${itemPrice.toFixed(2)}\n${isAnonymous ? '' : `Purchased by: ${purchaserName}\n`}\n\nView your wishlist: ${wishlistUrl}`;
+    const text = `Someone purchased "${itemName}" from your wishlist!\n\nPrice: ${formatPrice(itemPrice)}\n${isAnonymous ? '' : `Purchased by: ${purchaserName}\n`}\n\nView your wishlist: ${wishlistUrl}`;
 
     return { subject, html, text };
   }
@@ -453,14 +454,14 @@ Questions? Reply to this email or check your dashboard.
               <h3>Order Summary</h3>
               ${orderNumber ? `<p><strong>Order Number:</strong> ${orderNumber}</p>` : ''}
               <p><strong>Recipient:</strong> ${recipientName}</p>
-              <p><strong>Total Amount:</strong> $${itemPrice.toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> ${formatPrice(itemPrice)}</p>
             </div>
             
             <div class="product-grid">
               <div class="product-item">
                 <img src="${itemImage}" alt="${itemName}" class="product-image">
                 <div style="font-size: 14px; font-weight: 600; margin-top: 8px;">${itemName}</div>
-                <div style="color: #10b981; font-weight: 600; margin-top: 4px;">$${itemPrice.toFixed(2)}</div>
+                <div style="color: #10b981; font-weight: 600; margin-top: 4px;">${formatPrice(itemPrice)}</div>
               </div>
             </div>
             
@@ -475,7 +476,7 @@ Questions? Reply to this email or check your dashboard.
       </html>
     `;
 
-    const text = `Gift Purchase Confirmed!\n\nItem: ${itemName}\nRecipient: ${recipientName}\nPrice: $${itemPrice.toFixed(2)}\n${orderNumber ? `Order: ${orderNumber}\n` : ''}${trackingUrl ? `Track: ${trackingUrl}` : ''}`;
+    const text = `Gift Purchase Confirmed!\n\nItem: ${itemName}\nRecipient: ${recipientName}\nPrice: ${formatPrice(itemPrice)}\n${orderNumber ? `Order: ${orderNumber}\n` : ''}${trackingUrl ? `Track: ${trackingUrl}` : ''}`;
 
     return { subject, html, text };
   }

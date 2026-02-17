@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Check } from "lucide-react";
 import { usePricingSettings } from "@/hooks/usePricingSettings";
 import ContextualHelp from "@/components/help/ContextualHelp";
+import { formatPrice } from "@/lib/utils";
 
 interface TransparentPriceBreakdownProps {
   basePrice: number;
@@ -23,7 +24,7 @@ const TransparentPriceBreakdown = ({
     <div className={`space-y-2 ${className}`}>
       <div className="flex justify-between text-sm">
         <span>Product Cost</span>
-        <span>${breakdown.basePrice.toFixed(2)}</span>
+        <span>{formatPrice(breakdown.basePrice)}</span>
       </div>
       
       <div className="flex justify-between text-sm">
@@ -34,7 +35,7 @@ const TransparentPriceBreakdown = ({
             Free Delivery
           </span>
         ) : (
-          <span>${breakdown.shippingCost.toFixed(2)}</span>
+          <span>{formatPrice(breakdown.shippingCost)}</span>
         )}
       </div>
       
@@ -70,14 +71,14 @@ const TransparentPriceBreakdown = ({
             className="text-muted-foreground hover:text-foreground"
           />
         </span>
-        <span>${breakdown.giftingFee.toFixed(2)}</span>
+        <span>{formatPrice(breakdown.giftingFee)}</span>
       </div>
       
       <hr className="border-t border-muted" />
       
       <div className="flex justify-between font-medium">
         <span>Total</span>
-        <span>${breakdown.total.toFixed(2)}</span>
+        <span>{formatPrice(breakdown.total)}</span>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React from "react";
+import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Percent, PiggyBank, Crown, Handshake, Settings2, RotateCcw } from "lucide-react";
@@ -108,11 +109,11 @@ export default function OverviewTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Net Revenue</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">${netRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(netRevenue)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
                     <span className="text-xs text-green-600">
-                      {pendingNetRevenue > 0 ? `+$${pendingNetRevenue.toFixed(2)} pending` : "Elyphant fees earned"}
+                      {pendingNetRevenue > 0 ? `+${formatPrice(pendingNetRevenue)} pending` : "Elyphant fees earned"}
                     </span>
                   </div>
                 </div>
@@ -130,11 +131,11 @@ export default function OverviewTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">GMV</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">${gmv.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(gmv)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
                     <span className="text-xs text-green-600">
-                      {pendingGmv > 0 ? `+$${pendingGmv.toFixed(2)} pending` : "Total order value"}
+                      {pendingGmv > 0 ? `+${formatPrice(pendingGmv)} pending` : "Total order value"}
                     </span>
                   </div>
                 </div>
@@ -152,7 +153,7 @@ export default function OverviewTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Gross Profit</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">${grossProfit.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(grossProfit)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className={`h-3 w-3 mr-1 ${grossProfit > 0 ? 'text-green-600' : 'text-orange-600'}`} />
                     <span className={`text-xs ${grossProfit > 0 ? 'text-green-600' : 'text-orange-600'}`}>
@@ -280,15 +281,15 @@ export default function OverviewTab() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Net Revenue (Fees)</span>
-                  <span className="font-medium text-green-600">${netRevenue.toFixed(2)}</span>
+                  <span className="font-medium text-green-600">{formatPrice(netRevenue)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Zinc Fulfillment Costs</span>
-                  <span className="font-medium text-red-600">-${zincCosts.toFixed(2)}</span>
+                  <span className="font-medium text-red-600">-{formatPrice(zincCosts)}</span>
                 </div>
                 <div className="flex justify-between items-center border-t pt-2">
                   <span className="text-sm font-medium text-foreground">Gross Profit</span>
-                  <span className="font-bold text-foreground">${grossProfit.toFixed(2)}</span>
+                  <span className="font-bold text-foreground">{formatPrice(grossProfit)}</span>
                 </div>
               </div>
             </CardContent>

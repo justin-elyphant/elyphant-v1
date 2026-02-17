@@ -50,10 +50,15 @@ const WishlistSelectionPopoverButton: React.FC<WishlistSelectionPopoverButtonPro
         ? `${product.name} (${product.variationText})` 
         : product.name;
 
+      // Normalize cents to dollars: Zinc API prices are integers in cents (e.g., 1980 = $19.80)
+      const normalizedPrice = product.price && product.price > 200 && Number.isInteger(product.price)
+        ? product.price / 100
+        : product.price;
+
       await addToWishlist(wishlistId, {
         name: displayName,
         title: displayName,
-        price: product.price,
+        price: normalizedPrice,
         image_url: product.image,
         brand: product.brand,
         product_id: productIdToSave,

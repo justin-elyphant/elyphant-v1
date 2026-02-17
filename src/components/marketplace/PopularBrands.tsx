@@ -55,6 +55,18 @@ const PopularBrands = () => {
       name: "Lego",
       logo: "https://upload.wikimedia.org/wikipedia/commons/2/24/LEGO_logo.svg",
       searchTerm: "lego"
+    },
+    {
+      id: "yeti",
+      name: "Yeti",
+      logo: "/images/brands/yeti-logo.svg",
+      searchTerm: "yeti"
+    },
+    {
+      id: "playstation",
+      name: "PlayStation",
+      logo: "/images/brands/playstation-logo.png",
+      searchTerm: "playstation"
     }
   ];
 

@@ -24,7 +24,7 @@ const popularBrands = [
   { 
     id: 3, 
     name: "Yeti", 
-    logoUrl: "https://logo.clearbit.com/yeti.com", 
+    logoUrl: "/images/brands/yeti-logo.svg", 
     productCount: 152 
   },
   { 
@@ -54,7 +54,7 @@ const popularBrands = [
   { 
     id: 9, 
     name: "PlayStation", 
-    logoUrl: "https://logo.clearbit.com/playstation.com", 
+    logoUrl: "/images/brands/playstation-logo.png", 
     productCount: 98 
   }
 ];

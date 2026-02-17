@@ -51,6 +51,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft, Shield, Gift, Mail } from 'lucide-react';
+import { formatPrice } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -110,6 +111,19 @@ const UnifiedCheckoutForm: React.FC = () => {
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(true);
   const [shippingCostLoaded, setShippingCostLoaded] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+
+  // Guest email validation state
+  const [guestEmailError, setGuestEmailError] = useState<string | null>(null);
+  const [guestEmailTouched, setGuestEmailTouched] = useState(false);
+
+  const validateGuestEmail = (email: string): string | null => {
+    if (!email.trim()) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    return null;
+  };
+
+  const isGuestEmailValid = user || !validateGuestEmail(checkoutData.shippingInfo.email || '');
 
   // Calculate totals - CRITICAL: This logic must match order creation
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -639,7 +653,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5" />
-                  Your Email
+                  Your Email <span className="text-destructive">*</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -650,13 +664,25 @@ const UnifiedCheckoutForm: React.FC = () => {
                     type="email"
                     placeholder="Enter your email for order confirmation"
                     value={checkoutData.shippingInfo.email}
-                    onChange={(e) => handleUpdateShippingInfo({ email: e.target.value })}
+                    onChange={(e) => {
+                      handleUpdateShippingInfo({ email: e.target.value });
+                      if (guestEmailTouched) {
+                        setGuestEmailError(validateGuestEmail(e.target.value));
+                      }
+                    }}
+                    onBlur={() => {
+                      setGuestEmailTouched(true);
+                      setGuestEmailError(validateGuestEmail(checkoutData.shippingInfo.email || ''));
+                    }}
                     required
-                    className="mt-1"
+                    className={`mt-1 ${guestEmailError && guestEmailTouched ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                   />
+                  {guestEmailError && guestEmailTouched && (
+                    <p className="text-sm text-destructive mt-1">{guestEmailError}</p>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  We'll send your order confirmation and tracking details here.
+                  We'll send your order confirmation, tracking details, and a special offer to join Elyphant.
                 </p>
               </CardContent>
             </Card>
@@ -708,7 +734,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                   {/* Desktop/Tablet inline button - hidden on phone (sticky bar used instead) */}
                   <Button
                     onClick={createCheckoutSession}
-                    disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
+                    disabled={isProcessing || !addressesLoaded || !shippingCostLoaded || !isGuestEmailValid}
                     className="w-full hidden md:flex"
                     size="lg"
                   >
@@ -755,7 +781,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           <div>
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-lg font-bold">
-              {isLoadingShipping ? 'Calculating...' : `$${totalAmount.toFixed(2)}`}
+              {isLoadingShipping ? 'Calculating...' : formatPrice(totalAmount)}
             </p>
           </div>
           <Button
@@ -763,7 +789,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               triggerHapticFeedback(HapticPatterns.buttonTap);
               createCheckoutSession();
             }}
-            disabled={isProcessing || !addressesLoaded || !shippingCostLoaded}
+            disabled={isProcessing || !addressesLoaded || !shippingCostLoaded || !isGuestEmailValid}
             className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
             size="lg"
           >

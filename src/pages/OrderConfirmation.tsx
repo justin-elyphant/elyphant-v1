@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Package, Truck, Clock, AlertCircle, Gift, Sparkles, RefreshCw, Calendar, Lock } from "lucide-react";
+import GuestSignupCard from "@/components/checkout/GuestSignupCard";
+import { formatPrice } from "@/lib/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,8 +41,10 @@ const OrderConfirmation = () => {
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const guestEmail = searchParams.get('guest_email') || '';
   const navigate = useNavigate();
   const { clearCart } = useCart();
+  const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [childOrders, setChildOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -596,11 +601,11 @@ const OrderConfirmation = () => {
                       <div className="flex-1">
                         <p className="font-medium text-sm line-clamp-2">{item.title || item.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          Qty: {item.quantity} × ${(item.unit_price || item.price || 0).toFixed(2)}
+                          Qty: {item.quantity} × {formatPrice(item.unit_price || item.price || 0)}
                         </p>
                       </div>
                       <p className="font-semibold">
-                        ${(item.quantity * (item.unit_price || item.price || 0)).toFixed(2)}
+                        {formatPrice(item.quantity * (item.unit_price || item.price || 0))}
                       </p>
                     </div>
                   ))}
@@ -615,7 +620,7 @@ const OrderConfirmation = () => {
 
                   <div className="mt-4 pt-4 border-t flex justify-between items-center">
                     <span className="font-semibold">Subtotal:</span>
-                    <span className="text-lg font-bold">${child.total_amount.toFixed(2)}</span>
+                    <span className="text-lg font-bold">{formatPrice(child.total_amount)}</span>
                   </div>
                 </Card>
               );
@@ -648,9 +653,9 @@ const OrderConfirmation = () => {
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">${(item.quantity * (item.unit_price || item.price || 0)).toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">${(item.unit_price || item.price || 0).toFixed(2)} each</p>
+                    <div className="text-right">
+                    <p className="font-semibold">{formatPrice(item.quantity * (item.unit_price || item.price || 0))}</p>
+                    <p className="text-sm text-muted-foreground">{formatPrice(item.unit_price || item.price || 0)} each</p>
                   </div>
                 </div>
               ))}
@@ -670,24 +675,24 @@ const OrderConfirmation = () => {
                 <>
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>${pricing.subtotal.toFixed(2)}</span>
+                    <span>{formatPrice(pricing.subtotal)}</span>
                   </div>
                   {pricing.shipping_cost > 0 && (
                     <div className="flex justify-between">
                       <span>Shipping:</span>
-                      <span>${pricing.shipping_cost.toFixed(2)}</span>
+                      <span>{formatPrice(pricing.shipping_cost)}</span>
                     </div>
                   )}
                   {pricing.tax_amount > 0 && (
                     <div className="flex justify-between">
                       <span>Tax:</span>
-                      <span>${pricing.tax_amount.toFixed(2)}</span>
+                      <span>{formatPrice(pricing.tax_amount)}</span>
                     </div>
                   )}
                   {pricing.gifting_fee > 0 && (
                     <div className="flex justify-between">
                       <span>{pricing.gifting_fee_name}:</span>
-                      <span>${pricing.gifting_fee.toFixed(2)}</span>
+                      <span>{formatPrice(pricing.gifting_fee)}</span>
                     </div>
                   )}
                 </>
@@ -695,7 +700,7 @@ const OrderConfirmation = () => {
             })()}
             <div className="flex justify-between text-xl font-bold pt-2 border-t">
               <span>Total:</span>
-              <span>${order.total_amount.toFixed(2)}</span>
+              <span>{formatPrice(order.total_amount)}</span>
             </div>
           </div>
         </Card>
@@ -774,6 +779,17 @@ const OrderConfirmation = () => {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Guest-to-User Conversion Card */}
+        {!user && guestEmail && (
+          <div className="mb-6">
+            <GuestSignupCard
+              email={guestEmail}
+              heading="Want to track this order and future gifts?"
+              subheading="Create your free Elyphant account to manage orders, build wishlists, and discover personalized gift ideas."
+            />
+          </div>
         )}
 
         {/* Actions */}

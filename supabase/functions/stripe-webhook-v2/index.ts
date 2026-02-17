@@ -338,6 +338,7 @@ async function handleCheckoutSessionCompleted(
     state: metadata.ship_state || '',
     postal_code: metadata.ship_postal_code || '',
     country: metadata.ship_country || 'US',
+    phone: metadata.ship_phone || '',
   };
 
   console.log(`📦 [STEP 2] Shipping extracted: ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}`);
@@ -991,6 +992,7 @@ async function handleDeferredPaymentOrder(
     state: metadata.ship_state || '',
     postal_code: metadata.ship_postal_code || '',
     country: metadata.ship_country || 'US',
+    phone: metadata.ship_phone || '',
   };
   
   // Validate shipping

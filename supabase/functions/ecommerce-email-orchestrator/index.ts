@@ -31,6 +31,17 @@ const formatScheduledDate = (dateString: string): string => {
   });
 };
 
+// Centralized price formatting utility (prevents raw .toFixed(2) bugs)
+const formatPrice = (amount: number | null | undefined): string => {
+  return `$${Number(amount || 0).toFixed(2)}`;
+};
+
+// Possessive grammar helper (handles names ending in 's')
+const possessive = (name: string): string => {
+  if (!name) return "'s";
+  return name.endsWith('s') ? `${name}'` : `${name}'s`;
+};
+
 interface EmailRequest {
   eventType: string;
   recipientEmail: string;
@@ -103,14 +114,84 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
 </html>
 `;
 
+// Shared item list HTML generator (used by confirmation, shipped, failed templates)
+const renderItemsHtml = (items: any[]): string => {
+  if (!items || items.length === 0) return '';
+  return items.map((item: any) => {
+    const imageUrl = item.image_url || 'https://via.placeholder.com/80x80/e5e5e5/666666?text=Product';
+    return `
+    <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
+      <tr>
+        <td style="padding-right: 16px; vertical-align: top;">
+          <img src="${imageUrl}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />
+        </td>
+        <td style="vertical-align: top;">
+          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
+          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × ${formatPrice(item.price)}</p>
+        </td>
+      </tr>
+    </table>
+    `;
+  }).join('');
+};
+
+// Shared pricing breakdown HTML generator
+const renderPricingBreakdown = (props: any): string => {
+  return `
+    <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Subtotal</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${formatPrice(props.subtotal)}</p></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Shipping</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${formatPrice(props.shipping_cost)}</p></td>
+      </tr>
+      ${props.tax_amount && props.tax_amount > 0 ? `
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Tax</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${formatPrice(props.tax_amount)}</p></td>
+      </tr>
+      ` : ''}
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${formatPrice(props.gifting_fee)}</p></td>
+      </tr>
+      <tr style="border-top: 2px solid #e5e5e5;">
+        <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
+        <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">${formatPrice(props.total_amount)}</p></td>
+      </tr>
+    </table>
+  `;
+};
+
+// Shared shipping address HTML generator
+const renderShippingAddress = (shippingAddress: any): string => {
+  if (!shippingAddress) return '';
+  const parts = [
+    shippingAddress.name,
+    shippingAddress.address_line1 || shippingAddress.line1,
+    shippingAddress.address_line2 || shippingAddress.line2,
+    [shippingAddress.city, shippingAddress.state, shippingAddress.zip_code || shippingAddress.postal_code].filter(Boolean).join(', '),
+  ].filter(Boolean);
+  if (parts.length === 0) return '';
+  return `
+    <h3 style="margin: 24px 0 12px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">📍 Shipping Address</h3>
+    <p style="margin: 0 0 24px 0; font-size: 14px; color: #666666; line-height: 22px;">
+      ${parts.join('<br>')}
+    </p>
+  `;
+};
+
 // Order Confirmation Template
 const orderConfirmationTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name);
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
       Order Confirmed! 🎉
     </h2>
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hi ${props.customer_name}, thank you for your order. We're preparing your items for shipment.
+      Hi ${firstName}, thank you for your order. We're preparing your items for shipment.
     </p>
     ${props.scheduled_delivery_date ? `
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
@@ -126,55 +207,15 @@ const orderConfirmationTemplate = (props: any): string => {
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
         <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Total</p>
-        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">$${props.total_amount.toFixed(2)}</p>
+        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
       </td></tr>
     </table>
     ${props.items ? `
     <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
-    ${props.items.map((item: any) => {
-      // Use item image if available, otherwise use placeholder
-      const imageUrl = item.image_url || 'https://via.placeholder.com/80x80/e5e5e5/666666?text=Product';
-      return `
-    <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
-      <tr>
-        <td style="padding-right: 16px; vertical-align: top;">
-          <img src="${imageUrl}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />
-        </td>
-        <td style="vertical-align: top;">
-          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
-          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × $${item.price.toFixed(2)}</p>
-        </td>
-      </tr>
-    </table>
-    `;
-    }).join('')}
-    
-    <!-- Pricing breakdown -->
-    <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Subtotal</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.subtotal ? props.subtotal.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Shipping</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.shipping_cost ? props.shipping_cost.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      ${props.tax_amount && props.tax_amount > 0 ? `
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Tax</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.tax_amount.toFixed(2)}</p></td>
-      </tr>
-      ` : ''}
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.gifting_fee ? props.gifting_fee.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      <tr style="border-top: 2px solid #e5e5e5;">
-        <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
-        <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">$${props.total_amount ? props.total_amount.toFixed(2) : '0.00'}</p></td>
-      </tr>
-    </table>
+    ${renderItemsHtml(props.items)}
+    ${renderPricingBreakdown(props)}
     ` : ''}
+    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
@@ -221,56 +262,18 @@ const orderPendingPaymentTemplate = (props: any): string => {
     
     ${props.items && props.items.length > 0 ? `
     <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
-    ${props.items.map((item: any) => {
-      const imageUrl = item.image_url || 'https://via.placeholder.com/80x80/e5e5e5/666666?text=Product';
-      return `
-    <table style="border-bottom: 1px solid #e5e5e5; padding: 16px 0; width: 100%;">
-      <tr>
-        <td style="padding-right: 16px; vertical-align: top;">
-          <img src="${imageUrl}" alt="${truncateProductTitle(item.title)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />
-        </td>
-        <td style="vertical-align: top;">
-          <p style="margin: 0 0 5px 0; font-weight: 600; color: #1a1a1a;">${truncateProductTitle(item.title)}</p>
-          <p style="margin: 0; color: #666666;">Qty: ${item.quantity} × $${typeof item.price === 'number' ? item.price.toFixed(2) : item.price || '0.00'}</p>
-        </td>
-      </tr>
-    </table>
-    `;
-    }).join('')}
-    
-    <!-- Pricing breakdown -->
-    <table style="margin-top: 24px; width: 100%; border-top: 2px solid #e5e5e5; padding-top: 16px;">
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Subtotal</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.subtotal ? props.subtotal.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Shipping</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.shipping_cost ? props.shipping_cost.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      ${props.tax_amount && props.tax_amount > 0 ? `
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Tax</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.tax_amount.toFixed(2)}</p></td>
-      </tr>
-      ` : ''}
-      <tr>
-        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
-        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">$${props.gifting_fee ? props.gifting_fee.toFixed(2) : '0.00'}</p></td>
-      </tr>
-      <tr style="border-top: 2px solid #e5e5e5;">
-        <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
-        <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">$${typeof props.total_amount === 'number' ? props.total_amount.toFixed(2) : props.total_amount || '0.00'}</p></td>
-      </tr>
-    </table>
+    ${renderItemsHtml(props.items)}
+    ${renderPricingBreakdown(props)}
     ` : `
     <table style="background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%); border-radius: 8px; padding: 24px; margin-bottom: 20px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Estimated Total</p>
-        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">$${typeof props.total_amount === 'number' ? props.total_amount.toFixed(2) : props.total_amount || '0.00'}</p>
+        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
       </td></tr>
     </table>
     `}
+    
+    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
     
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
@@ -294,11 +297,14 @@ const orderPendingPaymentTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Order ${props.order_number} scheduled for ${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'delivery'}` });
 };
 
-// Order Shipped Template
+// Order Shipped Template (ENRICHED with items, address, formatted dates)
 const orderShippedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name);
+  const formattedDelivery = props.estimated_delivery ? formatScheduledDate(props.estimated_delivery) : null;
+  
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Your Order Has Shipped! 📦</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.customer_name ? `Hi ${props.customer_name}, your` : 'Your'} order is on its way!</p>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${firstName}, your order is on its way!</p>
     <table style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Order Number</p>
@@ -307,30 +313,42 @@ const orderShippedTemplate = (props: any): string => {
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Tracking Number</p>
         <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; font-family: monospace;">${props.tracking_number}</p>
         ` : ''}
-        ${props.estimated_delivery ? `
+        ${formattedDelivery ? `
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Estimated Delivery</p>
-        <p style="margin: 0; font-size: 16px; font-weight: 600;">${props.estimated_delivery}</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 600;">${formattedDelivery}</p>
         ` : ''}
       </td></tr>
     </table>
-    ${props.tracking_url ? `
+    ${props.items && props.items.length > 0 ? `
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Items in This Shipment</h3>
+    ${renderItemsHtml(props.items)}
+    ${renderPricingBreakdown(props)}
+    ` : ''}
+    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
     <table style="margin-top: 30px; width: 100%;">
-      <tr><td align="center">
+      ${props.tracking_url ? `
+      <tr><td align="center" style="padding-bottom: 12px;">
         <a href="${props.tracking_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
           Track Your Package
         </a>
       </td></tr>
+      ` : ''}
+      <tr><td align="center">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: ${props.tracking_url ? '#ffffff' : 'linear-gradient(90deg, #9333ea 0%, #7c3aed 100%)'}; color: ${props.tracking_url ? '#9333ea' : '#ffffff'}; text-decoration: none; border-radius: 8px; font-weight: 600; ${props.tracking_url ? 'border: 2px solid #9333ea;' : ''}">
+          View Order Details
+        </a>
+      </td></tr>
     </table>
-    ` : ''}
   `;
-  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} has shipped` });
+  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} has shipped${formattedDelivery ? ` - arrives ${formattedDelivery}` : ''}` });
 };
 
-// Order Failed Template
+// Order Failed Template (ENRICHED with items and first-name greeting)
 const orderFailedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name);
   const content = `
     <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Order Processing Issue ⚠️</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.customer_name ? `Hi ${props.customer_name}, we` : 'We'} encountered an issue with your order.</p>
+    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${firstName}, we encountered an issue with your order.</p>
     <table style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #ef4444; text-transform: uppercase;">Order Number</p>
@@ -341,16 +359,25 @@ const orderFailedTemplate = (props: any): string => {
         ` : ''}
       </td></tr>
     </table>
+    ${props.items && props.items.length > 0 ? `
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Affected Items</h3>
+    ${renderItemsHtml(props.items)}
+    ` : ''}
     <p style="margin: 0 0 20px 0; font-size: 14px; color: #666666;">Our team has been notified and is working to resolve this. You may also contact support for assistance.</p>
     <table style="margin-top: 30px; width: 100%;">
+      <tr><td align="center" style="padding-bottom: 12px;">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Order Details
+        </a>
+      </td></tr>
       <tr><td align="center">
-        <a href="https://elyphant.ai/support" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/support" style="display: inline-block; padding: 14px 32px; background: #ffffff; color: #9333ea; text-decoration: none; border-radius: 8px; font-weight: 600; border: 2px solid #9333ea;">
           Contact Support
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Issue with order ${props.order_number}` });
+  return baseEmailTemplate({ content, preheader: `Issue with order ${props.order_number} - we're on it` });
 };
 
 // Connection Invitation Template (also used for gift invitations)
@@ -389,7 +416,6 @@ const connectionInvitationTemplate = (props: any): string => {
     </table>
   `;
   
-  // Customize preheader based on gift context
   const preheader = props.has_pending_gift 
     ? `🎁 ${props.sender_name} has a gift waiting for you on Elyphant!`
     : `${props.sender_name} invited you to connect`;
@@ -446,7 +472,7 @@ const formatOccasion = (occasion: string): string => {
 // Auto-gift Approval Template - Enhanced with event context and next steps
 const autoGiftApprovalTemplate = (props: any): string => {
   const formattedOccasion = formatOccasion(props.occasion);
-  const budgetDisplay = props.budget ? `$${Number(props.budget).toFixed(2)}` : 'Flexible';
+  const budgetDisplay = props.budget ? formatPrice(props.budget) : 'Flexible';
   
   const content = `
     <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
@@ -463,7 +489,7 @@ const autoGiftApprovalTemplate = (props: any): string => {
           📅 UPCOMING EVENT
         </p>
         <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">
-          ${props.recipient_name}'s ${formattedOccasion}
+          ${possessive(props.recipient_name)} ${formattedOccasion}
         </p>
         <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #1a1a1a; font-weight: 600;">
           ${props.event_date || props.execution_date || 'Coming soon'}
@@ -489,7 +515,7 @@ const autoGiftApprovalTemplate = (props: any): string => {
             ${truncateProductTitle(gift.name || 'Gift Item')}
           </p>
           <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #666666; font-size: 14px;">
-            ${typeof gift.price === 'number' ? `$${gift.price.toFixed(2)}` : (gift.price || '')}
+            ${typeof gift.price === 'number' ? formatPrice(gift.price) : (gift.price || '')}
           </p>
         </td>
       </tr>
@@ -538,7 +564,7 @@ const autoGiftApprovalTemplate = (props: any): string => {
       <a href="https://elyphant.ai/auto-gifts" style="color: #9333ea; text-decoration: none; font-weight: 500;">Recurring Gifts Dashboard</a>
     </p>
   `;
-  return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${props.recipient_name}'s ${formattedOccasion}` });
+  return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${possessive(props.recipient_name)} ${formattedOccasion}` });
 };
 
 // Connection Established Template
@@ -574,14 +600,14 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
     <table style="background: ${alertBg}; border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%; border-left: 4px solid ${alertColor};">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Current Balance</p>
-        <p style="margin: 0 0 20px 0; font-size: 32px; font-weight: 700; color: #1a1a1a;">$${props.current_balance?.toFixed(2) || '0.00'}</p>
+        <p style="margin: 0 0 20px 0; font-size: 32px; font-weight: 700; color: #1a1a1a;">${formatPrice(props.current_balance)}</p>
         
         <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Alert Threshold</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">$${props.threshold?.toFixed(2) || '1000.00'}</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.threshold)}</p>
         
         ${props.pending_orders_value ? `
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Pending Orders Value</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">$${props.pending_orders_value.toFixed(2)}</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.pending_orders_value)}</p>
         ` : ''}
         
         ${props.orders_waiting > 0 ? `
@@ -591,7 +617,7 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
         
         ${props.recommended_transfer > 0 ? `
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #059669; text-transform: uppercase; font-weight: 600;">Recommended Transfer</p>
-        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #059669;">$${props.recommended_transfer.toFixed(2)}</p>
+        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #059669;">${formatPrice(props.recommended_transfer)}</p>
         ` : ''}
       </td></tr>
     </table>
@@ -614,8 +640,8 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
   `;
   
   const preheader = props.is_critical 
-    ? `CRITICAL: ZMA balance is $${props.current_balance?.toFixed(2)} - orders may be blocked`
-    : `ZMA balance is $${props.current_balance?.toFixed(2)} - transfer recommended`;
+    ? `CRITICAL: ZMA balance is ${formatPrice(props.current_balance)} - orders may be blocked`
+    : `ZMA balance is ${formatPrice(props.current_balance)} - transfer recommended`;
     
   return baseEmailTemplate({ content, preheader });
 };
@@ -665,6 +691,7 @@ const wishlistSharedTemplate = (props: any): string => {
 // Recurring Gift Rule Created Template (sent to shopper when they create recurring gift rules)
 const recurringGiftRuleCreatedTemplate = (props: any): string => {
   const firstName = getFirstName(props.shopper_name);
+  const recipientName = props.recipient_name || 'your friend';
   
   // Format events list
   const eventsHtml = (props.events || []).map((event: any) => {
@@ -678,7 +705,7 @@ const recurringGiftRuleCreatedTemplate = (props: any): string => {
       anniversary: '💍',
     };
     const icon = occasionIcons[event.date_type?.toLowerCase()] || '🎁';
-    const occasionName = event.occasion_name || event.date_type?.replace(/_/g, ' ') || 'Special Occasion';
+    const occasionName = event.occasion_name || formatOccasion(event.date_type) || 'Special Occasion';
     return `<li style="margin: 8px 0; color: #374151;">${icon} <strong>${occasionName}</strong>${event.date ? ` - ${event.date}` : ''}</li>`;
   }).join('');
 
@@ -687,14 +714,14 @@ const recurringGiftRuleCreatedTemplate = (props: any): string => {
       Recurring Gifts Set Up! 🔄
     </h2>
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hi ${firstName}, you've successfully set up recurring gifts for <strong>${props.recipient_name || 'your friend'}</strong>.
+      Hi ${firstName}, you've successfully set up recurring gifts for <strong>${recipientName}</strong>.
     </p>
     
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #10b981;">
       <tr><td>
         <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Configured Events</p>
         <ul style="margin: 0; padding-left: 20px; font-size: 16px;">
-          ${eventsHtml || '<li style="color: #374151;">Events configured</li>'}
+          ${eventsHtml || `<li style="color: #374151;">🎁 <strong>${formatOccasion(props.occasion || props.rule_details?.occasion || '')}</strong>${props.scheduled_date ? ` - ${props.scheduled_date}` : ''}</li>`}
         </ul>
       </td></tr>
     </table>
@@ -702,15 +729,15 @@ const recurringGiftRuleCreatedTemplate = (props: any): string => {
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
       <tr><td>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Budget Per Gift</p>
-        <p style="margin: 0 0 20px 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">Up to $${props.budget || 50}</p>
+        <p style="margin: 0 0 20px 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">Up to ${formatPrice(props.budget || props.budget_limit || props.rule_details?.budget_limit || 50)}</p>
         <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Auto-Approve</p>
-        <p style="margin: 0; font-size: 16px; color: #374151;">${props.auto_approve ? '✅ Enabled - Gifts will be sent automatically' : '🔔 Disabled - You\'ll approve each gift'}</p>
+        <p style="margin: 0; font-size: 16px; color: #374151;">${(props.auto_approve || props.auto_approve_enabled) ? '✅ Enabled - Gifts will be sent automatically' : '🔔 Disabled - You\'ll approve each gift'}</p>
       </td></tr>
     </table>
     
     <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #1d4ed8; font-size: 14px;">💡 How It Works</p>
-      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">We'll notify you 7 days before each event with gift suggestions from ${props.recipient_name || 'their'}'s wishlist. ${props.auto_approve ? 'Gifts will be purchased and shipped automatically.' : 'You\'ll review and approve before we purchase.'}</p>
+      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">We'll notify you 7 days before each event with gift suggestions from ${possessive(recipientName)} wishlist. ${(props.auto_approve || props.auto_approve_enabled) ? 'Gifts will be purchased and shipped automatically.' : 'You\'ll review and approve before we purchase.'}</p>
     </div>
     
     <table style="margin-top: 30px; width: 100%;">
@@ -721,7 +748,7 @@ const recurringGiftRuleCreatedTemplate = (props: any): string => {
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Recurring gifts for ${props.recipient_name || 'your friend'} are all set!` });
+  return baseEmailTemplate({ content, preheader: `Recurring gifts for ${recipientName} are all set!` });
 };
 
 // Gift Coming Your Way Template (sent to recipient when a gift is purchased for them)
@@ -796,7 +823,7 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
       Payment Issue ⚠️
     </h2>
     <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hi ${firstName}, we tried to process payment for <strong>${props.recipient_name || 'your recipient'}</strong>'s ${occasion} gift, but your saved card was declined.
+      Hi ${firstName}, we tried to process payment for <strong>${possessive(props.recipient_name || 'your recipient')}</strong> ${occasion} gift, but your saved card was declined.
     </p>
     
     <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 24px 0; border-radius: 8px;">
@@ -817,7 +844,7 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Action needed: Payment failed for ${props.recipient_name || 'your'}'s gift` });
+  return baseEmailTemplate({ content, preheader: `Action needed: Payment failed for ${possessive(props.recipient_name || 'your')} gift` });
 };
 
 // Template Router
@@ -869,7 +896,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'auto_gift_approval':
       return {
         html: autoGiftApprovalTemplate(data),
-        subject: `Auto-Gift Approval Needed - ${data.recipient_name}'s ${formatOccasion(data.occasion)} 🎁`
+        subject: `Auto-Gift Approval Needed - ${possessive(data.recipient_name)} ${formatOccasion(data.occasion)} 🎁`
       };
     case 'recurring_gift_rule_created':
     case 'auto_gift_rule_created': // Alias for backward compatibility
@@ -892,7 +919,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'auto_gift_payment_failed':
       return {
         html: autoGiftPaymentFailedTemplate(data),
-        subject: `⚠️ Payment Failed for ${data.recipient_name || 'Your'}'s Gift - Action Needed`
+        subject: `⚠️ Payment Failed for ${possessive(data.recipient_name || 'Your')} Gift - Action Needed`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
@@ -914,8 +941,9 @@ const handler = async (req: Request): Promise<Response> => {
     let emailData = data || metadata; // Support both 'data' and 'metadata' fields
     let emailRecipient = recipientEmail;
 
-    // If orderId provided for order_confirmation or order_pending_payment, fetch full order details
-    if ((eventType === 'order_confirmation' || eventType === 'order_pending_payment') && orderId && !emailData) {
+    // If orderId provided for order events, fetch full order details from DB
+    const orderFetchEventTypes = ['order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed'];
+    if (orderFetchEventTypes.includes(eventType) && orderId && !emailData) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseKey);
@@ -964,10 +992,17 @@ const handler = async (req: Request): Promise<Response> => {
           price: item.price || 0, // Already in dollars
           image_url: item.image_url || item.image
         })),
+        shipping_address: shippingAddress || null,
         is_gift: (order.gift_options as any)?.is_gift || false,
         gift_message: (order.gift_options as any)?.gift_message || null,
         scheduled_delivery_date: order.scheduled_delivery_date || null,
         scheduled_date: order.scheduled_delivery_date || null, // Alias for pending_payment template
+        // For shipped emails
+        tracking_number: order.tracking_number || null,
+        estimated_delivery: order.estimated_delivery || order.scheduled_delivery_date || null,
+        tracking_url: order.tracking_number ? `https://www.amazon.com/progress-tracker/package/?itemId=${order.tracking_number}` : null,
+        // For failed emails
+        error_message: order.notes || null,
       };
     }
 

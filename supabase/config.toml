@@ -132,6 +132,9 @@ verify_jwt = false
 [functions.delete-user-account]
 verify_jwt = true
 
+[functions.claim-guest-orders]
+verify_jwt = false
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

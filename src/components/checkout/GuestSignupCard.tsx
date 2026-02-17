@@ -55,6 +55,20 @@ const GuestSignupCard: React.FC<GuestSignupCardProps> = ({
         return;
       }
 
+      // Attempt to claim guest orders immediately
+      if (data.user) {
+        try {
+          const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-guest-orders');
+          if (claimError) {
+            console.warn('[GuestSignup] Order claim attempt (may succeed on email verify):', claimError);
+          } else {
+            console.log('[GuestSignup] Claimed orders:', claimData?.claimed);
+          }
+        } catch (claimErr) {
+          console.warn('[GuestSignup] Order claim failed (will retry on email verify):', claimErr);
+        }
+      }
+
       if (data.user && !data.user.email_confirmed_at) {
         toast.success('Account created! Check your email to verify.');
       } else {
@@ -78,6 +92,9 @@ const GuestSignupCard: React.FC<GuestSignupCardProps> = ({
           <h3 className="text-lg font-semibold">Account Created!</h3>
           <p className="text-sm text-muted-foreground">
             Check your email at <span className="font-medium">{email}</span> to verify your account.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            After verifying, we'll help you set up your profile for personalized gift recommendations, size matching, and more.
           </p>
         </CardContent>
       </Card>

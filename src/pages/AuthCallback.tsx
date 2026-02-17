@@ -70,6 +70,19 @@ const AuthCallback = () => {
             }
           }
           
+          // Claim any guest orders for this user (belt-and-suspenders)
+          try {
+            const { data: claimData, error: claimError } = await supabase.functions.invoke('claim-guest-orders');
+            if (claimError) {
+              console.warn('[AuthCallback] Order claim error:', claimError);
+            } else if (claimData?.claimed > 0) {
+              console.log(`[AuthCallback] Claimed ${claimData.claimed} guest order(s)`);
+              toast.success(`${claimData.claimed} order(s) linked to your account!`);
+            }
+          } catch (claimErr) {
+            console.warn('[AuthCallback] Order claim failed:', claimErr);
+          }
+
           // Store completion state for streamlined profile setup
           localStorage.setItem('profileCompletionState', JSON.stringify({
             step: 'profile',

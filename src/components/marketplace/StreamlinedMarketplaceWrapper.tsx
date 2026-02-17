@@ -552,14 +552,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const shouldUseVirtualization = paginatedProducts.length > 50;
 
   // Determine if we should show loading state
-  // Show loading when: explicitly loading OR we have search/category params but no products yet
+  // Show loading when: explicitly loading AND we have no products yet
   // SKIP loading for life event landing pages (wedding/baby with no search) — they're pure presentation
+  // IMPORTANT: Do NOT show loading skeleton after fetch completes with zero results — let ZeroResultsState render
   const isLifeEventLanding = !!(lifeEventCategory && !urlSearchTerm);
-  const shouldShowLoading = !isLifeEventLanding && (isLoading || (
-    showSearchInfo && 
-    paginatedProducts.length === 0 && 
-    !error
-  ));
+  const shouldShowLoading = !isLifeEventLanding && isLoading && paginatedProducts.length === 0;
 
   // Show loading skeleton
   if (shouldShowLoading) {

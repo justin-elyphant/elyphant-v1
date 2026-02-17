@@ -1,86 +1,132 @@
 
 
-## Make Guest Email Mandatory + Guest-to-User Conversion Loop
+## Email Template Audit: E-Commerce Best Practice Gaps
 
-### What We're Solving
+### Issues Found From Your Screenshots
 
-Right now the "Your Email" field on the guest checkout (shown in your screenshot) has an `html required` attribute but no real-time validation feedback — a guest can click "Pay Now" and only gets a toast error. More importantly, **after the purchase there's zero attempt to convert that guest into a signed-up user**, which is a missed viral loop opportunity.
+**Screenshot 1 -- "Order Shipped" email:**
+- Missing product images and item list (just order number + raw ISO date)
+- Estimated delivery shows raw `2026-02-16T00:00:00` instead of formatted "Monday, February 16, 2026"
+- Missing shipping address
+- No personalization with first name (uses full name inconsistently)
 
-### The Opportunity
+**Screenshot 2 -- "Order Confirmation" email:**
+- Item price shows `$0.00` (data issue -- price not passed correctly to line items)
+- Subtotal shows `$1360.00` (cents-not-divided bug -- the pricing fix we did was frontend-only; the orchestrator's `.toFixed(2)` on raw data still passes through whatever is stored)
 
-This is a classic e-commerce conversion funnel:
+**Screenshot 3 -- "Recurring Gift Rule Created" email:**
+- "Events configured" is a placeholder -- no actual event names/dates rendered (the events array is likely empty)
+- Missing recipient avatar or any visual personalization
+- "Justin Meeks's" should be "Justin Meeks'" (possessive grammar)
 
-1. **Recipient shares wishlist** (viral trigger)
-2. **Guest shopper lands on checkout** (high intent)
-3. **We capture their email** (lead capture -- currently weak)
-4. **Post-purchase, we offer account creation** (conversion moment -- currently missing)
+---
 
-Every major gifting platform (Zola, Amazon Registry, Target Registry) does this. The shopper just proved purchase intent -- that's the highest-conversion moment to offer an account.
+### Systematic Gaps Across All Templates
 
-### Plan
+#### Gap 1: "Order Shipped" lacks product details (CRITICAL)
+The `orderShippedTemplate` has zero item information -- no images, no product names, no quantities. Every major e-commerce platform (Amazon, Shopify, Target) includes the full item list in shipping emails.
 
-#### Part 1: Make Email Truly Mandatory with Inline Validation
+**Fix:** Add item images, names, quantities, and pricing breakdown to the shipped template. The orchestrator's handler already fetches `line_items` for confirmation emails but does NOT fetch order data for `order_shipped` events -- this data fetch needs to be added.
 
-**File: `src/components/checkout/UnifiedCheckoutForm.tsx`**
+#### Gap 2: Raw ISO dates in shipped emails
+`estimated_delivery` is passed as raw ISO (`2026-02-16T00:00:00`) and rendered as-is. The `formatScheduledDate()` utility already exists but isn't used here.
 
-- Add email validation state (`guestEmailError`) that checks for valid email format on blur and on submit
-- Show inline red error text below the email field when invalid (not just a toast)
-- Disable the "Pay Now" / "Proceed to Payment" buttons when email is empty or invalid for guest users
-- Add a subtle value proposition below the email field: "We'll send your order confirmation, tracking details, and a special offer to join Elyphant"
+**Fix:** Apply `formatScheduledDate()` to `props.estimated_delivery` in `orderShippedTemplate`.
 
-#### Part 2: Post-Purchase Signup Prompt on PaymentSuccess
+#### Gap 3: Remaining `.toFixed(2)` in orchestrator (18 instances)
+The pricing consolidation only fixed the frontend files. The orchestrator edge function still has ~18 raw `.toFixed(2)` calls. Since the orchestrator is a Deno edge function (not a React file), it doesn't import `formatPrice` from `@/lib/utils`. We need a local `formatPrice` helper.
 
-**File: `src/pages/PaymentSuccess.tsx`**
+**Instances to fix:**
+- `orderConfirmationTemplate`: lines 129, 145, 156, 160, 165, 170, 174
+- `orderPendingPaymentTemplate`: lines 234, 245, 249, 254, 259, 263, 270
+- `autoGiftApprovalTemplate`: line 449, 492
+- `zmaLowBalanceAlertTemplate`: lines 577, 580, 584, 594
 
-After the "Payment Successful!" confirmation, add a conversion card for guest users:
+**Fix:** Add a local `formatPrice` function at the top of the orchestrator and replace all `.toFixed(2)` interpolations.
 
-- Detect guest status (no authenticated user in context)
-- Show a card: "You're almost an Elyphant! Create a free account to track your order, save wishlists, and get personalized gift recommendations"
-- Pre-fill the email from the checkout session (pass via URL param `guest_email` from the Stripe success URL)
-- Two CTAs: "Create Free Account" (primary, red) and "Maybe Later" (ghost)
-- "Create Free Account" calls `supabase.auth.signUp()` with the captured email, prompts for a password
-- Track conversion with a console log for now (analytics later)
+#### Gap 4: "Order Shipped" missing first-name greeting
+Uses `props.customer_name` (full name) inconsistently. Other templates use `getFirstName()` but shipped does not.
 
-#### Part 3: Post-Purchase Signup on OrderConfirmation
+**Fix:** Apply `getFirstName(props.customer_name)` in the shipped template greeting.
 
-**File: `src/pages/OrderConfirmation.tsx`**
+#### Gap 5: Shipped email -- missing shipping address
+No shipping destination shown. Best practice is to confirm where the package is going so the customer can catch errors.
 
-- Same pattern: if no authenticated user, show a signup prompt card between the order details and the action buttons
-- This catches guests who land here via the email confirmation link
-- Messaging: "Want to track this order and future gifts? Create your free Elyphant account"
+**Fix:** Add shipping address section from order data.
 
-#### Part 4: Pass Guest Email Through Stripe Flow
+#### Gap 6: Handler doesn't fetch order data for `order_shipped`
+The orchestrator handler (line 918) only fetches from DB for `order_confirmation` and `order_pending_payment`. The `order_shipped` event relies entirely on pre-passed data, which is why the shipped email is so sparse.
 
-**File: `supabase/functions/create-checkout-session/index.ts`**
+**Fix:** Extend the handler's DB fetch logic to also cover `order_shipped` and `order_failed` event types, pulling items, pricing breakdown, and shipping address.
 
-- Append `guest_email` as a query parameter on the `success_url` so the PaymentSuccess page can pre-fill the signup form
-- Example: `success_url: \`$\{origin\}/payment-success?session_id={CHECKOUT_SESSION_ID}&guest_email=$\{encodeURIComponent(guestEmail)\}\``
+#### Gap 7: Recurring gift events array rendering empty
+The `recurringGiftRuleCreatedTemplate` tries to render `props.events` but falls back to the generic "Events configured" text. The calling code likely doesn't pass the events array.
 
-### Bonus: Also Fix a Missed formatPrice
+**Fix:** This is a data-passing issue in the caller (likely the auto-gift setup flow). The template itself is correct -- we need to ensure the caller passes the `events` array with `date_type`, `occasion_name`, and `date` fields.
 
-**File: `src/components/checkout/UnifiedCheckoutForm.tsx` line 758**
+#### Gap 8: Missing "View Order" CTA in shipped email
+The shipped template has "Track Your Package" (good) but no "View Order Details" link back to the platform, which is standard for driving engagement.
 
-The sticky bottom bar still uses raw `$${totalAmount.toFixed(2)}` -- this should be `formatPrice(totalAmount)` per the consolidation we just completed.
+**Fix:** Add a secondary "View Order Details" link below the tracking button.
 
-**File: `src/pages/OrderConfirmation.tsx` line 599**
+---
 
-Uses `$${(item.unit_price || item.price || 0).toFixed(2)}` -- should also use `formatPrice()`.
+### Implementation Plan
 
-### Technical Details
+#### Part 1: Add local `formatPrice` to orchestrator
+Add at the top of `ecommerce-email-orchestrator/index.ts`:
+```
+const formatPrice = (amount: number): string => {
+  return `$${Number(amount || 0).toFixed(2)}`;
+};
+```
+Replace all 18 raw `.toFixed(2)` interpolations with `formatPrice()`.
 
-**New component:** `GuestSignupCard` -- a reusable card component used on both PaymentSuccess and OrderConfirmation pages. Contains:
-- Email display (pre-filled, read-only)
-- Password input field
-- "Create Free Account" button calling `supabase.auth.signUp()`
-- Success state that shows "Account created! Check your email to verify"
-- Error handling for existing accounts ("Already have an account? Sign in instead")
+#### Part 2: Enrich "Order Shipped" template
+Rebuild `orderShippedTemplate` to include:
+- First-name greeting via `getFirstName()`
+- Formatted estimated delivery via `formatScheduledDate()`
+- Product images + names + quantities (same layout as order confirmation)
+- Shipping address section
+- "View Order Details" secondary CTA
 
-**Files changed:**
-- `src/components/checkout/UnifiedCheckoutForm.tsx` -- email validation + formatPrice fix
-- `src/pages/PaymentSuccess.tsx` -- guest signup card
-- `src/pages/OrderConfirmation.tsx` -- guest signup card + formatPrice fix
-- `src/components/checkout/GuestSignupCard.tsx` -- new reusable component
-- `supabase/functions/create-checkout-session/index.ts` -- pass guest_email in success URL
+#### Part 3: Extend handler DB fetch for shipped/failed events
+Update the handler condition (line 918) from:
+```
+if ((eventType === 'order_confirmation' || eventType === 'order_pending_payment') && orderId && !emailData)
+```
+to:
+```
+if (['order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed'].includes(eventType) && orderId && !emailData)
+```
+This ensures shipped and failed emails get the same rich data (items, pricing, address).
 
-**No database changes needed** -- uses existing `auth.users` and `profiles` table with the existing auto-creation trigger.
+#### Part 4: Fix "Order Failed" template richness
+Currently the failed template only shows order number and error message. Add:
+- First-name greeting via `getFirstName()`
+- Item list with images (so the customer knows which order failed)
+- "Retry" or "Contact Support" with order context
+
+#### Part 5: Recurring gift events data passthrough
+Investigate the caller of `recurring_gift_rule_created` to ensure it passes the `events` array. If the caller is in `approve-auto-gift` or a frontend service, update it to include event details.
+
+---
+
+### Files Changed
+
+| File | Changes |
+|------|---------|
+| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Add `formatPrice()`, enrich shipped/failed templates, extend handler DB fetch, fix 18x `.toFixed(2)` |
+
+### What Does NOT Change
+- Base template (`base-template.ts`) -- already well-structured
+- Order confirmation template -- already has items, images, pricing (just needs formatPrice)
+- Auto-gift approval template -- already rich
+- Welcome, connection, wishlist-shared templates -- appropriate for their purpose (no order data)
+
+### Bonus: Possessive grammar fix
+Fix `${props.recipient_name}'s` to handle names ending in 's' (e.g., "Justin Meeks'" not "Justin Meeks's"). Add a small helper:
+```
+const possessive = (name: string) => name.endsWith('s') ? `${name}'` : `${name}'s`;
+```
 

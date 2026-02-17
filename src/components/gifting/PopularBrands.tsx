@@ -65,30 +65,25 @@ const PopularBrands = () => {
   const isMobile = useIsMobile();
   
   const handleBrandClick = async (e: React.MouseEvent, brandName: string) => {
-    e.preventDefault(); // Prevent default navigation
+    e.preventDefault();
     console.log(`PopularBrands: Brand clicked: ${brandName}`);
-    
-    // Set loading state for this specific brand
     setLoadingBrand(brandName);
     
     try {
-      // Navigate to marketplace with brand search using brandCategories
-      const searchUrl = `/marketplace?brandCategories=${encodeURIComponent(brandName)}`;
-      navigate(searchUrl, { 
-        state: { 
-          fromBrand: true, 
-          brandName 
-        } 
-      });
-      
+      // Map brand name to brand ID for consistent URL format
+      const brandIdMap: Record<string, string> = {
+        'Nike': 'nike', 'Apple': 'apple', 'Yeti': 'yeti', 'Sony': 'sony',
+        'Adidas': 'adidas', 'Made In': 'madein', 'Lego': 'lego', 'PlayStation': 'playstation',
+        'Samsung': 'samsung',
+      };
+      const brandId = brandIdMap[brandName] || brandName.toLowerCase().replace(/\s+/g, '');
+      const searchUrl = `/marketplace?brandCategories=${encodeURIComponent(brandId)}`;
+      navigate(searchUrl, { state: { fromBrand: true, brandName } });
     } catch (error) {
       console.error(`Error handling brand click for ${brandName}:`, error);
       toast.error(`Failed to load ${brandName} products`);
     } finally {
-      // Clear loading state after a delay
-      setTimeout(() => {
-        setLoadingBrand(null);
-      }, 1000);
+      setTimeout(() => setLoadingBrand(null), 1000);
     }
   };
 
@@ -107,7 +102,7 @@ const PopularBrands = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-3 md:gap-4">
         {popularBrands.map((brand) => (
           <Link 
-            to={`/marketplace?brandCategories=${encodeURIComponent(brand.name)}`} 
+            to={`/marketplace?brandCategories=${encodeURIComponent((() => { const m: Record<string, string> = {'Nike':'nike','Apple':'apple','Yeti':'yeti','Sony':'sony','Adidas':'adidas','Made In':'madein','Lego':'lego','PlayStation':'playstation','Samsung':'samsung'}; return m[brand.name] || brand.name.toLowerCase().replace(/\s+/g,''); })())}`} 
             key={brand.id}
             onClick={(e) => handleBrandClick(e, brand.name)}
             className={cn(

@@ -72,7 +72,7 @@ const PopularBrands = () => {
 
   const handleBrandClick = (brand: Brand) => {
     triggerHapticFeedback('light');
-    navigate(`/marketplace?search=${encodeURIComponent(brand.searchTerm)}`);
+    navigate(`/marketplace?brandCategories=${encodeURIComponent(brand.id)}`);
   };
 
   return (

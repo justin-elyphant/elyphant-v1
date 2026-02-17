@@ -316,9 +316,9 @@ serve(async (req) => {
 
     // STEP 6.5: Validate phone number (CRITICAL for Zinc/carrier delivery notifications)
     // Priority: recipient phone (for gifts) > shipping address phone > shopper profile phone
-    const finalPhoneNumber = recipientPhone || shippingAddress.phone || shopperPhone || '';
-    if (!finalPhoneNumber) {
-      console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - Zinc may reject for carrier notifications`);
+    const finalPhoneNumber = recipientPhone || shippingAddress.phone || shopperPhone || '0000000000';
+    if (finalPhoneNumber === '0000000000') {
+      console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - using fallback 0000000000 for Zinc`);
       // Log to orders table for admin visibility
       await supabase.from('orders').update({
         notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'

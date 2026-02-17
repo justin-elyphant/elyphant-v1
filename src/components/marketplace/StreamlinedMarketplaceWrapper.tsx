@@ -8,6 +8,7 @@ import MarketplaceLandingHero from "./landing/MarketplaceLandingHero";
 import CuratedCollectionTiles, { TILES } from "./landing/CuratedCollectionTiles";
 import CategoryLandingHeader from "./landing/CategoryLandingHeader";
 import LifeEventLandingPage from "./landing/LifeEventLandingPage";
+import BrandLandingPage from "./landing/BrandLandingPage";
 import ShopByOccasion from "./landing/ShopByOccasion";
 import CategoryBrowseGrid from "./landing/CategoryBrowseGrid";
 import TrendingProductsSection from "./landing/TrendingProductsSection";
@@ -25,6 +26,7 @@ import CategoryHeroSection from "./CategoryHeroSection";
 // useOptimizedProducts removed - using server-side pagination
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { getCategoryByValue } from "@/constants/categories";
+import { getBrandData } from "@/constants/brandData";
 import OptimizedProductGrid from "./components/OptimizedProductGrid";
 import VirtualizedProductGrid from "./components/VirtualizedProductGrid";
 import { batchDOMUpdates } from "@/utils/performanceOptimizations";
@@ -555,8 +557,10 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // Show loading when: explicitly loading AND we have no products yet
   // SKIP loading for life event landing pages (wedding/baby with no search) — they're pure presentation
   // IMPORTANT: Do NOT show loading skeleton after fetch completes with zero results — let ZeroResultsState render
+  const isBrandLanding = !!(brandCategories && !urlSearchTerm);
+  const activeBrandData = brandCategories ? getBrandData(brandCategories) : null;
   const isLifeEventLanding = !!(lifeEventCategory && !urlSearchTerm);
-  const shouldShowLoading = !isLifeEventLanding && isLoading && paginatedProducts.length === 0;
+  const shouldShowLoading = !isLifeEventLanding && !isBrandLanding && isLoading && paginatedProducts.length === 0;
 
   // Show loading skeleton
   if (shouldShowLoading) {
@@ -629,7 +633,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       className={`container mx-auto px-4 py-6 pt-safe-top pb-safe ${isMobile ? 'mobile-marketplace-grid mobile-safe-area' : ''}`}
     >
       {/* Conditional Hero Section - Hide if personalized or there's an active search */}
-      {!isPersonalizedActive && !urlSearchTerm && (
+      {!isPersonalizedActive && !urlSearchTerm && !isBrandLanding && (
         <> 
           {brandCategories ? (
             hideHeroBanner ? null : (
@@ -645,8 +649,8 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         </>
       )}
       
-      {/* Only show MarketplaceHeader for non-personalized, non-life-event-landing */}
-      {!isPersonalizedActive && !isLifeEventLanding && (
+      {/* Only show MarketplaceHeader for non-personalized, non-life-event-landing, non-brand-landing */}
+      {!isPersonalizedActive && !isLifeEventLanding && !isBrandLanding && (
         <MarketplaceHeader
           totalResults={filteredPaginatedProducts.length}
           filteredProducts={filteredPaginatedProducts}
@@ -671,6 +675,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       {/* Life Event Landing Pages (Wedding / Baby) */}
       {lifeEventCategory && !urlSearchTerm && !isPersonalizedActive && (
         <LifeEventLandingPage category={lifeEventCategory} />
+      )}
+
+      {/* Brand Landing Pages */}
+      {isBrandLanding && activeBrandData && !isPersonalizedActive && (
+        <BrandLandingPage brand={activeBrandData} />
       )}
 
       {/* Unified Category / Search Header — skip for life event landing */}
@@ -770,7 +779,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       })()}
 
       {/* Quick Filters - Only for non-personalized, hidden on life event landing */}
-      {!isPersonalizedActive && !(lifeEventCategory && !urlSearchTerm) && (
+      {!isPersonalizedActive && !(lifeEventCategory && !urlSearchTerm) && !isBrandLanding && (
         <>
           {/* Sub-Category Tabs - Below hero, above filters */}
           {showSearchInfo && (

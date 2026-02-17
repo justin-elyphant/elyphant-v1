@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { HolidayHeroText } from "./HolidayHeroText";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
-import heroValentinesImage from "@/assets/valentines-hero.jpg";
+import heroImage from "@/assets/hero-spring.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated will-change-transform"
         style={{
-          backgroundImage: `url('${heroValentinesImage}')`,
+          backgroundImage: `url('${heroImage}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'left center',
         }}

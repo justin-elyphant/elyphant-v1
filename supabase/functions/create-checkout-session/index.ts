@@ -297,7 +297,7 @@ serve(async (req) => {
 
     // Store gift options as individual fields (no JSON truncation)
     if (giftOptions) {
-      metadata.gift_message = String(giftOptions.message || '').substring(0, 500);
+      metadata.gift_message = String(giftOptions.giftMessage || giftOptions.message || '').substring(0, 500);
       metadata.gift_is_anonymous = String(!!giftOptions.isAnonymous);
     }
 

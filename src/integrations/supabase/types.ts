@@ -2960,6 +2960,7 @@ export type Database = {
           funding_hold_reason: string | null
           funding_status: string | null
           gift_options: Json | null
+          guest_email: string | null
           id: string
           is_auto_gift: boolean | null
           last_polling_check_at: string | null
@@ -2995,6 +2996,7 @@ export type Database = {
           funding_hold_reason?: string | null
           funding_status?: string | null
           gift_options?: Json | null
+          guest_email?: string | null
           id?: string
           is_auto_gift?: boolean | null
           last_polling_check_at?: string | null
@@ -3030,6 +3032,7 @@ export type Database = {
           funding_hold_reason?: string | null
           funding_status?: string | null
           gift_options?: Json | null
+          guest_email?: string | null
           id?: string
           is_auto_gift?: boolean | null
           last_polling_check_at?: string | null

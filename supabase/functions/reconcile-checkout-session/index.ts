@@ -90,10 +90,18 @@ serve(async (req) => {
       (shippingAddress as any).validation_warning = `missing_${missingFields.join('_')}`;
     }
 
-    const userId = metadata.user_id || session.client_reference_id;
+    const rawUserId = metadata.user_id || session.client_reference_id;
+    const isGuestCheckout = !rawUserId || rawUserId.startsWith('guest_');
+    const userId = isGuestCheckout ? null : rawUserId;
+    const guestEmail = isGuestCheckout
+      ? (metadata.guest_email || session.customer_details?.email || null)
+      : null;
 
-    if (!userId) {
+    if (!userId && !isGuestCheckout) {
       throw new Error('No user_id found in session metadata or client_reference_id');
+    }
+    if (isGuestCheckout) {
+      console.log(`🛒 Guest checkout detected | Email: ${guestEmail}`);
     }
 
     const isScheduled = metadata.scheduled_delivery_date && 
@@ -121,6 +129,7 @@ serve(async (req) => {
     // Create order
     const orderData = {
       user_id: userId,
+      guest_email: guestEmail,
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
       status: isScheduled ? 'scheduled' : 'payment_confirmed',
@@ -129,7 +138,6 @@ serve(async (req) => {
       currency: session.currency || 'usd',
       line_items: lineItems,
       shipping_address: shippingAddress,
-      is_scheduled: isScheduled,
       scheduled_delivery_date: metadata.scheduled_delivery_date || null,
       is_auto_gift: metadata.is_auto_gift === 'true',
       auto_gift_rule_id: metadata.auto_gift_rule_id || null,

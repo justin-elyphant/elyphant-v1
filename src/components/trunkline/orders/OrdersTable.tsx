@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { formatPrice } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -201,7 +202,7 @@ export default function OrdersTable({ orders, loading, onOrderClick, onOrderUpda
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">
-                      ${Number(order.total_amount).toFixed(2)}
+                      {formatPrice(Number(order.total_amount))}
                     </div>
                     <div className="text-xs text-slate-600">
                       {order.currency}

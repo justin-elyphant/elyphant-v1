@@ -2,11 +2,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Check } from 'lucide-react';
-import { CartItem } from '@/contexts/CartContext';
+import { ShoppingBag, Check, Trash2 } from 'lucide-react';
+import { CartItem, useCart } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
 import CartItemImage from '@/components/cart/CartItemImage';
 import { formatPrice } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
@@ -31,6 +32,7 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   totalAmount,
   isLoadingShipping = false
 }) => {
+  const { removeFromCart } = useCart();
   const isFreeShipping = shippingCost === 0;
   
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
@@ -66,6 +68,14 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
               <div className="text-right flex-shrink-0">
                 <p className="font-medium">{formatPrice(item.product.price * item.quantity)}</p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 min-h-[44px] min-w-[44px] flex-shrink-0 text-muted-foreground hover:text-destructive touch-action-manipulation"
+                onClick={() => removeFromCart(item.product.product_id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>

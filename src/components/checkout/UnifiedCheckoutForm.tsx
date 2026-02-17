@@ -790,7 +790,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               createCheckoutSession();
             }}
             disabled={isProcessing || !addressesLoaded || !shippingCostLoaded || !isGuestEmailValid}
-            className="flex-1 max-w-[200px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600"
+            className="flex-1 max-w-[200px] min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 touch-action-manipulation"
             size="lg"
           >
             {isProcessing ? (

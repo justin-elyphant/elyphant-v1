@@ -346,7 +346,7 @@ export default function OverviewTab() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-sm text-foreground">${Number(order.total_amount).toFixed(2)}</p>
+                      <p className="font-medium text-sm text-foreground">{formatPrice(Number(order.total_amount))}</p>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         COMPLETED_STATUSES.includes(order.status) ? 'bg-green-100 text-green-700' :
                         PENDING_STATUSES.includes(order.status) ? 'bg-orange-100 text-orange-700' :

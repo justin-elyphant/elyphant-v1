@@ -662,7 +662,7 @@ const wishlistSharedTemplate = (props: any): string => {
           ${props.wishlist_title}
         </p>
         <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666;">
-          ${props.item_count} items • $${props.total_value}
+          ${props.item_count} items • ${formatPrice(props.total_value)}
         </p>
       </td></tr>
     </table>

@@ -47,6 +47,7 @@ import { unifiedRecipientService } from '@/services/unifiedRecipientService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -688,7 +689,32 @@ const UnifiedCheckoutForm: React.FC = () => {
             </Card>
           )}
 
-          {/* Payment Section - Mobile: Full width */}
+          {/* Gift Message - Available for all shoppers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5" />
+                Gift Message <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label htmlFor="gift-message">Add a personal note for the recipient</Label>
+                <Textarea
+                  id="gift-message"
+                  placeholder="Write a heartfelt message to include with the gift..."
+                  value={giftOptions.giftMessage}
+                  onChange={(e) => handleUpdateGiftOptions({ giftMessage: e.target.value })}
+                  className="mt-1 min-h-[80px] resize-none"
+                  maxLength={240}
+                />
+                <p className="text-xs text-muted-foreground mt-1 text-right">
+                  {giftOptions.giftMessage.length}/240 characters
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

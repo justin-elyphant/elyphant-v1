@@ -1,77 +1,111 @@
 
+## Unified Pricing Architecture: Consolidation Plan
 
-## Product Card Component Consolidation
+### Why This Is Safe for Zinc
 
-### The Problem
+The payment/fulfillment pipeline already follows the Unified Pricing Standard end-to-end:
 
-We just experienced a "whack-a-mole" fix across 5 files because the same wishlist button is independently implemented in 7+ product card components. This is a maintainability hazard -- any future change (styling, behavior, new feature) requires hunting down and updating every card variant.
+```text
+Frontend (dollars)
+  --> create-checkout-session (dollars * 100 = cents for Stripe)
+    --> stripe-webhook-v2 (cents / 100 = dollars for DB storage)
+      --> process-order-v2 (dollars * 100 = cents for Zinc max_price)
+```
 
-### Current State: 7 Redundant Card Components
+This plan touches **only the display layer and wishlist write path** -- neither feeds into the Zinc pipeline. Zero risk to order processing.
 
-| Component | Lines | Used By | Redundant? |
-|-----------|-------|---------|------------|
-| AirbnbStyleProductCard | 502 | UnifiedProductCard (default), direct imports | **Primary -- keep** |
-| ProductItem | 229 | useProductInteractions (grid/list) | Yes -- duplicates AirbnbStyle |
-| ModernProductCard | 149 | UnifiedProductCard ("modern") | Yes -- duplicates AirbnbStyle |
-| MobileProductCard | 186 | UnifiedProductCard ("mobile") | Yes -- AirbnbStyle already mobile-aware |
-| ProductCard | 154 | UnifiedProductCard ("general") | Yes -- incomplete (TODO wishlist) |
-| ProductItemBase | 105 | Delegates to ImageSection + InfoSection | Yes -- unused wrapper layer |
-| ProductImageSection | ~70 | ProductItemBase only | Yes -- dies with ProductItemBase |
-| ProductInfoSection | ~60 | ProductItemBase only | Yes -- dies with ProductItemBase |
-| WishlistButton | ~30 | Legacy wrapper | Yes -- wraps QuickWishlistButton |
-| QuickWishlistButton | ~70 | WishlistButton only | Yes -- wraps WishlistSelectionPopoverButton |
+---
 
-Additionally, `ProductGridOptimized.tsx` is a 1-line re-export of `ProductGrid` and can be removed.
+### Phase 1: Write-Path Normalization (1 file)
 
-### Consolidation Plan
+**File:** `src/components/gifting/wishlist/WishlistSelectionPopoverButton.tsx`
 
-**Goal**: Route ALL product tile rendering through `AirbnbStyleProductCard`, which already supports every view mode (grid, list, modern), context (marketplace, wishlist), mobile optimization, and the correct wishlist popover behavior.
+- Before saving `product.price` to `wishlist_items`, detect if it's in cents (integer > 200) and divide by 100
+- This prevents bad data from entering the database, eliminating bugs at the source
 
-### Phase 1: Update UnifiedProductCard to fully delegate to AirbnbStyleProductCard
+---
 
-`UnifiedProductCard.tsx` already maps card types to `AirbnbStyleProductCard`, but the "modern" and "mobile" cases currently import their own separate components. Update the switch cases to pass the correct props directly to `AirbnbStyleProductCard` instead.
+### Phase 2: Delete Redundant Utility Files (3 files)
 
-- **"modern" case**: Map `onClick` to `onProductClick`, set `viewMode="modern"`, pass through all props
-- **"mobile" case**: Map `onProductClick(productId)` to card click, pass through
-- **"general" case**: Already delegates correctly (no change needed)
-- **"gifting" case**: Already delegates correctly (no change needed)
+Delete these files whose logic is duplicated in `formatPrice()` inside `src/lib/utils.ts`:
 
-### Phase 2: Update useProductInteractions to use UnifiedProductCard for all view modes
+- `src/utils/productPricing.ts` -- `formatProductPrice()`, `usesCentsPricing()` (duplicates `formatPrice`)
+- `src/utils/productSourceDetection.ts` -- `formatPriceWithDetection()` (duplicates `formatPrice`)
+- `src/utils/priceValidation.ts` -- `safeFormatPrice()` (thin wrapper around `formatPrice`)
 
-In `src/components/marketplace/product-grid/hooks/useProductInteractions.tsx`, the non-modern branch renders `ProductItem` directly. Change it to render `UnifiedProductCard` with `cardType="airbnb"` instead, eliminating the last direct usage of `ProductItem`.
+**Keep** `src/utils/orderPricingUtils.ts` and `src/utils/transparentPricing.ts` -- these are domain-specific (checkout breakdown, order history) and do not overlap with display formatting.
 
-### Phase 3: Delete redundant components (10 files)
+---
 
-Once all consumers are routed through UnifiedProductCard to AirbnbStyleProductCard:
+### Phase 3: Update Imports (estimate 3-5 files)
 
-1. `src/components/marketplace/ui/ModernProductCard.tsx`
-2. `src/components/marketplace/mobile/MobileProductCard.tsx`
-3. `src/components/marketplace/ProductCard.tsx`
-4. `src/components/marketplace/product-item/ProductItem.tsx`
-5. `src/components/marketplace/product-item/ProductItemBase.tsx`
-6. `src/components/marketplace/product-item/ProductImageSection.tsx`
-7. `src/components/marketplace/product-item/ProductInfoSection.tsx`
-8. `src/components/marketplace/product-item/WishlistButton.tsx`
-9. `src/components/marketplace/product-item/QuickWishlistButton.tsx`
-10. `src/components/marketplace/ProductGridOptimized.tsx`
+Any component currently importing from the deleted files gets updated to `import { formatPrice } from "@/lib/utils"`.
 
-### Phase 4: Update remaining direct imports
+---
 
-Search for any remaining imports of deleted components and redirect them to `UnifiedProductCard` or `AirbnbStyleProductCard`:
+### Phase 4: Replace Raw `.toFixed(2)` -- Customer-Facing (12 files)
 
-- `OptimizedProductGrid.tsx` imports `AirbnbStyleProductCard` directly (fine, keep)
-- `TrendingSection.tsx`, `ShoppingPanel.tsx`, `MarketplaceProductsSection.tsx` import `AirbnbStyleProductCard` directly (fine, keep)
-- `ProductGridOptimized.tsx` consumers should import `ProductGrid` directly
+Replace every `$${price.toFixed(2)}` with `formatPrice(price)`:
+
+| File | Context |
+|------|---------|
+| `InlineWishlistViewer.tsx` | Wishlist item prices (the active bug) |
+| `WishlistOwnerHero.tsx` | Wishlist total |
+| `useFavorites.tsx` | Favorites price |
+| `WishlistAdd.tsx` | Add-to-wishlist confirmation |
+| `SuggestionProductCard.tsx` | AI suggestion cards |
+| `MobileProductGrid.tsx` | Mobile product grid |
+| `MobileProductSheet.tsx` | Mobile cart button |
+| `RecommendationCard.tsx` | Recommendation cards |
+| `BulkGiftingModal.tsx` | Bulk gifting total |
+| `GroupGiftProjectCard.tsx` | Group gift progress |
+| `StripePaymentForm.tsx` | Checkout pay button |
+| `TransparentPriceBreakdown.tsx` | Price breakdown |
+
+---
+
+### Phase 5: Replace Raw `.toFixed(2)` -- Admin/Internal (6 files)
+
+| File | Context |
+|------|---------|
+| `OverviewTab.tsx` | Revenue and GMV figures |
+| `OrdersTable.tsx` | Order amounts |
+| `ZincCreditsTab.tsx` | Credit amounts |
+| `PricingControlsCard.tsx` | Pricing simulator |
+| `BudgetTrackingSection.tsx` | Auto-gift budgets |
+| `ZmaSecurityStatus.tsx` | Spending limits |
+
+---
+
+### Phase 6: Email Templates (1 file, 7 instances)
+
+**File:** `EmailTemplateService.ts` -- replace all `$${price.toFixed(2)}` with `formatPrice(price)`
+
+---
+
+### Phase 7: Fix Existing Bad Data (SQL)
+
+```sql
+-- Fix known inflated diapers record
+UPDATE wishlist_items SET price = price / 100
+WHERE price > 500 AND product_id = 'B0FDX5186F';
+
+-- Diagnostic sweep for other inflated wishlist prices
+SELECT id, name, price, product_id FROM wishlist_items WHERE price > 500;
+```
+
+---
+
+### What Does NOT Change
+
+- `create-checkout-session` -- already receives dollars, converts to cents for Stripe
+- `stripe-webhook-v2` -- already converts Stripe cents to dollars for DB
+- `process-order-v2` -- already reads dollars from DB, converts to cents for Zinc `max_price`
+- `orderPricingUtils.ts` -- domain-specific checkout math, stays as-is
+- `transparentPricing.ts` -- domain-specific fee breakdown, stays as-is
 
 ### Result
 
-- **Before**: 7 card components, ~1,500 lines of duplicated logic, 12 files with independent `WishlistSelectionPopoverButton` instances
-- **After**: 1 primary card (`AirbnbStyleProductCard`) + 1 adapter (`UnifiedProductCard`), ~550 lines total, 1 place to update wishlist behavior
-- **Impact**: Any future change to wishlist buttons, image handling, rating display, or card layout requires editing exactly 1 file
-
-### Risk Mitigation
-
-- AirbnbStyleProductCard already handles all view modes, contexts, mobile/desktop, and the correct wishlist popover -- this is a deletion exercise, not a rewrite
-- Each phase can be tested independently before proceeding
-- Direct imports of AirbnbStyleProductCard (in wishlist shopping panels) remain valid and don't need changing
-
+- **Before**: 6 pricing utility files, 20+ files with raw `.toFixed(2)`, recurring 100x bugs
+- **After**: 1 canonical formatter (`formatPrice`), 2 domain modules (checkout/order math), 0 raw formatting in display code
+- **Zinc pipeline**: Completely unaffected -- dollars-in-DB, cents-to-Zinc conversion untouched

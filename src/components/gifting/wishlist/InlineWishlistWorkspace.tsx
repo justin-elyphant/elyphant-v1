@@ -9,7 +9,7 @@ import WishlistItemsGrid from "@/components/gifting/wishlist/WishlistItemsGrid";
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
 import WishlistActionToolbar from "@/components/gifting/wishlist/workspace/WishlistActionToolbar";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
-import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InlineWishlistWorkspaceProps {
@@ -109,7 +109,7 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
               productSource: (item as any).productSource || (item as any).product_source
             };
             
-            return enhanceWishlistItemWithSource(baseItem);
+            return baseItem;
           })
         };
         

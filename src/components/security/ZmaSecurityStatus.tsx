@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Shield, AlertTriangle, CheckCircle, XCircle, DollarSign, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from "@/lib/utils";
 
 interface ZmaSecurityStatusProps {
   userId?: string;
@@ -146,7 +147,7 @@ const ZmaSecurityStatus: React.FC<ZmaSecurityStatusProps> = ({
                 <div>
                   <div className="flex justify-between text-sm">
                     <span>Daily Spending</span>
-                    <span>${costStatus.dailySpent.toFixed(2)}/${costStatus.dailyLimit}</span>
+                    <span>{formatPrice(costStatus.dailySpent)}/${costStatus.dailyLimit}</span>
                   </div>
                   <Progress 
                     value={(costStatus.dailySpent / costStatus.dailyLimit) * 100} 
@@ -156,7 +157,7 @@ const ZmaSecurityStatus: React.FC<ZmaSecurityStatusProps> = ({
                 <div>
                   <div className="flex justify-between text-sm">
                     <span>Monthly Spending</span>
-                    <span>${costStatus.monthlySpent.toFixed(2)}/${costStatus.monthlyLimit}</span>
+                    <span>{formatPrice(costStatus.monthlySpent)}/${costStatus.monthlyLimit}</span>
                   </div>
                   <Progress 
                     value={(costStatus.monthlySpent / costStatus.monthlyLimit) * 100} 

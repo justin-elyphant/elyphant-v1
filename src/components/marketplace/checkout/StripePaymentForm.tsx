@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from "@/lib/utils";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -236,14 +237,14 @@ const StripePaymentForm = ({
 
       <div className="flex justify-between items-center pt-4">
         <div className="text-lg font-semibold">
-          Total: ${amount.toFixed(2)}
+          Total: {formatPrice(amount)}
         </div>
         <Button 
           type="submit" 
           disabled={!stripe || isProcessing || isSubmitting || !cardholderName.trim()}
           className="min-w-[120px]"
         >
-          {(isProcessing || isSubmitting) ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+          {(isProcessing || isSubmitting) ? 'Processing...' : `Pay ${formatPrice(amount)}`}
         </Button>
       </div>
     </form>

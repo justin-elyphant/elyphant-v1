@@ -8,6 +8,7 @@ import { Users, Gift, ShoppingCart, X } from 'lucide-react';
 import { useConnectionAddresses } from '@/hooks/checkout/useConnectionAddresses';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import { formatPrice } from "@/lib/utils";
 
 interface BulkGiftingModalProps {
   open: boolean;
@@ -182,7 +183,7 @@ const BulkGiftingModal: React.FC<BulkGiftingModalProps> = ({
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
               {selectedRecipients.length > 0 && (
-                <>Total: ${(selectedProduct?.price_cents / 100 * selectedRecipients.length).toFixed(2)}</>
+                <>Total: {formatPrice(selectedProduct?.price_cents / 100 * selectedRecipients.length)}</>
               )}
             </div>
             <div className="flex gap-3">

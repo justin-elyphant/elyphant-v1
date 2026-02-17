@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatOrderNumberWithHash } from "@/utils/orderHelpers";
+import { formatPrice } from "@/lib/utils";
 import { MapPin, ExternalLink, Copy } from "lucide-react";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { ZincOrder } from "@/components/marketplace/zinc/types";
@@ -90,7 +91,7 @@ const OrdersTable = ({
               )}
             </TableCell>
             <TableCell><OrderStatusBadge status={order.status} /></TableCell>
-            <TableCell>${order.total?.toFixed(2)}</TableCell>
+            <TableCell>{formatPrice(order.total)}</TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" asChild>

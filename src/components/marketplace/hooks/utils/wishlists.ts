@@ -2,7 +2,7 @@
 import { WishlistItem, Wishlist, normalizeWishlist, normalizeWishlistItem } from "@/types/profile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { detectProductSource } from "@/utils/productSourceDetection";
+
 
 // Create a new wishlist
 export async function createWishlist(userId: string, title: string, description?: string): Promise<Wishlist | null> {
@@ -84,7 +84,7 @@ export async function addToWishlist(
     }
     
     // Detect product source for unified pricing
-    const productSource = detectProductSource(product);
+    const productSource = product.productSource || (product.isZincApiProduct ? 'zinc_api' : (product.vendor === 'Amazon' ? 'zinc_api' : 'manual'));
     
     // Create new item with product source
     const newItem: WishlistItem = normalizeWishlistItem({

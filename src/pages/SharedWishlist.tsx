@@ -10,7 +10,7 @@ import SharedWishlistSkeleton from "@/components/gifting/wishlist/SharedWishlist
 import NoWishlistFound from "@/components/gifting/wishlist/NoWishlistFound";
 import SharedWishlistView from "@/components/gifting/wishlist/SharedWishlistView";
 import MainLayout from "@/components/layout/MainLayout";
-import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
+
 
 const SharedWishlist = () => {
   const { wishlistId } = useParams();
@@ -105,7 +105,7 @@ const SharedWishlist = () => {
               productSource: (item as any).productSource || (item as any).product_source
             };
             
-            return enhanceWishlistItemWithSource(baseItem);
+            return baseItem;
           })
         };
         

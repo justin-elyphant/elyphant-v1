@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, Plus, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 
@@ -36,7 +36,7 @@ const SuggestionProductCard: React.FC<SuggestionProductCardProps> = ({
   const productTitle = product.title || product.name || 'Product';
   const productRating = product.stars || product.rating || 0;
   const formattedPrice = product.price 
-    ? `$${product.price.toFixed(2)}` 
+    ? formatPrice(product.price) 
     : '';
 
   const handleCardClick = () => {

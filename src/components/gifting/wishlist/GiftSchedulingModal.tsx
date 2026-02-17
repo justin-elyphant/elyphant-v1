@@ -21,7 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WishlistItem } from "@/types/profile";
-import { formatPriceWithDetection } from "@/utils/productSourceDetection";
+import { formatPrice } from "@/lib/utils";
 
 interface GiftSchedulingModalProps {
   isOpen: boolean;
@@ -75,13 +75,7 @@ const GiftSchedulingModal = ({
   };
 
   const totalValue = items.reduce((sum, item) => {
-    const price = formatPriceWithDetection({
-      price: item.price,
-      image_url: item.image_url,
-      productSource: (item as any).product_source,
-    });
-    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
-    return sum + numericPrice;
+    return sum + (Number(item.price) || 0);
   }, 0);
 
   const isValid = scheduledDate && recipientEmail && recipientName;
@@ -106,7 +100,7 @@ const GiftSchedulingModal = ({
                   Selected Items ({items.length})
                 </h3>
                 <Badge variant="secondary">
-                  Total: ~${totalValue.toFixed(2)}
+                  Total: ~{formatPrice(totalValue)}
                 </Badge>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-40 overflow-y-auto">
@@ -122,11 +116,7 @@ const GiftSchedulingModal = ({
                         {item.name || item.title || "Unknown Item"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatPriceWithDetection({
-                          price: item.price,
-                          image_url: item.image_url,
-                          productSource: (item as any).product_source,
-                        })}
+                        {formatPrice(item.price)}
                       </p>
                     </div>
                   </div>

@@ -8,7 +8,7 @@ import { ShoppingCart, Gift, MapPin, Shield, Package, Loader2 } from "lucide-rea
 import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import WishlistCategoryBadge from "./categories/WishlistCategoryBadge";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface WishlistOwnerHeroProps {
@@ -41,7 +41,7 @@ const WishlistOwnerHero: React.FC<WishlistOwnerHeroProps> = ({
   isAdding = false
 }) => {
   const availableCount = itemCount - purchasedCount;
-  const formattedTotal = `$${totalPrice.toFixed(2)}`;
+  const formattedTotal = formatPrice(totalPrice);
   
   // Extract first name for friendlier headline
   const firstName = owner.name?.split(' ')[0] || owner.name || 'Someone';

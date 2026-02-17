@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WishlistItem } from "@/types/profile";
-import { formatPriceWithDetection } from "@/utils/productSourceDetection";
+import { formatPrice } from "@/lib/utils";
 
 interface BulkActionBarProps {
   selectedItems: WishlistItem[];
@@ -24,14 +24,7 @@ const BulkActionBar = ({
   if (selectedItems.length === 0) return null;
 
   const totalValue = selectedItems.reduce((sum, item) => {
-    const price = formatPriceWithDetection({
-      price: item.price,
-      image_url: item.image_url,
-      productSource: (item as any).product_source,
-    });
-    // Extract numeric value from formatted price (rough estimation)
-    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
-    return sum + numericPrice;
+    return sum + (Number(item.price) || 0);
   }, 0);
 
   return (
@@ -43,7 +36,7 @@ const BulkActionBar = ({
               {selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected
             </Badge>
             <span className="text-sm text-muted-foreground">
-              ~${totalValue.toFixed(2)} total
+              ~{formatPrice(totalValue)} total
             </span>
           </div>
           

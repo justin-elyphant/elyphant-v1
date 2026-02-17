@@ -12,7 +12,7 @@ import WishlistSwitcher from "@/components/gifting/wishlist/navigation/WishlistS
 import ShoppingPanel from "@/components/gifting/wishlist/shopping/ShoppingPanel";
 import MobileWishlistActionBar from "@/components/gifting/wishlist/workspace/MobileWishlistActionBar";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
-import { enhanceWishlistItemWithSource } from "@/utils/productSourceDetection";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { getWishlistShareUrl } from "@/utils/urlUtils";
@@ -123,7 +123,7 @@ const WishlistWorkspace = () => {
               productSource: (item as any).productSource || (item as any).product_source
             };
             
-            return enhanceWishlistItemWithSource(baseItem);
+            return baseItem;
           })
         };
         

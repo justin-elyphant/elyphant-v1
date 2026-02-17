@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -44,7 +45,7 @@ export function useFavorites() {
                 if (item.name && item.price) {
                   wishlistProducts.push({
                     name: item.name,
-                    price: typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : item.price
+                    price: typeof item.price === 'number' ? formatPrice(item.price) : item.price
                   });
                 }
               });

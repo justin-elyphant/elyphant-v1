@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth";
 import WishlistSelectionPopoverButton from "@/components/gifting/wishlist/WishlistSelectionPopoverButton";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 
 interface RecommendationCardProps {
   product: Product;
@@ -36,7 +37,7 @@ const RecommendationCard = ({
   const productId = String(product.id || product.product_id || "");
   const productName = product.title || product.name || "";
   
-  const getPrice = () => product.price.toFixed(2);
+  const getPrice = () => formatPrice(product.price);
   const isBestSeller = () => product.isBestSeller || false;
   const getRating = () => product.rating || product.stars || 0;
   

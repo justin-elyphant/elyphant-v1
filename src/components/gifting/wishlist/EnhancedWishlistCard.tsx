@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatPriceWithDetection } from "@/utils/productSourceDetection";
+import { formatPrice } from "@/lib/utils";
 import { WishlistItem } from "@/types/profile";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
@@ -143,16 +143,7 @@ const EnhancedWishlistCard = ({
     });
   };
 
-  // Use database product_source for accurate pricing
-  const formattedPrice = formatPriceWithDetection({
-    price: item.price,
-    image_url: item.image_url,
-    productSource: (item as any).product_source,
-    vendor: (item as any).vendor,
-    retailer: (item as any).retailer,
-    isZincApiProduct: (item as any).isZincApiProduct,
-    skipCentsDetection: (item as any).skipCentsDetection
-  });
+  const formattedPrice = formatPrice(item.price);
 
   return (
     <>

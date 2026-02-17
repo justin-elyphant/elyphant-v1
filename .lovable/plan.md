@@ -1,111 +1,86 @@
 
-## Unified Pricing Architecture: Consolidation Plan
 
-### Why This Is Safe for Zinc
+## Make Guest Email Mandatory + Guest-to-User Conversion Loop
 
-The payment/fulfillment pipeline already follows the Unified Pricing Standard end-to-end:
+### What We're Solving
 
-```text
-Frontend (dollars)
-  --> create-checkout-session (dollars * 100 = cents for Stripe)
-    --> stripe-webhook-v2 (cents / 100 = dollars for DB storage)
-      --> process-order-v2 (dollars * 100 = cents for Zinc max_price)
-```
+Right now the "Your Email" field on the guest checkout (shown in your screenshot) has an `html required` attribute but no real-time validation feedback — a guest can click "Pay Now" and only gets a toast error. More importantly, **after the purchase there's zero attempt to convert that guest into a signed-up user**, which is a missed viral loop opportunity.
 
-This plan touches **only the display layer and wishlist write path** -- neither feeds into the Zinc pipeline. Zero risk to order processing.
+### The Opportunity
 
----
+This is a classic e-commerce conversion funnel:
 
-### Phase 1: Write-Path Normalization (1 file)
+1. **Recipient shares wishlist** (viral trigger)
+2. **Guest shopper lands on checkout** (high intent)
+3. **We capture their email** (lead capture -- currently weak)
+4. **Post-purchase, we offer account creation** (conversion moment -- currently missing)
 
-**File:** `src/components/gifting/wishlist/WishlistSelectionPopoverButton.tsx`
+Every major gifting platform (Zola, Amazon Registry, Target Registry) does this. The shopper just proved purchase intent -- that's the highest-conversion moment to offer an account.
 
-- Before saving `product.price` to `wishlist_items`, detect if it's in cents (integer > 200) and divide by 100
-- This prevents bad data from entering the database, eliminating bugs at the source
+### Plan
 
----
+#### Part 1: Make Email Truly Mandatory with Inline Validation
 
-### Phase 2: Delete Redundant Utility Files (3 files)
+**File: `src/components/checkout/UnifiedCheckoutForm.tsx`**
 
-Delete these files whose logic is duplicated in `formatPrice()` inside `src/lib/utils.ts`:
+- Add email validation state (`guestEmailError`) that checks for valid email format on blur and on submit
+- Show inline red error text below the email field when invalid (not just a toast)
+- Disable the "Pay Now" / "Proceed to Payment" buttons when email is empty or invalid for guest users
+- Add a subtle value proposition below the email field: "We'll send your order confirmation, tracking details, and a special offer to join Elyphant"
 
-- `src/utils/productPricing.ts` -- `formatProductPrice()`, `usesCentsPricing()` (duplicates `formatPrice`)
-- `src/utils/productSourceDetection.ts` -- `formatPriceWithDetection()` (duplicates `formatPrice`)
-- `src/utils/priceValidation.ts` -- `safeFormatPrice()` (thin wrapper around `formatPrice`)
+#### Part 2: Post-Purchase Signup Prompt on PaymentSuccess
 
-**Keep** `src/utils/orderPricingUtils.ts` and `src/utils/transparentPricing.ts` -- these are domain-specific (checkout breakdown, order history) and do not overlap with display formatting.
+**File: `src/pages/PaymentSuccess.tsx`**
 
----
+After the "Payment Successful!" confirmation, add a conversion card for guest users:
 
-### Phase 3: Update Imports (estimate 3-5 files)
+- Detect guest status (no authenticated user in context)
+- Show a card: "You're almost an Elyphant! Create a free account to track your order, save wishlists, and get personalized gift recommendations"
+- Pre-fill the email from the checkout session (pass via URL param `guest_email` from the Stripe success URL)
+- Two CTAs: "Create Free Account" (primary, red) and "Maybe Later" (ghost)
+- "Create Free Account" calls `supabase.auth.signUp()` with the captured email, prompts for a password
+- Track conversion with a console log for now (analytics later)
 
-Any component currently importing from the deleted files gets updated to `import { formatPrice } from "@/lib/utils"`.
+#### Part 3: Post-Purchase Signup on OrderConfirmation
 
----
+**File: `src/pages/OrderConfirmation.tsx`**
 
-### Phase 4: Replace Raw `.toFixed(2)` -- Customer-Facing (12 files)
+- Same pattern: if no authenticated user, show a signup prompt card between the order details and the action buttons
+- This catches guests who land here via the email confirmation link
+- Messaging: "Want to track this order and future gifts? Create your free Elyphant account"
 
-Replace every `$${price.toFixed(2)}` with `formatPrice(price)`:
+#### Part 4: Pass Guest Email Through Stripe Flow
 
-| File | Context |
-|------|---------|
-| `InlineWishlistViewer.tsx` | Wishlist item prices (the active bug) |
-| `WishlistOwnerHero.tsx` | Wishlist total |
-| `useFavorites.tsx` | Favorites price |
-| `WishlistAdd.tsx` | Add-to-wishlist confirmation |
-| `SuggestionProductCard.tsx` | AI suggestion cards |
-| `MobileProductGrid.tsx` | Mobile product grid |
-| `MobileProductSheet.tsx` | Mobile cart button |
-| `RecommendationCard.tsx` | Recommendation cards |
-| `BulkGiftingModal.tsx` | Bulk gifting total |
-| `GroupGiftProjectCard.tsx` | Group gift progress |
-| `StripePaymentForm.tsx` | Checkout pay button |
-| `TransparentPriceBreakdown.tsx` | Price breakdown |
+**File: `supabase/functions/create-checkout-session/index.ts`**
 
----
+- Append `guest_email` as a query parameter on the `success_url` so the PaymentSuccess page can pre-fill the signup form
+- Example: `success_url: \`$\{origin\}/payment-success?session_id={CHECKOUT_SESSION_ID}&guest_email=$\{encodeURIComponent(guestEmail)\}\``
 
-### Phase 5: Replace Raw `.toFixed(2)` -- Admin/Internal (6 files)
+### Bonus: Also Fix a Missed formatPrice
 
-| File | Context |
-|------|---------|
-| `OverviewTab.tsx` | Revenue and GMV figures |
-| `OrdersTable.tsx` | Order amounts |
-| `ZincCreditsTab.tsx` | Credit amounts |
-| `PricingControlsCard.tsx` | Pricing simulator |
-| `BudgetTrackingSection.tsx` | Auto-gift budgets |
-| `ZmaSecurityStatus.tsx` | Spending limits |
+**File: `src/components/checkout/UnifiedCheckoutForm.tsx` line 758**
 
----
+The sticky bottom bar still uses raw `$${totalAmount.toFixed(2)}` -- this should be `formatPrice(totalAmount)` per the consolidation we just completed.
 
-### Phase 6: Email Templates (1 file, 7 instances)
+**File: `src/pages/OrderConfirmation.tsx` line 599**
 
-**File:** `EmailTemplateService.ts` -- replace all `$${price.toFixed(2)}` with `formatPrice(price)`
+Uses `$${(item.unit_price || item.price || 0).toFixed(2)}` -- should also use `formatPrice()`.
 
----
+### Technical Details
 
-### Phase 7: Fix Existing Bad Data (SQL)
+**New component:** `GuestSignupCard` -- a reusable card component used on both PaymentSuccess and OrderConfirmation pages. Contains:
+- Email display (pre-filled, read-only)
+- Password input field
+- "Create Free Account" button calling `supabase.auth.signUp()`
+- Success state that shows "Account created! Check your email to verify"
+- Error handling for existing accounts ("Already have an account? Sign in instead")
 
-```sql
--- Fix known inflated diapers record
-UPDATE wishlist_items SET price = price / 100
-WHERE price > 500 AND product_id = 'B0FDX5186F';
+**Files changed:**
+- `src/components/checkout/UnifiedCheckoutForm.tsx` -- email validation + formatPrice fix
+- `src/pages/PaymentSuccess.tsx` -- guest signup card
+- `src/pages/OrderConfirmation.tsx` -- guest signup card + formatPrice fix
+- `src/components/checkout/GuestSignupCard.tsx` -- new reusable component
+- `supabase/functions/create-checkout-session/index.ts` -- pass guest_email in success URL
 
--- Diagnostic sweep for other inflated wishlist prices
-SELECT id, name, price, product_id FROM wishlist_items WHERE price > 500;
-```
+**No database changes needed** -- uses existing `auth.users` and `profiles` table with the existing auto-creation trigger.
 
----
-
-### What Does NOT Change
-
-- `create-checkout-session` -- already receives dollars, converts to cents for Stripe
-- `stripe-webhook-v2` -- already converts Stripe cents to dollars for DB
-- `process-order-v2` -- already reads dollars from DB, converts to cents for Zinc `max_price`
-- `orderPricingUtils.ts` -- domain-specific checkout math, stays as-is
-- `transparentPricing.ts` -- domain-specific fee breakdown, stays as-is
-
-### Result
-
-- **Before**: 6 pricing utility files, 20+ files with raw `.toFixed(2)`, recurring 100x bugs
-- **After**: 1 canonical formatter (`formatPrice`), 2 domain modules (checkout/order math), 0 raw formatting in display code
-- **Zinc pipeline**: Completely unaffected -- dollars-in-DB, cents-to-Zinc conversion untouched

@@ -865,9 +865,17 @@ async function triggerEmailOrchestrator(
       return;
     }
 
+    // Detect guest checkout to use guest-specific template with signup CTA
+    const metadata = session.metadata || {};
+    const rawUserId = metadata.user_id || '';
+    const isGuestCheckout = !rawUserId || rawUserId.startsWith('guest_');
+    const emailEventType = isGuestCheckout ? 'guest_order_confirmation' : 'order_confirmation';
+
+    console.log(`📧 [${new Date().toISOString()}] Using ${emailEventType} template (guest: ${isGuestCheckout})`);
+
     const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
       body: {
-        eventType: 'order_confirmation',
+        eventType: emailEventType,
         recipientEmail: recipientEmail,
         orderId: orderId // Let orchestrator fetch complete order details from DB
       }

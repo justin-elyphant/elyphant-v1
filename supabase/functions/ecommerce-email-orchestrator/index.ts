@@ -847,6 +847,82 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Action needed: Payment failed for ${possessive(props.recipient_name || 'your')} gift` });
 };
 
+// Guest Order Confirmation Template (viral signup CTA)
+const guestOrderConfirmationTemplate = (props: any): string => {
+  const firstName = getFirstName(props.customer_name);
+  const content = `
+    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
+      Order Confirmed! 🎉
+    </h2>
+    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+      Hi ${firstName}, thank you for your order. We're preparing your items for shipment.
+    </p>
+    ${props.scheduled_delivery_date ? `
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
+      <tr><td>
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Delivery</p>
+        <p style="margin: 0 0 12px 0; font-size: 20px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
+        <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
+      </td></tr>
+    </table>
+    ` : ''}
+    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
+      <tr><td>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
+        <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
+        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Total</p>
+        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
+      </td></tr>
+    </table>
+    ${props.items ? `
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
+    ${renderItemsHtml(props.items)}
+    ${renderPricingBreakdown(props)}
+    ` : ''}
+    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
+    ${props.is_gift && props.gift_message ? `
+    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
+      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    </div>
+    ` : ''}
+
+    <!-- Viral Signup CTA for Guest -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 50%, #e0f2fe 100%); border-radius: 12px; padding: 32px 24px; margin: 30px 0; border: 1px solid #c4b5fd;">
+      <tr><td align="center">
+        <p style="margin: 0 0 8px 0; font-size: 24px;">🐘</p>
+        <h3 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #1a1a1a;">
+          You're almost an Elyphant!
+        </h3>
+        <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
+          Create a free account to track your order, save wishlists, set up auto-gifts, and get AI-powered gift recommendations.
+        </p>
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding-right: 12px;">
+              <a href="https://elyphant.ai/auth/signup?email=${encodeURIComponent(props.guest_email || '')}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600;">
+                Create Free Account
+              </a>
+            </td>
+          </tr>
+        </table>
+        <p style="margin: 16px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #9333ea;">
+          ✨ Track orders · Wishlists · Auto-Gifts · AI Recommendations
+        </p>
+      </td></tr>
+    </table>
+
+    <table style="margin-top: 10px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/order-confirmation?session_id=${props.checkout_session_id || ''}" style="display: inline-block; padding: 14px 32px; background: #ffffff; color: #9333ea; text-decoration: none; border-radius: 8px; font-weight: 600; border: 2px solid #9333ea; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px;">
+          View Order Details
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} confirmed! Create a free account to track it 🎁` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -921,6 +997,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: autoGiftPaymentFailedTemplate(data),
         subject: `⚠️ Payment Failed for ${possessive(data.recipient_name || 'Your')} Gift - Action Needed`
       };
+    case 'guest_order_confirmation':
+      return {
+        html: guestOrderConfirmationTemplate(data),
+        subject: `Order Confirmed - ${data.order_number || 'Your Order'} 🎁`
+      };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
   }
@@ -942,7 +1023,7 @@ const handler = async (req: Request): Promise<Response> => {
     let emailRecipient = recipientEmail;
 
     // If orderId provided for order events, fetch full order details from DB
-    const orderFetchEventTypes = ['order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed'];
+    const orderFetchEventTypes = ['order_confirmation', 'guest_order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed'];
     if (orderFetchEventTypes.includes(eventType) && orderId && !emailData) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -958,18 +1039,26 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Failed to fetch order: ${orderError?.message || 'Order not found'}`);
       }
 
-      // Fetch user email from profiles table using user_id
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', order.user_id)
-        .single();
+      // For guest orders, use guest_email; for authenticated users, fetch from profiles
+      if (order.user_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', order.user_id)
+          .single();
 
-      if (profileError || !profile?.email) {
-        throw new Error(`Failed to fetch user email: ${profileError?.message || 'Email not found'}`);
+        if (profileError || !profile?.email) {
+          throw new Error(`Failed to fetch user email: ${profileError?.message || 'Email not found'}`);
+        }
+        emailRecipient = profile.email;
+      } else if (order.guest_email) {
+        emailRecipient = order.guest_email;
+      } else if (recipientEmail) {
+        // Use the recipientEmail passed in the request
+        emailRecipient = recipientEmail;
+      } else {
+        throw new Error('No email found for order: no user_id, guest_email, or recipientEmail');
       }
-
-      emailRecipient = profile.email;
 
       // Format order data for email template
       const lineItems = (order.line_items as any)?.items || [];
@@ -1003,6 +1092,9 @@ const handler = async (req: Request): Promise<Response> => {
         tracking_url: order.tracking_number ? `https://www.amazon.com/progress-tracker/package/?itemId=${order.tracking_number}` : null,
         // For failed emails
         error_message: order.notes || null,
+        // For guest emails
+        guest_email: order.guest_email || null,
+        checkout_session_id: order.checkout_session_id || null,
       };
     }
 

@@ -355,7 +355,9 @@ serve(async (req) => {
     // STANDARD MODE: Create Checkout Session (redirect to Stripe)
     // Get domain for redirect URLs
     const origin = req.headers.get('origin') || 'http://localhost:8080';
-    const successUrl = `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
+    // Append guest_email to success URL for post-purchase signup prompt
+    const guestEmailParam = isGuestCheckout && user.email ? `&guest_email=${encodeURIComponent(user.email)}` : '';
+    const successUrl = `${origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}${guestEmailParam}`;
     const cancelUrl = `${origin}/checkout?cancelled=true`;
 
     // Create Checkout Session params

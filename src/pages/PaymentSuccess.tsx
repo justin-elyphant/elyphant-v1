@@ -2,17 +2,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
+import GuestSignupCard from "@/components/checkout/GuestSignupCard";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { clearCart } = useCart();
+  const { user } = useAuth();
+  const guestEmail = searchParams.get('guest_email') || '';
   const [isProcessing, setIsProcessing] = useState(true);
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<string>('Confirming your payment...');
@@ -180,6 +184,15 @@ const PaymentSuccess = () => {
             )}
           </div>
           
+          {/* Guest-to-User Conversion Card */}
+          {!user && guestEmail && (
+            <GuestSignupCard
+              email={guestEmail}
+              heading="You're almost an Elyphant!"
+              subheading="Create a free account to track your order, save wishlists, and get personalized gift recommendations."
+            />
+          )}
+
           <div className="space-y-3">
             <Button 
               onClick={() => navigate('/orders')} 

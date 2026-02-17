@@ -357,18 +357,26 @@ async function handleCheckoutSessionCompleted(
 
   // STEP 3: Extract scalars from metadata
   console.log(`🔍 [STEP 3] Extracting order metadata...`);
-  const userId = metadata.user_id || session.client_reference_id;
+  const rawUserId = metadata.user_id || session.client_reference_id;
+  const isGuestCheckout = !rawUserId || rawUserId.startsWith('guest_');
+  const userId = isGuestCheckout ? null : rawUserId;
+  const guestEmail = isGuestCheckout
+    ? (metadata.guest_email || metadata.user_email || session.customer_details?.email || null)
+    : null;
   const scheduledDate = metadata.scheduled_delivery_date || null;
   const isScheduled = !!scheduledDate && new Date(scheduledDate) > new Date();
   const isAutoGift = metadata.is_auto_gift === 'true';
   const autoGiftRuleId = metadata.auto_gift_rule_id || null;
   const deliveryGroupId = metadata.delivery_group_id || null;
 
-  console.log(`✅ [STEP 3] User: ${userId} | Scheduled: ${isScheduled} | AutoGift: ${isAutoGift} | DeliveryGroup: ${deliveryGroupId}`);
+  console.log(`✅ [STEP 3] User: ${userId} | Guest: ${isGuestCheckout} | Email: ${guestEmail} | Scheduled: ${isScheduled} | AutoGift: ${isAutoGift} | DeliveryGroup: ${deliveryGroupId}`);
 
-  if (!userId) {
+  if (!userId && !isGuestCheckout) {
     console.error('❌ No user_id in session metadata or client_reference_id');
     throw new Error('Missing user_id in checkout session');
+  }
+  if (isGuestCheckout) {
+    console.log(`🛒 Guest checkout detected | Email: ${guestEmail}`);
   }
 
   // STEP 4: Fetch line items from Stripe API and extract Amazon ASINs from metadata
@@ -537,6 +545,7 @@ async function handleCheckoutSessionCompleted(
     
     const orderData = {
       user_id: userId,
+      guest_email: guestEmail,
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
       status: isScheduled ? 'scheduled' : 'payment_confirmed',
@@ -630,6 +639,7 @@ async function handleCheckoutSessionCompleted(
     // Create parent order (for customer history, not sent to Zinc)
     const parentOrderData = {
       user_id: userId,
+      guest_email: guestEmail,
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
       status: 'split_parent',
@@ -683,6 +693,7 @@ async function handleCheckoutSessionCompleted(
       
       const childOrderData = {
         user_id: userId,
+        guest_email: guestEmail,
         checkout_session_id: sessionId,
         payment_intent_id: session.payment_intent as string || null,
         parent_order_id: parentOrder.id,

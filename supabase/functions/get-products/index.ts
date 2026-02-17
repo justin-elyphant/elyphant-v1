@@ -187,29 +187,38 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
   if (!supabase || !products || products.length === 0) return;
 
   try {
-    const productsToCache = products.map(p => ({
-      product_id: p.product_id || p.asin,
-      title: p.title,
-      price: typeof p.price === 'number' ? p.price : parseFloat(p.price) || null,
-      image_url: p.main_image || p.image || p.thumbnail,
-      retailer: 'amazon',
-      brand: p.brand || null,
-      category: p.category || p.categories?.[0] || null,
-      last_refreshed_at: new Date().toISOString(),
-      metadata: {
-        stars: p.stars || p.rating || null,
-        review_count: p.review_count || p.num_reviews || null,
-        num_sales: p.num_sales || null,
-        main_image: p.main_image || p.image,
-        images: p.images || [p.main_image || p.image].filter(Boolean),
-        isBestSeller: p.isBestSeller || false,
-        bestSellerType: p.bestSellerType || null,
-        badgeText: p.badgeText || null,
-        source: 'search_results',
-        source_query: sourceQuery || null,
-        cached_at: new Date().toISOString()
+    const productsToCache = products.map(p => {
+      let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
+      
+      // Auto-correct cents-as-dollars for Amazon products
+      if (price > 200) {
+        price = price / 100;
       }
-    })).filter(p => p.product_id);
+
+      return {
+        product_id: p.product_id || p.asin,
+        title: p.title,
+        price,
+        image_url: p.main_image || p.image || p.thumbnail,
+        retailer: 'amazon',
+        brand: p.brand || null,
+        category: p.category || p.categories?.[0] || null,
+        last_refreshed_at: new Date().toISOString(),
+        metadata: {
+          stars: p.stars || p.rating || null,
+          review_count: p.review_count || p.num_reviews || null,
+          num_sales: p.num_sales || null,
+          main_image: p.main_image || p.image,
+          images: p.images || [p.main_image || p.image].filter(Boolean),
+          isBestSeller: p.isBestSeller || false,
+          bestSellerType: p.bestSellerType || null,
+          badgeText: p.badgeText || null,
+          source: 'search_results',
+          source_query: sourceQuery || null,
+          cached_at: new Date().toISOString()
+        }
+      };
+    }).filter(p => p.product_id && p.price > 0);
 
     if (productsToCache.length === 0) return;
 

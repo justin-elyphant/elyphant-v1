@@ -106,23 +106,25 @@ export const ProgressiveAirbnbStyleCategorySections: React.FC<ProgressiveAirbnbS
       let products: Product[] = [];
 
       if (response.products && response.products.length > 0) {
-        products = response.products.map((result: any) => ({
-          product_id: result.product_id || result.id,
-          title: result.title || result.name,
-          price: result.price || 0,
-          image: result.image || result.main_image || '/placeholder.svg',
-          category: categoryKey,
-          vendor: result.vendor || result.retailer || 'Amazon',
-          rating: result.rating || result.stars || 0,
-          reviewCount: result.reviewCount || result.num_reviews || 0,
-          description: result.description || result.product_description || '',
-          brand: result.brand || '',
-          isBestSeller: result.isBestSeller ?? false,
-          bestSellerType: result.bestSellerType || null,
-          badgeText: result.badgeText || null,
-          best_seller_rank: result.best_seller_rank || null
-        }));
-        console.log(`Using results for ${categoryKey}: ${products.length} products`);
+        products = response.products
+          .map((result: any) => ({
+            product_id: result.product_id || result.id,
+            title: result.title || result.name,
+            price: typeof result.price === 'number' ? result.price : parseFloat(result.price) || 0,
+            image: result.image || result.main_image || '/placeholder.svg',
+            category: categoryKey,
+            vendor: result.vendor || result.retailer || 'Amazon',
+            rating: result.rating || result.stars || 0,
+            reviewCount: result.reviewCount || result.num_reviews || 0,
+            description: result.description || result.product_description || '',
+            brand: result.brand || '',
+            isBestSeller: result.isBestSeller ?? false,
+            bestSellerType: result.bestSellerType || null,
+            badgeText: result.badgeText || null,
+            best_seller_rank: result.best_seller_rank || null
+          }))
+          .filter((p: Product) => p.price > 0);
+        console.log(`Using results for ${categoryKey}: ${products.length} products (filtered $0)`);
       }
 
       const loadTime = performance.now();

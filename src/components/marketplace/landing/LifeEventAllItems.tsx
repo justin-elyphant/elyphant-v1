@@ -6,27 +6,7 @@ import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import ProductSkeleton from "@/components/marketplace/loading/ProductSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-
-/** Maps a products table row to the Product type (same pattern as TrendingProductsSection). */
-const mapDbProductToProduct = (row: any): Product => ({
-  product_id: row.product_id || row.id,
-  title: row.title || "",
-  price: row.price || 0,
-  image: row.image_url || "/placeholder.svg",
-  category: row.category || "general",
-  vendor: row.retailer || "Amazon",
-  retailer: row.retailer || "Amazon",
-  brand: row.brand || "",
-  rating: row.metadata?.stars || 0,
-  stars: row.metadata?.stars || 0,
-  reviewCount: row.metadata?.review_count || 0,
-  review_count: row.metadata?.review_count || 0,
-  description: row.metadata?.product_description || "",
-  images: row.metadata?.images || [],
-  metadata: row.metadata || {},
-  productSource: "zinc_api" as const,
-  isZincApiProduct: true,
-});
+import { mapDbProductsToProducts } from "@/utils/mapDbProduct";
 
 const CATEGORY_FILTERS: Record<"baby" | "wedding", string> = {
   baby: "category.ilike.%baby%,title.ilike.%baby%,title.ilike.%diaper%,title.ilike.%nursery%,title.ilike.%infant%,title.ilike.%newborn%",
@@ -51,6 +31,7 @@ const LifeEventAllItems: React.FC<LifeEventAllItemsProps> = ({ category }) => {
           .from("products")
           .select("*")
           .or(CATEGORY_FILTERS[category])
+          .gt("price", 0)
           .order("view_count", { ascending: false })
           .limit(24);
 
@@ -59,7 +40,7 @@ const LifeEventAllItems: React.FC<LifeEventAllItemsProps> = ({ category }) => {
           return;
         }
 
-        setProducts((data || []).map(mapDbProductToProduct));
+        setProducts(mapDbProductsToProducts(data || []));
       } catch (err) {
         console.error("[LifeEventAllItems] unexpected error:", err);
       } finally {

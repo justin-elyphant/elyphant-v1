@@ -6,26 +6,7 @@ import UnifiedProductCard from "@/components/marketplace/UnifiedProductCard";
 import ProductSkeleton from "@/components/marketplace/loading/ProductSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-
-const mapDbProductToProduct = (row: any): Product => ({
-  product_id: row.product_id || row.id,
-  title: row.title || "",
-  price: row.price || 0,
-  image: row.image_url || "/placeholder.svg",
-  category: row.category || "general",
-  vendor: row.retailer || "Amazon",
-  retailer: row.retailer || "Amazon",
-  brand: row.brand || "",
-  rating: row.metadata?.stars || 0,
-  stars: row.metadata?.stars || 0,
-  reviewCount: row.metadata?.review_count || 0,
-  review_count: row.metadata?.review_count || 0,
-  description: row.metadata?.product_description || "",
-  images: row.metadata?.images || [],
-  metadata: row.metadata || {},
-  productSource: "zinc_api" as const,
-  isZincApiProduct: true,
-});
+import { mapDbProductsToProducts } from "@/utils/mapDbProduct";
 
 interface BrandAllItemsProps {
   brandName: string;
@@ -47,6 +28,7 @@ const BrandAllItems: React.FC<BrandAllItemsProps> = ({ brandName, brandSearchTer
           .from("products")
           .select("*")
           .or(`brand.ilike.%${brandLower}%,title.ilike.%${brandLower}%`)
+          .gt("price", 0)
           .order("view_count", { ascending: false })
           .limit(24);
 
@@ -55,7 +37,7 @@ const BrandAllItems: React.FC<BrandAllItemsProps> = ({ brandName, brandSearchTer
           return;
         }
 
-        setProducts((data || []).map(mapDbProductToProduct));
+        setProducts(mapDbProductsToProducts(data || []));
       } catch (err) {
         console.error("[BrandAllItems] unexpected error:", err);
       } finally {

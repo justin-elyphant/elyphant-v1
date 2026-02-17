@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { CategorySection } from "@/components/marketplace/CategorySection";
 import { Product } from "@/types/product";
+import { mapDbProductsToProducts } from "@/utils/mapDbProduct";
 
 interface DiscoveryRowConfig {
   title: string;
@@ -10,30 +11,6 @@ interface DiscoveryRowConfig {
   seeAllUrl: string;
   queryFn: () => Promise<any[]>;
 }
-
-/**
- * Maps a row from the products table to the Product type used by cards.
- * The products table uses `image_url` and stores stars/review_count in metadata JSONB.
- */
-const mapDbProductToProduct = (row: any): Product => ({
-  product_id: row.product_id || row.id,
-  title: row.title || "",
-  price: row.price || 0,
-  image: row.image_url || "/placeholder.svg",
-  category: row.category || "general",
-  vendor: row.retailer || "Amazon",
-  retailer: row.retailer || "Amazon",
-  brand: row.brand || "",
-  rating: row.metadata?.stars || 0,
-  stars: row.metadata?.stars || 0,
-  reviewCount: row.metadata?.review_count || 0,
-  review_count: row.metadata?.review_count || 0,
-  description: row.metadata?.product_description || "",
-  images: row.metadata?.images || [],
-  metadata: row.metadata || {},
-  productSource: "zinc_api" as const,
-  isZincApiProduct: true,
-});
 
 const createRowConfigs = (): DiscoveryRowConfig[] => [
   {
@@ -46,6 +23,7 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
         .from("products")
         .select("*")
         .gt("view_count", 0)
+        .gt("price", 0)
         .order("view_count", { ascending: false })
         .limit(8);
 
@@ -75,6 +53,7 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .gt("price", 0)
         .order("created_at", { ascending: false })
         .limit(8);
       if (error) throw error;
@@ -91,6 +70,7 @@ const createRowConfigs = (): DiscoveryRowConfig[] => [
         .from("products")
         .select("*")
         .not("metadata->review_count", "is", null)
+        .gt("price", 0)
         .order("view_count", { ascending: false })
         .limit(40); // Fetch extra so we can sort client-side by review quality
       if (error) throw error;
@@ -150,7 +130,7 @@ const TrendingProductsSection: React.FC<TrendingProductsSectionProps> = ({
         results.map((result) => ({
           products:
             result.status === "fulfilled"
-              ? result.value.map(mapDbProductToProduct)
+              ? mapDbProductsToProducts(result.value)
               : [],
           isLoading: false,
         }))

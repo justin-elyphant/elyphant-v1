@@ -1027,8 +1027,16 @@ class UnifiedGiftManagementService {
             eventType: 'auto_gift_rule_created',
             recipientEmail: userEmail,
             data: {
+              shopper_name: userEmail, // Will use getFirstName fallback
               recipient_name: recipientName,
               recipient_username: recipientUsername,
+              occasion: rule.date_type || 'custom event',
+              budget_limit: rule.budget_limit || 0,
+              events: [{
+                date_type: rule.date_type || 'custom',
+                occasion_name: (rule.date_type || 'custom event').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                date: (rule as any).scheduled_date || null
+              }],
               rule_details: {
                 occasion: rule.date_type || 'custom event',
                 budget_limit: rule.budget_limit || 0,
@@ -2210,11 +2218,17 @@ class UnifiedGiftManagementService {
             eventType: 'auto_gift_rule_created',
             recipientEmail: senderProfile.email,
             data: {
+              shopper_name: senderProfile.name || senderProfile.first_name || null,
               user_email: senderProfile.email,
               recipient_name: connection?.pending_recipient_name || 'your recipient',
               recipient_email: recipientEmail,
               occasion: dateType,
               budget_limit: budgetLimit,
+              events: [{
+                date_type: dateType,
+                occasion_name: (dateType || 'custom').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+                date: null
+              }],
               is_recurring: true,
               auto_approve_enabled: false,
               rule_details: {

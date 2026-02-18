@@ -458,6 +458,12 @@ const OrderConfirmation = () => {
     new Date(order.scheduled_delivery_date) > new Date()
   );
 
+  // Detect ANY gift order (scheduled or Buy Now) for privacy masking
+  const isGiftOrder = isScheduledGift || 
+    !!(order as any)?.gift_options?.is_gift || 
+    !!(order as any)?.gift_options?.isGift ||
+    !!(order as any)?.recipient_id;
+
   // Extract recipient info from line_items for scheduled gifts
   const orderLineItems = getOrderLineItems(order);
   const firstItem = orderLineItems[0] || {};
@@ -707,19 +713,21 @@ const OrderConfirmation = () => {
 
         {/* Shipping/Delivery Address - Single Recipient Only */}
         {/* For scheduled gifts, show recipient address from line_items; otherwise show sender's shipping */}
-        {!isMultiRecipient && (isScheduledGift ? scheduledRecipientShipping : order.shipping_address) && (
+        {!isMultiRecipient && (isGiftOrder ? (scheduledRecipientShipping || order.shipping_address) : order.shipping_address) && (
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">
-              {isScheduledGift ? 'Delivery Address' : 'Shipping Address'}
+              {isGiftOrder ? 'Delivery Address' : 'Shipping Address'}
             </h2>
-            {isScheduledGift && scheduledRecipientShipping ? (
+            {isGiftOrder ? (
               <div className="text-sm">
-                <p className="font-medium">{scheduledRecipientShipping.name || scheduledRecipientName || 'Recipient'}</p>
+                <p className="font-medium">
+                  {scheduledRecipientShipping?.name || scheduledRecipientName || order.shipping_address?.name || 'Recipient'}
+                </p>
                 {/* Privacy: Only show city/state for gift recipients */}
                 <p>
-                  {scheduledRecipientShipping.city}, {scheduledRecipientShipping.state}
+                  {(scheduledRecipientShipping?.city || order.shipping_address?.city)}, {(scheduledRecipientShipping?.state || order.shipping_address?.state)}
                 </p>
-                <p>{scheduledRecipientShipping.country || 'United States'}</p>
+                <p>{(scheduledRecipientShipping?.country || order.shipping_address?.country) || 'United States'}</p>
                 <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                   <Lock className="h-3 w-3" />
                   Full address securely stored for delivery

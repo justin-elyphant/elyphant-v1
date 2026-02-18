@@ -140,12 +140,22 @@ const InlineWishlistViewer: React.FC<InlineWishlistViewerProps> = ({
 
   const handleAddToCart = (item: WishlistItem) => {
     triggerHapticFeedback(HapticPatterns.buttonTap);
-    addToCart({
-      id: item.product_id,
+
+    const product = {
+      product_id: item.product_id || item.id,
       name: item.title || item.name || 'Product',
       price: item.price || 0,
-      image: item.image_url || undefined
-    } as any);
+      image: item.image_url || undefined,
+    } as any;
+
+    const metadata = {
+      wishlist_id: wishlist.id,
+      wishlist_item_id: item.id,
+      wishlist_owner_id: profileOwner.id,
+      wishlist_owner_name: profileOwner.name,
+    };
+
+    addToCart(product, 1, metadata);
 
     triggerHapticFeedback('success');
     toast.success("Added to cart", {

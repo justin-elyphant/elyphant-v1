@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -36,7 +37,62 @@ serve(async (req) => {
     const isServiceRole = authHeader?.includes(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || '');
     
     // Parse body early to check for auto-gift orchestrator calls
-    const requestBody = await req.json();
+    const rawBody = await req.json();
+
+    // ── Input validation schema ──
+    const CartItemSchema = z.object({
+      product_id: z.string().max(50).optional(),
+      name: z.string().max(500).optional(),
+      price: z.number().nonnegative().max(50000).optional(),
+      quantity: z.number().int().min(1).max(99),
+      image_url: z.string().max(2000).optional(),
+      recipientAssignment: z.record(z.unknown()).optional(),
+      wishlist_id: z.string().max(100).optional(),
+      wishlist_item_id: z.string().max(100).optional(),
+      product: z.record(z.unknown()).optional(),
+    }).passthrough();
+
+    const PricingBreakdownSchema = z.object({
+      subtotal: z.number().nonnegative().max(100000),
+      shippingCost: z.number().nonnegative().max(10000),
+      giftingFee: z.number().nonnegative().max(10000),
+      taxAmount: z.number().nonnegative().max(10000),
+      giftingFeeName: z.string().max(200).optional(),
+      giftingFeeDescription: z.string().max(500).optional(),
+    }).passthrough();
+
+    const RequestSchema = z.object({
+      cartItems: z.array(CartItemSchema).max(50).optional(),
+      deliveryGroups: z.array(z.record(z.unknown())).max(20).optional(),
+      scheduledDeliveryDate: z.string().max(50).optional().nullable(),
+      giftOptions: z.object({
+        giftMessage: z.string().max(1000).optional(),
+        message: z.string().max(1000).optional(),
+        isAnonymous: z.boolean().optional(),
+      }).passthrough().optional().nullable(),
+      isAutoGift: z.boolean().optional(),
+      autoGiftRuleId: z.string().max(100).optional().nullable(),
+      paymentMethod: z.string().max(200).optional().nullable(),
+      pricingBreakdown: PricingBreakdownSchema.optional(),
+      shippingInfo: z.record(z.unknown()).optional().nullable(),
+      metadata: z.record(z.unknown()).optional().nullable(),
+      isGroupGift: z.boolean().optional(),
+      groupGiftProjectId: z.string().max(100).optional().nullable(),
+      contributionAmount: z.number().nonnegative().max(50000).optional().nullable(),
+    });
+
+    let requestBody: z.infer<typeof RequestSchema>;
+    try {
+      requestBody = RequestSchema.parse(rawBody);
+    } catch (validationError) {
+      const zodError = validationError as z.ZodError;
+      logStep("Input validation failed", { errors: zodError.errors?.map((e: any) => e.message) });
+      return new Response(
+        JSON.stringify({ error: "Invalid request data", details: zodError.errors?.map((e: any) => `${e.path.join('.')}: ${e.message}`) }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { 
       cartItems,
       deliveryGroups,

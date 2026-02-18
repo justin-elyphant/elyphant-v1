@@ -459,10 +459,16 @@ const OrderConfirmation = () => {
   );
 
   // Detect ANY gift order (scheduled or Buy Now) for privacy masking
+  // Also detect by name mismatch: if shipping name differs from buyer, it's a gift
+  const buyerName = (user?.user_metadata?.name || user?.user_metadata?.full_name || '').trim().toLowerCase();
+  const shippingName = (order?.shipping_address?.name || '').trim().toLowerCase();
+  const isNameMismatch = buyerName && shippingName && buyerName !== shippingName;
+  
   const isGiftOrder = isScheduledGift || 
     !!(order as any)?.gift_options?.is_gift || 
     !!(order as any)?.gift_options?.isGift ||
-    !!(order as any)?.recipient_id;
+    !!(order as any)?.recipient_id ||
+    isNameMismatch;
 
   // Extract recipient info from line_items for scheduled gifts
   const orderLineItems = getOrderLineItems(order);

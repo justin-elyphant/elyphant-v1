@@ -1079,6 +1079,32 @@ const handler = async (req: Request): Promise<Response> => {
       const lineItems = (order.line_items as any)?.items || [];
       const shippingAddress = order.shipping_address as any;
       const customerName = shippingAddress?.name || 'Customer';
+      
+      // Detect gift: check both camelCase (webhook) and snake_case variants,
+      // plus heuristic: if shipping name differs from buyer profile, it's a gift
+      const giftOpts = order.gift_options as any;
+      const lineItems_raw = order.line_items as any;
+      const hasGiftFlag = giftOpts?.isGift || giftOpts?.is_gift || false;
+      const hasRecipientInItems = lineItems_raw?.items?.some((item: any) => item.recipient_id || item.recipient_name);
+      
+      // Look up buyer's name from profile to compare with shipping name
+      let isGiftByNameMismatch = false;
+      if (!hasGiftFlag && order.user_id) {
+        const { data: buyerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', order.user_id)
+          .single();
+        if (buyerProfile) {
+          const buyerName = `${buyerProfile.first_name || ''} ${buyerProfile.last_name || ''}`.trim().toLowerCase();
+          const shippingName = (shippingAddress?.name || '').trim().toLowerCase();
+          if (buyerName && shippingName && buyerName !== shippingName) {
+            isGiftByNameMismatch = true;
+          }
+        }
+      }
+      
+      const effectiveIsGift = hasGiftFlag || !!hasRecipientInItems || isGiftByNameMismatch;
 
       emailData = {
         customer_name: customerName,
@@ -1086,10 +1112,10 @@ const handler = async (req: Request): Promise<Response> => {
         order_id: order.id,
         total_amount: order.total_amount || 0,
         // Values in line_items JSONB are stored in DOLLARS (not cents)
-        subtotal: (order.line_items as any)?.subtotal || 0,
-        shipping_cost: (order.line_items as any)?.shipping || 0,
-        tax_amount: (order.line_items as any)?.tax || 0,
-        gifting_fee: (order.line_items as any)?.gifting_fee || 0,
+        subtotal: lineItems_raw?.subtotal || 0,
+        shipping_cost: lineItems_raw?.shipping || 0,
+        tax_amount: lineItems_raw?.tax || 0,
+        gifting_fee: lineItems_raw?.gifting_fee || 0,
         items: lineItems.map((item: any) => ({
           title: item.title || item.product_name || 'Product',
           quantity: item.quantity || 1,
@@ -1097,8 +1123,8 @@ const handler = async (req: Request): Promise<Response> => {
           image_url: item.image_url || item.image
         })),
         shipping_address: shippingAddress || null,
-        is_gift: (order.gift_options as any)?.is_gift || false,
-        gift_message: (order.gift_options as any)?.gift_message || null,
+        is_gift: effectiveIsGift,
+        gift_message: giftOpts?.giftMessage || giftOpts?.gift_message || null,
         scheduled_delivery_date: order.scheduled_delivery_date || null,
         scheduled_date: order.scheduled_delivery_date || null, // Alias for pending_payment template
         // For shipped emails

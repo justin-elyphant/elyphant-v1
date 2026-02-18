@@ -21,7 +21,7 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
   // Priority 1: Check for scheduled gift / modern line_items.items[0].recipient_shipping
   const lineItems = (order as any).items || [];
   const isScheduledGift = (order as any).isScheduledGift || (order as any).scheduled_delivery_date;
-  const hasGiftOptions = (order as any).gift_options?.isGift || (order as any).gift_options?.is_gift;
+  const hasGiftOptions = (order as any).gift_options?.isGift || (order as any).gift_options?.is_gift || (order as any).isGiftOrder;
   
   if (lineItems.length > 0) {
     const firstItem = lineItems[0];
@@ -71,6 +71,10 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
     const shippingInfo = (order as any).shipping_info || {};
     recipientName = shippingInfo.name || order.customerName || "Customer";
     shippingAddress = shippingInfo.address || shippingInfo;
+    // If gift flags indicate this is a gift, still mask the address
+    if (hasGiftOptions || isScheduledGift) {
+      isGiftRecipient = true;
+    }
   }
 
   return (

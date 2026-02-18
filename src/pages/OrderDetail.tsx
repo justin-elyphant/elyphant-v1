@@ -83,7 +83,11 @@ const OrderDetail = () => {
           // For gift orders, check line_items for recipient info (modern format)
           const giftOptions = data.gift_options as any;
           const lineItems = data.line_items as any;
-          const isGift = giftOptions?.isGift || isScheduledGift;
+          // Detect gift by flag OR by name mismatch (Buy Now for someone else)
+          const buyerFullName = (user?.user_metadata?.name || user?.user_metadata?.full_name || '').trim().toLowerCase();
+          const shippingRecipientName = ((data.shipping_address as any)?.name || '').trim().toLowerCase();
+          const nameIndicatesGift = buyerFullName && shippingRecipientName && buyerFullName !== shippingRecipientName;
+          const isGift = giftOptions?.isGift || isScheduledGift || nameIndicatesGift;
           
           if (isGift && lineItems?.items?.length > 0) {
             const firstItem = lineItems.items[0];
@@ -112,6 +116,7 @@ const OrderDetail = () => {
             status: data.status,
             scheduled_delivery_date: data.scheduled_delivery_date,
             isScheduledGift: !!isScheduledGift,
+            isGiftOrder: isGift,
             total: data.total_amount,
             subtotal: pricingBreakdown.subtotal,
             shipping_cost: pricingBreakdown.shipping_cost,

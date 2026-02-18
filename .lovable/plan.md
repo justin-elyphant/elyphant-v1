@@ -1,97 +1,130 @@
 
-# Guest-to-User Order Linking and Onboarding
 
-## Problem
+# Privacy Fix: Hide Recipient Address from Gift Sender -- Complete Audit
 
-Two gaps exist in the guest-to-user conversion flow:
+## Summary of All Affected Areas
 
-1. **Orders never get linked**: When a guest creates an account via the `GuestSignupCard`, the code only calls `supabase.auth.signUp()`. It never updates the guest orders (which have `user_id = NULL` and `guest_email = 'justin+guest@elyphant.com'`) to point to the newly created user. So the orders don't appear in "My Orders."
-
-2. **No onboarding after guest conversion**: After creating a password, the guest is shown a "check your email" success message but is never routed through the onboarding flow (DOB, shipping address, interests, etc.) that regular signups go through.
-
-## Solution
-
-### 1. Add order-claiming logic after guest signup
-
-In `GuestSignupCard.tsx`, after a successful `signUp()`, call a new function that updates all orders matching that `guest_email` to set `user_id` to the new user's ID.
-
-This will be done via a Supabase Edge Function (`claim-guest-orders`) rather than a direct client update, because:
-- The client (anon role) likely can't UPDATE orders where `user_id IS NULL`
-- A server-side function can securely verify the email match and do the update
-
-**Edge Function: `claim-guest-orders`**
-- Input: user's JWT (from auth header)
-- Logic: Extract user email from JWT, then `UPDATE orders SET user_id = auth.uid() WHERE guest_email = user_email AND user_id IS NULL`
-- Returns: count of claimed orders
-
-### 2. Route guest converts through onboarding
-
-After email verification via `AuthCallback.tsx`, the user already gets redirected to `/profile-setup`. This is the correct behavior -- the guest-converted user will go through the standard onboarding flow (DOB, shipping, interests, profile image) when they verify their email.
-
-However, the `GuestSignupCard` success state should make this clearer by:
-- Mentioning that after email verification, they'll complete a quick profile setup
-- Emphasizing the benefits (AI gift recommendations, size matching, etc.)
-
-### 3. Also claim orders on AuthCallback
-
-As a belt-and-suspenders approach, also call `claim-guest-orders` from `AuthCallback.tsx` after successful email verification. This catches cases where the user verifies later.
+After a thorough codebase audit, I found **6 locations** where the recipient's full address is exposed (or could be exposed) to the gift sender. The original plan covered 2 of these -- here is the complete list.
 
 ---
 
-## Technical Details
+## Area 1: Order Confirmation Page (`src/pages/OrderConfirmation.tsx`)
+**Status: LEAKING -- confirmed by screenshot**
 
-### New Edge Function: `claim-guest-orders`
+Lines 710-737: The privacy branch only triggers for `isScheduledGift`. When Charles does a "Buy Now" gift for Justin, it falls into the `else` branch and renders the full street address, ZIP, etc.
 
-```
-supabase/functions/claim-guest-orders/index.ts
-```
+**Fix:** Expand the gift detection to include `order.gift_options?.is_gift`, `order.recipient_id`, or the presence of recipient data in `line_items`.
 
-- Authenticates the user via JWT
-- Gets user email from `auth.users`
-- Runs: `UPDATE orders SET user_id = $user_id, updated_at = now() WHERE guest_email = $email AND user_id IS NULL`
-- Returns `{ claimed: number }`
+---
 
-### Modified Files
+## Area 2: Confirmation Email (`ecommerce-email-orchestrator` -- `orderConfirmationTemplate`)
+**Status: LEAKING -- confirmed by screenshot**
 
-1. **`src/components/checkout/GuestSignupCard.tsx`**
-   - After successful signup, call `claim-guest-orders` edge function
-   - Update success message to mention onboarding after email verification
-   - Add copy like "After verifying your email, we'll help you set up your profile for personalized gift recommendations"
+Line 218: Calls `renderShippingAddress(props.shipping_address)` unconditionally. Even though `props.is_gift` is available (set on line 1085), the template never checks it. Full address (name, street, city, state, ZIP) goes into every confirmation email.
 
-2. **`src/pages/AuthCallback.tsx`**
-   - After successful email verification (line 47-82), call `claim-guest-orders` to link any guest orders
-   - This ensures orders are claimed even if the edge function call in GuestSignupCard was missed
+**Fix:** Add a `renderGiftShippingAddress` helper that shows only name + city/state + "Full address securely stored." Use it when `props.is_gift` is true.
 
-3. **`src/components/checkout/GuestSignupCard.tsx` success state**
-   - Improve the post-signup success message to set expectations about the onboarding flow
+---
 
-### Order Claiming Flow
+## Area 3: Pending Payment Email (`orderPendingPaymentTemplate`)
+**Status: LEAKING (for scheduled gifts)**
 
-```text
-Guest Checkout
-  |
-  v
-Order created (user_id=NULL, guest_email=X)
-  |
-  v
-Guest creates password (GuestSignupCard)
-  |-- calls claim-guest-orders (attempts early claim)
-  |
-  v
-Guest verifies email (AuthCallback)
-  |-- calls claim-guest-orders (guaranteed claim)
-  |-- redirects to /profile-setup (onboarding)
-  |
-  v
-User completes onboarding (DOB, shipping, interests)
-  |
-  v
-User lands on dashboard -- orders visible in "My Orders"
-```
+Line 276: Same issue -- `renderShippingAddress` is called unconditionally. Since this template is specifically for scheduled/deferred gifts, it should *always* use the masked version.
 
-### RLS Consideration
+**Fix:** Always use `renderGiftShippingAddress` in this template (it's inherently a gift flow).
 
-The `claim-guest-orders` edge function will use the service role key to perform the update, bypassing RLS. This is safe because:
-- It only matches on the authenticated user's verified email
-- It only claims orders with `user_id IS NULL`
-- The email comes from the JWT, not user input
+---
+
+## Area 4: Shipped Email (`orderShippedTemplate`)
+**Status: LEAKING**
+
+Line 327: `renderShippingAddress(props.shipping_address)` called with no gift check. When the gift ships, Charles gets an email with Justin's full address.
+
+**Fix:** Check `props.is_gift` and use the masked rendering.
+
+---
+
+## Area 5: Guest Order Confirmation Email (`guestOrderConfirmationTemplate`)
+**Status: LEAKING**
+
+Line 882: Same pattern -- unconditional `renderShippingAddress`. Guest senders who buy gifts for connected recipients will see the full address.
+
+**Fix:** Same `is_gift` check with masked rendering.
+
+---
+
+## Area 6: Order Detail Page (`src/pages/OrderDetail.tsx` via `ShippingInfoCard`)
+**Status: PARTIALLY PROTECTED -- but has a gap for Buy Now gifts**
+
+`ShippingInfoCard.tsx` sets `isGiftRecipient` based on `isScheduledGift || firstItem?.recipient_id`. For Buy Now gifts, there's no `scheduled_delivery_date`, and `recipient_id` depends on line_items structure. If neither matches, the card falls through to the full-address branch.
+
+Additionally, `OrderDetail.tsx` line 86 detects gifts via `giftOptions?.isGift || isScheduledGift` and passes recipient info into `shipping_info`, but `ShippingInfoCard` re-derives gift status independently and may not catch Buy Now gifts.
+
+**Fix:** Pass `isGift` flag explicitly from `OrderDetail.tsx` into `ShippingInfoCard` as a prop, or enhance `ShippingInfoCard` to also check gift_options from the order data.
+
+---
+
+## Area 7: Order Failed Email (`orderFailedTemplate`)
+**Status: SAFE** -- Does not call `renderShippingAddress` at all. No fix needed.
+
+---
+
+## Implementation Plan
+
+### Step 1: Email Orchestrator -- Add gift-aware address rendering
+
+In `supabase/functions/ecommerce-email-orchestrator/index.ts`:
+
+- Add a new `renderGiftShippingAddress(shippingAddress)` function that renders only:
+  - Recipient name
+  - City, State
+  - "Full address securely stored for delivery" note with a lock icon
+- Update 4 templates to use it when `is_gift` is true:
+  - `orderConfirmationTemplate` (line 218)
+  - `orderPendingPaymentTemplate` (line 276) -- always use masked version
+  - `orderShippedTemplate` (line 327)
+  - `guestOrderConfirmationTemplate` (line 882)
+
+### Step 2: Order Confirmation Page -- Extend gift detection
+
+In `src/pages/OrderConfirmation.tsx`:
+
+- Change the privacy branch condition from `isScheduledGift` to a broader `isGiftOrder` check:
+  - `isScheduledGift || order.gift_options?.is_gift || !!order.recipient_id`
+- The masked rendering (city/state only + Lock icon) already exists -- just needs the correct trigger
+
+### Step 3: ShippingInfoCard -- Fix Buy Now gift detection
+
+In `src/components/orders/ShippingInfoCard.tsx`:
+
+- Add a check for `(order as any).gift_options?.isGift` or `(order as any).gift_options?.is_gift` to the `isGiftRecipient` detection
+- This ensures Buy Now gifts (which have gift_options.isGift=true but no scheduled_delivery_date) get the privacy treatment
+
+### Step 4: Deploy and verify
+
+- Deploy updated `ecommerce-email-orchestrator`
+- Test a Buy Now gift flow and verify:
+  - Confirmation page shows city/state only
+  - Confirmation email shows city/state only
+  - Order detail page shows city/state only
+  - Self-purchase orders still show full address
+
+---
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `supabase/functions/ecommerce-email-orchestrator/index.ts` | Add `renderGiftShippingAddress`, update 4 templates |
+| `src/pages/OrderConfirmation.tsx` | Broaden `isGiftOrder` detection for privacy branch |
+| `src/components/orders/ShippingInfoCard.tsx` | Add `gift_options.isGift` to gift detection logic |
+
+---
+
+## What Remains Safe (No Changes Needed)
+
+- **Order Failed Email**: Does not render shipping address
+- **Connection Invitation Email**: No address data included
+- **AddressProviderPage**: This is the recipient providing their OWN address -- not a leak
+- **Cart page**: Shows the sender's own address for self-shipping validation
+

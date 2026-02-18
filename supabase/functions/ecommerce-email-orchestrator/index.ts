@@ -183,6 +183,21 @@ const renderShippingAddress = (shippingAddress: any): string => {
   `;
 };
 
+// Privacy-aware shipping address for gift orders (city/state only)
+const renderGiftShippingAddress = (shippingAddress: any): string => {
+  if (!shippingAddress) return '';
+  const name = shippingAddress.name || 'Recipient';
+  const cityState = [shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ');
+  return `
+    <h3 style="margin: 24px 0 12px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">📍 Delivery Address</h3>
+    <p style="margin: 0 0 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 600;">${name}</p>
+    ${cityState ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #666666;">${cityState}</p>` : ''}
+    <p style="margin: 0 0 24px 0; font-size: 12px; color: #999999;">
+      🔒 Full address securely stored for delivery
+    </p>
+  `;
+};
+
 // Order Confirmation Template
 const orderConfirmationTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
@@ -215,7 +230,7 @@ const orderConfirmationTemplate = (props: any): string => {
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
-    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
+    ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
@@ -273,7 +288,7 @@ const orderPendingPaymentTemplate = (props: any): string => {
     </table>
     `}
     
-    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
+    ${props.shipping_address ? renderGiftShippingAddress(props.shipping_address) : ''}
     
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
@@ -324,7 +339,7 @@ const orderShippedTemplate = (props: any): string => {
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
-    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
+    ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
     <table style="margin-top: 30px; width: 100%;">
       ${props.tracking_url ? `
       <tr><td align="center" style="padding-bottom: 12px;">
@@ -879,7 +894,7 @@ const guestOrderConfirmationTemplate = (props: any): string => {
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
-    ${props.shipping_address ? renderShippingAddress(props.shipping_address) : ''}
+    ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
     ${props.is_gift && props.gift_message ? `
     <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
       <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>

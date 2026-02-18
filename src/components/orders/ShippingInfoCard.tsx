@@ -21,12 +21,13 @@ const ShippingInfoCard = ({ order }: ShippingInfoCardProps) => {
   // Priority 1: Check for scheduled gift / modern line_items.items[0].recipient_shipping
   const lineItems = (order as any).items || [];
   const isScheduledGift = (order as any).isScheduledGift || (order as any).scheduled_delivery_date;
+  const hasGiftOptions = (order as any).gift_options?.isGift || (order as any).gift_options?.is_gift;
   
   if (lineItems.length > 0) {
     const firstItem = lineItems[0];
     const recipientAddr = firstItem?.recipient_shipping || firstItem?.shippingAddress;
     
-    if (recipientAddr && (isScheduledGift || firstItem?.recipient_id)) {
+    if (recipientAddr && (isScheduledGift || hasGiftOptions || firstItem?.recipient_id)) {
       shippingAddress = {
         address_line1: recipientAddr.address_line1 || recipientAddr.address,
         address_line2: recipientAddr.address_line2 || recipientAddr.addressLine2,

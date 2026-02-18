@@ -12,8 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useGroupMessaging } from "@/hooks/useUnifiedMessaging";
 import type { UnifiedMessage } from "@/services/UnifiedMessagingService";
 import { supabase } from "@/integrations/supabase/client";
-import { getGroupGiftProjects, GroupGiftProject } from "@/services/groupGiftService";
-import GroupGiftProjectCard from "./GroupGiftProjectCard";
 
 interface GroupChat {
   id: string;
@@ -47,7 +45,6 @@ interface GroupChatInterfaceProps {
 const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: GroupChatInterfaceProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [members, setMembers] = useState<GroupChatMember[]>([]);
-  const [giftProjects, setGiftProjects] = useState<GroupGiftProject[]>([]);
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -65,13 +62,8 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [membersData, projectsData] = await Promise.all([
-          getGroupMembers(groupChat.id),
-          getGroupGiftProjects(groupChat.id)
-        ]);
-        
+        const membersData = await getGroupMembers(groupChat.id);
         setMembers(membersData);
-        setGiftProjects(projectsData);
       } catch (error) {
         console.error('Error loading group data:', error);
         toast("Failed to load group data");
@@ -185,21 +177,6 @@ const GroupChatInterface = ({ groupChat, currentUserId, onCreateGiftProject }: G
           )}
         </div>
       </div>
-
-      {/* Gift Projects Section */}
-      {giftProjects.length > 0 && (
-        <div className="p-4 border-b bg-muted/20">
-          <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
-            <Gift className="h-4 w-4" />
-            Active Gift Projects
-          </h3>
-          <div className="space-y-2">
-            {giftProjects.map(project => (
-              <GroupGiftProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Members Sidebar */}
       {showMembers && (

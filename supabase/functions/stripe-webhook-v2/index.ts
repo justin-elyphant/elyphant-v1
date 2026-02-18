@@ -135,6 +135,18 @@ function groupItemsByRecipient(
     }
   }
 
+  // FALLBACK: If no per-item gift_message was found, use session-level metadata.gift_message
+  // This covers Buy Now drawer which stores gift_message in session metadata, not per-item
+  const sessionGiftMessage = metadata?.gift_message || '';
+  if (sessionGiftMessage) {
+    for (const group of groupsMap.values()) {
+      if (!group.giftMessage) {
+        group.giftMessage = sessionGiftMessage;
+        console.log(`🎁 [GROUP] Applied session-level gift_message to group "${group.recipientName}": "${sessionGiftMessage.substring(0, 50)}..."`);
+      }
+    }
+  }
+
   return Array.from(groupsMap.values());
 }
 

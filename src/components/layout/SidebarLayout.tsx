@@ -84,6 +84,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <SidebarProvider 
         defaultOpen={defaultOpen}
         onOpenChange={handleOpenChange}
+        style={{
+          "--sidebar-top-offset": `calc(${headerHeight}px + env(safe-area-inset-top, 0px))`,
+        } as React.CSSProperties}
       >
         <div
           className="flex w-full overflow-x-hidden"

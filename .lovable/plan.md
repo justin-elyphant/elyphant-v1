@@ -1,59 +1,147 @@
 
+# Privacy System Audit: Analysis & Recommendations
 
-# Smooth Page Transitions on Desktop
+## What You Have Today
 
-## Problem
-Every time you navigate between pages on desktop, the app feels like it does a "hard refresh" because:
-1. The Suspense fallback (full-screen spinner) flashes on every lazy-loaded route, even when the chunk is already cached
-2. There are no transition animations between pages -- content just pops in/out
-3. ScrollToTop snaps instantly to the top with no visual smoothing
+Your platform has privacy controls scattered across three separate, disconnected systems. None of them fully "talk" to each other, and they use different terminology, different storage mechanisms, and different enforcement patterns.
 
-## Solution
+---
 
-### 1. Add page transition wrapper using framer-motion (already installed)
-Create a `PageTransition` component that wraps route content with a subtle fade animation using `AnimatePresence` and `motion.div`. This gives every page a smooth fade-in when it appears.
+## The 3 Privacy Systems Currently in Your Codebase
 
-**New file: `src/components/layout/PageTransition.tsx`**
-- Uses `AnimatePresence mode="wait"` keyed by `location.pathname`
-- Simple fade + slight upward slide (opacity 0 to 1, y: 8px to 0)
-- Fast duration (200ms) so it feels snappy, not slow
+### System 1: Social Privacy (`privacy_settings` database table)
+**What it controls:** Profile visibility, connection requests, messaging, follower counts, block lists
+**Where it's stored:** Supabase `privacy_settings` table (properly persisted)
+**Where it's edited:** Two different places:
+- `Settings > Privacy & Sharing` tab (via `PrivacySharingSettings.tsx`)
+- `Connections` page (via `PrivacySettings.tsx` — a completely separate, near-identical component)
 
-### 2. Wrap Routes with AnimatePresence in App.tsx
-- Wrap the `<Routes>` block with `<AnimatePresence mode="wait">`
-- Each route's page component gets wrapped with the `PageTransition` component
-- The `location` key ensures animations trigger on route changes
+**Options used:**
+- Profile visibility: `public` / `followers_only` / `private`
+- Connection requests: `everyone` / `friends_only` / `nobody`
+- Message requests: boolean toggle
+- Show follower/following count: boolean toggles
 
-### 3. Improve Suspense fallback to avoid flash
-Replace the full-screen spinner Suspense fallback with a minimal, non-intrusive approach:
-- Add a short delay (200ms) before showing the spinner so cached chunks don't flash the loader at all
-- Use a subtler loading indicator (thin progress bar at top instead of full-screen spinner)
+### System 2: Data Sharing (`data_sharing_settings` JSONB in `profiles` table)
+**What it controls:** Who can see your email, birthday, shipping address, and interests
+**Where it's stored:** Inside the `profiles` table as a JSONB column (embedded inside the profile object)
+**Where it's edited:** `Settings > Privacy & Sharing` tab, via `DataSharingSectionWrapper` (which spins up a full general settings form just to change 4 fields)
 
-**New file: `src/components/layout/DelayedFallback.tsx`**
-- Renders nothing for the first 200ms
-- Then shows a minimal top progress bar instead of a centered spinner
+**Options used:**
+- Per-field visibility: `private` / `friends` / `public`
+- Fields: `dob`, `shipping_address`, `interests`, `email`
+- Note: `gift_preferences` is a deprecated duplicate of `interests` still floating around in 51 files
 
-### 4. Smooth ScrollToTop behavior
-Update `ScrollToTop.tsx` to use `behavior: "smooth"` for a less jarring scroll, but only when the scroll distance is small. For large jumps (e.g., from bottom of a long page), keep `"auto"` to avoid slow visible scrolling.
+### System 3: Wishlist Privacy (`is_public` boolean on `wishlists` table)
+**What it controls:** Whether a wishlist is publicly sharable
+**Where it's stored:** `wishlists.is_public` boolean column
+**Where it's edited:** Inline on wishlist cards, in a share dialog, in a mobile action bar
+**Enforcement:** Checked on the frontend when sharing links — but this is the most correctly scoped of the three systems
 
-## Technical Details
+---
 
-### PageTransition component
-```text
-- opacity: 0 -> 1 on enter, 1 -> 0 on exit
-- y: 8px -> 0 on enter (subtle upward slide)
-- duration: 0.2s with easeOut
-- Keyed by location.pathname
-```
+## The Problems
 
-### DelayedFallback component
-```text
-- useState with 200ms setTimeout to show/hide
-- When visible: thin 2px animated bar at top of viewport
-- No full-screen overlay or centered spinner
-```
+### Problem 1: Two hooks named `usePrivacySettings` — different things, both exported
+- `src/hooks/usePrivacySettings.ts` — reads from the **database** (`privacy_settings` table), used in Settings
+- `src/hooks/usePrivacySettings.tsx` — reads from **localStorage** only, never persisted to the database
+- The `.tsx` version stores settings in `localStorage` using a totally different shape (`allowFriendRequests`, `connectionVisibility`, `friendSuggestions`) that has **no corresponding database columns**. These settings are silently lost on logout or new device.
+- This is a data loss bug: users think they're saving settings, but they aren't.
 
-### Files modified
-1. `src/components/layout/PageTransition.tsx` (new) -- fade transition wrapper
-2. `src/components/layout/DelayedFallback.tsx` (new) -- delayed minimal loading indicator
-3. `src/App.tsx` -- wrap Routes with AnimatePresence + PageTransition, use DelayedFallback
-4. `src/components/layout/ScrollToTop.tsx` -- smoother scroll behavior
+### Problem 2: `PrivacySharingSettings.tsx` and `PrivacySecuritySettings.tsx` are near-identical
+Both files are ~180 lines, render the same social privacy controls (connection requests, profile visibility, message requests, follower counts), use the same hook, and differ by only one section (the data sharing wrapper). One of them is dead code.
+
+### Problem 3: `PrivacySettings.tsx` (in the Connections page) duplicates the Settings page controls
+The `connections/PrivacySettings.tsx` component renders the exact same social privacy settings that exist in `Settings > Privacy & Sharing`. Users who change them in one place won't know they exist in the other. This creates confusion about where the "real" privacy settings live.
+
+### Problem 4: Terminology mismatch across the three systems
+| Setting | System 1 | System 2 | System 3 |
+|---|---|---|---|
+| Public visibility | `public` / `followers_only` / `private` | `public` / `friends` / `private` | `is_public` boolean |
+| "Friends" concept | `friends_only` | `friends` | N/A |
+| Social graph term | "followers" | "friends" | N/A |
+
+Your social graph uses "connections" but your privacy labels say "followers" and "friends" — neither of which is your actual terminology in the app. Users see "Connections" everywhere but privacy settings say "Followers Only."
+
+### Problem 5: Data sharing settings are stored in the wrong place
+Storing `data_sharing_settings` as a JSONB blob inside `profiles` means:
+- It can't be indexed or queried efficiently
+- It gets dragged along in every profile fetch even when irrelevant
+- Updating it requires loading the entire general settings form
+- The `DataSharingSectionWrapper` creates a full `react-hook-form` instance just to change 4 fields
+
+### Problem 6: `gift_preferences` privacy field is deprecated but still referenced in 51 files
+The `gift_preferences` privacy field is marked deprecated in the types and should have been removed, but it's still being read, written, and validated across the codebase. The validator in `dataStructureValidator.ts` even still lists it as a "required field."
+
+### Problem 7: Missing gifting-specific privacy controls
+As an e-commerce + social platform, there are key privacy gaps that neither Instagram/Meta nor Amazon have but that Elyphant uniquely needs:
+- **Wishlist item visibility from non-connections** — there's no setting for "who can see my wishlist items when browsing my profile"
+- **Gift purchase visibility** — when someone buys from a wishlist, can the recipient see who bought it before the gift is delivered?
+- **Auto-gift opt-in/out** — can other users set up auto-gifts for you without your permission? There's no consent control in the privacy settings.
+- **Shipping address sharing for group gifts** — who within a group gift sees the recipient address?
+
+---
+
+## What Best Practice Looks Like for Your Platform
+
+### From social platforms (Instagram, LinkedIn):
+- One unified privacy settings page, not split across multiple routes
+- Consistent terminology: pick one word (you should use "Connections") and use it everywhere
+- Profile visibility affects what the profile shows, not whether you can be found
+
+### From e-commerce platforms (Amazon, Etsy):
+- Per-wishlist privacy toggle (you already have this — it's your strongest implementation)
+- Address privacy is locked by default and never shown to other shoppers
+- Purchase history is always private
+
+### From gift platforms (The Knot, Zola):
+- Separate the concept of "who can see my wishlist" from "who can buy from my wishlist"
+- Gift purchaser identity is withheld until after delivery ("surprise mode")
+- Explicit opt-in for auto-gifting features (consent controls)
+
+---
+
+## Recommended Consolidation Plan
+
+### Phase 1: Fix the data loss bug (critical)
+Delete `src/hooks/usePrivacySettings.tsx` (the localStorage version). The settings it stores (`allowFriendRequests`, `connectionVisibility`, `friendSuggestions`) need to either be added to the `privacy_settings` database table or removed entirely. Users are losing settings on every logout.
+
+### Phase 2: Unify terminology
+Rename all occurrences of "followers" and "friends" in privacy settings to "connections" to match your app's own language. Specifically:
+- `followers_only` → `connections_only`
+- `friends_only` → `connections_only`
+- `friends` (in data sharing) → `connections`
+- Update labels in all 3 settings components
+
+### Phase 3: Consolidate the UI into one settings page
+- Delete `PrivacySecuritySettings.tsx` (dead code)
+- Remove `connections/PrivacySettings.tsx` from the Connections page — replace with a "Manage Privacy Settings" link to Settings > Privacy
+- Merge `DataSharingSectionWrapper` logic to use the same `usePrivacySettings` hook rather than spinning up a full form
+
+### Phase 4: Migrate `data_sharing_settings` to its own table
+Move the 4 data sharing fields out of the `profiles` JSONB blob into the `privacy_settings` table (or a dedicated `data_sharing_settings` table). This lets them be updated independently without loading the full profile form.
+
+### Phase 5: Add gifting-specific privacy controls (competitive differentiator)
+Add three controls that no competitor has in this combination:
+1. **"Who can set up auto-gifts for me"** — `everyone` / `connections_only` / `nobody` (consent for auto-gifting)
+2. **"Show wishlist to"** — per-wishlist granular control beyond just public/private
+3. **"Gift surprise mode"** — hide purchaser identity until delivery date
+
+### Phase 6: Clean up `gift_preferences` references
+Remove the deprecated `gift_preferences` privacy field from all 51 files that still reference it. The single source of truth is `interests`.
+
+---
+
+## Summary: What to Build vs. What to Fix
+
+| Issue | Severity | Action |
+|---|---|---|
+| Two `usePrivacySettings` hooks (data loss bug) | Critical | Delete `.tsx` version, migrate settings to DB |
+| Terminology: "followers/friends" vs "connections" | High | Rename across all 3 systems |
+| Duplicate settings components | Medium | Delete `PrivacySecuritySettings.tsx`, remove from Connections page |
+| `data_sharing_settings` in profiles JSONB | Medium | Migrate to `privacy_settings` table |
+| Missing auto-gift consent control | Medium | Add to privacy settings |
+| `gift_preferences` privacy field still alive | Low | Clean up 51 files |
+| Wishlist privacy beyond public/private | Low | Add per-wishlist granular options |
+
+The biggest wins — fewest changes, most impact — are: fix the data loss bug, unify terminology to "connections," and remove the duplicate components.

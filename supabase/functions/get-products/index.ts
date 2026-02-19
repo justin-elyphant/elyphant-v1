@@ -297,8 +297,8 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
         .order('view_count', { ascending: false, nullsFirst: false })
         .limit(limit);
       
-      if (!andError && andResults && andResults.length >= Math.min(threshold, 5)) {
-        console.log(`✅ AND Cache HIT: Found ${andResults.length} products matching ALL terms for "${query}"`);
+      if (!andError && andResults && andResults.length >= threshold) {
+        console.log(`✅ AND Cache HIT: Found ${andResults.length} products matching ALL terms for "${query}" (threshold: ${threshold})`);
         
         return {
           products: andResults.map((p: any) => transformCachedProduct(p)),
@@ -308,7 +308,19 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
         };
       }
       
-      console.log(`⏳ AND search found only ${andResults?.length || 0} products, trying OR fallback...`);
+      // Return partial AND results so caller can supplement with Zinc
+      if (!andError && andResults && andResults.length > 0) {
+        console.log(`⏳ AND search found ${andResults.length} products (need ${threshold}) - returning partial for supplement`);
+        return {
+          products: andResults.map((p: any) => transformCachedProduct(p)),
+          fuzzyMatched: false,
+          suggestedCorrection: null,
+          matchType: 'and-partial',
+          isPartial: true
+        };
+      }
+      
+      console.log(`⏳ AND search found 0 products, trying OR fallback...`);
     }
 
     // Step 2: Fall back to OR logic (products contain ANY term)

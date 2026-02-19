@@ -255,6 +255,11 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         const genuinelyNew = result.products.filter((p: any) => !existingIds.has(p.product_id || p.asin));
         if (genuinelyNew.length > 0) {
           setExtraProducts(prev => [...prev, ...genuinelyNew]);
+          // Expand pagination to show the new products
+          setCurrentPage(prev => {
+            const totalAfter = displayProducts.length + genuinelyNew.length;
+            return Math.ceil(totalAfter / pageSize);
+          });
           toast.success(`Found ${genuinelyNew.length} new products`);
         } else {
           toast.info('No new products found');

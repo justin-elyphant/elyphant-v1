@@ -26,7 +26,7 @@ const DEFAULT_SETTINGS: PrivacySettings = {
   allow_message_requests: true,
   auto_gift_consent: 'connections_only',
   gift_surprise_mode: true,
-  wishlist_visibility: 'connections_only',
+  wishlist_visibility: 'public',
 };
 
 /** Normalize legacy DB values to current terminology */
@@ -52,7 +52,7 @@ function normalizeSettings(data: Record<string, unknown>): PrivacySettings {
     allow_message_requests: !!data.allow_message_requests,
     auto_gift_consent: (data.auto_gift_consent as PrivacySettings['auto_gift_consent']) ?? 'connections_only',
     gift_surprise_mode: data.gift_surprise_mode !== undefined ? !!data.gift_surprise_mode : true,
-    wishlist_visibility: (data.wishlist_visibility as PrivacySettings['wishlist_visibility']) ?? 'connections_only',
+    wishlist_visibility: (data.wishlist_visibility as PrivacySettings['wishlist_visibility']) ?? 'public',
   };
 }
 

@@ -34,6 +34,7 @@ export const shouldDisplayBirthday = (
     case 'private':
       return viewerRelationship === 'self';
     case 'friends':
+    case 'connections': // normalize both terms
       return viewerRelationship === 'self' || viewerRelationship === 'friend';
     case 'public':
       return true;

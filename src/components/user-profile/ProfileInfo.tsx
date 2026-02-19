@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Calendar, Gift, MapPin, Mail, Globe, Shield } from "lucide-react";
+import { Calendar, Gift, Globe, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PrivacyNotice from "./PrivacyNotice";
@@ -43,27 +43,12 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
   return (
     <div className="space-y-4">
       {/* Contact Information */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Contact Info</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {email && data_sharing_settings?.email && data_sharing_settings.email !== 'private' && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                <Mail className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">Email</div>
-                <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                  {email}
-                  <PrivacyNotice level={data_sharing_settings.email} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {username && (
+      {username && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Contact Info</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
                 <Globe className="h-4 w-4 text-purple-600" />
@@ -73,9 +58,9 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
                 <div className="text-xs text-muted-foreground">@{username}</div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Personal Information */}
       <Card>
@@ -98,20 +83,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
             </div>
           )}
 
-          {formattedAddress && data_sharing_settings?.shipping_address && data_sharing_settings.shipping_address !== 'private' && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
-                <MapPin className="h-4 w-4 text-orange-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">Location</div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  {formattedAddress}
-                  <PrivacyNotice level={data_sharing_settings.shipping_address} />
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 

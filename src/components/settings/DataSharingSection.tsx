@@ -28,23 +28,6 @@ const DataSharingSection: React.FC<DataSharingSectionProps> = ({ embedded = fals
     <div className="space-y-4">
       <FormField
         control={form.control}
-        name="data_sharing_settings.email"
-        render={({ field }) => (
-          <FormItem>
-            <PrivacySelector
-              value={field.value as SharingLevel}
-              onChange={(value) => handleSharingChange("email", value)}
-              label="Email Address Visibility"
-              description="Who can see your email address"
-            />
-          </FormItem>
-        )}
-      />
-
-      <Separator />
-      
-      <FormField
-        control={form.control}
         name="data_sharing_settings.dob"
         render={({ field }) => (
           <FormItem>
@@ -52,31 +35,14 @@ const DataSharingSection: React.FC<DataSharingSectionProps> = ({ embedded = fals
               value={field.value as SharingLevel}
               onChange={(value) => handleSharingChange("dob", value)}
               label="Birthday Visibility"
-              description="Who can see your date of birth"
+              description="Who can see your date of birth (year is never shown)"
             />
           </FormItem>
         )}
       />
 
       <Separator />
-      
-      <FormField
-        control={form.control}
-        name="data_sharing_settings.shipping_address"
-        render={({ field }) => (
-          <FormItem>
-            <PrivacySelector
-              value={field.value as SharingLevel}
-              onChange={(value) => handleSharingChange("shipping_address", value)}
-              label="Shipping Address Visibility"
-              description="Who can see your shipping address"
-            />
-          </FormItem>
-        )}
-      />
 
-      <Separator />
-      
       <FormField
         control={form.control}
         name="data_sharing_settings.interests"

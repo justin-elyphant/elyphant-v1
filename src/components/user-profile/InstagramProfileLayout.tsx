@@ -103,7 +103,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
       <div className="w-full py-4">
         {/* Instagram Wishlist Grid - Primary Focus */}
         <div className="mb-8 w-full">
-          <DesktopProfileWrapper className="w-full">
+        <DesktopProfileWrapper className="w-full">
             <InstagramWishlistGrid
               profileId={profile.id || profile.user_id}
               isOwnProfile={isCurrentUser}
@@ -112,6 +112,8 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
               wishlistItems={wishlistItems}
               displayName={profile?.display_name || profile?.full_name || profile?.username || userData?.user_metadata?.display_name}
               onWishlistClick={setSelectedWishlist}
+              wishlistVisibility={profile?.privacy_settings?.wishlist_visibility || (profile?.wishlist_visibility as any) || 'public'}
+              isConnected={isConnected}
             />
           </DesktopProfileWrapper>
         </div>

@@ -9,6 +9,7 @@ import WishlistPriceRange from "./WishlistPriceRange";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { motion } from "framer-motion";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
+import { Lock } from "lucide-react";
 
 interface InstagramWishlistGridProps {
   profileId: string;
@@ -18,6 +19,9 @@ interface InstagramWishlistGridProps {
   wishlistItems?: Array<{ price?: number }>;
   displayName?: string;
   onWishlistClick?: (wishlist: Wishlist) => void;
+  /** Pass the profile owner's wishlist_visibility setting for enforcement */
+  wishlistVisibility?: 'public' | 'connections_only' | 'private';
+  isConnected?: boolean;
 }
 
 const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
@@ -27,7 +31,9 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
   onWishlistsLoaded,
   wishlistItems = [],
   displayName = "Their",
-  onWishlistClick
+  onWishlistClick,
+  wishlistVisibility = 'public',
+  isConnected = false
 }) => {
   const navigate = useNavigate();
   const [publicWishlists, setPublicWishlists] = useState<Wishlist[]>([]);
@@ -104,6 +110,24 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
       onWishlistsLoaded(wishlists);
     }
   }, [wishlists, loading, onWishlistsLoaded]);
+
+  // Enforce wishlist_visibility for non-owners
+  const canViewWishlists = isOwnProfile || 
+    wishlistVisibility === 'public' || 
+    (wishlistVisibility === 'connections_only' && isConnected);
+
+  if (!isOwnProfile && !canViewWishlists) {
+    return (
+      <div className="text-center py-12 px-4">
+        <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+        <p className="text-muted-foreground text-sm">
+          {wishlistVisibility === 'connections_only'
+            ? `Connect with ${displayName} to view their wishlists`
+            : "This user's wishlists are private"}
+        </p>
+      </div>
+    );
+  }
 
   const handleManageClick = () => {
     triggerHapticFeedback(HapticPatterns.buttonTap);

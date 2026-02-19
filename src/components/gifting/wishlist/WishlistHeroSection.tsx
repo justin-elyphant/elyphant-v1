@@ -49,7 +49,7 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={isMobile ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       style={{ transform: 'translate3d(0,0,0)' }}
     >
       {/* Coral/Pink Hero Card - warm gradient with white text */}
@@ -99,9 +99,8 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
         </CardContent>
       </Card>
 
-      {/* Welcome Stats Card - Only shown on desktop (lg+) */}
-      {!isMobile && (
-        <Card className="bg-background hidden lg:block border border-border/50">
+      {/* Welcome Stats Card - shown on all screen sizes */}
+      <Card className="bg-background border border-border/50">
           <CardContent className="p-8 lg:p-10">
             <div className="space-y-6">
               <div>
@@ -153,7 +152,6 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             </div>
           </CardContent>
         </Card>
-      )}
     </motion.div>
   );
 };

@@ -114,8 +114,6 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                 variant="mobile"
               />
               
-              {/* Benefits Grid for new users */}
-              {wishlists.length < 3 && <WishlistBenefitsGrid className="mt-4" />}
 
               {/* Wishlists Grid */}
               {wishlists.length > 0 ? (

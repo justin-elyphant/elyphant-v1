@@ -272,8 +272,6 @@ const Wishlists = () => {
               onCreateWishlist={() => setCreateDialogOpen(true)}
             />
             
-            {/* Benefits Grid - show for users with fewer wishlists */}
-            {(wishlists?.length || 0) < 3 && <WishlistBenefitsGrid />}
           </div>
 
           {/* Tab Toggle + Sort Bar - Same Row Below Hero */}

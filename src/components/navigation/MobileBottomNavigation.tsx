@@ -110,7 +110,7 @@ const MobileBottomNavigation: React.FC = () => {
                 onClick={() => triggerHapticFeedback('selection')}
                 className={cn(
                   "flex flex-col items-center justify-center h-full flex-1 rounded-xl transition-all px-2",
-                  isActive ? "bg-gradient-to-r from-purple-600 to-sky-500 text-white" : "text-muted-foreground",
+                  isActive ? "bg-foreground text-background" : "text-muted-foreground",
                   "active:scale-95"
                 )}
               >
@@ -122,7 +122,7 @@ const MobileBottomNavigation: React.FC = () => {
                     )
                   })}
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-md">
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold shadow-md">
                       {tab.badge > 99 ? '99+' : tab.badge}
                     </span>
                   )}

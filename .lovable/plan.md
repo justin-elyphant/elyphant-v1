@@ -1,126 +1,117 @@
 
-# Privacy Rules: What's Real, What Needs Work, and What to Change
+# Privacy Compliance Gaps: What Can Be Built in Lovable
 
-## Honest Status Before Planning
-
-After reading all the relevant code — the profile display component, the public profile RPC, the birthday utility, the address resolver, and the signup trigger — here is exactly what is and isn't working today.
+Here is an honest assessment of each gap, what already exists, what's missing, and what needs to be built.
 
 ---
 
-## Your Three Points: Current Reality
+## Gap 1 — Cookie / Tracking Consent Banner
 
-### Point 1 — Email & Shipping Address Should NEVER Be Visible, But Gifting Must Still Work
+**Current state:** Zero. No cookie banner exists anywhere in the codebase. The privacy policy mentions cookies but there is no UI mechanism to collect or record consent.
 
-**What's already correct:**
-- The `ProfileInfo.tsx` component gates email display behind `data_sharing_settings.email !== 'private'`. If a user sets email to private, it won't show on their profile.
-- The shipping address shown on profiles is already limited to city and state only (the `formatAddress()` function in `ProfileInfo.tsx` only outputs city, state, country — never the street). The full address is never rendered in the UI.
-- The recipient address privacy standard is enforced in order confirmations: senders only see Name, City, State with a lock icon (confirmed in memory notes).
-- The `recipientAddressResolver.ts` service handles the gift-without-connection case correctly: if a shopper finds a non-connected user and tries to buy a gift, the system sends an address request email to that recipient. The purchase flow is NOT blocked — it just routes through a "request address" step. This is the right behavior.
+**What to build:**
+A persistent cookie consent banner that appears at the bottom of the screen for first-time visitors. It presents three choices: Accept All, Essential Only, and Customize. The user's selection is stored in `localStorage` so it doesn't reappear on subsequent visits.
 
-**What needs to change:**
-- Right now, the `data_sharing_settings.email` default is set by whatever the user chose during onboarding (can be `friends`, `public`, or `private`). There is no server-level guarantee that email is never sent to another user's browser. If a user sets email to `public`, `ProfileInfo.tsx` will render their email address in plaintext on their public profile. You've decided this should never happen — so email should be permanently removed from the profile display entirely, not controlled by a toggle.
-- Similarly, the `data_sharing_settings.shipping_address` toggle exists in the UI and is settable to `public` or `connections`. Even though the display only shows city/state, the toggle implies it's meaningful, which it isn't (the backend already resolves the full address through a separate system). This setting creates confusion without adding value.
+This is a frontend-only component — it does not require a database table because cookie consent is a browser-level preference. There is no need to store it server-side for an app where users are already authenticated (Supabase handles essential session cookies; we are not running ad tracking or third-party analytics).
 
-**Recommendation:** Remove email and shipping address from `ProfileInfo.tsx` and the `DataSharingSection` UI entirely. They should not be privacy-configurable fields at all — the rules are hardcoded: email = never shown, address = city/state only in social context, full address = backend-only for fulfillment.
+**Files to create:**
+- `src/components/legal/CookieConsentBanner.tsx` — the banner UI with Accept All / Essential Only / Customize options
+- `src/hooks/useCookieConsent.ts` — hook to read/write consent to localStorage
 
----
-
-### Point 2 — Birthday: Show Month/Day, Hide Year (Facebook Pattern)
-
-**What's already correct:**
-- The database already stores birthday as two separate fields: `dob` (MM-DD format, month and day only) and `birth_year` (a separate integer column). This architecture was already built for exactly this use case.
-- The `formatBirthdayForDisplay()` function already ONLY uses the `dob` field (month/day) and intentionally ignores `birth_year` for display purposes. So "January 15" would already show instead of "January 15, 1990" if you're looking at the birthday display.
-
-**What's missing:**
-- The `shouldDisplayBirthday()` function still uses the terminology `'friends'` instead of `'connections'` in its logic (minor cleanup).
-- More critically: there is no explanation to users anywhere in the UI about WHY year is separate. During profile setup, users enter a full date — the year gets stored separately and is used for age-gating and AI gift personalization, but this is invisible to users. A small note in the birthday field ("Your birth year is used for personalization but never shown publicly") would eliminate confusion.
-- The `data_sharing_settings.dob` privacy control remains meaningful and should stay — users should be able to control whether even their month/day birthday is visible (some people don't want it shown at all).
-
-**Recommendation:** No code change needed for the core birthday display — it already works the Facebook way. Only two things to add: fix the `'friends'` → `'connections'` terminology in `birthdayUtils.ts` and add a helper text note in the birthday input field during setup and in settings.
+**Files to modify:**
+- `src/App.tsx` — mount the banner at the root level so it appears on every page before login
 
 ---
 
-### Point 3 — Default Privacy Settings at Signup: Maximum Sharing, Minimum Friction
+## Gap 2 — Data Export (Right to Portability)
 
-**What's set today (from the database trigger):**
+**Current state:** The privacy policy explicitly promises "Portability: Export your data in a machine-readable format" but no such feature exists in settings. `NotificationSettings.tsx` saves to localStorage only — nothing is persisted to the database. The `email_preferences` table exists but only has one row type in use (`profile_completion_reminders`).
 
-| Setting | Current Default | Your Goal |
-|---|---|---|
-| `profile_visibility` | `public` | `public` ✅ |
-| `allow_connection_requests_from` | `everyone` | `everyone` ✅ |
-| `allow_message_requests` | `true` | `true` ✅ |
-| `show_follower_count` | `true` | `true` ✅ |
-| `show_following_count` | `true` | `true` ✅ |
-| `wishlist_visibility` | `connections_only` ⚠️ | `public` — needs change |
-| `auto_gift_consent` | `connections_only` ⚠️ | debatable — see below |
-| `gift_surprise_mode` | `true` | `true` ✅ |
-| `data_sharing_settings.dob` | `friends` (set at onboarding) | `connections` — terminology fix |
-| `data_sharing_settings.email` | user-set at onboarding | remove from UI entirely |
-| `data_sharing_settings.shipping_address` | user-set at onboarding | remove from UI entirely |
-| `data_sharing_settings.interests` | user-set at onboarding | `public` — see below |
+**What to build:**
+A "Download My Data" button in Settings → Privacy & Sharing. When clicked, it:
+1. Fetches the user's profile, interests, wishlists, important dates, orders, connections, and privacy settings from Supabase
+2. Compiles them into a structured JSON file
+3. Triggers a browser download
 
-**The key issue:** `wishlist_visibility` defaults to `connections_only` in the hook's `DEFAULT_SETTINGS`. This means a brand new user's wishlists are only visible to their connections — but they likely have zero connections when they first sign up. This creates a dead state where new users have no public-facing gifting presence. This is the most impactful default to fix.
+This can be done entirely in the frontend using existing Supabase queries — no edge function or backend work is required. The data is already accessible through RLS-protected queries using the user's session token.
 
-**For `auto_gift_consent`:** The right default here is `connections_only`, not `everyone`. Auto-gifting means someone can schedule recurring automated purchases charged to their card for you. Even for maximum sharing, allowing random strangers to set up auto-gifts is a trust and spam risk. `connections_only` is the right default here — this is the one control where maximum openness would hurt users.
+**Files to create:**
+- `src/utils/dataExportUtils.ts` — functions to gather all user data from the DB and format it for download
+- `src/components/settings/DataExportSection.tsx` — UI card with download button, description, and loading state
 
-**For `interests` data sharing:** Interests should default to `public` because they are the primary mechanism for gift discovery and AI recommendations. If a new user's interests are private, Nicole AI can't help shoppers find them good gifts.
+**Files to modify:**
+- `src/components/settings/PrivacySharingSettings.tsx` — add the `DataExportSection` card below the existing sections
 
 ---
 
-## What Needs to Change: Implementation Plan
+## Gap 3 — Marketing Email Preferences Persisted to DB
 
-### Change 1 — Database: Fix signup defaults (migration required)
-Update the `create_default_privacy_settings` trigger function to set:
-- `wishlist_visibility` → `'public'` (was `connections_only` — the hook default)
-- Ensure `auto_gift_consent` → `'connections_only'`
-- Ensure `gift_surprise_mode` → `true`
+**Current state:** `NotificationSettings.tsx` saves everything to `localStorage` only. This means if a user opts out of marketing emails on one device, that preference is lost on another device and is completely invisible to any backend email-sending system. The `email_preferences` table exists in the DB but is only used for one internal email type.
 
-The trigger currently doesn't include these 3 new columns at all (they were added in the last migration but the trigger was written before that). New users signing up right now get NULL for all three gifting fields — they fall back to hook defaults which may differ from what the DB should store.
+**What to build:**
+Migrate `NotificationSettings.tsx` from localStorage to the `email_preferences` table in Supabase. The email types to track:
 
-### Change 2 — Remove email & shipping from Data Sharing UI
-- Remove email and shipping address rows from `DataSharingSection.tsx` and `DataSharingSectionWrapper.tsx`
-- Remove them from the profile setup `DataSharingStep.tsx` and `PrivacyStep.tsx`
-- Remove email and shipping_address display blocks from `ProfileInfo.tsx`
-- The types in `DataSharingSettings` can retain the fields for backward compatibility but they won't appear in UI
+| Preference | email_type key |
+|---|---|
+| Marketing / Special Offers | `marketing` |
+| Order Updates | `order_updates` |
+| Gift Reminders | `gift_reminders` |
+| Friend/Connection Requests | `connection_requests` |
+| New Messages | `new_messages` |
 
-### Change 3 — Fix birthday terminology
-- In `birthdayUtils.ts`: rename `'friends'` → `'connections'` in `shouldDisplayBirthday()`
-- Add helper text to the birthday field in settings: "Your birth year is stored privately for personalization and is never shown on your profile"
+When the user saves, the component upserts rows into `email_preferences` per type. The email-sending edge functions (`ecommerce-email-orchestrator`) should check this table before sending any non-transactional email.
 
-### Change 4 — Default interests to `public` at onboarding
-- In profile setup steps (`DataSharingStep.tsx`, `PrivacyStep.tsx`), change the default value for `interests` from `"friends"` to `"public"`
-- Update `DEFAULT_SETTINGS` in `ProfileFormData` if applicable
-
-### Change 5 — Wire `wishlist_visibility` enforcement
-Since `wishlist_visibility` is now a stored setting, the wishlists shown on a user's public profile page need to actually check this setting. Currently, wishlists are filtered only by `is_public` boolean on individual wishlists. The global `wishlist_visibility` privacy setting needs to gate the entire wishlist section — if set to `connections_only`, non-connections see no wishlists even if individual wishlists have `is_public = true`.
-
-This is important: without this, the setting is stored but silently ignored.
+**Files to modify:**
+- `src/components/settings/NotificationSettings.tsx` — replace localStorage reads/writes with Supabase queries to `email_preferences`
+- The existing `email_preferences` table already has the right schema (`user_id`, `email_type`, `is_enabled`, `frequency`) — no migration required
 
 ---
 
-## What Does NOT Need to Change
+## Gap 4 — "Last Updated" Date on Privacy Policy
 
-- The address-for-gifting flow is correctly designed — non-connected shoppers trigger an address request instead of being blocked from purchasing. Leave this alone.
-- `gift_surprise_mode` enforcement already exists in `EmailTemplateService.ts` (purchaser identity is withheld when anonymous). The `isAnonymous` flag is already passed through. Leave this alone.
-- Birthday display already works the Facebook way (month/day only). Leave `formatBirthdayForDisplay` alone except the terminology fix.
-- `profile_visibility` and connection request defaults are already correct.
+**Current state:** The privacy policy page has `Last Updated: {new Date().toLocaleDateString()}` which uses the current date dynamically. This means the "last updated" date changes every day even if the policy hasn't changed — which is legally misleading and looks unprofessional.
+
+**What to build:**
+Replace the dynamic `new Date()` call with a hardcoded date constant that only changes when the policy is actually updated. This is a one-line change.
+
+**File to modify:**
+- `src/pages/PrivacyPolicy.tsx` — change line 9 from `new Date().toLocaleDateString()` to a static string like `"February 19, 2026"`
+
+Same fix applies to `src/pages/TermsOfService.tsx` if it has the same pattern.
 
 ---
 
-## Files to Change
+## Implementation Order
 
-**Database migration:**
-- Update `create_default_privacy_settings()` trigger to include `wishlist_visibility = 'public'`, `auto_gift_consent = 'connections_only'`, `gift_surprise_mode = true`
-- Backfill existing users who have NULL in these 3 columns
+All four gaps can be built in a single session. Recommended order:
 
-**Frontend:**
-- `src/utils/birthdayUtils.ts` — fix `'friends'` → `'connections'` terminology
-- `src/components/user-profile/ProfileInfo.tsx` — remove email and shipping address display blocks
-- `src/components/settings/DataSharingSection.tsx` — remove email and shipping_address form fields
-- `src/components/profile-setup/steps/DataSharingStep.tsx` — remove email and shipping, set interests default to `'public'`
-- `src/components/profile-setup/steps/PrivacyStep.tsx` — same as above
-- `src/hooks/usePrivacySettings.ts` — update `DEFAULT_SETTINGS.wishlist_visibility` from `'connections_only'` to `'public'`
-- `src/components/settings/DataSharingSectionWrapper.tsx` — remove email and shipping fields
+1. Privacy Policy "Last Updated" fix (30 seconds, zero risk)
+2. Cookie Consent Banner (new component, no DB changes)
+3. Notification preferences persisted to DB (touches one existing component)
+4. Data Export section (new utility + new UI card in settings)
 
-**Wishlist enforcement (requires reading the profile/wishlist rendering component):**
-- The component that renders wishlists on another user's profile needs to check `wishlist_visibility` from `privacy_settings` and hide the entire section if the viewer doesn't have the right relationship level
+---
+
+## What Is NOT Being Built (and Why)
+
+**One-click unsubscribe in emails:** The email footer in `emailNotificationService.ts` already has placeholder `<a href="#">Unsubscribe</a>` links that go nowhere. Making these functional requires a public (unauthenticated) unsubscribe endpoint — an edge function that accepts a signed token and marks the user's email preference as disabled. This is technically sound but adds backend complexity. It is the right thing to do for CAN-SPAM compliance and can be built as a follow-up.
+
+**Server-side cookie consent logging:** Storing cookie consent server-side only matters if you run third-party tracking (Google Analytics, Meta Pixel, etc.). Since this app does not currently run any third-party tracking scripts, localStorage is sufficient for cookie consent. If tracking is added later, this should be revisited.
+
+---
+
+## Files Touched Summary
+
+| File | Action |
+|---|---|
+| `src/components/legal/CookieConsentBanner.tsx` | Create |
+| `src/hooks/useCookieConsent.ts` | Create |
+| `src/utils/dataExportUtils.ts` | Create |
+| `src/components/settings/DataExportSection.tsx` | Create |
+| `src/App.tsx` | Add CookieConsentBanner at root |
+| `src/components/settings/NotificationSettings.tsx` | Migrate localStorage → DB |
+| `src/components/settings/PrivacySharingSettings.tsx` | Add DataExportSection |
+| `src/pages/PrivacyPolicy.tsx` | Fix hardcoded last-updated date |
+| `src/pages/TermsOfService.tsx` | Same fix if applicable |
+
+No database migrations are required — `email_preferences` already has the right schema.

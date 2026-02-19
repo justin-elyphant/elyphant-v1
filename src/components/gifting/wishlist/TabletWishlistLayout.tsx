@@ -87,7 +87,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
           onCreateWishlist={onCreateWishlist}
         />
         
-        {wishlists.length < 3 && <WishlistBenefitsGrid />}
+        
       </div>
 
       {/* Tab Toggle + Sort Bar - Below Hero, matching desktop */}

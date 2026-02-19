@@ -190,10 +190,8 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
     const productsToCache = products.map(p => {
       let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
       
-      // Auto-correct cents-as-dollars for Amazon products
-      if (price > 200) {
-        price = price / 100;
-      }
+      // Price already normalized by normalizePrices() before caching
+      // Do NOT divide again - that was causing $300 items to cache as $3.00
 
       return {
         product_id: p.product_id || p.asin,

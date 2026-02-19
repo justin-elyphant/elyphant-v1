@@ -1,107 +1,73 @@
 
-# Cookie Consent Banner — iOS Capacitor Compliance Patch
+# Cookie Consent Banner — Desktop Size Reduction
 
-## What's Missing Right Now
+## The Problem
 
-The redesign nailed the visual direction (monochromatic, flush bar, black pill CTA) but did not address iOS Capacitor touch standards. Three concrete gaps remain:
+On desktop the banner stretches full width (`left-0 right-0`) with just the inner text constrained to `max-w-4xl`. The white background and border-top span the entire screen, making it feel like a takeover. The goal is a compact, centered bar that sits quietly at the bottom on desktop without dominating the viewport.
 
-### Gap 1 — Touch Targets Below 44px
+## Compliance Note
 
-iOS Human Interface Guidelines and the project's own Capacitor memory require a 44px minimum tap target on all interactive elements.
+There are no size requirements in GDPR, ePrivacy, or CCPA. The only requirements are that the banner is clearly visible, easy to read, and that consent is unambiguous. A compact centered bar satisfies all of these.
 
-| Element | Current height | Issue |
+## Approach: Two-Tier Layout
+
+- **Mobile (default):** Keep the current full-width flush bar with safe area insets — correct for small screens and the bottom nav.
+- **Desktop (lg:):** Switch to a centered, width-constrained floating bar anchored to the bottom center. This is the standard pattern used by sites like Lululemon, Stripe, Linear, and Vercel.
+
+## Exact Design Change
+
+### Mobile (unchanged)
+```
+fixed bottom-0 left-0 right-0 — full width, flush, border-top
+pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] — clears bottom nav + safe area
+```
+
+### Desktop (new)
+Instead of `left-0 right-0`, switch to a centered approach:
+```
+fixed bottom-6 left-1/2 -translate-x-1/2 — centered, floating 24px from bottom
+w-full max-w-2xl — constrained to ~672px wide (roughly half the screen on 1440px)
+rounded-xl border border-border shadow-sm — subtle card, not flush bar
+bg-white px-5 py-4
+```
+
+The `border-t` border-top only makes sense on a full-width flush bar. On the centered floating card, it becomes a full `border border-border` with a subtle `shadow-sm` so it reads as a contained element.
+
+## Responsive Classes Summary
+
+| Property | Mobile | Desktop (lg:) |
 |---|---|---|
-| Accept All button | `h-9` = 36px | 8px short |
-| Essential Only button | `h-9` = 36px | 8px short |
-| X dismiss button | 16px (icon only) | 28px short |
-| "More info" toggle | text inline, ~20px | 24px short |
+| Position | `left-0 right-0 bottom-0` | `bottom-6 left-1/2 -translate-x-1/2` |
+| Width | full viewport | `w-full max-w-2xl` |
+| Corners | none (flush bar) | `rounded-xl` |
+| Border | `border-t border-border` | `border border-border` |
+| Shadow | none | `shadow-sm` |
+| Bottom padding | `pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]` | `pb-0 (default py-4)` |
 
-Fix: Bump primary buttons to `h-11` (44px). Wrap the X button in a `flex items-center justify-center min-w-[44px] min-h-[44px]` container. Give the "More info" inline button `py-2` so its tap region expands.
+## Implementation
 
-### Gap 2 — No `touch-manipulation` on Buttons
+The `motion.div` currently has one flat className string. It needs to be split into mobile-first classes with `lg:` overrides:
 
-Without `touch-manipulation`, iOS Safari adds a 300ms delay to tap events on buttons. All three buttons (Accept All, Essential Only, X) need `touch-manipulation` added to their className.
-
-### Gap 3 — Safe Area Inset Not Respected
-
-The banner uses `pb-14 lg:pb-0` to clear the mobile bottom nav. This is correct for the nav bar itself, but the mobile nav itself uses `env(safe-area-inset-bottom)` for the home indicator. The banner's bottom padding should stack the nav clearance + safe area:
-
-```
-pb-14 lg:pb-0
-```
-should become:
-```
-pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0
+```tsx
+className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border
+  pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]
+  lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto
+  lg:w-full lg:max-w-2xl lg:rounded-xl lg:border lg:border-border
+  lg:shadow-sm lg:pb-0"
 ```
 
-This ensures the banner sits correctly above the nav + home indicator on iPhone 12/13/14/15 (which have ~34px home indicator safe area).
+The inner `<div className="max-w-4xl mx-auto px-4 py-3">` on desktop should become `px-5 py-4` and drop the `max-w-4xl` constraint since the outer card already controls width — change to `lg:max-w-none`.
 
-### Gap 4 — Hover-Only Active States
+## Motion Animation
 
-`hover:bg-foreground/90` and `hover:bg-gray-50` are invisible on touch devices. Active state feedback (the visual "press" response) needs an `active:` variant alongside `hover:`:
-
-- Accept All: add `active:bg-foreground/80`
-- Essential Only: add `active:bg-gray-100`
-- X button: add `active:opacity-70`
-
-### Gap 5 — Tablet Offset Verification
-
-On tablet (768px–1023px), the `lg:hidden` mobile nav is still visible. The banner's `pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]` handles this correctly since it uses the same 56px clearance as the mobile nav height. No separate tablet breakpoint needed — the formula covers both phone and tablet.
+The `y: 60` slide-up works well for both layouts — no change needed.
 
 ## Files to Modify
 
 One file only:
 - `src/components/legal/CookieConsentBanner.tsx`
 
-## Exact Changes
+## Visual Result
 
-### Outer wrapper — safe area + touch
-```
-className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border 
-  pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
-```
-
-### Accept All button
-```
-h-9 → h-11
-add: touch-manipulation active:bg-foreground/80 active:scale-95
-```
-
-### Essential Only button
-```
-h-9 → h-11
-add: touch-manipulation active:bg-gray-100 active:scale-95
-```
-
-### X dismiss button — wrap in a proper touch target
-```jsx
-<button
-  onClick={acceptEssential}
-  className="flex items-center justify-center min-w-[44px] min-h-[44px] text-muted-foreground ml-1 shrink-0 touch-manipulation active:opacity-70"
-  aria-label="Dismiss cookie banner"
->
-  <X className="h-4 w-4" />
-</button>
-```
-
-### "More info" inline button — expand tap area
-```
-add: py-2 touch-manipulation active:opacity-70
-```
-
-## Visual Impact
-
-These changes are invisible to the eye on desktop. On mobile/tablet they ensure:
-- Every tap registers on first touch (no 300ms delay)
-- Every button is comfortably tappable with a thumb
-- The banner never clips behind the iPhone home indicator
-- Press states give immediate tactile-like visual feedback
-
-## Summary Table
-
-| Standard | Before | After |
-|---|---|---|
-| 44px touch targets | ❌ 36px buttons, 16px X | ✅ 44px all interactive elements |
-| `touch-manipulation` | ❌ Missing | ✅ All buttons |
-| Safe area inset | ❌ Hardcoded 56px | ✅ `calc(3.5rem + env(safe-area-inset-bottom))` |
-| Active press states | ❌ Hover only | ✅ `active:` variants on all buttons |
+- **Mobile/tablet:** Unchanged — full-width flush bar above the bottom nav with safe area support.
+- **Desktop:** A compact ~672px centered card floating 24px above the bottom of the viewport. Clean, minimal, non-intrusive — matching how Lululemon and other premium e-commerce sites handle cookie consent.

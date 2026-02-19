@@ -7,12 +7,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   ShoppingBag,
@@ -24,7 +22,6 @@ import {
   MessageCircle,
   Bell,
 } from "lucide-react";
-import Logo from "@/components/home/components/Logo";
 import { useAuth } from "@/contexts/auth";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";
@@ -111,9 +108,6 @@ const AppSidebar = () => {
 
   return (
     <Sidebar className="border-r" collapsible="icon">
-      <SidebarHeader className="p-4">
-        <Logo />
-      </SidebarHeader>
       <SidebarContent>
         {/* Shopping Section */}
         <SidebarGroup>

@@ -1,117 +1,70 @@
 
-# Privacy Compliance Gaps: What Can Be Built in Lovable
+# Cookie Consent Banner Redesign — Lululemon Style
 
-Here is an honest assessment of each gap, what already exists, what's missing, and what needs to be built.
+## What's Wrong With the Current Design
 
----
+The screenshot shows a classic SaaS-style cookie dialog: rounded card floating in the center-bottom, a colored cookie icon with a tinted background, `text-primary` blue links, and default shadcn Button styling. None of this matches the site's aesthetic.
 
-## Gap 1 — Cookie / Tracking Consent Banner
+The site uses:
+- `bg-white/80 backdrop-blur-xl border-t border-border` for the bottom nav (flat, white, subtle border-top, no rounded card floating)
+- `bg-foreground text-background` (black pill) for the active nav tab — that's the primary action style
+- `text-muted-foreground` for secondary labels, no colored icons
+- No floating card shadows for bottom-anchored UI — the bottom nav is flush/edge-anchored with a top border only
+- `rounded-t-2xl` for the mobile nav's top corners only, not a fully rounded floating card
 
-**Current state:** Zero. No cookie banner exists anywhere in the codebase. The privacy policy mentions cookies but there is no UI mechanism to collect or record consent.
+## Design Direction
 
-**What to build:**
-A persistent cookie consent banner that appears at the bottom of the screen for first-time visitors. It presents three choices: Accept All, Essential Only, and Customize. The user's selection is stored in `localStorage` so it doesn't reappear on subsequent visits.
+Replace the SaaS floating card with a **flat, flush bottom bar** — same visual language as the mobile bottom navigation. It should feel like a native site element, not a third-party popup.
 
-This is a frontend-only component — it does not require a database table because cookie consent is a browser-level preference. There is no need to store it server-side for an app where users are already authenticated (Supabase handles essential session cookies; we are not running ad tracking or third-party analytics).
+Key changes:
+- **No floating card** — replace with a flat `bg-white border-t border-border` bar flush to the bottom (above the mobile nav)
+- **No cookie icon or colored icon background** — remove entirely
+- **No `text-primary` blue links** — replace "More info" toggle with plain underline text in `text-foreground`
+- **"Accept All" button** → `bg-foreground text-background` (black, matches active nav tab style)
+- **"Essential Only" button** → `border border-border text-foreground bg-transparent` (clean outline, no colored border)
+- **Expanded detail section** → plain `bg-gray-50 border border-border rounded-md` (no `bg-muted/50` tint)
+- **X dismiss button** → keep but use `text-muted-foreground`, no hover color change needed
+- **Mobile offset** → keep `mb-16 lg:mb-0` so it clears the bottom nav on mobile, but strip card border-radius to `rounded-none` on mobile and `rounded-t-xl` on desktop if centered
 
-**Files to create:**
-- `src/components/legal/CookieConsentBanner.tsx` — the banner UI with Accept All / Essential Only / Customize options
-- `src/hooks/useCookieConsent.ts` — hook to read/write consent to localStorage
+## Files to Modify
 
-**Files to modify:**
-- `src/App.tsx` — mount the banner at the root level so it appears on every page before login
+**One file only:**
+- `src/components/legal/CookieConsentBanner.tsx`
 
----
+## Exact Changes
 
-## Gap 2 — Data Export (Right to Portability)
+### Structure
+```
+Fixed bottom bar (not a card):
+├── border-t border-border
+├── bg-white (not bg-background which can be dark-mode aware — this stays white like the nav)
+├── px-4 py-3
+└── max-w-screen — full width on mobile, constrained inner content max-w-2xl on desktop
 
-**Current state:** The privacy policy explicitly promises "Portability: Export your data in a machine-readable format" but no such feature exists in settings. `NotificationSettings.tsx` saves to localStorage only — nothing is persisted to the database. The `email_preferences` table exists but only has one row type in use (`profile_completion_reminders`).
+Inner layout (same flex pattern as current):
+├── Left: text block (title + description + expand toggle)
+├── Right: action buttons (Accept All black pill | Essential Only outline) + X
+```
 
-**What to build:**
-A "Download My Data" button in Settings → Privacy & Sharing. When clicked, it:
-1. Fetches the user's profile, interests, wishlists, important dates, orders, connections, and privacy settings from Supabase
-2. Compiles them into a structured JSON file
-3. Triggers a browser download
+### Color / Class Mapping
 
-This can be done entirely in the frontend using existing Supabase queries — no edge function or backend work is required. The data is already accessible through RLS-protected queries using the user's session token.
-
-**Files to create:**
-- `src/utils/dataExportUtils.ts` — functions to gather all user data from the DB and format it for download
-- `src/components/settings/DataExportSection.tsx` — UI card with download button, description, and loading state
-
-**Files to modify:**
-- `src/components/settings/PrivacySharingSettings.tsx` — add the `DataExportSection` card below the existing sections
-
----
-
-## Gap 3 — Marketing Email Preferences Persisted to DB
-
-**Current state:** `NotificationSettings.tsx` saves everything to `localStorage` only. This means if a user opts out of marketing emails on one device, that preference is lost on another device and is completely invisible to any backend email-sending system. The `email_preferences` table exists in the DB but is only used for one internal email type.
-
-**What to build:**
-Migrate `NotificationSettings.tsx` from localStorage to the `email_preferences` table in Supabase. The email types to track:
-
-| Preference | email_type key |
+| Current | New |
 |---|---|
-| Marketing / Special Offers | `marketing` |
-| Order Updates | `order_updates` |
-| Gift Reminders | `gift_reminders` |
-| Friend/Connection Requests | `connection_requests` |
-| New Messages | `new_messages` |
+| `bg-background border border-border rounded-xl shadow-lg` | `bg-white border-t border-border` (flush bar) |
+| `bg-primary/10 rounded-lg p-2` + Cookie icon | Remove entirely |
+| `text-primary underline` (More info link) | `text-foreground underline underline-offset-2` |
+| `<Button size="sm">` (default primary) | `bg-foreground text-background hover:bg-foreground/90 text-xs h-9 px-4 rounded-full font-medium` |
+| `<Button size="sm" variant="outline">` | `border border-border text-foreground bg-white hover:bg-gray-50 text-xs h-9 px-4 rounded-full` |
+| `bg-muted/50 rounded-lg` (expanded detail) | `bg-gray-50 border border-border rounded-md` |
+| `text-primary hover:underline` (Privacy Policy link) | `text-foreground underline underline-offset-2` |
+| `mb-16 md:mb-0 mx-4 mb-4` wrapper (floating) | `pb-16 lg:pb-0` on the fixed bar itself (no `mx-4` — full width) |
 
-When the user saves, the component upserts rows into `email_preferences` per type. The email-sending edge functions (`ecommerce-email-orchestrator`) should check this table before sending any non-transactional email.
+### Motion
+Keep the existing `framer-motion` slide-up animation — it's appropriate. Just change `y: 100` to a shorter slide (`y: 60`) since the bar is shorter than the card was.
 
-**Files to modify:**
-- `src/components/settings/NotificationSettings.tsx` — replace localStorage reads/writes with Supabase queries to `email_preferences`
-- The existing `email_preferences` table already has the right schema (`user_id`, `email_type`, `is_enabled`, `frequency`) — no migration required
+### Mobile offset
+The bar sits directly above the mobile bottom nav. Since the bottom nav is `h-14` (56px), the banner uses `pb-14 lg:pb-0` to clear it, same pattern as how other overlays handle the nav.
 
----
+## Result
 
-## Gap 4 — "Last Updated" Date on Privacy Policy
-
-**Current state:** The privacy policy page has `Last Updated: {new Date().toLocaleDateString()}` which uses the current date dynamically. This means the "last updated" date changes every day even if the policy hasn't changed — which is legally misleading and looks unprofessional.
-
-**What to build:**
-Replace the dynamic `new Date()` call with a hardcoded date constant that only changes when the policy is actually updated. This is a one-line change.
-
-**File to modify:**
-- `src/pages/PrivacyPolicy.tsx` — change line 9 from `new Date().toLocaleDateString()` to a static string like `"February 19, 2026"`
-
-Same fix applies to `src/pages/TermsOfService.tsx` if it has the same pattern.
-
----
-
-## Implementation Order
-
-All four gaps can be built in a single session. Recommended order:
-
-1. Privacy Policy "Last Updated" fix (30 seconds, zero risk)
-2. Cookie Consent Banner (new component, no DB changes)
-3. Notification preferences persisted to DB (touches one existing component)
-4. Data Export section (new utility + new UI card in settings)
-
----
-
-## What Is NOT Being Built (and Why)
-
-**One-click unsubscribe in emails:** The email footer in `emailNotificationService.ts` already has placeholder `<a href="#">Unsubscribe</a>` links that go nowhere. Making these functional requires a public (unauthenticated) unsubscribe endpoint — an edge function that accepts a signed token and marks the user's email preference as disabled. This is technically sound but adds backend complexity. It is the right thing to do for CAN-SPAM compliance and can be built as a follow-up.
-
-**Server-side cookie consent logging:** Storing cookie consent server-side only matters if you run third-party tracking (Google Analytics, Meta Pixel, etc.). Since this app does not currently run any third-party tracking scripts, localStorage is sufficient for cookie consent. If tracking is added later, this should be revisited.
-
----
-
-## Files Touched Summary
-
-| File | Action |
-|---|---|
-| `src/components/legal/CookieConsentBanner.tsx` | Create |
-| `src/hooks/useCookieConsent.ts` | Create |
-| `src/utils/dataExportUtils.ts` | Create |
-| `src/components/settings/DataExportSection.tsx` | Create |
-| `src/App.tsx` | Add CookieConsentBanner at root |
-| `src/components/settings/NotificationSettings.tsx` | Migrate localStorage → DB |
-| `src/components/settings/PrivacySharingSettings.tsx` | Add DataExportSection |
-| `src/pages/PrivacyPolicy.tsx` | Fix hardcoded last-updated date |
-| `src/pages/TermsOfService.tsx` | Same fix if applicable |
-
-No database migrations are required — `email_preferences` already has the right schema.
+The redesigned banner will look like a natural extension of the bottom navigation — a thin white strip with a top divider, black pill CTA, and clean typography. No SaaS popup feel, fully consistent with the Lululemon monochromatic system.

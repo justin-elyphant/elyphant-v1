@@ -15,7 +15,7 @@ const CookieConsentBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-14 lg:pb-0"
+          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
           role="dialog"
           aria-label="Cookie consent"
           aria-live="polite"
@@ -31,7 +31,7 @@ const CookieConsentBanner: React.FC = () => {
                   Only cookies required for authentication and security — no advertising or tracking.{" "}
                   <button
                     onClick={() => setExpanded(!expanded)}
-                    className="text-foreground underline underline-offset-2 inline-flex items-center gap-0.5 text-xs font-medium"
+                    className="text-foreground underline underline-offset-2 inline-flex items-center gap-0.5 text-xs font-medium py-2 touch-manipulation active:opacity-70"
                   >
                     {expanded ? "Less info" : "More info"}
                     {expanded ? (
@@ -51,7 +51,7 @@ const CookieConsentBanner: React.FC = () => {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-2 space-y-1.5 text-xs text-muted-foreground bg-gray-50 border border-border rounded-md p-3">
+                      <div className="mt-2 space-y-1.5 text-xs text-muted-foreground bg-muted border border-border rounded-md p-3">
                         <div>
                           <span className="font-medium text-foreground">Essential cookies</span>{" "}
                           — Required for login, session management, and security. Always active.
@@ -75,19 +75,19 @@ const CookieConsentBanner: React.FC = () => {
               <div className="flex items-center gap-2 shrink-0 mt-0.5">
                 <button
                   onClick={acceptAll}
-                  className="bg-foreground text-background text-xs font-medium h-9 px-4 rounded-full hover:bg-foreground/90 transition-colors whitespace-nowrap"
+                  className="bg-foreground text-background text-xs font-medium h-11 px-4 rounded-full hover:bg-foreground/90 active:bg-foreground/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
                 >
                   Accept All
                 </button>
                 <button
                   onClick={acceptEssential}
-                  className="border border-border text-foreground bg-white text-xs font-medium h-9 px-4 rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  className="border border-border text-foreground bg-white text-xs font-medium h-11 px-4 rounded-full hover:bg-muted active:bg-muted/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
                 >
                   Essential Only
                 </button>
                 <button
                   onClick={acceptEssential}
-                  className="text-muted-foreground ml-1 shrink-0"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] text-muted-foreground ml-1 shrink-0 touch-manipulation active:opacity-70"
                   aria-label="Dismiss cookie banner"
                 >
                   <X className="h-4 w-4" />

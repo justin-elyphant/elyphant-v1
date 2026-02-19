@@ -1,38 +1,90 @@
 
 
-# Resize Gift Message Container for Desktop + iOS Capacitor Compliance
+# Navigation Link Audit and Rebalancing
 
 ## Problem
 
-The gift message drawer currently stretches full-width across the entire viewport on desktop (as seen in the screenshot). On desktop, this creates an oversized, awkward layout. The drawer pattern (bottom sheet) is appropriate for mobile but needs constraints on larger screens.
+Several key e-commerce links are unreachable or hard to find on mobile and tablet:
+- **Orders**: zero entry points on mobile/tablet (desktop sidebar only)
+- **Notifications**: badge shows on avatar but no link in mobile dropdown
+- **Connections**: desktop sidebar only
+- **Mobile avatar dropdown**: too sparse (Dashboard, Settings, Sign Out) vs. desktop (Profile, Payments, Help)
+- **Bottom nav active gradient**: purple-blue gradient violates monochromatic design system
 
 ## Solution
 
-### Desktop: Constrain drawer width
+### 1. Enrich the Mobile Avatar Dropdown
 
-Add a `max-w-lg` (32rem / 512px) constraint and center the drawer on desktop using `sm:max-w-lg sm:mx-auto` on the `DrawerContent`. This keeps the bottom-sheet behavior on mobile while making it a compact, centered panel on desktop.
+Currently the mobile dropdown (UserButton.tsx, lines 139-208) only shows Dashboard, Settings, and Sign Out. Add the missing links to match the desktop experience:
 
-### Mobile/Tablet: iOS Capacitor compliance
+**New mobile dropdown structure:**
+```
+[Avatar + Name + Email]
+---
+Dashboard
+Orders          <-- NEW
+Connections     <-- NEW  (with pending badge)
+Notifications   <-- NEW  (with unread badge)
+---
+My Profile
+Account Settings
+Payment Methods
+Help & Support
+---
+(Trunkline - employee only)
+---
+Sign Out
+```
 
-- Add `pb-safe` padding to the footer for iPhone home indicator
-- Ensure all touch targets (buttons, template cards) meet 44px minimum
-- Add `touch-manipulation` to interactive elements to eliminate 300ms tap delay
-- Add spring-style transitions via existing drawer animation
+**File: `src/components/auth/UserButton.tsx`**
+- Replace the sparse mobile dropdown (lines 139-208) with a richer version
+- Add profile header (avatar + name + email) matching desktop
+- Add Orders, Connections, Notifications links with badge counts
+- Add Profile, Payment Methods, Help links
+- Keep Dashboard, Settings, Trunkline, Sign Out
 
-## Technical Changes
+### 2. Fix Bottom Nav Active State (Monochromatic)
 
-### File: `src/components/cart/ItemGiftMessageSection.tsx`
+**File: `src/components/navigation/MobileBottomNavigation.tsx`**
+- Line 113: Replace `bg-gradient-to-r from-purple-600 to-sky-500 text-white` with `bg-black text-white` (monochromatic, Lululemon-style)
+- This aligns with the design system: grey background, black active state, red for CTAs only
 
-1. Add `sm:max-w-lg sm:mx-auto` to `DrawerContent` className -- constrains width on desktop
-2. Add `touch-manipulation` and `min-h-[44px]` to the inline "Add gift message" button
-3. Add `pb-safe` to `DrawerFooter` for iOS safe area
-4. Add `touch-manipulation active:scale-[0.98]` to Save/Apply buttons for haptic feedback feel
-5. Reduce textarea rows from 4 to 3 for a more compact feel
+### 3. No structural changes to bottom nav tabs
 
-### File: `src/components/cart/GiftMessageTemplates.tsx`
+The 5-tab structure (Shop, Recurring, Wishlists, Messages, Account) is solid for a gifting-focused e-commerce app. Orders belongs in the avatar dropdown (Amazon and Target both put Orders behind the account menu on mobile, not in the tab bar). Adding a 6th tab would violate iOS HIG.
 
-1. Add `min-h-[44px] touch-manipulation` to each template button for iOS touch targets
-2. Reduce `max-h-64` on the scrollable template list to `max-h-48` on mobile for better fit within the constrained drawer
+### 4. No changes to desktop sidebar or header
 
-No other files need changes -- the drawer component itself is fine, we just need to constrain the content instance.
+The desktop sidebar already has all links properly organized. The header icons (Wishlists heart, Cart) are appropriately placed.
+
+## Technical Details
+
+### UserButton.tsx Mobile Dropdown Changes
+
+Replace the mobile return block (lines 139-208) with:
+- Add `useConnectionsAdapter` and `useNotifications` imports (already imported but unused in mobile path)
+- Profile header section with avatar, name, email
+- Shopping section: Dashboard, Orders (with Package icon)
+- Social section: Connections (with pending count badge), Notifications (with unread count badge)
+- Account section: My Profile, Account Settings, Payment Methods, Help and Support
+- Footer: Trunkline (employee), Sign Out
+
+### MobileBottomNavigation.tsx Active State
+
+Single line change on line 113:
+- From: `"bg-gradient-to-r from-purple-600 to-sky-500 text-white"`
+- To: `"bg-black text-white"`
+
+## What This Fixes
+
+- Orders: now 1 tap away (avatar -> Orders) on mobile and tablet
+- Notifications: now accessible from mobile dropdown with badge count
+- Connections: now accessible from mobile dropdown with pending count
+- Profile, Payments, Help: now available on mobile (were desktop-only)
+- Active tab style: monochromatic, aligned with Lululemon design system
+
+## Files Modified
+
+1. `src/components/auth/UserButton.tsx` -- enrich mobile dropdown
+2. `src/components/navigation/MobileBottomNavigation.tsx` -- fix active state color
 

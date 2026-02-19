@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Heart, Calendar, ArrowRight, Settings, ShoppingBag, Gift, ChevronRight, Plus } from "lucide-react";
+import { ArrowRight, Settings, ShoppingBag, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAutoGifting } from "@/hooks/useAutoGifting";
 import { useAuth } from "@/contexts/auth";
@@ -63,27 +63,26 @@ const RecurringGifts = () => {
       <div className="min-h-screen bg-muted pb-safe">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8 space-y-8">
         {/* Hero Section */}
-        <div className="grid lg:grid-cols-2 gap-6 pt-4">
-          {/* Left Side - Gradient Hero Card */}
+        <div className="pt-4">
           <Card className="relative overflow-hidden bg-gradient-to-br from-purple-600 via-purple-700 to-sky-500 border-0 text-white">
             <CardContent className="p-8 lg:p-10">
               <Badge className="bg-white/20 text-white border-0 mb-4 backdrop-blur-sm">
                 POWERED BY NICOLE AI
               </Badge>
-              <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-                Recurring Gifts
+              <p className="text-white/80 text-sm font-medium mb-1 uppercase tracking-wide">Recurring Gifts</p>
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2 leading-tight">
+                Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}!
               </h1>
-              <p className="text-lg text-white/90 mb-6 leading-relaxed">
-                Never miss a birthday, anniversary, or special occasion. Set up once and we'll handle everything automatically—gift selection, purchase, and delivery.
+              <p className="text-white/90 mb-6 leading-relaxed">
+                You have <span className="font-bold text-white">{rules.length}</span> active recurring gift {rules.length === 1 ? 'rule' : 'rules'}. Set up once and we'll handle everything automatically—gift selection, purchase, and delivery.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Primary CTA - Set Up Recurring Gift */}
                 <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
                   <Button 
                     onClick={() => {
                       triggerHapticFeedback('selection');
-                      setEditingRule(null); // Ensure we're in create mode
+                      setEditingRule(null);
                       setSetupDialogOpen(true);
                     }}
                     className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
@@ -93,7 +92,6 @@ const RecurringGifts = () => {
                   </Button>
                 </motion.div>
                 
-                {/* Secondary - Browse Products */}
                 <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
                   <Button 
                     onClick={() => {
@@ -107,98 +105,20 @@ const RecurringGifts = () => {
                     Browse Products
                   </Button>
                 </motion.div>
-              </div>
-              
-              <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} className="mt-2">
-                <Button 
-                  onClick={() => {
-                    triggerHapticFeedback('light');
-                    setHowItWorksOpen(true);
-                  }}
-                  variant="link" 
-                  className="text-white/80 hover:text-white p-0 h-auto"
-                >
-                  How It Works
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </motion.div>
-            </CardContent>
-          </Card>
 
-          {/* Right Side - Welcome Card with Quick Rules View */}
-          <Card className="bg-background">
-            <CardContent className="p-6 lg:p-8">
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-2xl font-bold mb-1">
-                    Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    You have <span className="font-semibold text-foreground">{rules.length}</span> active recurring gift {rules.length === 1 ? 'rule' : 'rules'}
-                  </p>
-                </div>
-
-                {/* Quick Rules Preview */}
-                <div className="space-y-2">
-                  {rules.length > 0 ? (
-                    <>
-                      {rules.slice(0, 3).map((rule) => (
-                        <motion.button
-                          key={rule.id}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            triggerHapticFeedback('selection');
-                            setEditingRule(rule);
-                            setSetupDialogOpen(true);
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left min-h-[44px]"
-                        >
-                          <div className="p-2 rounded-full bg-background">
-                            <Gift className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {rule.recipient?.name || rule.pending_recipient_name || rule.pending_recipient_email || 'Recipient'}
-                            </p>
-                            <p className="text-xs text-muted-foreground capitalize">
-                              {rule.date_type?.replace('_', ' ')} • ${rule.budget_limit}
-                            </p>
-                          </div>
-                          <Badge variant={rule.is_active ? "default" : "secondary"} className="text-xs shrink-0">
-                            {rule.is_active ? 'Active' : 'Paused'}
-                          </Badge>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                        </motion.button>
-                      ))}
-                      {rules.length > 3 && (
-                        <p className="text-xs text-muted-foreground text-center pt-1">
-                          +{rules.length - 3} more {rules.length - 3 === 1 ? 'rule' : 'rules'} below
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center py-6">
-                      <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-3">
-                        <Gift className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        No recurring gifts set up yet
-                      </p>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          triggerHapticFeedback('selection');
-                          setEditingRule(null);
-                          setSetupDialogOpen(true);
-                        }}
-                        className="min-h-[44px]"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Your First Rule
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <motion.div whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 25 }}>
+                  <Button 
+                    onClick={() => {
+                      triggerHapticFeedback('light');
+                      setHowItWorksOpen(true);
+                    }}
+                    variant="ghost"
+                    className="text-white/80 hover:text-white hover:bg-white/10 min-h-[44px]"
+                  >
+                    How It Works
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </motion.div>
               </div>
             </CardContent>
           </Card>

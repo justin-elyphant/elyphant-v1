@@ -3321,38 +3321,47 @@ export type Database = {
         Row: {
           allow_connection_requests_from: string
           allow_message_requests: boolean | null
+          auto_gift_consent: string
           block_list_visibility: string
           created_at: string | null
+          gift_surprise_mode: boolean
           id: string
           profile_visibility: string
           show_follower_count: boolean | null
           show_following_count: boolean | null
           updated_at: string | null
           user_id: string
+          wishlist_visibility: string
         }
         Insert: {
           allow_connection_requests_from?: string
           allow_message_requests?: boolean | null
+          auto_gift_consent?: string
           block_list_visibility?: string
           created_at?: string | null
+          gift_surprise_mode?: boolean
           id?: string
           profile_visibility?: string
           show_follower_count?: boolean | null
           show_following_count?: boolean | null
           updated_at?: string | null
           user_id: string
+          wishlist_visibility?: string
         }
         Update: {
           allow_connection_requests_from?: string
           allow_message_requests?: boolean | null
+          auto_gift_consent?: string
           block_list_visibility?: string
           created_at?: string | null
+          gift_surprise_mode?: boolean
           id?: string
           profile_visibility?: string
           show_follower_count?: boolean | null
           show_following_count?: boolean | null
           updated_at?: string | null
           user_id?: string
+          wishlist_visibility?: string
         }
         Relationships: []
       }
@@ -5500,14 +5509,17 @@ export type Database = {
         Returns: {
           allow_connection_requests_from: string
           allow_message_requests: boolean | null
+          auto_gift_consent: string
           block_list_visibility: string
           created_at: string | null
+          gift_surprise_mode: boolean
           id: string
           profile_visibility: string
           show_follower_count: boolean | null
           show_following_count: boolean | null
           updated_at: string | null
           user_id: string
+          wishlist_visibility: string
         }
         SetofOptions: {
           from: "*"

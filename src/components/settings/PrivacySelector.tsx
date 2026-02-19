@@ -33,7 +33,7 @@ const PrivacySelector = ({ value, onChange, label, description }: PrivacySelecto
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="private">Only Me</SelectItem>
-          <SelectItem value="friends">Friends Only</SelectItem>
+          <SelectItem value="friends">Connections Only</SelectItem>
           <SelectItem value="public">Everyone</SelectItem>
         </SelectContent>
       </Select>

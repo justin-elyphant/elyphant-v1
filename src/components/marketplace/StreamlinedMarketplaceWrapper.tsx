@@ -896,7 +896,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                   
                   {/* Find More Results Button - when cache results are sparse */}
 {showSearchInfo && urlSearchTerm && fromCache && displayProducts.length > 0 && (
-                    <div className="flex justify-center mt-6">
+                    <div className="flex justify-center mt-8 mb-16">
                       <Button 
                         onClick={handleFindMoreResults}
                         disabled={isFindingMore}
@@ -1068,7 +1068,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                 
                 {/* Mobile: Find More Results Button */}
                 {showSearchInfo && urlSearchTerm && fromCache && displayProducts.length > 0 && (
-                  <div className="flex justify-center mt-6">
+                  <div className="flex justify-center mt-8 mb-16">
                     <Button 
                       onClick={handleFindMoreResults}
                       disabled={isFindingMore}

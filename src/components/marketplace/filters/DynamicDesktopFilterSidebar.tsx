@@ -54,7 +54,7 @@ const DynamicDesktopFilterSidebar: React.FC<DynamicDesktopFilterSidebarProps> = 
 
   // Price range state
   const [priceRange, setPriceRange] = useState<[number, number]>(
-    activeFilters?.priceRange || [0, 200]
+    activeFilters?.priceRange || [0, 300]
   );
 
   const toggleSection = (key: string) => {
@@ -176,7 +176,7 @@ const DynamicDesktopFilterSidebar: React.FC<DynamicDesktopFilterSidebarProps> = 
         <CollapsibleContent className="pt-4 space-y-4">
           <Slider
             min={0}
-            max={200}
+            max={300}
             step={5}
             value={priceRange}
             onValueChange={handlePriceChange}

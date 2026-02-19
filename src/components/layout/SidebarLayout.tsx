@@ -1,5 +1,7 @@
 
 import React, { useLayoutEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
@@ -13,7 +15,7 @@ const SIDEBAR_STATE_KEY = "elyphant_sidebar_open";
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const headerWrapperRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(120);
-  
+  const location = useLocation();
   // Load sidebar state from localStorage, default to open (true = open)
   const [defaultOpen, setDefaultOpen] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
@@ -93,7 +95,17 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           <AppSidebar />
           <SidebarInset className="flex-1">
             <main className="h-full overflow-y-auto overflow-x-hidden pb-safe-bottom mobile-container ios-scroll max-w-[100vw]">
-              {children}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
             </main>
           </SidebarInset>
         </div>

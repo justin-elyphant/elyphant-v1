@@ -214,8 +214,6 @@ function AppContent() {
       {/* Import at top level - inside Router context */}
       <ErrorBoundary>
         <Suspense fallback={<DelayedFallback />}>
-        <AnimatePresence mode="wait">
-        <PageTransition key={location.pathname}>
         <Routes location={location}>
 
           <Route path="/" element={<Home />} />
@@ -305,8 +303,6 @@ function AppContent() {
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />
         </Routes>
-        </PageTransition>
-        </AnimatePresence>
         </Suspense>
       </ErrorBoundary>
       <MobileBottomNavigation />

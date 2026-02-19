@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useHeaderState } from "@/hooks/useHeaderState";
-import { Heart } from "lucide-react";
+import { Heart, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Component imports
@@ -97,6 +97,14 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => navigate("/connections")}
+                aria-label="Connections"
+              >
+                <Users className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate("/wishlists")}
                 aria-label="Wishlists"
               >
@@ -108,6 +116,14 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
 
             {/* Mobile Right Side (phone only) */}
             <div className="md:hidden flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/connections")}
+                aria-label="Connections"
+              >
+                <Users className="h-6 w-6" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

@@ -18,6 +18,7 @@ interface MobileWishlistHubProps {
   onCreateWishlist: () => void;
   onEditWishlist: (id: string) => void;
   onDeleteWishlist: (id: string) => void;
+  onShareWishlist?: (wishlist: Wishlist) => void;
   onUpdateSharing?: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
 }
 
@@ -26,6 +27,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
   onCreateWishlist,
   onEditWishlist,
   onDeleteWishlist,
+  onShareWishlist,
   onUpdateSharing
 }) => {
   const navigate = useNavigate();
@@ -125,6 +127,7 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                       variant="mobile"
                       onEdit={onEditWishlist}
                       onDelete={onDeleteWishlist}
+                      onShare={onShareWishlist}
                       onUpdateSharing={onUpdateSharing}
                     />
                   ))}

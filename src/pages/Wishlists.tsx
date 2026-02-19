@@ -8,6 +8,7 @@ import { ProductProvider } from "@/contexts/ProductContext";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import CreateWishlistDialog from "@/components/gifting/wishlist/CreateWishlistDialog";
 import EditWishlistDialog from "@/components/gifting/wishlist/EditWishlistDialog";
+import ShareWishlistDialog from "@/components/gifting/wishlist/ShareWishlistDialog";
 import WishlistHeroSection from "@/components/gifting/wishlist/WishlistHeroSection";
 import WishlistBenefitsGrid from "@/components/gifting/wishlist/WishlistBenefitsGrid";
 import NicoleAISuggestions from "@/components/gifting/wishlist/NicoleAISuggestions";
@@ -57,6 +58,8 @@ const Wishlists = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareWishlist, setShareWishlist] = useState<(typeof wishlists)[0] | null>(null);
   const [currentWishlistId, setCurrentWishlistId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -137,6 +140,11 @@ const Wishlists = () => {
     }
   };
 
+  const handleShareWishlist = (wishlist: (typeof wishlists)[0]) => {
+    setShareWishlist(wishlist);
+    setShareDialogOpen(true);
+  };
+
   // Handle tab switch with haptic
   const handleTabSwitch = (tab: TabMode) => {
     triggerHapticFeedback(HapticPatterns.tabSwitch);
@@ -179,6 +187,16 @@ const Wishlists = () => {
         wishlist={currentWishlist}
       />
 
+      <ShareWishlistDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        wishlist={shareWishlist}
+        onShareSettingsChange={async (wishlistId: string, isPublic: boolean) => {
+          await updateWishlistSharing({ wishlistId, isPublic });
+          return true;
+        }}
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -191,7 +209,7 @@ const Wishlists = () => {
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete} 
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               disabled={deleting}
             >
               {deleting ? (
@@ -219,6 +237,7 @@ const Wishlists = () => {
             onCreateWishlist={() => setCreateDialogOpen(true)}
             onEditWishlist={handleEditWishlist}
             onDeleteWishlist={handleDeleteWishlist}
+            onShareWishlist={handleShareWishlist}
             onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
               await updateWishlistSharing({ wishlistId, isPublic });
               return true;
@@ -240,6 +259,7 @@ const Wishlists = () => {
             onCreateWishlist={() => setCreateDialogOpen(true)}
             onEditWishlist={handleEditWishlist}
             onDeleteWishlist={handleDeleteWishlist}
+            onShareWishlist={handleShareWishlist}
             onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
               await updateWishlistSharing({ wishlistId, isPublic });
               return true;
@@ -348,6 +368,7 @@ const Wishlists = () => {
                       variant="desktop"
                       onEdit={handleEditWishlist}
                       onDelete={handleDeleteWishlist}
+                      onShare={handleShareWishlist}
                       onUpdateSharing={async (wishlistId: string, isPublic: boolean) => {
                         await updateWishlistSharing({ wishlistId, isPublic });
                         return true;

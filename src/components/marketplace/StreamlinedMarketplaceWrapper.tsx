@@ -110,11 +110,17 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [extraProducts, setExtraProducts] = useState<any[]>([]);
   const displayProducts = useMemo(() => {
     const base = personalizedProducts.length > 0 ? personalizedProducts : products;
-    if (extraProducts.length === 0) return base;
-    // Deduplicate by product_id/asin
-    const existingIds = new Set(base.map((p: any) => p.product_id || p.asin));
-    const newOnes = extraProducts.filter((p: any) => !existingIds.has(p.product_id || p.asin));
-    return [...base, ...newOnes];
+    let combined = base;
+    if (extraProducts.length > 0) {
+      const existingIds = new Set(base.map((p: any) => p.product_id || p.asin));
+      const newOnes = extraProducts.filter((p: any) => !existingIds.has(p.product_id || p.asin));
+      combined = [...base, ...newOnes];
+    }
+    // Filter out $0 products
+    return combined.filter((p: any) => {
+      const price = parseFloat(p.price) || 0;
+      return price > 0;
+    });
   }, [personalizedProducts, products, extraProducts]);
   
   const isMobile = useIsMobile();

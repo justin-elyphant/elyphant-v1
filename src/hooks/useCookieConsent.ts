@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export type CookieConsentLevel = "all" | "essential" | null;
 
@@ -14,23 +14,17 @@ export function useCookieConsent() {
     }
   });
 
-  const [showBanner, setShowBanner] = useState(false);
-
-  useEffect(() => {
-    // Only show banner if no consent has been recorded yet
-    setShowBanner(consent === null);
-  }, [consent]);
+  // Derive showBanner directly — no effect needed, avoids timing/re-render issues
+  const showBanner = consent === null;
 
   const acceptAll = () => {
     localStorage.setItem(STORAGE_KEY, "all");
     setConsent("all");
-    setShowBanner(false);
   };
 
   const acceptEssential = () => {
     localStorage.setItem(STORAGE_KEY, "essential");
     setConsent("essential");
-    setShowBanner(false);
   };
 
   return { consent, showBanner, acceptAll, acceptEssential };

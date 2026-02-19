@@ -15,12 +15,12 @@ const CookieConsentBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
+          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-2xl lg:rounded-xl lg:border lg:border-border lg:shadow-sm lg:pb-0"
           role="dialog"
           aria-label="Cookie consent"
           aria-live="polite"
         >
-          <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="max-w-4xl mx-auto px-4 py-3 lg:max-w-none lg:px-5 lg:py-4">
             <div className="flex items-start gap-4">
               {/* Text block */}
               <div className="flex-1 min-w-0">

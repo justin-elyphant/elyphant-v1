@@ -31,23 +31,6 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Email Address</Label>
-          <Select
-            value={profileData.data_sharing_settings?.email || "private"}
-            onValueChange={(value) => handlePrivacyChange("email", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="private">Private</SelectItem>
-              <SelectItem value="friends">Friends Only</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label>Birthday</Label>
           <Select
             value={profileData.data_sharing_settings?.dob || "friends"}
@@ -65,26 +48,9 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label>Shipping Address</Label>
-          <Select
-            value={profileData.data_sharing_settings?.shipping_address || "private"}
-            onValueChange={(value) => handlePrivacyChange("shipping_address", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="private">Private</SelectItem>
-              <SelectItem value="friends">Friends Only</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label>Interests</Label>
           <Select
-            value={profileData.data_sharing_settings?.interests || "friends"}
+            value={profileData.data_sharing_settings?.interests || "public"}
             onValueChange={(value) => handlePrivacyChange("interests", value)}
           >
             <SelectTrigger>

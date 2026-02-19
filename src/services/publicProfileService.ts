@@ -60,10 +60,10 @@ export const publicProfileService = {
       // Check connection status with current user
       const connectionStatus = await this.getConnectionStatus(profile.id, currentUser?.id);
       
-      // Get privacy settings for message requests setting
+      // Get privacy settings
       const { data: privacySettings } = await supabase
         .from('privacy_settings')
-        .select('allow_message_requests')
+        .select('allow_message_requests, wishlist_visibility')
         .eq('user_id', profile.id)
         .single();
       
@@ -81,7 +81,8 @@ export const publicProfileService = {
         can_connect: connectionStatus.can_connect,
         can_message: privacySettings?.allow_message_requests ?? true,
         is_connected: connectionStatus.is_connected,
-        connection_status: connectionStatus.status
+        connection_status: connectionStatus.status,
+        wishlist_visibility: (privacySettings?.wishlist_visibility as 'public' | 'connections_only' | 'private') ?? 'public'
       };
       
       console.log("🎯 Final profile object:", finalProfile);

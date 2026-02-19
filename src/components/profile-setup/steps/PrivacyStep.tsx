@@ -33,23 +33,6 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Email Address</Label>
-          <Select
-            value={currentSettings.email || "friends"}
-            onValueChange={(value) => handlePrivacyChange("email", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="private">Private</SelectItem>
-              <SelectItem value="friends">Friends Only</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label>Birthday</Label>
           <Select
             value={currentSettings.dob || "friends"}
@@ -67,26 +50,9 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label>Shipping Address</Label>
-          <Select
-            value={currentSettings.shipping_address || "friends"}
-            onValueChange={(value) => handlePrivacyChange("shipping_address", value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="private">Private</SelectItem>
-              <SelectItem value="friends">Friends Only</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label>Interests</Label>
           <Select
-            value={currentSettings.interests || currentSettings.gift_preferences || "friends"}
+            value={currentSettings.interests || currentSettings.gift_preferences || "public"}
             onValueChange={(value) => {
               handlePrivacyChange("interests", value);
               handlePrivacyChange("gift_preferences", value); // Backwards compat

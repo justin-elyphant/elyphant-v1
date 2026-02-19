@@ -1,7 +1,7 @@
 
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
@@ -95,17 +95,14 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           <AppSidebar />
           <SidebarInset className="flex-1">
             <main className="h-full overflow-y-auto overflow-x-hidden pb-safe-bottom mobile-container ios-scroll max-w-[100vw]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={location.pathname}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {children}
-                </motion.div>
-              </AnimatePresence>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {children}
+              </motion.div>
             </main>
           </SidebarInset>
         </div>

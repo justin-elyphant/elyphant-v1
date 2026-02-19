@@ -20,8 +20,9 @@ const CookieConsentBanner: React.FC = () => {
           aria-label="Cookie consent"
           aria-live="polite"
         >
-          <div className="max-w-4xl mx-auto px-4 py-3 lg:max-w-none lg:px-5 lg:py-4">
-            <div className="flex items-start gap-4">
+          <div className="px-4 py-3 lg:max-w-none lg:px-5 lg:py-4">
+            {/* Mobile/tablet: stack vertically. Desktop (lg): single row */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
               {/* Text block */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground text-sm">
@@ -71,17 +72,17 @@ const CookieConsentBanner: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0 mt-0.5">
+              {/* Actions — full width row on mobile, inline on desktop */}
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={acceptAll}
-                  className="bg-foreground text-background text-xs font-medium h-11 px-4 rounded-full hover:bg-foreground/90 active:bg-foreground/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
+                  className="flex-1 lg:flex-none bg-foreground text-background text-xs font-medium h-11 px-4 rounded-full hover:bg-foreground/90 active:bg-foreground/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
                 >
                   Accept All
                 </button>
                 <button
                   onClick={acceptEssential}
-                  className="border border-border text-foreground bg-white text-xs font-medium h-11 px-4 rounded-full hover:bg-muted active:bg-muted/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
+                  className="flex-1 lg:flex-none border border-border text-foreground bg-white text-xs font-medium h-11 px-4 rounded-full hover:bg-muted active:bg-muted/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
                 >
                   Essential Only
                 </button>

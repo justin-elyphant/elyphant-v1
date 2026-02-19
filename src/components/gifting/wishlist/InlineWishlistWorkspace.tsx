@@ -31,6 +31,7 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
   const [isShoppingPanelOpen, setIsShoppingPanelOpen] = useState(false);
   
   const { removeFromWishlist, isRemoving } = useWishlist();
+  const [purchasedItemIds, setPurchasedItemIds] = useState<Set<string>>(new Set());
   
   // Handle URL parameters for auto-opening shopping panel
   useEffect(() => {
@@ -133,6 +134,21 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
     fetchWishlist();
   }, [wishlistId, user?.id, onBack]);
 
+  // Fetch purchased item IDs for "Gifted 🎁" badge display
+  useEffect(() => {
+    const fetchPurchasedItems = async () => {
+      if (!wishlistId) return;
+      const { data, error } = await supabase
+        .from("wishlist_item_purchases")
+        .select("item_id")
+        .eq("wishlist_id", wishlistId);
+      if (!error && data) {
+        setPurchasedItemIds(new Set(data.map((row) => row.item_id)));
+      }
+    };
+    fetchPurchasedItems();
+  }, [wishlistId]);
+
   const handleRemoveItem = async (itemId: string) => {
     if (!wishlistId) return;
     
@@ -221,6 +237,7 @@ const InlineWishlistWorkspace: React.FC<InlineWishlistWorkspaceProps> = ({
           savingItemId={isRemoving ? 'removing' : undefined}
           isOwner={isOwner}
           isGuestPreview={isGuestPreview}
+          purchasedItemIds={purchasedItemIds}
         />
       </div>
 

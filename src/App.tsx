@@ -1,8 +1,6 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import PageTransition from "./components/layout/PageTransition";
 import DelayedFallback from "./components/layout/DelayedFallback";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";

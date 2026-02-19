@@ -11,6 +11,7 @@ import DeleteAccountSection from "./DeleteAccountSection";
 import { SessionManagement } from "./SessionManagement";
 import { ActiveSessionsCard } from "./ActiveSessionsCard";
 import DataSharingSectionWrapper from "./DataSharingSectionWrapper";
+import DataExportSection from "./DataExportSection";
 
 const PrivacySharingSettings: React.FC = () => {
   const { settings, loading, updateSettings } = usePrivacySettings();
@@ -252,6 +253,8 @@ const PrivacySharingSettings: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <DataExportSection />
 
       <DeleteAccountSection />
     </div>

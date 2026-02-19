@@ -1,98 +1,38 @@
 
 
-# Simplify Cart "Unassigned Items" for One-Off Shoppers
+# Resize Gift Message Container for Desktop + iOS Capacitor Compliance
 
 ## Problem
 
-The current cart shows an orange warning card titled "Unassigned Items" with the message "These items need recipient assignment." For a shopper who just wants to buy something for themselves, this is confusing -- standard e-commerce carts don't require you to "assign" items before checkout. The language and visual treatment (orange warning, alert icon) creates unnecessary friction.
+The gift message drawer currently stretches full-width across the entire viewport on desktop (as seen in the screenshot). On desktop, this creates an oversized, awkward layout. The drawer pattern (bottom sheet) is appropriate for mobile but needs constraints on larger screens.
 
-## Solution: Reframe as "Shipping To" with Smart Defaults
+## Solution
 
-Replace the warning-style "Unassigned Items" card with a clean, non-alarming delivery section inspired by standard e-commerce patterns and the existing Buy Now drawer's step layout.
+### Desktop: Constrain drawer width
 
-### Key Design Changes
+Add a `max-w-lg` (32rem / 512px) constraint and center the drawer on desktop using `sm:max-w-lg sm:mx-auto` on the `DrawerContent`. This keeps the bottom-sheet behavior on mobile while making it a compact, centered panel on desktop.
 
-1. **Remove the orange warning aesthetic** -- no AlertTriangle, no "needs assignment" language
-2. **Default assumption: shipping to yourself** -- this is what 90%+ of e-commerce shoppers expect
-3. **Show a clean "Delivering to" summary** with the user's address (if available) or a prompt to add one
-4. **Keep "Send as Gift" as an optional action** -- not the default flow
-5. **For guests**: skip the section entirely (they enter shipping at checkout, which is standard)
+### Mobile/Tablet: iOS Capacitor compliance
 
-### Visual Design (Lululemon-inspired, monochromatic)
+- Add `pb-safe` padding to the footer for iPhone home indicator
+- Ensure all touch targets (buttons, template cards) meet 44px minimum
+- Add `touch-manipulation` to interactive elements to eliminate 300ms tap delay
+- Add spring-style transitions via existing drawer animation
 
-```
-+-------------------------------------------------------+
-|  Delivering to                                         |
-|                                                        |
-|  [User icon]  Justin Meeks                             |
-|               123 Main St, Dallas, TX 75001            |
-|               [Edit]                                   |
-|                                                        |
-|  ---- or ----                                          |
-|                                                        |
-|  [Gift icon]  Send as a gift instead                   |
-+-------------------------------------------------------+
-```
+## Technical Changes
 
-If the user has no address saved:
-```
-+-------------------------------------------------------+
-|  Delivering to                                         |
-|                                                        |
-|  Shipping address will be collected at checkout        |
-|                                                        |
-|  [Gift icon]  Send as a gift instead                   |
-+-------------------------------------------------------+
-```
+### File: `src/components/cart/ItemGiftMessageSection.tsx`
 
-### Technical Changes
+1. Add `sm:max-w-lg sm:mx-auto` to `DrawerContent` className -- constrains width on desktop
+2. Add `touch-manipulation` and `min-h-[44px]` to the inline "Add gift message" button
+3. Add `pb-safe` to `DrawerFooter` for iOS safe area
+4. Add `touch-manipulation active:scale-[0.98]` to Save/Apply buttons for haptic feedback feel
+5. Reduce textarea rows from 4 to 3 for a more compact feel
 
-**File: `src/components/cart/UnassignedItemsSection.tsx`** (full rewrite)
+### File: `src/components/cart/GiftMessageTemplates.tsx`
 
-- Remove orange Card/Alert/AlertTriangle/Badge styling
-- Replace with a clean white card, grey border (monochromatic)
-- Header: "Delivering to" (not "Unassigned Items")
-- If user has address: show name + address summary with "Edit" link to settings
-- If no address: show neutral text "Shipping address collected at checkout"
-- Replace "Assign to Recipient" button with subtle "Send as a gift instead" link/button with Gift icon
-- Remove "Ship to Me" button (it's now the default, no action needed)
-- For guest users (no profile): show only the "collected at checkout" message
-- Keep the item list but make it less prominent (or remove it since items are already shown below in the main cart list)
+1. Add `min-h-[44px] touch-manipulation` to each template button for iOS touch targets
+2. Reduce `max-h-64` on the scrollable template list to `max-h-48` on mobile for better fit within the constrained drawer
 
-**File: `src/pages/Cart.tsx`** (minor update, lines 349-356)
-
-- Remove the `onAssignToMe` handler call since self-shipping is now the default
-- The "Send as a gift" action still triggers the existing `onAssignAll` / recipient modal flow
-- For guests, hide the section entirely (they enter shipping at checkout)
-
-### Props Changes
-
-```typescript
-interface UnassignedItemsSectionProps {
-  unassignedItems: CartItem[];
-  onSendAsGift: () => void;     // renamed from onAssignAll
-  userName?: string;
-  userAddress?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  } | null;
-  isGuest: boolean;
-}
-```
-
-### What Stays the Same
-
-- The recipient assignment modal (triggered by "Send as a gift") is unchanged
-- Delivery groups / package previews remain as-is
-- The checkout flow and address validation logic are unchanged
-- The wishlist purchase indicator (coral-orange banner) is unchanged
-
-### E-Commerce Standards Applied
-
-- Default to self-shipping (Amazon, Target, Lululemon all do this)
-- Gift option is secondary, not primary
-- No warnings for normal shopping behavior
-- Address shown if available, collected at checkout if not
+No other files need changes -- the drawer component itself is fine, we just need to constrain the content instance.
 

@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutDashboard, Settings, Terminal } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -135,7 +135,7 @@ const UserButton = () => {
     navigate("/marketplace");
   };
 
-  // On mobile, render a minimalist dropdown with essential account actions
+  // On mobile, render enriched dropdown matching desktop feature parity
   if (isMobile) {
     return (
       <DropdownMenu>
@@ -167,9 +167,33 @@ const UserButton = () => {
           </button>
         </DropdownMenuTrigger>
         
-        <DropdownMenuContent align="end" className="w-48 bg-background border border-border shadow-lg rounded-lg z-50">
+        <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-background border border-border shadow-lg rounded-lg z-50 max-h-[80vh] overflow-y-auto">
+          {/* Profile Header */}
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <Avatar className="h-10 w-10">
+              <AvatarImage 
+                src={normalizeImageUrl(
+                  profile?.profile_image || 
+                  user?.user_metadata?.avatar_url || 
+                  user?.user_metadata?.picture,
+                  { bucket: 'avatars' }
+                )}
+              />
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground truncate">
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+              </p>
+              <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+            </div>
+          </div>
+
+          {/* Shopping Section */}
           <DropdownMenuItem 
-            className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
             onClick={() => navigate("/dashboard")}
           >
             <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
@@ -177,27 +201,95 @@ const UserButton = () => {
           </DropdownMenuItem>
           
           <DropdownMenuItem 
-            className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/orders")}
+          >
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Orders</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="my-1 bg-border" />
+
+          {/* Social Section */}
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/connections")}
+          >
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium flex-1">Connections</span>
+            {pendingConnectionsCount > 0 && (
+              <span className="bg-destructive text-destructive-foreground text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-semibold">
+                {pendingConnectionsCount > 99 ? '99+' : pendingConnectionsCount}
+              </span>
+            )}
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/notifications")}
+          >
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium flex-1">Notifications</span>
+            {notificationsCount > 0 && (
+              <span className="bg-destructive text-destructive-foreground text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-semibold">
+                {notificationsCount > 99 ? '99+' : notificationsCount}
+              </span>
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="my-1 bg-border" />
+
+          {/* Account Section */}
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={handleProfileClick}
+          >
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">My Profile</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
             onClick={() => navigate("/settings")}
           >
             <Settings className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">Account Settings</span>
           </DropdownMenuItem>
           
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/payments")}
+          >
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Payment Methods</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => navigate("/support")}
+          >
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Help & Support</span>
+          </DropdownMenuItem>
+
+          {/* Employee Section */}
           {isEmployee && (
-            <DropdownMenuItem 
-              className="flex items-center gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer"
-              onClick={() => navigate("/trunkline")}
-            >
-              <Terminal className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Trunkline</span>
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuSeparator className="my-1 bg-border" />
+              <DropdownMenuItem 
+                className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                onClick={() => navigate("/trunkline")}
+              >
+                <Terminal className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Trunkline</span>
+              </DropdownMenuItem>
+            </>
           )}
           
           <DropdownMenuSeparator className="my-1 bg-border" />
           
           <DropdownMenuItem 
-            className="flex items-center gap-3 px-4 py-3 hover:bg-destructive/10 hover:text-destructive cursor-pointer text-destructive"
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-destructive/10 hover:text-destructive cursor-pointer text-destructive"
             onClick={handleSignOut}
           >
             <LogOut className="h-4 w-4" />

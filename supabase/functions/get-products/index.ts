@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 // Import from shared modules
 import { CATEGORY_REGISTRY, LEGACY_FLAG_TO_CATEGORY, BRAND_CATEGORY_MAPPINGS } from '../shared/categoryRegistry.ts';
-import { applyBrandAwareFilter, parseSearchQuery, COMMON_BRANDS } from '../shared/brandAwareFilter.ts';
+import { applyBrandAwareFilter, parseSearchQuery, calculateRelevanceScore, COMMON_BRANDS } from '../shared/brandAwareFilter.ts';
 import { filterUnsupportedProducts } from '../shared/unsupportedProductFilter.ts';
 import { generateFacetsFromResults } from '../shared/facetGenerator.ts';
 
@@ -1298,10 +1298,24 @@ serve(async (req) => {
       }
       
       // Apply brand-aware filter using shared module (NO DUPLICATE CODE)
+      // When supplementing sparse cache results, use a relaxed filter to get more products
+      const isSupplementing = typeof cachedProductsForMerge !== 'undefined' && cachedProductsForMerge.length > 0;
       if (query && filteredResults.length > 0) {
         const beforeCount = filteredResults.length;
-        filteredResults = applyBrandAwareFilter(filteredResults, query);
-        console.log(`🎯 Brand-aware filter applied: ${beforeCount} → ${filteredResults.length} products`);
+        if (isSupplementing) {
+          // Relaxed filter: only remove completely irrelevant products (score < 20)
+          // We already have good cached results; we just need more inventory
+          const { searchTerms, searchBrands } = parseSearchQuery(query);
+          filteredResults = filteredResults
+            .map(p => ({ product: p, score: calculateRelevanceScore(p, searchTerms, searchBrands) }))
+            .filter(r => r.score >= 20)
+            .sort((a, b) => b.score - a.score)
+            .map(r => r.product);
+          console.log(`🎯 Relaxed supplement filter applied: ${beforeCount} → ${filteredResults.length} products`);
+        } else {
+          filteredResults = applyBrandAwareFilter(filteredResults, query);
+          console.log(`🎯 Brand-aware filter applied: ${beforeCount} → ${filteredResults.length} products`);
+        }
       }
       
       // Apply unsupported product filter using shared module
@@ -1353,7 +1367,9 @@ serve(async (req) => {
           total: filteredResults.length,
           originalTotal: zincTotal,
           hasMore: zincTotal > filteredResults.length,
-          priceFiltered: !!(filters?.min_price || filters?.max_price)
+          priceFiltered: !!(filters?.min_price || filters?.max_price),
+          fromCache: isSupplementing ? true : false,
+          supplemented: isSupplementing || false
         }
       );
 

@@ -1,104 +1,88 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Users, UserPlus, AlertTriangle, User } from 'lucide-react';
+import { MapPin, Gift, Pencil, User } from 'lucide-react';
 import { CartItem } from '@/contexts/CartContext';
-import { useProfile } from '@/contexts/profile/ProfileContext';
-import CartItemImage from '@/components/cart/CartItemImage';
+import { useNavigate } from 'react-router-dom';
 
 interface UnassignedItemsSectionProps {
   unassignedItems: CartItem[];
-  onAssignAll: () => void;
-  onAssignToMe: () => void;
+  onSendAsGift: () => void;
+  userName?: string;
+  userAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  } | null;
+  isGuest: boolean;
 }
 
 const UnassignedItemsSection: React.FC<UnassignedItemsSectionProps> = ({
   unassignedItems,
-  onAssignAll,
-  onAssignToMe
+  onSendAsGift,
+  userName,
+  userAddress,
+  isGuest
 }) => {
-  const { profile } = useProfile();
+  const navigate = useNavigate();
 
-  if (unassignedItems.length === 0) {
+  if (unassignedItems.length === 0 || isGuest) {
     return null;
   }
 
-  const shippingAddress = profile?.shipping_address;
-  const hasCompleteAddress = shippingAddress && 
-    profile?.name &&
-    (shippingAddress.address_line1 || shippingAddress.street) &&
-    shippingAddress.city &&
-    shippingAddress.state &&
-    (shippingAddress.zip_code || shippingAddress.zipCode);
+  const hasAddress = userAddress && userAddress.street && userAddress.city && userAddress.state && userAddress.zipCode;
+
+  const formatAddress = () => {
+    if (!userAddress) return '';
+    const parts = [userAddress.street, userAddress.city, `${userAddress.state} ${userAddress.zipCode}`];
+    return parts.filter(Boolean).join(', ');
+  };
 
   return (
-    <Card className="border-orange-200 bg-orange-50/50 mb-4 overflow-hidden">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Users className="h-4 w-4 text-orange-600" />
-          Unassigned Items
-          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
-            {unassignedItems.length} item{unassignedItems.length > 1 ? 's' : ''}
-          </Badge>
+    <Card className="mb-4">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <MapPin className="h-4 w-4" />
+          Delivering to
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertTriangle className="h-4 w-4 text-orange-600" />
-          <AlertDescription>
-            <div className="space-y-2">
-              <p className="text-orange-800 font-medium">
-                These items need recipient assignment
-              </p>
-              <p className="text-orange-700 text-sm">
-                {hasCompleteAddress 
-                  ? "Items without recipients will be shipped to your address by default"
-                  : "Please add your shipping address or assign recipients to continue"
-                }
-              </p>
+      <CardContent className="space-y-3">
+        {hasAddress ? (
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-full bg-muted">
+              <User className="h-4 w-4 text-foreground" />
             </div>
-          </AlertDescription>
-        </Alert>
-
-        <div className="space-y-2">
-          {unassignedItems.map((item) => (
-            <div key={item.product.product_id} className="flex items-center gap-3 p-3 bg-white rounded border overflow-hidden">
-              <CartItemImage item={item} size="md" className="flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {item.product.name || item.product.title}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Qty: {item.quantity} • ${item.product.price.toFixed(2)}
-                </p>
-              </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">{userName || 'My Address'}</p>
+              <p className="text-sm text-muted-foreground">{formatAddress()}</p>
             </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onAssignAll}
-            className="flex-1 flex items-center justify-center gap-2 min-h-[44px]"
-          >
-            <UserPlus className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">Assign to Recipient</span>
-          </Button>
-          {hasCompleteAddress && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={onAssignToMe}
-              className="flex-1 flex items-center justify-center gap-2 min-h-[44px]"
+              onClick={() => navigate('/settings')}
+              className="text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
             >
-              <User className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap">Ship to Me</span>
+              <Pencil className="h-3 w-3" />
+              Edit
             </Button>
-          )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Shipping address will be collected at checkout
+          </p>
+        )}
+
+        <div className="border-t pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onSendAsGift}
+            className="text-sm text-muted-foreground hover:text-foreground gap-2 px-0 h-auto py-1"
+          >
+            <Gift className="h-4 w-4" />
+            Send as a gift instead
+          </Button>
         </div>
       </CardContent>
     </Card>

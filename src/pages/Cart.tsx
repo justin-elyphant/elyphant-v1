@@ -346,12 +346,19 @@ const Cart = () => {
                 </div>
               )}
 
-              {/* Unassigned Items Section - Only show if not a wishlist purchase */}
+              {/* Delivering To Section - Only show if not a wishlist purchase */}
               {!isWishlistPurchase && (
                 <UnassignedItemsSection 
                   unassignedItems={unassignedItems}
-                  onAssignAll={handleAssignAllToRecipients}
-                  onAssignToMe={handleAssignAllToMe}
+                  onSendAsGift={handleAssignAllToRecipients}
+                  userName={profile?.name || unifiedProfile?.name}
+                  userAddress={shippingAddress ? {
+                    street: shippingAddress.address_line1 || shippingAddress.street || '',
+                    city: shippingAddress.city || '',
+                    state: shippingAddress.state || '',
+                    zipCode: shippingAddress.zip_code || shippingAddress.zipCode || '',
+                  } : null}
+                  isGuest={!user}
                 />
               )}
 

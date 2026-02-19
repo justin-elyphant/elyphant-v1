@@ -6,7 +6,7 @@ const PrivacyPolicy = () => {
     <LegalLayout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-foreground">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-6">Last Updated: {new Date().toLocaleDateString()}</p>
+        <p className="text-muted-foreground mb-6">Last Updated: February 19, 2026</p>
         
         <div className="prose prose-lg max-w-none text-foreground">
           <section className="mb-8">

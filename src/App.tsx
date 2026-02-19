@@ -22,6 +22,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 // import { initializeCartCleanup } from "./utils/cartPersistenceUtils";
 import { SimpleNicoleProvider } from "./components/ai/SimpleNicoleProvider";
 import { performProductionCartCleanup } from "./utils/cartProductionCleanup";
+import CookieConsentBanner from "./components/legal/CookieConsentBanner";
 
 
 // Immediate load for critical pages
@@ -308,6 +309,9 @@ function AppContent() {
       
       {/* Simple Nicole Provider - Test Implementation */}
       <SimpleNicoleProvider />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsentBanner />
     </div>
   );
 }

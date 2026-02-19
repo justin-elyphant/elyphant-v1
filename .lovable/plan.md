@@ -1,70 +1,107 @@
 
-# Cookie Consent Banner Redesign — Lululemon Style
+# Cookie Consent Banner — iOS Capacitor Compliance Patch
 
-## What's Wrong With the Current Design
+## What's Missing Right Now
 
-The screenshot shows a classic SaaS-style cookie dialog: rounded card floating in the center-bottom, a colored cookie icon with a tinted background, `text-primary` blue links, and default shadcn Button styling. None of this matches the site's aesthetic.
+The redesign nailed the visual direction (monochromatic, flush bar, black pill CTA) but did not address iOS Capacitor touch standards. Three concrete gaps remain:
 
-The site uses:
-- `bg-white/80 backdrop-blur-xl border-t border-border` for the bottom nav (flat, white, subtle border-top, no rounded card floating)
-- `bg-foreground text-background` (black pill) for the active nav tab — that's the primary action style
-- `text-muted-foreground` for secondary labels, no colored icons
-- No floating card shadows for bottom-anchored UI — the bottom nav is flush/edge-anchored with a top border only
-- `rounded-t-2xl` for the mobile nav's top corners only, not a fully rounded floating card
+### Gap 1 — Touch Targets Below 44px
 
-## Design Direction
+iOS Human Interface Guidelines and the project's own Capacitor memory require a 44px minimum tap target on all interactive elements.
 
-Replace the SaaS floating card with a **flat, flush bottom bar** — same visual language as the mobile bottom navigation. It should feel like a native site element, not a third-party popup.
+| Element | Current height | Issue |
+|---|---|---|
+| Accept All button | `h-9` = 36px | 8px short |
+| Essential Only button | `h-9` = 36px | 8px short |
+| X dismiss button | 16px (icon only) | 28px short |
+| "More info" toggle | text inline, ~20px | 24px short |
 
-Key changes:
-- **No floating card** — replace with a flat `bg-white border-t border-border` bar flush to the bottom (above the mobile nav)
-- **No cookie icon or colored icon background** — remove entirely
-- **No `text-primary` blue links** — replace "More info" toggle with plain underline text in `text-foreground`
-- **"Accept All" button** → `bg-foreground text-background` (black, matches active nav tab style)
-- **"Essential Only" button** → `border border-border text-foreground bg-transparent` (clean outline, no colored border)
-- **Expanded detail section** → plain `bg-gray-50 border border-border rounded-md` (no `bg-muted/50` tint)
-- **X dismiss button** → keep but use `text-muted-foreground`, no hover color change needed
-- **Mobile offset** → keep `mb-16 lg:mb-0` so it clears the bottom nav on mobile, but strip card border-radius to `rounded-none` on mobile and `rounded-t-xl` on desktop if centered
+Fix: Bump primary buttons to `h-11` (44px). Wrap the X button in a `flex items-center justify-center min-w-[44px] min-h-[44px]` container. Give the "More info" inline button `py-2` so its tap region expands.
+
+### Gap 2 — No `touch-manipulation` on Buttons
+
+Without `touch-manipulation`, iOS Safari adds a 300ms delay to tap events on buttons. All three buttons (Accept All, Essential Only, X) need `touch-manipulation` added to their className.
+
+### Gap 3 — Safe Area Inset Not Respected
+
+The banner uses `pb-14 lg:pb-0` to clear the mobile bottom nav. This is correct for the nav bar itself, but the mobile nav itself uses `env(safe-area-inset-bottom)` for the home indicator. The banner's bottom padding should stack the nav clearance + safe area:
+
+```
+pb-14 lg:pb-0
+```
+should become:
+```
+pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0
+```
+
+This ensures the banner sits correctly above the nav + home indicator on iPhone 12/13/14/15 (which have ~34px home indicator safe area).
+
+### Gap 4 — Hover-Only Active States
+
+`hover:bg-foreground/90` and `hover:bg-gray-50` are invisible on touch devices. Active state feedback (the visual "press" response) needs an `active:` variant alongside `hover:`:
+
+- Accept All: add `active:bg-foreground/80`
+- Essential Only: add `active:bg-gray-100`
+- X button: add `active:opacity-70`
+
+### Gap 5 — Tablet Offset Verification
+
+On tablet (768px–1023px), the `lg:hidden` mobile nav is still visible. The banner's `pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]` handles this correctly since it uses the same 56px clearance as the mobile nav height. No separate tablet breakpoint needed — the formula covers both phone and tablet.
 
 ## Files to Modify
 
-**One file only:**
+One file only:
 - `src/components/legal/CookieConsentBanner.tsx`
 
 ## Exact Changes
 
-### Structure
+### Outer wrapper — safe area + touch
 ```
-Fixed bottom bar (not a card):
-├── border-t border-border
-├── bg-white (not bg-background which can be dark-mode aware — this stays white like the nav)
-├── px-4 py-3
-└── max-w-screen — full width on mobile, constrained inner content max-w-2xl on desktop
-
-Inner layout (same flex pattern as current):
-├── Left: text block (title + description + expand toggle)
-├── Right: action buttons (Accept All black pill | Essential Only outline) + X
+className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border 
+  pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
 ```
 
-### Color / Class Mapping
+### Accept All button
+```
+h-9 → h-11
+add: touch-manipulation active:bg-foreground/80 active:scale-95
+```
 
-| Current | New |
-|---|---|
-| `bg-background border border-border rounded-xl shadow-lg` | `bg-white border-t border-border` (flush bar) |
-| `bg-primary/10 rounded-lg p-2` + Cookie icon | Remove entirely |
-| `text-primary underline` (More info link) | `text-foreground underline underline-offset-2` |
-| `<Button size="sm">` (default primary) | `bg-foreground text-background hover:bg-foreground/90 text-xs h-9 px-4 rounded-full font-medium` |
-| `<Button size="sm" variant="outline">` | `border border-border text-foreground bg-white hover:bg-gray-50 text-xs h-9 px-4 rounded-full` |
-| `bg-muted/50 rounded-lg` (expanded detail) | `bg-gray-50 border border-border rounded-md` |
-| `text-primary hover:underline` (Privacy Policy link) | `text-foreground underline underline-offset-2` |
-| `mb-16 md:mb-0 mx-4 mb-4` wrapper (floating) | `pb-16 lg:pb-0` on the fixed bar itself (no `mx-4` — full width) |
+### Essential Only button
+```
+h-9 → h-11
+add: touch-manipulation active:bg-gray-100 active:scale-95
+```
 
-### Motion
-Keep the existing `framer-motion` slide-up animation — it's appropriate. Just change `y: 100` to a shorter slide (`y: 60`) since the bar is shorter than the card was.
+### X dismiss button — wrap in a proper touch target
+```jsx
+<button
+  onClick={acceptEssential}
+  className="flex items-center justify-center min-w-[44px] min-h-[44px] text-muted-foreground ml-1 shrink-0 touch-manipulation active:opacity-70"
+  aria-label="Dismiss cookie banner"
+>
+  <X className="h-4 w-4" />
+</button>
+```
 
-### Mobile offset
-The bar sits directly above the mobile bottom nav. Since the bottom nav is `h-14` (56px), the banner uses `pb-14 lg:pb-0` to clear it, same pattern as how other overlays handle the nav.
+### "More info" inline button — expand tap area
+```
+add: py-2 touch-manipulation active:opacity-70
+```
 
-## Result
+## Visual Impact
 
-The redesigned banner will look like a natural extension of the bottom navigation — a thin white strip with a top divider, black pill CTA, and clean typography. No SaaS popup feel, fully consistent with the Lululemon monochromatic system.
+These changes are invisible to the eye on desktop. On mobile/tablet they ensure:
+- Every tap registers on first touch (no 300ms delay)
+- Every button is comfortably tappable with a thumb
+- The banner never clips behind the iPhone home indicator
+- Press states give immediate tactile-like visual feedback
+
+## Summary Table
+
+| Standard | Before | After |
+|---|---|---|
+| 44px touch targets | ❌ 36px buttons, 16px X | ✅ 44px all interactive elements |
+| `touch-manipulation` | ❌ Missing | ✅ All buttons |
+| Safe area inset | ❌ Hardcoded 56px | ✅ `calc(3.5rem + env(safe-area-inset-bottom))` |
+| Active press states | ❌ Hover only | ✅ `active:` variants on all buttons |

@@ -39,9 +39,9 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
   const getPrivacyIcon = (level: string) => {
     switch (level) {
       case 'public':
+      case 'everyone':
         return <Eye className="h-4 w-4 text-green-600" />;
-      case 'friends_only':
-      case 'followers_only':
+      case 'connections_only':
         return <Users className="h-4 w-4 text-blue-600" />;
       case 'private':
       case 'nobody':
@@ -55,16 +55,14 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
     switch (level) {
       case 'public':
         return 'Public';
-      case 'friends_only':
-        return 'Friends Only';
-      case 'followers_only':
-        return 'Followers Only';
+      case 'connections_only':
+        return 'Connections Only';
+      case 'everyone':
+        return 'Everyone';
       case 'private':
         return 'Private';
       case 'nobody':
         return 'Nobody';
-      case 'everyone':
-        return 'Everyone';
       default:
         return 'Unknown';
     }
@@ -75,8 +73,7 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
       case 'public':
       case 'everyone':
         return 'bg-green-100 text-green-800';
-      case 'friends_only':
-      case 'followers_only':
+      case 'connections_only':
         return 'bg-blue-100 text-blue-800';
       case 'private':
       case 'nobody':
@@ -111,8 +108,8 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Connection requests</span>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={getPrivacyColor(settings.allow_connection_requests_from)}
                 >
                   <div className="flex items-center gap-1">
@@ -126,8 +123,8 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Profile visibility</span>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={getPrivacyColor(settings.profile_visibility)}
                 >
                   <div className="flex items-center gap-1">
@@ -141,13 +138,13 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Message requests</span>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={settings.allow_message_requests ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                 >
                   <div className="flex items-center gap-1">
-                    {settings.allow_message_requests ? 
-                      <Eye className="h-4 w-4" /> : 
+                    {settings.allow_message_requests ?
+                      <Eye className="h-4 w-4" /> :
                       <EyeOff className="h-4 w-4" />
                     }
                     {settings.allow_message_requests ? 'Enabled' : 'Disabled'}

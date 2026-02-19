@@ -175,8 +175,8 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         items={wishlist.items}
         onSaveItem={() => {}}
         savingItemId={null}
-        isOwner={false}
-        isGuestPreview={true}
+        isOwner={isOwnWishlist}
+        isGuestPreview={!isOwnWishlist}
         onAddToCart={handleAddToCart}
         purchasedItemIds={purchasedItemIds}
       />

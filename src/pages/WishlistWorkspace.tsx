@@ -29,6 +29,7 @@ const WishlistWorkspace = () => {
   const [loading, setLoading] = useState(true);
   const [ownerProfile, setOwnerProfile] = useState<any | null>(null);
   const [isShoppingPanelOpen, setIsShoppingPanelOpen] = useState(false);
+  const [purchasedItemIds, setPurchasedItemIds] = useState<Set<string>>(new Set());
   
   // Privacy toggle state
   const [isPublic, setIsPublic] = useState(false);
@@ -47,6 +48,21 @@ const WishlistWorkspace = () => {
   const isOwner = React.useMemo(() => {
     return user?.id === wishlist?.user_id;
   }, [user?.id, wishlist?.user_id]);
+
+  // Fetch purchased item IDs for "Gifted 🎁" badge display
+  useEffect(() => {
+    const fetchPurchasedItems = async () => {
+      if (!wishlistId) return;
+      const { data, error } = await supabase
+        .from("wishlist_item_purchases")
+        .select("item_id")
+        .eq("wishlist_id", wishlistId);
+      if (!error && data) {
+        setPurchasedItemIds(new Set(data.map((row) => row.item_id)));
+      }
+    };
+    fetchPurchasedItems();
+  }, [wishlistId]);
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -297,6 +313,7 @@ const WishlistWorkspace = () => {
             savingItemId={isRemoving ? 'removing' : undefined}
             isOwner={isOwner}
             isGuestPreview={false}
+            purchasedItemIds={purchasedItemIds}
             wishlistSwitcher={
               <WishlistSwitcher 
                 currentWishlistId={wishlist.id} 

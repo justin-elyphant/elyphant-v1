@@ -57,7 +57,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
       {/* Inline Add Button - Only shows when no message exists */}
       <button
         onClick={handleOpenDrawer}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground min-h-[44px] touch-manipulation"
       >
         <Gift className="h-3 w-3" />
         <span>Add gift message</span>
@@ -65,7 +65,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
 
       {/* Gift Message Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} modal={false}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85vh] sm:max-w-lg sm:mx-auto">
           <DrawerHeader className="border-b pb-4">
             <div className="flex items-center justify-between">
               <DrawerTitle>Gift Message for {recipientName}</DrawerTitle>
@@ -84,7 +84,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
                 placeholder={`Write a personal message for ${recipientName}...`}
                 value={tempMessage}
                 onChange={(e) => setTempMessage(e.target.value)}
-                rows={4}
+                rows={3}
                 className="resize-none"
               />
               <p className="text-xs text-muted-foreground">
@@ -102,9 +102,9 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
             </div>
           </div>
 
-          <DrawerFooter className="border-t pt-4">
+          <DrawerFooter className="border-t pt-4 pb-safe">
             <div className="flex flex-col gap-2 w-full">
-              <Button onClick={handleSave} className="w-full">
+              <Button onClick={handleSave} className="w-full min-h-[44px] touch-manipulation active:scale-[0.98] transition-transform">
                 Save Message
               </Button>
               
@@ -112,7 +112,7 @@ const ItemGiftMessageSection: React.FC<ItemGiftMessageSectionProps> = ({
                 <Button 
                   variant="outline" 
                   onClick={handleApplyToAll}
-                  className="w-full"
+                  className="w-full min-h-[44px] touch-manipulation active:scale-[0.98] transition-transform"
                 >
                   Apply to all {recipientItemCount} items for {recipientName}
                 </Button>

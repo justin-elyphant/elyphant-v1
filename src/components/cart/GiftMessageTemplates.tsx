@@ -126,7 +126,7 @@ const GiftMessageTemplates: React.FC<GiftMessageTemplatesProps> = ({
         )}
       </div>
 
-      <div className="space-y-4 max-h-64 overflow-y-auto">
+      <div className="space-y-4 max-h-48 overflow-y-auto">
         {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => (
           <div key={category} className="space-y-2">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -142,7 +142,7 @@ const GiftMessageTemplates: React.FC<GiftMessageTemplatesProps> = ({
                   <Button
                     key={template.id}
                     variant="outline"
-                    className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-muted/50"
+                    className="w-full justify-start text-left h-auto min-h-[44px] py-3 px-3 hover:bg-muted/50 touch-manipulation"
                     onClick={() => onSelectTemplate(personalizedMessage)}
                   >
                     <div className="flex items-start gap-3 w-full">

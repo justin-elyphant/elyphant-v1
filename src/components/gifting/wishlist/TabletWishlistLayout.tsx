@@ -27,6 +27,7 @@ interface TabletWishlistLayoutProps {
   onCreateWishlist: () => void;
   onEditWishlist: (id: string) => void;
   onDeleteWishlist: (id: string) => void;
+  onShareWishlist?: (wishlist: Wishlist) => void;
   onUpdateSharing?: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
 }
 
@@ -35,6 +36,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
   onCreateWishlist,
   onEditWishlist,
   onDeleteWishlist,
+  onShareWishlist,
   onUpdateSharing
 }) => {
   const navigate = useNavigate();
@@ -168,6 +170,7 @@ const TabletWishlistLayout: React.FC<TabletWishlistLayoutProps> = ({
                       variant="tablet"
                       onEdit={onEditWishlist}
                       onDelete={onDeleteWishlist}
+                      onShare={onShareWishlist}
                       onUpdateSharing={onUpdateSharing}
                     />
                   ))}

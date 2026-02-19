@@ -1,6 +1,9 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import PageTransition from "./components/layout/PageTransition";
+import DelayedFallback from "./components/layout/DelayedFallback";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
 import { ProfileProvider } from "./contexts/profile/ProfileContext";
@@ -157,6 +160,7 @@ function App() {
 // Inner component that has access to useNavigate
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleNicoleSearch = (event: CustomEvent) => {
@@ -209,15 +213,11 @@ function AppContent() {
       <SessionMonitor />
       {/* Import at top level - inside Router context */}
       <ErrorBoundary>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-              <p className="text-sm text-muted-foreground">Loading...</p>
-            </div>
-          </div>
-        }>
-        <Routes>
+        <Suspense fallback={<DelayedFallback />}>
+        <AnimatePresence mode="wait">
+        <PageTransition key={location.pathname}>
+        <Routes location={location}>
+
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/recurring-gifts" element={<RecurringGifts />} />
@@ -305,6 +305,8 @@ function AppContent() {
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />
         </Routes>
+        </PageTransition>
+        </AnimatePresence>
         </Suspense>
       </ErrorBoundary>
       <MobileBottomNavigation />

@@ -185,12 +185,12 @@ const EnhancedWishlistCard = ({
           )}
         </div>
         
-        {/* Product source badge or Purchased badge */}
+        {/* Product source badge or Purchased/Gifted badge */}
         {isPurchased ? (
           <div className="absolute top-3 left-3 z-10">
             <Badge className="text-xs bg-green-500 text-white border-green-600">
               <CheckCircle2 className="h-3 w-3 mr-1" />
-              Purchased
+              {isGuestView ? 'Purchased' : 'Gifted 🎁'}
             </Badge>
           </div>
         ) : (item as any).product_source === 'zinc_api' && !isSelectionMode ? (

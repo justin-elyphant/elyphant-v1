@@ -1200,17 +1200,17 @@ serve(async (req) => {
         // 2. Brand-specific search returns sparse results (< 8 products)
         // This accelerates organic catalog growth for brand searches
         // ============================================================
-        const MIN_RESULTS_THRESHOLD = 8;
-        const { hasBrandSearch, searchTerms } = parseSearchQuery(query);
-        const isMultiWordSearch = searchTerms.length >= 2;
-        const isSparseResults = (hasBrandSearch || isMultiWordSearch) && sortedProducts.length > 0 && sortedProducts.length < MIN_RESULTS_THRESHOLD;
+        const MIN_RESULTS_THRESHOLD = Math.max(limit, 20);
+        const needsSupplement = sortedProducts.length < MIN_RESULTS_THRESHOLD;
         
-        if (sortedProducts.length === 0 || isSparseResults) {
-          if (isSparseResults) {
-            console.log(`🎯 Search "${query}" has only ${sortedProducts.length} results (threshold: ${MIN_RESULTS_THRESHOLD}, brand: ${hasBrandSearch}, multiWord: ${isMultiWordSearch}) - supplementing with Zinc API`);
+        if (sortedProducts.length === 0 || needsSupplement) {
+          if (sortedProducts.length > 0) {
+            console.log(`🎯 Search "${query}" has only ${sortedProducts.length} results (threshold: ${MIN_RESULTS_THRESHOLD}) - supplementing with Zinc API`);
           } else {
             console.log(`🎯 Brand filter removed all ${cacheResult.products.length} cached products for "${query}" - falling back to Zinc API`);
           }
+          // Save cached products for merging after Zinc call
+          var cachedProductsForMerge = sortedProducts.length > 0 ? [...sortedProducts] : [];
           // DON'T return sparse/empty - continue to Zinc API call below
         } else {
           // We have relevant cached products, apply sorting and return
@@ -1254,9 +1254,11 @@ serve(async (req) => {
       }
       
       // Cache miss OR brand filter removed all results - call Zinc API
-      console.log(`⏳ Calling Zinc API for "${query}" ($0.01)`);
+      // For skip_cache ("Find more"), request page 2 to get genuinely different products
+      const zincPage = skip_cache ? 2 : page;
+      console.log(`⏳ Calling Zinc API for "${query}" page=${zincPage} ($0.01)`);
       
-      let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=${retailer}`;
+      let searchUrl = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${zincPage}&retailer=${retailer}`;
       
       if (filters?.min_price) searchUrl += `&min_price=${filters.min_price}`;
       if (filters?.max_price) searchUrl += `&max_price=${filters.max_price}`;
@@ -1330,6 +1332,14 @@ serve(async (req) => {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
+      }
+
+      // MERGE: If we have cached products from sparse results, combine with Zinc results
+      if (typeof cachedProductsForMerge !== 'undefined' && cachedProductsForMerge.length > 0) {
+        const cachedIds = new Set(cachedProductsForMerge.map((p: any) => p.product_id || p.asin));
+        const newZincProducts = filteredResults.filter((p: any) => !cachedIds.has(p.product_id || p.asin));
+        console.log(`🔀 Merging ${cachedProductsForMerge.length} cached + ${newZincProducts.length} new Zinc products`);
+        filteredResults = [...cachedProductsForMerge, ...newZincProducts].slice(0, limit);
       }
 
       // Use unified processor for regular search results

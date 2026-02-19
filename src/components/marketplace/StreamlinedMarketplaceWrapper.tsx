@@ -248,10 +248,17 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     if (!urlSearchTerm || isFindingMore) return;
     setIsFindingMore(true);
     try {
-      const result = await executeSearch(urlSearchTerm, { skipCache: true, limit: 20 });
+      const result = await executeSearch(urlSearchTerm, { skipCache: true, limit: 24 });
       if (result.products && result.products.length > 0) {
-        setExtraProducts(prev => [...prev, ...result.products]);
-        toast.success(`Found ${result.products.length} more products`);
+        // Deduplicate against existing displayed products before counting
+        const existingIds = new Set(displayProducts.map((p: any) => p.product_id || p.asin));
+        const genuinelyNew = result.products.filter((p: any) => !existingIds.has(p.product_id || p.asin));
+        if (genuinelyNew.length > 0) {
+          setExtraProducts(prev => [...prev, ...genuinelyNew]);
+          toast.success(`Found ${genuinelyNew.length} new products`);
+        } else {
+          toast.info('No new products found');
+        }
       } else {
         toast.info('No additional results found');
       }
@@ -261,7 +268,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     } finally {
       setIsFindingMore(false);
     }
-  }, [urlSearchTerm, isFindingMore, executeSearch]);
+  }, [urlSearchTerm, isFindingMore, executeSearch, displayProducts]);
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted

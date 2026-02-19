@@ -1,147 +1,126 @@
 
-# Privacy System Audit: Analysis & Recommendations
+# Privacy Rules: What's Real, What Needs Work, and What to Change
 
-## What You Have Today
+## Honest Status Before Planning
 
-Your platform has privacy controls scattered across three separate, disconnected systems. None of them fully "talk" to each other, and they use different terminology, different storage mechanisms, and different enforcement patterns.
-
----
-
-## The 3 Privacy Systems Currently in Your Codebase
-
-### System 1: Social Privacy (`privacy_settings` database table)
-**What it controls:** Profile visibility, connection requests, messaging, follower counts, block lists
-**Where it's stored:** Supabase `privacy_settings` table (properly persisted)
-**Where it's edited:** Two different places:
-- `Settings > Privacy & Sharing` tab (via `PrivacySharingSettings.tsx`)
-- `Connections` page (via `PrivacySettings.tsx` — a completely separate, near-identical component)
-
-**Options used:**
-- Profile visibility: `public` / `followers_only` / `private`
-- Connection requests: `everyone` / `friends_only` / `nobody`
-- Message requests: boolean toggle
-- Show follower/following count: boolean toggles
-
-### System 2: Data Sharing (`data_sharing_settings` JSONB in `profiles` table)
-**What it controls:** Who can see your email, birthday, shipping address, and interests
-**Where it's stored:** Inside the `profiles` table as a JSONB column (embedded inside the profile object)
-**Where it's edited:** `Settings > Privacy & Sharing` tab, via `DataSharingSectionWrapper` (which spins up a full general settings form just to change 4 fields)
-
-**Options used:**
-- Per-field visibility: `private` / `friends` / `public`
-- Fields: `dob`, `shipping_address`, `interests`, `email`
-- Note: `gift_preferences` is a deprecated duplicate of `interests` still floating around in 51 files
-
-### System 3: Wishlist Privacy (`is_public` boolean on `wishlists` table)
-**What it controls:** Whether a wishlist is publicly sharable
-**Where it's stored:** `wishlists.is_public` boolean column
-**Where it's edited:** Inline on wishlist cards, in a share dialog, in a mobile action bar
-**Enforcement:** Checked on the frontend when sharing links — but this is the most correctly scoped of the three systems
+After reading all the relevant code — the profile display component, the public profile RPC, the birthday utility, the address resolver, and the signup trigger — here is exactly what is and isn't working today.
 
 ---
 
-## The Problems
+## Your Three Points: Current Reality
 
-### Problem 1: Two hooks named `usePrivacySettings` — different things, both exported
-- `src/hooks/usePrivacySettings.ts` — reads from the **database** (`privacy_settings` table), used in Settings
-- `src/hooks/usePrivacySettings.tsx` — reads from **localStorage** only, never persisted to the database
-- The `.tsx` version stores settings in `localStorage` using a totally different shape (`allowFriendRequests`, `connectionVisibility`, `friendSuggestions`) that has **no corresponding database columns**. These settings are silently lost on logout or new device.
-- This is a data loss bug: users think they're saving settings, but they aren't.
+### Point 1 — Email & Shipping Address Should NEVER Be Visible, But Gifting Must Still Work
 
-### Problem 2: `PrivacySharingSettings.tsx` and `PrivacySecuritySettings.tsx` are near-identical
-Both files are ~180 lines, render the same social privacy controls (connection requests, profile visibility, message requests, follower counts), use the same hook, and differ by only one section (the data sharing wrapper). One of them is dead code.
+**What's already correct:**
+- The `ProfileInfo.tsx` component gates email display behind `data_sharing_settings.email !== 'private'`. If a user sets email to private, it won't show on their profile.
+- The shipping address shown on profiles is already limited to city and state only (the `formatAddress()` function in `ProfileInfo.tsx` only outputs city, state, country — never the street). The full address is never rendered in the UI.
+- The recipient address privacy standard is enforced in order confirmations: senders only see Name, City, State with a lock icon (confirmed in memory notes).
+- The `recipientAddressResolver.ts` service handles the gift-without-connection case correctly: if a shopper finds a non-connected user and tries to buy a gift, the system sends an address request email to that recipient. The purchase flow is NOT blocked — it just routes through a "request address" step. This is the right behavior.
 
-### Problem 3: `PrivacySettings.tsx` (in the Connections page) duplicates the Settings page controls
-The `connections/PrivacySettings.tsx` component renders the exact same social privacy settings that exist in `Settings > Privacy & Sharing`. Users who change them in one place won't know they exist in the other. This creates confusion about where the "real" privacy settings live.
+**What needs to change:**
+- Right now, the `data_sharing_settings.email` default is set by whatever the user chose during onboarding (can be `friends`, `public`, or `private`). There is no server-level guarantee that email is never sent to another user's browser. If a user sets email to `public`, `ProfileInfo.tsx` will render their email address in plaintext on their public profile. You've decided this should never happen — so email should be permanently removed from the profile display entirely, not controlled by a toggle.
+- Similarly, the `data_sharing_settings.shipping_address` toggle exists in the UI and is settable to `public` or `connections`. Even though the display only shows city/state, the toggle implies it's meaningful, which it isn't (the backend already resolves the full address through a separate system). This setting creates confusion without adding value.
 
-### Problem 4: Terminology mismatch across the three systems
-| Setting | System 1 | System 2 | System 3 |
-|---|---|---|---|
-| Public visibility | `public` / `followers_only` / `private` | `public` / `friends` / `private` | `is_public` boolean |
-| "Friends" concept | `friends_only` | `friends` | N/A |
-| Social graph term | "followers" | "friends" | N/A |
-
-Your social graph uses "connections" but your privacy labels say "followers" and "friends" — neither of which is your actual terminology in the app. Users see "Connections" everywhere but privacy settings say "Followers Only."
-
-### Problem 5: Data sharing settings are stored in the wrong place
-Storing `data_sharing_settings` as a JSONB blob inside `profiles` means:
-- It can't be indexed or queried efficiently
-- It gets dragged along in every profile fetch even when irrelevant
-- Updating it requires loading the entire general settings form
-- The `DataSharingSectionWrapper` creates a full `react-hook-form` instance just to change 4 fields
-
-### Problem 6: `gift_preferences` privacy field is deprecated but still referenced in 51 files
-The `gift_preferences` privacy field is marked deprecated in the types and should have been removed, but it's still being read, written, and validated across the codebase. The validator in `dataStructureValidator.ts` even still lists it as a "required field."
-
-### Problem 7: Missing gifting-specific privacy controls
-As an e-commerce + social platform, there are key privacy gaps that neither Instagram/Meta nor Amazon have but that Elyphant uniquely needs:
-- **Wishlist item visibility from non-connections** — there's no setting for "who can see my wishlist items when browsing my profile"
-- **Gift purchase visibility** — when someone buys from a wishlist, can the recipient see who bought it before the gift is delivered?
-- **Auto-gift opt-in/out** — can other users set up auto-gifts for you without your permission? There's no consent control in the privacy settings.
-- **Shipping address sharing for group gifts** — who within a group gift sees the recipient address?
+**Recommendation:** Remove email and shipping address from `ProfileInfo.tsx` and the `DataSharingSection` UI entirely. They should not be privacy-configurable fields at all — the rules are hardcoded: email = never shown, address = city/state only in social context, full address = backend-only for fulfillment.
 
 ---
 
-## What Best Practice Looks Like for Your Platform
+### Point 2 — Birthday: Show Month/Day, Hide Year (Facebook Pattern)
 
-### From social platforms (Instagram, LinkedIn):
-- One unified privacy settings page, not split across multiple routes
-- Consistent terminology: pick one word (you should use "Connections") and use it everywhere
-- Profile visibility affects what the profile shows, not whether you can be found
+**What's already correct:**
+- The database already stores birthday as two separate fields: `dob` (MM-DD format, month and day only) and `birth_year` (a separate integer column). This architecture was already built for exactly this use case.
+- The `formatBirthdayForDisplay()` function already ONLY uses the `dob` field (month/day) and intentionally ignores `birth_year` for display purposes. So "January 15" would already show instead of "January 15, 1990" if you're looking at the birthday display.
 
-### From e-commerce platforms (Amazon, Etsy):
-- Per-wishlist privacy toggle (you already have this — it's your strongest implementation)
-- Address privacy is locked by default and never shown to other shoppers
-- Purchase history is always private
+**What's missing:**
+- The `shouldDisplayBirthday()` function still uses the terminology `'friends'` instead of `'connections'` in its logic (minor cleanup).
+- More critically: there is no explanation to users anywhere in the UI about WHY year is separate. During profile setup, users enter a full date — the year gets stored separately and is used for age-gating and AI gift personalization, but this is invisible to users. A small note in the birthday field ("Your birth year is used for personalization but never shown publicly") would eliminate confusion.
+- The `data_sharing_settings.dob` privacy control remains meaningful and should stay — users should be able to control whether even their month/day birthday is visible (some people don't want it shown at all).
 
-### From gift platforms (The Knot, Zola):
-- Separate the concept of "who can see my wishlist" from "who can buy from my wishlist"
-- Gift purchaser identity is withheld until after delivery ("surprise mode")
-- Explicit opt-in for auto-gifting features (consent controls)
+**Recommendation:** No code change needed for the core birthday display — it already works the Facebook way. Only two things to add: fix the `'friends'` → `'connections'` terminology in `birthdayUtils.ts` and add a helper text note in the birthday input field during setup and in settings.
 
 ---
 
-## Recommended Consolidation Plan
+### Point 3 — Default Privacy Settings at Signup: Maximum Sharing, Minimum Friction
 
-### Phase 1: Fix the data loss bug (critical)
-Delete `src/hooks/usePrivacySettings.tsx` (the localStorage version). The settings it stores (`allowFriendRequests`, `connectionVisibility`, `friendSuggestions`) need to either be added to the `privacy_settings` database table or removed entirely. Users are losing settings on every logout.
+**What's set today (from the database trigger):**
 
-### Phase 2: Unify terminology
-Rename all occurrences of "followers" and "friends" in privacy settings to "connections" to match your app's own language. Specifically:
-- `followers_only` → `connections_only`
-- `friends_only` → `connections_only`
-- `friends` (in data sharing) → `connections`
-- Update labels in all 3 settings components
-
-### Phase 3: Consolidate the UI into one settings page
-- Delete `PrivacySecuritySettings.tsx` (dead code)
-- Remove `connections/PrivacySettings.tsx` from the Connections page — replace with a "Manage Privacy Settings" link to Settings > Privacy
-- Merge `DataSharingSectionWrapper` logic to use the same `usePrivacySettings` hook rather than spinning up a full form
-
-### Phase 4: Migrate `data_sharing_settings` to its own table
-Move the 4 data sharing fields out of the `profiles` JSONB blob into the `privacy_settings` table (or a dedicated `data_sharing_settings` table). This lets them be updated independently without loading the full profile form.
-
-### Phase 5: Add gifting-specific privacy controls (competitive differentiator)
-Add three controls that no competitor has in this combination:
-1. **"Who can set up auto-gifts for me"** — `everyone` / `connections_only` / `nobody` (consent for auto-gifting)
-2. **"Show wishlist to"** — per-wishlist granular control beyond just public/private
-3. **"Gift surprise mode"** — hide purchaser identity until delivery date
-
-### Phase 6: Clean up `gift_preferences` references
-Remove the deprecated `gift_preferences` privacy field from all 51 files that still reference it. The single source of truth is `interests`.
-
----
-
-## Summary: What to Build vs. What to Fix
-
-| Issue | Severity | Action |
+| Setting | Current Default | Your Goal |
 |---|---|---|
-| Two `usePrivacySettings` hooks (data loss bug) | Critical | Delete `.tsx` version, migrate settings to DB |
-| Terminology: "followers/friends" vs "connections" | High | Rename across all 3 systems |
-| Duplicate settings components | Medium | Delete `PrivacySecuritySettings.tsx`, remove from Connections page |
-| `data_sharing_settings` in profiles JSONB | Medium | Migrate to `privacy_settings` table |
-| Missing auto-gift consent control | Medium | Add to privacy settings |
-| `gift_preferences` privacy field still alive | Low | Clean up 51 files |
-| Wishlist privacy beyond public/private | Low | Add per-wishlist granular options |
+| `profile_visibility` | `public` | `public` ✅ |
+| `allow_connection_requests_from` | `everyone` | `everyone` ✅ |
+| `allow_message_requests` | `true` | `true` ✅ |
+| `show_follower_count` | `true` | `true` ✅ |
+| `show_following_count` | `true` | `true` ✅ |
+| `wishlist_visibility` | `connections_only` ⚠️ | `public` — needs change |
+| `auto_gift_consent` | `connections_only` ⚠️ | debatable — see below |
+| `gift_surprise_mode` | `true` | `true` ✅ |
+| `data_sharing_settings.dob` | `friends` (set at onboarding) | `connections` — terminology fix |
+| `data_sharing_settings.email` | user-set at onboarding | remove from UI entirely |
+| `data_sharing_settings.shipping_address` | user-set at onboarding | remove from UI entirely |
+| `data_sharing_settings.interests` | user-set at onboarding | `public` — see below |
 
-The biggest wins — fewest changes, most impact — are: fix the data loss bug, unify terminology to "connections," and remove the duplicate components.
+**The key issue:** `wishlist_visibility` defaults to `connections_only` in the hook's `DEFAULT_SETTINGS`. This means a brand new user's wishlists are only visible to their connections — but they likely have zero connections when they first sign up. This creates a dead state where new users have no public-facing gifting presence. This is the most impactful default to fix.
+
+**For `auto_gift_consent`:** The right default here is `connections_only`, not `everyone`. Auto-gifting means someone can schedule recurring automated purchases charged to their card for you. Even for maximum sharing, allowing random strangers to set up auto-gifts is a trust and spam risk. `connections_only` is the right default here — this is the one control where maximum openness would hurt users.
+
+**For `interests` data sharing:** Interests should default to `public` because they are the primary mechanism for gift discovery and AI recommendations. If a new user's interests are private, Nicole AI can't help shoppers find them good gifts.
+
+---
+
+## What Needs to Change: Implementation Plan
+
+### Change 1 — Database: Fix signup defaults (migration required)
+Update the `create_default_privacy_settings` trigger function to set:
+- `wishlist_visibility` → `'public'` (was `connections_only` — the hook default)
+- Ensure `auto_gift_consent` → `'connections_only'`
+- Ensure `gift_surprise_mode` → `true`
+
+The trigger currently doesn't include these 3 new columns at all (they were added in the last migration but the trigger was written before that). New users signing up right now get NULL for all three gifting fields — they fall back to hook defaults which may differ from what the DB should store.
+
+### Change 2 — Remove email & shipping from Data Sharing UI
+- Remove email and shipping address rows from `DataSharingSection.tsx` and `DataSharingSectionWrapper.tsx`
+- Remove them from the profile setup `DataSharingStep.tsx` and `PrivacyStep.tsx`
+- Remove email and shipping_address display blocks from `ProfileInfo.tsx`
+- The types in `DataSharingSettings` can retain the fields for backward compatibility but they won't appear in UI
+
+### Change 3 — Fix birthday terminology
+- In `birthdayUtils.ts`: rename `'friends'` → `'connections'` in `shouldDisplayBirthday()`
+- Add helper text to the birthday field in settings: "Your birth year is stored privately for personalization and is never shown on your profile"
+
+### Change 4 — Default interests to `public` at onboarding
+- In profile setup steps (`DataSharingStep.tsx`, `PrivacyStep.tsx`), change the default value for `interests` from `"friends"` to `"public"`
+- Update `DEFAULT_SETTINGS` in `ProfileFormData` if applicable
+
+### Change 5 — Wire `wishlist_visibility` enforcement
+Since `wishlist_visibility` is now a stored setting, the wishlists shown on a user's public profile page need to actually check this setting. Currently, wishlists are filtered only by `is_public` boolean on individual wishlists. The global `wishlist_visibility` privacy setting needs to gate the entire wishlist section — if set to `connections_only`, non-connections see no wishlists even if individual wishlists have `is_public = true`.
+
+This is important: without this, the setting is stored but silently ignored.
+
+---
+
+## What Does NOT Need to Change
+
+- The address-for-gifting flow is correctly designed — non-connected shoppers trigger an address request instead of being blocked from purchasing. Leave this alone.
+- `gift_surprise_mode` enforcement already exists in `EmailTemplateService.ts` (purchaser identity is withheld when anonymous). The `isAnonymous` flag is already passed through. Leave this alone.
+- Birthday display already works the Facebook way (month/day only). Leave `formatBirthdayForDisplay` alone except the terminology fix.
+- `profile_visibility` and connection request defaults are already correct.
+
+---
+
+## Files to Change
+
+**Database migration:**
+- Update `create_default_privacy_settings()` trigger to include `wishlist_visibility = 'public'`, `auto_gift_consent = 'connections_only'`, `gift_surprise_mode = true`
+- Backfill existing users who have NULL in these 3 columns
+
+**Frontend:**
+- `src/utils/birthdayUtils.ts` — fix `'friends'` → `'connections'` terminology
+- `src/components/user-profile/ProfileInfo.tsx` — remove email and shipping address display blocks
+- `src/components/settings/DataSharingSection.tsx` — remove email and shipping_address form fields
+- `src/components/profile-setup/steps/DataSharingStep.tsx` — remove email and shipping, set interests default to `'public'`
+- `src/components/profile-setup/steps/PrivacyStep.tsx` — same as above
+- `src/hooks/usePrivacySettings.ts` — update `DEFAULT_SETTINGS.wishlist_visibility` from `'connections_only'` to `'public'`
+- `src/components/settings/DataSharingSectionWrapper.tsx` — remove email and shipping fields
+
+**Wishlist enforcement (requires reading the profile/wishlist rendering component):**
+- The component that renders wishlists on another user's profile needs to check `wishlist_visibility` from `privacy_settings` and hide the entire section if the viewer doesn't have the right relationship level

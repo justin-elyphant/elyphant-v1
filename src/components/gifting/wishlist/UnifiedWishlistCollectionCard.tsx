@@ -58,6 +58,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   const navigate = useNavigate();
   const [isPressed, setIsPressed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const touchNavigatedRef = React.useRef(false);
   const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
   
   // Fetch purchase stats for this wishlist
@@ -304,7 +305,6 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         "relative transition-all duration-200 border-border/40 bg-card cursor-pointer",
         // Touch optimization
         "touch-manipulation",
-        "-webkit-tap-highlight-color-transparent",
         // Press/active feedback
         "active:scale-[0.97]",
         isPressed && "scale-[0.97]",
@@ -312,20 +312,25 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         !isMobile && "hover:shadow-md hover:border-primary/20",
         className
       )}
+      role="link"
+      tabIndex={0}
       onTouchStart={(e) => {
-        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a,[role='menuitem'],.dropdown-trigger")) return;
         setIsPressed(true);
       }}
       onTouchEnd={(e) => {
-        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a,[role='menuitem'],.dropdown-trigger")) return;
         setIsPressed(false);
+        // Trigger navigation on touch end for reliable iOS/Capacitor behavior
+        touchNavigatedRef.current = true;
+        handleCardPress();
       }}
       onMouseDown={(e) => {
-        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a,[role='menuitem']")) return;
         setIsPressed(true);
       }}
       onMouseUp={(e) => {
-        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a")) return;
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a,[role='menuitem']")) return;
         setIsPressed(false);
       }}
       onMouseLeave={() => {
@@ -333,7 +338,15 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
         setIsHovered(false);
       }}
       onMouseEnter={() => setIsHovered(true)}
-      onClick={handleCardPress}
+      onClick={(e) => {
+        // Prevent double-navigation: if touch already handled it, skip
+        if (touchNavigatedRef.current) {
+          touchNavigatedRef.current = false;
+          return;
+        }
+        if ((e.target as HTMLElement | null)?.closest("button,[role='button'],a,[role='menuitem']")) return;
+        handleCardPress();
+      }}
     >
       {/* Square Image Area */}
       <div className="relative aspect-square bg-muted rounded-t-lg">

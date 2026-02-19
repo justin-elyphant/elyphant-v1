@@ -1,97 +1,98 @@
 
 
-# Fix Wishlist Purchase Tracking (3 Issues)
+# Simplify Cart "Unassigned Items" for One-Off Shoppers
 
-## Problem Summary
+## Problem
 
-Justin@elyphant.com has a wishlist ("Test Gifts") with 2 items:
-- **OXO Salad Spinner** (B00004OCKR) -- purchased by justincmeeks@hotmail.com (logged in)
-- **Millie Moon Diapers** (B0FDX5186F) -- purchased via guest checkout
+The current cart shows an orange warning card titled "Unassigned Items" with the message "These items need recipient assignment." For a shopper who just wants to buy something for themselves, this is confusing -- standard e-commerce carts don't require you to "assign" items before checkout. The language and visual treatment (orange warning, alert icon) creates unnecessary friction.
 
-Neither purchase created a record in `wishlist_item_purchases`, so:
-- No "Purchased" badge appears on either item
-- The wishlist progress ring shows 0%
+## Solution: Reframe as "Shipping To" with Smart Defaults
 
-## Root Causes
+Replace the warning-style "Unassigned Items" card with a clean, non-alarming delivery section inspired by standard e-commerce patterns and the existing Buy Now drawer's step layout.
 
-### Issue 1: InlineWishlistViewer missing metadata (code bug)
-When a visitor clicks "Add to Cart" from a connection's profile page, `InlineWishlistViewer.tsx` (line 141-148) calls `addToCart()` without the required `wishlistMetadata` parameter. The `SharedWishlistView` component does this correctly -- `InlineWishlistViewer` just needs the same treatment.
+### Key Design Changes
 
-**Without metadata:** `wishlist_id` and `wishlist_item_id` are empty in Stripe session metadata, so `stripe-webhook-v2` skips the purchase tracking insert (line 607: `if (item.wishlist_id && item.wishlist_item_id)`).
+1. **Remove the orange warning aesthetic** -- no AlertTriangle, no "needs assignment" language
+2. **Default assumption: shipping to yourself** -- this is what 90%+ of e-commerce shoppers expect
+3. **Show a clean "Delivering to" summary** with the user's address (if available) or a prompt to add one
+4. **Keep "Send as Gift" as an optional action** -- not the default flow
+5. **For guests**: skip the section entirely (they enter shipping at checkout, which is standard)
 
-### Issue 2: No backfill for existing purchases
-The two orders already placed (ORD-20260217-8785 and ORD-20260217-7971) have empty wishlist tracking fields. They need manual backfill into `wishlist_item_purchases`.
+### Visual Design (Lululemon-inspired, monochromatic)
 
-### Issue 3: SharedWishlistView also affected for guests
-Charles's purchase (via shared link) and the guest purchase both went through without metadata. This confirms the shared wishlist link may not have been used, OR the metadata was lost during checkout. Either way, the backfill covers these.
+```
++-------------------------------------------------------+
+|  Delivering to                                         |
+|                                                        |
+|  [User icon]  Justin Meeks                             |
+|               123 Main St, Dallas, TX 75001            |
+|               [Edit]                                   |
+|                                                        |
+|  ---- or ----                                          |
+|                                                        |
+|  [Gift icon]  Send as a gift instead                   |
++-------------------------------------------------------+
+```
 
----
+If the user has no address saved:
+```
++-------------------------------------------------------+
+|  Delivering to                                         |
+|                                                        |
+|  Shipping address will be collected at checkout        |
+|                                                        |
+|  [Gift icon]  Send as a gift instead                   |
++-------------------------------------------------------+
+```
 
-## Fix Plan
+### Technical Changes
 
-### Step 1: Fix InlineWishlistViewer.tsx (code change)
+**File: `src/components/cart/UnassignedItemsSection.tsx`** (full rewrite)
 
-Update the `handleAddToCart` function to pass wishlist metadata, mirroring `SharedWishlistView`:
+- Remove orange Card/Alert/AlertTriangle/Badge styling
+- Replace with a clean white card, grey border (monochromatic)
+- Header: "Delivering to" (not "Unassigned Items")
+- If user has address: show name + address summary with "Edit" link to settings
+- If no address: show neutral text "Shipping address collected at checkout"
+- Replace "Assign to Recipient" button with subtle "Send as a gift instead" link/button with Gift icon
+- Remove "Ship to Me" button (it's now the default, no action needed)
+- For guest users (no profile): show only the "collected at checkout" message
+- Keep the item list but make it less prominent (or remove it since items are already shown below in the main cart list)
+
+**File: `src/pages/Cart.tsx`** (minor update, lines 349-356)
+
+- Remove the `onAssignToMe` handler call since self-shipping is now the default
+- The "Send as a gift" action still triggers the existing `onAssignAll` / recipient modal flow
+- For guests, hide the section entirely (they enter shipping at checkout)
+
+### Props Changes
 
 ```typescript
-const handleAddToCart = (item: WishlistItem) => {
-  triggerHapticFeedback(HapticPatterns.buttonTap);
-
-  const product = {
-    product_id: item.product_id || item.id,
-    name: item.title || item.name || 'Product',
-    price: item.price || 0,
-    image: item.image_url || undefined,
-  } as any;
-
-  const metadata = {
-    wishlist_id: wishlist.id,
-    wishlist_item_id: item.id,
-    wishlist_owner_id: profileOwner.id,
-    wishlist_owner_name: profileOwner.name,
-  };
-
-  addToCart(product, 1, metadata);
-
-  triggerHapticFeedback('success');
-  toast.success("Added to cart", {
-    description: `${item.title || item.name} from ${profileOwner.name}'s wishlist`
-  });
-};
+interface UnassignedItemsSectionProps {
+  unassignedItems: CartItem[];
+  onSendAsGift: () => void;     // renamed from onAssignAll
+  userName?: string;
+  userAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  } | null;
+  isGuest: boolean;
+}
 ```
 
-### Step 2: Backfill existing purchases (data insert)
+### What Stays the Same
 
-Insert 2 records into `wishlist_item_purchases` for the already-completed orders:
+- The recipient assignment modal (triggered by "Send as a gift") is unchanged
+- Delivery groups / package previews remain as-is
+- The checkout flow and address validation logic are unchanged
+- The wishlist purchase indicator (coral-orange banner) is unchanged
 
-| Order | Product | Wishlist Item | Purchaser |
-|-------|---------|---------------|-----------|
-| ORD-20260217-8785 (e7eac78f) | B00004OCKR (OXO Salad Spinner) | 5e3d6dd0 | justincmeeks@hotmail.com (f5c6fbb5) |
-| ORD-20260217-7971 (cf5f5f96) | B0FDX5186F (Millie Moon Diapers) | 5903277f | NULL (guest) |
+### E-Commerce Standards Applied
 
-SQL:
-```sql
-INSERT INTO wishlist_item_purchases
-  (wishlist_id, item_id, product_id, purchaser_user_id, order_id, quantity, price_paid, is_anonymous)
-VALUES
-  ('de28ab25-c53d-4cda-90a2-5131b0f9f486', '5e3d6dd0-d94f-4f09-9f07-6836a5d17210', 'B00004OCKR', 'f5c6fbb5-f2f2-4430-b679-39ec117e3596', 'e7eac78f-5083-48a3-9c9d-e7c49a408f31', 1, 32.95, false),
-  ('de28ab25-c53d-4cda-90a2-5131b0f9f486', '5903277f-2875-4c38-b821-4c2a58b3098f', 'B0FDX5186F', NULL, 'cf5f5f96-73a5-4513-98fd-aa7bf0bf1543', 1, 19.80, true);
-```
-
-### Step 3: Verify results
-
-After the backfill:
-- Visit `/profile/justin` -- both items should show green "Purchased" badges
-- The progress ring on the "Test Gifts" wishlist bubble should show 100% (2/2 items purchased)
-
----
-
-## Technical Details
-
-**Files modified:** 1 file
-- `src/components/user-profile/InlineWishlistViewer.tsx` -- lines 141-154
-
-**Data operations:** 1 insert (2 rows into `wishlist_item_purchases`)
-
-**No schema changes needed.** The `wishlist_item_purchases` table already supports `purchaser_user_id = NULL` for guest purchases. The webhook uses the service role key, bypassing RLS, so guest inserts work.
+- Default to self-shipping (Amazon, Target, Lululemon all do this)
+- Gift option is secondary, not primary
+- No warnings for normal shopping behavior
+- Address shown if available, collected at checkout if not
 

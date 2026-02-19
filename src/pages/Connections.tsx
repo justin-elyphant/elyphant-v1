@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -541,8 +542,18 @@ const Connections = () => {
                           : 'hover:border-muted-foreground/20'
                       }`}
                     >
-                      <p className="font-medium">{friend.name}</p>
-                      <p className="text-sm text-muted-foreground">{friend.relationship || 'Friend'}</p>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={friend.imageUrl} alt={friend.name} />
+                          <AvatarFallback className="text-sm">
+                            {friend.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{friend.name}</p>
+                          <p className="text-sm text-muted-foreground">{friend.relationship || 'Friend'}</p>
+                        </div>
+                      </div>
                     </div>
                   ))
                 ) : (

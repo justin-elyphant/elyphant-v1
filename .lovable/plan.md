@@ -1,94 +1,169 @@
 
-## Root Cause Analysis
+# Scheduled Gifting Testing Readiness Audit & Fix Plan
 
-**The "Gifted 🎁" badge is not showing for Justin (the wishlist owner) on mobile/tablet because `InlineWishlistWorkspace.tsx` — the component used in the owner's view — never fetches purchase data from `wishlist_item_purchases` and never passes `purchasedItemIds` to `WishlistItemsGrid`.**
+## What You're About to Test
 
-Here's the evidence:
+You want to test two flows from the product scheduling modal:
+1. **One-Time Scheduled Gift** — Pick a random future date, schedule it for a specific recipient
+2. **Recurring Gift** — Set up an annual auto-gift for a special occasion
 
-**Database confirms the purchases exist:**
-- OXO Salad Spinner (`item_id: 5e3d6dd0`) — purchased by Charles (logged-in user)
-- Millie Moon Diapers (`item_id: 5903277f`) — purchased by anonymous guest checkout
-- Both are in `wishlist_id: de28ab25` (Justin's "Test Gifts" wishlist)
-
-**Code confirms the bug — `InlineWishlistWorkspace.tsx` line 218-224:**
-```tsx
-<WishlistItemsGrid
-  items={wishlist.items}
-  onSaveItem={(item) => handleRemoveItem(item.id)}
-  savingItemId={isRemoving ? 'removing' : undefined}
-  isOwner={isOwner}
-  isGuestPreview={isGuestPreview}
-  // ❌ purchasedItemIds is MISSING — defaults to empty Set()
-/>
-```
-
-The `WishlistItemsGrid` has `purchasedItemIds = new Set()` as its default, so no item is ever marked as purchased from the owner's view.
-
-By contrast, `SharedWishlistView.tsx` (the guest/link view) **does** correctly fetch and pass `purchasedItemIds` — which is why external purchasers see the "Purchased" badge, but Justin sees nothing.
-
-Also noted: The Caboo Napkins and Oral-B Floss items (`id: 3770263d` and `2b61f5a2`) are in the `wishlist_items` table but have **no corresponding records** in `wishlist_item_purchases`. These were not the ones actually purchased — the purchases were for OXO Salad Spinner and Millie Moon Diapers based on the database records.
+Before you test, there is one important gap to fix that would cause issues mid-test.
 
 ---
 
-## Fix Plan
+## Current State: What Works
 
-**Single file to edit: `src/components/gifting/wishlist/InlineWishlistWorkspace.tsx`**
+### Auto-Gift Orchestrator (Recurring/Backend)
+The orchestrator is solid. It correctly:
+- Checks `wishlist_item_purchases` and excludes already-purchased items from suggestions
+- Falls back to recipient interests, then generic products if the wishlist is empty
+- Sends an approval email at T-7 days with suggested gifts
+- Creates a checkout session at T-4 days with the selected item
+- Passes `wishlist_id` and `wishlist_item_id` through to `create-checkout-session` so the "Gifted" badge appears after auto-gifting fires
 
-### Change 1 — Add state for purchased items
-Add a `purchasedItemIds` state (a `Set<string>`) to track which items have been purchased.
-
-### Change 2 — Fetch purchased items after wishlist loads
-After the wishlist is loaded and `wishlistId` is known, query `wishlist_item_purchases` for all `item_id` values matching `wishlist_id = wishlistId`. This mirrors exactly what `SharedWishlistView.tsx` already does correctly.
-
-```tsx
-// Fetch purchased item IDs for badge display
-useEffect(() => {
-  const fetchPurchasedItems = async () => {
-    if (!wishlistId) return;
-    const { data, error } = await supabase
-      .from("wishlist_item_purchases")
-      .select("item_id")
-      .eq("wishlist_id", wishlistId);
-    if (!error && data) {
-      setPurchasedItemIds(new Set(data.map((row) => row.item_id)));
-    }
-  };
-  fetchPurchasedItems();
-}, [wishlistId]);
-```
-
-### Change 3 — Pass `purchasedItemIds` to `WishlistItemsGrid`
-```tsx
-<WishlistItemsGrid
-  items={wishlist.items}
-  onSaveItem={(item) => handleRemoveItem(item.id)}
-  savingItemId={isRemoving ? 'removing' : undefined}
-  isOwner={isOwner}
-  isGuestPreview={isGuestPreview}
-  purchasedItemIds={purchasedItemIds}  // ✅ Add this
-/>
-```
-
-This will immediately cause the "Gifted 🎁" badge to appear on the OXO Salad Spinner and the Millie Moon Diapers in Justin's owner view on mobile, tablet, and desktop.
+### Scheduling Modal (`UnifiedGiftSchedulingModal`)
+The modal correctly:
+- Adds the product to the cart with a `scheduledDeliveryDate` on the recipient assignment
+- Optionally creates a recurring rule in `auto_gifting_rules`
+- Validates the delivery date meets the minimum lead time
 
 ---
 
-## About the Missing Caboo/Oral-B/OXO Floss Badges
+## The Gap: Wishlist Tracking Is Dropped at Checkout
 
-The database shows those three items **exist in `wishlist_items`** but do **not** have records in `wishlist_item_purchases`. This means their purchases either:
-- Did not complete through the webhook flow
-- Were placed on a different wishlist ID
+When a user schedules a gift from a product page (one-time or recurring + cart):
 
-The items that **do** have confirmed purchase records are:
-- OXO Good Grips Salad Spinner — purchased by Charles
-- Millie Moon Diapers — purchased via guest checkout
+```
+User picks product → "Schedule Gift" modal → addToCart() with scheduledDeliveryDate
+     → Cart → UnifiedCheckoutForm → create-checkout-session
+```
 
-These two will show badges immediately after this fix. The Caboo/Floss items would need a manual SQL backfill into `wishlist_item_purchases` if those orders completed successfully.
+The `CartItem` struct **does** have `wishlist_id` and `wishlist_item_id` fields, but in `UnifiedCheckoutForm.tsx` (line 406-413), the cart items are mapped to the checkout payload **without** those fields:
+
+```typescript
+// Current — wishlist tracking IDs are LOST here
+cartItems: cartItems.map(item => ({
+  product_id: item.product.product_id,
+  name: item.product.name,
+  price: item.product.price,
+  quantity: item.quantity,
+  image_url: item.product.image,
+  recipientAssignment: item.recipientAssignment  // ← wishlist_id not here
+})),
+```
+
+This means that when you schedule a gift from the product page and then check out through the cart, no `wishlist_item_purchases` record is created, and the "Gifted 🎁" badge never appears on the wishlist. This would only surface as a bug if you go from a wishlist → product page → Schedule Gift.
 
 ---
 
-## Summary
+## The Fix: 3 Small Changes
 
-- **1 file changed**: `InlineWishlistWorkspace.tsx`
-- **3 small additions**: state variable, fetch effect, prop pass-through
-- **Zero risk**: purely additive, matches the already-working pattern in `SharedWishlistView.tsx`
+### 1. Pass `wishlist_id` + `wishlist_item_id` in `UnifiedCheckoutForm`
+In `src/components/checkout/UnifiedCheckoutForm.tsx`, add the two tracking fields to the `cartItems` mapping.
+
+### 2. Accept them in `create-checkout-session` schema (already done)
+The Zod schema in the edge function already accepts `wishlist_id` and `wishlist_item_id` on `CartItemSchema` — no backend change needed.
+
+### 3. Ensure `product_name` is present (minor robustness fix)
+The checkout payload uses `name` but the edge function internally maps to `product_name`. Already handled by passthrough, but worth confirming.
+
+---
+
+## Test Scenarios & What to Watch For
+
+### Test 1: One-Time Scheduled Gift
+```
+Steps:
+1. Go to a product page
+2. Click "Schedule Gift"  
+3. Select a recipient
+4. Pick a date 8+ days out (triggers Stripe Setup Mode)
+5. Click "Schedule Gift" → goes to cart
+6. Checkout through cart
+7. Complete Stripe payment
+
+Expected:
+✅ Stripe redirects to /order-confirmation
+✅ Order shows purple "SCHEDULED DELIVERY" hero card
+✅ Order status = "scheduled" in DB
+✅ If product was on recipient's wishlist → "Gifted 🎁" badge appears (requires the fix above)
+```
+
+### Test 2: One-Time Gift, Near-Term (7 days or less)
+```
+Steps: Same as Test 1 but pick a date 2-7 days out
+
+Expected:
+✅ Standard Stripe payment capture (not Setup Mode)
+✅ order.status = "processing" 
+✅ scheduled-order-processor handles on the delivery date
+```
+
+### Test 3: Recurring Gift Setup (from product page)
+```
+Steps:
+1. Product page → "Schedule Gift" modal
+2. Toggle to "Recurring"
+3. Select recipient + occasion (e.g., Birthday, Christmas)
+4. Configure budget + payment method
+5. Click "Schedule & Set Recurring"
+
+Expected:
+✅ Product added to cart for immediate purchase
+✅ Row created in auto_gifting_rules with scheduled_date
+✅ Toast: "Gift scheduled + recurring rule created!"
+✅ Rule visible at /recurring-gifts
+```
+
+### Test 4: Recurring Gift — Orchestrator Approval Email
+```
+Steps (simulate the T-7 trigger):
+1. Make sure a rule exists in auto_gifting_rules
+2. Trigger: POST to /auto-gift-orchestrator with simulatedDate = scheduled_date - 7 days
+3. Check your email for the approval email
+
+Expected:
+✅ Email arrives with 3 suggested gifts (from wishlist, excluding already-purchased)
+✅ "Approve" and "Reject" links in email
+✅ automated_gift_executions record created with status = 'pending_approval'
+```
+
+---
+
+## Files to Change
+
+| File | Change |
+|------|--------|
+| `src/components/checkout/UnifiedCheckoutForm.tsx` | Add `wishlist_id` and `wishlist_item_id` to cart item mapping (line ~406) |
+
+That's it — one file, two lines added. The rest of the pipeline already handles these fields correctly.
+
+---
+
+## Technical Detail: What the Fix Looks Like
+
+```typescript
+// BEFORE (UnifiedCheckoutForm.tsx ~line 406)
+cartItems: cartItems.map(item => ({
+  product_id: item.product.product_id || item.product.id,
+  name: item.product.name,
+  price: item.product.price,
+  quantity: item.quantity,
+  image_url: item.product.image || item.product.images?.[0],
+  recipientAssignment: item.recipientAssignment
+})),
+
+// AFTER
+cartItems: cartItems.map(item => ({
+  product_id: item.product.product_id || item.product.id,
+  name: item.product.name,
+  price: item.product.price,
+  quantity: item.quantity,
+  image_url: item.product.image || item.product.images?.[0],
+  recipientAssignment: item.recipientAssignment,
+  wishlist_id: item.wishlist_id || '',         // ← pass through for badge tracking
+  wishlist_item_id: item.wishlist_item_id || '' // ← pass through for badge tracking
+})),
+```
+
+This ensures the webhook (`stripe-webhook-v2`) receives these IDs in session metadata and can create the `wishlist_item_purchases` record automatically upon payment completion.

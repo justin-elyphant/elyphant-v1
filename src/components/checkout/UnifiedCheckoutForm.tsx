@@ -409,7 +409,9 @@ const UnifiedCheckoutForm: React.FC = () => {
             price: item.product.price,
             quantity: item.quantity,
             image_url: item.product.image || item.product.images?.[0],
-            recipientAssignment: item.recipientAssignment
+            recipientAssignment: item.recipientAssignment,
+            wishlist_id: item.wishlist_id || '',
+            wishlist_item_id: item.wishlist_item_id || ''
           })),
           deliveryGroups: enrichedDeliveryGroups,
           shippingInfo: zmaCompatibleShippingInfo,

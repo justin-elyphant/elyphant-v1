@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Wishlist, WishlistItem } from "@/types/profile";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Calendar, Gift, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import WishlistItemsGrid from "./WishlistItemsGrid";
 import WishlistOwnerHero from "./WishlistOwnerHero";
 import GuestWishlistCTA from "./GuestWishlistCTA";
 import GiftCartFloatingBar from "./GiftCartFloatingBar";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +31,7 @@ interface SharedWishlistViewProps {
     id: string;
     bio?: string;
     location?: string;
-    shippingAddress?: any; // Owner's shipping address for registry-style fulfillment
+    shippingAddress?: any;
   };
 }
 
@@ -30,15 +39,21 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
   wishlist,
   owner
 }) => {
-  const { addToCart, cartItems, cartTotal } = useCart();
+  const { addToCart, cartItems, cartTotal, updateRecipientAssignment } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [purchasedItemIds, setPurchasedItemIds] = useState<Set<string>>(new Set());
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [showFloatingBar, setShowFloatingBar] = useState(false);
   const [addedItemCount, setAddedItemCount] = useState(0);
-  
-  // Check if the current user is the wishlist owner (buying from their own wishlist)
+
+  // Gift Options Drawer state
+  const [giftOptionsItem, setGiftOptionsItem] = useState<WishlistItem | null>(null);
+  const [pendingGiftNote, setPendingGiftNote] = useState('');
+  const [pendingScheduledDate, setPendingScheduledDate] = useState('');
+  const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false);
+
+  // Check if the current user is the wishlist owner
   const isOwnWishlist = user?.id === owner.id;
 
   // Fetch purchased items on mount
@@ -67,24 +82,23 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
     return calculateWishlistTotal(availableItems);
   }, [availableItems]);
 
-  // Handle adding a single item to cart
-  const handleAddToCart = async (item: WishlistItem) => {
+  // Today + 1 day minimum for scheduling
+  const minDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  })();
+
+  // Core add-to-cart logic (called directly or after gift options)
+  const doAddToCart = async (
+    item: WishlistItem,
+    giftNote?: string,
+    scheduledDate?: string
+  ) => {
     triggerHapticFeedback('success');
     try {
       const product = convertWishlistItemToProduct(item, wishlist.id);
-      
-      // Debug logging for wishlist flow
-      console.log('[SharedWishlist] Adding to cart with metadata:', {
-        wishlist_id: wishlist.id,
-        owner_id: owner.id,
-        owner_name: owner.name,
-        has_shipping: !!owner.shippingAddress,
-        shipping_city: owner.shippingAddress?.city,
-        is_own_wishlist: isOwnWishlist
-      });
-      
-      // Only include owner shipping if NOT the owner viewing their own list
-      // (If owner is buying from their own wishlist, they ship to themselves via normal flow)
+
       const metadata = {
         wishlist_id: wishlist.id,
         wishlist_item_id: item.id,
@@ -94,17 +108,58 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
           wishlist_owner_shipping: owner.shippingAddress,
         })
       };
-      
+
       await addToCart(product, 1, metadata);
-      
+
+      // If guest is gifting (not own wishlist), attach gift note + scheduled date
+      // so they flow through recipientAssignment → Stripe metadata → Zinc
+      if (!isOwnWishlist && (giftNote || scheduledDate)) {
+        const productId = product.product_id || product.id || item.product_id || item.id;
+        updateRecipientAssignment(productId, {
+          connectionId: owner.id,
+          connectionName: owner.name,
+          deliveryGroupId: `wishlist_${wishlist.id}`,
+          giftMessage: giftNote || '',
+          scheduledDeliveryDate: scheduledDate || '',
+        });
+      }
+
       setAddedItemCount(prev => prev + 1);
       setShowFloatingBar(true);
-      
       toast.success("Added to cart");
     } catch (error) {
       console.error("Failed to add item to cart:", error);
       toast.error("Failed to add to cart");
     }
+  };
+
+  // Simple add to cart (no options)
+  const handleAddToCart = async (item: WishlistItem) => {
+    await doAddToCart(item);
+  };
+
+  // Open gift options drawer then add to cart
+  const handleScheduleAndAddToCart = (item: WishlistItem) => {
+    setGiftOptionsItem(item);
+    setPendingGiftNote('');
+    setPendingScheduledDate('');
+    setIsGiftDrawerOpen(true);
+  };
+
+  // Confirm from drawer: add to cart with options
+  const handleConfirmGiftOptions = async () => {
+    if (!giftOptionsItem) return;
+    setIsGiftDrawerOpen(false);
+    await doAddToCart(giftOptionsItem, pendingGiftNote, pendingScheduledDate);
+    setGiftOptionsItem(null);
+  };
+
+  // Skip options: add immediately without date/note
+  const handleSkipAndAdd = async () => {
+    if (!giftOptionsItem) return;
+    setIsGiftDrawerOpen(false);
+    await doAddToCart(giftOptionsItem);
+    setGiftOptionsItem(null);
   };
 
   // Handle adding all items to cart
@@ -115,8 +170,6 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
     try {
       for (const item of availableItems) {
         const product = convertWishlistItemToProduct(item, wishlist.id);
-        
-        // Only include owner shipping if NOT the owner viewing their own list
         const metadata = {
           wishlist_id: wishlist.id,
           wishlist_item_id: item.id,
@@ -126,13 +179,11 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
             wishlist_owner_shipping: owner.shippingAddress,
           })
         };
-        
         await addToCart(product, 1, metadata);
       }
       
       setAddedItemCount(availableItems.length);
       setShowFloatingBar(true);
-      
       toast.success(`Added ${availableItems.length} items to cart`);
     } catch (error) {
       console.error("Failed to add items to cart:", error);
@@ -144,7 +195,7 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
 
   return (
     <div className="pb-24 md:pb-8">
-      {/* Back Navigation - Subtle on all platforms */}
+      {/* Back Navigation */}
       <div className="mb-4">
         <Link 
           to="/wishlists" 
@@ -178,10 +229,11 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         isOwner={isOwnWishlist}
         isGuestPreview={!isOwnWishlist}
         onAddToCart={handleAddToCart}
+        onScheduleAndAddToCart={!isOwnWishlist ? handleScheduleAndAddToCart : undefined}
         purchasedItemIds={purchasedItemIds}
       />
 
-      {/* Guest Signup CTA - After product grid */}
+      {/* Guest Signup CTA */}
       <GuestWishlistCTA ownerName={owner.name} />
 
       {/* Floating Cart Bar */}
@@ -192,6 +244,82 @@ const SharedWishlistView: React.FC<SharedWishlistViewProps> = ({
         isVisible={showFloatingBar}
         onClose={() => setShowFloatingBar(false)}
       />
+
+      {/* Gift Options Drawer */}
+      <Drawer open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="border-b pb-4">
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Gift options for {owner.name}
+              </DrawerTitle>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DrawerClose>
+            </div>
+            {giftOptionsItem && (
+              <p className="text-sm text-muted-foreground text-left mt-1 line-clamp-1">
+                {giftOptionsItem.name || giftOptionsItem.title}
+              </p>
+            )}
+          </DrawerHeader>
+
+          <div className="p-4 space-y-5 overflow-y-auto">
+            {/* Schedule Delivery */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                Schedule delivery date <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <input
+                type="date"
+                min={minDate}
+                value={pendingScheduledDate}
+                onChange={e => setPendingScheduledDate(e.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Funds will be held and released on the scheduled date
+              </p>
+            </div>
+
+            {/* Gift Note */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Gift note <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Textarea
+                placeholder={`Write a personal message for ${owner.name}...`}
+                value={pendingGiftNote}
+                onChange={e => setPendingGiftNote(e.target.value.slice(0, 240))}
+                rows={3}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                {pendingGiftNote.length}/240 · Included with the gift
+              </p>
+            </div>
+          </div>
+
+          <DrawerFooter className="border-t pt-4 pb-safe">
+            <Button
+              onClick={handleConfirmGiftOptions}
+              className="w-full min-h-[44px]"
+            >
+              Add to Cart
+            </Button>
+            <button
+              onClick={handleSkipAndAdd}
+              className="text-sm text-muted-foreground hover:text-foreground py-2 min-h-[44px]"
+            >
+              Skip — Add now without options
+            </button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

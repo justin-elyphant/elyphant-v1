@@ -403,16 +403,30 @@ const UnifiedCheckoutForm: React.FC = () => {
       // Create checkout session (V2 modernized approach)
       const { data, error } = await invokeWithAuthRetry('create-checkout-session', {
         body: {
-          cartItems: cartItems.map(item => ({
-            product_id: item.product.product_id || item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            image_url: item.product.image || item.product.images?.[0],
-            recipientAssignment: item.recipientAssignment,
-            wishlist_id: item.wishlist_id || '',
-            wishlist_item_id: item.wishlist_item_id || ''
-          })),
+          cartItems: cartItems.map(item => {
+            // Synthesize recipientAssignment from wishlist_owner_* fields when null
+            // This ensures gift_message, scheduled_delivery_date, and shipping address
+            // all flow through to Stripe metadata → stripe-webhook-v2 → Zinc
+            const synthesizedAssignment = item.recipientAssignment || (item.wishlist_owner_id ? {
+              connectionId: item.wishlist_owner_id,
+              connectionName: item.wishlist_owner_name || '',
+              deliveryGroupId: `wishlist_${item.wishlist_id}`,
+              shippingAddress: item.wishlist_owner_shipping ? normalizeAddress(item.wishlist_owner_shipping, item.wishlist_owner_name || 'Gift Recipient') : undefined,
+              giftMessage: (item as any).pendingGiftMessage || '',
+              scheduledDeliveryDate: (item as any).pendingScheduledDate || '',
+            } : undefined);
+
+            return {
+              product_id: item.product.product_id || item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+              image_url: item.product.image || item.product.images?.[0],
+              recipientAssignment: synthesizedAssignment,
+              wishlist_id: item.wishlist_id || '',
+              wishlist_item_id: item.wishlist_item_id || ''
+            };
+          }),
           deliveryGroups: enrichedDeliveryGroups,
           shippingInfo: zmaCompatibleShippingInfo,
           giftOptions: giftOptions,

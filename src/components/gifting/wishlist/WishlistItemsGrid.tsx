@@ -19,6 +19,7 @@ interface WishlistItemsGridProps {
   isGuestPreview?: boolean;
   // Guest purchase mode props
   onAddToCart?: (item: WishlistItem) => void;
+  onScheduleAndAddToCart?: (item: WishlistItem) => void;
   purchasedItemIds?: Set<string>;
   // Wishlist switcher - moved from header to filter row
   wishlistSwitcher?: React.ReactNode;
@@ -32,6 +33,7 @@ const WishlistItemsGrid = ({
   isOwner = true, 
   isGuestPreview = false,
   onAddToCart,
+  onScheduleAndAddToCart,
   purchasedItemIds = new Set(),
   wishlistSwitcher
 }: WishlistItemsGridProps) => {
@@ -279,6 +281,7 @@ const WishlistItemsGrid = ({
               isOwner={isOwner}
               isGuestPreview={isGuestPreview}
               onAddToCart={onAddToCart}
+              onScheduleAndAddToCart={onScheduleAndAddToCart}
               purchasedItemIds={purchasedItemIds}
             />
           ))}
@@ -300,6 +303,7 @@ const WishlistItemsGrid = ({
               isPurchased={purchasedItemIds.has(item.id)}
               isGuestView={isGuestPreview}
               onAddToCart={onAddToCart && !purchasedItemIds.has(item.id) ? () => onAddToCart(item) : undefined}
+              onScheduleAndAddToCart={onScheduleAndAddToCart && !purchasedItemIds.has(item.id) ? () => onScheduleAndAddToCart(item) : undefined}
               className="min-h-[320px]"
             />
           ))}

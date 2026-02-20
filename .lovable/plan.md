@@ -1,169 +1,84 @@
 
-# Scheduled Gifting Testing Readiness Audit & Fix Plan
+# Fix: Wishlist Click Navigation on Public Profiles
 
-## What You're About to Test
+## The Problem
 
-You want to test two flows from the product scheduling modal:
-1. **One-Time Scheduled Gift** — Pick a random future date, schedule it for a specific recipient
-2. **Recurring Gift** — Set up an annual auto-gift for a special occasion
+When Charles (a visitor) taps the "Test Gifts" wishlist circle on Justin's profile page, the expected behavior is to see Justin's full wishlist with all items and buy buttons. Instead, Charles only sees the top portion of an inline card that opens below the bubble grid — the "Test Gifts | Public / 6 items • justin's wishlist" header — and doesn't realize the items are further down the page (requiring a scroll).
 
-Before you test, there is one important gap to fix that would cause issues mid-test.
+This is a poor UX pattern, especially on mobile, because:
+- The `InlineWishlistViewer` opens silently below the wishlist row with no scroll-to behavior
+- On a small screen, the header card is partially visible but the item grid is off-screen
+- There is no signal to the user that content appeared below
 
----
+## Root Cause
 
-## Current State: What Works
-
-### Auto-Gift Orchestrator (Recurring/Backend)
-The orchestrator is solid. It correctly:
-- Checks `wishlist_item_purchases` and excludes already-purchased items from suggestions
-- Falls back to recipient interests, then generic products if the wishlist is empty
-- Sends an approval email at T-7 days with suggested gifts
-- Creates a checkout session at T-4 days with the selected item
-- Passes `wishlist_id` and `wishlist_item_id` through to `create-checkout-session` so the "Gifted" badge appears after auto-gifting fires
-
-### Scheduling Modal (`UnifiedGiftSchedulingModal`)
-The modal correctly:
-- Adds the product to the cart with a `scheduledDeliveryDate` on the recipient assignment
-- Optionally creates a recurring rule in `auto_gifting_rules`
-- Validates the delivery date meets the minimum lead time
-
----
-
-## The Gap: Wishlist Tracking Is Dropped at Checkout
-
-When a user schedules a gift from a product page (one-time or recurring + cart):
-
-```
-User picks product → "Schedule Gift" modal → addToCart() with scheduledDeliveryDate
-     → Cart → UnifiedCheckoutForm → create-checkout-session
-```
-
-The `CartItem` struct **does** have `wishlist_id` and `wishlist_item_id` fields, but in `UnifiedCheckoutForm.tsx` (line 406-413), the cart items are mapped to the checkout payload **without** those fields:
+In `InstagramWishlistGrid.tsx`, when a non-owner clicks a wishlist bubble, instead of navigating to the dedicated shared wishlist page, it calls the parent's `onWishlistClick` callback:
 
 ```typescript
-// Current — wishlist tracking IDs are LOST here
-cartItems: cartItems.map(item => ({
-  product_id: item.product.product_id,
-  name: item.product.name,
-  price: item.product.price,
-  quantity: item.quantity,
-  image_url: item.product.image,
-  recipientAssignment: item.recipientAssignment  // ← wishlist_id not here
-})),
+// InstagramWishlistGrid.tsx
+} else {
+  // Expand wishlist inline for visitors
+  if (onWishlistClick) {
+    onWishlistClick(wishlist);  // ← opens InlineWishlistViewer inline
+  }
+}
 ```
 
-This means that when you schedule a gift from the product page and then check out through the cart, no `wishlist_item_purchases` record is created, and the "Gifted 🎁" badge never appears on the wishlist. This would only surface as a bug if you go from a wishlist → product page → Schedule Gift.
+Meanwhile, a perfectly functional full-page route already exists:
+- **Route:** `/shared-wishlist/:wishlistId`
+- **Page:** `src/pages/SharedWishlist.tsx`
+- **Component:** `SharedWishlistView` — full page with items grid, purchase flow, and gift scheduling
 
----
+## The Fix
 
-## The Fix: 3 Small Changes
+**One file change, one line added:** In `InstagramWishlistGrid.tsx`, update the visitor click handler to navigate directly to `/shared-wishlist/:wishlistId` instead of calling the `onWishlistClick` callback.
 
-### 1. Pass `wishlist_id` + `wishlist_item_id` in `UnifiedCheckoutForm`
-In `src/components/checkout/UnifiedCheckoutForm.tsx`, add the two tracking fields to the `cartItems` mapping.
+### File: `src/components/user-profile/InstagramWishlistGrid.tsx`
 
-### 2. Accept them in `create-checkout-session` schema (already done)
-The Zod schema in the edge function already accepts `wishlist_id` and `wishlist_item_id` on `CartItemSchema` — no backend change needed.
-
-### 3. Ensure `product_name` is present (minor robustness fix)
-The checkout payload uses `name` but the edge function internally maps to `product_name`. Already handled by passthrough, but worth confirming.
-
----
-
-## Test Scenarios & What to Watch For
-
-### Test 1: One-Time Scheduled Gift
-```
-Steps:
-1. Go to a product page
-2. Click "Schedule Gift"  
-3. Select a recipient
-4. Pick a date 8+ days out (triggers Stripe Setup Mode)
-5. Click "Schedule Gift" → goes to cart
-6. Checkout through cart
-7. Complete Stripe payment
-
-Expected:
-✅ Stripe redirects to /order-confirmation
-✅ Order shows purple "SCHEDULED DELIVERY" hero card
-✅ Order status = "scheduled" in DB
-✅ If product was on recipient's wishlist → "Gifted 🎁" badge appears (requires the fix above)
-```
-
-### Test 2: One-Time Gift, Near-Term (7 days or less)
-```
-Steps: Same as Test 1 but pick a date 2-7 days out
-
-Expected:
-✅ Standard Stripe payment capture (not Setup Mode)
-✅ order.status = "processing" 
-✅ scheduled-order-processor handles on the delivery date
-```
-
-### Test 3: Recurring Gift Setup (from product page)
-```
-Steps:
-1. Product page → "Schedule Gift" modal
-2. Toggle to "Recurring"
-3. Select recipient + occasion (e.g., Birthday, Christmas)
-4. Configure budget + payment method
-5. Click "Schedule & Set Recurring"
-
-Expected:
-✅ Product added to cart for immediate purchase
-✅ Row created in auto_gifting_rules with scheduled_date
-✅ Toast: "Gift scheduled + recurring rule created!"
-✅ Rule visible at /recurring-gifts
-```
-
-### Test 4: Recurring Gift — Orchestrator Approval Email
-```
-Steps (simulate the T-7 trigger):
-1. Make sure a rule exists in auto_gifting_rules
-2. Trigger: POST to /auto-gift-orchestrator with simulatedDate = scheduled_date - 7 days
-3. Check your email for the approval email
-
-Expected:
-✅ Email arrives with 3 suggested gifts (from wishlist, excluding already-purchased)
-✅ "Approve" and "Reject" links in email
-✅ automated_gift_executions record created with status = 'pending_approval'
-```
-
----
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/checkout/UnifiedCheckoutForm.tsx` | Add `wishlist_id` and `wishlist_item_id` to cart item mapping (line ~406) |
-
-That's it — one file, two lines added. The rest of the pipeline already handles these fields correctly.
-
----
-
-## Technical Detail: What the Fix Looks Like
-
+Change lines 194–204 from:
 ```typescript
-// BEFORE (UnifiedCheckoutForm.tsx ~line 406)
-cartItems: cartItems.map(item => ({
-  product_id: item.product.product_id || item.product.id,
-  name: item.product.name,
-  price: item.product.price,
-  quantity: item.quantity,
-  image_url: item.product.image || item.product.images?.[0],
-  recipientAssignment: item.recipientAssignment
-})),
-
-// AFTER
-cartItems: cartItems.map(item => ({
-  product_id: item.product.product_id || item.product.id,
-  name: item.product.name,
-  price: item.product.price,
-  quantity: item.quantity,
-  image_url: item.product.image || item.product.images?.[0],
-  recipientAssignment: item.recipientAssignment,
-  wishlist_id: item.wishlist_id || '',         // ← pass through for badge tracking
-  wishlist_item_id: item.wishlist_item_id || '' // ← pass through for badge tracking
-})),
+const handleWishlistClick = (wishlist: Wishlist) => {
+  if (isOwnProfile) {
+    navigate(`/wishlists?wishlist=${wishlist.id}&view=home`);
+  } else {
+    if (onWishlistClick) {
+      onWishlistClick(wishlist);
+    }
+  }
+};
 ```
 
-This ensures the webhook (`stripe-webhook-v2`) receives these IDs in session metadata and can create the `wishlist_item_purchases` record automatically upon payment completion.
+To:
+```typescript
+const handleWishlistClick = (wishlist: Wishlist) => {
+  if (isOwnProfile) {
+    navigate(`/wishlists?wishlist=${wishlist.id}&view=home`);
+  } else {
+    // Navigate to the full shared wishlist page (not inline)
+    navigate(`/shared-wishlist/${wishlist.id}`);
+  }
+};
+```
+
+That's it — a single navigation change.
+
+## What This Delivers
+
+| Before | After |
+|--------|-------|
+| Visitor taps wishlist bubble → inline card appears silently below (no scroll) | Visitor taps wishlist bubble → navigates to `/shared-wishlist/:id` full page |
+| Items are off-screen on mobile — user doesn't know they exist | Full item grid visible immediately on a clean page |
+| Poor discoverability | Dedicated page with proper back navigation |
+
+## Downstream Cleanup
+
+Since `InlineWishlistViewer` will no longer be triggered from the profile page for visitors, the `selectedWishlist` state and `onWishlistClick` prop in `InstagramProfileLayout.tsx` can be removed. However, this is optional cleanup — removing them is safe since they won't cause any errors if left in place.
+
+The `InlineWishlistViewer` component itself should be kept — it may be useful in other contexts.
+
+## Technical Notes
+
+- The `/shared-wishlist/:wishlistId` route is already configured in `App.tsx` (line 258)
+- `SharedWishlist.tsx` already handles loading the wishlist by ID, fetching owner profile, and rendering `SharedWishlistView` with cart and gift scheduling functionality
+- No new routes or pages need to be created
+- No backend changes needed

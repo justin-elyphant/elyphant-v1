@@ -51,7 +51,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft, Shield, Gift, Mail } from 'lucide-react';
+import { CreditCard, ShoppingBag, AlertCircle, ArrowLeft, Shield, Gift, Mail, Calendar } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
@@ -745,6 +745,55 @@ const UnifiedCheckoutForm: React.FC = () => {
                   {giftOptions.giftMessage.length}/240 characters
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Schedule Delivery - Applies to all items in the order */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Schedule Delivery <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Choose a future arrival date for all items in this order — perfect for birthdays, holidays, or any special occasion.
+              </p>
+              {giftOptions.scheduledDeliveryDate ? (
+                <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">
+                      Scheduled for {new Date(giftOptions.scheduledDeliveryDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleUpdateGiftOptions({ scheduledDeliveryDate: '' })}
+                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="schedule-date">Arrival date</Label>
+                  <Input
+                    id="schedule-date"
+                    type="date"
+                    className="mt-1"
+                    min={new Date(Date.now() + 86400000 * 8).toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleUpdateGiftOptions({ scheduledDeliveryDate: e.target.value });
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select a date at least 8 days out to ensure on-time delivery.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

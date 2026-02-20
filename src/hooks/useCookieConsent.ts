@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export type CookieConsentLevel = "all" | "essential" | null;
 
@@ -17,18 +17,7 @@ function readStoredConsent(): CookieConsentLevel {
 export function useCookieConsent() {
   const [consent, setConsent] = useState<CookieConsentLevel>(readStoredConsent);
 
-  // Sync across tabs — if another tab accepts, hide banner in this tab too
-  useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) {
-        setConsent(readStoredConsent());
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
-  // Derive showBanner directly — no effect needed, avoids timing/re-render issues
+  // Derive showBanner directly — no effect needed
   const showBanner = consent === null;
 
   const acceptAll = () => {

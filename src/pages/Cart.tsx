@@ -540,6 +540,29 @@ const Cart = () => {
                                 />
                               )}
                             </div>
+                          ) : item.wishlist_owner_name ? (
+                            // Wishlist gift — recipient is already known, no Assign needed
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">→</span>
+                                <span className="font-medium text-foreground">{item.wishlist_owner_name}</span>
+                                <span className="text-xs text-muted-foreground">· from wishlist</span>
+                              </div>
+                              {/* Gift note preview */}
+                              {item.recipientAssignment?.giftMessage && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground ml-4">
+                                  <Gift className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">"{item.recipientAssignment.giftMessage}"</span>
+                                </div>
+                              )}
+                              {/* Scheduled date preview */}
+                              {item.recipientAssignment?.scheduledDeliveryDate && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground ml-4">
+                                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                                  <span>{formatScheduledDate(item.recipientAssignment.scheduledDeliveryDate)}</span>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">

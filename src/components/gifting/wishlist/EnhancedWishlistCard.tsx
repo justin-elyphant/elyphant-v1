@@ -39,6 +39,7 @@ interface EnhancedWishlistCardProps {
   isGuestView?: boolean;
   // Guest purchase mode
   onAddToCart?: () => void;
+  onScheduleAndAddToCart?: () => void;
   // Style props
   className?: string;
 }
@@ -56,6 +57,7 @@ const EnhancedWishlistCard = ({
   onCopyToWishlist,
   isGuestView = false,
   onAddToCart,
+  onScheduleAndAddToCart,
   className
 }: EnhancedWishlistCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -247,6 +249,21 @@ const EnhancedWishlistCard = ({
                         <ExternalLink className="h-3 w-3 mr-1" />
                         View
                       </Button>
+                      {onScheduleAndAddToCart && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            triggerHapticFeedback('success');
+                            onScheduleAndAddToCart();
+                          }}
+                          className="text-xs"
+                        >
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Schedule
+                        </Button>
+                      )}
                       <Button 
                         size="sm" 
                         onClick={(e) => {

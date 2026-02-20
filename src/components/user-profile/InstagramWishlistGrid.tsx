@@ -196,10 +196,8 @@ const InstagramWishlistGrid: React.FC<InstagramWishlistGridProps> = ({
                 // Navigate to wishlist workspace for owner
                 navigate(`/wishlists?wishlist=${wishlist.id}&view=home`);
               } else {
-                // Expand wishlist inline for visitors
-                if (onWishlistClick) {
-                  onWishlistClick(wishlist);
-                }
+                // Navigate to the full shared wishlist page for visitors
+                navigate(`/shared-wishlist/${wishlist.id}`);
               }
             };
 

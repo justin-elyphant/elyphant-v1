@@ -77,6 +77,72 @@ import { triggerHapticFeedback, HapticPatterns } from '@/utils/haptics';
  * The component uses a sophisticated state management system that
  * handles complex validation, shipping calculations, and payment processing.
  */
+const ScheduleDeliveryCard: React.FC<{
+  scheduledDeliveryDate: string;
+  onConfirm: (date: string) => void;
+  onRemove: () => void;
+}> = ({ scheduledDeliveryDate, onConfirm, onRemove }) => {
+  const [draftDate, setDraftDate] = useState('');
+  const minDate = new Date(Date.now() + 86400000 * 8).toISOString().split('T')[0];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Schedule Delivery <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Choose a future arrival date for all items in this order — perfect for birthdays, holidays, or any special occasion.
+        </p>
+        {scheduledDeliveryDate ? (
+          <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                Scheduled for {new Date(scheduledDeliveryDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+            <button
+              onClick={() => { onRemove(); setDraftDate(''); }}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="schedule-date">Arrival date</Label>
+            <div className="flex gap-2 items-center">
+              <Input
+                id="schedule-date"
+                type="date"
+                className="flex-1"
+                min={minDate}
+                value={draftDate}
+                onChange={(e) => setDraftDate(e.target.value)}
+              />
+              <button
+                type="button"
+                disabled={!draftDate || draftDate < minDate}
+                onClick={() => { if (draftDate) onConfirm(draftDate); }}
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shrink-0"
+              >
+                Set Date
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Select a date at least 8 days out to ensure on-time delivery.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const UnifiedCheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -749,53 +815,11 @@ const UnifiedCheckoutForm: React.FC = () => {
           </Card>
 
           {/* Schedule Delivery - Applies to all items in the order */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Schedule Delivery <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Choose a future arrival date for all items in this order — perfect for birthdays, holidays, or any special occasion.
-              </p>
-              {giftOptions.scheduledDeliveryDate ? (
-                <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">
-                      Scheduled for {new Date(giftOptions.scheduledDeliveryDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleUpdateGiftOptions({ scheduledDeliveryDate: '' })}
-                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="schedule-date">Arrival date</Label>
-                  <Input
-                    id="schedule-date"
-                    type="date"
-                    className="mt-1"
-                    min={new Date(Date.now() + 86400000 * 8).toISOString().split('T')[0]}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        handleUpdateGiftOptions({ scheduledDeliveryDate: e.target.value });
-                      }
-                    }}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Select a date at least 8 days out to ensure on-time delivery.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ScheduleDeliveryCard
+            scheduledDeliveryDate={giftOptions.scheduledDeliveryDate}
+            onConfirm={(date) => handleUpdateGiftOptions({ scheduledDeliveryDate: date })}
+            onRemove={() => handleUpdateGiftOptions({ scheduledDeliveryDate: '' })}
+          />
 
           <Card>
             <CardHeader>

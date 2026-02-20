@@ -407,14 +407,31 @@ const UnifiedCheckoutForm: React.FC = () => {
             // Synthesize recipientAssignment from wishlist_owner_* fields when null
             // This ensures gift_message, scheduled_delivery_date, and shipping address
             // all flow through to Stripe metadata → stripe-webhook-v2 → Zinc
-            const synthesizedAssignment = item.recipientAssignment || (item.wishlist_owner_id ? {
-              connectionId: item.wishlist_owner_id,
-              connectionName: item.wishlist_owner_name || '',
-              deliveryGroupId: `wishlist_${item.wishlist_id}`,
-              shippingAddress: item.wishlist_owner_shipping ? normalizeAddress(item.wishlist_owner_shipping, item.wishlist_owner_name || 'Gift Recipient') : undefined,
-              giftMessage: (item as any).pendingGiftMessage || '',
-              scheduledDeliveryDate: (item as any).pendingScheduledDate || '',
-            } : undefined);
+            // Synthesize a complete recipientAssignment for wishlist items.
+            // If recipientAssignment already exists (set via updateRecipientAssignment after
+            // the gift-options drawer), preserve its giftMessage + scheduledDeliveryDate but
+            // ALSO inject shippingAddress from wishlist_owner_shipping when missing.
+            // This ensures all fields flow through to Stripe metadata → webhook → Zinc.
+            let synthesizedAssignment = item.recipientAssignment;
+            if (!synthesizedAssignment && item.wishlist_owner_id) {
+              synthesizedAssignment = {
+                connectionId: item.wishlist_owner_id,
+                connectionName: item.wishlist_owner_name || '',
+                deliveryGroupId: `wishlist_${item.wishlist_id}`,
+                shippingAddress: item.wishlist_owner_shipping
+                  ? normalizeAddress(item.wishlist_owner_shipping, item.wishlist_owner_name || 'Gift Recipient')
+                  : undefined,
+                giftMessage: '',
+                scheduledDeliveryDate: '',
+              };
+            } else if (synthesizedAssignment && item.wishlist_owner_id && !synthesizedAssignment.shippingAddress && item.wishlist_owner_shipping) {
+              // recipientAssignment exists (has giftMessage/scheduledDate) but is missing shippingAddress
+              // — inject it from wishlist_owner_shipping so Zinc gets the correct delivery address
+              synthesizedAssignment = {
+                ...synthesizedAssignment,
+                shippingAddress: normalizeAddress(item.wishlist_owner_shipping, item.wishlist_owner_name || 'Gift Recipient'),
+              };
+            }
 
             return {
               product_id: item.product.product_id || item.product.id,

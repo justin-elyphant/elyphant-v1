@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, ShoppingCart, Trash2, Gift, ExternalLink, Calendar, Check, Copy, CheckCircle2 } from "lucide-react";
+import { Heart, ShoppingCart, Trash2, Gift, ExternalLink, Check, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -249,21 +249,6 @@ const EnhancedWishlistCard = ({
                         <ExternalLink className="h-3 w-3 mr-1" />
                         View
                       </Button>
-                      {onScheduleAndAddToCart && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            triggerHapticFeedback('success');
-                            onScheduleAndAddToCart();
-                          }}
-                          className="text-xs"
-                        >
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Schedule
-                        </Button>
-                      )}
                       <Button 
                         size="sm" 
                         onClick={(e) => {

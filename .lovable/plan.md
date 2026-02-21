@@ -1,67 +1,89 @@
 
 
-# Fix Buy Now Drawer: Deduplicate Scheduling and Improve UX
+# Fix: Gift Note Textarea Unusable on Mobile When Keyboard Opens
 
 ## Problem
-1. **Duplicate scheduling display**: After selecting a recipient and clicking "Schedule Gift", the scheduled date appears twice -- once in the scheduling modal area and again in the gift note section.
-2. **"Schedule Gift" is buried** inside the recipient dropdown, making it easy to miss and creating a confusing flow.
+On iPhone (live site), tapping the gift note textarea opens the keyboard, which pushes the drawer content up. The textarea scrolls out of view, leaving only the order total and "Place your order" button visible. The user can't see what they're typing.
+
+## Root Cause
+The drawer content area has `overflow-y-auto` but the iOS keyboard resize doesn't trigger a scroll-into-view for the focused textarea. The `max-h-[85vh]` on `DrawerContent` doesn't account for the reduced viewport when the keyboard is open.
 
 ## Solution
-Move "Schedule Gift" out of the recipient dropdown and make it a **standalone collapsible step** (Step 3) in the Buy Now drawer, positioned between "Add a gift note" and "Pay with". This is not too much user fatigue -- it's a single optional tap, consistent with how gift note and payment work, and keeps the drawer clean and scannable.
+Two changes to `BuyNowDrawer.tsx`:
 
-### Updated Buy Now Drawer Flow
-```text
-+----------------------------------+
-| [Product Image] Product Name     |
-|              Ships from Elyphant |
-+----------------------------------+
-| Step 1: Who is this for?      >  |
-|   - Myself                       |
-|   - Justin Meeks (connection)    |
-+----------------------------------+
-| Step 2: Add a gift note       >  |
-|   [textarea if expanded]         |
-+----------------------------------+
-| Step 3: Schedule delivery     >  |  <-- NEW standalone step
-|   (only visible when recipient   |
-|    is a connection)              |
-|   [date picker if expanded]      |
-+----------------------------------+
-| Step 4: Pay with              >  |
-|   Mastercard ....8673            |
-+----------------------------------+
-| Subtotal         $21.99          |
-| Shipping          $6.99          |
-| Gifting Fee       $3.20          |
-| Total            $32.18          |
-+----------------------------------+
-| [  Place your order  ]           |
-| Cancel                           |
-+----------------------------------+
-```
+1. **Auto-scroll textarea into view on focus**: Add an `onFocus` handler to the `Textarea` that calls `scrollIntoView()` after a short delay (to let the keyboard finish animating). This ensures the textarea stays visible when the user taps it.
 
-## Changes
+2. **Adjust drawer max-height for keyboard**: Use `visualViewport` API to detect keyboard presence and reduce the drawer height dynamically. Add a `useEffect` that listens to `window.visualViewport.resize` events and updates a CSS variable or inline style on the drawer content.
+
+## Technical Changes
 
 ### File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
 
-1. **Remove** the "Schedule Gift" nudge/link from inside the recipient `CollapsibleContent` (lines 343-363).
+**1. Add a ref for the textarea and scroll-into-view on focus:**
 
-2. **Add new state** for schedule delivery:
-   - `scheduleOpen` (boolean) -- controls collapsible
-   - `scheduledDate` (string) -- the selected date
+```typescript
+const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-3. **Add a new Collapsible step** (Step 3) between gift note and payment:
-   - Icon: Calendar
-   - Label: "Schedule delivery" (shows selected date when set)
-   - Only rendered when `selectedRecipient?.type === 'connection'`
-   - Contains an `<input type="date">` with the 8-day minimum lead time
-   - "Set Date" / "Remove" buttons similar to the checkout page's `ScheduleDeliveryCard`
+const handleTextareaFocus = () => {
+  // Delay to let iOS keyboard finish animating
+  setTimeout(() => {
+    textareaRef.current?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+  }, 300);
+};
+```
 
-4. **Remove the `onOpenScheduleGift` prop** since scheduling is now handled inline (no need to close the drawer and open a separate modal).
+Apply to the Textarea:
+```tsx
+<Textarea
+  ref={textareaRef}
+  onFocus={handleTextareaFocus}
+  value={giftNote}
+  onChange={...}
+  // also add font-size: 16px to prevent iOS zoom
+  className="text-sm min-h-[72px] resize-none text-[16px]"
+  style={{ fontSize: '16px' }}
+/>
+```
 
-5. **Pass `scheduledDate`** into the `create-checkout-session` metadata so the backend can handle deferred payment/fulfillment.
+**2. Add VisualViewport listener for keyboard-aware height:**
 
-### File: `src/components/marketplace/product-details/ProductDetailsSidebar.tsx`
-- Remove the `scheduleGiftData` state and `onOpenScheduleGift` callback that was passed to `BuyNowDrawer`, since scheduling is now self-contained in the drawer.
-- Remove the `UnifiedGiftSchedulingModal` trigger that was connected to this flow (if it was only used for Buy Now).
+```typescript
+const [drawerMaxHeight, setDrawerMaxHeight] = useState('85vh');
 
+useEffect(() => {
+  if (!open) return;
+  const vv = window.visualViewport;
+  if (!vv) return;
+
+  const onResize = () => {
+    const ratio = vv.height / window.innerHeight;
+    // If keyboard is open (viewport shrunk significantly)
+    if (ratio < 0.75) {
+      setDrawerMaxHeight(`${vv.height - 20}px`);
+    } else {
+      setDrawerMaxHeight('85vh');
+    }
+  };
+
+  vv.addEventListener('resize', onResize);
+  return () => vv.removeEventListener('resize', onResize);
+}, [open]);
+```
+
+Apply to DrawerContent:
+```tsx
+<DrawerContent 
+  className="flex flex-col"
+  style={{ maxHeight: drawerMaxHeight }}
+>
+```
+
+**3. Prevent iOS zoom on textarea** by ensuring `font-size: 16px` (iOS auto-zooms inputs below 16px).
+
+These three changes together ensure:
+- The textarea stays visible when the keyboard opens
+- The drawer resizes to fit the reduced viewport
+- iOS doesn't auto-zoom the input field

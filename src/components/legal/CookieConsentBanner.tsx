@@ -15,7 +15,7 @@ const CookieConsentBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-2xl lg:rounded-xl lg:border lg:border-border lg:shadow-sm lg:pb-0"
+          className="fixed bottom-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg rounded-xl border border-border shadow-sm sm:max-w-xl lg:bottom-6 lg:max-w-2xl lg:pb-0"
           role="dialog"
           aria-label="Cookie consent"
           aria-live="polite"

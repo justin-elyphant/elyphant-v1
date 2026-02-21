@@ -54,9 +54,6 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   const isMobile = useIsMobile();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showScheduleGiftModal, setShowScheduleGiftModal] = useState(false);
-  const [scheduleGiftInitialData, setScheduleGiftInitialData] = useState<{
-    recipientName: string; connectionId: string; address: any; giftNote: string;
-  } | null>(null);
   const [showBuyNowDrawer, setShowBuyNowDrawer] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
   const { isLargeScreen } = useViewport();
@@ -288,10 +285,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
       {/* Unified Gift Scheduling Modal */}
       <UnifiedGiftSchedulingModal
         open={showScheduleGiftModal}
-        onOpenChange={(open) => {
-          setShowScheduleGiftModal(open);
-          if (!open) setScheduleGiftInitialData(null);
-        }}
+        onOpenChange={setShowScheduleGiftModal}
         product={product}
         defaultMode="one-time"
         allowModeSwitch={true}
@@ -299,14 +293,6 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         getEffectiveProductId={getEffectiveProductId}
         getVariationDisplayText={getVariationDisplayText}
         isVariationComplete={isVariationComplete}
-        initialRecipient={scheduleGiftInitialData ? {
-          type: 'connection',
-          connectionId: scheduleGiftInitialData.connectionId,
-          connectionName: scheduleGiftInitialData.recipientName,
-          shippingAddress: scheduleGiftInitialData.address,
-          addressVerified: true,
-        } : undefined}
-        initialGiftMessage={scheduleGiftInitialData?.giftNote}
       />
 
       {/* Buy Now Drawer (mobile/tablet) */}
@@ -317,10 +303,6 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
         effectiveProductId={getEffectiveProductId()}
         variationText={getVariationDisplayText()}
         price={variantPrice || productPrice}
-        onOpenScheduleGift={(data) => {
-          setScheduleGiftInitialData(data);
-          setShowScheduleGiftModal(true);
-        }}
       />
     </>
   );

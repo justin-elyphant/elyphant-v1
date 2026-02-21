@@ -192,6 +192,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               giftingFeeDescription: pricing.giftingFeeDescription,
               taxAmount: 0,
             },
+            scheduledDeliveryDate: scheduledDate || null,
             paymentMethod: activePayment?.stripe_payment_method_id || undefined,
             metadata: {
               user_id: user?.id,
@@ -202,7 +203,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               payment_method_id: activePayment?.stripe_payment_method_id || "",
               ...(isGift && selectedRecipient?.connectionId ? { recipient_connection_id: selectedRecipient.connectionId } : {}),
               ...(giftNote.trim() ? { gift_message: giftNote.trim() } : {}),
-              ...(scheduledDate ? { scheduled_delivery_date: scheduledDate } : {}),
             },
           },
         }

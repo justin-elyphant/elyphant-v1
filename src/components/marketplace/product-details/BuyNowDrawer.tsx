@@ -67,6 +67,33 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [recipientOpen, setRecipientOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<string>("");
+  const [drawerMaxHeight, setDrawerMaxHeight] = useState('85vh');
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Keyboard-aware drawer height for iOS
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onResize = () => {
+      const ratio = vv.height / window.innerHeight;
+      if (ratio < 0.75) {
+        setDrawerMaxHeight(`${vv.height - 20}px`);
+      } else {
+        setDrawerMaxHeight('85vh');
+      }
+    };
+
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [open]);
+
+  const handleTextareaFocus = () => {
+    setTimeout(() => {
+      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  };
 
   // Minimum date: 8 days from now
   const minDate = useMemo(() => format(addDays(new Date(), 8), 'yyyy-MM-dd'), []);
@@ -227,7 +254,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh] flex flex-col">
+      <DrawerContent className="flex flex-col" style={{ maxHeight: drawerMaxHeight }}>
         <DrawerHeader className="pb-2">
           <DrawerTitle className="sr-only">Buy Now</DrawerTitle>
           {/* Product summary */}
@@ -368,10 +395,13 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 <CollapsibleContent>
                   <div className="py-2 border-b border-border">
                     <Textarea
+                      ref={textareaRef}
+                      onFocus={handleTextareaFocus}
                       value={giftNote}
                       onChange={(e) => setGiftNote(e.target.value.slice(0, 240))}
                       placeholder="Write a personal message to include with the gift..."
                       className="text-sm min-h-[72px] resize-none"
+                      style={{ fontSize: '16px' }}
                       maxLength={240}
                     />
                     <p className="text-xs text-muted-foreground text-right mt-1">

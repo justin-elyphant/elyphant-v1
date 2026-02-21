@@ -415,8 +415,8 @@ serve(async (req) => {
     }
 
     const currentZmaBalance = zmaAccount?.account_balance || 0;
-    const estimatedCost = order.total_amount * 1.30; // 30% buffer for Zinc markup
-    const ZMA_SAFETY_MARGIN = 50; // $50 safety margin
+    const estimatedCost = order.total_amount * 1.15; // 15% buffer for Zinc markup
+    const ZMA_SAFETY_MARGIN = 10; // $10 safety margin
     const minRequiredBalance = estimatedCost + ZMA_SAFETY_MARGIN;
 
     console.log(`📊 ZMA Balance: $${currentZmaBalance.toFixed(2)} | Required: $${minRequiredBalance.toFixed(2)}`);

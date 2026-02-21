@@ -1,81 +1,39 @@
 
 
-# Fix: Buy Now Scheduled Delivery Date Silently Dropped
+# Fix: Reduce Overly Aggressive ZMA Balance Thresholds
 
-## Critical Bug Found
+## Problem
+A Buy Now order was blocked with "awaiting_funds" even though the ZMA balance ($78) had plenty to cover the purchase. The current formula requires far too much headroom:
 
-The **scheduled delivery date from Buy Now is silently dropped** and scheduling will NOT work. Here's why:
-
-### Root Cause
-
-The `BuyNowDrawer` passes `scheduled_delivery_date` inside the `metadata` object:
-
-```javascript
-metadata: {
-  scheduled_delivery_date: scheduledDate,  // e.g. "2026-03-15"
-  gift_message: giftNote.trim(),
-}
+```
+required = (order_total * 1.30) + $50
 ```
 
-But `create-checkout-session` reads the scheduled date from a **top-level** field called `scheduledDeliveryDate` (line 99), NOT from metadata:
-
-```javascript
-const { scheduledDeliveryDate, ... } = requestBody;  // This is undefined!
-```
-
-Then on line 323, it sets `metadata.scheduled_delivery_date = scheduledDeliveryDate || ''` which becomes `''`.
-
-When the client metadata merge happens (lines 338-344), the client's `scheduled_delivery_date` value is **skipped** because the key already exists (set to `''`). The merge logic only adds keys that are `undefined`.
-
-This means:
-1. `isScheduled` = false (no deferred payment mode)
-2. `useDeferredPayment` = false (no setup mode)
-3. `metadata.scheduled_delivery_date` = '' in Stripe (webhook sees no schedule)
-4. Order is created as immediate, not scheduled
-
-The **gift_message** works fine because `giftOptions` is null for Buy Now, so `metadata.gift_message` is never pre-set, and the client metadata merge adds it correctly.
+For a ~$25 order, that's $82.50 required — more than your $78 balance. For small orders, the $50 flat margin dominates and is unreasonable.
 
 ## Fix
 
-### Option chosen: Fix the BuyNowDrawer to pass `scheduledDeliveryDate` as a top-level field
+In `supabase/functions/process-order-v2/index.ts`, reduce the safety thresholds:
 
-This aligns with how the checkout page sends it and requires no edge function changes.
+- **Buffer**: 30% down to 15% (Zinc markup rarely exceeds 10%)
+- **Safety margin**: $50 down to $10
 
-### File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
+New formula: `required = (order_total * 1.15) + $10`
 
-**Change**: Add `scheduledDeliveryDate` as a top-level field in the request body (alongside `metadata`), and remove it from metadata to avoid duplication.
+For a $25 order: `($25 * 1.15) + $10 = $38.75` — easily covered by $78.
 
-Before:
-```javascript
-body: {
-  cartItems: [cartItem],
-  shippingInfo,
-  pricingBreakdown: { ... },
-  metadata: {
-    ...(scheduledDate ? { scheduled_delivery_date: scheduledDate } : {}),
-  },
-}
+### File: `supabase/functions/process-order-v2/index.ts` (lines 418-419)
+
+Change:
+```typescript
+const estimatedCost = order.total_amount * 1.30; // 30% buffer
+const ZMA_SAFETY_MARGIN = 50;
 ```
 
-After:
-```javascript
-body: {
-  cartItems: [cartItem],
-  shippingInfo,
-  pricingBreakdown: { ... },
-  scheduledDeliveryDate: scheduledDate || null,
-  metadata: {
-    // scheduled_delivery_date removed — handled by top-level field
-  },
-}
+To:
+```typescript
+const estimatedCost = order.total_amount * 1.15; // 15% buffer for Zinc markup
+const ZMA_SAFETY_MARGIN = 10; // $10 safety margin
 ```
 
-This single change ensures:
-- The edge function reads the date correctly from `requestBody.scheduledDeliveryDate`
-- `isScheduled` and `useDeferredPayment` evaluate correctly
-- Stripe session gets proper `metadata.scheduled_delivery_date`
-- Webhook creates order with `status: 'scheduled'` and correct `scheduled_delivery_date`
-- The 8+ day deferred payment (setup mode) activates properly
-
-No edge function changes needed -- the existing code already handles everything correctly when `scheduledDeliveryDate` is passed at the top level.
-
+No other files need changes. After this, retry the stuck order from Trunkline's Order Recovery Tool.

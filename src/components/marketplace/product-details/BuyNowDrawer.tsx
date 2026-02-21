@@ -216,10 +216,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     setSelectedRecipient(recipient);
     triggerHapticFeedback("light");
     setRecipientOpen(false);
-    // Auto-expand gift note when a connection is selected
-    if (recipient.type === 'connection') {
-      setGiftNoteOpen(true);
-    }
+    // Don't auto-expand gift note — keep all sections closed by default
   };
 
   const handleSelectCard = (method: DefaultPaymentMethod) => {
@@ -354,12 +351,14 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 <CollapsibleTrigger asChild>
                   <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
                     <div className="flex items-center gap-2">
-                      <Gift className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground">
-                        {giftNote.trim() ? 'Gift note added' : 'Add a gift note'}
+                      <Gift className={`h-4 w-4 flex-shrink-0 ${giftNote.trim() ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm ${giftNote.trim() ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                        {giftNote.trim() ? 'Gift note added ✓' : 'Add a gift note'}
                       </span>
                     </div>
-                    {giftNoteOpen ? (
+                    {giftNote.trim() && !giftNoteOpen ? (
+                      <Check className="h-4 w-4 text-primary flex-shrink-0 ml-2" />
+                    ) : giftNoteOpen ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
                     ) : (
                       <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
@@ -388,14 +387,16 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                   <CollapsibleTrigger asChild>
                     <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-muted-foreground">
+                        <Calendar className={`h-4 w-4 flex-shrink-0 ${scheduledDate ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`text-sm ${scheduledDate ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                           {scheduledDate
-                            ? `Delivery: ${format(new Date(scheduledDate + 'T00:00:00'), 'MMM d, yyyy')}`
+                            ? `Delivery: ${format(new Date(scheduledDate + 'T00:00:00'), 'MMM d, yyyy')} ✓`
                             : 'Schedule delivery'}
                         </span>
                       </div>
-                      {scheduleOpen ? (
+                      {scheduledDate && !scheduleOpen ? (
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 ml-2" />
+                      ) : scheduleOpen ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />

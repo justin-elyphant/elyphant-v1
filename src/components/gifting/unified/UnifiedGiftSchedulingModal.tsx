@@ -414,10 +414,13 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
     });
   };
 
-  // Handle picker change - clears preset selection
+  // Handle picker change - keeps "just_because" preset active so picker stays visible
   const handlePickerChange = (value: { month: string; day: string; year: string }) => {
     setPickerValue(value);
-    setSelectedPreset(null);
+    // Don't clear preset if we're in "Just Because" mode - the picker needs to stay open
+    if (selectedPreset !== 'just_because') {
+      setSelectedPreset(null);
+    }
     setSelectedDate(null);
   };
 

@@ -1,89 +1,81 @@
 
 
-# Fix: Gift Note Textarea Unusable on Mobile When Keyboard Opens
+# Fix: Buy Now Scheduled Delivery Date Silently Dropped
 
-## Problem
-On iPhone (live site), tapping the gift note textarea opens the keyboard, which pushes the drawer content up. The textarea scrolls out of view, leaving only the order total and "Place your order" button visible. The user can't see what they're typing.
+## Critical Bug Found
 
-## Root Cause
-The drawer content area has `overflow-y-auto` but the iOS keyboard resize doesn't trigger a scroll-into-view for the focused textarea. The `max-h-[85vh]` on `DrawerContent` doesn't account for the reduced viewport when the keyboard is open.
+The **scheduled delivery date from Buy Now is silently dropped** and scheduling will NOT work. Here's why:
 
-## Solution
-Two changes to `BuyNowDrawer.tsx`:
+### Root Cause
 
-1. **Auto-scroll textarea into view on focus**: Add an `onFocus` handler to the `Textarea` that calls `scrollIntoView()` after a short delay (to let the keyboard finish animating). This ensures the textarea stays visible when the user taps it.
+The `BuyNowDrawer` passes `scheduled_delivery_date` inside the `metadata` object:
 
-2. **Adjust drawer max-height for keyboard**: Use `visualViewport` API to detect keyboard presence and reduce the drawer height dynamically. Add a `useEffect` that listens to `window.visualViewport.resize` events and updates a CSS variable or inline style on the drawer content.
+```javascript
+metadata: {
+  scheduled_delivery_date: scheduledDate,  // e.g. "2026-03-15"
+  gift_message: giftNote.trim(),
+}
+```
 
-## Technical Changes
+But `create-checkout-session` reads the scheduled date from a **top-level** field called `scheduledDeliveryDate` (line 99), NOT from metadata:
+
+```javascript
+const { scheduledDeliveryDate, ... } = requestBody;  // This is undefined!
+```
+
+Then on line 323, it sets `metadata.scheduled_delivery_date = scheduledDeliveryDate || ''` which becomes `''`.
+
+When the client metadata merge happens (lines 338-344), the client's `scheduled_delivery_date` value is **skipped** because the key already exists (set to `''`). The merge logic only adds keys that are `undefined`.
+
+This means:
+1. `isScheduled` = false (no deferred payment mode)
+2. `useDeferredPayment` = false (no setup mode)
+3. `metadata.scheduled_delivery_date` = '' in Stripe (webhook sees no schedule)
+4. Order is created as immediate, not scheduled
+
+The **gift_message** works fine because `giftOptions` is null for Buy Now, so `metadata.gift_message` is never pre-set, and the client metadata merge adds it correctly.
+
+## Fix
+
+### Option chosen: Fix the BuyNowDrawer to pass `scheduledDeliveryDate` as a top-level field
+
+This aligns with how the checkout page sends it and requires no edge function changes.
 
 ### File: `src/components/marketplace/product-details/BuyNowDrawer.tsx`
 
-**1. Add a ref for the textarea and scroll-into-view on focus:**
+**Change**: Add `scheduledDeliveryDate` as a top-level field in the request body (alongside `metadata`), and remove it from metadata to avoid duplication.
 
-```typescript
-const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
-const handleTextareaFocus = () => {
-  // Delay to let iOS keyboard finish animating
-  setTimeout(() => {
-    textareaRef.current?.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'center' 
-    });
-  }, 300);
-};
+Before:
+```javascript
+body: {
+  cartItems: [cartItem],
+  shippingInfo,
+  pricingBreakdown: { ... },
+  metadata: {
+    ...(scheduledDate ? { scheduled_delivery_date: scheduledDate } : {}),
+  },
+}
 ```
 
-Apply to the Textarea:
-```tsx
-<Textarea
-  ref={textareaRef}
-  onFocus={handleTextareaFocus}
-  value={giftNote}
-  onChange={...}
-  // also add font-size: 16px to prevent iOS zoom
-  className="text-sm min-h-[72px] resize-none text-[16px]"
-  style={{ fontSize: '16px' }}
-/>
+After:
+```javascript
+body: {
+  cartItems: [cartItem],
+  shippingInfo,
+  pricingBreakdown: { ... },
+  scheduledDeliveryDate: scheduledDate || null,
+  metadata: {
+    // scheduled_delivery_date removed — handled by top-level field
+  },
+}
 ```
 
-**2. Add VisualViewport listener for keyboard-aware height:**
+This single change ensures:
+- The edge function reads the date correctly from `requestBody.scheduledDeliveryDate`
+- `isScheduled` and `useDeferredPayment` evaluate correctly
+- Stripe session gets proper `metadata.scheduled_delivery_date`
+- Webhook creates order with `status: 'scheduled'` and correct `scheduled_delivery_date`
+- The 8+ day deferred payment (setup mode) activates properly
 
-```typescript
-const [drawerMaxHeight, setDrawerMaxHeight] = useState('85vh');
+No edge function changes needed -- the existing code already handles everything correctly when `scheduledDeliveryDate` is passed at the top level.
 
-useEffect(() => {
-  if (!open) return;
-  const vv = window.visualViewport;
-  if (!vv) return;
-
-  const onResize = () => {
-    const ratio = vv.height / window.innerHeight;
-    // If keyboard is open (viewport shrunk significantly)
-    if (ratio < 0.75) {
-      setDrawerMaxHeight(`${vv.height - 20}px`);
-    } else {
-      setDrawerMaxHeight('85vh');
-    }
-  };
-
-  vv.addEventListener('resize', onResize);
-  return () => vv.removeEventListener('resize', onResize);
-}, [open]);
-```
-
-Apply to DrawerContent:
-```tsx
-<DrawerContent 
-  className="flex flex-col"
-  style={{ maxHeight: drawerMaxHeight }}
->
-```
-
-**3. Prevent iOS zoom on textarea** by ensuring `font-size: 16px` (iOS auto-zooms inputs below 16px).
-
-These three changes together ensure:
-- The textarea stays visible when the keyboard opens
-- The drawer resizes to fit the reduced viewport
-- iOS doesn't auto-zoom the input field

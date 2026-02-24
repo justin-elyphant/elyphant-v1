@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift, Calendar } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Elements } from "@stripe/react-stripe-js";
 import stripeClientManager from "@/services/payment/StripeClientManager";
@@ -65,8 +64,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [giftNote, setGiftNote] = useState("");
   const [giftNoteOpen, setGiftNoteOpen] = useState(false);
   const [recipientOpen, setRecipientOpen] = useState(false);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<string>("");
+  const [scheduledDate] = useState<string>("");
   const [drawerMaxHeight, setDrawerMaxHeight] = useState('85vh');
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -95,8 +93,6 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
     }, 300);
   };
 
-  // Minimum date: 8 days from now
-  const minDate = useMemo(() => format(addDays(new Date(), 8), 'yyyy-MM-dd'), []);
 
   // Filter connections: only accepted with verified shipping address (city + state)
   const connectionsWithAddress = useMemo(() => {
@@ -411,67 +407,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Step 3: Schedule delivery (only for connections) */}
-              {selectedRecipient?.type === 'connection' && (
-                <Collapsible open={scheduleOpen} onOpenChange={setScheduleOpen}>
-                  <CollapsibleTrigger asChild>
-                    <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">
-                      <div className="flex items-center gap-2">
-                        <Calendar className={`h-4 w-4 flex-shrink-0 ${scheduledDate ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`text-sm ${scheduledDate ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                          {scheduledDate
-                            ? `Delivery: ${format(new Date(scheduledDate + 'T00:00:00'), 'MMM d, yyyy')} ✓`
-                            : 'Schedule delivery'}
-                        </span>
-                      </div>
-                      {scheduledDate && !scheduleOpen ? (
-                        <Check className="h-4 w-4 text-primary flex-shrink-0 ml-2" />
-                      ) : scheduleOpen ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
-                      )}
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="py-2 border-b border-border space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Choose an arrival date (8+ days out for guaranteed delivery).
-                      </p>
-                      <input
-                        type="date"
-                        min={minDate}
-                        value={scheduledDate}
-                        onChange={(e) => setScheduledDate(e.target.value)}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[44px]"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 min-h-[36px]"
-                          disabled={!scheduledDate}
-                          onClick={() => setScheduleOpen(false)}
-                        >
-                          Set Date
-                        </Button>
-                        {scheduledDate && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="min-h-[36px] text-muted-foreground"
-                            onClick={() => { setScheduledDate(""); }}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-
-              {/* Step 4: Pay with */}
+              {/* Step 3: Pay with */}
               <Collapsible open={paymentPickerOpen} onOpenChange={setPaymentPickerOpen}>
                 <CollapsibleTrigger asChild>
                   <button className="flex items-center justify-between w-full py-3 border-b border-border min-h-[44px] text-left">

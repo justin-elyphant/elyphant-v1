@@ -1,39 +1,81 @@
 
 
-# Fix: Reduce Overly Aggressive ZMA Balance Thresholds
+# Desktop Buy Now: Missing Recipient and Scheduling Options
 
 ## Problem
-A Buy Now order was blocked with "awaiting_funds" even though the ZMA balance ($78) had plenty to cover the purchase. The current formula requires far too much headroom:
 
-```
-required = (order_total * 1.30) + $50
-```
+On desktop, the "Buy Now" button bypasses the recipient selection, gift note, and scheduling UI entirely. Here is how each flow works today:
 
-For a ~$25 order, that's $82.50 required — more than your $78 balance. For small orders, the $50 flat margin dominates and is unreasonable.
+**Mobile/Tablet (correct)**:
+Buy Now click opens a `BuyNowDrawer` with 4 collapsible sections:
+1. Recipient Selection
+2. Gift Note
+3. Schedule Delivery
+4. Payment
 
-## Fix
+**Desktop (broken)**:
+Buy Now click calls `handleBuyNow()` which simply adds item to cart and navigates to `/checkout` with no opportunity to select a recipient, write a gift note, or schedule delivery.
 
-In `supabase/functions/process-order-v2/index.ts`, reduce the safety thresholds:
+The `/cart` page does have "Send as a gift instead" and inline recipient assignment, but the desktop Buy Now flow skips the cart entirely.
 
-- **Buffer**: 30% down to 15% (Zinc markup rarely exceeds 10%)
-- **Safety margin**: $50 down to $10
+## Proposed Solution
 
-New formula: `required = (order_total * 1.15) + $10`
+Open the **same BuyNowDrawer on desktop** that already works on mobile/tablet. The drawer is already a well-tested component with all 4 steps built in. The only reason it is skipped on desktop is a viewport check in `ProductDetailsSidebar.tsx`:
 
-For a $25 order: `($25 * 1.15) + $10 = $38.75` — easily covered by $78.
-
-### File: `supabase/functions/process-order-v2/index.ts` (lines 418-419)
-
-Change:
-```typescript
-const estimatedCost = order.total_amount * 1.30; // 30% buffer
-const ZMA_SAFETY_MARGIN = 50;
-```
-
-To:
-```typescript
-const estimatedCost = order.total_amount * 1.15; // 15% buffer for Zinc markup
-const ZMA_SAFETY_MARGIN = 10; // $10 safety margin
+```text
+// Line 155: Only opens drawer on small screens
+if (!isLargeScreen && user) {
+  setShowBuyNowDrawer(true);
+} else {
+  handleBuyNow(); // Desktop: just adds to cart and navigates
+}
 ```
 
-No other files need changes. After this, retry the stuck order from Trunkline's Order Recovery Tool.
+## Implementation Steps
+
+### 1. Remove the viewport gate in ProductDetailsSidebar.tsx
+
+Change the `handleBuyNowClick` function so that authenticated users on ALL screen sizes open the BuyNowDrawer. Only guests fall through to the sign-up/checkout redirect.
+
+Before:
+```text
+if (!isLargeScreen && user) {
+  setShowBuyNowDrawer(true);
+} else {
+  handleBuyNow();
+}
+```
+
+After:
+```text
+if (user) {
+  triggerHapticFeedback("light");
+  setShowBuyNowDrawer(true);
+} else {
+  handleBuyNow(); // Guest: add to cart + navigate to checkout
+}
+```
+
+### 2. Constrain the BuyNowDrawer width on desktop
+
+The drawer is currently designed for mobile bottom-sheet presentation. On desktop it should render as a centered dialog or constrained-width drawer. Add a `sm:max-w-lg sm:mx-auto` constraint (consistent with the existing drawer desktop constraint pattern documented in project memory).
+
+### 3. Verify the BuyNowDrawer renders correctly on large screens
+
+The drawer uses `Drawer` from vaul. It should render properly at desktop widths with the max-width constraint. No logic changes needed inside the drawer -- it already handles recipient selection, gift notes, scheduling, and payment for all flows.
+
+## What This Does NOT Change
+
+- The `/cart` page remains unchanged -- its "Send as a gift instead" flow continues to work independently
+- The mobile/tablet flow is unchanged (already uses the drawer)
+- Guest users still get redirected to sign-up/checkout (no drawer for unauthenticated users)
+- No backend or edge function changes needed
+
+## Technical Details
+
+Files modified:
+- `src/components/marketplace/product-details/ProductDetailsSidebar.tsx` -- Remove `!isLargeScreen` check (lines 154-161)
+- `src/components/marketplace/product-details/BuyNowDrawer.tsx` -- Add desktop width constraint if not already present
+
+Estimated scope: 2 files, ~5 lines changed.
+

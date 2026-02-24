@@ -3,7 +3,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ScheduledGiftCard from '../ScheduledGiftCard';
 import { format } from 'date-fns';
-import '@testing-library/jest-dom'; // Add this to access toHaveAttribute matcher
+// @ts-ignore - jest-dom types
+import '@testing-library/jest-dom';
 
 describe('ScheduledGiftCard', () => {
   const mockGift = {

@@ -151,12 +151,12 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
       return;
     }
     
-    // Mobile/tablet + authenticated → open drawer
-    if (!isLargeScreen && user) {
+    // Authenticated → open drawer on all screen sizes
+    if (user) {
       triggerHapticFeedback("light");
       setShowBuyNowDrawer(true);
     } else {
-      // Desktop or guest → standard add-to-cart + checkout
+      // Guest → standard add-to-cart + checkout
       handleBuyNow();
     }
   };

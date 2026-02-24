@@ -254,7 +254,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col" style={{ maxHeight: drawerMaxHeight }}>
+      <DrawerContent className="flex flex-col sm:max-w-lg sm:mx-auto" style={{ maxHeight: drawerMaxHeight }}>
         <DrawerHeader className="pb-2">
           <DrawerTitle className="sr-only">Buy Now</DrawerTitle>
           {/* Product summary */}

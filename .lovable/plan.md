@@ -1,81 +1,44 @@
 
 
-# Desktop Buy Now: Missing Recipient and Scheduling Options
+# Tablet Users Getting Desktop Checkout Layout
 
 ## Problem
 
-On desktop, the "Buy Now" button bypasses the recipient selection, gift note, and scheduling UI entirely. Here is how each flow works today:
+Your beta tester on an iPad is seeing the **desktop checkout layout** (two-column with Order Summary sidebar, category strip in header) instead of the mobile/tablet single-column stacked view. This happens because:
 
-**Mobile/Tablet (correct)**:
-Buy Now click opens a `BuyNowDrawer` with 4 collapsible sections:
-1. Recipient Selection
-2. Gift Note
-3. Schedule Delivery
-4. Payment
+- The checkout page uses `lg:` (1024px) as its desktop breakpoint
+- iPads in landscape are ~1180px wide, which exceeds 1024px
+- So they get: two-column grid, desktop header with category strip, inline "Proceed to Payment" button instead of sticky bottom CTA
 
-**Desktop (broken)**:
-Buy Now click calls `handleBuyNow()` which simply adds item to cart and navigates to `/checkout` with no opportunity to select a recipient, write a gift note, or schedule delivery.
+Per your project's design strategy, tablets should use the mobile shell (single-column, sticky bottom CTA, no category strip in header).
 
-The `/cart` page does have "Send as a gift instead" and inline recipient assignment, but the desktop Buy Now flow skips the cart entirely.
+## Solution
 
-## Proposed Solution
+Bump the checkout page's desktop breakpoint from `lg:` (1024px) to `xl:` (1280px). This ensures all iPads (including landscape) get the single-column mobile layout. No tablet has a viewport wider than 1280px, so this cleanly separates tablet from desktop.
 
-Open the **same BuyNowDrawer on desktop** that already works on mobile/tablet. The drawer is already a well-tested component with all 4 steps built in. The only reason it is skipped on desktop is a viewport check in `ProductDetailsSidebar.tsx`:
+## Changes
 
-```text
-// Line 155: Only opens drawer on small screens
-if (!isLargeScreen && user) {
-  setShowBuyNowDrawer(true);
-} else {
-  handleBuyNow(); // Desktop: just adds to cart and navigates
-}
-```
+### File: `src/components/checkout/UnifiedCheckoutForm.tsx`
 
-## Implementation Steps
+Replace all layout-critical `lg:` breakpoints with `xl:`:
 
-### 1. Remove the viewport gate in ProductDetailsSidebar.tsx
+| Line | Current | Change to |
+|------|---------|-----------|
+| 717 | `pb-40 lg:pb-8` | `pb-40 xl:pb-8` |
+| 719 | `lg:grid-cols-3 ... lg:gap-6` | `xl:grid-cols-3 ... xl:gap-6` |
+| 721 | `lg:col-span-2 ... lg:space-y-6` | `xl:col-span-2 ... xl:space-y-6` |
+| 863 | `hidden lg:block` | `hidden xl:block` |
+| 892 | `lg:col-span-1 order-first lg:order-last` | `xl:col-span-1 order-first xl:order-last` |
+| 893 | `lg:sticky lg:top-6` | `xl:sticky xl:top-6` |
 
-Change the `handleBuyNowClick` function so that authenticated users on ALL screen sizes open the BuyNowDrawer. Only guests fall through to the sign-up/checkout redirect.
+The `md:` breakpoints (768px) for the sticky bottom CTA bar and inline button remain unchanged -- those correctly distinguish phones from tablets/desktop.
 
-Before:
-```text
-if (!isLargeScreen && user) {
-  setShowBuyNowDrawer(true);
-} else {
-  handleBuyNow();
-}
-```
+### What stays the same
+- Mobile sticky bottom CTA bar (md:hidden) -- unchanged
+- Desktop inline button (hidden md:flex) -- unchanged, tablets still see it
+- BuyNowDrawer changes from earlier -- unaffected
+- Header/navigation -- the header already uses `md:` which correctly handles tablet vs phone; the category strip visibility is a separate concern if you want to address it later
 
-After:
-```text
-if (user) {
-  triggerHapticFeedback("light");
-  setShowBuyNowDrawer(true);
-} else {
-  handleBuyNow(); // Guest: add to cart + navigate to checkout
-}
-```
-
-### 2. Constrain the BuyNowDrawer width on desktop
-
-The drawer is currently designed for mobile bottom-sheet presentation. On desktop it should render as a centered dialog or constrained-width drawer. Add a `sm:max-w-lg sm:mx-auto` constraint (consistent with the existing drawer desktop constraint pattern documented in project memory).
-
-### 3. Verify the BuyNowDrawer renders correctly on large screens
-
-The drawer uses `Drawer` from vaul. It should render properly at desktop widths with the max-width constraint. No logic changes needed inside the drawer -- it already handles recipient selection, gift notes, scheduling, and payment for all flows.
-
-## What This Does NOT Change
-
-- The `/cart` page remains unchanged -- its "Send as a gift instead" flow continues to work independently
-- The mobile/tablet flow is unchanged (already uses the drawer)
-- Guest users still get redirected to sign-up/checkout (no drawer for unauthenticated users)
-- No backend or edge function changes needed
-
-## Technical Details
-
-Files modified:
-- `src/components/marketplace/product-details/ProductDetailsSidebar.tsx` -- Remove `!isLargeScreen` check (lines 154-161)
-- `src/components/marketplace/product-details/BuyNowDrawer.tsx` -- Add desktop width constraint if not already present
-
-Estimated scope: 2 files, ~5 lines changed.
+## Scope
+1 file, ~6 class name substitutions (lg to xl). No logic changes, no backend impact.
 

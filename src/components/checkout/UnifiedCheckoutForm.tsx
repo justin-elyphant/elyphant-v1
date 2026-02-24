@@ -714,11 +714,11 @@ const UnifiedCheckoutForm: React.FC = () => {
         </div>
       </div>
       
-      <div className="container mx-auto px-4 py-6 max-w-4xl mobile-container pb-40 lg:pb-8">
+      <div className="container mx-auto px-4 py-6 max-w-4xl mobile-container pb-40 xl:pb-8">
 
-        <div className="w-full max-w-full grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="w-full max-w-full grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-6">
           {/* Main Checkout Content - Mobile: Stack vertically */}
-          <div className="w-full lg:col-span-2 space-y-4 lg:space-y-6 min-w-0">
+          <div className="w-full xl:col-span-2 space-y-4 xl:space-y-6 min-w-0">
           
           {/* Registry-Style Wishlist Purchase: Show owner shipping info */}
           {isWishlistPurchase && wishlistOwnerInfo ? (
@@ -860,7 +860,7 @@ const UnifiedCheckoutForm: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground hidden lg:block">
+                  <p className="text-sm text-muted-foreground hidden xl:block">
                     Click the button below to proceed to secure checkout.
                   </p>
                   {/* Desktop/Tablet inline button - hidden on phone (sticky bar used instead) */}
@@ -889,8 +889,8 @@ const UnifiedCheckoutForm: React.FC = () => {
         </div>
 
           {/* Order Summary Sidebar - Mobile: Full width, stacked */}
-          <div className="w-full lg:col-span-1 order-first lg:order-last min-w-0">
-            <div className="lg:sticky lg:top-6">
+          <div className="w-full xl:col-span-1 order-first xl:order-last min-w-0">
+            <div className="xl:sticky xl:top-6">
               <CheckoutOrderSummary
                 items={cartItems}
                 subtotal={subtotal}

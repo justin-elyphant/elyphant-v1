@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CreditCard, ChevronRight, ChevronDown, Check, Plus, User, Gift } from "lucide-react";
+import { SimpleRecipientSelector, SelectedRecipient as SelectorRecipient } from "./SimpleRecipientSelector";
 import { Textarea } from "@/components/ui/textarea";
 import { Elements } from "@stripe/react-stripe-js";
 import stripeClientManager from "@/services/payment/StripeClientManager";
@@ -18,7 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 import { useDefaultPaymentMethod, DefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
-import { useEnhancedConnections, EnhancedConnection } from "@/hooks/profile/useEnhancedConnections";
+
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerHapticFeedback } from "@/utils/haptics";
@@ -54,7 +55,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const { user } = useAuth();
   const { defaultAddress, loading: addressLoading } = useDefaultAddress();
   const { defaultPaymentMethod, loading: paymentLoading } = useDefaultPaymentMethod();
-  const { connections: allConnections, loading: connectionsLoading } = useEnhancedConnections();
+  
   const [placing, setPlacing] = useState(false);
   const [paymentPickerOpen, setPaymentPickerOpen] = useState(false);
   const [allPaymentMethods, setAllPaymentMethods] = useState<DefaultPaymentMethod[]>([]);
@@ -94,15 +95,8 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   };
 
 
-  // Filter connections: only accepted with verified shipping address (city + state)
-  const connectionsWithAddress = useMemo(() => {
-    return allConnections
-      .filter(conn => {
-        const addr = conn.profile_shipping_address;
-        return addr && addr.city && addr.state;
-      })
-      .slice(0, 3); // Top 3 most recent
-  }, [allConnections]);
+  // userName for recipient selector
+  const userName = defaultAddress?.name || 'Myself';
 
   // Sync default payment method
   useEffect(() => {
@@ -318,62 +312,43 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="py-1 border-b border-border max-h-[200px] overflow-y-auto">
-                    {/* Myself */}
-                    <button
-                      onClick={() => handleSelectRecipient({ type: 'self', name: defaultAddress.name, address: defaultAddress.address })}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
-                        selectedRecipient?.type === 'self' ? 'bg-accent' : 'hover:bg-accent/50'
-                      }`}
-                    >
-                      <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium">Myself</span>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {defaultAddress.address.city}, {defaultAddress.address.state}
-                        </p>
-                      </div>
-                      {selectedRecipient?.type === 'self' && (
-                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      )}
-                    </button>
-
-                    {/* Connections */}
-                    {connectionsWithAddress.map((conn) => {
-                      const addr = conn.profile_shipping_address;
-                      const connId = conn.display_user_id || conn.connected_user_id || conn.id;
-                      const isSelected = selectedRecipient?.type === 'connection' && selectedRecipient.connectionId === connId;
-                      return (
-                        <button
-                          key={conn.id}
-                          onClick={() => handleSelectRecipient({
-                            type: 'connection',
-                            name: conn.profile_name || 'Connection',
-                            address: addr,
-                            connectionId: connId,
-                          })}
-                          className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors min-h-[44px] text-left ${
-                            isSelected ? 'bg-accent' : 'hover:bg-accent/50'
-                          }`}
-                        >
-                          <img
-                            src={conn.profile_image || '/placeholder.svg'}
-                            alt={conn.profile_name || ''}
-                            className="h-6 w-6 rounded-full object-cover flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium">{conn.profile_name}</span>
-                            <p className="text-xs text-muted-foreground">
-                              {addr.city}, {addr.state}
-                            </p>
-                          </div>
-                          {isSelected && (
-                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-
+                  <div className="py-2 border-b border-border">
+                    <SimpleRecipientSelector
+                      embedded={true}
+                      value={selectedRecipient ? {
+                        type: selectedRecipient.type === 'self' ? 'self' : 'connection',
+                        connectionId: selectedRecipient.connectionId,
+                        connectionName: selectedRecipient.name,
+                        shippingAddress: selectedRecipient.address ? {
+                          name: selectedRecipient.name,
+                          address: selectedRecipient.address.address_line1 || selectedRecipient.address.street || '',
+                          city: selectedRecipient.address.city || '',
+                          state: selectedRecipient.address.state || '',
+                          zipCode: selectedRecipient.address.zip_code || selectedRecipient.address.zipCode || '',
+                          country: selectedRecipient.address.country || 'US',
+                        } : undefined,
+                      } : null}
+                      onChange={(selected) => {
+                        handleSelectRecipient({
+                          type: selected.type === 'self' ? 'self' : 'connection',
+                          name: selected.connectionName || userName,
+                          address: selected.shippingAddress ? {
+                            address_line1: selected.shippingAddress.address,
+                            address_line2: selected.shippingAddress.addressLine2 || '',
+                            city: selected.shippingAddress.city,
+                            state: selected.shippingAddress.state,
+                            zip_code: selected.shippingAddress.zipCode,
+                            country: selected.shippingAddress.country || 'US',
+                          } : defaultAddress?.address,
+                          connectionId: selected.connectionId,
+                        });
+                      }}
+                      userAddress={defaultAddress?.address}
+                      userName={userName}
+                      onInviteNew={(name, email) => {
+                        toast.info(`Invitation sent to ${email}`);
+                      }}
+                    />
                   </div>
                 </CollapsibleContent>
               </Collapsible>

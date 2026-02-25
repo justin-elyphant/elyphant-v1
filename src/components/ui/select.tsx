@@ -93,6 +93,7 @@ const SelectContent = React.forwardRef<
           maxHeight: '240px'
         } as React.CSSProperties}
         onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {children}
       </SelectPrimitive.Viewport>

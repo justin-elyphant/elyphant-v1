@@ -56,8 +56,9 @@ export function DropdownDatePicker({ value, onChange, className }: DropdownDateP
           <SelectValue placeholder="Month" />
         </SelectTrigger>
         <SelectContent 
-          className="z-[9999] bg-background pointer-events-auto max-h-[200px]" 
+          className="z-[9999] bg-background pointer-events-auto max-h-[250px]" 
           position="popper"
+          onWheel={(e) => e.stopPropagation()}
         >
           {MONTHS.map((month) => (
             <SelectItem key={month} value={month}>
@@ -76,8 +77,9 @@ export function DropdownDatePicker({ value, onChange, className }: DropdownDateP
           <SelectValue placeholder="Day" />
         </SelectTrigger>
         <SelectContent 
-          className="z-[9999] bg-background pointer-events-auto max-h-[200px]" 
+          className="z-[9999] bg-background pointer-events-auto max-h-[250px]" 
           position="popper"
+          onWheel={(e) => e.stopPropagation()}
         >
           {days.map((day) => (
             <SelectItem key={day} value={day}>

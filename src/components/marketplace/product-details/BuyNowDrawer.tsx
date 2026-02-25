@@ -127,6 +127,15 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   const isLoading = addressLoading || paymentLoading;
   const activePayment = selectedPaymentMethod || defaultPaymentMethod;
+
+  // Auto-open payment section when no card exists but address is available
+  useEffect(() => {
+    if (!paymentLoading && !activePayment && defaultAddress) {
+      setPaymentPickerOpen(true);
+      setShowAddCardForm(true);
+    }
+  }, [paymentLoading, activePayment, defaultAddress]);
+
   const hasRequiredData = defaultAddress && activePayment && selectedRecipient !== null;
 
   const productName = product.title || product.name || "";
@@ -286,7 +295,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
-          ) : (defaultAddress && activePayment) ? (
+          ) : defaultAddress ? (
             <>
               {/* Step 1: Who is this for? — collapsible */}
               <Collapsible open={recipientOpen} onOpenChange={setRecipientOpen}>
@@ -415,7 +424,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                       <CreditCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">Pay with</p>
-                        <p className="text-sm">{formatCard()}</p>
+                        <p className="text-sm">{activePayment ? formatCard() : 'Add a payment method'}</p>
                       </div>
                     </div>
                     {paymentPickerOpen ? (
@@ -520,11 +529,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
           ) : (
             <div className="py-4 text-center">
               <p className="text-sm text-muted-foreground mb-3">
-                {!defaultAddress && !defaultPaymentMethod
-                  ? "Add a shipping address and payment method to use Buy Now"
-                  : !defaultAddress
-                  ? "Add a shipping address to use Buy Now"
-                  : "Add a payment method to use Buy Now"}
+                Add a shipping address to use Buy Now
               </p>
               <Button
                 variant="outline"

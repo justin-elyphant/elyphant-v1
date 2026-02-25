@@ -42,6 +42,7 @@ interface SimpleRecipientSelectorProps {
   userAddress?: any; // User's own shipping address from profile
   userName?: string;
   onInviteNew?: (name: string, email: string) => void;
+  embedded?: boolean; // When true, skip outer Collapsible wrapper (parent controls open/close)
 }
 
 export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = ({
@@ -49,7 +50,8 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   onChange,
   userAddress,
   userName = "Myself",
-  onInviteNew
+  onInviteNew,
+  embedded = false
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -193,6 +195,237 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     setInviteEmail("");
   };
 
+  // The inner content (search, connections list, invite form)
+  const innerContent = (
+    <div ref={contentRef} className={cn(!embedded && "mt-2 rounded-lg border bg-background shadow-sm")}>
+      {/* Invite Form */}
+      {showInviteForm ? (
+        <div className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Invite New Recipient</h3>
+            <Button variant="ghost" size="sm" onClick={resetInviteForm} className="h-8 px-2">
+              Cancel
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-name" className="text-xs">Name</Label>
+              <Input
+                id="invite-name"
+                placeholder="Recipient's name"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email" className="text-xs">Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="recipient@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleInviteSubmit}
+            disabled={!inviteName.trim() || !inviteEmail.trim()}
+            className="w-full h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
+          >
+            Send Invitation
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            They'll receive an email to share their shipping address
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          {/* Connection list - natural height, parent modal scrolls */}
+          <div className="divide-y">
+            {/* Invite New Recipient Option - TOP of list for visibility */}
+            {onInviteNew && (
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback('light');
+                    setShowInviteForm(true);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
+                    <UserPlus className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Invite New Recipient</div>
+                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Ship to Myself Option */}
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={handleSelectSelf}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
+                  value?.type === 'self' && "bg-accent"
+                )}
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Ship to {userName}</div>
+                  <div className="text-xs text-muted-foreground">Your own address</div>
+                </div>
+                {value?.type === 'self' && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            </div>
+
+            {/* Search input - positioned above Top Connections */}
+            <div className="flex items-center border-b px-3 py-2 bg-background">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input
+                type="text"
+                placeholder="Search connections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
+                autoComplete="off"
+              />
+              {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
+            </div>
+
+            {/* Top Connections Section (includes pending invitations) */}
+            {(displayConnections.length > 0 || filteredPending.length > 0) && (
+              <div className="p-2">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {searchQuery.trim().length >= 2 ? 'Matching Connections' : 'Your Top Connections'}
+                </div>
+                
+                {/* Accepted connections */}
+                {displayConnections.map((connection) => {
+                  const connectionId = connection.display_user_id || connection.connected_user_id;
+                  const isSelected = value?.type === 'connection' && value?.connectionId === connectionId;
+                  
+                  return (
+                    <button
+                      key={connection.id}
+                      type="button"
+                      onClick={() => handleSelectConnection(connection)}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
+                        isSelected && "bg-accent"
+                      )}
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={connection.profile_image} />
+                        <AvatarFallback>
+                          {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">
+                          {connection.profile_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {connection.relationship_type || 'Connection'}
+                        </div>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  );
+                })}
+                
+                {/* Pending invitations (merged into same section) */}
+                {filteredPending.map((invitation) => {
+                  const isSelected = value?.type === 'connection' && value?.connectionId === invitation.id;
+                  
+                  return (
+                    <button
+                      key={invitation.id}
+                      type="button"
+                      onClick={() => handleSelectConnection(invitation)}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
+                        isSelected && "bg-accent"
+                      )}
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {(invitation.profile_name || invitation.pending_recipient_name)?.substring(0, 2).toUpperCase() || 'UN'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">
+                          {invitation.profile_name || invitation.pending_recipient_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {invitation.pending_recipient_email || 'Invitation sent'}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-xs">Pending</Badge>
+                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                  );
+                })}
+                
+                {/* Show hint when more connections exist */}
+                {hasMoreConnections && (
+                  <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                    +{filteredConnections.length - 3} more • Search to find them
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Assign Later Option */}
+            {!embedded && (
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={handleSelectLater}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
+                    value?.type === 'later' && "bg-accent"
+                  )}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Assign Later</div>
+                    <div className="text-xs text-muted-foreground">Choose recipient in cart</div>
+                  </div>
+                  {value?.type === 'later' && <Check className="h-4 w-4 text-primary" />}
+                </button>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No connections found matching "{searchQuery}"
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // In embedded mode, render content directly without Collapsible wrapper
+  if (embedded) {
+    return innerContent;
+  }
+
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
@@ -211,226 +444,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
       </CollapsibleTrigger>
       
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-        <div ref={contentRef} className="mt-2 rounded-lg border bg-background shadow-sm">
-          {/* Invite Form */}
-          {showInviteForm ? (
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm">Invite New Recipient</h3>
-                <Button variant="ghost" size="sm" onClick={resetInviteForm} className="h-8 px-2">
-                  Cancel
-                </Button>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="invite-name" className="text-xs">Name</Label>
-                  <Input
-                    id="invite-name"
-                    placeholder="Recipient's name"
-                    value={inviteName}
-                    onChange={(e) => setInviteName(e.target.value)}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="invite-email" className="text-xs">Email</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    placeholder="recipient@email.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="h-11 text-base"
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={handleInviteSubmit}
-                disabled={!inviteName.trim() || !inviteEmail.trim()}
-                className="w-full h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
-              >
-                Send Invitation
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                They'll receive an email to share their shipping address
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col">
-              {/* Connection list - natural height, parent modal scrolls */}
-              <div className="divide-y">
-                {/* Invite New Recipient Option - TOP of list for visibility */}
-                {onInviteNew && (
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHapticFeedback('light');
-                        setShowInviteForm(true);
-                      }}
-                      className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
-                        <UserPlus className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <div className="font-medium">Invite New Recipient</div>
-                        <div className="text-xs text-muted-foreground">Send an invitation via email</div>
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {/* Ship to Myself Option */}
-                <div className="p-2">
-                  <button
-                    type="button"
-                    onClick={handleSelectSelf}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
-                      value?.type === 'self' && "bg-accent"
-                    )}
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="font-medium">Ship to {userName}</div>
-                      <div className="text-xs text-muted-foreground">Your own address</div>
-                    </div>
-                    {value?.type === 'self' && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                </div>
-
-                {/* Search input - positioned above Top Connections */}
-                <div className="flex items-center border-b px-3 py-2 bg-background">
-                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                  <input
-                    type="text"
-                    placeholder="Search connections..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
-                    autoComplete="off"
-                  />
-                  {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
-                </div>
-
-                {/* Top Connections Section (includes pending invitations) */}
-                {(displayConnections.length > 0 || filteredPending.length > 0) && (
-                  <div className="p-2">
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {searchQuery.trim().length >= 2 ? 'Matching Connections' : 'Your Top Connections'}
-                    </div>
-                    
-                    {/* Accepted connections */}
-                    {displayConnections.map((connection) => {
-                      const connectionId = connection.display_user_id || connection.connected_user_id;
-                      const isSelected = value?.type === 'connection' && value?.connectionId === connectionId;
-                      
-                      return (
-                        <button
-                          key={connection.id}
-                          type="button"
-                          onClick={() => handleSelectConnection(connection)}
-                          className={cn(
-                            "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
-                            isSelected && "bg-accent"
-                          )}
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={connection.profile_image} />
-                            <AvatarFallback>
-                              {connection.profile_name?.substring(0, 2).toUpperCase() || 'UN'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 text-left">
-                            <div className="font-medium">
-                              {connection.profile_name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {connection.relationship_type || 'Connection'}
-                            </div>
-                          </div>
-                          {isSelected && <Check className="h-4 w-4 text-primary" />}
-                        </button>
-                      );
-                    })}
-                    
-                    {/* Pending invitations (merged into same section) */}
-                    {filteredPending.map((invitation) => {
-                      const isSelected = value?.type === 'connection' && value?.connectionId === invitation.id;
-                      
-                      return (
-                        <button
-                          key={invitation.id}
-                          type="button"
-                          onClick={() => handleSelectConnection(invitation)}
-                          className={cn(
-                            "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
-                            isSelected && "bg-accent"
-                          )}
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {(invitation.profile_name || invitation.pending_recipient_name)?.substring(0, 2).toUpperCase() || 'UN'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 text-left">
-                            <div className="font-medium">
-                              {invitation.profile_name || invitation.pending_recipient_name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {invitation.pending_recipient_email || 'Invitation sent'}
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="text-xs">Pending</Badge>
-                          {isSelected && <Check className="h-4 w-4 text-primary" />}
-                        </button>
-                      );
-                    })}
-                    
-                    {/* Show hint when more connections exist */}
-                    {hasMoreConnections && (
-                      <div className="px-3 py-2 text-xs text-muted-foreground text-center">
-                        +{filteredConnections.length - 3} more • Search to find them
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Assign Later Option */}
-                <div className="p-2">
-                  <button
-                    type="button"
-                    onClick={handleSelectLater}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation",
-                      value?.type === 'later' && "bg-accent"
-                    )}
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                      <Clock className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="font-medium">Assign Later</div>
-                      <div className="text-xs text-muted-foreground">Choose recipient in cart</div>
-                    </div>
-                    {value?.type === 'later' && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                </div>
-
-                {/* Empty state */}
-                {filteredConnections.length === 0 && filteredPending.length === 0 && searchQuery.length >= 2 && (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No connections found matching "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        {innerContent}
       </CollapsibleContent>
     </Collapsible>
   );

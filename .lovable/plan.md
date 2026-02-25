@@ -1,43 +1,89 @@
 
 
-# Fix Touch Scroll in Select Dropdowns on Tablet
+# Fix: Inline Add-Card in Buy Now Drawer + Auto-Save
 
-## Root Cause
+## Problem
 
-The `onWheel` fix we applied only intercepts **mouse wheel / trackpad** scroll events. On a tablet with finger touch, the browser fires **touch events** (`touchstart`, `touchmove`, `touchend`) instead -- these still propagate up to the parent Dialog, which captures them and prevents the dropdown list from scrolling.
-
-The keyboard/trackpad worked because those generate wheel events. Finger touch does not.
+When a user has a shipping address but no saved payment method, the Buy Now drawer shows a dead-end "Go to Settings" screen. The inline Stripe card form already exists inside the payment collapsible (lines 443-487) and already saves cards via the `save-payment-method` edge function -- it's just unreachable because the entire drawer UI is gated behind `defaultAddress && activePayment` (line 289).
 
 ## Solution
 
-Add `onTouchMove={(e) => e.stopPropagation()}` to the `SelectPrimitive.Viewport` in `src/components/ui/select.tsx`. This is the shared Select component, so the fix applies globally to every Select dropdown in the app -- including the date picker, and any future Select inside a Dialog.
+Three surgical changes in `BuyNowDrawer.tsx`:
 
-## Changes
+### 1. Relax the main gate (line 289)
 
-### File: `src/components/ui/select.tsx`
-
-**Viewport element (line 84-96):** Add `onTouchMove` propagation stop alongside the existing `onWheel` stop:
-
+Change from:
 ```
-// Line 84-96, add onTouchMove handler
-<SelectPrimitive.Viewport
-  className={cn(
-    "p-1 overflow-y-auto overscroll-contain touch-pan-y",
-    position === "popper" &&
-      "w-full min-w-[var(--radix-select-trigger-width)]"
-  )}
-  style={{
-    WebkitOverflowScrolling: 'touch',
-    scrollbarWidth: 'thin',
-    maxHeight: '240px'
-  } as React.CSSProperties}
-  onWheel={(e) => e.stopPropagation()}
-  onTouchMove={(e) => e.stopPropagation()}
->
+) : (defaultAddress && activePayment) ? (
+```
+to:
+```
+) : defaultAddress ? (
 ```
 
-This single line addition ensures touch scroll gestures stay contained within the dropdown viewport and don't bubble up to the Dialog overlay.
+This lets the full 3-step drawer render when the user has an address but no card yet.
+
+### 2. Auto-open the payment section when no card exists
+
+Add a `useEffect` after the existing sync effect (after line 112):
+
+```tsx
+useEffect(() => {
+  if (!paymentLoading && !activePayment && defaultAddress) {
+    setPaymentPickerOpen(true);
+    setShowAddCardForm(true);
+  }
+}, [paymentLoading, activePayment, defaultAddress]);
+```
+
+This immediately shows the Stripe card form so the user doesn't have to click through two levels to find it.
+
+### 3. Update the payment trigger label for empty state (line 418)
+
+Change from:
+```
+<p className="text-sm">{formatCard()}</p>
+```
+to:
+```
+<p className="text-sm">{activePayment ? formatCard() : 'Add a payment method'}</p>
+```
+
+### 4. Simplify the fallback (lines 520-539)
+
+The fallback now only handles the missing-address case:
+
+```tsx
+) : (
+  <div className="py-4 text-center">
+    <p className="text-sm text-muted-foreground mb-3">
+      Add a shipping address to use Buy Now
+    </p>
+    <Button
+      variant="outline"
+      className="min-h-[44px]"
+      onClick={() => { onOpenChange(false); navigate("/settings"); }}
+    >
+      Go to Settings
+    </Button>
+  </div>
+)}
+```
+
+### 5. Footer CTA remains gated (line 544 -- no change)
+
+The "Place your order" button already requires `defaultAddress && activePayment`, so it only appears after the user saves a card. No change needed.
+
+## Card Saving Already Works
+
+The existing `onSuccess` callback (lines 457-469) already:
+1. Calls `save-payment-method` edge function (via `UnifiedPaymentForm` setup mode)
+2. Refreshes the payment methods list from the database
+3. Auto-selects the newly added card as `selectedPaymentMethod`
+
+So the card persists and won't be asked for again on the next Buy Now.
 
 ## Scope
-1 file, 1 line added. No logic changes, no backend impact. Fixes all Select dropdowns inside Dialogs app-wide.
+
+1 file: `BuyNowDrawer.tsx`. 4 small edits. No backend changes.
 

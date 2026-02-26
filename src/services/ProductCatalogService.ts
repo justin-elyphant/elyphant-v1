@@ -11,6 +11,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { mapDbProductsToProducts } from "@/utils/mapDbProduct";
 
 export interface SearchFilters {
   minPrice?: number;
@@ -127,8 +128,9 @@ class ProductCatalogServiceClass {
         };
       }
 
-      // Normalize response structure
-      const products = data?.results || data?.products || [];
+      // Normalize response structure — reuse shared mapper for price safety net
+      const rawProducts = data?.results || data?.products || [];
+      const products = mapDbProductsToProducts(rawProducts);
       
       return {
         products,

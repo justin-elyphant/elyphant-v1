@@ -240,11 +240,18 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
 /**
  * Transform cached product to standard format
  */
-const transformCachedProduct = (p: any) => ({
+const transformCachedProduct = (p: any) => {
+  let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
+  // Safety net: reuse same heuristic as mapDbProductToProduct (> 200 = cents)
+  if (price > 200 && (p.retailer === 'amazon' || p.retailer === 'Amazon')) {
+    price = price / 100;
+  }
+
+  return {
   product_id: p.product_id,
   asin: p.product_id,
   title: p.title,
-  price: p.price,
+  price,
   image: p.image_url,
   main_image: p.metadata?.main_image || p.image_url,
   images: p.metadata?.images || [p.image_url],
@@ -262,7 +269,8 @@ const transformCachedProduct = (p: any) => ({
   view_count: p.view_count || 0,
   popularity_score: calculatePopularityScore(p, p.metadata || {}),
   from_cache: true
-});
+  };
+};
 
 /**
  * Check if we have enough cached products for a query (cache-first lookup)

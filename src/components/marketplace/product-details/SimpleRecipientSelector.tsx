@@ -59,6 +59,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   const { connections, pendingInvitations, loading } = useEnhancedConnections();
   
@@ -249,10 +250,16 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
             <div className="flex items-center border-b px-3 py-2 bg-background">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search connections..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  setTimeout(() => {
+                    searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }, 350);
+                }}
                 className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
                 autoComplete="off"
               />

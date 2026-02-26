@@ -19,6 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDefaultAddress } from "@/hooks/useDefaultAddress";
 import { useDefaultPaymentMethod, DefaultPaymentMethod } from "@/hooks/useDefaultPaymentMethod";
+import { useIOSKeyboardResize } from "@/hooks/useIOSKeyboardResize";
 
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,32 +67,15 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   const [giftNoteOpen, setGiftNoteOpen] = useState(false);
   const [recipientOpen, setRecipientOpen] = useState(false);
   const [scheduledDate] = useState<string>("");
-  const [drawerMaxHeight, setDrawerMaxHeight] = useState('85vh');
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  // Keyboard-aware drawer height for iOS
-  useEffect(() => {
-    if (!open) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const onResize = () => {
-      const ratio = vv.height / window.innerHeight;
-      if (ratio < 0.75) {
-        setDrawerMaxHeight(`${vv.height - 20}px`);
-      } else {
-        setDrawerMaxHeight('85vh');
-      }
-    };
-
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
-  }, [open]);
+  // Shared iOS keyboard resize hook — sets --keyboard-viewport-height CSS var
+  useIOSKeyboardResize();
 
   const handleTextareaFocus = () => {
     setTimeout(() => {
-      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 300);
+      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 350);
   };
 
 
@@ -253,7 +237,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col sm:max-w-lg sm:mx-auto" style={{ maxHeight: drawerMaxHeight }}>
+      <DrawerContent className="flex flex-col sm:max-w-lg sm:mx-auto">
         <DrawerHeader className="pb-2">
           <DrawerTitle className="sr-only">Buy Now</DrawerTitle>
           {/* Product summary */}

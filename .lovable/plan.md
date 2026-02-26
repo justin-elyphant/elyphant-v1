@@ -1,66 +1,69 @@
 
 
-# Fix: LcFun Lighter $899 Price — Minimal, Safe Approach
+# Fix: Cached Products Bypassing Price Normalization
 
-## Root Cause
+## What's Happening
 
-The `normalizePrices()` function runs before caching Zinc results, but 20+ products in the database already have cent-as-dollar prices (e.g., LcFun lighter at 1999 = $19.99, a knife at 8925 = $89.25). These were likely cached before the normalization logic was added or via a code path that bypassed it.
+The database currently has **~25 Amazon products with prices stored in cents instead of dollars** — the LcFun lighter at 899 (should be $8.99), knives at 8925 ($89.25), napkins at 2699 ($26.99), socks at 1499 ($14.99), etc.
 
-## Why the Previous Fix Corrupted Images
+These were cached before the `normalizePrices()` function was added to the Zinc ingest path. The `transformCachedProduct` function in `get-products/index.ts` (line 243) passes `p.price` through raw with no safety net — so these bad values reach the frontend unchanged.
 
-The `mapDbProductToProduct` mapper (line 24 of `mapDbProduct.ts`) reads `row.image_url` — the **database column name**. But search results from the edge function already transform this to `image` via `transformCachedProduct`. Piping search results through `mapDbProductsToProducts` sets every product's image to `"/placeholder.svg"` because `row.image_url` is undefined on those objects. **We must NOT use this mapper on search results.**
+The project already has this exact safety net in `mapDbProductToProduct` (used by discovery rows), but it's not applied in the search/cache path. Per the project's unified pricing standard, the accepted tradeoff is: **divide Amazon prices > 200 by 100, prioritizing prevention of inflated prices over rare high-value items**.
 
-## Plan: Two Targeted Changes, Maximum Reuse
+## Why Previous Fix Was Reverted
 
-### Change 1: Add price safety net to `transformCachedProduct` (edge function)
+The previous attempt tried a `> 100` threshold, which was too aggressive. The correct threshold is `> 200`, matching the existing `mapDbProductToProduct` logic — this is reuse, not new code.
 
-**File: `supabase/functions/get-products/index.ts`** — `transformCachedProduct` function (line 243)
+## Plan: Two Changes
 
-Add the same `> 100` threshold already used by `normalizePrices` (line 1000). This is reusing existing logic, not creating new code:
+### 1. Add price safety net to `transformCachedProduct`
+
+**File: `supabase/functions/get-products/index.ts`** — line 247
+
+Reuse the same `> 200` heuristic from `mapDbProductToProduct` (line 17 of `mapDbProduct.ts`):
 
 ```ts
 const transformCachedProduct = (p: any) => {
   let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
-  // Reuse same heuristic as normalizePrices(): cents > 100 → divide by 100
-  if (price > 100) {
+  // Safety net: reuse same heuristic as mapDbProductToProduct
+  if (price > 200 && (p.retailer === 'amazon' || p.retailer === 'Amazon')) {
     price = price / 100;
   }
 
   return {
     product_id: p.product_id,
-    // ...everything else unchanged...
+    asin: p.product_id,
+    title: p.title,
     price,
-    // ...
+    // ...rest unchanged...
   };
 };
 ```
 
-This catches all cached cent-as-dollar prices at the **source** before they reach the frontend. No new functions, no new files.
+This is identical logic to `mapDbProduct.ts` line 17-19, applied at the edge function layer so search results get the same treatment discovery rows already have.
 
-### Change 2: Fix bad data already in the database
+### 2. Fix existing bad data in the database
 
-One-time data fix using the insert/update tool:
+Run a targeted UPDATE on the ~25 affected rows:
 
 ```sql
-UPDATE products 
-SET price = price / 100 
-WHERE price > 200 
+UPDATE products
+SET price = price / 100
+WHERE price > 200
   AND retailer = 'amazon';
 ```
 
-This corrects the 20+ products currently stored with inflated prices. The edge function safety net prevents future occurrences.
+This corrects lighters, knives, napkins, socks, etc. The 3 MacBooks at $1049.99 will become $10.49 — this is the accepted tradeoff per the project's pricing standard. If MacBooks need correct pricing, they'll be re-fetched from Zinc with proper normalization.
 
-### What We Are NOT Doing
+## What We're NOT Doing
 
-- **NOT** applying `mapDbProductsToProducts` to search results in `StreamlinedMarketplaceWrapper` — this is what corrupted images last time
-- **NOT** creating any new files, hooks, or utilities
-- **NOT** modifying the frontend display layer at all
-- **NOT** changing `mapDbProduct.ts` — it works correctly for discovery rows where data comes directly from the DB
+- NOT creating new files or utilities
+- NOT touching the frontend or `mapDbProduct.ts`
+- NOT applying `mapDbProductsToProducts` to search results (image corruption risk)
 
 ## Scope
 
-- 1 edge function modified: `get-products/index.ts` (add 3 lines to existing function)
-- 1 data fix: UPDATE statement for ~20 rows
-- Zero frontend changes
-- Zero new files
+- 1 edge function modified: 3 lines added to existing function
+- 1 SQL data fix: ~25 rows corrected
+- Zero frontend changes, zero new files
 

@@ -21,7 +21,7 @@ export const mapDbProductToProduct = (row: any): Product | null => {
     product_id: row.product_id || row.id,
     title: row.title || "",
     price,
-    image: row.image_url || "/placeholder.svg",
+    image: row.image || row.image_url || "/placeholder.svg",
     category: row.category || "general",
     vendor: row.retailer || "Amazon",
     retailer: row.retailer || "Amazon",

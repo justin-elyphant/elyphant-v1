@@ -95,10 +95,10 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   // Limit to top 3 when not searching
   const displayConnections = useMemo(() => {
     if (searchQuery.trim().length >= 2) return filteredConnections; // Show all matches when searching
-    return filteredConnections.slice(0, 3); // Limit to top 3 when not searching
+    return filteredConnections.slice(0, 5); // Limit to top 5 when not searching
   }, [filteredConnections, searchQuery]);
   
-  const hasMoreConnections = !searchQuery.trim() && filteredConnections.length > 3;
+  const hasMoreConnections = !searchQuery.trim() && filteredConnections.length > 5;
   
   // Only show pending when searching (not in default top 3 view)
   const filteredPending = useMemo(() => {
@@ -245,29 +245,21 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
         <div className="flex flex-col">
           {/* Connection list - natural height, parent modal scrolls */}
           <div className="divide-y">
-            {/* Invite New Recipient Option - TOP of list for visibility */}
-            {onInviteNew && (
-              <div className="p-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHapticFeedback('light');
-                    setShowInviteForm(true);
-                  }}
-                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
-                    <UserPlus className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Invite New Recipient</div>
-                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
-                  </div>
-                </button>
-              </div>
-            )}
+            {/* 1. Search input - FIRST thing user sees */}
+            <div className="flex items-center border-b px-3 py-2 bg-background">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <input
+                type="text"
+                placeholder="Search connections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
+                autoComplete="off"
+              />
+              {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
+            </div>
 
-            {/* Ship to Myself Option */}
+            {/* 2. Ship to Myself Option */}
             <div className="p-2">
               <button
                 type="button"
@@ -288,26 +280,12 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
               </button>
             </div>
 
-            {/* Search input - positioned above Top Connections */}
-            <div className="flex items-center border-b px-3 py-2 bg-background">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <input
-                type="text"
-                placeholder="Search connections..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent border-0 outline-none text-base placeholder:text-muted-foreground"
-                autoComplete="off"
-              />
-              {loading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
-            </div>
-
-            {/* Top Connections Section (includes pending invitations) */}
+            {/* 3. Top 5 Connections (or filtered results) */}
             {(displayConnections.length > 0 || filteredPending.length > 0) && (
               <div className="p-2">
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {searchQuery.trim().length >= 2 ? 'Matching Connections' : 'Your Top Connections'}
+                  {searchQuery.trim().length >= 2 ? 'Results' : 'Your Connections'}
                 </div>
                 
                 {/* Accepted connections */}
@@ -380,9 +358,31 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                 {/* Show hint when more connections exist */}
                 {hasMoreConnections && (
                   <div className="px-3 py-2 text-xs text-muted-foreground text-center">
-                    +{filteredConnections.length - 3} more • Search to find them
+                    +{filteredConnections.length - 5} more • Search to find them
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 4. Invite New Recipient - BOTTOM (least common action) */}
+            {onInviteNew && (
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback('light');
+                    setShowInviteForm(true);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
+                    <UserPlus className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">Invite New Recipient</div>
+                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
+                  </div>
+                </button>
               </div>
             )}
 

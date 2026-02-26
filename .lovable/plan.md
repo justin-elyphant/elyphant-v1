@@ -1,46 +1,80 @@
 
 
-# Fix: Reuse `mapDbProductToProduct` for Search Result Price Normalization
+# Redesign: E-Commerce Friendly Recipient Selector in Buy Now Drawer
 
-## Analysis
+## Problem
 
-After reading the codebase, here's what already exists:
+Looking at the screenshot, the current layout inside the "Who is this for?" section is:
+1. "Invite New Recipient" (top)
+2. "Ship to Checkout Address" (second)
+3. Search bar (third)
+4. Then connections below
 
-1. **`mapDbProductToProduct`** (`src/utils/mapDbProduct.ts`) — already has the exact safety net needed: divides Amazon prices > 200 by 100, rejects invalid prices. Used by discovery paths (trending, brands, life events).
-2. **`normalizePrices`** (edge function) — runs on fresh Zinc results before caching. Works correctly for NEW searches.
-3. **`transformCachedProduct`** (edge function) — passes price through raw. This is where the $939 lighters leak through — they were cached before `normalizePrices` existed.
+This ordering is unintuitive for e-commerce. The most common actions (ship to myself, pick a friend) are buried. "Invite New Recipient" being first is odd -- it's the least common action.
 
-The search results path (`ProductCatalogService` → `get-products` → `transformCachedProduct`) is the ONLY path that doesn't run through `mapDbProductToProduct`. That's the gap.
+The user wants:
+- Search bar visible first when dropdown opens
+- Clicking into search shows top 5 connections (not 3) before typing
+- "My address" (Ship to Myself) shown above the top connections
+- "Invite New Recipient" moved to the bottom of the container
+- Connections disappear as user types and filters
+- Clean e-commerce feel
 
-## Stripe Webhook Safety
+## Changes
 
-No conflict. Stripe webhooks read prices from **session metadata** set by `create-checkout-session` at purchase time — not from the products table or display prices. The checkout session captures the price the user saw and agreed to. Normalizing display prices has zero effect on payment amounts.
+### File: `src/components/marketplace/product-details/SimpleRecipientSelector.tsx`
 
-## Plan: One-File Change
+**1. Reorder the inner content sections (lines 247-410)**
 
-### File: `src/services/ProductCatalogService.ts`
+New order inside the `divide-y` container:
+1. **Search input** -- first thing the user sees
+2. **"Ship to Myself"** -- always visible, right below search
+3. **Top 5 Connections** -- auto-populate when search is empty, filter as user types
+4. **"Invite New Recipient"** -- moved to bottom (least common action)
 
-Import and apply `mapDbProductsToProducts` to the search response (around line 131):
+Remove the "Assign Later" option when `embedded` (already hidden, confirmed).
 
-```ts
-import { mapDbProductsToProducts } from '@/utils/mapDbProduct';
+**2. Change top connections limit from 3 to 5 (line 98)**
 
-// After receiving products from edge function:
-const rawProducts = data?.results || data?.products || [];
-const products = mapDbProductsToProducts(rawProducts);
+```tsx
+// Before
+return filteredConnections.slice(0, 3);
+
+// After  
+return filteredConnections.slice(0, 5);
 ```
 
-This reuses the existing mapper that:
-- Divides Amazon prices > 200 by 100 (catches $939 → $9.39)
-- Rejects products with price ≤ 0
-- Normalizes all field names (stars, reviewCount, images, etc.)
+Update the `hasMoreConnections` threshold to match (line 101):
+```tsx
+const hasMoreConnections = !searchQuery.trim() && filteredConnections.length > 5;
+```
 
-No new logic. No edge function changes. No deployment needed.
+And the "+N more" count (line 383):
+```tsx
++{filteredConnections.length - 5} more
+```
 
-## Why This Works
+**3. Reorder the JSX blocks inside the `divide-y` div**
 
-- The $939 lighter (939 > 200) gets divided to $9.39
-- The $22 NFL poncho (22 < 200) passes through unchanged
-- Legitimate $200+ products are rare in a gift marketplace and would be divided — same existing tradeoff already accepted in discovery paths
-- Over time, as products get re-cached via fresh Zinc searches, `normalizePrices` writes correct values and the frontend safety net becomes a no-op
+Current order: Invite → Ship to Myself → Search → Connections → Assign Later
+
+New order:
+```
+Search input (sticky at top)
+Ship to Myself  
+Top 5 Connections (or filtered results)
+Invite New Recipient (at bottom)
+```
+
+Move the search `<div>` block (lines 292-303) to be the first child.
+Move "Ship to Myself" block (lines 271-289) to be second.
+Move "Invite New Recipient" block (lines 249-268) to be after the connections section.
+
+**4. Update section header text**
+
+When not searching, show "Your Connections" instead of "Your Top Connections" (cleaner for e-commerce). When searching, show "Results".
+
+## Scope
+
+1 file: `SimpleRecipientSelector.tsx`. Reorder existing blocks + change limit from 3→5. No new components, no backend changes. The BuyNowDrawer integration stays unchanged since it uses `embedded={true}` and the selector handles its own layout.
 

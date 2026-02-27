@@ -164,6 +164,14 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   return (
     <>
       <div className="space-y-6 bg-white rounded-lg p-6 sticky top-24">
+        {/* Unavailable Product Banner */}
+        {(product as any).is_unavailable && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-center">
+            <p className="text-sm font-medium text-destructive">This product is no longer available</p>
+            <p className="text-xs text-muted-foreground mt-1">This item has been discontinued and can't be purchased.</p>
+          </div>
+        )}
+        
         {/* Product Title */}
         <div>
           <h1 className="text-2xl font-bold text-elyphant-black leading-tight">
@@ -220,12 +228,13 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           </div>
         )}
         
-        {/* 4 CTA BUTTONS - Wishlist-first hierarchy */}
+        {/* 4 CTA BUTTONS - Wishlist-first hierarchy — disabled when unavailable */}
         <div className="space-y-3">
           {/* Position 0: Buy Now - INSTANT PURCHASE (Red accent) */}
           <Button
             className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium h-12"
             onClick={handleBuyNowClick}
+            disabled={(product as any).is_unavailable}
           >
             <Zap className="h-5 w-5 mr-2" />
             Buy Now
@@ -253,6 +262,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             variant="outline"
             className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
             onClick={handleScheduleGift}
+            disabled={(product as any).is_unavailable}
           >
             <Calendar className="h-5 w-5 mr-2" />
             Schedule as Gift
@@ -263,6 +273,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
             variant="outline"
             className="w-full border border-gray-300 bg-white text-elyphant-grey-text font-medium h-12 hover:border-gray-400"
             onClick={handleAddToCart}
+            disabled={(product as any).is_unavailable}
           >
             <ShoppingCart className="h-5 w-5 mr-2" />
             Add to Cart

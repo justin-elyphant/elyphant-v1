@@ -8,6 +8,7 @@ interface TargetEventHook {
     name: string;
     date: Date;
     type: string;
+    personName?: string;
   } | null;
 }
 
@@ -21,6 +22,7 @@ export const useTargetEvent = (
     name: string;
     date: Date;
     type: string;
+    personName?: string;
   } | null>(null);
 
   // Memoize the friendOccasions array to prevent infinite re-renders
@@ -64,7 +66,8 @@ export const useTargetEvent = (
         setTargetEvent({
           name: closestEvent.name,
           date: closestDate,
-          type: closestEvent.type
+          type: closestEvent.type,
+          personName: closestEvent.personName
         });
       }
     } else if (targetEvent !== null) {

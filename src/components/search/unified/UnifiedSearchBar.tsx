@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, TrendingUp, Package, Users, UserPlus, Clock, UserCheck } from "lucide-react";
@@ -72,6 +72,21 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   const [inputFocused, setInputFocused] = useState(false);
   
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Sync query with URL search param so text persists after navigation
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch) {
+      setQuery(urlSearch);
+    }
+  }, [searchParams]);
+
+  // Close suggestions on route change for graceful transitions
+  useEffect(() => {
+    setShowSuggestions(false);
+  }, [location.pathname, location.search]);
   const { user } = useAuth();
   const { recentSearches, addSearch } = useUserSearchHistory();
   const isMobile = useIsMobile();

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileDataIntegrity } from "@/hooks/common/useProfileDataIntegrity";
@@ -23,7 +23,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 
 const UserButton = () => {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut, isEmployee } = useAuth();
   const { profile } = useProfile();
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
@@ -43,6 +45,11 @@ const UserButton = () => {
   
   const { sections } = getNavigationConfig(true, badges);
   
+  // Close dropdown immediately on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
   // Debounced integrity check to prevent page cycling
   React.useEffect(() => {
     if (user && profile) {
@@ -52,7 +59,7 @@ const UserButton = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [user?.id, profile?.id, checkDataIntegrity]); // Add checkDataIntegrity dependency
+  }, [user?.id, profile?.id, checkDataIntegrity]);
   
   // Get user initials from first and last name, fallback to email
   const getUserInitials = () => {
@@ -138,7 +145,7 @@ const UserButton = () => {
   // On mobile, render enriched dropdown matching desktop feature parity
   if (isMobile) {
     return (
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
             <Avatar className="h-9 w-9 border border-border shadow-sm transition-all duration-200 hover:shadow-md">
@@ -302,7 +309,7 @@ const UserButton = () => {
   
   // Desktop dropdown menu
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center space-x-1 hover:opacity-80 active:opacity-70 transition-all duration-200 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 rounded-full p-1 -m-1 touch-manipulation">
           <Avatar className="h-9 w-9 border border-border shadow-sm transition-all duration-200 hover:shadow-md">

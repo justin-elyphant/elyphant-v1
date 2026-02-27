@@ -1,28 +1,53 @@
 
 
-# Replace Mock Friend Dates with Real Connection Data
+# Wire Hero "Shop" Button to Personalized Marketplace Route
 
 ## Problem
-`src/hooks/useConnectedFriendsSpecialDates.ts` uses hardcoded mock data (John Smith, Emma Wilson, Michael Davis) instead of querying real connections. The `useEnhancedConnections` hook already fetches `profile_dob` and `profile_important_dates` for each accepted connection — this data just needs to be used.
+The hero countdown "Shop" button navigates to a dumb text search (`/marketplace?search=Curt+Davidson's+birthday+gift`) instead of the existing personalized route that activates Nicole's 4-tier intelligence system.
 
-## Database Verification
-- **Curt Davidson** (connected to justin@elyphant.com): `dob: "03-01"` — birthday is March 1st
-- **Charles Meeks**: `dob: "11-26"`
-- **Justin Meeks**: `dob: "01-11"`
+## Fix — Single file: `src/components/marketplace/hero/HeroContent.tsx`
 
-All data is already available via `useEnhancedConnections`.
+### 1. Update `handleShopNowClick()` for birthday events
+When `targetEvent.type === "birthday"`, navigate to `/marketplace/for/{name}` with event context state instead of a plain search:
 
-## Changes
+```ts
+if (targetEvent?.type === "birthday" && targetEvent.personName) {
+  const slug = targetEvent.personName.toLowerCase().replace(/\s+/g, '-');
+  navigate(`/marketplace/for/${slug}`, {
+    state: {
+      eventType: 'birthday',
+      relationship: 'friend'
+    }
+  });
+}
+```
 
-### `src/hooks/useConnectedFriendsSpecialDates.ts` — Full rewrite
+This activates the existing `PersonalizedMarketplace` page which uses `NicoleMarketplaceIntelligenceService` with the 4-tier hierarchy:
+- **Tier 1**: Curt's public wishlist items
+- **Tier 2**: Curt's profile interests
+- **Tier 3**: AI-curated products for "birthday" + "friend"
+- **Tier 4**: Demographic fallback
 
-1. **Remove** the `MOCK_FRIEND_DATES` array entirely (lines 9-37)
-2. **Replace** the `useEffect` logic to iterate over real `connections` (already fetched by the hook) instead of mock data:
-   - For each accepted connection with a `profile_dob` (MM-DD format), parse the month/day, compute the next occurrence (this year or next), and create a `GiftOccasion` with type `"birthday"`
-   - For each connection's `profile_important_dates` array, do the same for anniversaries and other date types
-   - Respect `data_sharing_settings.dob` privacy (only show if set to `"friends"` or `"public"`)
-3. **Keep** the 90-day window filter and date sorting logic
-4. **Populate** `personId`, `personName`, `personImage` from the connection's profile fields (`display_user_id`, `profile_name`, `profile_image`)
+### 2. Update `getShopNowText()` for cleaner label
+```ts
+if (targetEvent.type === "birthday") {
+  const firstName = targetEvent.personName?.split(" ")[0] || targetEvent.name.split("'s")[0];
+  return `Shop ${firstName}'s Bday Gifts`;
+}
+```
 
-This single file change will make the hero countdown show "Curt Davidson's Birthday Countdown" with the real March 1st date instead of mock "John Smith" data.
+### 3. Pass `personName` through the event interface
+The `Event` interface in `HeroContent.tsx` needs an optional `personName` field — this is already set in `useConnectedFriendsSpecialDates` from the previous change.
+
+```ts
+interface Event {
+  name: string;
+  date: Date;
+  type: string;
+  personName?: string;  // add this
+}
+```
+
+## Result
+Clicking "Shop Curt's Bday Gifts" → opens `/marketplace/for/curt-davidson` → Nicole fetches Curt's wishlists + interests + AI curation → `PersonalizedGiftingSections` renders tiered results.
 

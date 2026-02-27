@@ -11,6 +11,7 @@ interface Event {
   name: string;
   date: Date;
   type: string;
+  personName?: string;
 }
 
 interface HeroContentProps {
@@ -28,17 +29,25 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
 
   // Helper to format button text
   const getShopNowText = () => {
-    if (targetEvent && targetEvent.name) {
-      return `Shop ${targetEvent.name} Gift`;
+    if (!targetEvent?.name) return "Shop Gifts";
+    
+    if (targetEvent.type === "birthday" && targetEvent.personName) {
+      const firstName = targetEvent.personName.split(" ")[0];
+      return `Shop ${firstName}'s Bday Gifts`;
     }
-    return "Shop Gifts";
+    
+    return `Shop ${targetEvent.name} Gifts`;
   };
 
   // Navigate to the marketplace with a search for the event name
   const handleShopNowClick = () => {
     triggerHapticFeedback('light');
-    if (targetEvent && targetEvent.name) {
-      // Use encodeURIComponent for safe URL
+    if (targetEvent?.type === "birthday" && targetEvent.personName) {
+      const slug = targetEvent.personName.toLowerCase().replace(/\s+/g, '-');
+      navigate(`/marketplace/for/${slug}`, {
+        state: { eventType: 'birthday', relationship: 'friend' }
+      });
+    } else if (targetEvent?.name) {
       navigate(`/marketplace?search=${encodeURIComponent(targetEvent.name + " gift")}`);
     } else {
       navigate("/marketplace");

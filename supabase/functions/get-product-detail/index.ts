@@ -100,8 +100,12 @@ serve(async (req) => {
       );
     }
     
-    const { product_id, retailer = 'amazon' } = await req.json();
+    const { product_id: rawProductId, retailer = 'amazon' } = await req.json();
     const supabase = initSupabase();
+    
+    // Extract actual ASIN from composite IDs like "MC_Assembly_1#B07535Y9T6"
+    const product_id = rawProductId.includes('#') ? rawProductId.split('#').pop() : rawProductId;
+    console.log(`[get-product-detail] Raw ID: "${rawProductId}" → Resolved ASIN: "${product_id}"`);
     
     try {
       // PHASE 2: Cache-First Architecture (Nicole AI Core)

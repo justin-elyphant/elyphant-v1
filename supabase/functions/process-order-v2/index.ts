@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { isUnsupportedProduct } from '../shared/unsupportedProductFilter.ts';
 
+/** Extract Amazon ASIN from composite IDs like "MC_Assembly_1#B07535Y9T6" → "B07535Y9T6" */
+function extractAsin(rawId: string): string {
+  if (rawId && rawId.includes('#')) {
+    return rawId.split('#').pop() || rawId;
+  }
+  return rawId;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -130,6 +138,17 @@ serve(async (req) => {
     }
 
     console.log(`✅ Found ${itemsArray.length} line items`);
+
+    // STEP 4.1: Normalize composite product IDs → clean ASINs
+    // Composite IDs like "MC_Assembly_1#B07535Y9T6" come from multi-config catalog system
+    for (const item of itemsArray) {
+      const rawId = item.product_id || item.productId || item.id;
+      const cleanId = extractAsin(rawId);
+      if (cleanId !== rawId) {
+        console.log(`🔄 Normalized product ID: ${rawId} → ${cleanId}`);
+        item.product_id = cleanId;
+      }
+    }
 
     // STEP 4.5: RECIPIENT-FIRST ADDRESS PRIORITY
     // For gift orders, extract shipping from line_items.recipient_shipping

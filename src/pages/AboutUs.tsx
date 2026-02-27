@@ -89,6 +89,29 @@ const AboutUs = () => {
           <div className="mb-16">
             <Card>
               <CardContent className="pt-6">
+                <h3 className="text-2xl font-semibold mb-4 flex items-center">
+                  <GraduationCap className="mr-2 text-purple-600" />
+                  Why the Name Elyphant?
+                </h3>
+                <p className="text-gray-700">
+                  Our name and logo were inspired by elephants because they embody the very qualities 
+                  we strive to bring to gifting. Elephants are renowned for their remarkable memory, 
+                  deep emotional intelligence, and strong family bonds. They're naturally thoughtful, 
+                  compassionate, and celebrate their connections through rituals and gatherings.
+                </p>
+                <p className="text-gray-700 mt-4">
+                  Like these magnificent creatures, Elyphant remembers what matters, responds with 
+                  emotional intelligence, and helps strengthen the bonds between people through 
+                  meaningful gestures. We aspire to bring the same level of care, intelligence, and 
+                  connection to your gifting experience.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mb-16">
+            <Card>
+              <CardContent className="pt-6">
                 <h2 className="text-2xl font-semibold mb-4 flex items-center">
                   <Gift className="mr-2 text-purple-600" />
                   Reducing Retail Waste Through Smart Gifting
@@ -177,29 +200,6 @@ const AboutUs = () => {
                   </div>
                 </div>
                 
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mb-16">
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-2xl font-semibold mb-4 flex items-center">
-                  <GraduationCap className="mr-2 text-purple-600" />
-                  Why the Name Elyphant?
-                </h3>
-                <p className="text-gray-700">
-                  Our name and logo were inspired by elephants because they embody the very qualities 
-                  we strive to bring to gifting. Elephants are renowned for their remarkable memory, 
-                  deep emotional intelligence, and strong family bonds. They're naturally thoughtful, 
-                  compassionate, and celebrate their connections through rituals and gatherings.
-                </p>
-                <p className="text-gray-700 mt-4">
-                  Like these magnificent creatures, Elyphant remembers what matters, responds with 
-                  emotional intelligence, and helps strengthen the bonds between people through 
-                  meaningful gestures. We aspire to bring the same level of care, intelligence, and 
-                  connection to your gifting experience.
-                </p>
               </CardContent>
             </Card>
           </div>

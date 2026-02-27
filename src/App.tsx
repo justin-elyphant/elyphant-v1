@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, useLocation } from "react-router-dom";
 import DelayedFallback from "./components/layout/DelayedFallback";
+import ScrollToTop from "./components/layout/ScrollToTop";
 import { AuthProvider } from "./contexts/auth";
 import { ProductProvider } from "./contexts/ProductContext";
 import { ProfileProvider } from "./contexts/profile/ProfileContext";
@@ -206,8 +207,10 @@ function AppContent() {
     };
   }, [navigate]);
 
-  return (
+   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Scroll to top on route change */}
+      <ScrollToTop />
       {/* Session monitoring for security */}
       <SessionMonitor />
       {/* Import at top level - inside Router context */}

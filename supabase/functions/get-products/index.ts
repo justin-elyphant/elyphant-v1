@@ -146,6 +146,12 @@ const enrichWithCachedData = async (supabase: any, products: any[]) => {
       const cached = cacheMap.get(productId);
 
       if (cached && cached.metadata) {
+        // UNAVAILABLE PRODUCT FILTER: Skip products flagged as discontinued
+        if (cached.metadata.is_unavailable) {
+          console.log(`🚫 Filtering unavailable product from results: ${productId}`);
+          return null; // Will be filtered out below
+        }
+        
         cacheHits++;
         const metadata = cached.metadata;
         
@@ -169,7 +175,7 @@ const enrichWithCachedData = async (supabase: any, products: any[]) => {
           popularity_score: 0
         };
       }
-    });
+    }).filter(Boolean); // Remove null entries (unavailable products)
 
     console.log(`✅ Cache enrichment: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / products.length * 100)}% hit rate)`);
     

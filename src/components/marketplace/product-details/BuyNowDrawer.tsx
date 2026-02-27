@@ -236,7 +236,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open && !(product as any).is_unavailable} onOpenChange={onOpenChange}>
       <DrawerContent className="flex flex-col sm:max-w-lg sm:mx-auto">
         <DrawerHeader className="pb-2">
           <DrawerTitle className="sr-only">Buy Now</DrawerTitle>

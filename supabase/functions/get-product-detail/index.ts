@@ -218,14 +218,38 @@ serve(async (req) => {
       
       console.log('Raw Zinc API response for product detail:', JSON.stringify(data, null, 2));
       
-      // CHECK: Zinc API can return error responses (e.g., invalid_variant)
+      // CHECK: Zinc API can return error responses (e.g., invalid_variant, invalid_product_id)
       // These have _type: "error" and no product data (no title, no images)
       if (data._type === 'error' || data.status === 'failed') {
-        console.log(`[Zinc API ERROR] Product ${product_id}: ${data.code || data.message || 'unknown error'}`);
+        const errorCode = data.code || data.message || 'unknown error';
+        console.log(`[Zinc API ERROR] Product ${product_id}: ${errorCode}`);
         
-        // If we have cached data, return it even if stale — better than nothing
+        // UNAVAILABLE PRODUCT DETECTION: If Zinc says the ASIN is invalid/discontinued,
+        // flag it in the DB so it's filtered from future search results
+        const isUnavailable = errorCode === 'invalid_product_id';
+        
+        // If we have cached data, return it (with unavailable flag if applicable)
         if (cachedProduct) {
-          console.log(`[Fallback] Returning cached data for ${product_id}`);
+          if (isUnavailable) {
+            console.log(`🚫 [UNAVAILABLE] Product ${product_id} no longer exists on Amazon — flagging in DB`);
+            // Mark product as unavailable in DB (background, non-blocking)
+            EdgeRuntime.waitUntil(
+              supabase.from('products').update({
+                metadata: {
+                  ...(cachedProduct.metadata || {}),
+                  is_unavailable: true,
+                  unavailable_since: new Date().toISOString(),
+                  unavailable_reason: 'invalid_product_id'
+                }
+              }).eq('product_id', product_id)
+              .then(({ error }) => {
+                if (error) console.error('[UNAVAILABLE] DB update failed:', error);
+                else console.log(`[UNAVAILABLE] Product ${product_id} flagged in DB`);
+              })
+            );
+          }
+          
+          console.log(`[Fallback] Returning cached data for ${product_id}${isUnavailable ? ' (marked unavailable)' : ''}`);
           const fallbackData = {
             ...cachedProduct,
             ...(cachedProduct.metadata || {}),
@@ -234,6 +258,7 @@ serve(async (req) => {
             review_count: cachedProduct.metadata?.review_count,
             hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0),
             all_variants: data.data?.all_variants || cachedProduct.metadata?.all_variants || [],
+            ...(isUnavailable ? { is_unavailable: true } : {}),
           };
           return new Response(JSON.stringify(fallbackData), {
             status: 200,
@@ -245,7 +270,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           error: true, 
           code: data.code,
-          message: 'Product details unavailable' 
+          message: isUnavailable ? 'This product is no longer available on Amazon' : 'Product details unavailable',
+          is_unavailable: isUnavailable || undefined,
         }), {
           status: 404,
           headers: { "Content-Type": "application/json", ...corsHeaders }

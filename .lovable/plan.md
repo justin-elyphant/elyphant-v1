@@ -1,69 +1,71 @@
 
 
-# Fix: Cached Products Bypassing Price Normalization
+# Fix: Product Details Page Reverting to "Unnamed Product"
 
-## What's Happening
+## Root Cause
 
-The database currently has **~25 Amazon products with prices stored in cents instead of dollars** — the LcFun lighter at 899 (should be $8.99), knives at 8925 ($89.25), napkins at 2699 ($26.99), socks at 1499 ($14.99), etc.
+The Zinc Product Detail API returns an **error response** for certain products (e.g., `invalid_variant`):
 
-These were cached before the `normalizePrices()` function was added to the Zinc ingest path. The `transformCachedProduct` function in `get-products/index.ts` (line 243) passes `p.price` through raw with no safety net — so these bad values reach the frontend unchanged.
+```json
+{"_type": "error", "status": "failed", "code": "invalid_variant", "data": {...}}
+```
 
-The project already has this exact safety net in `mapDbProductToProduct` (used by discovery rows), but it's not applied in the search/cache path. Per the project's unified pricing standard, the accepted tradeoff is: **divide Amazon prices > 200 by 100, prioritizing prevention of inflated prices over rare high-value items**.
+The `get-product-detail` edge function (line 213) does `const data = await productResponse.json()` but **never checks if `data._type === "error"`**. It spreads this error object into `enhancedData` (line 262), producing:
+- `title: undefined` → becomes "Unnamed Product" after `normalizeProduct`
+- `image: undefined` → becomes placeholder
+- `price: 2199` (from Offers API, in cents) → shows as $21.99 initially but the real issue is the missing title/image
 
-## Why Previous Fix Was Reverted
+The frontend (`ProductDetails.tsx` line 48-72) first shows the good navigation state data, then the background `fetchProductDetail` call completes and **overwrites** the good data with the broken API response — causing the "flash then revert" behavior.
 
-The previous attempt tried a `> 100` threshold, which was too aggressive. The correct threshold is `> 200`, matching the existing `mapDbProductToProduct` logic — this is reuse, not new code.
+## Fix: 1 Change in Edge Function
 
-## Plan: Two Changes
+**File: `supabase/functions/get-product-detail/index.ts`** — after line 213
 
-### 1. Add price safety net to `transformCachedProduct`
-
-**File: `supabase/functions/get-products/index.ts`** — line 247
-
-Reuse the same `> 200` heuristic from `mapDbProductToProduct` (line 17 of `mapDbProduct.ts`):
+Add an error check on the Zinc API response. If Zinc returns an error, fall back to cached data (if available) or return the error gracefully — don't spread error fields over the product.
 
 ```ts
-const transformCachedProduct = (p: any) => {
-  let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
-  // Safety net: reuse same heuristic as mapDbProductToProduct
-  if (price > 200 && (p.retailer === 'amazon' || p.retailer === 'Amazon')) {
-    price = price / 100;
+const data = await productResponse.json();
+
+// CHECK: Zinc API can return error responses (e.g., invalid_variant)
+// These have _type: "error" and no product data (no title, no images)
+if (data._type === 'error' || data.status === 'failed') {
+  console.log(`[Zinc API ERROR] Product ${product_id}: ${data.code || data.message || 'unknown error'}`);
+  
+  // If we have cached data, return it even if stale — better than nothing
+  if (cachedProduct) {
+    console.log(`[Fallback] Returning cached data for ${product_id}`);
+    const fallbackData = {
+      ...cachedProduct,
+      ...(cachedProduct.metadata || {}),
+      image: cachedProduct.metadata?.main_image || cachedProduct.image_url,
+      stars: cachedProduct.metadata?.stars,
+      review_count: cachedProduct.metadata?.review_count,
+      hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0),
+      // Include variant data from the error response if available
+      all_variants: data.data?.all_variants || cachedProduct.metadata?.all_variants || [],
+    };
+    return new Response(JSON.stringify(fallbackData), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders }
+    });
   }
-
-  return {
-    product_id: p.product_id,
-    asin: p.product_id,
-    title: p.title,
-    price,
-    // ...rest unchanged...
-  };
-};
+  
+  // No cache either — return error so frontend keeps navigation state
+  return new Response(JSON.stringify({ 
+    error: true, 
+    code: data.code,
+    message: 'Product details unavailable' 
+  }), {
+    status: 404,
+    headers: { "Content-Type": "application/json", ...corsHeaders }
+  });
+}
 ```
 
-This is identical logic to `mapDbProduct.ts` line 17-19, applied at the edge function layer so search results get the same treatment discovery rows already have.
-
-### 2. Fix existing bad data in the database
-
-Run a targeted UPDATE on the ~25 affected rows:
-
-```sql
-UPDATE products
-SET price = price / 100
-WHERE price > 200
-  AND retailer = 'amazon';
-```
-
-This corrects lighters, knives, napkins, socks, etc. The 3 MacBooks at $1049.99 will become $10.49 — this is the accepted tradeoff per the project's pricing standard. If MacBooks need correct pricing, they'll be re-fetched from Zinc with proper normalization.
-
-## What We're NOT Doing
-
-- NOT creating new files or utilities
-- NOT touching the frontend or `mapDbProduct.ts`
-- NOT applying `mapDbProductsToProducts` to search results (image corruption risk)
+This prevents the broken error data from being returned as if it were a valid product. The frontend's existing fallback logic (line 132-136 of `ProductDetails.tsx`) already handles `null` returns from `getProductDetail` by keeping the navigation state — so returning a 404 will trigger that path naturally.
 
 ## Scope
-
-- 1 edge function modified: 3 lines added to existing function
-- 1 SQL data fix: ~25 rows corrected
-- Zero frontend changes, zero new files
+- 1 edge function modified: `get-product-detail/index.ts` (add error check after line 213)
+- Zero frontend changes — existing fallback logic handles this
+- Zero new files
 

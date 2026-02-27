@@ -1,71 +1,89 @@
 
 
-# Fix: Product Details Page Reverting to "Unnamed Product"
+# Fix: Price Filters Not Working in Marketplace
 
 ## Root Cause
 
-The Zinc Product Detail API returns an **error response** for certain products (e.g., `invalid_variant`):
+The price filter is **set in local state** (`activeFilters.priceRange`) but **never applied** to filter products. There are two disconnected paths:
 
-```json
-{"_type": "error", "status": "failed", "code": "invalid_variant", "data": {...}}
+1. **Desktop sidebar** (`DynamicDesktopFilterSidebar.tsx`): Sets `priceRange` as `[min, max]` array via slider → stored in `activeFilters` state → **never used to filter or sent to URL**
+2. **Mobile filter pills** (`LululemonMobileFilters.tsx`): Sets `priceRange` as a string like `"0-25"` → stored in `activeFilters` state → **also never used**
+
+On line 286 of `StreamlinedMarketplaceWrapper.tsx`:
+```ts
+const filteredPaginatedProducts = paginatedProducts; // No filtering at all!
 ```
 
-The `get-product-detail` edge function (line 213) does `const data = await productResponse.json()` but **never checks if `data._type === "error"`**. It spreads this error object into `enhancedData` (line 262), producing:
-- `title: undefined` → becomes "Unnamed Product" after `normalizeProduct`
-- `image: undefined` → becomes placeholder
-- `price: 2199` (from Offers API, in cents) → shows as $21.99 initially but the real issue is the missing title/image
+Meanwhile, `triggerEnhancedSearch` (lines 386-396) adds `waist`, `inseam`, `size`, `brand`, `color`, `gender` to URL params but **omits price entirely**. And `useMarketplace` already supports `minPrice`/`maxPrice` URL params and passes them server-side — they're just never set by the filter UI.
 
-The frontend (`ProductDetails.tsx` line 48-72) first shows the good navigation state data, then the background `fetchProductDetail` call completes and **overwrites** the good data with the broken API response — causing the "flash then revert" behavior.
+## Fix (2 files)
 
-## Fix: 1 Change in Edge Function
+### 1. `StreamlinedMarketplaceWrapper.tsx` — Apply client-side price filtering + propagate to URL
 
-**File: `supabase/functions/get-product-detail/index.ts`** — after line 213
-
-Add an error check on the Zinc API response. If Zinc returns an error, fall back to cached data (if available) or return the error gracefully — don't spread error fields over the product.
+Replace line 286 (`const filteredPaginatedProducts = paginatedProducts;`) with a `useMemo` that filters by the `activeFilters.priceRange`:
 
 ```ts
-const data = await productResponse.json();
+const filteredPaginatedProducts = useMemo(() => {
+  if (!activeFilters.priceRange) return paginatedProducts;
 
-// CHECK: Zinc API can return error responses (e.g., invalid_variant)
-// These have _type: "error" and no product data (no title, no images)
-if (data._type === 'error' || data.status === 'failed') {
-  console.log(`[Zinc API ERROR] Product ${product_id}: ${data.code || data.message || 'unknown error'}`);
-  
-  // If we have cached data, return it even if stale — better than nothing
-  if (cachedProduct) {
-    console.log(`[Fallback] Returning cached data for ${product_id}`);
-    const fallbackData = {
-      ...cachedProduct,
-      ...(cachedProduct.metadata || {}),
-      image: cachedProduct.metadata?.main_image || cachedProduct.image_url,
-      stars: cachedProduct.metadata?.stars,
-      review_count: cachedProduct.metadata?.review_count,
-      hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0),
-      // Include variant data from the error response if available
-      all_variants: data.data?.all_variants || cachedProduct.metadata?.all_variants || [],
-    };
-    return new Response(JSON.stringify(fallbackData), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders }
-    });
+  let min = 0, max = Infinity;
+
+  // Handle mobile string format: "0-25", "25-50", "200+"
+  if (typeof activeFilters.priceRange === 'string') {
+    const range = activeFilters.priceRange;
+    if (range.endsWith('+')) {
+      min = parseInt(range);
+    } else {
+      const [lo, hi] = range.split('-').map(Number);
+      min = lo; max = hi;
+    }
   }
-  
-  // No cache either — return error so frontend keeps navigation state
-  return new Response(JSON.stringify({ 
-    error: true, 
-    code: data.code,
-    message: 'Product details unavailable' 
-  }), {
-    status: 404,
-    headers: { "Content-Type": "application/json", ...corsHeaders }
+  // Handle desktop slider array format: [0, 25]
+  else if (Array.isArray(activeFilters.priceRange)) {
+    [min, max] = activeFilters.priceRange;
+    if (max >= 300) max = Infinity; // slider max = uncapped
+  }
+
+  if (min === 0 && max === Infinity) return paginatedProducts;
+
+  return paginatedProducts.filter(p => {
+    const price = parseFloat(p.price) || 0;
+    return price >= min && price <= max;
   });
+}, [paginatedProducts, activeFilters.priceRange]);
+```
+
+### 2. `StreamlinedMarketplaceWrapper.tsx` — Add price to `triggerEnhancedSearch` URL params
+
+In `triggerEnhancedSearch` (around line 390), add price params so server-side filtering also applies on re-fetch:
+
+```ts
+// After the existing filter params (line 395)
+if (filters.priceRange) {
+  if (Array.isArray(filters.priceRange)) {
+    if (filters.priceRange[0] > 0) newParams.set('minPrice', String(filters.priceRange[0]));
+    if (filters.priceRange[1] < 300) newParams.set('maxPrice', String(filters.priceRange[1]));
+  } else if (typeof filters.priceRange === 'string') {
+    const range = filters.priceRange;
+    if (range.endsWith('+')) {
+      newParams.set('minPrice', range.replace('+', ''));
+    } else {
+      const [lo, hi] = range.split('-').map(Number);
+      if (lo > 0) newParams.set('minPrice', String(lo));
+      if (hi) newParams.set('maxPrice', String(hi));
+    }
+  }
 }
 ```
 
-This prevents the broken error data from being returned as if it were a valid product. The frontend's existing fallback logic (line 132-136 of `ProductDetails.tsx`) already handles `null` returns from `getProductDetail` by keeping the navigation state — so returning a 404 will trigger that path naturally.
+Also add `priceRange` to the `criticalFilters` array in all three `onFilterChange` handlers (lines 822, 964, and the one at ~1147) so that selecting a price triggers a server refetch too.
 
-## Scope
-- 1 edge function modified: `get-product-detail/index.ts` (add error check after line 213)
-- Zero frontend changes — existing fallback logic handles this
-- Zero new files
+### Duplicate filter logic note
+
+The `src/components/gifting/` filter files (`useProductFilter.tsx`, `useFilteredProducts.tsx`, `usePriceFilter.tsx`, `ProductFilters.tsx`) are a **separate, older system** used by the gifting page — NOT the marketplace. They can be left alone for now. The marketplace's active filtering system is:
+- `useMarketplace.ts` (URL → server)
+- `StreamlinedMarketplaceWrapper.tsx` (local `activeFilters` state)
+- `LululemonMobileFilters.tsx` + `DynamicDesktopFilterSidebar.tsx` (UI)
+
+No duplicate marketplace filter logic needs cleanup — the issue is simply that price was never wired through.
 

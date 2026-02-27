@@ -283,7 +283,34 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted
-  const filteredPaginatedProducts = paginatedProducts;
+  const filteredPaginatedProducts = useMemo(() => {
+    if (!activeFilters.priceRange) return paginatedProducts;
+
+    let min = 0, max = Infinity;
+
+    // Handle mobile string format: "0-25", "25-50", "200+"
+    if (typeof activeFilters.priceRange === 'string') {
+      const range = activeFilters.priceRange as string;
+      if (range.endsWith('+')) {
+        min = parseInt(range);
+      } else {
+        const [lo, hi] = range.split('-').map(Number);
+        min = lo; max = hi;
+      }
+    }
+    // Handle desktop slider array format: [0, 25]
+    else if (Array.isArray(activeFilters.priceRange)) {
+      [min, max] = activeFilters.priceRange;
+      if (max >= 300) max = Infinity; // slider max = uncapped
+    }
+
+    if (min === 0 && max === Infinity) return paginatedProducts;
+
+    return paginatedProducts.filter(p => {
+      const price = parseFloat(p.price) || 0;
+      return price >= min && price <= max;
+    });
+  }, [paginatedProducts, activeFilters.priceRange]);
 
   // Determine if we should show a featured product hero
   // Show for searches with high-quality first result (cached with good data, best seller, or high rating)
@@ -394,6 +421,23 @@ const StreamlinedMarketplaceWrapper = memo(() => {
       if (filters.color?.length) newParams.set('color', filters.color.join(','));
       if (filters.gender?.length) newParams.set('gender', filters.gender.join(','));
       
+      // Add price range params for server-side filtering
+      if (filters.priceRange) {
+        if (Array.isArray(filters.priceRange)) {
+          if (filters.priceRange[0] > 0) newParams.set('minPrice', String(filters.priceRange[0]));
+          if (filters.priceRange[1] < 300) newParams.set('maxPrice', String(filters.priceRange[1]));
+        } else if (typeof filters.priceRange === 'string') {
+          const range = filters.priceRange as string;
+          if (range.endsWith('+')) {
+            newParams.set('minPrice', range.replace('+', ''));
+          } else {
+            const [lo, hi] = range.split('-').map(Number);
+            if (lo > 0) newParams.set('minPrice', String(lo));
+            if (hi) newParams.set('maxPrice', String(hi));
+          }
+        }
+      }
+
       // Use React Router's navigate to update URL - this TRIGGERS useMarketplace refetch
       navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
       
@@ -819,7 +863,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                   setActiveFilters(newFilters);
                   // Trigger enhanced search if needed
                   if (urlSearchTerm) {
-                    const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+                    const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features', 'priceRange'];
                     const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
                     if (hasChanges) {
                       setTimeout(() => triggerEnhancedSearch(newFilters), 100);
@@ -961,7 +1005,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
               onFilterChange={(newFilters) => {
                 setActiveFilters(newFilters);
                 if (urlSearchTerm) {
-                  const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+                  const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features', 'priceRange'];
                   const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
                   if (hasChanges) {
                     setTimeout(() => triggerEnhancedSearch(newFilters), 100);
@@ -1144,7 +1188,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
         onFilterChange={(newFilters) => {
           setActiveFilters(newFilters);
           if (urlSearchTerm) {
-            const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features'];
+            const criticalFilters = ['waist', 'inseam', 'size', 'brand', 'color', 'material', 'style', 'features', 'priceRange'];
             const hasChanges = Object.keys(newFilters).some(key => criticalFilters.includes(key));
             if (hasChanges) {
               setTimeout(() => triggerEnhancedSearch(newFilters), 100);

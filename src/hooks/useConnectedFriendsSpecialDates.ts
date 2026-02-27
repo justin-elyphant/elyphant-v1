@@ -3,38 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { useEnhancedConnections } from "@/hooks/profile/useEnhancedConnections";
 import { GiftOccasion } from "@/components/marketplace/utils/upcomingOccasions";
-import { addDays, format, parseISO } from "date-fns";
-
-// Mock data for development until connected to real data
-const MOCK_FRIEND_DATES = [
-  {
-    id: "1",
-    userId: "friend-1",
-    name: "John Smith",
-    avatar: "https://i.pravatar.cc/150?img=1",
-    dateType: "birthday",
-    date: "2025-05-20", // May 20
-    visibility: "friends"
-  },
-  {
-    id: "2",
-    userId: "friend-2",
-    name: "Emma Wilson",
-    avatar: "https://i.pravatar.cc/150?img=2",
-    dateType: "anniversary",
-    date: "2025-06-15", // June 15
-    visibility: "friends"
-  },
-  {
-    id: "3", 
-    userId: "friend-3",
-    name: "Michael Davis",
-    avatar: "https://i.pravatar.cc/150?img=3",
-    dateType: "birthday",
-    date: "2025-05-25", // May 25
-    visibility: "friends"
-  }
-];
+import { addDays } from "date-fns";
 
 export const useConnectedFriendsSpecialDates = () => {
   const { user } = useAuth();
@@ -43,64 +12,89 @@ export const useConnectedFriendsSpecialDates = () => {
   const { connections } = useEnhancedConnections();
 
   useEffect(() => {
-    const loadFriendOccasions = async () => {
+    const loadFriendOccasions = () => {
       setLoading(true);
-      
+
       try {
-        // In a real app, we would fetch from Supabase using connections
-        // For now, we'll use mock data
-        const currentDate = new Date();
-        const ninety_days_later = addDays(currentDate, 90);
-        
-        // Process mock data
+        const now = new Date();
+        const cutoff = addDays(now, 90);
+        const currentYear = now.getFullYear();
         const occasions: GiftOccasion[] = [];
-        
-        MOCK_FRIEND_DATES.forEach(friend => {
-          // Parse date and set current year
-          const originalDate = parseISO(friend.date);
-          const currentYear = new Date().getFullYear();
-          
-          // Create date for this year
-          const thisYearDate = new Date(currentYear, originalDate.getMonth(), originalDate.getDate());
-          
-          // If this year's date is in the past, use next year
-          const dateToUse = thisYearDate < currentDate 
-            ? new Date(currentYear + 1, originalDate.getMonth(), originalDate.getDate())
-            : thisYearDate;
-            
-          // Only include if within 90 days
-          if (dateToUse <= ninety_days_later) {
-            occasions.push({
-              name: `${friend.name}'s ${friend.dateType}`,
-              searchTerm: `${friend.dateType} gift`,
-              date: dateToUse,
-              type: friend.dateType === "birthday" ? "birthday" : "anniversary",
-              personId: friend.userId,
-              personName: friend.name,
-              personImage: friend.avatar
-            });
+
+        for (const conn of connections) {
+          // Only accepted connections
+          if (conn.status !== "accepted") continue;
+
+          const otherUserId = conn.display_user_id || (conn.user_id === user?.id ? conn.connected_user_id : conn.user_id);
+          const name = conn.profile_name || "Friend";
+
+          // --- Birthday from profile_dob (MM-DD format) ---
+          if (conn.profile_dob) {
+            const parts = conn.profile_dob.split("-").map(Number);
+            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+              const [month, day] = parts;
+              let nextBirthday = new Date(currentYear, month - 1, day, 12, 0, 0);
+              if (nextBirthday < now) {
+                nextBirthday = new Date(currentYear + 1, month - 1, day, 12, 0, 0);
+              }
+              if (nextBirthday <= cutoff) {
+                occasions.push({
+                  name: `${name}'s birthday`,
+                  searchTerm: "birthday gift",
+                  date: nextBirthday,
+                  type: "birthday",
+                  personId: otherUserId || undefined,
+                  personName: name,
+                  personImage: conn.profile_image || undefined,
+                });
+              }
+            }
           }
-        });
-        
-        // Sort by date (closest first)
+
+          // --- Important dates (anniversaries, etc.) ---
+          if (Array.isArray(conn.profile_important_dates)) {
+            for (const entry of conn.profile_important_dates) {
+              if (!entry?.date) continue;
+              const label = entry.description || entry.label || "special day";
+              const raw = typeof entry.date === "string" ? entry.date : entry.date?.iso;
+              if (!raw) continue;
+
+              const parsed = new Date(raw);
+              if (isNaN(parsed.getTime())) continue;
+
+              let nextDate = new Date(currentYear, parsed.getMonth(), parsed.getDate(), 12, 0, 0);
+              if (nextDate < now) {
+                nextDate = new Date(currentYear + 1, parsed.getMonth(), parsed.getDate(), 12, 0, 0);
+              }
+              if (nextDate <= cutoff) {
+                const type = label.toLowerCase().includes("anniversary") ? "anniversary" : "custom";
+                occasions.push({
+                  name: `${name}'s ${label}`,
+                  searchTerm: `${type === "anniversary" ? "anniversary" : label} gift`,
+                  date: nextDate,
+                  type,
+                  personId: otherUserId || undefined,
+                  personName: name,
+                  personImage: conn.profile_image || undefined,
+                });
+              }
+            }
+          }
+        }
+
         occasions.sort((a, b) => a.date.getTime() - b.date.getTime());
         setFriendOccasions(occasions);
-        
       } catch (error) {
         console.error("Error loading friend occasions:", error);
       } finally {
         setLoading(false);
       }
     };
-    
-    // Only load if we have a user
+
     if (user) {
       loadFriendOccasions();
     }
   }, [user, connections]);
-  
-  return {
-    friendOccasions,
-    loading
-  };
+
+  return { friendOccasions, loading };
 };

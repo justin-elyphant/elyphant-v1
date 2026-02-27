@@ -174,13 +174,21 @@ class ProductCatalogServiceClass {
       });
 
       if (error) {
-        console.error('[ProductCatalogService] Product detail error:', error);
+        // Don't log 404s as errors — they're expected for discontinued products
+        console.warn('[ProductCatalogService] Product detail unavailable:', productId);
+        return null;
+      }
+
+      // Edge function may return an error object in the body with status 200
+      if (data?.error) {
+        console.warn('[ProductCatalogService] Product unavailable:', productId, data.message);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('[ProductCatalogService] Product detail error:', error);
+      // FunctionsHttpError is thrown for non-2xx responses — handle gracefully
+      console.warn('[ProductCatalogService] Product detail fetch failed:', productId);
       return null;
     }
   }

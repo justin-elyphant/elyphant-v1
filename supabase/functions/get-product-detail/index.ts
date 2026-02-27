@@ -214,6 +214,40 @@ serve(async (req) => {
       
       console.log('Raw Zinc API response for product detail:', JSON.stringify(data, null, 2));
       
+      // CHECK: Zinc API can return error responses (e.g., invalid_variant)
+      // These have _type: "error" and no product data (no title, no images)
+      if (data._type === 'error' || data.status === 'failed') {
+        console.log(`[Zinc API ERROR] Product ${product_id}: ${data.code || data.message || 'unknown error'}`);
+        
+        // If we have cached data, return it even if stale — better than nothing
+        if (cachedProduct) {
+          console.log(`[Fallback] Returning cached data for ${product_id}`);
+          const fallbackData = {
+            ...cachedProduct,
+            ...(cachedProduct.metadata || {}),
+            image: cachedProduct.metadata?.main_image || cachedProduct.image_url,
+            stars: cachedProduct.metadata?.stars,
+            review_count: cachedProduct.metadata?.review_count,
+            hasVariations: Boolean(cachedProduct.metadata?.all_variants?.length > 0),
+            all_variants: data.data?.all_variants || cachedProduct.metadata?.all_variants || [],
+          };
+          return new Response(JSON.stringify(fallbackData), {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
+        }
+        
+        // No cache either — return error so frontend keeps navigation state
+        return new Response(JSON.stringify({ 
+          error: true, 
+          code: data.code,
+          message: 'Product details unavailable' 
+        }), {
+          status: 404,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+      
       // Process offers response for accurate current pricing
       let currentPrice = data.price;
       if (offersResponse && offersResponse.ok) {

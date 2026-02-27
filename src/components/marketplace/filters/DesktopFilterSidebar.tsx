@@ -25,10 +25,17 @@ const DesktopFilterSidebar: React.FC<DesktopFilterSidebarProps> = ({
   const [ratingOpen, setRatingOpen] = useState(true);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // Price range state (in dollars)
-  const [priceRange, setPriceRange] = useState<[number, number]>(
-    activeFilters?.priceRange || [0, 300]
-  );
+  // Price range state (in dollars) - guard against string format from mobile filters
+  const [priceRange, setPriceRange] = useState<[number, number]>(() => {
+    const range = activeFilters?.priceRange;
+    if (Array.isArray(range) && range.length >= 2) return [range[0], range[1]];
+    if (typeof range === 'string') {
+      if (range.endsWith('+')) return [parseInt(range), 300];
+      const parts = range.split('-').map(Number);
+      if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return [parts[0], parts[1]];
+    }
+    return [0, 300];
+  });
 
   // Categories list
   const categories = [

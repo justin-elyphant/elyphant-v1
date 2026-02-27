@@ -52,9 +52,19 @@ const DynamicDesktopFilterSidebar: React.FC<DynamicDesktopFilterSidebarProps> = 
   });
   const [showMoreOptions, setShowMoreOptions] = useState<Record<string, boolean>>({});
 
-  // Price range state
+  // Price range state - ensure it's always an array (mobile filters may pass a string like "0-25")
+  const parsePriceRange = (range: any): [number, number] => {
+    if (Array.isArray(range) && range.length >= 2) return [range[0], range[1]];
+    if (typeof range === 'string') {
+      if (range.endsWith('+')) return [parseInt(range), 300];
+      const parts = range.split('-').map(Number);
+      if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return [parts[0], parts[1]];
+    }
+    return [0, 300];
+  };
+
   const [priceRange, setPriceRange] = useState<[number, number]>(
-    activeFilters?.priceRange || [0, 300]
+    parsePriceRange(activeFilters?.priceRange)
   );
 
   const toggleSection = (key: string) => {

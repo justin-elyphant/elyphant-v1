@@ -303,6 +303,18 @@ const Cart = () => {
           </div>
         </div>
 
+        {cartItems.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/marketplace")}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Continue Shopping
+          </Button>
+        )}
+
         {cartItems.length === 0 ? (
           <div className="text-center py-16">
             <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />

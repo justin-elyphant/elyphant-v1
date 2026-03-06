@@ -742,10 +742,6 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
 
       toast.success(isRecurring && !hasExistingRule ? 'Gift scheduled + recurring rule created!' : 'Gift scheduled!', {
         description: `Will be delivered ${recipientText} on ${format(effectiveDate, 'PPP')}`.trim(),
-        action: product ? {
-          label: 'View Cart',
-          onClick: () => navigate('/cart')
-        } : undefined
       });
 
       onComplete?.({
@@ -760,6 +756,11 @@ const UnifiedGiftSchedulingModal: React.FC<UnifiedGiftSchedulingModalProps> = ({
       });
 
       onOpenChange(false);
+
+      // Navigate to cart so user sees confirmation and avoids accidental re-purchase
+      if (product) {
+        navigate('/cart');
+      }
     } catch (error) {
       console.error('Error scheduling gift:', error);
       toast.error('Failed to schedule gift');

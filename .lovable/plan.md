@@ -118,6 +118,39 @@ Zero modifications to checkout, webhooks, order processing, or any Zinc-related 
 
 ---
 
+## Beta Partner: San Diego Flower Shop (Banked 2026-03-06)
+
+### Partner Details
+- **Type:** Local flower shop in San Diego
+- **Platform:** Shopify
+- **Status:** Agreed to beta test
+
+### What They Need From Us (Before Building)
+1. **Onboarding guide** — How to generate a Storefront Access Token in Shopify admin
+2. **Product feed integration** — Pull their real catalog via Storefront API
+3. **Vendor notification system** — How they'll receive orders (email first, portal later)
+
+### What We Need From Them
+1. Shopify store URL (e.g., `their-store.myshopify.com`)
+2. Storefront Access Token (free, generated in Shopify admin → Apps → Develop apps)
+3. Willingness to fulfill orders received via email notification (Phase 3 MVP)
+
+### Beta Test Plan (Draft)
+1. Connect their Shopify catalog to Elyphant
+2. Display their flowers alongside Amazon/Zinc products (tagged as "Local Shop")
+3. Customer buys flowers on Elyphant → Stripe processes payment
+4. Flower shop gets email notification with order details → they fulfill
+5. Elyphant takes margin between retail price and payout to vendor
+
+### Open Questions
+- What margin makes sense for local retailers? (Industry: 15-25%)
+- Do they want to set their own prices on Elyphant or use Shopify prices?
+- How do they want to receive orders? (Email? SMS? Dashboard?)
+- Do they handle their own delivery or need a delivery partner?
+- What's their product catalog size? (affects API sync strategy)
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

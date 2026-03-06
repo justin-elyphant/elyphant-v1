@@ -1,34 +1,62 @@
 
 
-# Post-Schedule Navigation: Redirect to Cart After Scheduling a Gift
+# Checkout Page Cleanup: Modern E-Commerce UX
 
-## Problem
-After scheduling a gift via the "Schedule as Gift" button on a product page, the user lands back on the same product page with the "Buy Now" button still prominent. This creates confusion — shoppers may click "Buy Now" thinking they haven't completed the action, or not realize their scheduled gift is already in the cart.
+## Problems Identified
 
-## E-Commerce Best Practice
-Major retailers (Amazon, Target) redirect users to the cart after adding an item, with a prominent "Continue Shopping" button. This pattern:
-- Confirms the action succeeded (cart view = proof)
-- Prevents accidental double-purchases
-- Gives shoppers a clear fork: proceed to checkout OR keep browsing
+Looking at the screenshots and code, there are several issues on the `/checkout` page:
+
+1. **Redundant Gift Message section** — There's a standalone "Gift Message" card below shipping that duplicates the gift message already displayed inside the green shipping review card. If the user already set a message during scheduling (shown in the green card as `"Scheduled gift test"`), the empty textarea below is confusing. The shipping review card already has inline edit capability via `QuickEditModal`.
+
+2. **Green SaaS aesthetic** — Delivery group cards use `bg-green-50`, `border-green-200`, `text-green-600/700/800` with green badges and green text everywhere. This reads as a SaaS dashboard status indicator, not a Lululemon-inspired e-commerce checkout.
+
+3. **Purple-to-blue gradient** — The progress indicator and Pay Now button use `bg-gradient-to-r from-purple-600 to-sky-500`, which violates the monochromatic + red accent design system.
+
+4. **Blue self-shipping card** — "Your Address" section uses `bg-blue-50`, `border-blue-200` — another color that doesn't belong.
 
 ## Changes
 
-### 1. Auto-navigate to `/cart` after gift is scheduled
-**File:** `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` (~line 740-760)
+### 1. Remove redundant Gift Message card from checkout form
+**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (lines 791-815)
 
-After the success toast in `handleProductSubmit`, add `navigate('/cart')` instead of just closing the modal. The toast with "View Cart" action becomes redundant since the user is already there. Replace it with a simpler confirmation toast.
+Remove the standalone Gift Message `<Card>` section. The gift message is already editable inline within `CheckoutShippingReview` via the `QuickEditModal` component. If no message exists, there's already an "Add gift message" button in the shipping review card. This eliminates the confusing empty textarea.
 
-### 2. Add "Continue Shopping" button to Cart page
-**File:** `src/pages/Cart.tsx`
+### 2. Restyle shipping review cards — monochromatic theme
+**File:** `src/components/checkout/CheckoutShippingReview.tsx`
 
-Add an `ArrowLeft` + "Continue Shopping" button near the top of the cart (next to the existing cart header). Clicking it navigates back to `/marketplace` (or uses `navigate(-1)` to return to the product they were browsing). This is standard e-commerce UX — Amazon, Target, and Lululemon all have this.
+Replace the green/blue color scheme with the Lululemon-inspired monochromatic palette:
+- **Recipient cards**: `bg-green-50` → `bg-gray-50`, `border-green-200` → `border-gray-200`, `text-green-600/700/800` → `text-gray-600/700/800`, green badges → neutral badges
+- **Self-shipping card**: `bg-blue-50` → `bg-gray-50`, `border-blue-200` → `border-gray-200`, blue text → neutral text
+- **Gift message/scheduled delivery sub-cards**: White background with `border-gray-200` instead of green borders
+- **"Scheduled Delivery" and "Gift Message" labels**: Use subtle text styling instead of colored text
 
-The page already imports `ArrowLeft` from lucide-react, so this is minimal work.
+### 3. Restyle progress indicator — monochromatic + red accent
+**File:** `src/components/checkout/CheckoutProgressIndicator.tsx`
 
-### 3. Keep the empty-cart state navigation
-The cart page likely already has a "Start Shopping" CTA for empty carts — no change needed there.
+- Active step circle: `border-purple-600 text-purple-600` → `border-black text-black`
+- Completed step: `bg-gradient-to-r from-purple-600 to-sky-500` → `bg-black text-white`
+- Connecting line completed: gradient → `bg-black`
+- Connecting line pending: stays muted
+
+### 4. Restyle Pay Now sticky button — red accent CTA
+**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (line 925)
+
+- Replace `bg-gradient-to-r from-purple-600 to-sky-500` with `bg-red-600 hover:bg-red-700` (matches the single-accent-color rule from the design system)
+
+### 5. Restyle Stripe redirect overlay
+**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (line 649)
+
+- Animated shimmer bar: Replace purple gradient with neutral/black shimmer
 
 ## Files Changed
-1. `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` — navigate to `/cart` after scheduling
-2. `src/pages/Cart.tsx` — add "Continue Shopping" button in header area
+1. `src/components/checkout/UnifiedCheckoutForm.tsx` — remove redundant gift message card, restyle Pay Now button and redirect overlay
+2. `src/components/checkout/CheckoutShippingReview.tsx` — monochromatic card styling
+3. `src/components/checkout/CheckoutProgressIndicator.tsx` — black/white step indicator with no gradients
+
+## Visual Result
+- Clean monochromatic checkout matching Lululemon aesthetic
+- Red accent only on primary CTA (Pay Now)
+- No green, blue, or purple colored sections
+- Shipping review shows all gift details inline (no redundant message card)
+- Progress indicator uses black circles with white numbers/checkmarks
 

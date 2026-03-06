@@ -1,62 +1,55 @@
 
+# Strategic Notes
 
-# Checkout Page Cleanup: Modern E-Commerce UX
+## Local Retailer Partnership Strategy (Banked 2026-03-06)
 
-## Problems Identified
+### The Question
+Can Elyphant partner with Shopify/Toast/Square while owning the payment process?
 
-Looking at the screenshots and code, there are several issues on the `/checkout` page:
+### Answer: No Direct Payment Control — But There's a Better Path
 
-1. **Redundant Gift Message section** — There's a standalone "Gift Message" card below shipping that duplicates the gift message already displayed inside the green shipping review card. If the user already set a message during scheduling (shown in the green card as `"Scheduled gift test"`), the empty textarea below is confusing. The shipping review card already has inline edit capability via `QuickEditModal`.
+**Reality Check:** Shopify, Toast, and Square will NOT grant payment bypass access. Payments are their core revenue (2.6-2.9% + $0.30 per transaction). Even enterprise-tier partners don't get this.
 
-2. **Green SaaS aesthetic** — Delivery group cards use `bg-green-50`, `border-green-200`, `text-green-600/700/800` with green badges and green text everywhere. This reads as a SaaS dashboard status indicator, not a Lululemon-inspired e-commerce checkout.
+### Recommended Architecture: "Instacart/Faire Model"
 
-3. **Purple-to-blue gradient** — The progress indicator and Pay Now button use `bg-gradient-to-r from-purple-600 to-sky-500`, which violates the monochromatic + red accent design system.
+Own the customer relationship and payment (via Stripe), use partner platforms for **read-only data sync only**.
 
-4. **Blue self-shipping card** — "Your Address" section uses `bg-blue-50`, `border-blue-200` — another color that doesn't belong.
+#### How It Works
+1. **Product Catalog Sync** — Pull inventory/pricing via read-only APIs (Shopify Storefront API, Square Catalog API)
+2. **Elyphant Owns Checkout** — Customer pays through our Stripe Checkout Sessions
+3. **Order Push to Vendor** — After payment, notify the retailer via vendor portal, email, or webhook
+4. **Retailer Fulfills** — They ship/deliver, we track status
 
-## Changes
+#### Integration Priority
+| Platform | API | Use Case |
+|----------|-----|----------|
+| Shopify Storefront API | Product/inventory sync | Online retailers |
+| Square Catalog API | Product sync | Local brick-and-mortar |
+| Toast (limited API) | Menu sync | Restaurants/food gifts |
+| CSV/Manual Upload | MVP onboarding | Any retailer |
 
-### 1. Remove redundant Gift Message card from checkout form
-**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (lines 791-815)
+#### Why This Works
+- **Elyphant controls payment UX** (no redirect to Shopify checkout)
+- **Retailers get orders** without building their own gifting infrastructure
+- **Elyphant takes a margin** between what customer pays and wholesale/retail price
+- **No platform permission needed** — Storefront APIs are public/read-only
 
-Remove the standalone Gift Message `<Card>` section. The gift message is already editable inline within `CheckoutShippingReview` via the `QuickEditModal` component. If no message exists, there's already an "Add gift message" button in the shipping review card. This eliminates the confusing empty textarea.
+#### Build Order (Future)
+1. **MVP:** CSV upload + manual product entry for local retailers
+2. **Phase 2:** Shopify Storefront API product feed import
+3. **Phase 3:** Vendor order notification system (email + dashboard)
+4. **Phase 4:** Square Catalog API integration
+5. **Phase 5:** Vendor portal with order management, analytics, payouts
 
-### 2. Restyle shipping review cards — monochromatic theme
-**File:** `src/components/checkout/CheckoutShippingReview.tsx`
+#### Key Insight
+Elyphant doesn't need to become "influential enough" for platform access. The Instacart model proves you can build a $10B+ company by owning the customer/payment layer while vendors fulfill. The vendor portal is NOT wasted effort — it's the moat.
 
-Replace the green/blue color scheme with the Lululemon-inspired monochromatic palette:
-- **Recipient cards**: `bg-green-50` → `bg-gray-50`, `border-green-200` → `border-gray-200`, `text-green-600/700/800` → `text-gray-600/700/800`, green badges → neutral badges
-- **Self-shipping card**: `bg-blue-50` → `bg-gray-50`, `border-blue-200` → `border-gray-200`, blue text → neutral text
-- **Gift message/scheduled delivery sub-cards**: White background with `border-gray-200` instead of green borders
-- **"Scheduled Delivery" and "Gift Message" labels**: Use subtle text styling instead of colored text
+---
 
-### 3. Restyle progress indicator — monochromatic + red accent
-**File:** `src/components/checkout/CheckoutProgressIndicator.tsx`
+## Completed Plans
 
-- Active step circle: `border-purple-600 text-purple-600` → `border-black text-black`
-- Completed step: `bg-gradient-to-r from-purple-600 to-sky-500` → `bg-black text-white`
-- Connecting line completed: gradient → `bg-black`
-- Connecting line pending: stays muted
-
-### 4. Restyle Pay Now sticky button — red accent CTA
-**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (line 925)
-
-- Replace `bg-gradient-to-r from-purple-600 to-sky-500` with `bg-red-600 hover:bg-red-700` (matches the single-accent-color rule from the design system)
-
-### 5. Restyle Stripe redirect overlay
-**File:** `src/components/checkout/UnifiedCheckoutForm.tsx` (line 649)
-
-- Animated shimmer bar: Replace purple gradient with neutral/black shimmer
-
-## Files Changed
-1. `src/components/checkout/UnifiedCheckoutForm.tsx` — remove redundant gift message card, restyle Pay Now button and redirect overlay
-2. `src/components/checkout/CheckoutShippingReview.tsx` — monochromatic card styling
-3. `src/components/checkout/CheckoutProgressIndicator.tsx` — black/white step indicator with no gradients
-
-## Visual Result
-- Clean monochromatic checkout matching Lululemon aesthetic
-- Red accent only on primary CTA (Pay Now)
-- No green, blue, or purple colored sections
-- Shipping review shows all gift details inline (no redundant message card)
-- Progress indicator uses black circles with white numbers/checkmarks
-
+### Checkout Page Cleanup (Completed 2026-03-06)
+- Removed redundant gift message card
+- Restyled shipping review to monochromatic (gray) theme
+- Replaced purple/blue gradients with black + red accent
+- Files: UnifiedCheckoutForm.tsx, CheckoutShippingReview.tsx, CheckoutProgressIndicator.tsx

@@ -1,74 +1,34 @@
 
 
-# Catch Unavailable Products at Catalog Level, Not Checkout
+# Post-Schedule Navigation: Redirect to Cart After Scheduling a Gift
 
 ## Problem
-A shopper browses → clicks Buy Now → enters payment → gets charged → Zinc says "invalid ASIN" → order stuck. The validation happens way too late. Products that no longer exist on Amazon should be caught before they're ever purchasable.
+After scheduling a gift via the "Schedule as Gift" button on a product page, the user lands back on the same product page with the "Buy Now" button still prominent. This creates confusion — shoppers may click "Buy Now" thinking they haven't completed the action, or not realize their scheduled gift is already in the cart.
 
-## Where Products Enter the System
-1. **Zinc Search API** (`get-products`) — returns search results including ASINs. These can include discontinued products that Amazon still indexes but no longer sells.
-2. **Products table cache** — stores previously seen products indefinitely, including ones that may have been delisted since caching.
-3. **Product detail page** (`get-product-detail`) — fetches full product info when a user clicks through. This is the natural gatekeeping point.
+## E-Commerce Best Practice
+Major retailers (Amazon, Target) redirect users to the cart after adding an item, with a prominent "Continue Shopping" button. This pattern:
+- Confirms the action succeeded (cart view = proof)
+- Prevents accidental double-purchases
+- Gives shoppers a clear fork: proceed to checkout OR keep browsing
 
-## Strategy: Validate at Product Detail, Gate the Buy Button
+## Changes
 
-Rather than adding a Zinc API call at checkout (adds latency to every purchase), catch it when the user views the product detail page — the step right before they can buy.
+### 1. Auto-navigate to `/cart` after gift is scheduled
+**File:** `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` (~line 740-760)
 
-### Change 1: `get-product-detail` — Flag unavailable products in response
-**File:** `supabase/functions/get-product-detail/index.ts`
+After the success toast in `handleProductSubmit`, add `navigate('/cart')` instead of just closing the modal. The toast with "View Cart" action becomes redundant since the user is already there. Replace it with a simpler confirmation toast.
 
-When Zinc returns `_type: "error"` with code `invalid_product_id`, the function currently returns a 404 (line 245). Instead:
-- If there's cached data, return it with `is_unavailable: true` so the frontend can show the product info but disable purchasing
-- If no cache, return the 404 as today
-- Also mark the product as unavailable in the `products` table so it's flagged for future visitors
+### 2. Add "Continue Shopping" button to Cart page
+**File:** `src/pages/Cart.tsx`
 
-```ts
-// When Zinc returns invalid_product_id error:
-if (cachedProduct) {
-  // Mark product unavailable in DB
-  await supabase.from('products').update({ 
-    metadata: { ...cachedProduct.metadata, is_unavailable: true, unavailable_since: new Date().toISOString() }
-  }).eq('product_id', product_id);
+Add an `ArrowLeft` + "Continue Shopping" button near the top of the cart (next to the existing cart header). Clicking it navigates back to `/marketplace` (or uses `navigate(-1)` to return to the product they were browsing). This is standard e-commerce UX — Amazon, Target, and Lululemon all have this.
 
-  return Response with { ...cachedData, is_unavailable: true }
-}
-```
+The page already imports `ArrowLeft` from lucide-react, so this is minimal work.
 
-### Change 2: Frontend — Disable Buy/Cart buttons for unavailable products
-**Files:**
-- `src/components/marketplace/product-details/ProductDetailsSidebar.tsx`
-- `src/components/marketplace/product-details/BuyNowDrawer.tsx`
-
-When the product has `is_unavailable: true`:
-- Show a "This product is no longer available" banner
-- Disable "Buy Now", "Add to Cart", "Schedule Gift", and "Create Auto-Gift" buttons
-- Keep the product page visible (user might want to find alternatives)
-
-### Change 3: Filter unavailable products from search results
-**File:** `supabase/functions/get-products/index.ts`
-
-In `enrichWithCachedData` (~line 144), when merging cached data, check if `metadata.is_unavailable === true` and exclude those products from search results. This prevents discontinued products from appearing in the grid at all.
-
-### Change 4: Product card "Unavailable" badge (optional, low effort)
-**File:** `src/components/marketplace/UnifiedProductCard.tsx`
-
-If a cached product somehow still appears (e.g., from a direct link), show a subtle "Unavailable" badge on the card.
+### 3. Keep the empty-cart state navigation
+The cart page likely already has a "Start Shopping" CTA for empty carts — no change needed there.
 
 ## Files Changed
-1. `supabase/functions/get-product-detail/index.ts` — flag unavailable products in response + DB
-2. `supabase/functions/get-products/index.ts` — filter out unavailable products from search results
-3. `src/components/marketplace/product-details/ProductDetailsSidebar.tsx` — disable purchase buttons
-4. `src/components/marketplace/product-details/BuyNowDrawer.tsx` — prevent opening for unavailable products
-5. `src/components/marketplace/UnifiedProductCard.tsx` — unavailable badge
-
-## Why Not Validate at Checkout?
-- Adds 200-500ms latency to every purchase (bad UX for 99% of valid orders)
-- Costs $0.01 per Zinc API call on every checkout
-- User already entered payment info — telling them "sorry" after that is worse than before
-
-## Why Product Detail Page is the Right Layer
-- Already makes a Zinc API call (no extra cost)
-- Natural point where we learn the product is gone
-- User hasn't committed to buying yet
-- We can show alternatives or similar products
+1. `src/components/gifting/unified/UnifiedGiftSchedulingModal.tsx` — navigate to `/cart` after scheduling
+2. `src/pages/Cart.tsx` — add "Continue Shopping" button in header area
 

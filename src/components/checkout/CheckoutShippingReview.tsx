@@ -181,16 +181,16 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               });
               
               return (
-                <div key={group.id} className="w-full p-3 bg-green-50 rounded-lg border border-green-200">
+                <div key={group.id} className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-start gap-3 w-full">
-                    <div className="p-2 bg-green-100 rounded-full flex-shrink-0">
-                      <Users className="h-4 w-4 text-green-600" />
+                    <div className="p-2 bg-gray-100 rounded-full flex-shrink-0">
+                      <Users className="h-4 w-4 text-gray-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1 gap-2">
-                        <p className="font-medium text-green-800 truncate flex-1">{group.connectionName}</p>
+                        <p className="font-medium text-foreground truncate flex-1">{group.connectionName}</p>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 text-xs">
+                          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
                             <Package className="h-3 w-3 mr-1" />
                             {group.items.length}
                           </Badge>
@@ -198,7 +198,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                       </div>
                       
                       {group.shippingAddress && (
-                        <div className="text-sm text-green-700 mb-2">
+                        <div className="text-sm text-muted-foreground mb-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               {group.isPrivateAddress ? (
@@ -270,11 +270,11 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                       )}
                       
                       {group.giftMessage && (
-                        <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                        <div className="mt-2 p-2 bg-white rounded border border-gray-200">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className="text-xs text-green-600 font-medium mb-1">Gift Message:</p>
-                              <p className="text-sm text-green-800 italic">"{group.giftMessage}"</p>
+                              <p className="text-xs text-muted-foreground font-medium mb-1">Gift Message:</p>
+                              <p className="text-sm text-foreground italic">"{group.giftMessage}"</p>
                             </div>
                             <QuickEditModal
                               type="message"
@@ -291,14 +291,14 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                       )}
 
                       {group.scheduledDeliveryDate && (
-                        <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                        <div className="mt-2 p-2 bg-white rounded border border-gray-200">
                           <div className="flex items-start gap-2">
                             <div className="flex-1">
-                              <p className="text-xs text-green-600 font-medium mb-1">Scheduled Delivery:</p>
-                              <p className="text-sm text-green-800 font-medium">
+                              <p className="text-xs text-muted-foreground font-medium mb-1">Scheduled Delivery:</p>
+                              <p className="text-sm text-foreground font-medium">
                                 {formatScheduledDate(group.scheduledDeliveryDate)}
                               </p>
-                              <p className="text-xs text-green-600 mt-1 italic">
+                              <p className="text-xs text-muted-foreground mt-1 italic">
                                 📅 Will be processed 4 days before delivery date to ensure on-time arrival
                               </p>
                             </div>
@@ -313,7 +313,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                           currentData={{ message: '' }}
                           onSave={(data) => handleMessageEdit(group.id, data.message)}
                         >
-                          <Button variant="ghost" size="sm" className="text-xs text-green-600 mt-1 h-auto p-1">
+                          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground mt-1 h-auto p-1">
                             <MessageSquare className="h-3 w-3 mr-1" />
                             Add gift message
                           </Button>
@@ -327,22 +327,22 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
 
             {/* Your Address (Unassigned Items) - Hide for wishlist purchases */}
             {!isWishlistPurchase && unassignedItems.length > 0 && (
-              <div className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-start gap-3 w-full">
-                  <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
-                    <User className="h-4 w-4 text-blue-600" />
+                  <div className="p-2 bg-gray-100 rounded-full flex-shrink-0">
+                    <User className="h-4 w-4 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1 gap-2">
-                      <p className="font-medium text-blue-800 truncate flex-1">Your Address</p>
-                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs flex-shrink-0">
+                      <p className="font-medium text-foreground truncate flex-1">Your Address</p>
+                      <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs flex-shrink-0">
                         <Package className="h-3 w-3 mr-1" />
                         {unassignedItems.length}
                       </Badge>
                     </div>
                     
                     {hasCompleteAddress && shippingAddress ? (
-                      <div className="text-sm text-blue-700">
+                      <div className="text-sm text-muted-foreground">
                         <p className="font-medium flex items-center gap-2">
                           <span className="truncate">{profile?.name}</span>
                           <AddressVerificationBadge

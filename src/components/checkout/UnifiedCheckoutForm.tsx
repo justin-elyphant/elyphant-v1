@@ -646,7 +646,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               
               {/* Animated Progress Bar */}
               <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_100%] animate-shimmer"></div>
+                <div className="h-full bg-gradient-to-r from-gray-400 via-gray-600 to-gray-400 bg-[length:200%_100%] animate-shimmer"></div>
               </div>
               
               {/* Secondary Message */}
@@ -788,32 +788,6 @@ const UnifiedCheckoutForm: React.FC = () => {
             </Card>
           )}
 
-          {/* Gift Message - Available for all shoppers */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                Gift Message <span className="text-xs font-normal text-muted-foreground">(optional)</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label htmlFor="gift-message">Add a personal note for the recipient</Label>
-                <Textarea
-                  id="gift-message"
-                  placeholder="Write a heartfelt message to include with the gift..."
-                  value={giftOptions.giftMessage}
-                  onChange={(e) => handleUpdateGiftOptions({ giftMessage: e.target.value })}
-                  className="mt-1 min-h-[80px] resize-none"
-                  maxLength={240}
-                />
-                <p className="text-xs text-muted-foreground mt-1 text-right">
-                  {giftOptions.giftMessage.length}/240 characters
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Schedule Delivery - Applies to all items in the order */}
           <ScheduleDeliveryCard
             scheduledDeliveryDate={giftOptions.scheduledDeliveryDate}
@@ -922,7 +896,7 @@ const UnifiedCheckoutForm: React.FC = () => {
               createCheckoutSession();
             }}
             disabled={isProcessing || !addressesLoaded || !shippingCostLoaded || !isGuestEmailValid}
-            className="flex-1 max-w-[200px] min-h-[44px] bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 touch-action-manipulation"
+            className="flex-1 max-w-[200px] min-h-[44px] bg-red-600 hover:bg-red-700 text-white touch-action-manipulation"
             size="lg"
           >
             {isProcessing ? (

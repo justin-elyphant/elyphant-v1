@@ -124,10 +124,33 @@ export const useOrderSourceAnalysis = (order: ZincOrder) => {
               giftMessage: (order as any).gift_message
             });
           } else {
-            // Standard order
-            setAnalysis({
-              sourceType: 'standard'
-            });
+            // Check if this order has vendor_direct fulfillment
+            const orderNotes = (order as any).notes;
+            let isVendorDirect = false;
+            try {
+              const parsed = typeof orderNotes === 'string' ? JSON.parse(orderNotes) : orderNotes;
+              isVendorDirect = parsed?.fulfillment === 'vendor_direct_only';
+            } catch {}
+            
+            // Also check line_items for vendor_direct items
+            const lineItems = (order as any).line_items;
+            const items = lineItems?.items || (Array.isArray(lineItems) ? lineItems : []);
+            const hasVendorItems = items.some((item: any) => item.fulfillment_method === 'vendor_direct');
+            
+            if (isVendorDirect || hasVendorItems) {
+              setAnalysis({
+                sourceType: 'vendor_direct',
+                vendorInfo: {
+                  vendorName: 'Partner Vendor',
+                  vendorAccountId: items.find((item: any) => item.vendor_account_id)?.vendor_account_id || '',
+                },
+              });
+            } else {
+              // Standard order
+              setAnalysis({
+                sourceType: 'standard'
+              });
+            }
           }
         }
       } catch (err) {

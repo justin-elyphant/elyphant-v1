@@ -11,7 +11,8 @@ import {
   ChevronUp,
   Clock,
   CheckCircle,
-  Mail
+  Mail,
+  Store
 } from 'lucide-react';
 import { formatScheduledDate, formatScheduledDateTime } from '@/utils/date-formatting';
 import { format } from 'date-fns';
@@ -33,6 +34,8 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
         return <Zap className="h-4 w-4" />;
       case 'ai_auto_gift':
         return <Bot className="h-4 w-4" />;
+      case 'vendor_direct':
+        return <Store className="h-4 w-4" />;
       default:
         return <ShoppingCart className="h-4 w-4" />;
     }
@@ -48,6 +51,8 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
         return 'Auto-Gift';
       case 'ai_auto_gift':
         return 'AI Auto-Gift';
+      case 'vendor_direct':
+        return 'Partner Vendor';
       default:
         return 'Standard Order';
     }
@@ -60,9 +65,10 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
       case 'scheduled':
         return 'outline';
       case 'auto_gift':
-        return 'default';
       case 'ai_auto_gift':
         return 'default';
+      case 'vendor_direct':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -76,12 +82,14 @@ const OrderSourceDisplay = ({ analysis }: OrderSourceDisplayProps) => {
         return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300';
       case 'ai_auto_gift':
         return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300';
+      case 'vendor_direct':
+        return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300';
       default:
         return '';
     }
   };
 
-  const hasExpandableContent = analysis.sourceType !== 'standard' && (
+  const hasExpandableContent = analysis.sourceType !== 'standard' && analysis.sourceType !== 'vendor_direct' && (
     analysis.recipientInfo || 
     analysis.selectedProducts?.length || 
     analysis.giftMessage ||

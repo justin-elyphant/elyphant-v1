@@ -51,7 +51,7 @@ export function formatPrice(
     fallbackText?: string;
     currency?: string;
     locale?: string;
-    productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+    productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'vendor_direct' | 'manual';
     skipCentsDetection?: boolean;
   } = {}
 ): string {
@@ -90,6 +90,7 @@ export function formatPrice(
         break;
       case 'shopify':
       case 'vendor_portal':
+      case 'vendor_direct':
       case 'manual':
         shouldDetectCents = false; // These sources use dollars
         break;

@@ -169,6 +169,41 @@ class ProductCatalogServiceClass {
     console.log(`[ProductCatalogService] Getting product detail: ${productId}`);
 
     try {
+      // Check if this is a vendor product by querying the DB first
+      const { data: dbProduct } = await supabase
+        .from('products')
+        .select('*')
+        .eq('product_id', productId)
+        .maybeSingle();
+
+      // If it's a vendor product, return directly from DB (no Zinc API call)
+      if (dbProduct?.vendor_account_id) {
+        console.log(`[ProductCatalogService] Vendor product detected: ${productId} — returning from DB`);
+        const meta = (dbProduct.metadata as Record<string, any>) || {};
+        return {
+          product_id: dbProduct.product_id,
+          title: dbProduct.title,
+          price: dbProduct.price,
+          images: meta.images || [dbProduct.image_url],
+          main_image: meta.main_image || dbProduct.image_url,
+          product_description: meta.product_description || '',
+          feature_bullets: meta.feature_bullets || [],
+          product_details: meta.product_details || [],
+          stars: meta.stars,
+          review_count: meta.review_count,
+          all_variants: meta.all_variants,
+          variant_specifics: meta.variant_specifics,
+          metadata: {
+            ...meta,
+            productSource: 'vendor_direct',
+            fulfillment_method: 'vendor_direct',
+            vendor_account_id: dbProduct.vendor_account_id,
+            skipCentsDetection: true,
+          },
+        };
+      }
+
+      // Standard Zinc product — use edge function
       const { data, error } = await supabase.functions.invoke('get-product-detail', {
         body: { product_id: productId }
       });

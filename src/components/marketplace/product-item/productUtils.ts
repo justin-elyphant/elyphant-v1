@@ -124,7 +124,8 @@ export const standardizeProduct = (product: any): any => {
       
       if (rawPrice > 0) {
         // SKIP conversion if already normalized (skipCentsDetection flag set)
-        if (product.skipCentsDetection === true) {
+      if (product.skipCentsDetection === true || product.productSource === 'vendor_direct' || product.fulfillment_method === 'vendor_direct') {
+          // Vendor products and explicitly flagged products: price is already in dollars
           normalizedPrice = rawPrice;
         } else {
           // ENHANCED: More comprehensive Zinc product detection for pricing
@@ -213,7 +214,7 @@ export const standardizeProduct = (product: any): any => {
     description: product.description || "",
     category: product.category || product.category_name || "General",
     category_name: product.category_name || product.category || "General",
-    vendor: product.vendor || product.retailer || "Amazon",
+    vendor: product.vendor || product.retailer || (product.productSource === 'vendor_direct' || product.vendor_account_id ? "Vendor" : "Amazon"),
     retailer: product.retailer || product.vendor || "Amazon",
     rating: product.rating || product.stars || product.metadata?.stars || product.metadata?.rating || 0,
     stars: product.stars || product.rating || product.metadata?.stars || product.metadata?.rating || 0,
@@ -253,8 +254,14 @@ export const standardizeProduct = (product: any): any => {
     })(),
     productSource: (() => {
       // Preserve existing productSource if valid
-      if (product.productSource && ['zinc_api', 'shopify', 'vendor_portal', 'manual'].includes(product.productSource)) {
+      if (product.productSource && ['zinc_api', 'shopify', 'vendor_portal', 'vendor_direct', 'manual'].includes(product.productSource)) {
         return product.productSource;
+      }
+      
+      // Detect vendor_direct products by vendor_account_id or source_query prefix
+      if (product.vendor_account_id || product.fulfillment_method === 'vendor_direct' ||
+          (product.source_query && typeof product.source_query === 'string' && product.source_query.startsWith('vendor_'))) {
+        return 'vendor_direct';
       }
       
       // Detect source from multiple indicators

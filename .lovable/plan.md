@@ -335,6 +335,56 @@ Amazon/Etsy storefronts are product catalogs. Elyphant storefronts are **gifting
 
 ---
 
+## Vendor Portal Development Guardrails
+
+### 1. No Overengineering
+- Build only what's needed for the current phase — no speculative abstractions
+- One component = one responsibility; split if >200 lines
+- No zero-logic wrapper components
+- Reuse existing shadcn/ui and Radix primitives
+
+### 2. Code Bloat Prevention
+- No duplicate services/hooks — search before creating
+- No unused imports or dead code after refactors
+- Shared types in a single `types.ts` per feature area
+- No new edge functions without justification (8 core payment functions only)
+
+### 3. Vendor Data Security (RLS)
+- Every new vendor table gets RLS with `auth.uid() = user_id`
+- Cross-vendor data isolation is absolute
+- Use `can_access_vendor_portal()` SECURITY DEFINER function for access checks
+- No vendor PII exposed beyond what the vendor owns
+- Product data: public-read, vendor-write
+
+### 4. Authentication & Authorization
+- Roles stay in `user_roles` table — never on profiles
+- Never trust client-side role checks — validate via `has_role()` or `can_access_vendor_portal()` in RLS
+- Vendor portal routes gate on `vendor_accounts.approval_status = 'approved'`
+
+### 5. Payment & Order Security
+- Stripe Checkout Sessions only — no new Payment Intent flows
+- Vendor payout data never exposed client-side
+- Vendor order views scoped to own orders; customer addresses masked (city/state only)
+
+### 6. Frontend Conventions
+- Lululemon design system: grey (#F7F7F7) bg, black text, white components, red (#DC2626) accent for CTAs only
+- Vendor portal uses its own layout (`VendorPortalLayout`) — never share consumer nav
+- Full-page routes, not modals, for data-heavy views
+- Mobile-first — all vendor views must work on phones
+
+### 7. Database Discipline
+- No new columns on `orders` table without checking Phase 2 target (22 columns)
+- New vendor tables use JSONB `metadata` for extensible data
+- Indexes on all `vendor_id` / `user_id` foreign keys
+- `created_at` and `updated_at` with auto-update triggers on every table
+
+### 8. Testing & Validation
+- Zod schemas for all form inputs (product forms, CSV uploads, settings)
+- Edge function inputs validated server-side
+- Manual test before shipping any payment or order flow
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

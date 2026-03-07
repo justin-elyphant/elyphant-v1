@@ -429,7 +429,7 @@ async function handleCheckoutSessionCompleted(
       // This is a product item - accumulate subtotal
       subtotalAmount += itemAmount;
       
-      // Fetch product to get metadata containing Amazon ASIN, gift message, recipient shipping, and wishlist tracking
+      // Fetch product to get metadata containing Amazon ASIN, gift message, recipient shipping, wishlist tracking, and fulfillment routing
       let amazonAsin = 'unknown';
       let recipientId = null;
       let recipientName = '';
@@ -439,6 +439,9 @@ async function handleCheckoutSessionCompleted(
       let wishlistItemId = '';
       // NEW: Capture recipient shipping from Stripe product metadata
       let recipientShipping: any = null;
+      // Phase C: Fulfillment routing
+      let fulfillmentMethod = 'zinc_api';
+      let vendorAccountId = '';
       
       if (stripeProductId) {
         try {
@@ -451,6 +454,9 @@ async function handleCheckoutSessionCompleted(
           // Wishlist tracking
           wishlistId = product.metadata?.wishlist_id || '';
           wishlistItemId = product.metadata?.wishlist_item_id || '';
+          // Phase C: Fulfillment routing
+          fulfillmentMethod = product.metadata?.fulfillment_method || 'zinc_api';
+          vendorAccountId = product.metadata?.vendor_account_id || '';
           
           // CRITICAL: Extract recipient shipping address from Stripe metadata (metadata-first routing)
           if (product.metadata?.recipient_ship_line1) {
@@ -465,7 +471,7 @@ async function handleCheckoutSessionCompleted(
             };
             console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Recipient Shipping from metadata: ${recipientShipping.city}, ${recipientShipping.state}`);
           } else {
-            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Wishlist: ${wishlistId ? 'Yes' : 'No'} | Stripe ID: ${stripeProductId}`);
+            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Fulfillment: ${fulfillmentMethod} | Vendor: ${vendorAccountId || 'N/A'} | Stripe ID: ${stripeProductId}`);
           }
           
           if (!imageUrl) {
@@ -490,6 +496,9 @@ async function handleCheckoutSessionCompleted(
         wishlist_item_id: wishlistItemId,
         // NEW: Include recipient shipping from Stripe metadata (for metadata-first routing)
         recipient_shipping: recipientShipping,
+        // Phase C: Fulfillment routing
+        fulfillment_method: fulfillmentMethod,
+        vendor_account_id: vendorAccountId,
       };
     })
   );

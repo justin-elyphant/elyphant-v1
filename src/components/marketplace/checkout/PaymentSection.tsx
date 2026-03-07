@@ -102,7 +102,10 @@ const PaymentSection = ({
             price: item.product.price,
             quantity: item.quantity,
             image_url: item.product.image || item.product.images?.[0],
-            recipientAssignment: item.recipientAssignment
+            recipientAssignment: item.recipientAssignment,
+            // Phase C: Fulfillment routing
+            fulfillment_method: item.product.fulfillment_method || (item.product.productSource === 'vendor_direct' ? 'vendor_direct' : 'zinc_api'),
+            vendor_account_id: item.product.vendor_account_id || '',
           })),
           deliveryGroups,
           shippingInfo,

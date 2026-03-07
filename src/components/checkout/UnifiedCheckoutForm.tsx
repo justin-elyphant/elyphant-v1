@@ -507,7 +507,10 @@ const UnifiedCheckoutForm: React.FC = () => {
               image_url: item.product.image || item.product.images?.[0],
               recipientAssignment: synthesizedAssignment,
               wishlist_id: item.wishlist_id || '',
-              wishlist_item_id: item.wishlist_item_id || ''
+              wishlist_item_id: item.wishlist_item_id || '',
+              // Phase C: Fulfillment routing
+              fulfillment_method: item.product.fulfillment_method || (item.product.productSource === 'vendor_direct' ? 'vendor_direct' : 'zinc_api'),
+              vendor_account_id: item.product.vendor_account_id || '',
             };
           }),
           deliveryGroups: enrichedDeliveryGroups,

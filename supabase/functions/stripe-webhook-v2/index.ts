@@ -777,14 +777,25 @@ async function handleCheckoutSessionCompleted(
       console.log(`✅ [STEP 6.${i + 2}] Child order ${groupLabel} created: ${childOrder.id} | Number: ${childOrder.order_number}`);
       childOrderIds.push(childOrder.id);
 
-      // Process child order immediately if not scheduled
-      if (!isScheduled && session.payment_status === 'paid') {
-        console.log(`🚀 [STEP 6.${i + 2}] Triggering processing for child order ${groupLabel}...`);
+      // Phase C: Split fulfillment for child orders
+      const childZincItems = group.items.filter((item: any) => (item.fulfillment_method || 'zinc_api') === 'zinc_api');
+      const childVendorItems = group.items.filter((item: any) => item.fulfillment_method === 'vendor_direct');
+      
+      if (childVendorItems.length > 0) {
+        console.log(`🏪 [STEP 6.${i + 2}] Creating vendor order(s) for child ${groupLabel}...`);
+        await createVendorOrders(childVendorItems, childOrder.id, group.shippingAddress, supabase);
+      }
+      
+      if (!isScheduled && session.payment_status === 'paid' && childZincItems.length > 0) {
+        console.log(`🚀 [STEP 6.${i + 2}] Triggering Zinc processing for child order ${groupLabel}...`);
         try {
           await triggerOrderProcessingWithRetry(childOrder.id, supabase, userId);
         } catch (processingError: any) {
           console.error(`❌ Child order ${groupLabel} processing failed:`, processingError);
         }
+      } else if (childZincItems.length === 0) {
+        console.log(`🏪 [STEP 6.${i + 2}] Child ${groupLabel} all vendor_direct — skipping Zinc`);
+        await supabase.from('orders').update({ status: 'processing', notes: JSON.stringify({ fulfillment: 'vendor_direct_only' }) }).eq('id', childOrder.id);
       }
     }
 

@@ -179,14 +179,14 @@ class ProductCatalogServiceClass {
       // If it's a vendor product, return directly from DB (no Zinc API call)
       if (dbProduct?.vendor_account_id) {
         console.log(`[ProductCatalogService] Vendor product detected: ${productId} — returning from DB`);
-        const meta = dbProduct.metadata || {};
+        const meta = (dbProduct.metadata as Record<string, any>) || {};
         return {
           product_id: dbProduct.product_id,
           title: dbProduct.title,
           price: dbProduct.price,
           images: meta.images || [dbProduct.image_url],
           main_image: meta.main_image || dbProduct.image_url,
-          product_description: meta.product_description || dbProduct.description || '',
+          product_description: meta.product_description || '',
           feature_bullets: meta.feature_bullets || [],
           product_details: meta.product_details || [],
           stars: meta.stars,

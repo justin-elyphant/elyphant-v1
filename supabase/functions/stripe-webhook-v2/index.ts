@@ -650,8 +650,21 @@ async function handleCheckoutSessionCompleted(
       );
     }
     
-    if (!isScheduled && session.payment_status === 'paid') {
+    // Phase C: Split fulfillment — route vendor_direct items to vendor_orders, zinc_api items to Zinc
+    const zincItems = group.items.filter((item: any) => (item.fulfillment_method || 'zinc_api') === 'zinc_api');
+    const vendorItems = group.items.filter((item: any) => item.fulfillment_method === 'vendor_direct');
+    
+    if (vendorItems.length > 0) {
+      console.log(`🏪 [STEP 6.V] Creating ${vendorItems.length} vendor order(s) for vendor_direct items...`);
+      await createVendorOrders(vendorItems, newOrder.id, shippingAddress, supabase);
+    }
+    
+    if (!isScheduled && session.payment_status === 'paid' && zincItems.length > 0) {
       await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
+    } else if (zincItems.length === 0) {
+      // All items are vendor_direct — mark order as processing (vendor handles fulfillment)
+      console.log(`🏪 [STEP 6.V] All items vendor_direct — skipping Zinc, marking as processing`);
+      await supabase.from('orders').update({ status: 'processing', notes: JSON.stringify({ fulfillment: 'vendor_direct_only' }) }).eq('id', newOrder.id);
     }
 
   } else {

@@ -200,6 +200,58 @@ Zero modifications to checkout, webhooks, order processing, or any Zinc-related 
 
 ---
 
+## Retailer Landing Page Strategy (Banked 2026-03-07)
+
+### Current State
+Brand pages (Apple, Yeti, etc.) use `BrandLandingPage.tsx` with hero images, taglines, and sub-collection carousels via `BrandData` interface. These showcase brands to attract retailer partnerships.
+
+### Competitive Analysis
+| Platform | Storefront Model | Gap |
+|----------|-----------------|-----|
+| **Amazon** | Template-based "Brand Store" with modules | No storytelling, no gifting context |
+| **Etsy** | Fixed layout, banner + grid | No customization beyond banner |
+| **Faire** | Clean wholesale catalog | No consumer-facing branding |
+| **Shopify** | Full website builder | Too complex for a marketplace page |
+
+### Strategy: Self-Service Block-Based Page Builder
+
+Evolve existing `BrandData` into a drag-and-drop block system in the Vendor Portal.
+
+#### Block Types (Tiered by Plan)
+**Free Tier:**
+- Hero Banner (image + tagline + CTA)
+- Product Grid (auto-populated from listings)
+- About / Brand Story (text + image)
+
+**Boost Tier ($49/mo):**
+- Sub-Collection Carousel (curated product groups)
+- "Perfect For" Occasion Tags (Valentine's, Birthday, etc.)
+- Testimonials / Social Proof block
+- Video embed block
+
+**Spotlight Tier ($149/mo):**
+- Full-page editorial layouts (magazine-style)
+- Nicole AI Cross-Sell section (dynamic related vendor suggestions)
+- Seasonal auto-promotion (auto-surface collections for upcoming holidays)
+- Priority placement in marketplace discovery rows
+
+#### Gifting-Native Differentiators (No Competitor Does This)
+1. **Occasion-Aware Sections** — Auto-promote seasonal products by leveraging life events system
+2. **4-CTA Product Integration** — Every vendor page product has: Add to Cart, Buy Now, Schedule Gift, Create Auto-Gift
+3. **Nicole AI Cross-Selling** — "People who gifted from [Brand X] also loved [Brand Y]"
+4. **Gifting Analytics for Vendors** — Show vendors WHO is buying (occasion, relationship type, recipient demographics)
+
+#### Implementation Path
+1. **Phase 1 (Current):** Static `BrandData` config — Elyphant curates pages for top brands
+2. **Phase 2:** Vendor Portal self-service editor — vendors pick blocks, upload assets, preview live
+3. **Phase 3:** Drag-and-drop reordering with `@dnd-kit` (already in project)
+4. **Phase 4:** Occasion-aware automation + Nicole AI integration
+
+#### Key Insight
+Amazon/Etsy storefronts are product catalogs. Elyphant storefronts are **gifting experiences**. The block system lets vendors tell their brand story while the platform handles gifting context (occasions, scheduling, AI recommendations) automatically.
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

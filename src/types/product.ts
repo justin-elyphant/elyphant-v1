@@ -75,7 +75,9 @@ export type Product = {
   fromPreferences?: boolean;
   
   // Unified pricing strategy fields
-  productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'manual';
+  productSource?: 'zinc_api' | 'shopify' | 'vendor_portal' | 'vendor_direct' | 'manual';
+  fulfillment_method?: 'zinc_api' | 'vendor_direct';
+  vendor_account_id?: string;
   skipCentsDetection?: boolean;
   isZincApiProduct?: boolean; // Legacy compatibility flag
   

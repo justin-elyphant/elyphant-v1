@@ -247,15 +247,19 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
  * Transform cached product to standard format
  */
 const transformCachedProduct = (p: any) => {
+  const isVendorProduct = p.vendor_account_id != null || 
+    (p.metadata?.source_query && typeof p.metadata.source_query === 'string' && p.metadata.source_query.startsWith('vendor_'));
+
   let price = typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0;
   // Safety net: reuse same heuristic as mapDbProductToProduct (> 200 = cents)
-  if (price > 200 && (p.retailer === 'amazon' || p.retailer === 'Amazon')) {
+  // SKIP for vendor products — their prices are already in dollars
+  if (!isVendorProduct && price > 200 && (p.retailer === 'amazon' || p.retailer === 'Amazon')) {
     price = price / 100;
   }
 
   return {
   product_id: p.product_id,
-  asin: p.product_id,
+  asin: isVendorProduct ? undefined : p.product_id,
   title: p.title,
   price,
   image: p.image_url,
@@ -274,7 +278,12 @@ const transformCachedProduct = (p: any) => {
   is_cached: true,
   view_count: p.view_count || 0,
   popularity_score: calculatePopularityScore(p, p.metadata || {}),
-  from_cache: true
+  from_cache: true,
+  // Vendor-specific fields
+  productSource: isVendorProduct ? 'vendor_direct' : undefined,
+  fulfillment_method: isVendorProduct ? 'vendor_direct' : 'zinc_api',
+  vendor_account_id: isVendorProduct ? p.vendor_account_id : undefined,
+  skipCentsDetection: isVendorProduct ? true : undefined,
   };
 };
 

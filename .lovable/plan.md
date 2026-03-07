@@ -314,6 +314,27 @@ Amazon/Etsy storefronts are product catalogs. Elyphant storefronts are **gifting
 
 ---
 
+## Non-Shopify Vendor Experience
+
+### Three Vendor Tiers
+1. **Shopify Retailers** — Shopify Storefront API sync, read-only inventory, automated product import
+2. **Tech-Savvy Vendors** — Direct API integration, webhook-based inventory sync, custom platform connectors
+3. **Platform-Exclusive Vendors** — Manual product creation forms, CSV bulk upload, image uploads, internal inventory management via Elyphant portal
+
+### Platform-Exclusive Vendor Features (CSV/Manual)
+- Manual product creation form with image upload (multi-image), pricing, variants (size/color), description, category assignment
+- CSV bulk upload with template download, validation preview, error reporting
+- In-portal inventory management — stock levels, price updates, product status toggling
+- Fulfillment routing via `vendor_direct` — vendor receives order notifications by email, ships directly
+- No external platform dependency — Elyphant IS their storefront
+
+### Files to Build (Future)
+- `src/components/vendor/products/ManualProductForm.tsx` — full product creation form with image uploads, variants, pricing
+- `src/components/vendor/products/CSVUploadFlow.tsx` — template download, file upload, validation preview, error reporting
+- `src/components/vendor/products/InventoryManager.tsx` — stock levels, price updates, product status toggling
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

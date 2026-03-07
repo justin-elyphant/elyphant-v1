@@ -1079,6 +1079,7 @@ async function createVendorOrders(
                 order_id: vendorOrder.id,
                 item_count: items.length,
                 total_amount: totalAmount,
+                vendor_payout: vendorPayout,
               }
             }
           });

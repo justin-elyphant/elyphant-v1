@@ -67,6 +67,14 @@ const Press = lazy(() => import("./pages/Press"));
 const VendorPartner = lazy(() => import("./pages/VendorPartner"));
 const VendorPortal = lazy(() => import("./pages/VendorPortal"));
 const VendorManagement = lazy(() => import("./pages/VendorManagement"));
+const VendorPortalLayout = lazy(() => import("./components/vendor/layout/VendorPortalLayout"));
+const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard"));
+const VendorOrdersPage = lazy(() => import("./pages/vendor/VendorOrdersPage"));
+const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
+const VendorAnalyticsPage = lazy(() => import("./pages/vendor/VendorAnalyticsPage"));
+const VendorSupportPage = lazy(() => import("./pages/vendor/VendorSupportPage"));
+const VendorAdvertisingPage = lazy(() => import("./pages/vendor/VendorAdvertisingPage"));
+const VendorSettingsPage = lazy(() => import("./pages/vendor/VendorSettingsPage"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -264,7 +272,16 @@ function AppContent() {
            <Route path="/press" element={<Press />} />
            <Route path="/vendor-partner" element={<VendorPartner />} />
            <Route path="/vendor-portal" element={<VendorPortal />} />
-           <Route path="/vendor-management" element={<VendorManagement />} />
+           <Route path="/vendor-management" element={<Navigate to="/vendor" replace />} />
+           <Route path="/vendor" element={<VendorPortalLayout />}>
+             <Route index element={<VendorDashboard />} />
+             <Route path="orders" element={<VendorOrdersPage />} />
+             <Route path="products" element={<VendorProductsPage />} />
+             <Route path="advertising" element={<VendorAdvertisingPage />} />
+             <Route path="analytics" element={<VendorAnalyticsPage />} />
+             <Route path="support" element={<VendorSupportPage />} />
+             <Route path="settings" element={<VendorSettingsPage />} />
+           </Route>
            <Route path="/privacy" element={<PrivacyPolicy />} />
            <Route path="/terms" element={<TermsOfService />} />
            <Route path="/sms-consent" element={<SMSConsent />} />

@@ -288,6 +288,32 @@ Amazon/Etsy storefronts are product catalogs. Elyphant storefronts are **gifting
 
 ---
 
+## Vendor Portal UI/UX — Typography & Iconography
+
+### Typography
+- **Dual-font system**: Plus Jakarta Sans for headings/UI elements, Inter for body text
+- Add `font-display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif']` to `tailwind.config.ts`
+- Type scale (vendor portal only):
+  - Page titles: `text-2xl font-semibold tracking-tight font-display`
+  - Section headers: `text-lg font-medium font-display`
+  - Table headers: `text-xs font-medium uppercase tracking-wider text-slate-500`
+  - Metric numbers: `text-3xl font-semibold tabular-nums`
+  - Labels/captions: `text-sm text-slate-500`
+- Scoped to vendor portal only — consumer app unchanged
+
+### Iconography
+- Standardize Lucide icons in vendor portal: `size={18}`, `strokeWidth={1.5}` (thinner/more elegant)
+- Color: `text-slate-400` default, `text-slate-700` on hover/active — no brand blue in nav
+- Create `VendorIcon.tsx` wrapper component for consistency
+- Only metric trend indicators and status dots get color (green/red)
+
+### Files to Create/Modify
+- `src/index.css` — Google Font import for Plus Jakarta Sans
+- `tailwind.config.ts` — add `font-display` family
+- `src/components/vendor/layout/VendorIcon.tsx` — icon wrapper component
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

@@ -938,6 +938,54 @@ const guestOrderConfirmationTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Order ${props.order_number} confirmed! Create a free account to track it 🎁` });
 };
 
+// Vendor New Order Template
+const vendorNewOrderTemplate = (props: any): string => {
+  const content = `
+    <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px 0;">
+      New Order Received 📦
+    </h1>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; margin: 0 0 24px 0;">
+      Hi ${props.vendor_name || 'Vendor'}, you have a new order to fulfill.
+    </p>
+
+    <!-- Order Summary Card -->
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin: 0 0 24px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b7280;">Order ID</td>
+          <td align="right" style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1a; font-variant-numeric: tabular-nums;">${(props.order_id || '').substring(0, 8)}...</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b7280;">Items</td>
+          <td align="right" style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1a;">${props.item_count || 0} item(s)</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b7280;">Order Total</td>
+          <td align="right" style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.total_amount)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b7280;">Your Payout (85%)</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 700; color: #047857;">${formatPrice(props.vendor_payout)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- CTA -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/vendor/orders" style="display: inline-block; padding: 14px 32px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600;">
+          View &amp; Fulfill Order
+        </a>
+      </td></tr>
+    </table>
+
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #9ca3af; margin: 24px 0 0 0; text-align: center;">
+      Please fulfill this order within 3 business days. Update the status and add tracking in your vendor portal.
+    </p>
+  `;
+  return baseEmailTemplate({ content, preheader: `New order received — ${props.item_count || ''} item(s) | ${formatPrice(props.total_amount)}` });
+};
+
 // Template Router
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
@@ -1016,6 +1064,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
       return {
         html: guestOrderConfirmationTemplate(data),
         subject: `Order Confirmed - ${data.order_number || 'Your Order'} 🎁`
+      };
+    case 'vendor_new_order':
+      return {
+        html: vendorNewOrderTemplate(data),
+        subject: `New Order Received — ${data.item_count || ''} item(s) | ${formatPrice(data.total_amount)}`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

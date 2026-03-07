@@ -272,7 +272,16 @@ function AppContent() {
            <Route path="/press" element={<Press />} />
            <Route path="/vendor-partner" element={<VendorPartner />} />
            <Route path="/vendor-portal" element={<VendorPortal />} />
-           <Route path="/vendor-management" element={<VendorManagement />} />
+           <Route path="/vendor-management" element={<Navigate to="/vendor" replace />} />
+           <Route path="/vendor" element={<VendorPortalLayout />}>
+             <Route index element={<VendorDashboard />} />
+             <Route path="orders" element={<VendorOrdersPage />} />
+             <Route path="products" element={<VendorProductsPage />} />
+             <Route path="advertising" element={<VendorAdvertisingPage />} />
+             <Route path="analytics" element={<VendorAnalyticsPage />} />
+             <Route path="support" element={<VendorSupportPage />} />
+             <Route path="settings" element={<VendorSettingsPage />} />
+           </Route>
            <Route path="/privacy" element={<PrivacyPolicy />} />
            <Route path="/terms" element={<TermsOfService />} />
            <Route path="/sms-consent" element={<SMSConsent />} />

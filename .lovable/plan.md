@@ -151,6 +151,55 @@ Zero modifications to checkout, webhooks, order processing, or any Zinc-related 
 
 ---
 
+## Vendor Revenue Model & Payout Strategy (Banked 2026-03-07)
+
+### Revenue Model: Three Revenue Streams
+
+#### 1. Consumer Markup (30%)
+- **How:** 30% added ON TOP of retailer's normal price (consumer-facing charge)
+- **Example:** Retailer sells bouquet for $50 → Elyphant lists at $65
+- **Net margin after Stripe fees (~2.9% + $0.30) and ops:** ~20% ($13.05 on $65 sale)
+- **Justification:** Gifting experience value (scheduling, group gifts, AI recommendations, gift wrapping/messaging)
+
+#### 2. Free Unlimited Listings (Vendor Acquisition)
+- **How:** Vendors list unlimited products for free — zero onboarding friction
+- **Why:** Solves the supply-side chicken-and-egg problem; vendors have no reason NOT to join
+- **Precedent:** Faire, Etsy (free to list, pay on transaction)
+
+#### 3. Tiered Sponsored Ads (Vendor Monetization)
+| Tier | Name | Price | Features |
+|------|------|-------|----------|
+| Free | Basic Listing | $0 | Standard placement in search/browse |
+| Paid | Boost | TBD/month | Priority placement in category pages, "Featured" badge |
+| Premium | Spotlight | TBD/month | Homepage carousel, AI recommendation priority, analytics dashboard |
+
+### Vendor Payout Strategy
+
+#### Payment Method: Stripe Connect (Long-term)
+- Automates payment splitting, 1099 tax reporting, vendor dashboards
+- **Beta (1-5 vendors):** Manual bank transfers to reduce setup overhead
+- **Scale (5+ vendors):** Migrate to Stripe Connect
+
+#### Payout Schedule
+| Vendor Type | Payout Cycle | Rationale |
+|-------------|-------------|-----------|
+| Perishable/Local (flowers, food) | Net 7 | Fast turnaround, delivery confirmed quickly |
+| Standard retail | Net 14 | Industry standard for marketplaces |
+| New/high-risk vendors | Net 30 | Trust-building period |
+
+#### Payout Example (Flower Shop)
+- Customer pays: $65 (retail $50 + 30% markup)
+- Stripe fee: ~$2.19 (2.9% + $0.30)
+- Elyphant keeps: $15 markup - $2.19 fees = **$12.81 gross profit**
+- Vendor receives: **$50** (their full retail price, Net 7)
+
+### Price Comparison Risk Mitigation
+- Focus marketing on **gifting experience**, not product price
+- Value props: scheduled delivery, group gifting, AI gift recommendations, gift wrapping/messaging
+- Customers pay the premium for convenience, not the product itself
+
+---
+
 ## Completed Plans
 
 ### Checkout Page Cleanup (Completed 2026-03-06)

@@ -3,22 +3,29 @@ import React from "react";
 import VendorsTable from "./VendorsTable";
 import EmptyVendorsState from "./EmptyVendorsState";
 import { Vendor } from "./types";
+import { Loader2 } from "lucide-react";
 
 interface AllVendorsContentProps {
   vendors: Vendor[];
-  hasSearched: boolean;
+  isLoading: boolean;
+  emptyMessage?: string;
 }
 
 const AllVendorsContent: React.FC<AllVendorsContentProps> = ({ 
   vendors,
-  hasSearched
+  isLoading,
+  emptyMessage = "No vendors found. Try searching or adjusting filters."
 }) => {
-  if (!hasSearched) {
-    return <EmptyVendorsState />;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
-  
+
   if (vendors.length === 0) {
-    return <EmptyVendorsState message="No vendors found matching your search criteria." />;
+    return <EmptyVendorsState message={emptyMessage} />;
   }
 
   return <VendorsTable vendors={vendors} />;

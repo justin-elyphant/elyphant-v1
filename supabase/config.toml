@@ -135,6 +135,9 @@ verify_jwt = true
 [functions.claim-guest-orders]
 verify_jwt = false
 
+[functions.approve-vendor]
+verify_jwt = true
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

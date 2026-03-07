@@ -4737,6 +4737,72 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_orders: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          customer_name: string | null
+          id: string
+          line_items: Json
+          metadata: Json | null
+          order_id: string | null
+          shipping_address_masked: Json | null
+          status: string
+          total_amount: number
+          tracking_number: string | null
+          updated_at: string
+          vendor_account_id: string
+          vendor_payout: number
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          line_items?: Json
+          metadata?: Json | null
+          order_id?: string | null
+          shipping_address_masked?: Json | null
+          status?: string
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+          vendor_account_id: string
+          vendor_payout?: number
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          line_items?: Json
+          metadata?: Json | null
+          order_id?: string | null
+          shipping_address_masked?: Json | null
+          status?: string
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+          vendor_account_id?: string
+          vendor_payout?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_orders_vendor_account_id_fkey"
+            columns: ["vendor_account_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_delivery_log: {
         Row: {
           created_at: string | null
@@ -5527,6 +5593,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_vendor_account_id_for_user: {
+        Args: { _user_id: string }
+        Returns: string
       }
       get_zma_account_safe: {
         Args: { account_id: string }

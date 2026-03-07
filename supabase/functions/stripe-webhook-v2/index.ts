@@ -1006,6 +1006,92 @@ async function sendRecipientGiftNotification(
 }
 
 // ============================================================================
+// HELPER: Create vendor orders for vendor_direct items (Phase C)
+// ============================================================================
+async function createVendorOrders(
+  vendorItems: any[],
+  orderId: string,
+  shippingAddress: any,
+  supabase: any
+) {
+  // Group vendor items by vendor_account_id
+  const vendorGroups = new Map<string, any[]>();
+  for (const item of vendorItems) {
+    const vid = item.vendor_account_id || 'unknown';
+    if (!vendorGroups.has(vid)) vendorGroups.set(vid, []);
+    vendorGroups.get(vid)!.push(item);
+  }
+
+  for (const [vendorAccountId, items] of vendorGroups) {
+    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0);
+    // Platform takes 15% commission, vendor gets 85%
+    const vendorPayout = Math.round(totalAmount * 85) / 100;
+
+    // Mask shipping address for vendor privacy (hide exact address, show city/state)
+    const maskedAddress = shippingAddress ? {
+      name: shippingAddress.name || '',
+      city: shippingAddress.city || '',
+      state: shippingAddress.state || '',
+      postal_code: shippingAddress.postal_code || '',
+      country: shippingAddress.country || 'US',
+    } : null;
+
+    const { data: vendorOrder, error: voError } = await supabase
+      .from('vendor_orders')
+      .insert({
+        vendor_account_id: vendorAccountId,
+        order_id: orderId,
+        status: 'pending',
+        total_amount: totalAmount,
+        vendor_payout: vendorPayout,
+        line_items: items.map((item: any) => ({
+          product_id: item.product_id,
+          title: item.title,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        })),
+        shipping_address_masked: maskedAddress,
+        customer_name: shippingAddress?.name || '',
+      })
+      .select('id')
+      .single();
+
+    if (voError) {
+      console.error(`❌ [VENDOR ORDER] Failed to create vendor order for ${vendorAccountId}:`, voError);
+    } else {
+      console.log(`✅ [VENDOR ORDER] Created: ${vendorOrder.id} | Vendor: ${vendorAccountId} | Amount: $${totalAmount.toFixed(2)} | Payout: $${vendorPayout.toFixed(2)}`);
+      
+      // MVP: Send email notification to vendor
+      try {
+        const { data: vendorAccount } = await supabase
+          .from('vendor_accounts')
+          .select('contact_email, company_name')
+          .eq('id', vendorAccountId)
+          .single();
+        
+        if (vendorAccount?.contact_email) {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'vendor_new_order',
+              recipientEmail: vendorAccount.contact_email,
+              data: {
+                vendor_name: vendorAccount.company_name,
+                order_id: vendorOrder.id,
+                item_count: items.length,
+                total_amount: totalAmount,
+              }
+            }
+          });
+          console.log(`📧 [VENDOR ORDER] Notification sent to ${vendorAccount.contact_email}`);
+        }
+      } catch (emailErr: any) {
+        console.warn(`⚠️ [VENDOR ORDER] Email notification failed:`, emailErr.message);
+      }
+    }
+  }
+}
+
+//
 // HELPER: Handle deferred payment orders (setup mode - 8+ days before delivery)
 // ============================================================================
 async function handleDeferredPaymentOrder(

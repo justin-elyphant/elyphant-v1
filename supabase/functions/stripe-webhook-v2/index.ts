@@ -429,7 +429,7 @@ async function handleCheckoutSessionCompleted(
       // This is a product item - accumulate subtotal
       subtotalAmount += itemAmount;
       
-      // Fetch product to get metadata containing Amazon ASIN, gift message, recipient shipping, and wishlist tracking
+      // Fetch product to get metadata containing Amazon ASIN, gift message, recipient shipping, wishlist tracking, and fulfillment routing
       let amazonAsin = 'unknown';
       let recipientId = null;
       let recipientName = '';
@@ -439,6 +439,9 @@ async function handleCheckoutSessionCompleted(
       let wishlistItemId = '';
       // NEW: Capture recipient shipping from Stripe product metadata
       let recipientShipping: any = null;
+      // Phase C: Fulfillment routing
+      let fulfillmentMethod = 'zinc_api';
+      let vendorAccountId = '';
       
       if (stripeProductId) {
         try {
@@ -451,6 +454,9 @@ async function handleCheckoutSessionCompleted(
           // Wishlist tracking
           wishlistId = product.metadata?.wishlist_id || '';
           wishlistItemId = product.metadata?.wishlist_item_id || '';
+          // Phase C: Fulfillment routing
+          fulfillmentMethod = product.metadata?.fulfillment_method || 'zinc_api';
+          vendorAccountId = product.metadata?.vendor_account_id || '';
           
           // CRITICAL: Extract recipient shipping address from Stripe metadata (metadata-first routing)
           if (product.metadata?.recipient_ship_line1) {
@@ -465,7 +471,7 @@ async function handleCheckoutSessionCompleted(
             };
             console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Recipient Shipping from metadata: ${recipientShipping.city}, ${recipientShipping.state}`);
           } else {
-            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Image: ${imageUrl ? 'Yes' : 'MISSING'} | Wishlist: ${wishlistId ? 'Yes' : 'No'} | Stripe ID: ${stripeProductId}`);
+            console.log(`✅ [STEP 4.1] Product: ${description} | Amazon ASIN: ${amazonAsin} | Fulfillment: ${fulfillmentMethod} | Vendor: ${vendorAccountId || 'N/A'} | Stripe ID: ${stripeProductId}`);
           }
           
           if (!imageUrl) {
@@ -490,6 +496,9 @@ async function handleCheckoutSessionCompleted(
         wishlist_item_id: wishlistItemId,
         // NEW: Include recipient shipping from Stripe metadata (for metadata-first routing)
         recipient_shipping: recipientShipping,
+        // Phase C: Fulfillment routing
+        fulfillment_method: fulfillmentMethod,
+        vendor_account_id: vendorAccountId,
       };
     })
   );
@@ -641,8 +650,21 @@ async function handleCheckoutSessionCompleted(
       );
     }
     
-    if (!isScheduled && session.payment_status === 'paid') {
+    // Phase C: Split fulfillment — route vendor_direct items to vendor_orders, zinc_api items to Zinc
+    const zincItems = group.items.filter((item: any) => (item.fulfillment_method || 'zinc_api') === 'zinc_api');
+    const vendorItems = group.items.filter((item: any) => item.fulfillment_method === 'vendor_direct');
+    
+    if (vendorItems.length > 0) {
+      console.log(`🏪 [STEP 6.V] Creating ${vendorItems.length} vendor order(s) for vendor_direct items...`);
+      await createVendorOrders(vendorItems, newOrder.id, shippingAddress, supabase);
+    }
+    
+    if (!isScheduled && session.payment_status === 'paid' && zincItems.length > 0) {
       await triggerOrderProcessingWithRetry(newOrder.id, supabase, userId);
+    } else if (zincItems.length === 0) {
+      // All items are vendor_direct — mark order as processing (vendor handles fulfillment)
+      console.log(`🏪 [STEP 6.V] All items vendor_direct — skipping Zinc, marking as processing`);
+      await supabase.from('orders').update({ status: 'processing', notes: JSON.stringify({ fulfillment: 'vendor_direct_only' }) }).eq('id', newOrder.id);
     }
 
   } else {
@@ -755,14 +777,25 @@ async function handleCheckoutSessionCompleted(
       console.log(`✅ [STEP 6.${i + 2}] Child order ${groupLabel} created: ${childOrder.id} | Number: ${childOrder.order_number}`);
       childOrderIds.push(childOrder.id);
 
-      // Process child order immediately if not scheduled
-      if (!isScheduled && session.payment_status === 'paid') {
-        console.log(`🚀 [STEP 6.${i + 2}] Triggering processing for child order ${groupLabel}...`);
+      // Phase C: Split fulfillment for child orders
+      const childZincItems = group.items.filter((item: any) => (item.fulfillment_method || 'zinc_api') === 'zinc_api');
+      const childVendorItems = group.items.filter((item: any) => item.fulfillment_method === 'vendor_direct');
+      
+      if (childVendorItems.length > 0) {
+        console.log(`🏪 [STEP 6.${i + 2}] Creating vendor order(s) for child ${groupLabel}...`);
+        await createVendorOrders(childVendorItems, childOrder.id, group.shippingAddress, supabase);
+      }
+      
+      if (!isScheduled && session.payment_status === 'paid' && childZincItems.length > 0) {
+        console.log(`🚀 [STEP 6.${i + 2}] Triggering Zinc processing for child order ${groupLabel}...`);
         try {
           await triggerOrderProcessingWithRetry(childOrder.id, supabase, userId);
         } catch (processingError: any) {
           console.error(`❌ Child order ${groupLabel} processing failed:`, processingError);
         }
+      } else if (childZincItems.length === 0) {
+        console.log(`🏪 [STEP 6.${i + 2}] Child ${groupLabel} all vendor_direct — skipping Zinc`);
+        await supabase.from('orders').update({ status: 'processing', notes: JSON.stringify({ fulfillment: 'vendor_direct_only' }) }).eq('id', childOrder.id);
       }
     }
 
@@ -973,6 +1006,92 @@ async function sendRecipientGiftNotification(
 }
 
 // ============================================================================
+// HELPER: Create vendor orders for vendor_direct items (Phase C)
+// ============================================================================
+async function createVendorOrders(
+  vendorItems: any[],
+  orderId: string,
+  shippingAddress: any,
+  supabase: any
+) {
+  // Group vendor items by vendor_account_id
+  const vendorGroups = new Map<string, any[]>();
+  for (const item of vendorItems) {
+    const vid = item.vendor_account_id || 'unknown';
+    if (!vendorGroups.has(vid)) vendorGroups.set(vid, []);
+    vendorGroups.get(vid)!.push(item);
+  }
+
+  for (const [vendorAccountId, items] of vendorGroups) {
+    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0);
+    // Platform takes 15% commission, vendor gets 85%
+    const vendorPayout = Math.round(totalAmount * 85) / 100;
+
+    // Mask shipping address for vendor privacy (hide exact address, show city/state)
+    const maskedAddress = shippingAddress ? {
+      name: shippingAddress.name || '',
+      city: shippingAddress.city || '',
+      state: shippingAddress.state || '',
+      postal_code: shippingAddress.postal_code || '',
+      country: shippingAddress.country || 'US',
+    } : null;
+
+    const { data: vendorOrder, error: voError } = await supabase
+      .from('vendor_orders')
+      .insert({
+        vendor_account_id: vendorAccountId,
+        order_id: orderId,
+        status: 'pending',
+        total_amount: totalAmount,
+        vendor_payout: vendorPayout,
+        line_items: items.map((item: any) => ({
+          product_id: item.product_id,
+          title: item.title,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        })),
+        shipping_address_masked: maskedAddress,
+        customer_name: shippingAddress?.name || '',
+      })
+      .select('id')
+      .single();
+
+    if (voError) {
+      console.error(`❌ [VENDOR ORDER] Failed to create vendor order for ${vendorAccountId}:`, voError);
+    } else {
+      console.log(`✅ [VENDOR ORDER] Created: ${vendorOrder.id} | Vendor: ${vendorAccountId} | Amount: $${totalAmount.toFixed(2)} | Payout: $${vendorPayout.toFixed(2)}`);
+      
+      // MVP: Send email notification to vendor
+      try {
+        const { data: vendorAccount } = await supabase
+          .from('vendor_accounts')
+          .select('contact_email, company_name')
+          .eq('id', vendorAccountId)
+          .single();
+        
+        if (vendorAccount?.contact_email) {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'vendor_new_order',
+              recipientEmail: vendorAccount.contact_email,
+              data: {
+                vendor_name: vendorAccount.company_name,
+                order_id: vendorOrder.id,
+                item_count: items.length,
+                total_amount: totalAmount,
+              }
+            }
+          });
+          console.log(`📧 [VENDOR ORDER] Notification sent to ${vendorAccount.contact_email}`);
+        }
+      } catch (emailErr: any) {
+        console.warn(`⚠️ [VENDOR ORDER] Email notification failed:`, emailErr.message);
+      }
+    }
+  }
+}
+
+//
 // HELPER: Handle deferred payment orders (setup mode - 8+ days before delivery)
 // ============================================================================
 async function handleDeferredPaymentOrder(

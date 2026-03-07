@@ -50,6 +50,9 @@ serve(async (req) => {
       wishlist_id: z.string().max(100).optional(),
       wishlist_item_id: z.string().max(100).optional(),
       product: z.record(z.unknown()).optional(),
+      // Phase C: Fulfillment routing
+      fulfillment_method: z.enum(['zinc_api', 'vendor_direct']).optional(),
+      vendor_account_id: z.string().max(100).optional(),
     }).passthrough();
 
     const PricingBreakdownSchema = z.object({
@@ -244,6 +247,9 @@ serve(async (req) => {
             recipient_ship_postal: recipientShipping.postal_code || recipientShipping.zipCode || recipientShipping.zip_code || '',
             recipient_ship_phone: recipientShipping.phone || '',
             recipient_ship_country: recipientShipping.country || 'US',
+            // Phase C: Fulfillment routing metadata
+            fulfillment_method: item.fulfillment_method || 'zinc_api',
+            vendor_account_id: item.vendor_account_id || '',
           }
         },
         unit_amount: Math.round((item.price || item.product?.price || 0) * 100)

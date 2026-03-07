@@ -9,4 +9,7 @@ export interface CheckoutItem {
   retailer?: string;
   variationText?: string;
   selectedVariations?: string;
+  // Phase C: Fulfillment routing
+  fulfillment_method?: 'zinc_api' | 'vendor_direct';
+  vendor_account_id?: string;
 }

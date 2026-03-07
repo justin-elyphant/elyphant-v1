@@ -162,6 +162,15 @@ const VendorPortalAuth = () => {
           console.error('Error creating vendor account:', vendorError);
           toast.error("Account created but vendor application failed. Please contact support.");
         } else {
+          // Fire-and-forget: send application received confirmation email
+          supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'vendor_application_received',
+              recipientEmail: signupData.email,
+              data: { company_name: signupData.companyName }
+            }
+          }).catch((err) => console.error('Failed to send vendor application email:', err));
+
           toast.success("Vendor application submitted! Please check your email for verification.");
           toast.info("Your application will be reviewed and you'll be notified once approved.");
         }

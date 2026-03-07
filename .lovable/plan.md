@@ -251,6 +251,42 @@ Evolve existing `BrandData` into a drag-and-drop block system in the Vendor Port
 Amazon/Etsy storefronts are product catalogs. Elyphant storefronts are **gifting experiences**. The block system lets vendors tell their brand story while the platform handles gifting context (occasions, scheduling, AI recommendations) automatically.
 
 ---
+## Vendor Operations Strategy (Banked 2026-03-07)
+
+### 1. Local Vendor Fulfillment Flow
+- **Email notification MVP:** Vendor receives order details via email after Stripe payment confirms
+- **`fulfillment_method` field** on orders (`zinc_api` vs `vendor_direct`) to route webhook logic
+- `stripe-webhook-v2` checks `productSource` → Zinc products go to `process-order-v2`, Shopify products trigger vendor email notification
+- **Future:** Vendor portal with order accept/reject, delivery confirmation, real-time status updates
+
+### 2. Mixed-Cart Checkout (Split Fulfillment)
+- **Parent order** splits into **child orders** by fulfillment source post-payment
+- Checkout UI shows **separate delivery timelines** per source (e.g., "Arrives Feb 14 via Amazon" / "Arrives Feb 13 via Local Delivery")
+- Leverages existing `productSource` field already in 25+ files
+- **Single Stripe checkout session**, split post-payment in `stripe-webhook-v2`
+- Each child order routed to appropriate fulfillment path independently
+
+### 3. Vendor Onboarding Funnel (Curated Beta)
+- **Flow:** Apply → Admin Review → Shopify Connect → Product Import → Test Order → Go Live
+- **Manual curation** during beta to maintain quality and brand alignment
+- Admin reviews vendor application before granting Shopify integration access
+- Test order required before products go live on marketplace
+- **Future:** Open marketplace once trust signals (reviews, ratings, return rates) and automated review systems are built
+
+### 4. Pricing Control (Auto 30% Markup)
+- **Always apply 30% markup** on vendor's Shopify price — no exceptions, no custom pricing UI
+- Vendors set prices on Shopify, Elyphant adds markup automatically during product sync
+- **Sale prices pass through:** If vendor runs 20% off on Shopify, customer sees lower Elyphant price too (30% markup on the sale price)
+- Simplifies vendor onboarding — zero pricing configuration needed on Elyphant side
+
+### 5. Geo-Restrictions & Local Delivery
+- **`delivery_zones` field** on vendor record (zip codes or radius-based)
+- Validate against **recipient address** (not buyer's address) at product page and checkout
+- Products outside delivery zone show: "Not available for delivery to this address"
+- **National shipping vendors** have no restrictions (delivery_zones = null)
+- Geo-validation happens at two points: product detail page (soft warning) and checkout (hard block)
+
+---
 
 ## Completed Plans
 

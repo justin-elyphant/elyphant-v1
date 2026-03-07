@@ -90,6 +90,7 @@ export function formatPrice(
         break;
       case 'shopify':
       case 'vendor_portal':
+      case 'vendor_direct':
       case 'manual':
         shouldDetectCents = false; // These sources use dollars
         break;

@@ -3416,6 +3416,7 @@ export type Database = {
           search_terms: string[] | null
           title: string
           updated_at: string | null
+          vendor_account_id: string | null
           view_count: number | null
         }
         Insert: {
@@ -3435,6 +3436,7 @@ export type Database = {
           search_terms?: string[] | null
           title: string
           updated_at?: string | null
+          vendor_account_id?: string | null
           view_count?: number | null
         }
         Update: {
@@ -3454,9 +3456,18 @@ export type Database = {
           search_terms?: string[] | null
           title?: string
           updated_at?: string | null
+          vendor_account_id?: string | null
           view_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_account_id_fkey"
+            columns: ["vendor_account_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_completion_analytics: {
         Row: {
@@ -4672,9 +4683,18 @@ export type Database = {
           company_name: string
           contact_email: string
           created_at: string
+          description: string | null
+          free_shipping_enabled: boolean | null
+          free_shipping_threshold: number | null
           id: string
+          logo_url: string | null
+          notification_preferences: Json | null
+          phone: string | null
+          shipping_flat_rate: number | null
+          shipping_type: string | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
           approval_status?: string
@@ -4682,9 +4702,18 @@ export type Database = {
           company_name: string
           contact_email: string
           created_at?: string
+          description?: string | null
+          free_shipping_enabled?: boolean | null
+          free_shipping_threshold?: number | null
           id?: string
+          logo_url?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          shipping_flat_rate?: number | null
+          shipping_type?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
           approval_status?: string
@@ -4692,9 +4721,18 @@ export type Database = {
           company_name?: string
           contact_email?: string
           created_at?: string
+          description?: string | null
+          free_shipping_enabled?: boolean | null
+          free_shipping_threshold?: number | null
           id?: string
+          logo_url?: string | null
+          notification_preferences?: Json | null
+          phone?: string | null
+          shipping_flat_rate?: number | null
+          shipping_type?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }

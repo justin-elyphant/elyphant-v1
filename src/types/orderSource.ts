@@ -1,5 +1,9 @@
 export interface OrderSourceAnalysis {
-  sourceType: 'standard' | 'scheduled' | 'auto_gift' | 'ai_auto_gift';
+  sourceType: 'standard' | 'scheduled' | 'auto_gift' | 'ai_auto_gift' | 'vendor_direct';
+  vendorInfo?: {
+    vendorName: string;
+    vendorAccountId: string;
+  };
   recipientInfo?: {
     id: string;
     name: string;

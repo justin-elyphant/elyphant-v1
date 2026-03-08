@@ -22,6 +22,9 @@ const VendorPortalAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({ 
+    firstName: "",
+    lastName: "",
+    title: "",
     email: "", 
     password: "", 
     companyName: "",
@@ -93,8 +96,8 @@ const VendorPortalAuth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupData.email || !signupData.password || !signupData.companyName || !signupData.confirmPassword) {
-      toast.error("Please fill in all fields");
+    if (!signupData.firstName || !signupData.lastName || !signupData.title || !signupData.email || !signupData.password || !signupData.companyName || !signupData.confirmPassword || !signupData.website || !signupData.phone || !signupData.description) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -119,6 +122,9 @@ const VendorPortalAuth = () => {
           data: {
             signup_source: 'vendor_portal',
             user_type: 'vendor',
+            first_name: signupData.firstName,
+            last_name: signupData.lastName,
+            title: signupData.title,
             company_name: signupData.companyName
           }
         }
@@ -295,6 +301,44 @@ const VendorPortalAuth = () => {
               
               <TabsContent value="signup" className="space-y-4 mt-4">
                 <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">First Name</label>
+                      <Input 
+                        type="text" 
+                        placeholder="First name"
+                        value={signupData.firstName}
+                        onChange={(e) => setSignupData({...signupData, firstName: e.target.value})}
+                        className="w-full border-slate-300"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Last Name</label>
+                      <Input 
+                        type="text" 
+                        placeholder="Last name"
+                        value={signupData.lastName}
+                        onChange={(e) => setSignupData({...signupData, lastName: e.target.value})}
+                        className="w-full border-slate-300"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Title</label>
+                    <Input 
+                      type="text" 
+                      placeholder="e.g. Founder, Head of Sales"
+                      value={signupData.title}
+                      onChange={(e) => setSignupData({...signupData, title: e.target.value})}
+                      className="w-full border-slate-300"
+                      disabled={isLoading}
+                      required
+                    />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Company Name</label>
                     <Input 
@@ -304,6 +348,7 @@ const VendorPortalAuth = () => {
                       onChange={(e) => setSignupData({...signupData, companyName: e.target.value})}
                       className="w-full border-slate-300"
                       disabled={isLoading}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -315,12 +360,11 @@ const VendorPortalAuth = () => {
                       onChange={(e) => setSignupData({...signupData, email: e.target.value})}
                       className="w-full border-slate-300"
                       disabled={isLoading}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Website <span className="text-slate-400 font-normal">(optional)</span>
-                    </label>
+                    <label className="text-sm font-medium text-slate-700">Website</label>
                     <Input 
                       type="url" 
                       placeholder="https://yourcompany.com"
@@ -328,12 +372,11 @@ const VendorPortalAuth = () => {
                       onChange={(e) => setSignupData({...signupData, website: e.target.value})}
                       className="w-full border-slate-300"
                       disabled={isLoading}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Phone <span className="text-slate-400 font-normal">(optional)</span>
-                    </label>
+                    <label className="text-sm font-medium text-slate-700">Phone</label>
                     <Input 
                       type="tel" 
                       placeholder="(555) 123-4567"
@@ -341,12 +384,11 @@ const VendorPortalAuth = () => {
                       onChange={(e) => setSignupData({...signupData, phone: e.target.value})}
                       className="w-full border-slate-300"
                       disabled={isLoading}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Tell us about your business <span className="text-slate-400 font-normal">(optional)</span>
-                    </label>
+                    <label className="text-sm font-medium text-slate-700">Tell us about your business</label>
                     <textarea 
                       placeholder="What products do you sell? Why are you a good fit for Elyphant?"
                       value={signupData.description}
@@ -354,6 +396,7 @@ const VendorPortalAuth = () => {
                       className="flex min-h-[80px] w-full rounded-md border border-slate-300 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isLoading}
                       rows={3}
+                      required
                     />
                   </div>
 

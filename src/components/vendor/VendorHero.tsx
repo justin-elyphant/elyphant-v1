@@ -11,23 +11,24 @@ export const VendorHero = ({ onContactClick }: VendorHeroProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="text-center max-w-4xl mx-auto mb-16">
-      <h1 className="font-sans text-3xl md:text-5xl font-bold text-gray-900 mb-6">
-        Grow Your Business with Elyphant
+    <div className="text-center max-w-4xl mx-auto mb-24 pt-8">
+      <h1 className="font-sans text-4xl md:text-6xl font-bold text-foreground tracking-tight mb-6 leading-tight">
+        Your products.<br />Their perfect gift.
       </h1>
-      <p className="text-base md:text-xl text-muted-foreground mb-4">
-        Join our marketplace and connect with customers looking for meaningful gifts
+      <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto">
+        Elyphant connects your catalog with gift-givers using AI-powered matching 
+        and wishlist-driven purchasing — so every sale sticks.
       </p>
-      <p className="text-base md:text-lg text-muted-foreground mb-8">
-        Our seamless vendor portal makes it easy to showcase your products, manage inventory,
-        and track your success all in one place.
+      <p className="text-base text-muted-foreground mb-10 max-w-2xl mx-auto">
+        Near-zero returns. Automated gifting. Scheduled deliveries. 
+        Your first 10 listings are free.
       </p>
       <Button 
         size="lg"
-        className="text-lg px-8 py-6" 
-        onClick={() => navigate('/vendor-signup')}
+        className="bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,42%)] text-white text-lg px-10 py-6 rounded-none font-semibold tracking-wide" 
+        onClick={() => navigate('/vendor-portal')}
       >
-        Become a Partner Today
+        Apply Now
       </Button>
     </div>
   );

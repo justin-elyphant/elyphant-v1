@@ -1008,6 +1008,16 @@ const vendorApplicationReceivedTemplate = (props: any): string => {
           <td style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Company</td>
           <td align="right" style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1a1a1a;">${companyName}</td>
         </tr>
+        ${props.website ? `<tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Website</td>
+          <td align="right" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${props.website}</td>
+        </tr>` : ''}
+        ${props.description ? `<tr>
+          <td colspan="2" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">About</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #4b5563; line-height: 1.6;">${props.description}</td>
+        </tr>` : ''}
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Status</td>
           <td align="right" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #d97706;">Under Review</td>

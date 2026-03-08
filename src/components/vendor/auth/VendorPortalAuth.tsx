@@ -24,7 +24,10 @@ const VendorPortalAuth = () => {
     email: "", 
     password: "", 
     companyName: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    website: "",
+    phone: "",
+    description: ""
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -155,6 +158,9 @@ const VendorPortalAuth = () => {
             user_id: data.user.id,
             company_name: signupData.companyName,
             contact_email: signupData.email,
+            website: signupData.website || null,
+            phone: signupData.phone || null,
+            description: signupData.description || null,
             approval_status: 'pending'
           });
 
@@ -167,7 +173,12 @@ const VendorPortalAuth = () => {
             body: {
               eventType: 'vendor_application_received',
               recipientEmail: signupData.email,
-              data: { company_name: signupData.companyName }
+              data: { 
+                company_name: signupData.companyName,
+                website: signupData.website || undefined,
+                phone: signupData.phone || undefined,
+                description: signupData.description || undefined
+              }
             }
           }).catch((err) => console.error('Failed to send vendor application email:', err));
 
@@ -305,6 +316,49 @@ const VendorPortalAuth = () => {
                       className="w-full border-slate-300"
                       disabled={isLoading}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Website <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <Input 
+                      type="url" 
+                      placeholder="https://yourcompany.com"
+                      value={signupData.website}
+                      onChange={(e) => setSignupData({...signupData, website: e.target.value})}
+                      className="w-full border-slate-300"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Phone <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <Input 
+                      type="tel" 
+                      placeholder="(555) 123-4567"
+                      value={signupData.phone}
+                      onChange={(e) => setSignupData({...signupData, phone: e.target.value})}
+                      className="w-full border-slate-300"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Tell us about your business <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea 
+                      placeholder="What products do you sell? Why are you a good fit for Elyphant?"
+                      value={signupData.description}
+                      onChange={(e) => setSignupData({...signupData, description: e.target.value})}
+                      className="flex min-h-[80px] w-full rounded-md border border-slate-300 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isLoading}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <p className="text-xs text-slate-400 mb-3">Create your account credentials — you'll use these to access the portal once approved.</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Password</label>

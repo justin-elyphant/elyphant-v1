@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -6,7 +6,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -16,10 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { toast } from "sonner";
+import { CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 const VendorPortalAuth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({ 
     firstName: "",
@@ -33,6 +36,17 @@ const VendorPortalAuth = () => {
     phone: "",
     description: ""
   });
+
+  // Auto-redirect after submission
+  useEffect(() => {
+    if (!submitted) return;
+    if (countdown <= 0) {
+      navigate('/');
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [submitted, countdown, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +74,6 @@ const VendorPortalAuth = () => {
       }
 
       if (data.user) {
-        // Check vendor role using secure has_role function
         const { data: hasVendorRole } = await supabase
           .rpc('has_role', { 
             _user_id: data.user.id, 
@@ -71,7 +84,6 @@ const VendorPortalAuth = () => {
           toast.success("Welcome back!");
           navigate("/vendor-management");
         } else {
-          // Check if they have a pending application
           const { data: vendorAccount } = await supabase
             .from('vendor_accounts')
             .select('approval_status')
@@ -113,7 +125,6 @@ const VendorPortalAuth = () => {
 
     setIsLoading(true);
     try {
-      // Create auth user with vendor source attribution
       const { data, error } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
@@ -136,7 +147,6 @@ const VendorPortalAuth = () => {
       }
 
       if (data.user) {
-        // Set user identification
         const { error: identificationError } = await supabase
           .rpc('set_user_identification', {
             target_user_id: data.user.id,
@@ -158,7 +168,6 @@ const VendorPortalAuth = () => {
           console.error('Error setting user identification:', identificationError);
         }
 
-        // Create vendor account record
         const { error: vendorError } = await supabase
           .from('vendor_accounts')
           .insert({
@@ -175,7 +184,6 @@ const VendorPortalAuth = () => {
           console.error('Error creating vendor account:', vendorError);
           toast.error("Account created but vendor application failed. Please contact support.");
         } else {
-          // Fire-and-forget: send application received confirmation email
           supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: 'vendor_application_received',
@@ -189,8 +197,7 @@ const VendorPortalAuth = () => {
             }
           }).catch((err) => console.error('Failed to send vendor application email:', err));
 
-          toast.success("Vendor application submitted! Please check your email for verification.");
-          toast.info("Your application will be reviewed and you'll be notified once approved.");
+          setSubmitted(true);
         }
       }
     } catch (err) {
@@ -227,15 +234,72 @@ const VendorPortalAuth = () => {
     }
   };
 
+  // Confirmation view after successful submission
+  if (submitted) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[hsl(var(--background))]">
+        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full"
+          >
+            <Card className="w-full bg-white rounded-none border-border shadow-sm">
+              <CardContent className="flex flex-col items-center text-center py-12 px-6 space-y-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                >
+                  <CheckCircle className="h-16 w-16 text-foreground" strokeWidth={1.5} />
+                </motion.div>
+
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                    Application Submitted
+                  </h1>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+                    Thank you for applying to become a vendor on Elyphant. We'll review your application and notify you by email once approved.
+                  </p>
+                </div>
+
+                <div className="bg-muted/50 rounded-none px-4 py-3 w-full">
+                  <p className="text-xs text-muted-foreground">
+                    Application for <span className="font-medium text-foreground">{signupData.companyName}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Confirmation sent to <span className="font-medium text-foreground">{signupData.email}</span>
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => navigate('/')}
+                  className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-none h-12 text-sm font-medium tracking-wide uppercase"
+                >
+                  Back to Elyphant
+                </Button>
+
+                <p className="text-xs text-muted-foreground">
+                  Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-100">
+    <div className="flex flex-col min-h-screen bg-[hsl(var(--background))]">
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <Card className="w-full bg-white shadow-lg border-slate-200">
+        <Card className="w-full bg-white rounded-none border-border shadow-sm">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
-              <h1 className="text-2xl font-bold text-slate-800">Vendor Portal</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Vendor Portal</h1>
             </div>
-            <CardDescription className="text-slate-500 text-center">
+            <CardDescription className="text-muted-foreground text-center">
               Access your vendor dashboard or apply to become a vendor
             </CardDescription>
           </CardHeader>
@@ -245,7 +309,7 @@ const VendorPortalAuth = () => {
               variant="outline"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 rounded-none border-border"
             >
               <GoogleIcon className="h-5 w-5" />
               Continue with Google
@@ -256,43 +320,43 @@ const VendorPortalAuth = () => {
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">Or continue with</span>
+                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
 
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Apply</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 rounded-none">
+                <TabsTrigger value="login" className="rounded-none">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-none">Apply</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login" className="space-y-4 mt-4">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <label className="text-sm font-medium text-foreground">Email</label>
                     <Input 
                       type="email" 
                       placeholder="Enter your email"
                       value={loginData.email}
                       onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Password</label>
+                    <label className="text-sm font-medium text-foreground">Password</label>
                     <PasswordInput 
                       placeholder="Enter your password"
                       value={loginData.password}
                       onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                     />
                   </div>
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-none h-12 text-sm font-medium tracking-wide uppercase"
                   >
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
@@ -303,70 +367,70 @@ const VendorPortalAuth = () => {
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">First Name</label>
+                      <label className="text-sm font-medium text-foreground">First Name</label>
                       <Input 
                         type="text" 
                         placeholder="First name"
                         value={signupData.firstName}
                         onChange={(e) => setSignupData({...signupData, firstName: e.target.value})}
-                        className="w-full border-slate-300"
+                        className="w-full border-border rounded-none"
                         disabled={isLoading}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Last Name</label>
+                      <label className="text-sm font-medium text-foreground">Last Name</label>
                       <Input 
                         type="text" 
                         placeholder="Last name"
                         value={signupData.lastName}
                         onChange={(e) => setSignupData({...signupData, lastName: e.target.value})}
-                        className="w-full border-slate-300"
+                        className="w-full border-border rounded-none"
                         disabled={isLoading}
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Title</label>
+                    <label className="text-sm font-medium text-foreground">Title</label>
                     <Input 
                       type="text" 
                       placeholder="e.g. Founder, Head of Sales"
                       value={signupData.title}
                       onChange={(e) => setSignupData({...signupData, title: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Company Name</label>
+                    <label className="text-sm font-medium text-foreground">Company Name</label>
                     <Input 
                       type="text" 
                       placeholder="Your company name"
                       value={signupData.companyName}
                       onChange={(e) => setSignupData({...signupData, companyName: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <label className="text-sm font-medium text-foreground">Email</label>
                     <Input 
                       type="email" 
                       placeholder="Enter your email"
                       value={signupData.email}
                       onChange={(e) => setSignupData({...signupData, email: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Website</label>
+                    <label className="text-sm font-medium text-foreground">Website</label>
                     <div className="flex">
-                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm">
+                      <span className="inline-flex items-center px-3 border border-r-0 border-border bg-muted text-muted-foreground text-sm">
                         https://
                       </span>
                       <Input 
@@ -374,14 +438,14 @@ const VendorPortalAuth = () => {
                         placeholder="yourcompany.com"
                         value={signupData.website}
                         onChange={(e) => setSignupData({...signupData, website: e.target.value})}
-                        className="rounded-l-none border-slate-300"
+                        className="rounded-none border-border"
                         disabled={isLoading}
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Phone</label>
+                    <label className="text-sm font-medium text-foreground">Phone</label>
                     <Input 
                       type="tel" 
                       placeholder="(555) 123-4567"
@@ -395,18 +459,18 @@ const VendorPortalAuth = () => {
                         if (digits.length >= 6) formatted += '-' + digits.slice(6);
                         setSignupData({...signupData, phone: formatted});
                       }}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Tell us about your business</label>
+                    <label className="text-sm font-medium text-foreground">Tell us about your business</label>
                     <textarea 
                       placeholder="What products do you sell? Why are you a good fit for Elyphant?"
                       value={signupData.description}
                       onChange={(e) => setSignupData({...signupData, description: e.target.value})}
-                      className="flex min-h-[80px] w-full rounded-md border border-slate-300 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex min-h-[80px] w-full rounded-none border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={isLoading}
                       rows={3}
                       required
@@ -414,32 +478,32 @@ const VendorPortalAuth = () => {
                   </div>
 
                   <div className="pt-2">
-                    <p className="text-xs text-slate-400 mb-3">Create your account credentials — you'll use these to access the portal once approved.</p>
+                    <p className="text-xs text-muted-foreground mb-3">Create your account credentials — you'll use these to access the portal once approved.</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Password</label>
+                    <label className="text-sm font-medium text-foreground">Password</label>
                     <PasswordInput 
                       placeholder="Create a password"
                       value={signupData.password}
                       onChange={(e) => setSignupData({...signupData, password: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Confirm Password</label>
+                    <label className="text-sm font-medium text-foreground">Confirm Password</label>
                     <PasswordInput 
                       placeholder="Confirm your password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({...signupData, confirmPassword: e.target.value})}
-                      className="w-full border-slate-300"
+                      className="w-full border-border rounded-none"
                       disabled={isLoading}
                     />
                   </div>
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-none h-12 text-sm font-medium tracking-wide uppercase"
                   >
                     {isLoading ? "Submitting..." : "Apply to Become a Vendor"}
                   </Button>
@@ -450,7 +514,7 @@ const VendorPortalAuth = () => {
           <CardFooter className="flex justify-center">
             <Link 
               to="/forgot-password" 
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="text-sm text-foreground underline underline-offset-4 hover:text-foreground/80"
             >
               Forgot password?
             </Link>
@@ -460,7 +524,7 @@ const VendorPortalAuth = () => {
       <div className="text-center py-4">
         <Link 
           to="/" 
-          className="text-sm text-slate-600 hover:text-slate-800"
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back to Elyphant
         </Link>

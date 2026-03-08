@@ -10,41 +10,24 @@ import { ReturnReductionSection } from "@/components/vendor/ReturnReductionSecti
 import { VendorPortalFeaturesSection } from "@/components/vendor/VendorPortalFeaturesSection";
 
 const VendorPartner = () => {
-  // Function to scroll to contact form
   const scrollToContactForm = () => {
     document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 to-white">
+    <div className="bg-white">
       <div className="container mx-auto px-4 py-16">
-        {/* Hero Section */}
         <VendorHero onContactClick={scrollToContactForm} />
-
-        {/* Benefits Section */}
         <BenefitsSection />
-
-        {/* Returns Reduction Section */}
         <ReturnReductionSection />
-
-        {/* Vendor Portal Features Section */}
         <VendorPortalFeaturesSection />
-
-        {/* Vendor Types Section */}
         <BusinessTypesSection />
-
-        {/* How It Works Section */}
         <HowItWorksSection />
-
-        {/* Testimonials Section */}
         <TestimonialsSection />
-
-        {/* Contact Form */}
         <VendorContactForm id="contact-form" />
       </div>
     </div>

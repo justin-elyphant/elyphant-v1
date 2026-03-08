@@ -365,15 +365,20 @@ const VendorPortalAuth = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Website</label>
-                    <Input 
-                      type="url" 
-                      placeholder="https://yourcompany.com"
-                      value={signupData.website}
-                      onChange={(e) => setSignupData({...signupData, website: e.target.value})}
-                      className="w-full border-slate-300"
-                      disabled={isLoading}
-                      required
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm">
+                        https://
+                      </span>
+                      <Input 
+                        type="text" 
+                        placeholder="yourcompany.com"
+                        value={signupData.website}
+                        onChange={(e) => setSignupData({...signupData, website: e.target.value})}
+                        className="rounded-l-none border-slate-300"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Phone</label>
@@ -381,7 +386,15 @@ const VendorPortalAuth = () => {
                       type="tel" 
                       placeholder="(555) 123-4567"
                       value={signupData.phone}
-                      onChange={(e) => setSignupData({...signupData, phone: e.target.value})}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        let formatted = '';
+                        if (digits.length > 0) formatted = '(' + digits.slice(0, 3);
+                        if (digits.length >= 3) formatted += ') ';
+                        if (digits.length > 3) formatted += digits.slice(3, 6);
+                        if (digits.length >= 6) formatted += '-' + digits.slice(6);
+                        setSignupData({...signupData, phone: formatted});
+                      }}
                       className="w-full border-slate-300"
                       disabled={isLoading}
                       required

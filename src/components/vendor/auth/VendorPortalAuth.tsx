@@ -197,6 +197,9 @@ const VendorPortalAuth = () => {
             }
           }).catch((err) => console.error('Failed to send vendor application email:', err));
 
+          // Sign out vendor immediately — they should not land on the shopper dashboard
+          await supabase.auth.signOut();
+
           setSubmitted(true);
         }
       }

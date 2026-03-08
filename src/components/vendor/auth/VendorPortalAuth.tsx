@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -274,8 +275,7 @@ const VendorPortalAuth = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Password</label>
-                    <Input 
-                      type="password" 
+                    <PasswordInput 
                       placeholder="Enter your password"
                       value={loginData.password}
                       onChange={(e) => setLoginData({...loginData, password: e.target.value})}
@@ -362,8 +362,7 @@ const VendorPortalAuth = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Password</label>
-                    <Input 
-                      type="password" 
+                    <PasswordInput 
                       placeholder="Create a password"
                       value={signupData.password}
                       onChange={(e) => setSignupData({...signupData, password: e.target.value})}
@@ -373,8 +372,7 @@ const VendorPortalAuth = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Confirm Password</label>
-                    <Input 
-                      type="password" 
+                    <PasswordInput 
                       placeholder="Confirm your password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData({...signupData, confirmPassword: e.target.value})}

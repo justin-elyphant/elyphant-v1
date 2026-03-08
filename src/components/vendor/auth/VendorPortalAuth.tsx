@@ -165,7 +165,7 @@ const VendorPortalAuth = () => {
             user_id: data.user.id,
             company_name: signupData.companyName,
             contact_email: signupData.email,
-            website: signupData.website || null,
+            website: signupData.website ? `https://${signupData.website}` : null,
             phone: signupData.phone || null,
             description: signupData.description || null,
             approval_status: 'pending'
@@ -182,7 +182,7 @@ const VendorPortalAuth = () => {
               recipientEmail: signupData.email,
               data: { 
                 company_name: signupData.companyName,
-                website: signupData.website || undefined,
+                website: signupData.website ? `https://${signupData.website}` : undefined,
                 phone: signupData.phone || undefined,
                 description: signupData.description || undefined
               }

@@ -58,7 +58,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
             <div className="flex space-x-2">
               <Input
                 id="shopify-url"
-                placeholder="yourstore.myshopify.com or development"
+                placeholder="yourstore.myshopify.com"
                 value={shopifyUrl}
                 onChange={(e) => setShopifyUrl(e.target.value)}
                 disabled={isLoading}

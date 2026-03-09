@@ -28,9 +28,7 @@ const VendorTopBar: React.FC<VendorTopBarProps> = ({ sidebarCollapsed }) => {
       )}
     >
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-muted-foreground border border-border">
-          Test Mode
-        </span>
+        <h1 className="text-sm font-semibold text-foreground tracking-tight">Vendor Portal</h1>
       </div>
 
       <div className="flex items-center gap-2">

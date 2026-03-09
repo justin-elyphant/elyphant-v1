@@ -17,6 +17,7 @@ import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import ElyphantTextLogo from "@/components/ui/ElyphantTextLogo";
 
 const VendorPortalAuth = () => {
   const navigate = useNavigate();

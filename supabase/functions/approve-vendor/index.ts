@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     // Fetch vendor account
     const { data: vendor, error: vendorError } = await supabaseAdmin
       .from("vendor_accounts")
-      .select("id, user_id, approval_status")
+      .select("id, user_id, approval_status, contact_email, company_name")
       .eq("id", vendor_account_id)
       .single();
 
@@ -132,6 +132,34 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Vendor ${vendor_account_id} ${action} by ${user.id}`);
+
+    // Send notification email (non-fatal)
+    if ((action === "approved" || action === "rejected") && vendor.contact_email) {
+      try {
+        const eventType = action === "approved"
+          ? "vendor_application_approved"
+          : "vendor_application_rejected";
+
+        const { error: emailError } = await supabaseAdmin.functions.invoke(
+          "ecommerce-email-orchestrator",
+          {
+            body: {
+              eventType,
+              recipientEmail: vendor.contact_email,
+              data: { company_name: vendor.company_name },
+            },
+          }
+        );
+
+        if (emailError) {
+          console.error(`Non-fatal: failed to send ${eventType} email:`, emailError);
+        } else {
+          console.log(`📧 Sent ${eventType} email to ${vendor.contact_email}`);
+        }
+      } catch (emailErr) {
+        console.error("Non-fatal: email trigger failed:", emailErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, action, vendor_account_id }),

@@ -985,6 +985,119 @@ const vendorNewOrderTemplate = (props: any): string => {
   `;
   return baseEmailTemplate({ content, preheader: `New order received — ${props.item_count || ''} item(s) | ${formatPrice(props.total_amount)}` });
 };
+// Vendor Application Approved Template (Lululemon-inspired editorial)
+const vendorApplicationApprovedTemplate = (props: any): string => {
+  const companyName = props.company_name || 'Your Company';
+  const approvedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const content = `
+    <div style="padding: 48px 0 24px 0; text-align: center;">
+      <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 300; letter-spacing: -0.02em; color: #1a1a1a; margin: 0 0 12px 0; line-height: 1.2;">
+        Welcome to Elyphant,
+      </h1>
+      <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; color: #1a1a1a; margin: 0 0 24px 0; line-height: 1.2;">
+        ${companyName}.
+      </h1>
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b7280; margin: 0 0 40px 0; line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto;">
+        Congratulations — your application to the Elyphant Vendor Program has been approved. You now have full access to your Vendor Portal.
+      </p>
+    </div>
+
+    <!-- Status Card -->
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 28px 24px; margin: 0 0 32px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Company</td>
+          <td align="right" style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1a1a1a;">${companyName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Status</td>
+          <td align="right" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #047857;">Approved ✓</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Approved On</td>
+          <td align="right" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1a1a1a;">${approvedDate}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- What's Next -->
+    <div style="padding: 0 0 32px 0; text-align: center;">
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin: 0 0 16px 0; font-weight: 500;">What's next</p>
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #4b5563; margin: 0; line-height: 1.7;">
+        Connect your Shopify store or add products manually. Once your catalog is live, customers can discover and purchase your products through Elyphant.
+      </p>
+    </div>
+
+    <!-- CTA -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr><td align="center" style="padding: 0 0 40px 0;">
+        <a href="https://elyphant.lovable.app/vendor-portal" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Open Your Vendor Portal
+        </a>
+      </td></tr>
+    </table>
+
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #9ca3af; margin: 0; text-align: center; line-height: 1.6;">
+      Questions? Simply reply to this email — we're here to help.
+    </p>
+  `;
+  return baseEmailTemplate({ content, preheader: `You're approved — welcome to the Elyphant Vendor Program` });
+};
+
+// Vendor Application Rejected Template (Lululemon-inspired editorial)
+const vendorApplicationRejectedTemplate = (props: any): string => {
+  const companyName = props.company_name || 'Your Company';
+  const content = `
+    <div style="padding: 48px 0 24px 0; text-align: center;">
+      <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 300; letter-spacing: -0.02em; color: #1a1a1a; margin: 0 0 12px 0; line-height: 1.2;">
+        An update on your application,
+      </h1>
+      <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; color: #1a1a1a; margin: 0 0 24px 0; line-height: 1.2;">
+        ${companyName}.
+      </h1>
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b7280; margin: 0 0 40px 0; line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto;">
+        After careful review, we're unable to move forward with your application to the Elyphant Vendor Program at this time.
+      </p>
+    </div>
+
+    <!-- Status Card -->
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 28px 24px; margin: 0 0 32px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Company</td>
+          <td align="right" style="padding: 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1a1a1a;">${companyName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Status</td>
+          <td align="right" style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #b91c1c;">Not Approved</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Encouragement -->
+    <div style="padding: 0 0 32px 0; text-align: center;">
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin: 0 0 16px 0; font-weight: 500;">This doesn't have to be the end</p>
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #4b5563; margin: 0; line-height: 1.7;">
+        We encourage you to reapply in the future. If you have questions about what we look for, or how to strengthen your application, feel free to reach out — we're happy to help.
+      </p>
+    </div>
+
+    <!-- CTA -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr><td align="center" style="padding: 0 0 40px 0;">
+        <a href="https://elyphant.ai" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Visit Elyphant
+        </a>
+      </td></tr>
+    </table>
+
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #9ca3af; margin: 0; text-align: center; line-height: 1.6;">
+      Questions? Simply reply to this email — we're here to help.
+    </p>
+  `;
+  return baseEmailTemplate({ content, preheader: `Update on your Elyphant Vendor Program application` });
+};
+
 // Vendor Application Received Template (Lululemon-inspired editorial)
 const vendorApplicationReceivedTemplate = (props: any): string => {
   const companyName = props.company_name || 'Your Company';
@@ -1141,6 +1254,16 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
       return {
         html: vendorApplicationReceivedTemplate(data),
         subject: `Application Received — ${data.company_name || 'Your Company'} | Elyphant Vendor Program`
+      };
+    case 'vendor_application_approved':
+      return {
+        html: vendorApplicationApprovedTemplate(data),
+        subject: `You're Approved — Welcome to Elyphant, ${data.company_name || 'Partner'}!`
+      };
+    case 'vendor_application_rejected':
+      return {
+        html: vendorApplicationRejectedTemplate(data),
+        subject: `Application Update — ${data.company_name || 'Your Company'} | Elyphant Vendor Program`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

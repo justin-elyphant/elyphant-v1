@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     // Fetch vendor account
     const { data: vendor, error: vendorError } = await supabaseAdmin
       .from("vendor_accounts")
-      .select("id, user_id, approval_status")
+      .select("id, user_id, approval_status, contact_email, company_name")
       .eq("id", vendor_account_id)
       .single();
 

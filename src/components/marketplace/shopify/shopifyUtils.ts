@@ -60,15 +60,7 @@ export const connectToShopify = async (storeUrl: string): Promise<{ success: boo
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // For demo purposes, check if the URL looks valid
-    if (!storeUrl.includes('.myshopify.com') && !storeUrl.endsWith('.com') && !storeUrl.endsWith('.store')) {
-      return { 
-        success: false, 
-        message: "Please enter a valid Shopify store URL (e.g., yourstore.myshopify.com)"
-      };
-    }
-    
-    // Detect if this is a development store request
+    // Detect if this is a development store request (check BEFORE URL validation)
     const isDevelopmentStore = storeUrl.toLowerCase() === "development" || storeUrl.toLowerCase() === "dev";
     
     if (isDevelopmentStore) {
@@ -80,6 +72,14 @@ export const connectToShopify = async (storeUrl: string): Promise<{ success: boo
           accessToken: "dev_token_for_testing",
           scopes: ["read_products", "write_products", "read_orders", "write_orders"]
         }
+      };
+    }
+    
+    // For demo purposes, check if the URL looks valid
+    if (!storeUrl.includes('.myshopify.com') && !storeUrl.endsWith('.com') && !storeUrl.endsWith('.store')) {
+      return { 
+        success: false, 
+        message: "Please enter a valid Shopify store URL (e.g., yourstore.myshopify.com)"
       };
     }
     

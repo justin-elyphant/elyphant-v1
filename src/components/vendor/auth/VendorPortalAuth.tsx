@@ -67,7 +67,8 @@ const VendorPortalAuth = () => {
         if (error.message.includes('Invalid login credentials')) {
           toast.error("Invalid email or password");
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error("Please check your email and click the verification link");
+          toast.error("Please verify your email before signing in");
+          setShowResendVerification(true);
         } else {
           toast.error(error.message);
         }

@@ -68,7 +68,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Examples: yourstore.myshopify.com, development, your-custom-domain.com
+              Example: yourstore.myshopify.com
             </p>
           </div>
           

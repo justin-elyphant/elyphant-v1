@@ -1255,6 +1255,16 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: vendorApplicationReceivedTemplate(data),
         subject: `Application Received — ${data.company_name || 'Your Company'} | Elyphant Vendor Program`
       };
+    case 'vendor_application_approved':
+      return {
+        html: vendorApplicationApprovedTemplate(data),
+        subject: `You're Approved — Welcome to Elyphant, ${data.company_name || 'Partner'}!`
+      };
+    case 'vendor_application_rejected':
+      return {
+        html: vendorApplicationRejectedTemplate(data),
+        subject: `Application Update — ${data.company_name || 'Your Company'} | Elyphant Vendor Program`
+      };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
   }

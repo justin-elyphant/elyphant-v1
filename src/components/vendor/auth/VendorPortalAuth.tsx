@@ -23,6 +23,7 @@ const VendorPortalAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [showResendVerification, setShowResendVerification] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({ 
     firstName: "",
@@ -66,7 +67,8 @@ const VendorPortalAuth = () => {
         if (error.message.includes('Invalid login credentials')) {
           toast.error("Invalid email or password");
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error("Please check your email and click the verification link");
+          toast.error("Please verify your email before signing in");
+          setShowResendVerification(true);
         } else {
           toast.error(error.message);
         }
@@ -82,7 +84,7 @@ const VendorPortalAuth = () => {
 
         if (hasVendorRole) {
           toast.success("Welcome back!");
-          navigate("/vendor-management");
+          navigate("/vendor");
         } else {
           const { data: vendorAccount } = await supabase
             .from('vendor_accounts')
@@ -363,6 +365,29 @@ const VendorPortalAuth = () => {
                   >
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
+                  {showResendVerification && loginData.email && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full text-sm text-muted-foreground hover:text-foreground"
+                      disabled={isLoading}
+                      onClick={async () => {
+                        try {
+                          const { error } = await supabase.auth.resend({
+                            type: 'signup',
+                            email: loginData.email,
+                            options: { emailRedirectTo: `${window.location.origin}/vendor-portal` }
+                          });
+                          if (error) throw error;
+                          toast.success("Verification email sent! Check your inbox.");
+                        } catch (err) {
+                          toast.error("Failed to resend verification email");
+                        }
+                      }}
+                    >
+                      Resend verification email
+                    </Button>
+                  )}
                 </form>
               </TabsContent>
               

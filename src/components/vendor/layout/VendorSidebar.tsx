@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { label: "Dashboard", href: "/vendor", icon: LayoutDashboard },
   { label: "Orders", href: "/vendor/orders", icon: ShoppingCart },
   { label: "Products", href: "/vendor/products", icon: Package },
+  { label: "Integrations", href: "/vendor/integrations", icon: Plug },
   { label: "Advertising", href: "/vendor/advertising", icon: Megaphone },
   { label: "Analytics", href: "/vendor/analytics", icon: BarChart3 },
   { label: "Support", href: "/vendor/support", icon: HeadphonesIcon },

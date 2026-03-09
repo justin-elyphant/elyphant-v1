@@ -277,11 +277,12 @@ function AppContent() {
            <Route path="/vendor" element={<VendorPortalLayout />}>
              <Route index element={<VendorDashboard />} />
              <Route path="orders" element={<VendorOrdersPage />} />
-             <Route path="products" element={<VendorProductsPage />} />
-             <Route path="advertising" element={<VendorAdvertisingPage />} />
-             <Route path="analytics" element={<VendorAnalyticsPage />} />
-             <Route path="support" element={<VendorSupportPage />} />
-             <Route path="settings" element={<VendorSettingsPage />} />
+              <Route path="products" element={<VendorProductsPage />} />
+              <Route path="integrations" element={<VendorIntegrationsPage />} />
+              <Route path="advertising" element={<VendorAdvertisingPage />} />
+              <Route path="analytics" element={<VendorAnalyticsPage />} />
+              <Route path="support" element={<VendorSupportPage />} />
+              <Route path="settings" element={<VendorSettingsPage />} />
            </Route>
            <Route path="/privacy" element={<PrivacyPolicy />} />
            <Route path="/terms" element={<TermsOfService />} />

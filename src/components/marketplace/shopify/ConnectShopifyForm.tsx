@@ -31,12 +31,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
       <Alert className="bg-blue-50 border-blue-200">
         <AlertCircle className="h-4 w-4 text-blue-500" />
         <AlertDescription className="text-sm">
-          <span className="font-medium">Testing options:</span>
-          <ul className="list-disc ml-5 mt-1">
-            <li>Enter <strong>development</strong> to connect to a simulated store</li>
-            <li>Enter your development store URL from Shopify Partners</li>
-            <li>Enter a production store URL for a live integration</li>
-          </ul>
+          Enter your Shopify store URL (e.g., <strong>yourstore.myshopify.com</strong>) to connect your catalog to the Elyphant marketplace.
         </AlertDescription>
       </Alert>
       

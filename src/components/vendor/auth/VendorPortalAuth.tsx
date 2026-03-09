@@ -365,6 +365,29 @@ const VendorPortalAuth = () => {
                   >
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
+                  {showResendVerification && loginData.email && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full text-sm text-muted-foreground hover:text-foreground"
+                      disabled={isLoading}
+                      onClick={async () => {
+                        try {
+                          const { error } = await supabase.auth.resend({
+                            type: 'signup',
+                            email: loginData.email,
+                            options: { emailRedirectTo: `${window.location.origin}/vendor-portal` }
+                          });
+                          if (error) throw error;
+                          toast.success("Verification email sent! Check your inbox.");
+                        } catch (err) {
+                          toast.error("Failed to resend verification email");
+                        }
+                      }}
+                    >
+                      Resend verification email
+                    </Button>
+                  )}
                 </form>
               </TabsContent>
               

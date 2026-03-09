@@ -244,6 +244,11 @@ const VendorPortalAuth = () => {
   if (submitted) {
     return (
       <div className="flex flex-col min-h-screen bg-[hsl(var(--background))]">
+        <div className="w-full px-6 pt-4">
+          <Link to="/">
+            <ElyphantTextLogo />
+          </Link>
+        </div>
         <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

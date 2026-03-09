@@ -49,7 +49,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      For testing, enter "development" or create a free development store in your Shopify Partners account
+                      Enter your Shopify store URL to sync your product catalog
                     </p>
                   </TooltipContent>
                 </Tooltip>

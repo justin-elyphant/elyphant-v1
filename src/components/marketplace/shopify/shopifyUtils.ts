@@ -153,78 +153,178 @@ export const generateDevelopmentStoreProducts = (): Product[] => {
   const mockProducts = [
     {
       id: 1001,
-      product_id: "1001",
-      name: "Test Product 1",
-      title: "Test Product 1",
-      price: 19.99,
-      category: "Test Category",
-      category_name: "Test Category",
+      product_id: "shopify-1001",
+      name: "Classic Minimalist Watch",
+      title: "Classic Minimalist Watch",
+      price: 199.99,
+      original_retail_price: 249.99,
+      category: "Watches & Accessories",
+      category_name: "Watches & Accessories",
       image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
-      images: ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"],
-      vendor: "Shopify",
-      retailer: "Shopify",
-      variants: ["Small", "Medium", "Large"],
-      description: "This is a test product for development purposes"
+      images: [
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
+        "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600",
+        "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=600"
+      ],
+      vendor: "Dev Store",
+      retailer: "Dev Store",
+      brand: "Timecraft",
+      description: "Elegant minimalist watch with Japanese quartz movement, genuine leather strap, and scratch-resistant sapphire crystal. Water resistant to 50m.",
+      feature_bullets: [
+        "Japanese quartz movement for precision timekeeping",
+        "Genuine Italian leather strap with quick-release pins",
+        "Scratch-resistant sapphire crystal face",
+        "Water resistant to 50 meters"
+      ],
+      tags: ["gift", "bestseller", "accessories", "watches"],
+      stars: 4.7,
+      review_count: 2340,
+      productSource: 'shopify' as const,
+      variant_specifics: [{ dimension: "Color", value: "Silver" }],
+      all_variants: [
+        { variant_specifics: [{ dimension: "Color", value: "Silver" }], product_id: "shopify-1001-silver" },
+        { variant_specifics: [{ dimension: "Color", value: "Gold" }], product_id: "shopify-1001-gold" },
+        { variant_specifics: [{ dimension: "Color", value: "Rose Gold" }], product_id: "shopify-1001-rosegold" }
+      ]
     },
     {
       id: 1002,
-      product_id: "1002",
-      name: "Test Product 2",
-      title: "Test Product 2",
-      price: 29.99,
-      category: "Test Category",
-      category_name: "Test Category",
+      product_id: "shopify-1002",
+      name: "Wireless Noise-Cancelling Headphones",
+      title: "Wireless Noise-Cancelling Headphones",
+      price: 149.99,
+      category: "Electronics",
+      category_name: "Electronics",
       image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
-      images: ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600"],
-      vendor: "Shopify",
-      retailer: "Shopify",
-      variants: ["Red", "Blue", "Green"],
-      description: "This is another test product for development purposes"
+      images: [
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
+        "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600"
+      ],
+      vendor: "Dev Store",
+      retailer: "Dev Store",
+      brand: "SoundWave",
+      description: "Premium over-ear headphones with active noise cancellation, 30-hour battery life, and memory foam ear cushions for all-day comfort.",
+      feature_bullets: [
+        "Active noise cancellation with transparency mode",
+        "30-hour battery life with quick charge (10 min = 3 hrs)",
+        "Memory foam ear cushions with cooling gel",
+        "Bluetooth 5.3 with multipoint connection"
+      ],
+      tags: ["electronics", "audio", "gift", "top-rated"],
+      stars: 4.5,
+      review_count: 8920,
+      productSource: 'shopify' as const,
+      variant_specifics: [{ dimension: "Color", value: "Matte Black" }],
+      all_variants: [
+        { variant_specifics: [{ dimension: "Color", value: "Matte Black" }], product_id: "shopify-1002-black" },
+        { variant_specifics: [{ dimension: "Color", value: "Silver" }], product_id: "shopify-1002-silver" },
+        { variant_specifics: [{ dimension: "Color", value: "Navy" }], product_id: "shopify-1002-navy" }
+      ]
     },
     {
       id: 1003,
-      product_id: "1003",
-      name: "Sample Product",
-      title: "Sample Product",
-      price: 39.99,
-      category: "Sample Category",
-      category_name: "Sample Category",
+      product_id: "shopify-1003",
+      name: "Vintage Instant Camera",
+      title: "Vintage Instant Camera",
+      price: 89.99,
+      category: "Photography",
+      category_name: "Photography",
       image: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600",
-      images: ["https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600"],
-      vendor: "Shopify",
-      retailer: "Shopify",
-      variants: ["Option 1", "Option 2", "Option 3"],
-      description: "This is a sample product with multiple options"
+      images: [
+        "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600",
+        "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600"
+      ],
+      vendor: "Dev Store",
+      retailer: "Dev Store",
+      brand: "SnapRetro",
+      description: "Retro-style instant camera with built-in flash, automatic exposure control, and self-timer. Uses standard mini film packs.",
+      feature_bullets: [
+        "Built-in flash with automatic intensity adjustment",
+        "Automatic exposure control for perfect shots every time",
+        "Self-timer with 10-second delay",
+        "Compatible with standard Instax Mini film"
+      ],
+      tags: ["photography", "gift", "retro", "creative"],
+      stars: 4.3,
+      review_count: 1560,
+      productSource: 'shopify' as const,
+      variant_specifics: [{ dimension: "Color", value: "Mint Green" }],
+      all_variants: [
+        { variant_specifics: [{ dimension: "Color", value: "Mint Green" }], product_id: "shopify-1003-mint" },
+        { variant_specifics: [{ dimension: "Color", value: "Coral" }], product_id: "shopify-1003-coral" },
+        { variant_specifics: [{ dimension: "Color", value: "Classic Black" }], product_id: "shopify-1003-black" }
+      ]
     },
     {
       id: 1004,
-      product_id: "1004",
-      name: "Development Item",
-      title: "Development Item",
-      price: 49.99,
-      category: "Development",
-      category_name: "Development",
+      product_id: "shopify-1004",
+      name: "Polarized Sport Sunglasses",
+      title: "Polarized Sport Sunglasses",
+      price: 79.99,
+      original_retail_price: 99.99,
+      category: "Eyewear",
+      category_name: "Eyewear",
       image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600",
-      images: ["https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600"],
-      vendor: "Shopify",
-      retailer: "Shopify",
-      variants: ["Test Variant"],
-      description: "A development item for testing the store functionality"
+      images: [
+        "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600",
+        "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600"
+      ],
+      vendor: "Dev Store",
+      retailer: "Dev Store",
+      brand: "OpticShield",
+      description: "Lightweight polarized sunglasses with UV400 protection, anti-scratch coating, and flexible TR90 frame for active lifestyles.",
+      feature_bullets: [
+        "Polarized TAC lenses with UV400 protection",
+        "Anti-scratch and anti-reflective coating",
+        "Flexible TR90 frame — lightweight and durable",
+        "Includes hard case and microfiber cloth"
+      ],
+      tags: ["eyewear", "sport", "outdoor", "gift"],
+      stars: 4.6,
+      review_count: 3210,
+      productSource: 'shopify' as const,
+      variant_specifics: [{ dimension: "Style", value: "Tortoise" }],
+      all_variants: [
+        { variant_specifics: [{ dimension: "Style", value: "Tortoise" }], product_id: "shopify-1004-tortoise" },
+        { variant_specifics: [{ dimension: "Style", value: "Black" }], product_id: "shopify-1004-black" },
+        { variant_specifics: [{ dimension: "Style", value: "Clear" }], product_id: "shopify-1004-clear" }
+      ]
     },
     {
       id: 1005,
-      product_id: "1005",
-      name: "API Test Product",
-      title: "API Test Product",
-      price: 59.99,
-      category: "API Testing",
-      category_name: "API Testing",
+      product_id: "shopify-1005",
+      name: "Premium Running Shoes",
+      title: "Premium Running Shoes",
+      price: 129.99,
+      category: "Footwear",
+      category_name: "Footwear",
       image: "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600",
-      images: ["https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600"],
-      vendor: "Shopify",
-      retailer: "Shopify",
-      variants: ["Default"],
-      description: "Used for testing API integration"
+      images: [
+        "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600",
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600",
+        "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600"
+      ],
+      vendor: "Dev Store",
+      retailer: "Dev Store",
+      brand: "StrideMax",
+      description: "Breathable mesh running shoes with responsive EVA cushioning, reinforced arch support, and durable rubber outsole for road and trail.",
+      feature_bullets: [
+        "Breathable engineered mesh upper",
+        "Responsive EVA midsole with energy return",
+        "Reinforced arch support for stability",
+        "Durable rubber outsole with multi-surface grip"
+      ],
+      tags: ["footwear", "running", "sport", "gift"],
+      stars: 4.4,
+      review_count: 5670,
+      productSource: 'shopify' as const,
+      variant_specifics: [{ dimension: "Size", value: "US 9" }],
+      all_variants: [
+        { variant_specifics: [{ dimension: "Size", value: "US 8" }], product_id: "shopify-1005-us8" },
+        { variant_specifics: [{ dimension: "Size", value: "US 9" }], product_id: "shopify-1005-us9" },
+        { variant_specifics: [{ dimension: "Size", value: "US 10" }], product_id: "shopify-1005-us10" },
+        { variant_specifics: [{ dimension: "Size", value: "US 11" }], product_id: "shopify-1005-us11" }
+      ]
     }
   ];
   

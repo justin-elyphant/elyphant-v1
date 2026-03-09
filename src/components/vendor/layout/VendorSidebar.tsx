@@ -5,6 +5,7 @@ import {
   Package,
   ShoppingCart,
   BarChart3,
+  Plug,
   HeadphonesIcon,
   Settings,
   Megaphone,

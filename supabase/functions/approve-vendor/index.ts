@@ -122,6 +122,21 @@ Deno.serve(async (req) => {
         console.error("Failed to assign vendor role:", roleError);
         // Non-fatal — status was already updated
       }
+
+      // Auto-confirm vendor's email so they can log in immediately
+      try {
+        const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
+          vendor.user_id,
+          { email_confirm: true }
+        );
+        if (confirmError) {
+          console.error("Non-fatal: failed to auto-confirm vendor email:", confirmError);
+        } else {
+          console.log(`✅ Auto-confirmed email for vendor user ${vendor.user_id}`);
+        }
+      } catch (confirmErr) {
+        console.error("Non-fatal: email confirmation failed:", confirmErr);
+      }
     } else if (action === "suspended" || action === "rejected") {
       // Remove vendor role
       await supabaseAdmin

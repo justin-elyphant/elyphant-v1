@@ -82,7 +82,7 @@ const VendorPortalAuth = () => {
 
         if (hasVendorRole) {
           toast.success("Welcome back!");
-          navigate("/vendor-management");
+          navigate("/vendor");
         } else {
           const { data: vendorAccount } = await supabase
             .from('vendor_accounts')

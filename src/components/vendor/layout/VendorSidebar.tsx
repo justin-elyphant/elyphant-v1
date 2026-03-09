@@ -14,6 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Link } from "react-router-dom";
+import ElyphantTextLogo from "@/components/ui/ElyphantTextLogo";
 
 interface NavItem {
   label: string;
@@ -58,16 +60,24 @@ const VendorSidebar: React.FC<VendorSidebarProps> = ({ collapsed, onToggle }) =>
           "h-14 flex items-center border-b border-border px-3",
           collapsed ? "justify-center" : "justify-between"
         )}>
-          {!collapsed && (
-            <span className="font-semibold text-sm text-foreground tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Vendor Portal
-            </span>
+          {!collapsed ? (
+            <Link to="/" className="flex-1 min-w-0">
+              <ElyphantTextLogo />
+            </Link>
+          ) : (
+            <Link to="/">
+              <img
+                src="/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png"
+                alt="Elyphant logo"
+                className="h-7 w-auto"
+              />
+            </Link>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>

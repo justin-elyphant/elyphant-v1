@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -15,11 +15,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Vendor } from "./types";
 import { useVendorApproval } from "@/hooks/trunkline/useVendorApproval";
+import VendorDetailSheet from "./VendorDetailSheet";
 
 interface VendorsTableProps {
   vendors: Vendor[];
@@ -27,6 +27,7 @@ interface VendorsTableProps {
 
 const VendorsTable: React.FC<VendorsTableProps> = ({ vendors }) => {
   const { mutate: performAction, isPending } = useVendorApproval();
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
   const getStatusBadge = (status: Vendor["approval_status"]) => {
     switch (status) {
@@ -44,86 +45,104 @@ const VendorsTable: React.FC<VendorsTableProps> = ({ vendors }) => {
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Company</TableHead>
-          <TableHead>Contact</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Website</TableHead>
-          <TableHead>Applied</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {vendors.map((vendor) => (
-          <TableRow key={vendor.id}>
-            <TableCell className="font-medium">{vendor.company_name}</TableCell>
-            <TableCell className="text-muted-foreground text-sm">{vendor.contact_email}</TableCell>
-            <TableCell>{getStatusBadge(vendor.approval_status)}</TableCell>
-            <TableCell className="text-sm">
-              {vendor.website ? (
-                <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate max-w-[150px] block">
-                  {vendor.website.replace(/^https?:\/\//, "")}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {new Date(vendor.created_at).toLocaleDateString()}
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" disabled={isPending}>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {vendor.approval_status === "pending" && (
-                    <>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Company</TableHead>
+            <TableHead>Contact</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Website</TableHead>
+            <TableHead>Applied</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {vendors.map((vendor) => (
+            <TableRow
+              key={vendor.id}
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => setSelectedVendor(vendor)}
+            >
+              <TableCell className="font-medium">{vendor.company_name}</TableCell>
+              <TableCell className="text-muted-foreground text-sm">{vendor.contact_email}</TableCell>
+              <TableCell>{getStatusBadge(vendor.approval_status)}</TableCell>
+              <TableCell className="text-sm">
+                {vendor.website ? (
+                  <a
+                    href={vendor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline truncate max-w-[150px] block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {vendor.website.replace(/^https?:\/\//, "")}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {new Date(vendor.created_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" disabled={isPending}>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {vendor.approval_status === "pending" && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => performAction({ vendor_account_id: vendor.id, action: "approved" })}
+                          className="text-green-700"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => performAction({ vendor_account_id: vendor.id, action: "rejected" })}
+                          className="text-red-700"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {vendor.approval_status === "approved" && (
+                      <DropdownMenuItem
+                        onClick={() => performAction({ vendor_account_id: vendor.id, action: "suspended" })}
+                        className="text-amber-700"
+                      >
+                        <Ban className="h-4 w-4 mr-2" />
+                        Suspend
+                      </DropdownMenuItem>
+                    )}
+                    {(vendor.approval_status === "suspended" || vendor.approval_status === "rejected") && (
                       <DropdownMenuItem
                         onClick={() => performAction({ vendor_account_id: vendor.id, action: "approved" })}
                         className="text-green-700"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Approve
+                        Re-approve
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => performAction({ vendor_account_id: vendor.id, action: "rejected" })}
-                        className="text-red-700"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Reject
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {vendor.approval_status === "approved" && (
-                    <DropdownMenuItem
-                      onClick={() => performAction({ vendor_account_id: vendor.id, action: "suspended" })}
-                      className="text-amber-700"
-                    >
-                      <Ban className="h-4 w-4 mr-2" />
-                      Suspend
-                    </DropdownMenuItem>
-                  )}
-                  {(vendor.approval_status === "suspended" || vendor.approval_status === "rejected") && (
-                    <DropdownMenuItem
-                      onClick={() => performAction({ vendor_account_id: vendor.id, action: "approved" })}
-                      className="text-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Re-approve
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <VendorDetailSheet
+        vendor={selectedVendor}
+        open={!!selectedVendor}
+        onOpenChange={(open) => { if (!open) setSelectedVendor(null); }}
+      />
+    </>
   );
 };
 

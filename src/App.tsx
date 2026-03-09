@@ -75,6 +75,7 @@ const VendorAnalyticsPage = lazy(() => import("./pages/vendor/VendorAnalyticsPag
 const VendorSupportPage = lazy(() => import("./pages/vendor/VendorSupportPage"));
 const VendorAdvertisingPage = lazy(() => import("./pages/vendor/VendorAdvertisingPage"));
 const VendorSettingsPage = lazy(() => import("./pages/vendor/VendorSettingsPage"));
+const VendorIntegrationsPage = lazy(() => import("./pages/vendor/VendorIntegrationsPage"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Contact = lazy(() => import("./pages/Contact"));

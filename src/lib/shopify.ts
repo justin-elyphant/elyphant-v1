@@ -101,11 +101,15 @@ export const STOREFRONT_PRODUCTS_QUERY = `
 `;
 
 export async function storefrontApiRequest(query: string, variables: Record<string, any> = {}) {
-  const response = await fetch(SHOPIFY_STOREFRONT_URL, {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/shopify-storefront-proxy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'apikey': supabaseAnonKey,
     },
     body: JSON.stringify({ query, variables }),
   });

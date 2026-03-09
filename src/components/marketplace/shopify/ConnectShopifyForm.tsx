@@ -31,12 +31,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
       <Alert className="bg-blue-50 border-blue-200">
         <AlertCircle className="h-4 w-4 text-blue-500" />
         <AlertDescription className="text-sm">
-          <span className="font-medium">Testing options:</span>
-          <ul className="list-disc ml-5 mt-1">
-            <li>Enter <strong>development</strong> to connect to a simulated store</li>
-            <li>Enter your development store URL from Shopify Partners</li>
-            <li>Enter a production store URL for a live integration</li>
-          </ul>
+          Enter your Shopify store URL (e.g., <strong>yourstore.myshopify.com</strong>) to connect your catalog to the Elyphant marketplace.
         </AlertDescription>
       </Alert>
       
@@ -54,7 +49,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
-                      For testing, enter "development" or create a free development store in your Shopify Partners account
+                      Enter your Shopify store URL to sync your product catalog
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -63,7 +58,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
             <div className="flex space-x-2">
               <Input
                 id="shopify-url"
-                placeholder="yourstore.myshopify.com or development"
+                placeholder="yourstore.myshopify.com"
                 value={shopifyUrl}
                 onChange={(e) => setShopifyUrl(e.target.value)}
                 disabled={isLoading}
@@ -73,7 +68,7 @@ const ConnectShopifyForm = ({ onConnect, isLoading }: ConnectShopifyFormProps) =
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Examples: yourstore.myshopify.com, development, your-custom-domain.com
+              Example: yourstore.myshopify.com
             </p>
           </div>
           

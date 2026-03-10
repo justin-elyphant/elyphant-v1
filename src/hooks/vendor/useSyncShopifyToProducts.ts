@@ -61,8 +61,6 @@ export function useSyncShopifyToProducts() {
             options: node.options,
             product_source: "shopify_sync",
             fulfillment_method: "vendor_direct",
-            base_price: basePrice,
-            markup_percent: markup,
           },
         };
       });

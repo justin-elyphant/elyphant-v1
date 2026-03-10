@@ -40,7 +40,7 @@ export function useSyncShopifyToProducts() {
         return {
           product_id: `shopify_${node.id.split("/").pop()}`,
           title: node.title,
-          price: markedUpPrice,
+          price: basePrice,
           image_url: firstImage,
           brand: "Shopify",
           retailer: vendorAccount.company_name || "Vendor",

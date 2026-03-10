@@ -101,8 +101,8 @@ export const STOREFRONT_PRODUCTS_QUERY = `
 `;
 
 export async function storefrontApiRequest(query: string, variables: Record<string, any> = {}) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = "https://dmkxtkvlispxeqfzlczr.supabase.co";
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRta3h0a3ZsaXNweGVxZnpsY3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3ODYwNTYsImV4cCI6MjA1OTM2MjA1Nn0.L4maWmbU_MgnjWRuc9hGZweXVY4QCYjrnhFMGbdEebI";
 
   const response = await fetch(`${supabaseUrl}/functions/v1/shopify-storefront-proxy`, {
     method: 'POST',

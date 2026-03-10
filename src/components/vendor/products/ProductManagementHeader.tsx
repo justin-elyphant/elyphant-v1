@@ -2,9 +2,10 @@
 import React from "react";
 import { CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, Plus, Info } from "lucide-react";
+import { Upload, Download, Plus, Info, RefreshCw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useVendorProducts } from "@/hooks/vendor/useVendorProducts";
+import { useSyncShopifyToProducts } from "@/hooks/vendor/useSyncShopifyToProducts";
 
 interface ProductManagementHeaderProps {
   onAddProduct?: () => void;
@@ -14,6 +15,7 @@ interface ProductManagementHeaderProps {
 export const ProductManagementHeader = ({ onAddProduct, onImportCSV }: ProductManagementHeaderProps) => {
   const { data: products } = useVendorProducts();
   const totalProducts = products?.length ?? 0;
+  const { syncShopifyProducts, isSyncing } = useSyncShopifyToProducts();
 
   return (
     <div className="flex flex-col gap-4">
@@ -23,6 +25,10 @@ export const ProductManagementHeader = ({ onAddProduct, onImportCSV }: ProductMa
           <CardDescription>Manage all products from connected vendors</CardDescription>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={syncShopifyProducts} disabled={isSyncing}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? "Syncing…" : "Sync Shopify"}
+          </Button>
           <Button variant="outline" size="sm" onClick={onImportCSV}>
             <Upload className="h-4 w-4 mr-1" />
             Import CSV

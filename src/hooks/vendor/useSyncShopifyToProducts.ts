@@ -32,12 +32,9 @@ export function useSyncShopifyToProducts() {
       }
 
       const edges: ShopifyProduct[] = result.data.products.edges;
-      const markup = 30; // Default 30% markup
-
       const rows = edges.map((edge) => {
         const node = edge.node;
         const basePrice = parseFloat(node.priceRange.minVariantPrice.amount);
-        const markedUpPrice = Math.round(basePrice * (1 + markup / 100) * 100) / 100;
         const firstImage = node.images.edges[0]?.node.url || null;
 
         return {

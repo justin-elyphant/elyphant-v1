@@ -3,17 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, DollarSign, Package, Clock, Loader2 } from "lucide-react";
 import { useVendorOrderStats } from "@/hooks/vendor/useVendorOrders";
 import { useVendorAccount } from "@/hooks/vendor/useVendorAccount";
+import { useVendorProducts } from "@/hooks/vendor/useVendorProducts";
 
 const VendorDashboard: React.FC = () => {
   const { data: account, isLoading: accountLoading } = useVendorAccount();
   const { data: stats, isLoading: statsLoading } = useVendorOrderStats();
+  const { data: products, isLoading: productsLoading } = useVendorProducts();
 
-  const isLoading = accountLoading || statsLoading;
+  const isLoading = accountLoading || statsLoading || productsLoading;
 
   const metrics = [
     { label: "Total Orders", value: stats?.totalOrders ?? 0, icon: ShoppingCart, format: (v: number) => String(v) },
     { label: "Revenue", value: stats?.totalRevenue ?? 0, icon: DollarSign, format: (v: number) => `$${v.toFixed(2)}` },
-    { label: "Active Products", value: 0, icon: Package, format: (v: number) => String(v) },
+    { label: "Active Products", value: products?.length ?? 0, icon: Package, format: (v: number) => String(v) },
     { label: "Pending Orders", value: stats?.pendingOrders ?? 0, icon: Clock, format: (v: number) => String(v) },
   ];
 

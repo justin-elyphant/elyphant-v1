@@ -70,20 +70,17 @@ export function useSyncShopifyToProducts() {
         };
       });
 
-      // Upsert each product by product_id
-      let synced = 0;
-      for (const row of rows) {
-        const { error } = await supabase
-          .from("products")
-          .upsert(row as any, { onConflict: "product_id" });
+      // Send rows to edge function (uses service_role to bypass RLS)
+      const { data: syncResult, error: syncError } = await supabase.functions.invoke(
+        "sync-shopify-products",
+        { body: { rows } }
+      );
 
-        if (error) {
-          console.error("Upsert error for", row.product_id, error);
-        } else {
-          synced++;
-        }
+      if (syncError) {
+        throw syncError;
       }
 
+      const synced = syncResult?.synced ?? 0;
       queryClient.invalidateQueries({ queryKey: ["vendor-products"] });
       toast.success(`Synced ${synced} product${synced !== 1 ? "s" : ""} from Shopify`);
     } catch (err: any) {

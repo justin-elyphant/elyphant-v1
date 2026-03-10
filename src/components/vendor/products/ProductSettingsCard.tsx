@@ -14,24 +14,6 @@ export const ProductSettingsCard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Default Markup</label>
-            <Select defaultValue="30">
-              <SelectTrigger>
-                <SelectValue placeholder="Select markup" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10%</SelectItem>
-                <SelectItem value="20">20%</SelectItem>
-                <SelectItem value="30">30%</SelectItem>
-                <SelectItem value="40">40%</SelectItem>
-                <SelectItem value="50">50%</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Applied to all products without a custom markup
-            </p>
-          </div>
           
           <div>
             <label className="text-sm font-medium mb-1 block">Default Fulfillment</label>

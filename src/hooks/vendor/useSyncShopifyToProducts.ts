@@ -32,18 +32,15 @@ export function useSyncShopifyToProducts() {
       }
 
       const edges: ShopifyProduct[] = result.data.products.edges;
-      const markup = 30; // Default 30% markup
-
       const rows = edges.map((edge) => {
         const node = edge.node;
         const basePrice = parseFloat(node.priceRange.minVariantPrice.amount);
-        const markedUpPrice = Math.round(basePrice * (1 + markup / 100) * 100) / 100;
         const firstImage = node.images.edges[0]?.node.url || null;
 
         return {
           product_id: `shopify_${node.id.split("/").pop()}`,
           title: node.title,
-          price: markedUpPrice,
+          price: basePrice,
           image_url: firstImage,
           brand: "Shopify",
           retailer: vendorAccount.company_name || "Vendor",
@@ -64,8 +61,6 @@ export function useSyncShopifyToProducts() {
             options: node.options,
             product_source: "shopify_sync",
             fulfillment_method: "vendor_direct",
-            base_price: basePrice,
-            markup_percent: markup,
           },
         };
       });

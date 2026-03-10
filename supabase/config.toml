@@ -141,6 +141,9 @@ verify_jwt = false
 [functions.approve-vendor]
 verify_jwt = true
 
+[functions.sync-shopify-products]
+verify_jwt = true
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

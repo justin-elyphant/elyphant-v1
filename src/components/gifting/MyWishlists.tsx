@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useAddressGate } from "@/hooks/useAddressGate";
+import AddressGateModal from "@/components/shared/AddressGateModal";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";

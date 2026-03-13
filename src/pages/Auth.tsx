@@ -132,7 +132,7 @@ const Auth = () => {
               console.log('[Auth] Token-based linking failed or no match:', tokenLinkError);
             }
             
-            sessionStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
+            localStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
           }
           
           // Handle invite_user param (from /invite/:username page)

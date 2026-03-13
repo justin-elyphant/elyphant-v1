@@ -392,7 +392,7 @@ class UnifiedGiftManagementService {
     
     try {
       // Tier 1: Check recipient's public wishlist first
-      const wishlistGifts = await this.getWishlistGifts(recipientId, adjustedBudget);
+      const wishlistGifts = await this.getWishlistGifts(recipientId, adjustedBudget, userId);
       if (wishlistGifts.length > 0) {
         console.log(`✅ Tier 1: Found ${wishlistGifts.length} wishlist items`);
         return {

@@ -514,6 +514,13 @@ const MyWishlists = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AddressGateModal
+        open={isGateOpen}
+        onClose={closeGate}
+        onComplete={completeGate}
+        title={contextMessage?.title}
+        description={contextMessage?.description}
+      />
     </div>
   );
 };

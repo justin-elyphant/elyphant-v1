@@ -110,7 +110,7 @@ const Auth = () => {
         
         try {
           // Check for stored invitation token (handles different email signup)
-          const storedToken = sessionStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
+          const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
           
           if (storedToken) {
             console.log('[Auth] Found stored invitation token, attempting to link by token...');

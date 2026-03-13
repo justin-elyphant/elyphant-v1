@@ -105,6 +105,8 @@ const Auth = () => {
   useEffect(() => {
     if (user && !isLoading) {
       const handlePostSignupLinking = async () => {
+        let inviterProfileId: string | null = null;
+        
         try {
           // Check for stored invitation token (handles different email signup)
           const storedToken = sessionStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
@@ -112,17 +114,16 @@ const Auth = () => {
           if (storedToken) {
             console.log('[Auth] Found stored invitation token, attempting to link by token...');
             
-            // Try to link by token first (works even if user signed up with different email)
-            // Using type assertion since the function was just created and types aren't regenerated yet
             const { data: tokenLinkResult, error: tokenLinkError } = await supabase
               .rpc('accept_invitation_by_token' as any, {
                 p_user_id: user.id,
                 p_token: storedToken
               });
             
-            const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string } | null;
+            const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string; inviter_id?: string } | null;
             if (!tokenLinkError && linkResult?.linked) {
               console.log('[Auth] Successfully linked connection by token:', linkResult);
+              inviterProfileId = linkResult.inviter_id || null;
               toast.success('🤝 Connection established!', {
                 description: 'You are now connected with your friend'
               });
@@ -130,8 +131,26 @@ const Auth = () => {
               console.log('[Auth] Token-based linking failed or no match:', tokenLinkError);
             }
             
-            // Clear stored token after attempting to use it
             sessionStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
+          }
+          
+          // Handle invite_user param (from /invite/:username page)
+          const storedInviteUser = inviteUserId || sessionStorage.getItem('elyphant_invite_user');
+          if (storedInviteUser && storedInviteUser !== user.id) {
+            console.log('[Auth] Processing invite_user connection:', storedInviteUser);
+            try {
+              const { sendConnectionRequest } = await import(
+                "@/services/connections/connectionService"
+              );
+              const result = await sendConnectionRequest(storedInviteUser, 'friend');
+              if (result.success) {
+                inviterProfileId = storedInviteUser;
+                toast.success('🤝 Connection request sent!');
+              }
+            } catch (err) {
+              console.error('[Auth] Error auto-connecting to inviter:', err);
+            }
+            sessionStorage.removeItem('elyphant_invite_user');
           }
           
           // Also try email-based linking for auto-gift rules
@@ -152,15 +171,21 @@ const Auth = () => {
         } catch (error) {
           console.error('Failed to link pending rules:', error);
         }
+        
+        // Redirect: if we have an inviter, go to their profile for the "aha moment"
+        const redirectPath = searchParams.get('redirect');
+        if (redirectPath) {
+          navigate(redirectPath, { replace: true });
+        } else if (inviterProfileId) {
+          navigate(`/profile/${inviterProfileId}`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       };
       
       handlePostSignupLinking();
-      
-      // Normal redirect flow
-      const redirectPath = searchParams.get('redirect') || '/';
-      navigate(redirectPath, { replace: true });
     }
-  }, [user, isLoading, profileData, navigate, searchParams]);
+  }, [user, isLoading, profileData, navigate, searchParams, inviteUserId]);
 
   if (isLoading) {
     return (

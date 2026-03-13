@@ -85,7 +85,8 @@ const InvitePage: React.FC = () => {
 
   const handleConnect = async () => {
     if (!user && inviter) {
-      // Redirect to auth with invite context
+      // Store invite context for post-signup auto-connect
+      sessionStorage.setItem('elyphant_invite_user', inviter.id);
       navigate(`/auth?invite_user=${inviter.id}`);
       return;
     }

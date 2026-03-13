@@ -45,13 +45,13 @@ const formSchema = z.object({
     required_error: "Birthday is required",
   }),
   address: z.object({
-    street: z.string().min(1, "Street address is required"),
+    street: z.string().optional().default(''),
     line2: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    zipCode: z.string().min(4, "Valid zip code is required"),
-    country: z.string().min(1, "Country is required"),
-  })
+    city: z.string().optional().default(''),
+    state: z.string().optional().default(''),
+    zipCode: z.string().optional().default(''),
+    country: z.string().optional().default('US'),
+  }).optional()
 });
 
 type FormData = z.infer<typeof formSchema>;

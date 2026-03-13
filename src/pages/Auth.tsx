@@ -26,6 +26,7 @@ const Auth = () => {
   
   // Handle invitation links (both connection invites and gift invitations)
   const inviteToken = searchParams.get('invite') || searchParams.get('invitation_token');
+  const inviteUserId = searchParams.get('invite_user'); // From /invite/:username page
   const [invitationData, setInvitationData] = useState<{
     connectionId: string;
     recipientEmail: string;

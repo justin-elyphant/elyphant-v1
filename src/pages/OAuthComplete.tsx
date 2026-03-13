@@ -16,41 +16,55 @@ const OAuthComplete = () => {
     if (isLoading) return;
 
     if (user) {
-      setStatus('success');
-      
-      // Process any stored invitation token BEFORE redirecting
-      const storedToken = sessionStorage.getItem('elyphant_invitation_token');
-      if (storedToken) {
-        const processInvitation = async () => {
-          console.log('[OAuthComplete] Processing stored invitation token');
-          try {
-            const { data: rpcResult, error: rpcError } = await supabase.rpc(
-              'accept_invitation_by_token' as any,
-              { p_token: storedToken, p_user_id: user.id }
-            );
-            if (!rpcError && rpcResult?.linked) {
-              toast.success("Connection linked!", {
-                description: "You're now connected with your friend!"
-              });
+      // Check if user has completed onboarding already
+      const checkProfile = async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.onboarding_completed) {
+          // Returning user — go straight to home
+          setStatus('success');
+          
+          // Process any stored invitation token
+          const storedToken = localStorage.getItem('elyphant_invitation_token');
+          if (storedToken) {
+            try {
+              const { data: rpcResult, error: rpcError } = await supabase.rpc(
+                'accept_invitation_by_token' as any,
+                { p_token: storedToken, p_user_id: user.id }
+              );
+              if (!rpcError && rpcResult?.linked) {
+                toast.success("Connection linked!", {
+                  description: "You're now connected with your friend!"
+                });
+              }
+            } catch (error) {
+              console.error('[OAuthComplete] Error linking invitation:', error);
+            } finally {
+              localStorage.removeItem('elyphant_invitation_token');
             }
-          } catch (error) {
-            console.error('[OAuthComplete] Error linking invitation:', error);
-          } finally {
-            sessionStorage.removeItem('elyphant_invitation_token');
           }
-        };
-        processInvitation();
-      }
-      
-      // Redirect to home after successful OAuth sign-in
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 2000);
+
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 1500);
+        } else {
+          // New OAuth user — send to stepped flow to finish onboarding
+          setStatus('success');
+          setTimeout(() => {
+            navigate('/auth?mode=signup&oauth_resume=true', { replace: true });
+          }, 1000);
+        }
+      };
+
+      checkProfile();
     } else {
       console.error('OAuth authentication failed - no user found');
       setStatus('error');
       
-      // Redirect to auth page after delay
       setTimeout(() => {
         navigate('/auth', { replace: true });
       }, 3000);

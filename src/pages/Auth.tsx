@@ -201,11 +201,22 @@ const Auth = () => {
     );
   }
 
+  const isSignupMode = initialMode === 'signup' && !preFilledEmail;
+  const isOAuthResume = searchParams.get('oauth_resume') === 'true';
+
+  // Use stepped flow for signup and OAuth resume
+  if (isSignupMode || isOAuthResume) {
+    return (
+      <SteppedAuthFlow invitationData={invitationData} />
+    );
+  }
+
+  // Sign-in mode: use existing card-based form
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-8 md:py-20 px-4 flex-grow flex items-center justify-center pt-safe pb-safe my-6 md:my-0">
         <UnifiedAuthView 
-          initialMode={preFilledEmail ? 'signin' : initialMode} 
+          initialMode={'signin'} 
           preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
           invitationData={invitationData}
         />

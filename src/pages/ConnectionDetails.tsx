@@ -28,7 +28,7 @@ const ConnectionDetails = () => {
   
   const sendVerificationRequest = (dataType: keyof Connection['dataStatus']) => {
     if (!connectionId) return;
-    handleSendVerificationRequest(connectionId, dataType);
+    handleSendVerificationRequest(connectionId);
   };
   const [activeTab, setActiveTab] = useState("profile");
 

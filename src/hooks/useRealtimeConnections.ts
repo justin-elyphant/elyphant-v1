@@ -4,20 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
+/**
+ * Unified realtime listener for all user_connections changes.
+ * Dispatches a 'connections-changed' custom event so other hooks
+ * (like usePendingConnectionsCount) can react without their own channels.
+ */
 export const useRealtimeConnections = (onConnectionChange: () => void) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) {
-      console.log('🔗 [useRealtimeConnections] No user, skipping realtime setup');
-      return;
-    }
+    if (!user) return;
 
-    console.log('🔗 [useRealtimeConnections] Setting up realtime listeners for user:', user.id);
-
-    // Subscribe to changes in user_connections table
     const channel = supabase
-      .channel('connections-changes')
+      .channel('connections-unified')
       .on(
         'postgres_changes',
         {
@@ -27,29 +26,9 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('🔗 [useRealtimeConnections] Connection change detected (as sender):', payload);
-          
-          // Show toast notifications for connection events
-          if (payload.eventType === 'INSERT') {
-            const newConnection = payload.new;
-            if (newConnection.status === 'pending' && newConnection.connected_user_id === user.id) {
-              toast.info("New connection request received!");
-            } else if (newConnection.status === 'accepted') {
-              toast.success("Connection request accepted!");
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedConnection = payload.new;
-            if (updatedConnection.status === 'accepted') {
-              toast.success("Connection accepted!");
-            } else if (updatedConnection.status === 'rejected') {
-              toast.info("Connection request declined");
-            }
-          } else if (payload.eventType === 'DELETE') {
-            toast.info("Connection removed");
-          }
-          
-          // Trigger refresh of connections data
+          handlePayload(payload, user.id);
           onConnectionChange();
+          window.dispatchEvent(new CustomEvent('connections-changed'));
         }
       )
       .on(
@@ -61,34 +40,35 @@ export const useRealtimeConnections = (onConnectionChange: () => void) => {
           filter: `connected_user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('🔗 [useRealtimeConnections] Connection change detected (as recipient):', payload);
-          
-          // Show toast notifications for connection events
-          if (payload.eventType === 'INSERT') {
-            const newConnection = payload.new;
-            if (newConnection.status === 'pending') {
-              toast.info("New connection request received!");
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedConnection = payload.new;
-            if (updatedConnection.status === 'accepted') {
-              toast.success("Connection accepted!");
-            } else if (updatedConnection.status === 'rejected') {
-              toast.info("Connection request declined");
-            }
-          }
-          
-          // Trigger refresh of connections data
+          handlePayload(payload, user.id);
           onConnectionChange();
+          window.dispatchEvent(new CustomEvent('connections-changed'));
         }
       )
-      .subscribe((status) => {
-        console.log('🔗 [useRealtimeConnections] Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('🔗 [useRealtimeConnections] Cleaning up realtime listeners');
       supabase.removeChannel(channel);
     };
   }, [user, onConnectionChange]);
 };
+
+function handlePayload(payload: any, currentUserId: string) {
+  if (payload.eventType === 'INSERT') {
+    const conn = payload.new;
+    if (conn.connected_user_id === currentUserId && (conn.status === 'pending' || conn.status === 'pending_invitation')) {
+      toast.info("New connection request received!");
+    } else if (conn.status === 'accepted') {
+      toast.success("Connection request accepted!");
+    }
+  } else if (payload.eventType === 'UPDATE') {
+    const conn = payload.new;
+    if (conn.status === 'accepted') {
+      toast.success("Connection accepted!");
+    } else if (conn.status === 'rejected') {
+      toast.info("Connection request declined");
+    }
+  } else if (payload.eventType === 'DELETE') {
+    toast.info("Connection removed");
+  }
+}

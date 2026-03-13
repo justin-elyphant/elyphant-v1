@@ -3,6 +3,11 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 
+/**
+ * Lightweight hook for nav badge counts.
+ * Listens for 'connections-changed' custom events dispatched by useRealtimeConnections
+ * instead of maintaining its own Supabase realtime channel.
+ */
 export const usePendingConnectionsCount = () => {
   const { user } = useAuth();
   const [count, setCount] = useState(0);
@@ -18,16 +23,14 @@ export const usePendingConnectionsCount = () => {
         .from('user_connections')
         .select('id')
         .eq('connected_user_id', user.id)
-        .eq('status', 'pending');
+        .in('status', ['pending', 'pending_invitation']);
 
       if (error) {
         console.error('Error fetching pending connections count:', error);
         return;
       }
 
-      const newCount = data?.length || 0;
-      console.log('🔔 [usePendingConnectionsCount] Updated count:', newCount);
-      setCount(newCount);
+      setCount(data?.length || 0);
     } catch (error) {
       console.error('Error in fetchPendingCount:', error);
     }
@@ -41,27 +44,14 @@ export const usePendingConnectionsCount = () => {
 
     fetchPendingCount();
 
-    // Set up real-time listener for pending connection changes
-    const channel = supabase
-      .channel('pending-connections-count')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_connections',
-          filter: `connected_user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('🔔 [usePendingConnectionsCount] Real-time update:', payload);
-          // Small delay to ensure database consistency
-          setTimeout(fetchPendingCount, 500);
-        }
-      )
-      .subscribe();
+    // Listen for custom event from unified realtime channel
+    const handler = () => {
+      setTimeout(fetchPendingCount, 500);
+    };
+    window.addEventListener('connections-changed', handler);
 
     return () => {
-      supabase.removeChannel(channel);
+      window.removeEventListener('connections-changed', handler);
     };
   }, [user, fetchPendingCount]);
 

@@ -42,8 +42,8 @@ const Auth = () => {
       
       console.log('[Auth] Validating invite token:', inviteToken);
       
-      // Store token in sessionStorage for post-signup linking (handles different email signup)
-      sessionStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
+      // Store token in localStorage to survive OAuth redirects
+      localStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
       console.log('[Auth] Stored invitation token for post-signup linking');
       
       try {

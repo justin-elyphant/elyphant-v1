@@ -51,11 +51,11 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({
     hasCompleteDOB(profile) &&
     profile.profile_image?.trim();
 
-  // If profile is incomplete, redirect to OAuth completion or signup
+  // If profile is incomplete, redirect to the stepped signup flow
   if (!isProfileComplete) {
-    // Check if this is an OAuth user needing completion
-    if (user?.app_metadata?.provider && user.app_metadata.provider !== 'email') {
-      return <Navigate to="/auth/oauth-complete" replace />;
+    // Check if user has an account but just needs to finish onboarding
+    if (user) {
+      return <Navigate to="/auth?mode=signup&oauth_resume=true" replace />;
     }
     
     // Otherwise redirect to signup with current path as redirect

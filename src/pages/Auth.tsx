@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
+import SteppedAuthFlow from "@/components/auth/stepped/SteppedAuthFlow";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -41,8 +42,8 @@ const Auth = () => {
       
       console.log('[Auth] Validating invite token:', inviteToken);
       
-      // Store token in sessionStorage for post-signup linking (handles different email signup)
-      sessionStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
+      // Store token in localStorage to survive OAuth redirects
+      localStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
       console.log('[Auth] Stored invitation token for post-signup linking');
       
       try {
@@ -109,7 +110,7 @@ const Auth = () => {
         
         try {
           // Check for stored invitation token (handles different email signup)
-          const storedToken = sessionStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
+          const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
           
           if (storedToken) {
             console.log('[Auth] Found stored invitation token, attempting to link by token...');
@@ -131,7 +132,7 @@ const Auth = () => {
               console.log('[Auth] Token-based linking failed or no match:', tokenLinkError);
             }
             
-            sessionStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
+            localStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
           }
           
           // Handle invite_user param (from /invite/:username page)
@@ -200,11 +201,22 @@ const Auth = () => {
     );
   }
 
+  const isSignupMode = initialMode === 'signup' && !preFilledEmail;
+  const isOAuthResume = searchParams.get('oauth_resume') === 'true';
+
+  // Use stepped flow for signup and OAuth resume
+  if (isSignupMode || isOAuthResume) {
+    return (
+      <SteppedAuthFlow invitationData={invitationData} />
+    );
+  }
+
+  // Sign-in mode: use existing card-based form
   return (
     <MainLayout>
       <div className="container max-w-md mx-auto py-8 md:py-20 px-4 flex-grow flex items-center justify-center pt-safe pb-safe my-6 md:my-0">
         <UnifiedAuthView 
-          initialMode={preFilledEmail ? 'signin' : initialMode} 
+          initialMode={'signin'} 
           preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
           invitationData={invitationData}
         />

@@ -8,10 +8,15 @@ const StreamlinedProfileSetup = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
 
-  // Redirect to auth if not authenticated
+  // Redirect all users to the stepped auth flow
   React.useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/auth');
+    if (!isLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else {
+        // Authenticated user needing profile setup → stepped flow
+        navigate('/auth?mode=signup&oauth_resume=true', { replace: true });
+      }
     }
   }, [user, isLoading, navigate]);
 

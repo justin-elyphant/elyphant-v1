@@ -45,13 +45,13 @@ const formSchema = z.object({
     required_error: "Birthday is required",
   }),
   address: z.object({
-    street: z.string().min(1, "Street address is required"),
+    street: z.string().optional().default(''),
     line2: z.string().optional(),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    zipCode: z.string().min(4, "Valid zip code is required"),
-    country: z.string().min(1, "Country is required"),
-  })
+    city: z.string().optional().default(''),
+    state: z.string().optional().default(''),
+    zipCode: z.string().optional().default(''),
+    country: z.string().optional().default('US'),
+  }).optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -329,12 +329,17 @@ const UnifiedOnboarding: React.FC = () => {
       return;
     }
     
-    const addressVerified = await ensureAddressVerified();
-    if (!addressVerified) {
-      return;
+    // Address is now optional — verify only if user filled it in
+    const address = form.getValues('address');
+    const hasAddress = address?.street && address?.city && address?.state && address?.zipCode;
+    if (hasAddress) {
+      const addressVerified = await ensureAddressVerified();
+      if (!addressVerified) {
+        return;
+      }
     }
     
-    console.log('✅ Profile step validated and address verified, moving to interests');
+    console.log('✅ Profile step validated, moving to interests');
     triggerHapticFeedback('success');
     setCurrentStep('interests');
   };
@@ -692,9 +697,15 @@ const UnifiedOnboarding: React.FC = () => {
                     )}
                   />
 
-                  {/* Address */}
+                  {/* Address (Optional) */}
                   <div className="space-y-4">
-                    <FormLabel className="text-base font-medium">Your Shipping Address</FormLabel>
+                    <FormLabel className="text-base font-medium">
+                      Your Shipping Address
+                      <span className="text-sm font-normal text-muted-foreground ml-2">(optional)</span>
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground -mt-2">
+                      Add your address so friends can send you gifts directly. You can always add it later.
+                    </p>
                     <AddressAutocomplete
                       value={form.watch('address.street')}
                       onChange={(value) => form.setValue('address.street', value)}

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useAddressGate } from "@/hooks/useAddressGate";
+import AddressGateModal from "@/components/shared/AddressGateModal";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import CreateWishlistCard from "./wishlist/CreateWishlistCard";
@@ -71,6 +73,7 @@ const MyWishlists = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("all-items");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
+  const { isGateOpen, contextMessage, requireAddress, closeGate, completeGate } = useAddressGate();
   
   // Detect mobile screen size (declare before any early returns)
   const [isMobile, setIsMobile] = React.useState(false);
@@ -164,9 +167,9 @@ const MyWishlists = () => {
     }
   }, [categoryFilter, selectableCategories]);
 
-  const handleCreateWishlist = () => {
-    setDialogOpen(true);
-  };
+  const handleCreateWishlist = useCallback(() => {
+    requireAddress('wishlist', () => setDialogOpen(true));
+  }, [requireAddress]);
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
     // Only pass title and description to createWishlist
@@ -511,6 +514,13 @@ const MyWishlists = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AddressGateModal
+        open={isGateOpen}
+        onClose={closeGate}
+        onComplete={completeGate}
+        title={contextMessage?.title}
+        description={contextMessage?.description}
+      />
     </div>
   );
 };

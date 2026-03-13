@@ -5527,6 +5527,10 @@ export type Database = {
         }[]
       }
       get_masked_location: { Args: { target_user_id: string }; Returns: Json }
+      get_mutual_friends_count: {
+        Args: { user_a: string; user_b: string }
+        Returns: number
+      }
       get_nudge_summary: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: {

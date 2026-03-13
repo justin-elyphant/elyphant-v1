@@ -3,11 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { Connection } from "@/types/connections";
-import { useMutualConnections } from "./useMutualConnections";
-
 export const useConnectionSuggestions = () => {
   const { user } = useAuth();
-  const { calculateMutualFriends } = useMutualConnections();
   const [suggestions, setSuggestions] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +58,12 @@ export const useConnectionSuggestions = () => {
             return null;
           }
           
-          const mutualFriends = await calculateMutualFriends(profile.id);
+          // Use RPC for single-query mutual friends count
+          const { data: mutualData } = await supabase.rpc('get_mutual_friends_count', {
+            user_a: user.id,
+            user_b: profile.id
+          });
+          const mutualFriends = mutualData ?? 0;
           
           // Calculate interest similarity
           const profileInterests = profile.interests || [];

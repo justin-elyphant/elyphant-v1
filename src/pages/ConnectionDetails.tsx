@@ -8,14 +8,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Gift, UserPlus, Calendar, Mail, Heart, MapPin, BadgeInfo, MessageCircle } from "lucide-react";
-import { Connection } from "@/types/connections";
+import { Connection, RelationshipType } from "@/types/connections";
 import { toast } from "sonner";
 import { getRelationshipIcon, getRelationshipLabel } from "@/components/connections/RelationshipUtils";
-import useConnectionsById from "@/hooks/useConnectionById";
+import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 
 const ConnectionDetails = () => {
   const { connectionId } = useParams<{ connectionId: string }>();
-  const { connection, loading, error, updateRelationship, sendVerificationRequest } = useConnectionsById(connectionId || "");
+  const { connections, handleRelationshipChange, handleSendVerificationRequest } = useConnectionsAdapter();
+  
+  const connection = connections.find(c => c.id === connectionId) || null;
+  const loading = connections.length === 0;
+  const error = !loading && !connection ? "Connection not found" : null;
+  
+  const updateRelationship = (newRelationship: RelationshipType, customValue?: string) => {
+    if (!connectionId) return;
+    handleRelationshipChange(connectionId, newRelationship);
+  };
+  
+  const sendVerificationRequest = (dataType: keyof Connection['dataStatus']) => {
+    if (!connectionId) return;
+    handleSendVerificationRequest(connectionId);
+  };
   const [activeTab, setActiveTab] = useState("profile");
 
   if (loading) {

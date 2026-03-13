@@ -73,6 +73,7 @@ const MyWishlists = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("all-items");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const { user } = useAuth();
+  const { isGateOpen, contextMessage, requireAddress, closeGate, completeGate } = useAddressGate();
   
   // Detect mobile screen size (declare before any early returns)
   const [isMobile, setIsMobile] = React.useState(false);

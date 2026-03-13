@@ -1265,6 +1265,16 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: vendorApplicationRejectedTemplate(data),
         subject: `Application Update — ${data.company_name || 'Your Company'} | Elyphant Vendor Program`
       };
+    case 'connection_request':
+      return {
+        html: connectionRequestTemplate(data),
+        subject: `${data.sender_name || 'Someone'} wants to connect with you on Elyphant! 🤝`
+      };
+    case 'nudge_reminder':
+      return {
+        html: nudgeReminderTemplate(data),
+        subject: `Reminder: ${data.sender_name || 'Someone'} is waiting to connect with you 🔔`
+      };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
   }

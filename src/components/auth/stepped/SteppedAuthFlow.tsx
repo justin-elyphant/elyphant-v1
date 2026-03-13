@@ -232,7 +232,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           await supabase.rpc("set_user_identification", {
             target_user_id: authData.user.id,
             user_type_param: "shopper",
-            signup_source_param: invitationData ? "invite" : "stepped_signup",
+            signup_source_param: invitationData ? "invite" : "header_cta",
             metadata_param: {
               name: `${state.firstName} ${state.lastName}`.trim(),
               signup_timestamp: new Date().toISOString(),

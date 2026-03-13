@@ -167,9 +167,9 @@ const MyWishlists = () => {
     }
   }, [categoryFilter, selectableCategories]);
 
-  const handleCreateWishlist = () => {
-    setDialogOpen(true);
-  };
+  const handleCreateWishlist = useCallback(() => {
+    requireAddress('wishlist', () => setDialogOpen(true));
+  }, [requireAddress]);
 
   const handleDialogSubmit = async (values: WishlistFormValues) => {
     // Only pass title and description to createWishlist

@@ -1166,7 +1166,63 @@ const vendorApplicationReceivedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Application received — we'll review ${companyName} within 72 hours` });
 };
 
-// Template Router
+// Connection Request Template (for existing platform users)
+const connectionRequestTemplate = (data: any): string => {
+  const senderName = data.sender_name || 'Someone';
+  const recipientFirstName = getFirstName(data.recipient_name);
+  const content = `
+    <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 600; color: #1a1a1a; margin: 0 0 8px 0; letter-spacing: -0.02em;">
+      New Connection Request
+    </h1>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b7280; margin: 0 0 32px 0; line-height: 1.5;">
+      Hi ${recipientFirstName}, <strong>${senderName}</strong> wants to connect with you on Elyphant!
+    </p>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #374151; margin: 0 0 32px 0; line-height: 1.6;">
+      Once connected, you can share wishlists, exchange gift ideas, and make gifting effortless for each other.
+    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr><td align="center" style="padding: 0 0 40px 0;">
+        <a href="https://elyphant.ai/connections" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          View Request
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #9ca3af; margin: 0; text-align: center; line-height: 1.6;">
+      You can accept or decline this request from your Connections page.
+    </p>
+  `;
+  return baseEmailTemplate({ content, preheader: `${senderName} wants to connect with you on Elyphant` });
+};
+
+// Nudge Reminder Template
+const nudgeReminderTemplate = (data: any): string => {
+  const senderName = data.sender_name || 'Someone';
+  const recipientFirstName = getFirstName(data.recipient_name);
+  const content = `
+    <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 600; color: #1a1a1a; margin: 0 0 8px 0; letter-spacing: -0.02em;">
+      Friendly Reminder
+    </h1>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b7280; margin: 0 0 32px 0; line-height: 1.5;">
+      Hi ${recipientFirstName}, <strong>${senderName}</strong> is still waiting to connect with you on Elyphant!
+    </p>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #374151; margin: 0 0 32px 0; line-height: 1.6;">
+      Don't miss out — connecting makes it easy to share wishlists and send thoughtful gifts to each other.
+    </p>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr><td align="center" style="padding: 0 0 40px 0;">
+        <a href="https://elyphant.ai/connections" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          View Pending Request
+        </a>
+      </td></tr>
+    </table>
+    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #9ca3af; margin: 0; text-align: center; line-height: 1.6;">
+      You can accept or decline this request from your Connections page.
+    </p>
+  `;
+  return baseEmailTemplate({ content, preheader: `${senderName} is waiting to connect with you` });
+};
+
+
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
     case 'wishlist_shared':

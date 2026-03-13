@@ -116,7 +116,40 @@ export const sendConnectionRequest = async (
       };
     }
 
-    console.log('🔗 [connectionService] Connection request successful. Email queued automatically via trigger.');
+    console.log('🔗 [connectionService] Connection request successful. Sending notification email...');
+    
+    // Send email notification to the recipient (no DB trigger exists, so we do it here)
+    try {
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('name, first_name')
+        .eq('id', user.id)
+        .single();
+      
+      const { data: recipientProfile } = await supabase
+        .from('profiles')
+        .select('email, name')
+        .eq('id', targetUserId)
+        .single();
+      
+      if (recipientProfile?.email) {
+        await supabase.functions.invoke('ecommerce-email-orchestrator', {
+          body: {
+            eventType: 'connection_request',
+            recipientEmail: recipientProfile.email,
+            data: {
+              sender_name: senderProfile?.name || senderProfile?.first_name || 'Someone',
+              recipient_name: recipientProfile.name || 'there',
+              relationship_type: relationshipType,
+            }
+          }
+        });
+        console.log('📧 [connectionService] Connection request notification email sent');
+      }
+    } catch (emailError) {
+      console.error('⚠️ [connectionService] Failed to send notification email (non-blocking):', emailError);
+    }
+    
     return { success: true, data };
     
   } catch (error: any) {

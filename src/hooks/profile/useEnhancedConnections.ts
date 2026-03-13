@@ -179,7 +179,7 @@ export const useEnhancedConnections = () => {
       // Separate different types of connections
       const accepted = deduplicatedConnections.filter(conn => conn.status === 'accepted');
       const pending = deduplicatedConnections.filter(conn => 
-        conn.status === 'pending' && conn.connected_user_id === user.id
+        (conn.status === 'pending' || conn.status === 'pending_invitation') && conn.connected_user_id === user.id
       );
       
       // Outgoing pending requests (sent by current user, not yet accepted)

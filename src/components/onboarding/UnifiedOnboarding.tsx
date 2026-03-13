@@ -697,9 +697,15 @@ const UnifiedOnboarding: React.FC = () => {
                     )}
                   />
 
-                  {/* Address */}
+                  {/* Address (Optional) */}
                   <div className="space-y-4">
-                    <FormLabel className="text-base font-medium">Your Shipping Address</FormLabel>
+                    <FormLabel className="text-base font-medium">
+                      Your Shipping Address
+                      <span className="text-sm font-normal text-muted-foreground ml-2">(optional)</span>
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground -mt-2">
+                      Add your address so friends can send you gifts directly. You can always add it later.
+                    </p>
                     <AddressAutocomplete
                       value={form.watch('address.street')}
                       onChange={(value) => form.setValue('address.street', value)}

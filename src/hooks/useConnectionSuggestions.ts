@@ -3,11 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { Connection } from "@/types/connections";
-import { useMutualConnections } from "./useMutualConnections";
-
 export const useConnectionSuggestions = () => {
   const { user } = useAuth();
-  const { calculateMutualFriends } = useMutualConnections();
   const [suggestions, setSuggestions] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(false);
 

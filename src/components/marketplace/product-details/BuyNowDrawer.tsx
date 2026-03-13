@@ -342,6 +342,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                               pending_recipient_email: email,
                               pending_recipient_name: name,
                               status: 'pending_invitation',
+                              relationship_type: 'friend',
                             })
                             .select()
                             .single();

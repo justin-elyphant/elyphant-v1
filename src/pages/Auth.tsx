@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import MainLayout from "@/components/layout/MainLayout";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
+import SteppedAuthFlow from "@/components/auth/stepped/SteppedAuthFlow";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

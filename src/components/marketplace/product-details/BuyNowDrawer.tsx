@@ -329,8 +329,38 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                       }}
                       userAddress={defaultAddress?.address}
                       userName={userName}
-                      onInviteNew={(name, email) => {
-                        toast.info(`Invitation sent to ${email}`);
+                      onInviteNew={async (name, email) => {
+                        try {
+                          // Create a pending_invitation connection
+                          const { data: { user: currentUser } } = await supabase.auth.getUser();
+                          if (!currentUser) return;
+
+                          const { data: newConnection, error } = await supabase
+                            .from('user_connections')
+                            .insert({
+                              user_id: currentUser.id,
+                              pending_recipient_email: email,
+                              pending_recipient_name: name,
+                              status: 'pending_invitation',
+                            })
+                            .select()
+                            .single();
+
+                          if (error) throw error;
+
+                          // Auto-select the new recipient
+                          handleSelectRecipient({
+                            type: 'connection',
+                            name,
+                            address: null,
+                            connectionId: newConnection.id,
+                          });
+                          setRecipientOpen(false);
+                          toast.success(`Invitation sent to ${name}. They'll be asked for their shipping address.`);
+                        } catch (err) {
+                          console.error('Error creating invitation:', err);
+                          toast.error('Failed to send invitation');
+                        }
                       }}
                     />
                   </div>

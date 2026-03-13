@@ -518,9 +518,39 @@ class UnifiedGiftManagementService {
 
   /**
    * Enhanced Tier 1: Get gifts from recipient's public wishlist
+   * Respects wishlist_visibility privacy setting
    */
-  private async getWishlistGifts(recipientId: string, budget: number): Promise<any[]> {
+  private async getWishlistGifts(recipientId: string, budget: number, senderId?: string): Promise<any[]> {
     try {
+      // Check wishlist_visibility setting
+      const { data: privacySettings } = await supabase
+        .from('privacy_settings')
+        .select('wishlist_visibility')
+        .eq('user_id', recipientId)
+        .single();
+
+      const visibility = privacySettings?.wishlist_visibility || 'public';
+
+      if (visibility === 'private') {
+        console.log('🔒 Wishlist is private - skipping Tier 1');
+        return [];
+      }
+
+      if (visibility === 'connections_only' && senderId) {
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('id')
+          .or(`and(user_id.eq.${senderId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${senderId})`)
+          .eq('status', 'accepted')
+          .limit(1)
+          .single();
+
+        if (!connection) {
+          console.log('🔒 Wishlist is connections_only and no connection exists - skipping Tier 1');
+          return [];
+        }
+      }
+
       const { data: wishlists, error } = await (supabase as any)
         .from('wishlists')
         .select(`

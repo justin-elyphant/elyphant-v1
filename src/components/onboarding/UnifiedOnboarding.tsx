@@ -329,12 +329,17 @@ const UnifiedOnboarding: React.FC = () => {
       return;
     }
     
-    const addressVerified = await ensureAddressVerified();
-    if (!addressVerified) {
-      return;
+    // Address is now optional — verify only if user filled it in
+    const address = form.getValues('address');
+    const hasAddress = address?.street && address?.city && address?.state && address?.zipCode;
+    if (hasAddress) {
+      const addressVerified = await ensureAddressVerified();
+      if (!addressVerified) {
+        return;
+      }
     }
     
-    console.log('✅ Profile step validated and address verified, moving to interests');
+    console.log('✅ Profile step validated, moving to interests');
     triggerHapticFeedback('success');
     setCurrentStep('interests');
   };

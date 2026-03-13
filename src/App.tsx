@@ -244,6 +244,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:identifier" element={<Profile />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/invite/:username" element={<InvitePage />} />
           
           {/* Redirects for consolidated pages */}
           <Route path="/account" element={<Navigate to="/settings" replace />} />

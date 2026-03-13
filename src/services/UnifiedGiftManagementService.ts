@@ -305,6 +305,48 @@ class UnifiedGiftManagementService {
   // ============= HIERARCHICAL GIFT SELECTION (Enhanced) =============
 
   /**
+   * Check recipient's auto_gift_consent privacy setting before proceeding.
+   * Returns true if auto-gifting is allowed for this sender→recipient pair.
+   */
+  async checkAutoGiftConsent(senderId: string, recipientId: string): Promise<{ allowed: boolean; reason?: string }> {
+    try {
+      const { data: privacySettings } = await supabase
+        .from('privacy_settings')
+        .select('auto_gift_consent')
+        .eq('user_id', recipientId)
+        .single();
+
+      const consent = privacySettings?.auto_gift_consent || 'connections_only';
+
+      if (consent === 'nobody') {
+        return { allowed: false, reason: 'Recipient has disabled auto-gifting from everyone' };
+      }
+
+      if (consent === 'connections_only') {
+        // Verify accepted connection exists
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('id')
+          .or(`and(user_id.eq.${senderId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${senderId})`)
+          .eq('status', 'accepted')
+          .limit(1)
+          .single();
+
+        if (!connection) {
+          return { allowed: false, reason: 'Recipient only accepts auto-gifts from connections' };
+        }
+      }
+
+      // 'everyone' or passed connections_only check
+      return { allowed: true };
+    } catch (error) {
+      console.error('Error checking auto-gift consent:', error);
+      // Default to allowing if we can't check (fail open for commerce)
+      return { allowed: true };
+    }
+  }
+
+  /**
    * Main hierarchical gift selection algorithm with comprehensive protection measures
    * Tier 1: Wishlist → Tier 2: Preferences → Tier 3: Metadata → Tier 4: AI Guess
    */
@@ -318,6 +360,20 @@ class UnifiedGiftManagementService {
   ): Promise<UnifiedHierarchicalGiftSelection> {
     console.log(`🎁 [UNIFIED] Starting hierarchical gift selection for recipient ${recipientId}, budget: $${budget}, occasion: ${occasion}`);
     
+    // Phase 0: Check recipient's auto_gift_consent privacy setting
+    if (userId) {
+      const consentCheck = await this.checkAutoGiftConsent(userId, recipientId);
+      if (!consentCheck.allowed) {
+        console.log(`🚫 Auto-gift blocked: ${consentCheck.reason}`);
+        return {
+          tier: 'ai_guess',
+          products: [],
+          confidence: 0,
+          reasoning: consentCheck.reason || 'Recipient has not consented to auto-gifting'
+        };
+      }
+    }
+
     // Phase 1: Protection measures check
     if (!await protectedAutoGiftingService.checkEmergencyCircuitBreaker()) {
       console.log('🚨 Emergency circuit breaker active - returning empty results');
@@ -336,7 +392,7 @@ class UnifiedGiftManagementService {
     
     try {
       // Tier 1: Check recipient's public wishlist first
-      const wishlistGifts = await this.getWishlistGifts(recipientId, adjustedBudget);
+      const wishlistGifts = await this.getWishlistGifts(recipientId, adjustedBudget, userId);
       if (wishlistGifts.length > 0) {
         console.log(`✅ Tier 1: Found ${wishlistGifts.length} wishlist items`);
         return {
@@ -462,9 +518,39 @@ class UnifiedGiftManagementService {
 
   /**
    * Enhanced Tier 1: Get gifts from recipient's public wishlist
+   * Respects wishlist_visibility privacy setting
    */
-  private async getWishlistGifts(recipientId: string, budget: number): Promise<any[]> {
+  private async getWishlistGifts(recipientId: string, budget: number, senderId?: string): Promise<any[]> {
     try {
+      // Check wishlist_visibility setting
+      const { data: privacySettings } = await supabase
+        .from('privacy_settings')
+        .select('wishlist_visibility')
+        .eq('user_id', recipientId)
+        .single();
+
+      const visibility = privacySettings?.wishlist_visibility || 'public';
+
+      if (visibility === 'private') {
+        console.log('🔒 Wishlist is private - skipping Tier 1');
+        return [];
+      }
+
+      if (visibility === 'connections_only' && senderId) {
+        const { data: connection } = await supabase
+          .from('user_connections')
+          .select('id')
+          .or(`and(user_id.eq.${senderId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${senderId})`)
+          .eq('status', 'accepted')
+          .limit(1)
+          .single();
+
+        if (!connection) {
+          console.log('🔒 Wishlist is connections_only and no connection exists - skipping Tier 1');
+          return [];
+        }
+      }
+
       const { data: wishlists, error } = await (supabase as any)
         .from('wishlists')
         .select(`

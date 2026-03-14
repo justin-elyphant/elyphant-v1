@@ -1,8 +1,6 @@
 import React from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
 
 interface StepLayoutProps {
   heading: string;
@@ -36,22 +34,21 @@ const StepLayout: React.FC<StepLayoutProps> = ({
   footer,
 }) => {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background pt-safe pb-safe">
-      {/* Top bar with back button */}
-      <div className="flex items-center px-4 py-3 md:py-4">
+    <div className="flex flex-col">
+      {/* Top bar with back button + step dots */}
+      <div className="flex items-center px-4 py-3">
         {showBack && onBack ? (
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-12 h-12 -ml-2 rounded-full hover:bg-muted active:bg-muted/80 touch-manipulation transition-colors"
+            className="flex items-center justify-center w-10 h-10 -ml-1 rounded-full hover:bg-muted active:bg-muted/80 touch-manipulation transition-colors"
             aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="w-4 h-4 text-foreground" />
           </button>
         ) : (
-          <div className="w-12 h-12" />
+          <div className="w-10 h-10" />
         )}
 
-        {/* Step dots */}
         {stepIndex !== undefined && totalSteps !== undefined && (
           <div className="flex-1 flex justify-center gap-1.5">
             {Array.from({ length: totalSteps }).map((_, i) => (
@@ -65,28 +62,28 @@ const StepLayout: React.FC<StepLayoutProps> = ({
           </div>
         )}
 
-        <div className="w-12 h-12" />
+        <div className="w-10 h-10" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col px-6 md:px-0 md:max-w-md md:mx-auto md:w-full">
-        <div className="pt-6 md:pt-12 pb-4">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+      <div className="px-6 md:px-8 pb-2">
+        <div className="pb-3">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
             {heading}
           </h1>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-2">{subtitle}</p>
+            <p className="text-sm text-muted-foreground mt-1.5">{subtitle}</p>
           )}
         </div>
 
-        <div className="flex-1 py-4 space-y-4">{children}</div>
+        <div className="py-3 space-y-4">{children}</div>
 
         {footer && <div className="py-2">{footer}</div>}
       </div>
 
-      {/* Sticky bottom CTA */}
+      {/* Bottom CTA */}
       {showNext && (
-        <div className="sticky bottom-0 left-0 right-0 p-4 pb-safe bg-background border-t border-border md:border-0 md:max-w-md md:mx-auto md:w-full md:static md:pb-8">
+        <div className="px-6 md:px-8 pb-6 pt-2">
           <Button
             onClick={onNext}
             disabled={isNextDisabled || isNextLoading}

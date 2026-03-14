@@ -90,80 +90,90 @@ const Auth = () => {
     validateInvitation();
   }, [inviteToken]);
 
-  // Handle post-signup linking and redirect
+  // Handle already-authenticated users — redirect immediately without full linking flow
   useEffect(() => {
-    if (user && !isLoading) {
-      const handlePostSignupLinking = async () => {
-        let inviterProfileId: string | null = null;
-        
-        try {
-          const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
-          
-          if (storedToken) {
-            const { data: tokenLinkResult, error: tokenLinkError } = await supabase
-              .rpc('accept_invitation_by_token' as any, {
-                p_user_id: user.id,
-                p_token: storedToken
-              });
-            
-            const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string; inviter_id?: string } | null;
-            if (!tokenLinkError && linkResult?.linked) {
-              inviterProfileId = linkResult.inviter_id || null;
-              toast.success('🤝 Connection established!', {
-                description: 'You are now connected with your friend'
-              });
-            }
-            
-            localStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
-          }
-          
-          const storedInviteUser = inviteUserId || sessionStorage.getItem('elyphant_invite_user');
-          if (storedInviteUser && storedInviteUser !== user.id) {
-            try {
-              const { sendConnectionRequest } = await import(
-                "@/services/connections/connectionService"
-              );
-              const result = await sendConnectionRequest(storedInviteUser, 'friend');
-              if (result.success) {
-                inviterProfileId = storedInviteUser;
-                toast.success('🤝 Connection request sent!');
-              }
-            } catch (err) {
-              console.error('[Auth] Error auto-connecting to inviter:', err);
-            }
-            sessionStorage.removeItem('elyphant_invite_user');
-          }
-          
-          const { data, error } = await supabase
-            .rpc('link_pending_rules_manual', {
+    if (!user || isLoading) return;
+
+    // Check if this is a fresh post-signup (has invitation tokens to process)
+    const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
+    const storedInviteUser = inviteUserId || sessionStorage.getItem('elyphant_invite_user');
+    const hasPendingLinking = storedToken || storedInviteUser;
+
+    if (!hasPendingLinking) {
+      // Already logged in, no pending invitations — just redirect
+      const redirectPath = searchParams.get('redirect');
+      navigate(redirectPath || '/', { replace: true });
+      return;
+    }
+
+    // Post-signup linking flow (only runs when there are pending invitations)
+    const handlePostSignupLinking = async () => {
+      let inviterProfileId: string | null = null;
+      
+      try {
+        if (storedToken) {
+          const { data: tokenLinkResult, error: tokenLinkError } = await supabase
+            .rpc('accept_invitation_by_token' as any, {
               p_user_id: user.id,
-              p_email: user.email
+              p_token: storedToken
             });
           
-          if (!error && data && typeof data === 'object' && 'linked_count' in data) {
-            const linkedCount = (data as { linked_count: number }).linked_count;
-            if (linkedCount > 0) {
-              toast.success(`🎁 ${linkedCount} auto-gift rule(s) activated for you!`, {
-                description: "Your friend has set up automatic gifting"
-              });
-            }
+          const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string; inviter_id?: string } | null;
+          if (!tokenLinkError && linkResult?.linked) {
+            inviterProfileId = linkResult.inviter_id || null;
+            toast.success('🤝 Connection established!', {
+              description: 'You are now connected with your friend'
+            });
           }
-        } catch (error) {
-          console.error('Failed to link pending rules:', error);
+          
+          localStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
         }
         
-        const redirectPath = searchParams.get('redirect');
-        if (redirectPath) {
-          navigate(redirectPath, { replace: true });
-        } else if (inviterProfileId) {
-          navigate(`/profile/${inviterProfileId}`, { replace: true });
-        } else {
-          navigate('/', { replace: true });
+        if (storedInviteUser && storedInviteUser !== user.id) {
+          try {
+            const { sendConnectionRequest } = await import(
+              "@/services/connections/connectionService"
+            );
+            const result = await sendConnectionRequest(storedInviteUser, 'friend');
+            if (result.success) {
+              inviterProfileId = storedInviteUser;
+              toast.success('🤝 Connection request sent!');
+            }
+          } catch (err) {
+            console.error('[Auth] Error auto-connecting to inviter:', err);
+          }
+          sessionStorage.removeItem('elyphant_invite_user');
         }
-      };
+        
+        const { data, error } = await supabase
+          .rpc('link_pending_rules_manual', {
+            p_user_id: user.id,
+            p_email: user.email
+          });
+        
+        if (!error && data && typeof data === 'object' && 'linked_count' in data) {
+          const linkedCount = (data as { linked_count: number }).linked_count;
+          if (linkedCount > 0) {
+            toast.success(`🎁 ${linkedCount} auto-gift rule(s) activated for you!`, {
+              description: "Your friend has set up automatic gifting"
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to link pending rules:', error);
+      }
       
-      handlePostSignupLinking();
-    }
+      const redirectPath = searchParams.get('redirect');
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+      } else if (inviterProfileId) {
+        navigate(`/profile/${inviterProfileId}`, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    };
+    
+    handlePostSignupLinking();
   }, [user, isLoading, profileData, navigate, searchParams, inviteUserId]);
 
   const isSignupMode = initialMode === 'signup' && !preFilledEmail;

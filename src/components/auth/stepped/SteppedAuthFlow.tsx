@@ -50,7 +50,6 @@ const initialState: FormState = {
   photoUrl: "",
 };
 
-// Steps for email vs oauth
 type StepId = "name" | "email" | "password" | "birthday" | "interests" | "photo";
 const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "photo"];
 const OAUTH_STEPS: StepId[] = ["birthday", "interests", "photo"];
@@ -80,11 +79,10 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   const steps = isOAuth ? OAUTH_STEPS : EMAIL_STEPS;
   const totalSteps = steps.length;
 
-  // Detect OAuth resume: user already has session from OAuth redirect
+  // Detect OAuth resume
   useEffect(() => {
     const oauthResume = searchParams.get("oauth_resume") === "true";
     if (user && oauthResume) {
-      console.log("[SteppedAuthFlow] OAuth resume detected, pre-filling from user_metadata");
       setIsOAuth(true);
       setShowEntryScreen(false);
 
@@ -172,7 +170,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     setIsSubmitting(true);
     try {
       if (isOAuth && user) {
-        // OAuth: update existing profile
         const profileUpdate: any = {
           dob: state.birthday,
           birth_year: new Date(state.birthday).getFullYear(),
@@ -188,7 +185,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           profileUpdate.profile_image = state.photoUrl;
         }
 
-        // Also update name if changed
         if (state.firstName || state.lastName) {
           profileUpdate.first_name = state.firstName;
           profileUpdate.last_name = state.lastName;
@@ -206,7 +202,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
         navigate("/", { replace: true });
       } else {
-        // Email signup: create account
         const redirectUrl = `${window.location.origin}/profile-setup`;
 
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -227,7 +222,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         if (authError) throw authError;
         if (!authData.user) throw new Error("Failed to create account");
 
-        // Set user identification
         try {
           await supabase.rpc("set_user_identification", {
             target_user_id: authData.user.id,
@@ -248,7 +242,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           console.error("Error setting user identification:", e);
         }
 
-        // Create profile with all collected data
         const profileData: any = {
           id: authData.user.id,
           first_name: state.firstName,
@@ -283,12 +276,10 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
-          // Don't throw — account was created, profile can be completed later
         }
 
         toast.success("Account created! Welcome to Elyphant 🎉");
 
-        // Store signup context for intelligent routing
         if (invitationData) {
           localStorage.setItem("signupContext", "gift_recipient");
         } else {
@@ -309,64 +300,62 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   };
 
-  // ── Entry screen (before stepping) ────────────────────────
+  // ── Entry screen (inside modal) ────────────────────────────
   if (showEntryScreen && !isOAuth) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-background pt-safe pb-safe">
-        <div className="flex-1 flex flex-col justify-center px-6 md:px-0 md:max-w-md md:mx-auto md:w-full">
-          <div className="space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-                Join Elyphant
-              </h1>
-              <p className="text-sm text-muted-foreground mt-3">
-                {invitationData
-                  ? `${invitationData.senderName} invited you to connect!`
-                  : "The smarter way to give and receive gifts"}
-              </p>
-            </div>
-
-            {/* Google button */}
-            <Button
-              variant="outline"
-              onClick={handleGoogleSignIn}
-              className="w-full h-12 text-base font-medium rounded-lg border-border gap-3 touch-manipulation"
-            >
-              <GoogleIcon className="w-5 h-5" />
-              Continue with Google
-            </Button>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">
-                  or sign up with email
-                </span>
-              </div>
-            </div>
-
-            {/* Start email flow */}
-            <Button
-              onClick={() => setShowEntryScreen(false)}
-              className="w-full h-12 text-base font-medium rounded-lg touch-manipulation"
-            >
-              Sign up with email
-            </Button>
-
-            {/* Sign in link */}
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <button
-                onClick={() => navigate("/auth?mode=signin")}
-                className="text-primary font-medium touch-manipulation"
-              >
-                Sign in
-              </button>
+      <div className="px-6 py-10 md:p-10">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+              Join Elyphant
+            </h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              {invitationData
+                ? `${invitationData.senderName} invited you to connect!`
+                : "The smarter way to give and receive gifts"}
             </p>
           </div>
+
+          {/* Google button */}
+          <Button
+            variant="outline"
+            onClick={handleGoogleSignIn}
+            className="w-full h-12 text-base font-medium rounded-lg border-border gap-3 touch-manipulation"
+          >
+            <GoogleIcon className="w-5 h-5" />
+            Continue with Google
+          </Button>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-3 text-muted-foreground">
+                or sign up with email
+              </span>
+            </div>
+          </div>
+
+          {/* Start email flow */}
+          <Button
+            onClick={() => setShowEntryScreen(false)}
+            className="w-full h-12 text-base font-medium rounded-lg touch-manipulation"
+          >
+            Sign up with email
+          </Button>
+
+          {/* Sign in link */}
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/auth?mode=signin")}
+              className="text-primary font-medium touch-manipulation"
+            >
+              Sign in
+            </button>
+          </p>
         </div>
       </div>
     );
@@ -458,9 +447,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
       <motion.div
         key={stepId}
         custom={direction}
-        initial={{ x: direction > 0 ? 80 : -80, opacity: 0 }}
+        initial={{ x: direction > 0 ? 60 : -60, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        exit={{ x: direction > 0 ? -80 : 80, opacity: 0 }}
+        exit={{ x: direction > 0 ? -60 : 60, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full"
       >

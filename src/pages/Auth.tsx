@@ -2,12 +2,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import MainLayout from "@/components/layout/MainLayout";
+import HomeContent from "@/components/home/HomeContent";
+import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import Footer from "@/components/home/Footer";
 import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
 import SteppedAuthFlow from "@/components/auth/stepped/SteppedAuthFlow";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const INVITATION_TOKEN_STORAGE_KEY = 'elyphant_invitation_token';
 
@@ -18,16 +22,12 @@ const Auth = () => {
   const { user, isLoading } = useAuth();
   const { profileData } = useProfileRetrieval();
 
-  // Detect initial mode from URL parameters
   const mode = searchParams.get('mode') as 'signin' | 'signup' | null;
-  const initialMode = mode || 'signup'; // Default to signup if no mode specified
-
-  // Get pre-filled email from password reset navigation state
+  const initialMode = mode || 'signup';
   const preFilledEmail = location.state?.email;
   
-  // Handle invitation links (both connection invites and gift invitations)
   const inviteToken = searchParams.get('invite') || searchParams.get('invitation_token');
-  const inviteUserId = searchParams.get('invite_user'); // From /invite/:username page
+  const inviteUserId = searchParams.get('invite_user');
   const [invitationData, setInvitationData] = useState<{
     connectionId: string;
     recipientEmail: string;
@@ -35,28 +35,21 @@ const Auth = () => {
     senderName: string;
   } | null>(null);
 
-  // Validate invitation token on mount and store for post-signup linking
+  // Validate invitation token on mount
   useEffect(() => {
     const validateInvitation = async () => {
       if (!inviteToken) return;
       
       console.log('[Auth] Validating invite token:', inviteToken);
-      
-      // Store token in localStorage to survive OAuth redirects
       localStorage.setItem(INVITATION_TOKEN_STORAGE_KEY, inviteToken);
-      console.log('[Auth] Stored invitation token for post-signup linking');
       
       try {
-        // Call edge function to validate invitation (bypasses RLS issues)
         const { data, error } = await supabase.functions.invoke('validate-invite', {
           body: { token: inviteToken }
         });
         
-        console.log('[Auth] Edge function response:', data, error);
-        
         if (error || !data) {
           console.error('[Auth] Failed to validate invitation:', error);
-          // Check for cancelled invitation
           if (data?.type === 'cancelled') {
             toast.error(data.message || 'This invitation was cancelled');
           } else {
@@ -66,32 +59,27 @@ const Auth = () => {
         }
         
         if (data.type === 'connection') {
-          // This is a connection invitation
           setInvitationData({
             connectionId: data.connectionId,
             recipientEmail: data.recipientEmail || '',
             recipientName: data.recipientName || '',
             senderName: data.senderName || 'Your friend'
           });
-          
           toast.success(`${data.senderName || 'Your friend'} invited you to connect on Elyphant!`);
           return;
         }
         
         if (data.type === 'gift') {
-          // This is a gift invitation
           setInvitationData({
             connectionId: data.connectionId,
             recipientEmail: data.recipientEmail || '',
             recipientName: data.recipientName || '',
             senderName: data.senderName || 'Someone'
           });
-          
           toast.success(`🎁 You've been invited to join Elyphant!`);
           return;
         }
         
-        // Invalid response type
         toast.error('Invalid invitation link');
       } catch (error) {
         console.error('[Auth] Failed to validate invitation:', error);
@@ -109,12 +97,9 @@ const Auth = () => {
         let inviterProfileId: string | null = null;
         
         try {
-          // Check for stored invitation token (handles different email signup)
           const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
           
           if (storedToken) {
-            console.log('[Auth] Found stored invitation token, attempting to link by token...');
-            
             const { data: tokenLinkResult, error: tokenLinkError } = await supabase
               .rpc('accept_invitation_by_token' as any, {
                 p_user_id: user.id,
@@ -123,22 +108,17 @@ const Auth = () => {
             
             const linkResult = tokenLinkResult as { linked?: boolean; connection_id?: string; inviter_id?: string } | null;
             if (!tokenLinkError && linkResult?.linked) {
-              console.log('[Auth] Successfully linked connection by token:', linkResult);
               inviterProfileId = linkResult.inviter_id || null;
               toast.success('🤝 Connection established!', {
                 description: 'You are now connected with your friend'
               });
-            } else {
-              console.log('[Auth] Token-based linking failed or no match:', tokenLinkError);
             }
             
             localStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
           }
           
-          // Handle invite_user param (from /invite/:username page)
           const storedInviteUser = inviteUserId || sessionStorage.getItem('elyphant_invite_user');
           if (storedInviteUser && storedInviteUser !== user.id) {
-            console.log('[Auth] Processing invite_user connection:', storedInviteUser);
             try {
               const { sendConnectionRequest } = await import(
                 "@/services/connections/connectionService"
@@ -154,7 +134,6 @@ const Auth = () => {
             sessionStorage.removeItem('elyphant_invite_user');
           }
           
-          // Also try email-based linking for auto-gift rules
           const { data, error } = await supabase
             .rpc('link_pending_rules_manual', {
               p_user_id: user.id,
@@ -173,7 +152,6 @@ const Auth = () => {
           console.error('Failed to link pending rules:', error);
         }
         
-        // Redirect: if we have an inviter, go to their profile for the "aha moment"
         const redirectPath = searchParams.get('redirect');
         if (redirectPath) {
           navigate(redirectPath, { replace: true });
@@ -188,40 +166,78 @@ const Auth = () => {
     }
   }, [user, isLoading, profileData, navigate, searchParams, inviteUserId]);
 
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Loading...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   const isSignupMode = initialMode === 'signup' && !preFilledEmail;
   const isOAuthResume = searchParams.get('oauth_resume') === 'true';
 
-  // Use stepped flow for signup and OAuth resume
-  if (isSignupMode || isOAuthResume) {
-    return (
-      <SteppedAuthFlow invitationData={invitationData} />
-    );
-  }
+  const handleCloseModal = () => {
+    navigate('/', { replace: true });
+  };
 
-  // Sign-in mode: use existing card-based form
-  return (
-    <MainLayout>
-      <div className="container max-w-md mx-auto py-8 md:py-20 px-4 flex-grow flex items-center justify-center pt-safe pb-safe my-6 md:my-0">
+  // Determine modal content
+  const renderModalContent = () => {
+    if (isSignupMode || isOAuthResume) {
+      return <SteppedAuthFlow invitationData={invitationData} />;
+    }
+    
+    // Sign-in mode
+    return (
+      <div className="px-6 py-8 md:p-8">
         <UnifiedAuthView 
-          initialMode={'signin'} 
+          initialMode="signin" 
           preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
           invitationData={invitationData}
         />
       </div>
-    </MainLayout>
+    );
+  };
+
+  return (
+    <div className="min-h-screen surface-primary flex flex-col">
+      {/* Homepage as backdrop — always rendered immediately, no flash */}
+      <UnifiedShopperHeader mode="main" />
+      <main className="flex-1">
+        <HomeContent />
+      </main>
+      <Footer />
+
+      {/* Auth modal overlay */}
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+        >
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCloseModal}
+          />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="relative z-10 w-[calc(100%-2rem)] max-w-md max-h-[90vh] overflow-y-auto bg-background rounded-2xl shadow-2xl border border-border/50 md:my-8 overscroll-contain"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={handleCloseModal}
+              className="absolute right-3 top-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {renderModalContent()}
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 };
 

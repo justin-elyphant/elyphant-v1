@@ -13,6 +13,8 @@ import PasswordStep from "./steps/PasswordStep";
 import BirthdayStep from "./steps/BirthdayStep";
 import InterestsStep from "./steps/InterestsStep";
 import PhotoStep from "./steps/PhotoStep";
+import AddressStep from "./steps/AddressStep";
+import { ShippingAddress } from "@/types/shipping";
 
 // ── Types ──────────────────────────────────────────────────
 interface FormState {
@@ -22,6 +24,7 @@ interface FormState {
   password: string;
   birthday: string;
   interests: string[];
+  address: ShippingAddress;
   photoUrl: string;
 }
 
@@ -47,12 +50,13 @@ const initialState: FormState = {
   password: "",
   birthday: "",
   interests: [],
+  address: { country: "US" },
   photoUrl: "",
 };
 
-type StepId = "name" | "email" | "password" | "birthday" | "interests" | "photo";
-const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "photo"];
-const OAUTH_STEPS: StepId[] = ["birthday", "interests", "photo"];
+type StepId = "name" | "email" | "password" | "birthday" | "interests" | "address" | "photo";
+const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "address", "photo"];
+const OAUTH_STEPS: StepId[] = ["birthday", "interests", "address", "photo"];
 
 // ── Component ──────────────────────────────────────────────
 interface SteppedAuthFlowProps {
@@ -177,6 +181,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             importance: "medium",
           })),
           onboarding_completed: true,
+          shipping_address: state.address,
         };
 
         if (state.photoUrl) {
@@ -262,6 +267,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             gift_preferences: "public",
             email: "private",
           },
+          shipping_address: state.address,
         };
 
         if (state.photoUrl) {
@@ -396,6 +402,16 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           <InterestsStep
             interests={state.interests}
             onChange={(v) => dispatch({ type: "SET_FIELD", field: "interests", value: v })}
+            onNext={goNext}
+            onBack={goBack}
+            {...commonProps}
+          />
+        );
+      case "address":
+        return (
+          <AddressStep
+            address={state.address}
+            onChange={(v) => dispatch({ type: "SET_FIELD", field: "address", value: v })}
             onNext={goNext}
             onBack={goBack}
             {...commonProps}

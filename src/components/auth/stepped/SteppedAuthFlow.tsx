@@ -181,6 +181,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             importance: "medium",
           })),
           onboarding_completed: true,
+          shipping_address: state.address,
         };
 
         if (state.photoUrl) {

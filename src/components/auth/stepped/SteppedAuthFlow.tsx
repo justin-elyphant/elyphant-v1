@@ -172,33 +172,32 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     setIsSubmitting(true);
     try {
       if (isOAuth && user) {
-        const profileUpdate: any = {
-          dob: state.birthday,
-          birth_year: new Date(state.birthday).getFullYear(),
-          interests: state.interests,
-          gift_preferences: state.interests.map((i) => ({
+        const username = state.firstName && state.lastName
+          ? `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "")
+          : user.email?.split("@")[0] || `user${Date.now()}`;
+
+        const { error } = await supabase.rpc("complete_onboarding", {
+          p_user_id: user.id,
+          p_first_name: state.firstName || user.user_metadata?.first_name || "",
+          p_last_name: state.lastName || user.user_metadata?.last_name || "",
+          p_email: user.email || "",
+          p_username: username,
+          p_dob: state.birthday,
+          p_birth_year: new Date(state.birthday).getFullYear(),
+          p_interests: state.interests,
+          p_gift_preferences: state.interests.map((i) => ({
             category: i,
             importance: "medium",
           })),
-          onboarding_completed: true,
-          shipping_address: state.address,
-        };
-
-        if (state.photoUrl) {
-          profileUpdate.profile_image = state.photoUrl;
-        }
-
-        if (state.firstName || state.lastName) {
-          profileUpdate.first_name = state.firstName;
-          profileUpdate.last_name = state.lastName;
-          profileUpdate.name = `${state.firstName} ${state.lastName}`.trim();
-          profileUpdate.username = `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "");
-        }
-
-        const { error } = await supabase
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("id", user.id);
+          p_data_sharing_settings: {
+            dob: "friends",
+            shipping_address: "private",
+            gift_preferences: "public",
+            email: "private",
+          },
+          p_shipping_address: state.address,
+          p_profile_image: state.photoUrl || null,
+        });
 
         if (error) throw error;
 

@@ -314,28 +314,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             </p>
           </div>
 
-          {/* Google button */}
-          <Button
-            variant="outline"
-            onClick={handleGoogleSignIn}
-            className="w-full h-12 text-base font-medium rounded-lg border-border gap-3 touch-manipulation"
-          >
-            <GoogleIcon className="w-5 h-5" />
-            Continue with Google
-          </Button>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-3 text-muted-foreground">
-                or sign up with email
-              </span>
-            </div>
-          </div>
-
           {/* Start email flow */}
           <Button
             onClick={() => setShowEntryScreen(false)}

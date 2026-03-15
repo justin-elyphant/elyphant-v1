@@ -24,6 +24,7 @@ interface FormState {
   password: string;
   birthday: string;
   interests: string[];
+  address: ShippingAddress;
   photoUrl: string;
 }
 

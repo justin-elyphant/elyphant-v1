@@ -184,18 +184,18 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           p_username: username,
           p_dob: state.birthday,
           p_birth_year: new Date(state.birthday).getFullYear(),
-          p_interests: state.interests,
+          p_interests: state.interests as any,
           p_gift_preferences: state.interests.map((i) => ({
             category: i,
             importance: "medium",
-          })),
+          })) as any,
           p_data_sharing_settings: {
             dob: "friends",
             shipping_address: "private",
             gift_preferences: "public",
             email: "private",
-          },
-          p_shipping_address: state.address,
+          } as any,
+          p_shipping_address: state.address as any,
           p_profile_image: state.photoUrl || null,
         });
 
@@ -244,38 +244,29 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           console.error("Error setting user identification:", e);
         }
 
-        const profileData: any = {
-          id: authData.user.id,
-          first_name: state.firstName,
-          last_name: state.lastName,
-          name: `${state.firstName} ${state.lastName}`.trim(),
-          username: `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, ""),
-          email: state.email,
-          dob: state.birthday,
-          birth_year: new Date(state.birthday).getFullYear(),
-          interests: state.interests,
-          gift_preferences: state.interests.map((i) => ({
+        // Use RPC to reliably save profile + queue welcome email (bypasses RLS timing)
+        const { error: profileError } = await supabase.rpc("complete_onboarding", {
+          p_user_id: authData.user.id,
+          p_first_name: state.firstName,
+          p_last_name: state.lastName,
+          p_email: state.email,
+          p_username: `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, ""),
+          p_dob: state.birthday,
+          p_birth_year: new Date(state.birthday).getFullYear(),
+          p_interests: state.interests as any,
+          p_gift_preferences: state.interests.map((i) => ({
             category: i,
             importance: "medium",
-          })),
-          onboarding_completed: true,
-          user_type: "shopper",
-          data_sharing_settings: {
+          })) as any,
+          p_data_sharing_settings: {
             dob: "friends",
             shipping_address: "private",
             gift_preferences: "public",
             email: "private",
-          },
-          shipping_address: state.address,
-        };
-
-        if (state.photoUrl) {
-          profileData.profile_image = state.photoUrl;
-        }
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert(profileData as any);
+          } as any,
+          p_shipping_address: state.address as any,
+          p_profile_image: state.photoUrl || null,
+        });
 
         if (profileError) {
           console.error("Profile creation error:", profileError);

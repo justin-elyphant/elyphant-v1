@@ -50,6 +50,7 @@ const initialState: FormState = {
   password: "",
   birthday: "",
   interests: [],
+  address: { country: "US" },
   photoUrl: "",
 };
 

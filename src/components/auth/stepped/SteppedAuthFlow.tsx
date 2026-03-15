@@ -407,6 +407,16 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             {...commonProps}
           />
         );
+      case "address":
+        return (
+          <AddressStep
+            address={state.address}
+            onChange={(v) => dispatch({ type: "SET_FIELD", field: "address", value: v })}
+            onNext={goNext}
+            onBack={goBack}
+            {...commonProps}
+          />
+        );
       case "photo":
         return (
           <PhotoStep

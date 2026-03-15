@@ -191,13 +191,10 @@ const Auth = () => {
     
     // Sign-in mode
     return (
-      <div className="px-6 py-8 md:p-8">
-        <UnifiedAuthView 
-          initialMode="signin" 
-          preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
-          invitationData={invitationData}
-        />
-      </div>
+      <MinimalSignInView 
+        preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
+        invitationData={invitationData}
+      />
     );
   };
 

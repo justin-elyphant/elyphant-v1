@@ -137,16 +137,14 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   // ── Google OAuth handler ──────────────────────────────────
   const handleGoogleSignIn = async () => {
     try {
-      const redirectUrl = `${window.location.origin}/auth/oauth-complete`;
+      const redirectUrl = new URL("/auth/oauth-complete", window.location.origin);
+      redirectUrl.searchParams.set("signup_source", "social_auth");
+      redirectUrl.searchParams.set("user_type", "shopper");
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            signup_source: "social_auth",
-            user_type: "shopper",
-          },
+          redirectTo: redirectUrl.toString(),
         },
       });
 

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth";
 import HomeContent from "@/components/home/HomeContent";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
-import UnifiedAuthView from "@/components/auth/unified/UnifiedAuthView";
+import MinimalSignInView from "@/components/auth/signin/MinimalSignInView";
 import SteppedAuthFlow from "@/components/auth/stepped/SteppedAuthFlow";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";
 import { supabase } from "@/integrations/supabase/client";
@@ -191,13 +191,10 @@ const Auth = () => {
     
     // Sign-in mode
     return (
-      <div className="px-6 py-8 md:p-8">
-        <UnifiedAuthView 
-          initialMode="signin" 
-          preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
-          invitationData={invitationData}
-        />
-      </div>
+      <MinimalSignInView 
+        preFilledEmail={preFilledEmail || invitationData?.recipientEmail}
+        invitationData={invitationData}
+      />
     );
   };
 

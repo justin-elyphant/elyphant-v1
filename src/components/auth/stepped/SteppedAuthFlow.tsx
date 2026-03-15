@@ -267,6 +267,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             gift_preferences: "public",
             email: "private",
           },
+          shipping_address: state.address,
         };
 
         if (state.photoUrl) {

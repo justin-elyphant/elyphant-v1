@@ -54,9 +54,9 @@ const initialState: FormState = {
   photoUrl: "",
 };
 
-type StepId = "name" | "email" | "password" | "birthday" | "interests" | "photo";
-const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "photo"];
-const OAUTH_STEPS: StepId[] = ["birthday", "interests", "photo"];
+type StepId = "name" | "email" | "password" | "birthday" | "interests" | "address" | "photo";
+const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "address", "photo"];
+const OAUTH_STEPS: StepId[] = ["birthday", "interests", "address", "photo"];
 
 // ── Component ──────────────────────────────────────────────
 interface SteppedAuthFlowProps {

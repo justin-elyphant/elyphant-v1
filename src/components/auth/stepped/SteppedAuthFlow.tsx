@@ -13,6 +13,8 @@ import PasswordStep from "./steps/PasswordStep";
 import BirthdayStep from "./steps/BirthdayStep";
 import InterestsStep from "./steps/InterestsStep";
 import PhotoStep from "./steps/PhotoStep";
+import AddressStep from "./steps/AddressStep";
+import { ShippingAddress } from "@/types/shipping";
 
 // ── Types ──────────────────────────────────────────────────
 interface FormState {

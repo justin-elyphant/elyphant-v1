@@ -72,6 +72,42 @@ export const stemWord = (word: string): string => {
 };
 
 /**
+ * Levenshtein distance for fuzzy/typo-tolerant matching.
+ * Returns edit distance between two strings.
+ */
+export const levenshteinDistance = (a: string, b: string): number => {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  let curr = new Array(n + 1);
+  
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+};
+
+/**
+ * Fuzzy match: returns true if two words are within edit distance 2
+ * Only applies to words of length >= 4 to avoid false positives on short words
+ */
+export const fuzzyMatch = (a: string, b: string): boolean => {
+  if (a === b) return true;
+  if (a.length < 4 || b.length < 4) return false;
+  // Allow distance 1 for short words (4-5 chars), distance 2 for longer
+  const maxDist = Math.min(a.length, b.length) <= 5 ? 1 : 2;
+  return levenshteinDistance(a, b) <= maxDist;
+};
+
+/**
  * Calculate relevance score for a product based on search query
  * Enhanced with model number detection for apparel searches
  */

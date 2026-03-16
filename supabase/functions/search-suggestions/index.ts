@@ -89,24 +89,63 @@ serve(async (req) => {
         .limit(5)
     ]);
 
+    // Fallback: if no local products, invoke get-products (which caches via Zinc)
+    let fallbackProducts: any[] = [];
+    if ((!productsResult.data || productsResult.data.length === 0) && normalizedQuery) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const fallbackRes = await fetch(`${supabaseUrl}/functions/v1/get-products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ query: normalizedQuery, limit: 5 }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          fallbackProducts = (fallbackData?.products || []).slice(0, 5);
+          console.log(`[search-suggestions] Fallback returned ${fallbackProducts.length} products for "${normalizedQuery}"`);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.warn(`[search-suggestions] Fallback timed out for "${normalizedQuery}"`);
+        } else {
+          console.error(`[search-suggestions] Fallback error:`, err);
+        }
+      }
+    }
+
     const trending = (trendingResult.data || []).map((t: any) => ({
       text: t.search_query,
       type: 'trending',
       count: t.search_count
     }));
 
-    const products = (productsResult.data || []).map((p: any) => ({
+    // Use local products if available, otherwise use fallback
+    const rawProducts = (productsResult.data && productsResult.data.length > 0)
+      ? productsResult.data
+      : fallbackProducts;
+
+    const products = rawProducts.map((p: any) => ({
       id: p.product_id,
       title: p.title,
       price: p.price,
-      image: p.image_url || p.metadata?.main_image,
+      image: p.image_url || p.image || p.main_image || p.metadata?.main_image,
       brand: p.brand,
       type: 'product'
     }));
 
     // Generate text suggestions from product titles
     const titleWords = new Set<string>();
-    (productsResult.data || []).forEach((p: any) => {
+    rawProducts.forEach((p: any) => {
       const words = (p.title || '').toLowerCase().split(/\s+/);
       words.forEach((word: string) => {
         if (word.length > 3 && word.includes(normalizedQuery)) {

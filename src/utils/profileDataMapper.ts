@@ -192,12 +192,19 @@ export function mapDatabaseToSettingsForm(profile: any) {
   let dateOfBirth;
   if (profile.dob) {
     try {
-      // Handle MM-DD format with birth_year
-      if (profile.birth_year && profile.dob.includes('-')) {
+      if (profile.dob.length === 10 && profile.dob[4] === '-') {
+        // YYYY-MM-DD format
+        dateOfBirth = new Date(profile.dob + 'T00:00:00');
+      } else if (profile.birth_year && profile.dob.includes('-')) {
+        // MM-DD format with birth_year
         const [month, day] = profile.dob.split('-');
         dateOfBirth = new Date(profile.birth_year, parseInt(month) - 1, parseInt(day));
       } else {
         dateOfBirth = new Date(profile.dob);
+      }
+      // Validate the date
+      if (isNaN(dateOfBirth.getTime())) {
+        dateOfBirth = undefined;
       }
     } catch (e) {
       console.warn("Invalid date of birth format:", profile.dob);

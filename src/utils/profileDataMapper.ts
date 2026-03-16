@@ -93,8 +93,17 @@ export function createBirthdayImportantDate(dob: string, birthYear?: number | nu
   if (!dob) return null;
   
   try {
-    // Parse MM-DD format and add current year for display
-    const [month, day] = dob.split('-');
+    let month: string, day: string;
+    
+    if (dob.length === 10 && dob[4] === '-') {
+      // YYYY-MM-DD format
+      month = dob.slice(5, 7);
+      day = dob.slice(8, 10);
+    } else {
+      // MM-DD format
+      [month, day] = dob.split('-');
+    }
+    
     const currentYear = new Date().getFullYear();
     const birthdayDate = new Date(currentYear, parseInt(month) - 1, parseInt(day));
     

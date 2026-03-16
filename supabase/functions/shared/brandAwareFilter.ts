@@ -120,55 +120,60 @@ export const calculateRelevanceScore = (
   const title = (product.title || '').toLowerCase();
   const brand = (product.brand || '').toLowerCase();
   const category = (product.category || '').toLowerCase();
+  const description = (product.product_description || product.description || product.metadata?.product_description || '').toLowerCase();
   
   // Detect model numbers in search (3-4 digit numbers like "512", "501", "505")
   const searchModelNumbers = searchTerms.filter(t => /^\d{3,4}$/.test(t));
   
-  for (const term of searchTerms) {
+  // Helper: check if a term matches in a text field (exact, stem, or fuzzy)
+  const matchesField = (term: string, field: string): 'exact' | 'stem' | 'fuzzy' | false => {
     const normalizedTerm = normalizeBrandTerm(term);
     const stemmedTerm = stemWord(term);
+    if (field.includes(term) || field.includes(normalizedTerm)) return 'exact';
+    if (field.split(/\s+/).some(w => stemWord(w) === stemmedTerm)) return 'stem';
+    if (field.split(/\s+/).some(w => fuzzyMatch(w, term) || fuzzyMatch(stemWord(w), stemmedTerm))) return 'fuzzy';
+    return false;
+  };
+  
+  for (const term of searchTerms) {
+    const normalizedTerm = normalizeBrandTerm(term);
     const isModelNumber = /^\d{3,4}$/.test(term);
     
     // Brand match = highest priority (100 points)
     if (brand.includes(term) || brand.includes(normalizedTerm)) score += 100;
     
-    // Title match scoring (includes stemmed matching)
-    const titleMatch = title.includes(term) || title.includes(normalizedTerm) ||
-      title.split(/\s+/).some(w => stemWord(w) === stemmedTerm);
+    // Title match scoring (includes stemmed and fuzzy matching)
+    const titleMatch = matchesField(term, title);
     if (titleMatch) {
       if (isModelNumber) {
         score += 150;
       } else {
-        score += 50;
+        score += titleMatch === 'fuzzy' ? 20 : 50;
       }
     }
     
-    // Category match = decent (20 points) - also with stemming
-    const categoryMatch = category.includes(term) ||
-      category.split(/\s+/).some(w => stemWord(w) === stemmedTerm);
-    if (categoryMatch) score += 20;
+    // Category match (20 points, 10 for fuzzy)
+    const catMatch = matchesField(term, category);
+    if (catMatch) score += catMatch === 'fuzzy' ? 10 : 20;
+    
+    // Description match (15 points, 8 for fuzzy) — catches conceptual searches
+    const descMatch = matchesField(term, description);
+    if (descMatch) score += descMatch === 'fuzzy' ? 8 : 15;
   }
   
-  // Bonus for matching ALL search terms
+  // Bonus for matching ALL search terms (across all fields)
   const allMatch = searchTerms.every(t => {
-    const nt = normalizeBrandTerm(t);
-    const st = stemWord(t);
-    return title.includes(t) || title.includes(nt) || 
-           title.split(/\s+/).some(w => stemWord(w) === st) ||
-           brand.includes(t) || brand.includes(nt) || 
-           category.includes(t) || category.split(/\s+/).some(w => stemWord(w) === st);
+    return matchesField(t, title) || matchesField(t, brand) || matchesField(t, category) || matchesField(t, description);
   });
   if (allMatch) score += 200;
   
   // PENALTY: Wrong model numbers
-  // If searching for "512", heavily penalize products with different model numbers (537, 505, etc.)
   if (searchModelNumbers.length > 0) {
     const titleNumbers = title.match(/\b\d{3,4}\b/g) || [];
     const hasSearchModel = searchModelNumbers.some(m => titleNumbers.includes(m));
     const hasWrongModel = titleNumbers.some(num => !searchModelNumbers.includes(num));
     
     if (hasWrongModel && !hasSearchModel) {
-      // Product has a model number that doesn't match search - heavy penalty
       score -= 100;
       console.log(`[Relevance] Penalized wrong model: "${title}" has [${titleNumbers.join(',')}] but searching [${searchModelNumbers.join(',')}]`);
     }
@@ -182,12 +187,12 @@ export const calculateRelevanceScore = (
              title.includes(searchBrand) || title.includes(normalizedSearchBrand);
     });
     if (!productBrandMatchesSearch) {
-      score -= 150; // Heavy penalty for brand mismatch
+      score -= 150;
     }
   }
   
   // PRODUCT-TYPE ENFORCEMENT: For multi-word searches, penalize results missing
-  // the product-type keyword (e.g., "socks" in "adidas mens socks")
+  // the product-type keyword — reduced from -200 to -100 to allow conceptual matches
   const GENERIC_MODIFIERS = [
     "mens", "womens", "women", "men", "kids", "boys", "girls", "unisex",
     "adult", "junior", "youth", "small", "medium", "large", "new", "best",
@@ -195,7 +200,6 @@ export const calculateRelevanceScore = (
   ];
   
   if (searchTerms.length >= 2) {
-    // Find product-type keywords: non-brand, non-generic terms
     const productTypeTerms = searchTerms.filter(t => {
       const nt = normalizeBrandTerm(t);
       const isBrand = searchBrands.includes(t) || searchBrands.includes(nt) ||
@@ -206,17 +210,13 @@ export const calculateRelevanceScore = (
     });
     
     if (productTypeTerms.length > 0) {
+      // Check across title, category, AND description (+ fuzzy)
       const hasProductTypeMatch = productTypeTerms.some(pt => {
-        const nt = normalizeBrandTerm(pt);
-        const st = stemWord(pt);
-        return title.includes(pt) || title.includes(nt) || 
-               title.split(/\s+/).some(w => stemWord(w) === st) ||
-               category.includes(pt) || category.includes(nt) ||
-               category.split(/\s+/).some(w => stemWord(w) === st);
+        return matchesField(pt, title) || matchesField(pt, category) || matchesField(pt, description);
       });
       
       if (!hasProductTypeMatch) {
-        score -= 200; // Heavy penalty: product doesn't match what the user is looking for
+        score -= 100; // Reduced from -200: still penalizes but doesn't kill conceptual matches
         console.log(`[Relevance] Product-type penalty: "${title.substring(0, 50)}" missing [${productTypeTerms.join(',')}]`);
       }
     }

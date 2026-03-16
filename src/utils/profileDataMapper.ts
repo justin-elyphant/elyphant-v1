@@ -245,7 +245,9 @@ export function mapDatabaseToSettingsForm(profile: any) {
     profile_image: profile.profile_image || null,
     date_of_birth: dateOfBirth,
     address: mappedAddress,
-    interests: profile.interests || [],
+    interests: (profile.interests && profile.interests.length > 0) 
+      ? profile.interests 
+      : (profile.gift_preferences || []).map((p: any) => typeof p === 'string' ? p : p?.category).filter(Boolean),
     importantDates: mappedImportantDates,
     data_sharing_settings: profile.data_sharing_settings || {
       dob: "private",

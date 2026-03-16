@@ -107,6 +107,7 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
           ref={inputRef}
           type="file"
           accept="image/*"
+          capture="user"
           onChange={handleFileChange}
           className="hidden"
         />

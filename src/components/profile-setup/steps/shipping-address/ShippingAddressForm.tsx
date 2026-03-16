@@ -154,7 +154,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
               type="tel"
               placeholder="(555) 123-4567"
               value={address.phone || ''}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) => handleChange("phone", formatPhoneNumber(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
               Required for carrier delivery notifications

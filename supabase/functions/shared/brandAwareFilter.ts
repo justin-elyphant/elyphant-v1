@@ -279,12 +279,22 @@ export const applyBrandAwareFilter = (products: any[], query: string): any[] => 
   }));
   
   // Filter out low-relevance products
-  // For multi-word non-brand searches, require higher score (products must match multiple terms)
   const isMultiWordSearch = searchTerms.length >= 2;
   const minScore = hasBrandSearch ? 100 : (isMultiWordSearch ? 150 : 50);
-  const relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
+  let relevantResults = scoredResults.filter(r => r.relevanceScore >= minScore);
   
   console.log(`🎯 Brand-aware filter: minScore=${minScore} (multi-word: ${isMultiWordSearch}, brand: ${hasBrandSearch})`);
+  
+  // ZERO-RESULTS SAFETY NET: If filter would eliminate ALL products,
+  // fall back to sorting by score (no minimum). This prevents total wipeouts
+  // for conceptual searches like "motivational books" where titles don't
+  // contain the search terms but the products are still relevant.
+  if (relevantResults.length === 0 && products.length > 0) {
+    console.log(`⚠️ Zero-results safety net activated: ${products.length} products would have been eliminated. Falling back to score-sorted results.`);
+    relevantResults = scoredResults
+      .filter(r => r.relevanceScore > -50) // Only exclude truly irrelevant products
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
+  }
   
   // Sort by relevance score (highest first)
   relevantResults.sort((a, b) => b.relevanceScore - a.relevanceScore);

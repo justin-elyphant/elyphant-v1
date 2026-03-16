@@ -139,6 +139,31 @@ export function useUserSearchHistory() {
     }
   }, [user, loadSearchHistory]);
 
+  // Remove a single search term
+  const removeSearch = useCallback(async (term: string) => {
+    if (!user) {
+      const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+      const recent = stored ? JSON.parse(stored) : [];
+      const updated = recent.filter((s: string) => s !== term);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      setRecentSearches(filterSystemSearches(updated));
+      return;
+    }
+
+    try {
+      await supabase
+        .from('user_search_history')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('search_term', term)
+        .eq('search_type', 'marketplace');
+
+      setRecentSearches(prev => prev.filter(s => s !== term));
+    } catch (error) {
+      console.error('Error removing search term:', error);
+    }
+  }, [user]);
+
   // Clear all search history
   const clearSearchHistory = useCallback(async () => {
     if (!user) {

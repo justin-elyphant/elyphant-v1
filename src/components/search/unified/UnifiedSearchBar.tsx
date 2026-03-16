@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X, TrendingUp, Package, Users, UserPlus, Clock, UserCheck } from "lucide-react";
+import { Search, X, TrendingUp, Package, Users, UserPlus, Clock, UserCheck, ArrowRight, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchSuggestionsLive } from "@/hooks/useSearchSuggestionsLive";
 import { useAuth } from "@/contexts/auth";
@@ -24,13 +24,10 @@ interface UnifiedSearchBarProps {
   mobile?: boolean;
 }
 
-// ConnectionResult replaced by FilteredProfile from privacyAwareFriendSearch
-
 // Skeleton loading component for suggestions
 const SuggestionsSkeleton: React.FC = () => (
   <Card className="bg-background border shadow-lg rounded-xl p-3">
     <div className="space-y-3">
-      {/* Text suggestions skeleton */}
       <div>
         <div className="flex items-center gap-2 mb-2 px-2">
           <div className="w-4 h-4 bg-muted animate-pulse rounded" />
@@ -42,7 +39,6 @@ const SuggestionsSkeleton: React.FC = () => (
           </div>
         ))}
       </div>
-      {/* Product suggestions skeleton */}
       <div>
         <div className="flex items-center gap-2 mb-2 px-2">
           <div className="w-4 h-4 bg-muted animate-pulse rounded" />
@@ -70,10 +66,11 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Sync query with URL search param so text persists after navigation
   useEffect(() => {
@@ -88,7 +85,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     setShowSuggestions(false);
   }, [location.pathname, location.search]);
   const { user } = useAuth();
-  const { recentSearches, addSearch } = useUserSearchHistory();
+  const { recentSearches, addSearch, clearSearchHistory, removeSearch } = useUserSearchHistory();
   const isMobile = useIsMobile();
   
   const {
@@ -125,7 +122,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     connectionTimerRef.current = setTimeout(async () => {
       try {
         const results = await searchFriendsWithPrivacy(query.trim(), user.id, 6);
-        // Filter out blocked and self
         const filtered = results.filter(r => r.connectionStatus !== 'blocked' && r.id !== user.id);
         setConnectionResults(filtered.slice(0, 4));
       } catch (err) {
@@ -143,7 +139,6 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     try {
       if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
       await sendConnectionRequest(personId);
-      // Optimistic update
       setConnectionResults(prev => prev.map(p => 
         p.id === personId ? { ...p, connectionStatus: 'pending' as const } : p
       ));
@@ -173,6 +168,21 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     inputRef.current?.blur();
   }, []);
 
+  // Build flat list of navigable items for keyboard nav
+  const flatItems = useMemo(() => {
+    if (!query.trim()) return [];
+    const items: Array<{ type: 'suggestion' | 'person' | 'product'; data: any }> = [];
+    liveSuggestions.slice(0, 5).forEach(s => items.push({ type: 'suggestion', data: s }));
+    connectionResults.forEach(p => items.push({ type: 'person', data: p }));
+    suggestedProducts.slice(0, 4).forEach(p => items.push({ type: 'product', data: p }));
+    return items;
+  }, [query, liveSuggestions, connectionResults, suggestedProducts]);
+
+  // Reset selected index when suggestions change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [query, liveSuggestions.length, connectionResults.length, suggestedProducts.length]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
@@ -188,10 +198,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     setInputFocused(false);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (query.trim()) {
-      // Haptic feedback on iOS
       if (isMobile || mobile) {
         triggerHapticFeedback(HapticPatterns.buttonTap);
       }
@@ -240,6 +249,63 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
     dismissKeyboard();
     addSearch(title);
     navigate(`/product/${productId}`);
+  };
+
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % (flatItems.length + 1)); // +1 for "see all results"
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev <= 0 ? flatItems.length : prev - 1));
+    } else if (e.key === 'Enter') {
+      if (selectedIndex >= 0 && selectedIndex < flatItems.length) {
+        e.preventDefault();
+        const item = flatItems[selectedIndex];
+        if (item.type === 'suggestion') {
+          handleSuggestionClick(item.data.text);
+        } else if (item.type === 'person') {
+          setShowSuggestions(false);
+          navigate(`/profile/${item.data.username || item.data.id}`);
+        } else if (item.type === 'product') {
+          handleProductSuggestionClick(item.data.id, item.data.title);
+        }
+      } else if (selectedIndex === flatItems.length && query.trim()) {
+        // "See all results" item selected
+        e.preventDefault();
+        handleSearch();
+      }
+      // If selectedIndex === -1, let the form submit naturally
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+    }
+  };
+
+  // Helper to get the flat index for a given section item
+  const getFlatIndex = (type: 'suggestion' | 'person' | 'product', sectionIndex: number): number => {
+    let offset = 0;
+    if (type === 'person') offset = liveSuggestions.slice(0, 5).length;
+    if (type === 'product') offset = liveSuggestions.slice(0, 5).length + connectionResults.length;
+    return offset + sectionIndex;
+  };
+
+  // Clear input and reset URL
+  const handleClearInput = () => {
+    setQuery("");
+    setSelectedIndex(-1);
+    inputRef.current?.focus();
+    
+    // Remove search param from URL if present
+    if (searchParams.has('search')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('search');
+      setSearchParams(newParams, { replace: true });
+    }
   };
 
   // Voice transcript
@@ -300,46 +366,66 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
       return <SuggestionsSkeleton />;
     }
 
-    // If no query, show recent searches or trending
+    // If no query, show recent searches AND trending together
     if (!query.trim()) {
-      if (recentSearches.length > 0) {
-        return (
-          <RecentSearches
-            searches={recentSearches}
-            onSearchSelect={handleRecentSearchSelect}
-          />
-        );
-      }
-      // Show trending if no recent searches
-      if (trending.length > 0) {
-        return (
-          <Card className="bg-background border shadow-lg rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2 px-2">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Trending Searches</span>
+      const hasRecent = recentSearches.length > 0;
+      const hasTrending = trending.length > 0;
+      
+      if (!hasRecent && !hasTrending) return null;
+
+      return (
+        <Card className="bg-background border shadow-lg rounded-xl p-3 max-h-[400px] overflow-y-auto">
+          {/* Recent searches section */}
+          {hasRecent && (
+            <RecentSearches
+              searches={recentSearches}
+              onSearchSelect={handleRecentSearchSelect}
+              onRemoveSearch={removeSearch}
+              onClearAll={clearSearchHistory}
+              embedded
+            />
+          )}
+          
+          {/* Trending section below recent */}
+          {hasTrending && (
+            <div className={hasRecent ? "mt-3 pt-3 border-t border-border" : ""}>
+              <div className="flex items-center gap-2 mb-2 px-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase">Trending</span>
+              </div>
+              <div className="space-y-1">
+                {trending.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(item.text)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm min-h-[44px] flex items-center touch-manipulation"
+                  >
+                    {item.text}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              {trending.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestionClick(item.text)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm min-h-[44px] flex items-center touch-manipulation"
-                >
-                  {item.text}
-                </button>
-              ))}
-            </div>
-          </Card>
-        );
-      }
-      return null;
+          )}
+        </Card>
+      );
     }
 
     // Show live suggestions for query
     const hasSuggestions = liveSuggestions.length > 0 || suggestedProducts.length > 0 || connectionResults.length > 0;
     
+    // No results state
     if (!hasSuggestions) {
-      return null;
+      return (
+        <Card className="bg-background border shadow-lg rounded-xl p-4">
+          <div className="flex flex-col items-center gap-2 py-3 text-center">
+            <SearchX className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              No results for "<span className="font-medium text-foreground">{query.trim()}</span>"
+            </p>
+            <p className="text-xs text-muted-foreground">Try a different search term</p>
+          </div>
+        </Card>
+      );
     }
 
     return (
@@ -352,16 +438,21 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               <span className="text-xs font-medium text-muted-foreground uppercase">Suggestions</span>
             </div>
             <div className="space-y-1">
-              {liveSuggestions.slice(0, 5).map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestionClick(suggestion.text)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm min-h-[44px] flex items-center gap-2 touch-manipulation"
-                >
-                  {suggestion.type === 'trending' && <TrendingUp className="h-3 w-3 text-orange-500" />}
-                  <span>{suggestion.text}</span>
-                </button>
-              ))}
+              {liveSuggestions.slice(0, 5).map((suggestion, index) => {
+                const flatIdx = getFlatIndex('suggestion', index);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion.text)}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm min-h-[44px] flex items-center gap-2 touch-manipulation ${
+                      selectedIndex === flatIdx ? 'bg-muted' : 'hover:bg-muted'
+                    }`}
+                  >
+                    {suggestion.type === 'trending' && <TrendingUp className="h-3 w-3 text-orange-500" />}
+                    <span>{suggestion.text}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -374,61 +465,65 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               <span className="text-xs font-medium text-muted-foreground uppercase">People</span>
             </div>
             <div className="space-y-1">
-              {connectionResults.map((person) => (
-                <div
-                  key={person.id}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation"
-                >
-                  <button
-                    className="flex items-center gap-3 flex-1 min-w-0"
-                    onClick={() => {
-                      if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
-                      setShowSuggestions(false);
-                      navigate(`/profile/${person.username || person.id}`);
-                    }}
+              {connectionResults.map((person, index) => {
+                const flatIdx = getFlatIndex('person', index);
+                return (
+                  <div
+                    key={person.id}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation ${
+                      selectedIndex === flatIdx ? 'bg-muted' : 'hover:bg-muted'
+                    }`}
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={person.profile_image || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        {person.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium truncate">{person.name}</p>
-                      {person.username && (
-                        <p className="text-xs text-muted-foreground">@{person.username}</p>
-                      )}
-                    </div>
-                  </button>
-                  {/* Connection status / action */}
-                  {person.connectionStatus === 'connected' && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
-                      <UserCheck className="h-3 w-3" />
-                      Connected
-                    </span>
-                  )}
-                  {person.connectionStatus === 'pending' && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
-                      <Clock className="h-3 w-3" />
-                      Pending
-                    </span>
-                  )}
-                  {person.connectionStatus === 'none' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 shrink-0 touch-manipulation"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSendConnectionRequest(person.id, person.name);
+                    <button
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                      onClick={() => {
+                        if (isMobile || mobile) triggerHapticFeedback(HapticPatterns.buttonTap);
+                        setShowSuggestions(false);
+                        navigate(`/profile/${person.username || person.id}`);
                       }}
                     >
-                      <UserPlus className="h-3.5 w-3.5 mr-1" />
-                      Connect
-                    </Button>
-                  )}
-                </div>
-              ))}
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={person.profile_image || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          {person.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium truncate">{person.name}</p>
+                        {person.username && (
+                          <p className="text-xs text-muted-foreground">@{person.username}</p>
+                        )}
+                      </div>
+                    </button>
+                    {person.connectionStatus === 'connected' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
+                        <UserCheck className="h-3 w-3" />
+                        Connected
+                      </span>
+                    )}
+                    {person.connectionStatus === 'pending' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+                        <Clock className="h-3 w-3" />
+                        Pending
+                      </span>
+                    )}
+                    {person.connectionStatus === 'none' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 shrink-0 touch-manipulation"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSendConnectionRequest(person.id, person.name);
+                        }}
+                      >
+                        <UserPlus className="h-3.5 w-3.5 mr-1" />
+                        Connect
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -441,28 +536,50 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
               <span className="text-xs font-medium text-muted-foreground uppercase">Products</span>
             </div>
             <div className="space-y-1">
-              {suggestedProducts.slice(0, 4).map((product, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleProductSuggestionClick(product.id, product.title)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation"
-                >
-                  {product.image && (
-                    <img 
-                      src={product.image} 
-                      alt={product.title}
-                      className="w-10 h-10 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{product.title}</p>
-                    {product.price > 0 && (
-                      <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
+              {suggestedProducts.slice(0, 4).map((product, index) => {
+                const flatIdx = getFlatIndex('product', index);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleProductSuggestionClick(product.id, product.title)}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors min-h-[44px] flex items-center gap-3 touch-manipulation ${
+                      selectedIndex === flatIdx ? 'bg-muted' : 'hover:bg-muted'
+                    }`}
+                  >
+                    {product.image && (
+                      <img 
+                        src={product.image} 
+                        alt={product.title}
+                        className="w-10 h-10 object-cover rounded"
+                      />
                     )}
-                  </div>
-                </button>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{product.title}</p>
+                      {product.price > 0 && (
+                        <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+        )}
+
+        {/* "See all results" footer */}
+        {query.trim() && (
+          <div className="mt-2 pt-2 border-t border-border">
+            <button
+              onClick={() => handleSearch()}
+              className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors text-sm min-h-[44px] flex items-center justify-between touch-manipulation ${
+                selectedIndex === flatItems.length ? 'bg-muted' : 'hover:bg-muted'
+              }`}
+            >
+              <span className="text-muted-foreground">
+                See all results for "<span className="font-medium text-foreground">{query.trim()}</span>"
+              </span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
           </div>
         )}
       </Card>
@@ -485,10 +602,15 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
+            onKeyDown={handleKeyDown}
             className={`transition-all duration-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-500 ${
               mobile || isMobile ? 'text-base h-11 pl-12 pr-12' : 'h-11 text-sm pl-12 pr-12'
             }`}
             style={{ fontSize: mobile || isMobile ? '16px' : '14px' }}
+            role="combobox"
+            aria-expanded={showSuggestions}
+            aria-autocomplete="list"
+            aria-haspopup="listbox"
           />
           
           <div className={`absolute flex items-center space-x-1 ${mobile || isMobile ? 'right-2' : 'right-3'}`}>
@@ -497,10 +619,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setQuery("");
-                  inputRef.current?.focus();
-                }}
+                onClick={handleClearInput}
                 className="h-8 w-8 p-0 hover:bg-gray-100 touch-manipulation"
               >
                 <X className="h-4 w-4 text-gray-500" />

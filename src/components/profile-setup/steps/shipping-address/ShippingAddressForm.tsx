@@ -9,6 +9,13 @@ import { StandardizedAddress } from "@/services/googlePlacesService";
 import { FormAddress } from "@/utils/addressStandardization";
 import InlineAddressVerification from "@/components/profile-setup/InlineAddressVerification";
 
+const formatPhoneNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 3) return digits.length ? `(${digits}` : '';
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+};
+
 interface ShippingAddressFormProps {
   address: ShippingAddress;
   onChange: (address: ShippingAddress) => void;
@@ -154,7 +161,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
               type="tel"
               placeholder="(555) 123-4567"
               value={address.phone || ''}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) => handleChange("phone", formatPhoneNumber(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
               Required for carrier delivery notifications

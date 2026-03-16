@@ -176,14 +176,17 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           ? `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "")
           : user.email?.split("@")[0] || `user${Date.now()}`;
 
+        const dobFormatted = state.birthday ? state.birthday.slice(5) : null;
+        const birthYear = state.birthday ? parseInt(state.birthday.slice(0, 4)) : null;
+
         const { error } = await supabase.rpc("complete_onboarding", {
           p_user_id: user.id,
           p_first_name: state.firstName || user.user_metadata?.first_name || "",
           p_last_name: state.lastName || user.user_metadata?.last_name || "",
           p_email: user.email || "",
           p_username: username,
-          p_dob: state.birthday,
-          p_birth_year: new Date(state.birthday).getFullYear(),
+          p_dob: dobFormatted,
+          p_birth_year: birthYear && !isNaN(birthYear) ? birthYear : null,
           p_interests: state.interests as any,
           p_gift_preferences: state.interests.map((i) => ({
             category: i,
@@ -245,14 +248,17 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         }
 
         // Use RPC to reliably save profile + queue welcome email (bypasses RLS timing)
+        const emailDobFormatted = state.birthday ? state.birthday.slice(5) : null;
+        const emailBirthYear = state.birthday ? parseInt(state.birthday.slice(0, 4)) : null;
+
         const { error: profileError } = await supabase.rpc("complete_onboarding", {
           p_user_id: authData.user.id,
           p_first_name: state.firstName,
           p_last_name: state.lastName,
           p_email: state.email,
           p_username: `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, ""),
-          p_dob: state.birthday,
-          p_birth_year: new Date(state.birthday).getFullYear(),
+          p_dob: emailDobFormatted,
+          p_birth_year: emailBirthYear && !isNaN(emailBirthYear) ? emailBirthYear : null,
           p_interests: state.interests as any,
           p_gift_preferences: state.interests.map((i) => ({
             category: i,

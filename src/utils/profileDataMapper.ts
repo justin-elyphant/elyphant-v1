@@ -93,8 +93,17 @@ export function createBirthdayImportantDate(dob: string, birthYear?: number | nu
   if (!dob) return null;
   
   try {
-    // Parse MM-DD format and add current year for display
-    const [month, day] = dob.split('-');
+    let month: string, day: string;
+    
+    if (dob.length === 10 && dob[4] === '-') {
+      // YYYY-MM-DD format
+      month = dob.slice(5, 7);
+      day = dob.slice(8, 10);
+    } else {
+      // MM-DD format
+      [month, day] = dob.split('-');
+    }
+    
     const currentYear = new Date().getFullYear();
     const birthdayDate = new Date(currentYear, parseInt(month) - 1, parseInt(day));
     
@@ -183,12 +192,19 @@ export function mapDatabaseToSettingsForm(profile: any) {
   let dateOfBirth;
   if (profile.dob) {
     try {
-      // Handle MM-DD format with birth_year
-      if (profile.birth_year && profile.dob.includes('-')) {
+      if (profile.dob.length === 10 && profile.dob[4] === '-') {
+        // YYYY-MM-DD format
+        dateOfBirth = new Date(profile.dob + 'T00:00:00');
+      } else if (profile.birth_year && profile.dob.includes('-')) {
+        // MM-DD format with birth_year
         const [month, day] = profile.dob.split('-');
         dateOfBirth = new Date(profile.birth_year, parseInt(month) - 1, parseInt(day));
       } else {
         dateOfBirth = new Date(profile.dob);
+      }
+      // Validate the date
+      if (isNaN(dateOfBirth.getTime())) {
+        dateOfBirth = undefined;
       }
     } catch (e) {
       console.warn("Invalid date of birth format:", profile.dob);
@@ -229,7 +245,9 @@ export function mapDatabaseToSettingsForm(profile: any) {
     profile_image: profile.profile_image || null,
     date_of_birth: dateOfBirth,
     address: mappedAddress,
-    interests: profile.interests || [],
+    interests: (profile.interests && profile.interests.length > 0) 
+      ? profile.interests 
+      : (profile.gift_preferences || []).map((p: any) => typeof p === 'string' ? p : p?.category).filter(Boolean),
     importantDates: mappedImportantDates,
     data_sharing_settings: profile.data_sharing_settings || {
       dob: "private",

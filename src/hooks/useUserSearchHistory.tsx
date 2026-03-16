@@ -240,6 +240,7 @@ export function useUserSearchHistory() {
     recentSearches,
     loading,
     addSearch,
+    removeSearch,
     clearSearchHistory,
     refreshSearchHistory: loadSearchHistory
   };

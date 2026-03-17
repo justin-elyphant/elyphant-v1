@@ -29,44 +29,67 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Use the GoTrue admin API directly to check by email
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const response = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "apikey": serviceRoleKey,
+        },
+      }
     );
 
-    // listUsers with no server-side filter, then match by email
-    // The admin API doesn't support email filter directly in all versions
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
+    // Alternative: use the admin client to query
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Use a more reliable approach: try to get user by email
-    const { data: userData, error: userError } = await supabaseAdmin
+    // Check profiles table (most reliable for our app)
+    const { data: profileData } = await supabaseAdmin
       .from("profiles")
       .select("id")
-      .eq("email", email.toLowerCase().trim())
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
-    // Also check auth.users via admin API getUserByEmail-style workaround
-    let authUserExists = false;
-    try {
-      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 50,
+    if (profileData) {
+      return new Response(JSON.stringify({ available: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      if (listData?.users) {
-        authUserExists = listData.users.some(
-          (u: any) => u.email?.toLowerCase() === email.toLowerCase().trim()
-        );
-      }
-    } catch {
-      // Fall back to profiles check only
     }
 
-    const available = !authUserExists && !userData;
+    // Also check auth.users via RPC or admin API
+    // Use the REST API to query auth users by email
+    const authResponse = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users?filter=${encodeURIComponent(normalizedEmail)}`,
+      {
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "apikey": serviceRoleKey,
+        },
+      }
+    );
 
-    return new Response(JSON.stringify({ available }), {
+    if (authResponse.ok) {
+      const authData = await authResponse.json();
+      const users = authData?.users || [];
+      const exists = users.some(
+        (u: any) => u.email?.toLowerCase() === normalizedEmail
+      );
+      if (exists) {
+        return new Response(JSON.stringify({ available: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ available: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

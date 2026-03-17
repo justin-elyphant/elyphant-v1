@@ -123,7 +123,7 @@ const EmailStep: React.FC<EmailStepProps> = ({
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
             {availability === "available" && (
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             )}
           </div>
         </div>

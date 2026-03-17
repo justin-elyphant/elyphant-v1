@@ -39,7 +39,7 @@ const AddressStep: React.FC<AddressStepProps> = ({
       <ShippingAddressForm
         address={address}
         onChange={onChange}
-        showVerification={false}
+        showVerification={true}
       />
     </StepLayout>
   );

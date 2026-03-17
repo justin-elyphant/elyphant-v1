@@ -276,6 +276,18 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
+          throw new Error(`Profile save failed: ${profileError.message}`);
+        }
+
+        // Verify data actually persisted before navigating
+        const { data: verifyProfile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed, dob, shipping_address")
+          .eq("id", authData.user.id)
+          .single();
+
+        if (!verifyProfile?.onboarding_completed) {
+          throw new Error("Profile data did not persist. Please try again.");
         }
 
         toast.success("Account created! Welcome to Elyphant 🎉");

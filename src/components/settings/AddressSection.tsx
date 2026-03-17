@@ -117,16 +117,24 @@ const AddressSection = () => {
   const getVerificationStatus = () => {
     if (!profile?.shipping_address) return null;
     
-    const verified = profile.address_verified || false;
-    const verifiedAt = profile.address_verified_at;
+    const shippingAddr = profile.shipping_address as any;
+    
+    // Check both the top-level column AND the JSONB is_verified field (onboarding stores it there)
+    const verified = profile.address_verified || shippingAddr?.is_verified === true || shippingAddr?.is_verified === 'true';
+    const verifiedAt = profile.address_verified_at || shippingAddr?.verified_at;
     const lastUpdated = profile.address_last_updated;
     
     // Check if address was updated after verification (needs re-verification)
     const isOutdated = verified && lastUpdated && verifiedAt && new Date(lastUpdated) > new Date(verifiedAt);
     
+    // Determine method: if verified via onboarding JSONB but not column, it was profile_setup
+    const method = profile.address_verification_method && profile.address_verification_method !== 'pending_verification'
+      ? profile.address_verification_method
+      : verified ? 'profile_setup' : 'pending_verification';
+    
     return {
       verified,
-      method: profile.address_verification_method || 'pending_verification',
+      method,
       verifiedAt,
       lastUpdated,
       needsVerification: !verified || isOutdated

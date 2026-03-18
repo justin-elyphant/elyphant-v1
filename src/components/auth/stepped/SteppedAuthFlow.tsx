@@ -204,6 +204,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (error) throw error;
 
+        // Fire-and-forget: process email queue immediately so welcome email sends now
+        supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
+
         toast.success("Profile complete! Welcome to Elyphant 🎉");
         navigate("/", { replace: true });
       } else {

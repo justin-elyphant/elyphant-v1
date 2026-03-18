@@ -204,6 +204,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (error) throw error;
 
+        // Fire-and-forget: process email queue immediately so welcome email sends now
+        supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
+
         toast.success("Profile complete! Welcome to Elyphant 🎉");
         navigate("/", { replace: true });
       } else {
@@ -289,6 +292,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         if (!verifyProfile?.onboarding_completed) {
           throw new Error("Profile data did not persist. Please try again.");
         }
+
+        // Fire-and-forget: process email queue immediately so welcome email sends now
+        supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Account created! Welcome to Elyphant 🎉");
 

@@ -53,6 +53,7 @@ const initialState: FormState = {
   interests: [],
   address: { country: "US" },
   photoUrl: "",
+  photoFile: null,
 };
 
 type StepId = "name" | "email" | "password" | "birthday" | "interests" | "address" | "photo";

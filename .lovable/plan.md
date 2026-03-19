@@ -1,46 +1,53 @@
 
-Fix plan (reuse-first, no overengineering)
+## Goal
+Polish the onboarding camera/photo UX so:
+1) camera action buttons sit clearly below the viewer (not on top of it), and  
+2) the captured photo immediately appears in the profile avatar bubble.
 
-1) Confirmed root causes from current code
-- `PhotoStep` only triggers a hidden `<input type="file">`, so desktop will always open OS attachment folders (exactly what your screenshot shows).
-- `PhotoStep` uploads to `avatars/profile-photos/...`, but existing storage policies expect `avatars/profile-images/{userId}/...`.
-- In email signup flow, photo upload currently happens before account creation/auth is complete, so storage insert is prone to fail.
+## What I found
+- `PhotoStep` preview uses `URL.createObjectURL(...)` (blob URLs).
+- Your CSP in `index.html` currently allows `img-src 'self' data: https:` but **not** `blob:`, so blob previews can fail and show broken-image/alt text.
+- `CameraCapture` layout is close, but the action row needs a stricter structure to always render as a separate footer area from the viewer.
 
-2) Implementation approach
-- Reuse existing `CameraCapture` component already used in settings/profile bubble.
-- Keep one simple fallback file picker for “Choose from device”.
-- Move photo upload responsibility to `SteppedAuthFlow` (final submit), where we have a user id and can follow existing backend storage conventions.
+## Implementation plan
 
-3) File-by-file plan
+### 1) Fix camera control placement in `CameraCapture`
+**File:** `src/components/ui/camera-capture.tsx`
 
-A) `src/components/auth/stepped/steps/PhotoStep.tsx`
-- Remove direct Supabase upload from this step.
-- Add camera capture UX using existing `CameraCapture`:
-  - Primary avatar/camera action opens camera modal (desktop/tablet/mobile with webcam permissions).
-  - Secondary action opens hidden file input (gallery/files fallback).
-- Validate file type/size here, then pass selected file + preview URL to parent state.
-- Keep current visual style and “Change photo” behavior.
+- Refactor dialog body to a strict vertical layout:
+  - Header
+  - Viewer block (camera/image)
+  - Action bar block (capture / retake / use)
+- Ensure action bar is visually separated from the viewer:
+  - add top border/background or spacing (`border-t`, `pt-*`, `mt-*`)
+  - avoid any visual overlap by using normal document flow (no overlay positioning for controls)
+- Tighten dialog overflow behavior (`overflow-hidden` on content + internal spacing) so controls don’t collapse into the viewer region on desktop/tablet.
 
-B) `src/components/auth/stepped/SteppedAuthFlow.tsx`
-- Extend form state to track:
-  - `photoFile: File | null`
-  - `photoPreviewUrl: string` (for UI preview only)
-- Add one helper (inside this file) to upload avatar using existing path convention:
-  - bucket: `avatars`
-  - path: `profile-images/${userId}/profile-${Date.now()}.${ext}`
-- On final submit:
-  - OAuth flow: if `photoFile` exists, upload first, then pass uploaded public URL to `complete_onboarding`.
-  - Email flow: create account first, then upload (using new user id), then call `complete_onboarding` with final photo URL.
-- If upload fails, show a clear toast and continue signup (non-blocking), so onboarding completion is never stuck.
+### 2) Make onboarding photo preview CSP-safe (no blob URLs)
+**File:** `src/components/auth/stepped/steps/PhotoStep.tsx`
 
-4) Why this matches your request
-- Reuses existing camera component and existing avatars bucket/path rules.
-- Avoids new backend migrations/functions.
-- Fixes desktop “attachment folders only” by adding real in-app camera capture.
-- Fixes “photo not saved” by aligning upload path and timing with current backend policy model.
+- Replace blob preview URLs with **data URLs** for in-step preview:
+  - file picker: convert `File` to data URL before `onChange`
+  - camera capture: convert captured `Blob` to data URL before `onChange`
+- Keep `onPhotoFile(file)` unchanged so final upload flow still uses the existing deferred upload logic in `SteppedAuthFlow`.
+- Add robust fallback handling:
+  - if conversion fails, show toast and keep prior preview
+  - add `onError` fallback on `<img>` so broken-image text never appears in avatar bubble.
 
-5) Validation checklist after implementation
-- Desktop: clicking photo opens camera modal (not immediate file picker), and captured image is saved.
-- Desktop fallback: “Choose from device” still opens file picker and saves.
-- Mobile Chrome: camera capture + gallery both work and persist.
-- Both signup paths (Google OAuth + email/password) save profile image into `avatars/profile-images/{userId}/...`.
+### 3) Keep backend flow unchanged (reuse existing logic)
+**File:** no backend/migration changes
+
+- Reuse current deferred upload in `SteppedAuthFlow` (`avatars` bucket + `profile-images/{userId}/...`).
+- Do **not** add new storage buckets, policies, or edge functions.
+
+## Technical details (concise)
+- Add a small helper in `PhotoStep`:
+  - `blobToDataUrl(blob: Blob): Promise<string>`
+- Use this helper in both `handleFileChange` and `handleCameraCapture`.
+- In `CameraCapture`, structure controls in a dedicated footer container (`flex-col`, `gap-0`, footer `shrink-0`) to prevent overlay-like rendering.
+
+## Validation checklist after implementation
+1. Desktop/tablet: “Take Photo” opens camera; capture/retake/use controls are clearly below viewer.
+2. After clicking “Use Photo,” the avatar bubble in PhotoStep immediately shows the captured image.
+3. “Choose from device” still works and updates preview.
+4. Finish onboarding still saves image successfully via existing `SteppedAuthFlow` upload path.

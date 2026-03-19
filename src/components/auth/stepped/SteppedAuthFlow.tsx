@@ -278,6 +278,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           console.error("Error setting user identification:", e);
         }
 
+        // Upload photo now that we have a user id
+        const emailFinalPhotoUrl = await uploadPhoto(authData.user.id);
+
         // Use RPC to reliably save profile + queue welcome email (bypasses RLS timing)
         const emailDobFormatted = state.birthday ? state.birthday.slice(5) : null;
         const emailBirthYear = state.birthday ? parseInt(state.birthday.slice(0, 4)) : null;
@@ -302,7 +305,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             email: "private",
           } as any,
           p_shipping_address: state.address as any,
-          p_profile_image: state.photoUrl || null,
+          p_profile_image: emailFinalPhotoUrl || null,
         });
 
         if (profileError) {

@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";

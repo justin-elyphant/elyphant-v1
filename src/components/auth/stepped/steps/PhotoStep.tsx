@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import StepLayout from "../StepLayout";
 import { Camera, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PhotoStepProps {
   photoUrl: string;
@@ -31,9 +32,17 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+    // Reset input so same file can be re-selected
+    if (inputRef.current) inputRef.current.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -42,18 +51,19 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       const filePath = `profile-photos/${fileName}`;
 
       const { error } = await supabase.storage
-        .from("profile_photos")
+        .from("avatars")
         .upload(filePath, file, { upsert: true });
 
       if (error) throw error;
 
       const { data: urlData } = supabase.storage
-        .from("profile_photos")
+        .from("avatars")
         .getPublicUrl(filePath);
 
       onChange(urlData.publicUrl);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Photo upload failed:", err);
+      toast.error(err?.message || "Failed to upload photo. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -81,7 +91,6 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       }
     >
       <div className="flex flex-col items-center pt-8">
-        {/* Photo circle */}
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -96,8 +105,6 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
           ) : (
             <User className="w-12 h-12 text-muted-foreground" />
           )}
-
-          {/* Camera overlay */}
           <div className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
             <Camera className="w-4 h-4" />
           </div>
@@ -107,7 +114,6 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
           ref={inputRef}
           type="file"
           accept="image/*"
-          capture="user"
           onChange={handleFileChange}
           className="hidden"
         />

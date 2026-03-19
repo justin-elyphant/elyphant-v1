@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Hero from "./sections/hero/Hero";
 import GiftCategoriesGrid from "./sections/GiftCategoriesGrid";
 import FeaturedCategories from "./sections/FeaturedCategories";
@@ -9,10 +9,12 @@ import PersonTypeCarousel from "./sections/CategoriesGrid";
 import WishlistCreationCTA from "./sections/WishlistCreationCTA";
 import ConnectionsCTA from "./sections/ConnectionsCTA";
 import SocialProofSection from "./sections/SocialProofSection";
+import PostOnboardingWelcome from "@/components/onboarding/PostOnboardingWelcome";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { usePerformanceMonitor } from "@/utils/performanceMonitoring";
 import { isInIframe } from "@/utils/iframeUtils";
 import { preloadRoutes, preloadCriticalImages } from "@/utils/lazyLoading";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();

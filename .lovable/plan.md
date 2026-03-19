@@ -1,53 +1,43 @@
 
-## Goal
-Polish the onboarding camera/photo UX so:
-1) camera action buttons sit clearly below the viewer (not on top of it), and  
-2) the captured photo immediately appears in the profile avatar bubble.
 
-## What I found
-- `PhotoStep` preview uses `URL.createObjectURL(...)` (blob URLs).
-- Your CSP in `index.html` currently allows `img-src 'self' data: https:` but **not** `blob:`, so blob previews can fail and show broken-image/alt text.
-- `CameraCapture` layout is close, but the action row needs a stricter structure to always render as a separate footer area from the viewer.
+## Post-Onboarding Welcome Modal
 
-## Implementation plan
+### Overview
+Create a welcome modal that appears immediately after signup, greeting the user by name and offering 3 clear next actions. It reuses the existing Dialog + framer-motion patterns from `OnboardingIntentModal`.
 
-### 1) Fix camera control placement in `CameraCapture`
-**File:** `src/components/ui/camera-capture.tsx`
+### Files to create
 
-- Refactor dialog body to a strict vertical layout:
-  - Header
-  - Viewer block (camera/image)
-  - Action bar block (capture / retake / use)
-- Ensure action bar is visually separated from the viewer:
-  - add top border/background or spacing (`border-t`, `pt-*`, `mt-*`)
-  - avoid any visual overlap by using normal document flow (no overlay positioning for controls)
-- Tighten dialog overflow behavior (`overflow-hidden` on content + internal spacing) so controls don’t collapse into the viewer region on desktop/tablet.
+**`src/components/onboarding/PostOnboardingWelcome.tsx`**
+- Dialog-based modal matching onboarding aesthetic (blurred backdrop, centered)
+- Props: `open`, `userName`, `onDismiss`
+- Content:
+  - Sparkle/elephant icon header
+  - "Welcome to Elyphant, {firstName}!" title
+  - Brief subtitle: "Here's what you can do"
+  - 3 motion-animated action cards (same style as `OnboardingIntentModal`):
+    - **Find a Gift** (Gift icon) → navigates to `/gifts`
+    - **Create a Wishlist** (List icon) → navigates to `/wishlists`
+    - **Explore the Shop** (Search icon) → navigates to `/marketplace`
+  - "Just browsing" skip link at bottom
+- On any action or dismiss: sets `localStorage.setItem("postOnboardingWelcomeSeen", "true")`
+- iOS-safe: uses `pb-safe`, `touch-manipulation`, `whileTap={{ scale: 0.97 }}`, 44px min touch targets
 
-### 2) Make onboarding photo preview CSP-safe (no blob URLs)
-**File:** `src/components/auth/stepped/steps/PhotoStep.tsx`
+### Files to modify
 
-- Replace blob preview URLs with **data URLs** for in-step preview:
-  - file picker: convert `File` to data URL before `onChange`
-  - camera capture: convert captured `Blob` to data URL before `onChange`
-- Keep `onPhotoFile(file)` unchanged so final upload flow still uses the existing deferred upload logic in `SteppedAuthFlow`.
-- Add robust fallback handling:
-  - if conversion fails, show toast and keep prior preview
-  - add `onError` fallback on `<img>` so broken-image text never appears in avatar bubble.
+**`src/components/auth/stepped/SteppedAuthFlow.tsx`**
+- Add `localStorage.setItem("justCompletedSignup", "true")` before `navigate("/")` in both the OAuth path (line ~242) and the email path (line ~342)
 
-### 3) Keep backend flow unchanged (reuse existing logic)
-**File:** no backend/migration changes
+**`src/components/home/HomeContent.tsx`**
+- Import `PostOnboardingWelcome` and `useProfile`
+- Add state: `showWelcomeModal`
+- In the existing `useEffect`, instead of just clearing `justCompletedSignup`, also check that `postOnboardingWelcomeSeen` is not set — if both conditions met, set `showWelcomeModal = true`
+- Render `<PostOnboardingWelcome>` with user's first name from profile context
+- On dismiss, clear flag and close modal
 
-- Reuse current deferred upload in `SteppedAuthFlow` (`avatars` bucket + `profile-images/{userId}/...`).
-- Do **not** add new storage buckets, policies, or edge functions.
+### Technical notes
+- No backend changes, no new DB tables
+- Reuses existing `Dialog`, `Button`, `motion` patterns
+- localStorage-gated: shows only once per user ever
+- Works for both OAuth and email signup paths
+- Consistent with existing iOS Capacitor compliance (safe areas, touch targets, overscroll)
 
-## Technical details (concise)
-- Add a small helper in `PhotoStep`:
-  - `blobToDataUrl(blob: Blob): Promise<string>`
-- Use this helper in both `handleFileChange` and `handleCameraCapture`.
-- In `CameraCapture`, structure controls in a dedicated footer container (`flex-col`, `gap-0`, footer `shrink-0`) to prevent overlay-like rendering.
-
-## Validation checklist after implementation
-1. Desktop/tablet: “Take Photo” opens camera; capture/retake/use controls are clearly below viewer.
-2. After clicking “Use Photo,” the avatar bubble in PhotoStep immediately shows the captured image.
-3. “Choose from device” still works and updates preview.
-4. Finish onboarding still saves image successfully via existing `SteppedAuthFlow` upload path.

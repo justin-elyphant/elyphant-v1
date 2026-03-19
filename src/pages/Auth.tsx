@@ -229,6 +229,7 @@ const Auth = () => {
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="relative z-10 w-[calc(100%-2rem)] max-w-md max-h-[90vh] overflow-y-auto bg-background rounded-2xl shadow-2xl border border-border/50 md:my-8 overscroll-contain"
+            data-auth-modal-scroll
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}

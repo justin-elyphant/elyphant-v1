@@ -143,7 +143,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 items-start">
           <div className="grid gap-2">
             <Label htmlFor="zipCode">Zip / Postal Code</Label>
             <Input
@@ -152,6 +152,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
               value={formAddress.zipCode}
               onChange={(e) => handleChange("zipCode", e.target.value)}
             />
+            <p className="text-xs text-muted-foreground invisible">Spacer</p>
           </div>
 
           <div className="grid gap-2">

@@ -46,6 +46,10 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
       setError("Password must be at least 8 characters");
       return;
     }
+    if (strength < 3) {
+      setError("Please choose a stronger password (add uppercase, numbers, or symbols)");
+      return;
+    }
     setError("");
     onNext();
   };
@@ -56,7 +60,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
       subtitle="Use 8 or more characters"
       onBack={onBack}
       onNext={handleNext}
-      isNextDisabled={password.length < 8}
+      isNextDisabled={password.length < 8 || strength < 3}
       stepIndex={stepIndex}
       totalSteps={totalSteps}
     >

@@ -122,6 +122,12 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   }, [invitationData]);
 
+  // Scroll modal to top on step change
+  useEffect(() => {
+    const el = document.querySelector('[data-auth-modal-scroll]');
+    if (el) el.scrollTop = 0;
+  }, [currentStep]);
+
   const goNext = useCallback(() => {
     setDirection(1);
     if (currentStep < totalSteps - 1) {
@@ -308,10 +314,19 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
       }
     } catch (error: any) {
       console.error("Signup error:", error);
-      if (error.message?.includes("User already registered")) {
+      const msg = error.message || "";
+      if (msg.includes("User already registered")) {
         toast.error("An account with this email already exists. Try signing in instead.");
+      } else if (msg.toLowerCase().includes("weak") || msg.toLowerCase().includes("password")) {
+        toast.error("Please choose a stronger password");
+        // Navigate back to the password step
+        const passwordIndex = steps.indexOf("password");
+        if (passwordIndex >= 0) {
+          setDirection(-1);
+          setCurrentStep(passwordIndex);
+        }
       } else {
-        toast.error(error.message || "Something went wrong. Please try again.");
+        toast.error(msg || "Something went wrong. Please try again.");
       }
     } finally {
       setIsSubmitting(false);

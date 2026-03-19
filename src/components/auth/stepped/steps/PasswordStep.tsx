@@ -60,7 +60,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
       subtitle="Use 8 or more characters"
       onBack={onBack}
       onNext={handleNext}
-      isNextDisabled={password.length < 8}
+      isNextDisabled={password.length < 8 || strength < 3}
       stepIndex={stepIndex}
       totalSteps={totalSteps}
     >

@@ -122,6 +122,12 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   }, [invitationData]);
 
+  // Scroll modal to top on step change
+  useEffect(() => {
+    const el = document.querySelector('[data-auth-modal-scroll]');
+    if (el) el.scrollTop = 0;
+  }, [currentStep]);
+
   const goNext = useCallback(() => {
     setDirection(1);
     if (currentStep < totalSteps - 1) {

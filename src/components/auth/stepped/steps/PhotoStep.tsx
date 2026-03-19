@@ -16,6 +16,14 @@ interface PhotoStepProps {
   isLoading?: boolean;
 }
 
+const blobToDataUrl = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
 const PhotoStep: React.FC<PhotoStepProps> = ({
   photoUrl,
   onChange,
@@ -30,7 +38,7 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCamera, setShowCamera] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
@@ -44,17 +52,25 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    onChange(previewUrl);
-    onPhotoFile?.(file);
+    try {
+      const dataUrl = await blobToDataUrl(file);
+      onChange(dataUrl);
+      onPhotoFile?.(file);
+    } catch {
+      toast.error("Failed to load image preview");
+    }
   };
 
-  const handleCameraCapture = (blob: Blob) => {
-    const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
-    const previewUrl = URL.createObjectURL(blob);
-    onChange(previewUrl);
-    onPhotoFile?.(file);
-    setShowCamera(false);
+  const handleCameraCapture = async (blob: Blob) => {
+    try {
+      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
+      const dataUrl = await blobToDataUrl(blob);
+      onChange(dataUrl);
+      onPhotoFile?.(file);
+      setShowCamera(false);
+    } catch {
+      toast.error("Failed to load captured photo");
+    }
   };
 
   return (
@@ -79,7 +95,6 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       }
     >
       <div className="flex flex-col items-center pt-8">
-        {/* Avatar preview - tap opens camera */}
         <button
           type="button"
           onClick={() => setShowCamera(true)}
@@ -90,6 +105,7 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
               src={photoUrl}
               alt="Profile photo"
               className="w-full h-full object-cover"
+              onError={() => onChange("")}
             />
           ) : (
             <User className="w-12 h-12 text-muted-foreground" />
@@ -99,7 +115,6 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
           </div>
         </button>
 
-        {/* Secondary action: choose from device */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}

@@ -290,7 +290,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           )}
         </div>
         
-        <div className="p-4 flex-shrink-0">
+        <div className="p-4 flex-shrink-0 border-t border-border bg-background">
           {!capturedImage ? (
             <div className="flex justify-center items-center gap-4">
               <Button

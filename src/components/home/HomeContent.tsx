@@ -32,8 +32,14 @@ const HomeContent = () => {
       try {
         // Check if user just completed signup for welcome messaging
         const justCompletedSignup = localStorage.getItem('justCompletedSignup');
+        const welcomeSeen = localStorage.getItem('postOnboardingWelcomeSeen');
+        
         if (justCompletedSignup) {
           localStorage.removeItem('justCompletedSignup');
+          
+          if (!welcomeSeen) {
+            setShowWelcomeModal(true);
+          }
           
           // Set Nicole context to be helpful for new users
           LocalStorageService.setNicoleContext({

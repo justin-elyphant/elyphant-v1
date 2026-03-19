@@ -1,31 +1,46 @@
 
+Fix plan (reuse-first, no overengineering)
 
-# Fix Profile Photo Step: Camera + Upload on All Platforms
+1) Confirmed root causes from current code
+- `PhotoStep` only triggers a hidden `<input type="file">`, so desktop will always open OS attachment folders (exactly what your screenshot shows).
+- `PhotoStep` uploads to `avatars/profile-photos/...`, but existing storage policies expect `avatars/profile-images/{userId}/...`.
+- In email signup flow, photo upload currently happens before account creation/auth is complete, so storage insert is prone to fail.
 
-## Root Cause
+2) Implementation approach
+- Reuse existing `CameraCapture` component already used in settings/profile bubble.
+- Keep one simple fallback file picker for “Choose from device”.
+- Move photo upload responsibility to `SteppedAuthFlow` (final submit), where we have a user id and can follow existing backend storage conventions.
 
-Two issues:
+3) File-by-file plan
 
-1. **`capture="user"` forces camera-only** — On Android/Chrome this bypasses the native "Camera or Gallery" chooser, and on desktop it has no camera so behaves unpredictably. Removing it lets the OS show its native picker (camera + gallery on mobile, file picker on desktop).
+A) `src/components/auth/stepped/steps/PhotoStep.tsx`
+- Remove direct Supabase upload from this step.
+- Add camera capture UX using existing `CameraCapture`:
+  - Primary avatar/camera action opens camera modal (desktop/tablet/mobile with webcam permissions).
+  - Secondary action opens hidden file input (gallery/files fallback).
+- Validate file type/size here, then pass selected file + preview URL to parent state.
+- Keep current visual style and “Change photo” behavior.
 
-2. **Wrong storage bucket** — PhotoStep uploads to `profile_photos` which doesn't exist. The rest of the app uses the `avatars` bucket (already created with proper RLS policies in existing migrations). This causes a silent upload failure.
+B) `src/components/auth/stepped/SteppedAuthFlow.tsx`
+- Extend form state to track:
+  - `photoFile: File | null`
+  - `photoPreviewUrl: string` (for UI preview only)
+- Add one helper (inside this file) to upload avatar using existing path convention:
+  - bucket: `avatars`
+  - path: `profile-images/${userId}/profile-${Date.now()}.${ext}`
+- On final submit:
+  - OAuth flow: if `photoFile` exists, upload first, then pass uploaded public URL to `complete_onboarding`.
+  - Email flow: create account first, then upload (using new user id), then call `complete_onboarding` with final photo URL.
+- If upload fails, show a clear toast and continue signup (non-blocking), so onboarding completion is never stuck.
 
-## Changes
+4) Why this matches your request
+- Reuses existing camera component and existing avatars bucket/path rules.
+- Avoids new backend migrations/functions.
+- Fixes desktop “attachment folders only” by adding real in-app camera capture.
+- Fixes “photo not saved” by aligning upload path and timing with current backend policy model.
 
-### File: `src/components/auth/stepped/steps/PhotoStep.tsx`
-
-1. **Remove `capture="user"`** from the `<input>` — lets the OS provide native camera-or-gallery choice on both iOS and Android (Google Pixel included), and a normal file picker on desktop
-2. **Change bucket from `profile_photos` to `avatars`** — reuse the existing bucket that all other profile image code uses
-3. **Change upload path** to match existing convention: `profile-images/{userId}/{filename}` (requires passing user ID, or use the simpler `{timestamp}-{random}.{ext}` pattern already used elsewhere in the avatars bucket)
-4. **Add `toast.error`** on upload failure so the user gets feedback
-5. **Reset `input.value`** after selection so the same file can be re-selected
-
-No new migrations or edge functions needed — this reuses existing infrastructure.
-
-| What | Detail |
-|------|--------|
-| File changed | `src/components/auth/stepped/steps/PhotoStep.tsx` |
-| Bucket | `avatars` (existing, public, with RLS) |
-| `capture` attr | Removed entirely |
-| Error handling | `toast.error` added |
-
+5) Validation checklist after implementation
+- Desktop: clicking photo opens camera modal (not immediate file picker), and captured image is saved.
+- Desktop fallback: “Choose from device” still opens file picker and saves.
+- Mobile Chrome: camera capture + gallery both work and persist.
+- Both signup paths (Google OAuth + email/password) save profile image into `avatars/profile-images/{userId}/...`.

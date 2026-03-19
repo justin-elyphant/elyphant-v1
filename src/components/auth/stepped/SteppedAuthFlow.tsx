@@ -75,6 +75,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { refetchProfile } = useProfile();
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [currentStep, setCurrentStep] = useState(0);

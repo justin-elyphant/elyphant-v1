@@ -235,7 +235,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent aria-describedby="camera-desc" className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-y-auto">
+      <DialogContent aria-describedby="camera-desc" className="max-w-md w-full mx-auto p-0 max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-center">Take Photo</DialogTitle>
         </DialogHeader>
@@ -290,7 +290,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           )}
         </div>
         
-        <div className="p-4 flex-shrink-0">
+        <div className="p-4 flex-shrink-0 border-t border-border bg-background">
           {!capturedImage ? (
             <div className="flex justify-center items-center gap-4">
               <Button

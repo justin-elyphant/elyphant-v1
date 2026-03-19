@@ -199,6 +199,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     setIsSubmitting(true);
     try {
       if (isOAuth && user) {
+        const finalPhotoUrl = await uploadPhoto(user.id);
         const username = state.firstName && state.lastName
           ? `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "")
           : user.email?.split("@")[0] || `user${Date.now()}`;

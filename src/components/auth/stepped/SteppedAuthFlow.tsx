@@ -476,6 +476,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           <PhotoStep
             photoUrl={state.photoUrl}
             onChange={(v) => dispatch({ type: "SET_FIELD", field: "photoUrl", value: v })}
+            onPhotoFile={(f) => dispatch({ type: "SET_FIELD", field: "photoFile", value: f })}
             onNext={handleComplete}
             onBack={goBack}
             onSkip={handleComplete}

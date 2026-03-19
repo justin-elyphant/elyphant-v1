@@ -175,6 +175,25 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   };
 
+  // ── Upload photo helper ────────────────────────────────────
+  const uploadPhoto = async (userId: string): Promise<string | null> => {
+    if (!state.photoFile) return state.photoUrl || null;
+    try {
+      const ext = state.photoFile.name.split(".").pop() || "jpg";
+      const filePath = `profile-images/${userId}/profile-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, state.photoFile, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      return urlData.publicUrl;
+    } catch (err: any) {
+      console.error("Photo upload failed:", err);
+      toast.error("Photo upload failed — you can update it later in settings.");
+      return null;
+    }
+  };
+
   // ── Final submission ──────────────────────────────────────
   const handleComplete = async () => {
     setIsSubmitting(true);

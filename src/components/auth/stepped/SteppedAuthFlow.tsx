@@ -238,6 +238,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
+        await refetchProfile();
         navigate("/", { replace: true });
       } else {
         const redirectUrl = `${window.location.origin}/profile-setup`;

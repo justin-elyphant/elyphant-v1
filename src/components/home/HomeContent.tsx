@@ -18,6 +18,8 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
+  const { profile } = useProfile();
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   
   useEffect(() => {
     let isMounted = true;

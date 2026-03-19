@@ -227,7 +227,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             email: "private",
           } as any,
           p_shipping_address: state.address as any,
-          p_profile_image: state.photoUrl || null,
+          p_profile_image: finalPhotoUrl || null,
         });
 
         if (error) throw error;

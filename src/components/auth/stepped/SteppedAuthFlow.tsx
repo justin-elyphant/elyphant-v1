@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
@@ -74,6 +75,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { refetchProfile } = useProfile();
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [currentStep, setCurrentStep] = useState(0);
@@ -236,6 +238,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
+        await refetchProfile();
         navigate("/", { replace: true });
       } else {
         const redirectUrl = `${window.location.origin}/profile-setup`;
@@ -335,6 +338,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           localStorage.setItem("signupContext", "gift_giver");
         }
 
+        await refetchProfile();
         navigate("/", { replace: true });
       }
     } catch (error: any) {

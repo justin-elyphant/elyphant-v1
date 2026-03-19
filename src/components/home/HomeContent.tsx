@@ -91,6 +91,11 @@ const HomeContent = () => {
 
   return (
     <div className="min-h-screen">
+      <PostOnboardingWelcome
+        open={showWelcomeModal}
+        userName={profile?.name || profile?.first_name || ""}
+        onDismiss={() => setShowWelcomeModal(false)}
+      />
       {/* Hero section - maintains its own layout */}
       <Hero />
       

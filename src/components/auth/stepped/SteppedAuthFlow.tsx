@@ -26,6 +26,7 @@ interface FormState {
   interests: string[];
   address: ShippingAddress;
   photoUrl: string;
+  photoFile: File | null;
 }
 
 type Action =
@@ -52,6 +53,7 @@ const initialState: FormState = {
   interests: [],
   address: { country: "US" },
   photoUrl: "",
+  photoFile: null,
 };
 
 type StepId = "name" | "email" | "password" | "birthday" | "interests" | "address" | "photo";
@@ -173,11 +175,31 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   };
 
+  // ── Upload photo helper ────────────────────────────────────
+  const uploadPhoto = async (userId: string): Promise<string | null> => {
+    if (!state.photoFile) return state.photoUrl || null;
+    try {
+      const ext = state.photoFile.name.split(".").pop() || "jpg";
+      const filePath = `profile-images/${userId}/profile-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, state.photoFile, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      return urlData.publicUrl;
+    } catch (err: any) {
+      console.error("Photo upload failed:", err);
+      toast.error("Photo upload failed — you can update it later in settings.");
+      return null;
+    }
+  };
+
   // ── Final submission ──────────────────────────────────────
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
       if (isOAuth && user) {
+        const finalPhotoUrl = await uploadPhoto(user.id);
         const username = state.firstName && state.lastName
           ? `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "")
           : user.email?.split("@")[0] || `user${Date.now()}`;
@@ -205,7 +227,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             email: "private",
           } as any,
           p_shipping_address: state.address as any,
-          p_profile_image: state.photoUrl || null,
+          p_profile_image: finalPhotoUrl || null,
         });
 
         if (error) throw error;
@@ -256,6 +278,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           console.error("Error setting user identification:", e);
         }
 
+        // Upload photo now that we have a user id
+        const emailFinalPhotoUrl = await uploadPhoto(authData.user.id);
+
         // Use RPC to reliably save profile + queue welcome email (bypasses RLS timing)
         const emailDobFormatted = state.birthday ? state.birthday.slice(5) : null;
         const emailBirthYear = state.birthday ? parseInt(state.birthday.slice(0, 4)) : null;
@@ -280,7 +305,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             email: "private",
           } as any,
           p_shipping_address: state.address as any,
-          p_profile_image: state.photoUrl || null,
+          p_profile_image: emailFinalPhotoUrl || null,
         });
 
         if (profileError) {
@@ -451,6 +476,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           <PhotoStep
             photoUrl={state.photoUrl}
             onChange={(v) => dispatch({ type: "SET_FIELD", field: "photoUrl", value: v })}
+            onPhotoFile={(f) => dispatch({ type: "SET_FIELD", field: "photoFile", value: f })}
             onNext={handleComplete}
             onBack={goBack}
             onSkip={handleComplete}

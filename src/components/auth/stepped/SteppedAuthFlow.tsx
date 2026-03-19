@@ -26,6 +26,7 @@ interface FormState {
   interests: string[];
   address: ShippingAddress;
   photoUrl: string;
+  photoFile: File | null;
 }
 
 type Action =

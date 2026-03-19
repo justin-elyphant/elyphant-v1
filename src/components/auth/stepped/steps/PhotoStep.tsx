@@ -1,12 +1,13 @@
 import React, { useRef, useState } from "react";
 import StepLayout from "../StepLayout";
-import { Camera, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Camera, User, ImagePlus } from "lucide-react";
+import { CameraCapture } from "@/components/ui/camera-capture";
 import { toast } from "sonner";
 
 interface PhotoStepProps {
   photoUrl: string;
   onChange: (url: string) => void;
+  onPhotoFile?: (file: File | null) => void;
   onNext: () => void;
   onBack: () => void;
   onSkip: () => void;
@@ -18,6 +19,7 @@ interface PhotoStepProps {
 const PhotoStep: React.FC<PhotoStepProps> = ({
   photoUrl,
   onChange,
+  onPhotoFile,
   onNext,
   onBack,
   onSkip,
@@ -25,15 +27,13 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
   totalSteps,
   isLoading = false,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
-
-    // Reset input so same file can be re-selected
-    if (inputRef.current) inputRef.current.value = "";
 
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
@@ -44,29 +44,17 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       return;
     }
 
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const filePath = `profile-photos/${fileName}`;
+    const previewUrl = URL.createObjectURL(file);
+    onChange(previewUrl);
+    onPhotoFile?.(file);
+  };
 
-      const { error } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      onChange(urlData.publicUrl);
-    } catch (err: any) {
-      console.error("Photo upload failed:", err);
-      toast.error(err?.message || "Failed to upload photo. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+  const handleCameraCapture = (blob: Blob) => {
+    const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
+    const previewUrl = URL.createObjectURL(blob);
+    onChange(previewUrl);
+    onPhotoFile?.(file);
+    setShowCamera(false);
   };
 
   return (
@@ -91,9 +79,10 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       }
     >
       <div className="flex flex-col items-center pt-8">
+        {/* Avatar preview - tap opens camera */}
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setShowCamera(true)}
           className="relative w-32 h-32 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:border-primary transition-colors touch-manipulation"
         >
           {photoUrl ? (
@@ -110,28 +99,30 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
           </div>
         </button>
 
+        {/* Secondary action: choose from device */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 text-sm text-primary mt-4 touch-manipulation"
+        >
+          <ImagePlus className="w-4 h-4" />
+          {photoUrl ? "Choose different photo" : "Choose from device"}
+        </button>
+
         <input
-          ref={inputRef}
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileChange}
           className="hidden"
         />
-
-        {uploading && (
-          <p className="text-sm text-muted-foreground mt-4">Uploading...</p>
-        )}
-
-        {photoUrl && !uploading && (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="text-sm text-primary mt-4 touch-manipulation"
-          >
-            Change photo
-          </button>
-        )}
       </div>
+
+      <CameraCapture
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={handleCameraCapture}
+      />
     </StepLayout>
   );
 };

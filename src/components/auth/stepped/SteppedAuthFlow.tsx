@@ -339,6 +339,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           localStorage.setItem("signupContext", "gift_giver");
         }
 
+        localStorage.setItem("justCompletedSignup", "true");
         await refetchProfile();
         navigate("/", { replace: true });
       }

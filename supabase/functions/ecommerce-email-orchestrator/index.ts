@@ -79,11 +79,22 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
     <tr>
       <td align="center" style="padding: 40px 10px;">
         <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
-          <!-- Header: Clean wordmark + gradient accent -->
+          <!-- Header: Logo + gradient wordmark -->
           <tr>
             <td align="center" style="padding: 40px 30px 24px 30px;">
-              <h1 style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">Elyphant</h1>
-              <div style="width: 40px; height: 2px; background: linear-gradient(90deg, #9333ea 0%, #0ea5e9 100%); margin: 0 auto;"></div>
+              <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td valign="middle" style="padding-right: 8px;">
+                    <img src="https://elyphant.lovable.app/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" alt="Elyphant" width="36" height="36" style="display: block; border: 0;" />
+                  </td>
+                  <td valign="middle">
+                    <h1 style="margin: 0; font-family: ${fontStack}; font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">
+                      <span style="color: #9333ea;">Ely</span><span style="color: #7c3aed;">ph</span><span style="color: #6d28d9;">a</span><span style="color: #4f46e5;">n</span><span style="color: #0ea5e9;">t</span>
+                    </h1>
+                  </td>
+                </tr>
+              </table>
+              <div style="width: 40px; height: 2px; background: linear-gradient(90deg, #9333ea 0%, #0ea5e9 100%); margin: 16px auto 0 auto;"></div>
             </td>
           </tr>
           <!-- Content -->

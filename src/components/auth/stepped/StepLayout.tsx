@@ -36,7 +36,7 @@ const StepLayout: React.FC<StepLayoutProps> = ({
   return (
     <div className="flex flex-col">
       {/* Top bar with back button + step dots */}
-      <div className="flex items-center px-4 py-3">
+      <div className="flex items-center px-5 py-4">
         {showBack && onBack ? (
           <button
             onClick={onBack}
@@ -50,12 +50,16 @@ const StepLayout: React.FC<StepLayoutProps> = ({
         )}
 
         {stepIndex !== undefined && totalSteps !== undefined && (
-          <div className="flex-1 flex justify-center gap-1.5">
+          <div className="flex-1 flex justify-center items-center gap-1.5">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  i <= stepIndex ? "bg-primary" : "bg-border"
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === stepIndex
+                    ? "w-6 bg-primary/80"
+                    : i < stepIndex
+                      ? "w-1.5 bg-primary/40"
+                      : "w-1.5 bg-border"
                 }`}
               />
             ))}
@@ -66,28 +70,28 @@ const StepLayout: React.FC<StepLayoutProps> = ({
       </div>
 
       {/* Content */}
-      <div className="px-6 md:px-8 pb-2">
-        <div className="pb-3">
+      <div className="px-8 md:px-10 pb-2">
+        <div className="pb-4">
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
             {heading}
           </h1>
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1.5">{subtitle}</p>
+            <p className="text-sm text-muted-foreground mt-2">{subtitle}</p>
           )}
         </div>
 
-        <div className="py-3 space-y-4">{children}</div>
+        <div className="py-4 space-y-4">{children}</div>
 
         {footer && <div className="py-2">{footer}</div>}
       </div>
 
       {/* Bottom CTA */}
       {showNext && (
-        <div className="px-6 md:px-8 pb-6 pt-2">
+        <div className="px-8 md:px-10 pb-8 pt-4">
           <Button
             onClick={onNext}
             disabled={isNextDisabled || isNextLoading}
-            className="w-full h-12 text-base font-medium touch-manipulation rounded-lg"
+            className="w-full h-13 text-base font-normal touch-manipulation rounded-xl"
             size="lg"
           >
             {isNextLoading ? (

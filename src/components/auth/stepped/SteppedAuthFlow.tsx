@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { Button } from "@/components/ui/button";
+import ElyphantTextLogo from "@/components/ui/ElyphantTextLogo";
 
 import NameStep from "./steps/NameStep";
 import EmailStep from "./steps/EmailStep";
@@ -367,13 +368,18 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   // ── Entry screen (inside modal) ────────────────────────────
   if (showEntryScreen && !isOAuth) {
     return (
-      <div className="px-6 py-10 md:p-10">
-        <div className="space-y-6">
-          <div className="text-center">
+      <div className="px-8 py-12 md:px-10 md:py-14">
+        <div className="space-y-8">
+          {/* Branding */}
+          <div className="flex justify-center">
+            <ElyphantTextLogo />
+          </div>
+
+          <div className="text-center space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
               Join Elyphant
             </h1>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground">
               {invitationData
                 ? `${invitationData.senderName} invited you to connect!`
                 : "The smarter way to give and receive gifts"}
@@ -383,10 +389,13 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           {/* Start email flow */}
           <Button
             onClick={() => setShowEntryScreen(false)}
-            className="w-full h-12 text-base font-medium rounded-lg touch-manipulation"
+            className="w-full h-13 text-base font-normal rounded-xl touch-manipulation"
           >
             Sign up with email
           </Button>
+
+          {/* Divider */}
+          <div className="border-t border-border/40" />
 
           {/* Sign in link */}
           <p className="text-center text-sm text-muted-foreground">

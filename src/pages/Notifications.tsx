@@ -25,6 +25,7 @@ const Notifications = () => {
   };
   
   return (
+    <SidebarLayout>
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>

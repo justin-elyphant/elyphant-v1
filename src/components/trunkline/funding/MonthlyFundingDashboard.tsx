@@ -345,7 +345,7 @@ export default function MonthlyFundingDashboard() {
         />
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Untransferred Payouts</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">Untransferred Payouts <InfoTooltip content="Stripe payouts with status 'paid' that haven't been recorded as transferred to ZMA yet. Total = gross payout amount. Net = after subtracting estimated Elyphant fees you retain." /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{untransferredPayouts.length}</div>

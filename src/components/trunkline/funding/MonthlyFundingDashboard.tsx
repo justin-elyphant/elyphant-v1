@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ZMABalanceCard } from "./ZMABalanceCard";
 import { TransferCalculator } from "./TransferCalculator";
 import { TransferHistory } from "./TransferHistory";
+import { InfoTooltip } from "../dashboard/InfoTooltip";
 import { format, addDays } from "date-fns";
 import { PAYMENT_LEAD_TIME } from "@/lib/constants/paymentLeadTime";
 import {

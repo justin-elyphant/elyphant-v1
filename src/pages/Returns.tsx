@@ -114,6 +114,7 @@ const Returns = () => {
 
   if (!order) {
     return (
+      <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <OrderNotFound />
       </div>

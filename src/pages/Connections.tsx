@@ -145,7 +145,7 @@ const Connections = () => {
       type: 'suggestion' as const,
       mutualFriends: r.mutualConnections || 0,
       lastActive: '',
-      dataStatus: 'verified' as const,
+      dataStatus: { shipping: 'missing', birthday: 'missing', email: 'missing' } as const,
       bio: r.bio || undefined,
     }));
   

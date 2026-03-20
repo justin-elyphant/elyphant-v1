@@ -82,6 +82,8 @@ export const TrunklineRouter: React.FC = () => {
         return <AutoGiftTestingTab />;
       case '/funding':
         return <MonthlyFundingDashboard />;
+      case '/referrals':
+        return <TrunklineReferralsTab />;
       default:
         return <OverviewTab />;
     }

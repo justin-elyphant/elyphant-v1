@@ -19,7 +19,8 @@ import {
   Mail,
   Zap,
   Wallet,
-  RotateCcw
+  RotateCcw,
+  Gift
 } from "lucide-react";
 import {
   Sidebar,

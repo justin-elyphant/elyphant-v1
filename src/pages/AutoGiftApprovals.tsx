@@ -52,6 +52,7 @@ const AutoGiftApprovals = () => {
   };
 
   return (
+    <SidebarLayout>
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">

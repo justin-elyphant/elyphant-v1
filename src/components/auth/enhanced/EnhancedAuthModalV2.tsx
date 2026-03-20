@@ -106,8 +106,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
       description: "Your profile is set up. Explore our Nicole AI assistant on the homepage!"
     });
     
-    // Set flag for homepage to show welcome messaging
-    localStorage.setItem('justCompletedSignup', 'true');
     
     // Close modal and redirect to homepage
     cleanupState();

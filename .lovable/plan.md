@@ -1,55 +1,35 @@
 
 
-## Consolidate Suggestion Engine — Single Server-Side RPC
+## Remove Find Friends Modal, Elevate Invite as Primary CTA
 
-### Problem
+### Concept
 
-Two separate suggestion systems exist:
-1. **`useConnectionSuggestions` hook** — client-side N+1 monster: fetches ALL non-connected profiles, then fires an RPC per profile for mutual count. Slow, wasteful, no dismiss persistence, no pending-request filtering.
-2. **`get_suggested_connections` RPC** — efficient friends-of-friends query, but only used in the search pre-state. Misses interest matching and cold-start users (0 connections = 0 results).
+Replace the "Find Friends" button in the hero with "Invite a Friend" as the **primary** white CTA — this is the highest-visibility spot on the page and turns every visit into a potential viral moment. The search bar (now handling discovery) makes "Find Friends" redundant, but invite is a distinct action that deserves prominence.
 
-Additionally, `useMutualConnections.ts` is dead code (zero imports outside itself).
+### Changes
 
-### Plan
+**1. Hero section: swap buttons**
+- Replace the primary white "Find Friends" button with **"Invite a Friend"** (UserPlus icon) — keeps the high-contrast white-on-purple treatment
+- Remove the secondary ghost "Invite New" button (no longer needed as a secondary)
+- Update the hero copy from "Build your gifting circle" to something more action-oriented like "Grow your gifting circle — invite friends to discover gifts they'll love"
+- Update props: remove `onFindFriends`, make `onInviteNew` the primary action
 
-**1. Upgrade `get_suggested_connections` RPC to handle everything**
+**2. Search bar: handle discovery**
+- As planned: upgrade the search bar placeholder to "Search by name, username, or email..."
+- Debounced global search merges results into Suggestions tab
+- Email detection shows inline invite CTA
 
-Extend the existing RPC to cover all scoring signals in one query:
-- Keep the friends-of-friends mutual count logic (already there)
-- Add interest overlap: accept `user_interests text[]` param, compute `array_length(array_intersect(p.interests, user_interests))` as `common_interests`
-- Add cold-start fallback: when the user has 0 accepted connections, fall back to profiles with the most connections (popular users) + interest overlap
-- Exclude pending connections (any row in `user_connections` regardless of status, not just accepted)
-- Add `profile_image` completeness flag for tie-breaking
-- Increase default limit from 6 → 15 (tab shows more than search pre-state)
-- Return `common_interests` count alongside `mutual_count`
+**3. Remove modal triggers**
+- Remove `showFindFriendsDialog` state and all `<Dialog>` blocks for EnhancedConnectionSearch in Connections.tsx
+- Remove `AddConnectionFAB` (the floating + button) — the hero invite CTA and search bar email-invite cover this
+- Clean up `ConnectionsHeader` "Find Friends" button
 
-**2. Rewrite `useConnectionSuggestions` to use the RPC**
-
-Replace the entire 130-line hook with ~30 lines:
-- Fetch current user's interests from profiles
-- Call `get_suggested_connections` RPC with `requesting_user_id` and `user_interests`
-- Map results directly to `Connection[]` — no client-side scoring loop, no N+1
-- Generate `reason` string from `mutual_count` / `common_interests` returned by RPC
-
-**3. Delete `useMutualConnections.ts`**
-
-Dead code — nothing imports it. The `get_mutual_friends_count` RPC is called directly where needed.
-
-**4. Update `SuggestionCard` dismiss to persist**
-
-Store dismissed suggestion IDs in localStorage (`dismissed_suggestions`) so they survive page reloads. Filter them out in `useConnectionSuggestions` before setting state. No new DB table needed — lightweight and sufficient.
+**4. Keep the share/invite link in the hero**
+Add a subtle "Share your invite link" text button below the primary CTA — tapping copies the user's `/invite/{username}` URL or triggers native share on Capacitor. This is a second viral touch that costs zero friction.
 
 ### Files affected
-- **Migrate**: Update `get_suggested_connections` RPC (add interests param, cold-start, pending exclusion)
-- **Rewrite**: `src/hooks/useConnectionSuggestions.ts` — slim down to RPC caller
-- **Delete**: `src/hooks/useMutualConnections.ts` — unused
-- **Edit**: `src/components/connections/SuggestionCard.tsx` — persist dismiss to localStorage
-- **Edit**: `src/integrations/supabase/types.ts` — auto-updated by migration
-
-### What stays unchanged
-- `get_mutual_friends_count` RPC (still used by search results enrichment)
-- `EnhancedConnectionSearch.tsx` (uses `get_suggested_connections` independently for the search pre-state with limit 6)
-- `useConnectionsAdapter.tsx` — still consumes `useConnectionSuggestions`, no interface change
-- `SuggestionsTabContent.tsx` — no changes needed
-- All connection request / accept / reject logic
+- **Edit**: `src/components/connections/ConnectionsHeroSection.tsx` — swap to invite-first CTA, add share link, update copy
+- **Edit**: `src/pages/Connections.tsx` — remove modal state/dialogs, add debounced global search, wire invite as primary
+- **Edit**: `src/components/connections/ConnectionsHeader.tsx` — remove Find Friends button, update placeholder
+- **Keep**: `AddConnectionSheet` (opened by invite CTA), `EnhancedConnectionSearch.tsx` (file stays, just not rendered here)
 

@@ -109,7 +109,7 @@ const Connections = () => {
   // Check URL params for tab selection
   const searchParams = new URLSearchParams(window.location.search);
   const urlTab = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(urlTab === 'pending' ? 'pending' : "friends");
+  const [activeTab, setActiveTab] = useState(urlTab === 'pending' ? 'pending' : "suggestions");
   
   // Handle auto-accept from email link
   useEffect(() => {

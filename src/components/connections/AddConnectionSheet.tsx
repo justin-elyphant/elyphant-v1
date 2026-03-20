@@ -131,7 +131,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
   };
 
   const formContent = (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 pb-safe touch-action-manipulation overscroll-contain">
       <div className="text-center pb-2">
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
           <UserPlus className="w-6 h-6 text-primary" />

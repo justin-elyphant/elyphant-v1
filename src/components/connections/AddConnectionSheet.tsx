@@ -219,7 +219,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
       <Button
         onClick={handleSendInvitation}
         disabled={isLoading || !inviteForm.name || !inviteForm.email}
-        className="w-full"
+        className="w-full min-h-[44px] active:scale-[0.97] transition-transform"
         size="lg"
       >
         {isLoading ? (

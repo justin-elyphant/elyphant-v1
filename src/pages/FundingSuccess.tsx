@@ -133,6 +133,7 @@ const FundingSuccess = () => {
         </CardFooter>
       </Card>
     </div>
+    </MainLayout>
   );
 };
 

@@ -159,6 +159,7 @@ const Funding = () => {
         onSuccess={handleCampaignCreated}
       />
     </div>
+    </MainLayout>
   );
 };
 

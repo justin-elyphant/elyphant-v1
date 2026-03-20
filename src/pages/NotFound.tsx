@@ -88,6 +88,7 @@ const NotFound = () => {
         </CardFooter>
       </Card>
     </div>
+    </MainLayout>
   );
 };
 

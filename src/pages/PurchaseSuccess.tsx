@@ -170,6 +170,7 @@ const PurchaseSuccess = () => {
         </CardFooter>
       </Card>
     </div>
+    </MainLayout>
   );
 };
 

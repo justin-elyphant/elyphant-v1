@@ -265,6 +265,7 @@ const FundingDetails = () => {
         campaignTitle={campaign.title}
       />
     </div>
+    </MainLayout>
   );
 };
 

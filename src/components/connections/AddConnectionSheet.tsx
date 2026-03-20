@@ -251,7 +251,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto overscroll-contain p-0">
         <DialogHeader className="px-4 pt-4 pb-0">
           <DialogTitle>Invite Someone</DialogTitle>
         </DialogHeader>

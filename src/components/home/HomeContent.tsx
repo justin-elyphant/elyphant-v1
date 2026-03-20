@@ -96,6 +96,7 @@ const HomeContent = () => {
       <PostOnboardingWelcome
         open={showWelcomeModal}
         userName={profile?.name || profile?.first_name || ""}
+        userId={profile?.id}
         onDismiss={() => setShowWelcomeModal(false)}
       />
       {/* Hero section - maintains its own layout */}

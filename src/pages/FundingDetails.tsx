@@ -115,6 +115,7 @@ const FundingDetails = () => {
   }
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-8 px-4">
       <Button 
         variant="ghost" 

@@ -11,18 +11,18 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { DraggableSection } from './DraggableSection';
 import { DraggableCard } from './DraggableCard';
 
-// Helper to extract gifting fee from line_items JSONB (stored in cents)
+// Helper to extract gifting fee from line_items JSONB (stored in dollars)
 const extractGiftingFee = (lineItems: any): number => {
   if (!lineItems) return 0;
   
   if (typeof lineItems === 'object') {
     if (lineItems.gifting_fee !== undefined) {
-      return Number(lineItems.gifting_fee) / 100;
+      return Number(lineItems.gifting_fee);
     }
     if (Array.isArray(lineItems)) {
-      return lineItems.reduce((sum, item) => {
+      return lineItems.reduce((sum: number, item: any) => {
         if (item?.gifting_fee !== undefined) {
-          return sum + Number(item.gifting_fee) / 100;
+          return sum + Number(item.gifting_fee);
         }
         return sum;
       }, 0);

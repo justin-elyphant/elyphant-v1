@@ -189,6 +189,7 @@ const Returns = () => {
         </div>
       )}
     </div>
+    </SidebarLayout>
   );
 };
 

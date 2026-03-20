@@ -162,6 +162,7 @@ const AutoGiftApprovals = () => {
         </CardContent>
       </Card>
     </div>
+    </SidebarLayout>
   );
 };
 

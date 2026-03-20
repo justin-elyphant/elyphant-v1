@@ -97,9 +97,14 @@ const DEMO_ORDER: OrderDetails = {
 };
 
 import EnhancedOrderTracking from "@/components/tracking/EnhancedOrderTracking";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const OrderTracking = () => {
-  return <EnhancedOrderTracking />;
+  return (
+    <SidebarLayout>
+      <EnhancedOrderTracking />
+    </SidebarLayout>
+  );
 };
 
 export default OrderTracking;

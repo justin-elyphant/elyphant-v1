@@ -52,6 +52,7 @@ const ConnectionDetails = () => {
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-8 mx-8"></div>
         </div>
       </div>
+      </SidebarLayout>
     );
   }
 

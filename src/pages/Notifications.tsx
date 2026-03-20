@@ -111,6 +111,7 @@ const Notifications = () => {
         </div>
       </Tabs>
     </div>
+    </SidebarLayout>
   );
 };
 

@@ -28,6 +28,7 @@ const Events = () => {
   // Show sign-in prompt if not authenticated
   if (!user) {
     return (
+        <SidebarLayout>
         <div className="container mx-auto py-8 px-4">
           
           <div className="mb-6">

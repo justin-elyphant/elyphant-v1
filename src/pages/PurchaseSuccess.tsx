@@ -128,6 +128,7 @@ const PurchaseSuccess = () => {
   }
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-16 px-4">
       <Card className="max-w-lg mx-auto">
         <CardHeader className="text-center">

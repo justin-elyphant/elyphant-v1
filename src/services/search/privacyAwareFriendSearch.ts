@@ -301,7 +301,7 @@ export const searchFriendsWithPrivacy = async (
           city: (profile as any).city || (profile as any).shipping_address?.city || undefined,
           state: (profile as any).state || (profile as any).shipping_address?.state || undefined,
           connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
-          mutualConnections: 0, // TODO: Implement mutual connections count
+          mutualConnections: 0, // Will be enriched below
           privacyLevel: privacyLevel as 'public' | 'limited' | 'private',
           isPrivacyRestricted: !canConnect,
           canGift: canGift

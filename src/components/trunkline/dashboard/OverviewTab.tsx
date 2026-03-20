@@ -291,6 +291,7 @@ export default function OverviewTab() {
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 Revenue Breakdown
+                <InfoTooltip content="Net Revenue = sum of gifting fees from completed orders. Zinc Costs = $1.00 per fulfilled order. Gross Profit = Net Revenue − Zinc Costs." />
               </CardTitle>
             </CardHeader>
             <CardContent>

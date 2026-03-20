@@ -92,6 +92,7 @@ const Returns = () => {
       <div className="container max-w-6xl mx-auto py-8 px-4 flex justify-center">
         <OrderSkeleton />
       </div>
+      </SidebarLayout>
     );
   }
 

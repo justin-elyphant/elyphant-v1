@@ -375,6 +375,7 @@ export default function MonthlyFundingDashboard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Banknote className="h-5 w-5" />
             Stripe Payouts → ZMA Transfers
+            <InfoTooltip content="Live data from stripe.payouts.list(). 'Fees Retained' is estimated by applying the ratio of total gifting fees to total paid payouts. 'Net to ZMA' = Payout Amount − Fees Retained. Click 'Record' to log the transfer in zma_funding_schedule." />
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Total Elyphant fees retained across all completed orders: <strong className="text-foreground">${totalFeesRetained.toFixed(2)}</strong>

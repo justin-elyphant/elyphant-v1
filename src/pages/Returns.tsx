@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
@@ -87,14 +88,17 @@ const Returns = () => {
 
   if (!userData || isLoading) {
     return (
+      <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4 flex justify-center">
         <OrderSkeleton />
       </div>
+      </SidebarLayout>
     );
   }
 
   if (existingReturns.length > 0) {
     return (
+      <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-6">
           <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>
@@ -104,18 +108,22 @@ const Returns = () => {
         </div>
         <ExistingReturnsCard existingReturns={existingReturns} orderId={orderId} />
       </div>
+      </SidebarLayout>
     );
   }
 
   if (!order) {
     return (
+      <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <OrderNotFound />
       </div>
+      </SidebarLayout>
     );
   }
 
   return (
+    <SidebarLayout>
     <div className="container max-w-6xl mx-auto py-8 px-4">
       <div className="mb-6">
         <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>
@@ -181,6 +189,7 @@ const Returns = () => {
         </div>
       )}
     </div>
+    </SidebarLayout>
   );
 };
 

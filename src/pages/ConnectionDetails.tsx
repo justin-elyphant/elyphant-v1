@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useParams, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const ConnectionDetails = () => {
 
   if (loading) {
     return (
+      <SidebarLayout>
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <div className="flex items-center space-x-4 mb-6">
           <Button variant="ghost" asChild className="p-0">
@@ -50,11 +52,13 @@ const ConnectionDetails = () => {
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-8 mx-8"></div>
         </div>
       </div>
+      </SidebarLayout>
     );
   }
 
   if (error || !connection) {
     return (
+      <SidebarLayout>
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <div className="flex items-center space-x-4 mb-6">
           <Button variant="ghost" asChild className="p-0">
@@ -79,6 +83,7 @@ const ConnectionDetails = () => {
           </CardContent>
         </Card>
       </div>
+      </SidebarLayout>
     );
   }
 
@@ -91,6 +96,7 @@ const ConnectionDetails = () => {
   };
 
   return (
+    <SidebarLayout>
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="flex items-center space-x-4 mb-6">
         <Button variant="ghost" asChild className="p-0">
@@ -384,6 +390,7 @@ const ConnectionDetails = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </SidebarLayout>
   );
 };
 

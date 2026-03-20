@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import MainLayout from "@/components/layout/MainLayout";
 
 const FundingSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -78,6 +79,7 @@ const FundingSuccess = () => {
   
   if (isLoading) {
     return (
+      <MainLayout>
       <div className="container mx-auto py-16 px-4 flex justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
@@ -85,10 +87,12 @@ const FundingSuccess = () => {
           </CardHeader>
         </Card>
       </div>
+      </MainLayout>
     );
   }
   
   return (
+    <MainLayout>
     <div className="container mx-auto py-16 px-4 flex justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -129,6 +133,7 @@ const FundingSuccess = () => {
         </CardFooter>
       </Card>
     </div>
+    </MainLayout>
   );
 };
 

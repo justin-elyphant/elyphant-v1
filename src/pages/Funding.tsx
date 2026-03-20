@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import MainLayout from "@/components/layout/MainLayout";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -78,6 +79,7 @@ const Funding = () => {
   };
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
@@ -157,6 +159,7 @@ const Funding = () => {
         onSuccess={handleCampaignCreated}
       />
     </div>
+    </MainLayout>
   );
 };
 

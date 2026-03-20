@@ -1,4 +1,5 @@
 import React from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ const AutoGiftApprovals = () => {
   };
 
   return (
+    <SidebarLayout>
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -160,6 +162,7 @@ const AutoGiftApprovals = () => {
         </CardContent>
       </Card>
     </div>
+    </SidebarLayout>
   );
 };
 

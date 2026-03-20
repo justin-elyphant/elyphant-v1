@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import MainLayout from "@/components/layout/MainLayout";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ const FundingDetails = () => {
   
   if (isLoading) {
     return (
+      <MainLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-center">
           <div className="w-full max-w-4xl">
@@ -104,6 +106,7 @@ const FundingDetails = () => {
           </div>
         </div>
       </div>
+      </MainLayout>
     );
   }
   
@@ -112,6 +115,7 @@ const FundingDetails = () => {
   }
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-8 px-4">
       <Button 
         variant="ghost" 
@@ -261,6 +265,7 @@ const FundingDetails = () => {
         campaignTitle={campaign.title}
       />
     </div>
+    </MainLayout>
   );
 };
 

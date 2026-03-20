@@ -6,6 +6,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import MainLayout from "@/components/layout/MainLayout";
 
 const PurchaseSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -114,6 +115,7 @@ const PurchaseSuccess = () => {
 
   if (isLoading) {
     return (
+      <MainLayout>
       <div className="container mx-auto py-16 px-4">
         <Card className="max-w-lg mx-auto">
           <CardHeader className="text-center">
@@ -121,10 +123,12 @@ const PurchaseSuccess = () => {
           </CardHeader>
         </Card>
       </div>
+      </MainLayout>
     );
   }
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-16 px-4">
       <Card className="max-w-lg mx-auto">
         <CardHeader className="text-center">
@@ -166,6 +170,7 @@ const PurchaseSuccess = () => {
         </CardFooter>
       </Card>
     </div>
+    </MainLayout>
   );
 };
 

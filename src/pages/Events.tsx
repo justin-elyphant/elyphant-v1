@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import PastEventsContainer from "@/components/gifting/events/past-events/PastEventsContainer";
@@ -27,6 +28,7 @@ const Events = () => {
   // Show sign-in prompt if not authenticated
   if (!user) {
     return (
+        <SidebarLayout>
         <div className="container mx-auto py-8 px-4">
           
           <div className="mb-6">
@@ -48,10 +50,12 @@ const Events = () => {
             </CardContent>
           </Card>
         </div>
+        </SidebarLayout>
     );
   }
 
   return (
+      <SidebarLayout>
       <EventsProvider>
         <div className="container mx-auto py-8 px-4">
           
@@ -74,6 +78,7 @@ const Events = () => {
           <EventsContent onAddEvent={handleAddEvent} />
         </div>
       </EventsProvider>
+      </SidebarLayout>
   );
 };
 

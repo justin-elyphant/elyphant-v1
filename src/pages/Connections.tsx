@@ -463,7 +463,10 @@ const Connections = () => {
             <DialogHeader>
               <DialogTitle>Find New Connections</DialogTitle>
             </DialogHeader>
-            <EnhancedConnectionSearch />
+            <EnhancedConnectionSearch onInvite={(prefill) => {
+              setShowFindFriendsDialog(false);
+              setShowInviteSheet(true);
+            }} />
           </DialogContent>
         </Dialog>
       </div>

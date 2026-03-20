@@ -57,7 +57,8 @@ const NotFound = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <MainLayout>
+    <div className="min-h-[60vh] flex items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center pb-6">
           <CardTitle className="text-4xl font-bold">404</CardTitle>

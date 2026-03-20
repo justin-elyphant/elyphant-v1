@@ -79,6 +79,7 @@ const Funding = () => {
   };
 
   return (
+    <MainLayout>
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>

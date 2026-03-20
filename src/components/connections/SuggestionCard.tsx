@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { UserPlus, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Connection } from "@/types/connections";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { dismissSuggestion } from "@/hooks/useConnectionSuggestions";
 
 interface SuggestionCardProps {
   suggestion: Connection;
@@ -31,7 +31,6 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
         return;
       }
 
-      // Create a connection request
       const { error } = await supabase
         .from('user_connections')
         .insert({
@@ -55,13 +54,12 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
 
   const handleDismiss = () => {
     setIsDismissed(true);
+    dismissSuggestion(suggestion.id);
     onDismiss?.(suggestion.id);
     toast.info(`${suggestion.name} dismissed from suggestions`);
   };
 
-  if (isDismissed) {
-    return null;
-  }
+  if (isDismissed) return null;
 
   return (
     <Card key={suggestion.id}>

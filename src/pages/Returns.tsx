@@ -108,6 +108,7 @@ const Returns = () => {
         </div>
         <ExistingReturnsCard existingReturns={existingReturns} orderId={orderId} />
       </div>
+      </SidebarLayout>
     );
   }
 

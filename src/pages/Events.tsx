@@ -78,6 +78,7 @@ const Events = () => {
           <EventsContent onAddEvent={handleAddEvent} />
         </div>
       </EventsProvider>
+      </SidebarLayout>
   );
 };
 

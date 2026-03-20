@@ -98,6 +98,7 @@ const Returns = () => {
 
   if (existingReturns.length > 0) {
     return (
+      <SidebarLayout>
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-6">
           <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>

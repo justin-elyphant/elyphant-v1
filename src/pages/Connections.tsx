@@ -139,10 +139,13 @@ const Connections = () => {
     .map(r => ({
       id: r.id,
       name: r.name || r.username || 'Unknown',
-      avatar: r.profileImage || '',
+      username: r.username || '',
+      imageUrl: r.profile_image || r.avatar_url || '',
       relationship: 'friend' as RelationshipType,
-      status: 'suggested' as const,
-      mutualConnections: r.mutualConnections || 0,
+      type: 'suggestion' as const,
+      mutualFriends: r.mutualConnections || 0,
+      lastActive: '',
+      dataStatus: 'verified' as const,
       bio: r.bio || undefined,
     }));
   

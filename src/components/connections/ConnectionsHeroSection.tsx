@@ -71,7 +71,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
             {friendsCount === 1 ? 'connection' : 'connections'}
             {pendingCount > 0 && (
               <> and <span className="font-bold text-white">{pendingCount}</span> pending request{pendingCount !== 1 ? 's' : ''}</>
-            )}. Grow your gifting circle — invite friends to discover gifts they'll love.
+            )}. Share your link and earn <span className="font-bold text-white">$100</span> for every friend who joins.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3">

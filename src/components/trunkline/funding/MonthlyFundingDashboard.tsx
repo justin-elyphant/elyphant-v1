@@ -356,7 +356,7 @@ export default function MonthlyFundingDashboard() {
         </Card>
         <Card className={recommendedTransfer > 0 ? 'border-primary' : ''}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Transfer Recommended</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">Transfer Recommended <InfoTooltip content={`Formula: (Pending Orders Value + $${PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT} buffer) − Current ZMA Balance. If result is ≤ 0, no transfer needed.`} /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${recommendedTransfer > 0 ? 'text-primary' : 'text-green-600'}`}>

@@ -224,7 +224,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Customers</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Customers <InfoTooltip content="Unique profiles from the customers/profiles table. Represents all registered users on the platform." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{totalCustomers}</p>
                   <span className="text-xs text-muted-foreground">Active users</span>
                 </div>

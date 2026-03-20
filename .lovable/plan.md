@@ -1,51 +1,52 @@
 
 
-## Replace Email Templates Manager with Live Orchestrator Previewer
+## Fix Dashboard Numbers + Automate Stripe Payout Tracking
 
-### Problem
-The current Trunkline Email Templates Manager reads from the `email_templates` database table, which is stale — it has old emoji-laden subject lines and HTML that doesn't match what actually gets sent. The live system is the inline `getEmailTemplate()` in the orchestrator edge function. The DB table and its CRUD UI are dead weight.
+### Problem 1: Dashboard Net Revenue is wrong
+
+The `extractGiftingFee` function divides by 100 (line 20: `return Number(lineItems.gifting_fee) / 100`), assuming values are stored in cents. But the actual DB data shows gifting fees stored in **dollars** (e.g., `3.35`, `4.2`, `2.0`). This is why Net Revenue shows $0.85 instead of ~$84.56, and Gross Profit shows "Price not available" (it goes deeply negative).
+
+**Fix**: Remove the `/100` division in `extractGiftingFee`. The gifting_fee in `line_items` JSONB is already in dollars.
+
+### Problem 2: Stripe payouts not tracked
+
+You receive daily Stripe payout emails ($100.19, $91.45, $26.09, $64.61...) but the `zma_funding_schedule` table is empty. The funding flow is: Stripe → Chase → PayPal → Zinc ZMA. The dashboard needs to:
+
+1. **Pull Stripe payout history** so you can see what's landing in Chase
+2. **Calculate the Elyphant fee deduction** — only the product cost portion should transfer to ZMA, not the gifting fee (that's your revenue to keep)
+3. **Show the net transfer amount** per payout
 
 ### Plan
 
-**1. Add a `preview` mode to the orchestrator edge function**
-Add a check at the top of the handler: if the request body includes `preview: true`, render the template with the provided sample data and return `{ html, subject }` without sending via Resend. This lets Trunkline fetch a live render of any template.
+**1. Fix `extractGiftingFee` in OverviewTab.tsx**
+Remove the `/100` division on lines 20 and 25. Values are already in dollars.
 
-**2. Replace `EmailTemplatesManager` with a live previewer**
-Rebuild the component to:
-- Show a dropdown of all event types (the ~20 types from `getEmailTemplate`)
-- Pre-fill sample data per event type (order number, customer name, items, etc.)
-- Call the orchestrator with `preview: true` to get rendered HTML
-- Display in an iframe with desktop/mobile toggle
-- Show the rendered subject line above the preview
-- Keep the "Send Test" button that sends a real email to a specified address
+**2. Create a `get-stripe-payouts` edge function**
+Call `stripe.payouts.list()` to fetch recent payouts with amounts, dates, and status. Return them as JSON. This replaces manual tracking — you can see exactly what Stripe is sending to Chase each day.
 
-**3. Update `EmailPreviewModal` to use live rendering**
-Instead of substituting `{{variables}}` in stored HTML, it calls the orchestrator preview endpoint and renders the actual output.
+**3. Add a Stripe Payouts section to MonthlyFundingDashboard**
+Replace the static "Monthly Funding Checklist" with a live **Stripe Payouts → ZMA Transfer** workflow:
+- Table of recent Stripe payouts (date, amount, status, payout ID)
+- For each payout, show a calculated breakdown:
+  - **Payout amount** (from Stripe)
+  - **Elyphant fees retained** (sum of gifting_fees from orders in that payout period)
+  - **Net to transfer to ZMA** = Payout - Fees retained
+- A "Record Transfer" action per payout row that creates a `zma_funding_schedule` entry with `stripe_payout_id`, `transfer_amount` (net), and `total_markup_retained`
 
-**4. Remove stale DB-dependent components**
-- Remove `EmailTemplateEditor` (was for editing DB templates)
-- Remove the `email_templates` / `email_template_variables` table CRUD logic
-- The DB tables themselves can stay (no migration needed) but the UI no longer reads from them
-
-**5. Deploy the updated orchestrator**
-
-### Event types and sample data
-Each event type gets a hardcoded sample data object in the frontend, e.g.:
-- `order_confirmation`: `{ customer_name: "Sarah", order_number: "ORD-A1B2C3", items: [...], total_amount: 89.99 }`
-- `welcome_email`: `{ first_name: "Sarah" }`
-- `auto_gift_approval`: `{ recipient_name: "Mom", occasion: "birthday", product_title: "Silk Scarf", ... }`
-- etc.
+**4. Update TransferCalculator to use real payout data**
+Instead of just comparing pending orders vs balance, also show:
+- Recent Stripe payouts arriving in Chase (with dates)
+- Suggested transfer = sum of untransferred payouts minus retained fees
 
 ### Files affected
-- **Edit**: `supabase/functions/ecommerce-email-orchestrator/index.ts` — add preview mode (~10 lines)
-- **Rewrite**: `src/components/trunkline/communications/EmailTemplatesManager.tsx` — live previewer
-- **Rewrite**: `src/components/trunkline/communications/EmailPreviewModal.tsx` — iframe-based live render
-- **Delete**: `src/components/trunkline/communications/EmailTemplateEditor.tsx` — no longer needed
-- **Keep**: `TestEmailModal.tsx` — still useful for sending real test emails
-- **Deploy**: `ecommerce-email-orchestrator`
+- **Edit**: `src/components/trunkline/dashboard/OverviewTab.tsx` — fix `/100` bug
+- **Create**: `supabase/functions/get-stripe-payouts/index.ts` — list recent payouts
+- **Edit**: `src/components/trunkline/funding/MonthlyFundingDashboard.tsx` — add payouts table + transfer workflow
+- **Edit**: `src/components/trunkline/funding/TransferCalculator.tsx` — incorporate payout data
+- **Deploy**: `get-stripe-payouts`
 
-### What stays
-- `TestEmailModal` for sending actual test emails
-- `EmailAnalyticsDashboard` (reads from `email_send_log`, unrelated)
-- All orchestrator sending logic unchanged
+### What stays unchanged
+- ZMA balance polling, audit log, TransferHistory component
+- Order pipeline visualization
+- All order processing / fulfillment logic
 

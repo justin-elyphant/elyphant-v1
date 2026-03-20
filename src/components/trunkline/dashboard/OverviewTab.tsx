@@ -109,7 +109,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Net Revenue</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Net Revenue <InfoTooltip content="Sum of gifting_fee from all completed/shipped/delivered orders. This is the platform fee Elyphant retains — stored in line_items.gifting_fee (dollars)." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(netRevenue)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />

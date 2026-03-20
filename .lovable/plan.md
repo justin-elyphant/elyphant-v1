@@ -1,35 +1,32 @@
 
 
-## Remove Find Friends Modal, Elevate Invite as Primary CTA
+## Fix Invite Sheet Scrolling + iOS/Capacitor Polish
 
-### Concept
+### Problem
+The desktop Dialog on line 254 of `AddConnectionSheet.tsx` uses `overflow-hidden`, which clips the form content — users can't scroll to reach the message field or send button. The mobile bottom sheet already scrolls correctly via `overflow-y-auto`.
 
-Replace the "Find Friends" button in the hero with "Invite a Friend" as the **primary** white CTA — this is the highest-visibility spot on the page and turns every visit into a potential viral moment. The search bar (now handling discovery) makes "Find Friends" redundant, but invite is a distinct action that deserves prominence.
+### Production wiring — confirmed working
+- `handleSendInvitation` creates a pending connection via `unifiedGiftManagementService.createPendingConnection`
+- Fires `connection_invitation` event to `ecommerce-email-orchestrator` with proper sender/recipient data and invitation URL
+- Invitation URL uses the real `elyphant.ai` domain with the invitation token
+- Analytics tracking via `invitationAnalyticsService` is wired
+- Copy invite link generates the correct `/invite/{username}` URL
+- No gaps — this is production-ready
 
 ### Changes
 
-**1. Hero section: swap buttons**
-- Replace the primary white "Find Friends" button with **"Invite a Friend"** (UserPlus icon) — keeps the high-contrast white-on-purple treatment
-- Remove the secondary ghost "Invite New" button (no longer needed as a secondary)
-- Update the hero copy from "Build your gifting circle" to something more action-oriented like "Grow your gifting circle — invite friends to discover gifts they'll love"
-- Update props: remove `onFindFriends`, make `onInviteNew` the primary action
+**1. Fix desktop Dialog scroll** (`AddConnectionSheet.tsx` line 254)
+- Change `overflow-hidden` to `overflow-y-auto` on `DialogContent` so the form scrolls when content exceeds viewport height
 
-**2. Search bar: handle discovery**
-- As planned: upgrade the search bar placeholder to "Search by name, username, or email..."
-- Debounced global search merges results into Suggestions tab
-- Email detection shows inline invite CTA
+**2. iOS/Capacitor polish on the form content**
+- Add `pb-safe` (safe area bottom padding) to the form container for Capacitor notch handling
+- Add `overscroll-contain` to prevent background scroll bleed on iOS
+- Ensure the Send button has proper `min-h-[44px]` touch target (currently uses `size="lg"` which is close but not guaranteed)
+- Add `touch-action-manipulation` on the form to prevent double-tap zoom
 
-**3. Remove modal triggers**
-- Remove `showFindFriendsDialog` state and all `<Dialog>` blocks for EnhancedConnectionSearch in Connections.tsx
-- Remove `AddConnectionFAB` (the floating + button) — the hero invite CTA and search bar email-invite cover this
-- Clean up `ConnectionsHeader` "Find Friends" button
-
-**4. Keep the share/invite link in the hero**
-Add a subtle "Share your invite link" text button below the primary CTA — tapping copies the user's `/invite/{username}` URL or triggers native share on Capacitor. This is a second viral touch that costs zero friction.
+**3. Tablet handling**
+- The current breakpoint uses `useIsMobile(768)` — tablets (768-1024px) get the desktop Dialog. Change to use the bottom sheet for tablets too by bumping the breakpoint to `useIsMobile(1024)`, consistent with the Lululemon-style pattern used elsewhere in the app
 
 ### Files affected
-- **Edit**: `src/components/connections/ConnectionsHeroSection.tsx` — swap to invite-first CTA, add share link, update copy
-- **Edit**: `src/pages/Connections.tsx` — remove modal state/dialogs, add debounced global search, wire invite as primary
-- **Edit**: `src/components/connections/ConnectionsHeader.tsx` — remove Find Friends button, update placeholder
-- **Keep**: `AddConnectionSheet` (opened by invite CTA), `EnhancedConnectionSearch.tsx` (file stays, just not rendered here)
+- **Edit**: `src/components/connections/AddConnectionSheet.tsx` — fix overflow, add iOS safe area, adjust tablet breakpoint
 

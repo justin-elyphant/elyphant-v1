@@ -92,6 +92,7 @@ const FundingSuccess = () => {
   }
   
   return (
+    <MainLayout>
     <div className="container mx-auto py-16 px-4 flex justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">

@@ -26,7 +26,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
   onConnectionAdded
 }) => {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1024);
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 

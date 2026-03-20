@@ -106,6 +106,7 @@ const FundingDetails = () => {
           </div>
         </div>
       </div>
+      </MainLayout>
     );
   }
   

@@ -243,7 +243,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Orders</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Pending Orders <InfoTooltip content="Orders with status: scheduled, pending, or processing. These need attention or are awaiting fulfillment." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{pendingOrders.length}</p>
                   <span className="text-xs text-orange-600">Needs attention</span>
                 </div>

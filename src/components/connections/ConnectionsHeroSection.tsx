@@ -71,7 +71,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
             {friendsCount === 1 ? 'connection' : 'connections'}
             {pendingCount > 0 && (
               <> and <span className="font-bold text-white">{pendingCount}</span> pending request{pendingCount !== 1 ? 's' : ''}</>
-            )}. Grow your gifting circle — invite friends to discover gifts they'll love.
+            )}. Share your link and earn <span className="font-bold text-white">$100</span> for every friend who joins.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3">
@@ -81,7 +81,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
                 className="bg-white text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Invite a Friend
+                Invite a Friend, Get $100
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>

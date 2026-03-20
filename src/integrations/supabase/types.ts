@@ -979,6 +979,67 @@ export type Database = {
           },
         ]
       }
+      beta_referrals: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          id: string
+          referred_email: string
+          referred_id: string | null
+          referrer_id: string
+          reward_amount: number
+          reward_notes: string | null
+          reward_paid_at: string | null
+          status: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          referred_email: string
+          referred_id?: string | null
+          referrer_id: string
+          reward_amount?: number
+          reward_notes?: string | null
+          reward_paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          referred_email?: string
+          referred_id?: string | null
+          referrer_id?: string
+          reward_amount?: number
+          reward_notes?: string | null
+          reward_paid_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beta_referrals_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beta_referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beta_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       birthday_email_tracking: {
         Row: {
           birthday_year: number

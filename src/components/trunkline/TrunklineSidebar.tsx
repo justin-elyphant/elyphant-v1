@@ -19,7 +19,8 @@ import {
   Mail,
   Zap,
   Wallet,
-  RotateCcw
+  RotateCcw,
+  Gift
 } from "lucide-react";
 import {
   Sidebar,
@@ -74,6 +75,12 @@ const navigationItems = [
     url: "/trunkline/support",
     icon: MessageSquare,
     badge: "12",
+  },
+  {
+    title: "Referrals",
+    url: "/trunkline/referrals",
+    icon: Gift,
+    badge: null,
   },
 ];
 

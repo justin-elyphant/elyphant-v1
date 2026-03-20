@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle, Gift, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -244,6 +244,16 @@ const UserButton = () => {
             )}
           </DropdownMenuItem>
 
+          {/* Referral CTA */}
+          <DropdownMenuItem 
+            className="flex items-center gap-3 px-4 py-3 min-h-[44px] bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 cursor-pointer mx-1 rounded-md my-1"
+            onClick={() => navigate("/connections")}
+          >
+            <Gift className="h-4 w-4 text-pink-500" />
+            <span className="font-semibold flex-1 text-sm">Invite Friends, Get $100</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator className="my-1 bg-border" />
 
           {/* Account Section */}
@@ -406,6 +416,17 @@ const UserButton = () => {
             {sectionIndex < sections.length - 1 && <DropdownMenuSeparator />}
           </div>
         ))}
+
+        {/* Referral CTA - Desktop */}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 cursor-pointer mx-1 rounded-md my-1"
+          onClick={() => navigate("/connections")}
+        >
+          <Gift className="h-4 w-4 text-pink-500" />
+          <span className="font-semibold flex-1 text-sm">Invite Friends, Get $100</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        </DropdownMenuItem>
         
         {/* Trunkline - Employee Only */}
         {isEmployee && (

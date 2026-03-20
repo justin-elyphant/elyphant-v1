@@ -19,6 +19,7 @@ import EmailAnalyticsDashboard from "@/components/trunkline/communications/Email
 import AutoGiftTestingTab from "@/components/trunkline/AutoGiftTestingTab";
 import MonthlyFundingDashboard from "@/components/trunkline/funding/MonthlyFundingDashboard";
 import TrunklineRefundsTab from "@/components/trunkline/TrunklineRefundsTab";
+import TrunklineReferralsTab from "@/components/trunkline/TrunklineReferralsTab";
 
 export const TrunklineRouter: React.FC = () => {
   const location = useLocation();
@@ -81,6 +82,8 @@ export const TrunklineRouter: React.FC = () => {
         return <AutoGiftTestingTab />;
       case '/funding':
         return <MonthlyFundingDashboard />;
+      case '/referrals':
+        return <TrunklineReferralsTab />;
       default:
         return <OverviewTab />;
     }

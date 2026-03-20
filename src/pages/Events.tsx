@@ -50,6 +50,7 @@ const Events = () => {
             </CardContent>
           </Card>
         </div>
+        </SidebarLayout>
     );
   }
 

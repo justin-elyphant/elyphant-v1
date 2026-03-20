@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { Users, UserPlus, Clock, AlertCircle, Search } from "lucide-react";
+import { Users, UserPlus, Clock, AlertCircle, Search, Mail } from "lucide-react";
 import { useConnectionsAdapter } from "@/hooks/useConnectionsAdapter";
 import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
 import { toast } from "sonner";
@@ -16,18 +16,15 @@ import { Connection, RelationshipType } from "@/types/connections";
 import ConnectionDetailPanel from "@/components/connections/ConnectionDetailPanel";
 import MobileConnectionDetail from "@/components/connections/MobileConnectionDetail";
 import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import EnhancedConnectionSearch from "@/components/connections/EnhancedConnectionSearch";
 import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
-import { AddConnectionFAB } from "@/components/connections/AddConnectionFAB";
 import { MobileConnectionsHeader } from "@/components/connections/MobileConnectionsHeader";
 import { OptimizedMobileConnectionCard } from "@/components/connections/OptimizedMobileConnectionCard";
 import { MobilePullToRefresh } from "@/components/mobile/MobilePullToRefresh";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import MobileSwipeGestures from "@/components/mobile/MobileSwipeGestures";
 import VoiceInputButton from "@/components/search/VoiceInputButton";
-// SearchSuggestions removed - using UnifiedSearchBar
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { useFriendSearch } from "@/hooks/useFriendSearch";
 import "@/styles/connections-mobile.css";
 
 // Lazy load heavy components
@@ -41,10 +38,10 @@ const PrivacyIntegration = lazy(() => import("@/components/connections/PrivacyIn
 const ConnectionsErrorFallback = ({ error, resetError }: { error: Error; resetError: () => void }) => (
   <Card className="max-w-md mx-auto">
     <CardHeader className="text-center">
-      <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-        <AlertCircle className="w-6 h-6 text-red-600" />
+      <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+        <AlertCircle className="w-6 h-6 text-destructive" />
       </div>
-      <CardTitle className="text-red-900">Something went wrong</CardTitle>
+      <CardTitle className="text-destructive">Something went wrong</CardTitle>
     </CardHeader>
     <CardContent className="text-center space-y-4">
       <p className="text-muted-foreground">
@@ -79,18 +76,22 @@ const Connections = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { isPhone, isTablet, usesMobileShell } = useResponsiveLayout();
-  const isMobile = isPhone; // Keep for backward compatibility
+  const isMobile = isPhone;
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<Error | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
-  const [showFindFriendsDialog, setShowFindFriendsDialog] = useState(false);
   const [showInviteSheet, setShowInviteSheet] = useState(false);
   const [showRelationshipSheet, setShowRelationshipSheet] = useState(false);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [invitePrefill, setInvitePrefill] = useState<string>("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Global search for discovering new users
+  const { results: globalSearchResults, isLoading: globalSearchLoading, searchForFriends, clear: clearGlobalSearch } = useFriendSearch();
   
   // Get connections data
   const { 
@@ -110,6 +111,43 @@ const Connections = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const urlTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(urlTab === 'pending' ? 'pending' : "suggestions");
+  
+  // Debounced global search when typing 2+ chars
+  const handleSearchChange = useCallback((term: string) => {
+    setSearchTerm(term);
+    setShowSuggestions(term.length > 0);
+    
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    
+    const isEmail = term.includes('@');
+    
+    if (!isEmail && term.length >= 2) {
+      debounceRef.current = setTimeout(() => {
+        searchForFriends(term);
+      }, 400);
+    } else if (term.length < 2) {
+      clearGlobalSearch();
+    }
+  }, [searchForFriends, clearGlobalSearch]);
+
+  // Detect email pattern for inline invite CTA
+  const isEmailSearch = searchTerm.includes('@') && searchTerm.includes('.');
+
+  // Map global search results to Connection-like objects for the suggestions tab
+  const globalResultsAsConnections: Connection[] = globalSearchResults
+    .filter(r => !safeFriends.some(f => f.id === r.id) && !safePending.some(p => p.id === r.id))
+    .map(r => ({
+      id: r.id,
+      name: r.name || r.username || 'Unknown',
+      username: r.username || '',
+      imageUrl: r.profile_image || r.avatar_url || '',
+      relationship: 'friend' as RelationshipType,
+      type: 'suggestion' as const,
+      mutualFriends: r.mutualConnections || 0,
+      lastActive: '',
+      dataStatus: { shipping: 'missing', birthday: 'missing', email: 'missing' } as const,
+      bio: r.bio || undefined,
+    }));
   
   // Handle auto-accept from email link
   useEffect(() => {
@@ -141,7 +179,6 @@ const Connections = () => {
 
   // Handle relationship changes
   const handleRelationshipChange = async (connectionId: string, newRelationship: string, customValue?: string) => {
-    console.log('🔄 [Connections] Updating relationship:', { connectionId, newRelationship, customValue });
     if (adapterHandleRelationshipChange) {
       await adapterHandleRelationshipChange(connectionId, newRelationship as RelationshipType);
     }
@@ -150,7 +187,6 @@ const Connections = () => {
 
   // Handle auto-gift toggle
   const handleAutoGiftToggle = async (connectionId: string, enabled: boolean) => {
-    console.log('🔄 [Connections] Toggling auto-gift:', { connectionId, enabled });
     toast.success(`Auto-gift ${enabled ? 'enabled' : 'disabled'} for this connection`);
   };
   
@@ -172,12 +208,10 @@ const Connections = () => {
 
   const handleSwipeLeft = useCallback((connectionId: string) => {
     triggerHapticFeedback('impact');
-    console.log('Swipe left action for:', connectionId);
   }, []);
 
   const handleSwipeRight = useCallback((connectionId: string) => {
     triggerHapticFeedback('impact');
-    console.log('Swipe right action for:', connectionId);
   }, []);
 
   const handleVoiceInput = useCallback(() => {
@@ -200,8 +234,13 @@ const Connections = () => {
     }
   }, [adapterHandleRelationshipChange]);
 
-  // Search suggestions
-  const searchSuggestions = React.useMemo(() => {
+  const handleInviteWithPrefill = useCallback((prefill?: string) => {
+    setInvitePrefill(prefill || '');
+    setShowInviteSheet(true);
+  }, []);
+
+  // Search suggestions for autocomplete
+  const searchAutocompleteSuggestions = React.useMemo(() => {
     if (!searchTerm) return [];
     const allConnections = [...safeFriends, ...safeSuggestions, ...safePending];
     return allConnections
@@ -219,6 +258,47 @@ const Connections = () => {
   );
   const filteredPending = safePending.filter(pending =>
     pending.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Merge global results into suggestions when searching
+  const mergedSuggestions = searchTerm.length >= 2 
+    ? [...filteredSuggestions, ...globalResultsAsConnections]
+    : filteredSuggestions;
+
+  // Inline email invite CTA component
+  const EmailInviteCTA = () => {
+    if (!isEmailSearch) return null;
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Mail className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">Invite {searchTerm}</p>
+          <p className="text-xs text-muted-foreground">Send them an invitation to join Elyphant</p>
+        </div>
+        <Button 
+          size="sm" 
+          onClick={() => handleInviteWithPrefill(searchTerm)}
+          className="flex-shrink-0"
+        >
+          Invite
+        </Button>
+      </div>
+    );
+  };
+
+  // No results + invite fallback
+  const NoResultsInvite = () => (
+    <div className="text-center py-12">
+      <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+      <h3 className="text-lg font-medium mb-2">No one found for "{searchTerm}"</h3>
+      <p className="text-muted-foreground mb-4">They might not be on Elyphant yet — invite them!</p>
+      <Button onClick={() => handleInviteWithPrefill(searchTerm)}>
+        <Mail className="h-4 w-4 mr-2" />
+        Invite to Elyphant
+      </Button>
+    </div>
   );
 
   // Show mobile detail view if connection is selected on mobile OR tablet
@@ -251,6 +331,104 @@ const Connections = () => {
     );
   }
 
+  // Shared search bar component
+  const SearchBar = ({ className = "" }: { className?: string }) => (
+    <div className={`relative ${className}`}>
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input
+        ref={searchInputRef}
+        placeholder="Search by name, username, or email..."
+        value={searchTerm}
+        onChange={(e) => handleSearchChange(e.target.value)}
+        onFocus={() => setShowSuggestions(searchTerm.length > 0)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        className="connections-search-input pl-10 pr-12 h-11"
+      />
+      {isMobile && (
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+          <VoiceInputButton
+            isListening={isVoiceListening}
+            onVoiceInput={handleVoiceInput}
+            mobile={true}
+          />
+        </div>
+      )}
+      {/* Inline autocomplete dropdown */}
+      {showSuggestions && searchAutocompleteSuggestions.length > 0 && (
+        <ul className="absolute top-full left-0 right-0 z-50 bg-background shadow-lg border rounded-md mt-1 text-sm">
+          {searchAutocompleteSuggestions.map((suggestion, idx) => (
+            <li
+              key={idx}
+              className="p-3 cursor-pointer hover:bg-muted border-b border-border last:border-b-0 touch-manipulation min-h-[44px] flex items-center"
+              onClick={() => {
+                handleSearchChange(suggestion);
+                setShowSuggestions(false);
+                searchInputRef.current?.blur();
+              }}
+            >
+              {suggestion}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
+  // Suggestions tab content with global search results merged
+  const SuggestionsContent = ({ skeleton: SkeletonComp }: { skeleton: React.FC<{ count?: number }> }) => {
+    const hasMergedResults = mergedSuggestions.length > 0;
+    const showNoResults = searchTerm.length >= 2 && !hasMergedResults && !globalSearchLoading;
+
+    if (connectionsLoading || globalSearchLoading) return <SkeletonComp count={4} />;
+
+    return (
+      <>
+        {isEmailSearch && <EmailInviteCTA />}
+        {hasMergedResults ? (
+          <>
+            {searchTerm.length >= 2 && globalResultsAsConnections.length > 0 && filteredSuggestions.length > 0 && (
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Suggested for you</p>
+            )}
+            {filteredSuggestions.map((suggestion) => (
+              <OptimizedMobileConnectionCard
+                key={suggestion.id}
+                connection={suggestion}
+                onSwipeLeft={() => handleSwipeLeft(suggestion.id)}
+                onSwipeRight={() => handleSwipeRight(suggestion.id)}
+                isSuggestion={true}
+              />
+            ))}
+            {searchTerm.length >= 2 && globalResultsAsConnections.length > 0 && (
+              <>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-4 mb-2">People on Elyphant</p>
+                {globalResultsAsConnections.map((person) => (
+                  <OptimizedMobileConnectionCard
+                    key={person.id}
+                    connection={person}
+                    onSwipeLeft={() => handleSwipeLeft(person.id)}
+                    onSwipeRight={() => handleSwipeRight(person.id)}
+                    isSuggestion={true}
+                  />
+                ))}
+              </>
+            )}
+          </>
+        ) : showNoResults ? (
+          <NoResultsInvite />
+        ) : !searchTerm ? (
+          mergedSuggestions.length === 0 ? (
+            <div className="text-center py-12">
+              <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No suggestions yet</h3>
+              <p className="text-muted-foreground mb-4">Check back later for new suggestions</p>
+              <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Invite a Friend</Button>
+            </div>
+          ) : null
+        ) : null}
+      </>
+    );
+  };
+
   // ========== MOBILE LAYOUT ==========
   if (isMobile) {
     return (
@@ -262,54 +440,14 @@ const Connections = () => {
           <ConnectionsHeroSection
             friendsCount={safeFriends.length}
             pendingCount={safePending.length}
-            onFindFriends={() => setShowFindFriendsDialog(true)}
-            onInviteNew={() => setShowInviteSheet(true)}
+            onInvite={() => setShowInviteSheet(true)}
             isMobile={true}
           />
         </div>
         
         {/* Search Bar */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              placeholder="Search connections..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowSuggestions(e.target.value.length > 0);
-              }}
-              onFocus={() => setShowSuggestions(searchTerm.length > 0)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="connections-search-input pl-10 pr-12 h-11"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <VoiceInputButton
-                isListening={isVoiceListening}
-                onVoiceInput={handleVoiceInput}
-                mobile={true}
-              />
-            </div>
-            {/* Inline suggestions dropdown */}
-            {showSuggestions && searchSuggestions.length > 0 && (
-              <ul className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 text-sm">
-                {searchSuggestions.map((suggestion, idx) => (
-                  <li
-                    key={idx}
-                    className="p-3 cursor-pointer hover:bg-muted border-b border-gray-100 last:border-b-0 touch-manipulation min-h-[44px] flex items-center"
-                    onClick={() => {
-                      setSearchTerm(suggestion);
-                      setShowSuggestions(false);
-                      searchInputRef.current?.blur();
-                    }}
-                  >
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <SearchBar />
         </div>
 
         {/* Tabs */}
@@ -345,26 +483,7 @@ const Connections = () => {
             <MobilePullToRefresh onRefresh={handlePullToRefresh}>
               <MobileSwipeGestures enableQuickActions={true}>
                 <TabsContent value="suggestions" className="mt-0 px-4 py-4 space-y-3">
-                  {connectionsLoading ? (
-                    <MobileConnectionsSkeleton count={4} />
-                  ) : filteredSuggestions.length > 0 ? (
-                    filteredSuggestions.map((suggestion) => (
-                      <OptimizedMobileConnectionCard
-                        key={suggestion.id}
-                        connection={suggestion}
-                        onSwipeLeft={() => handleSwipeLeft(suggestion.id)}
-                        onSwipeRight={() => handleSwipeRight(suggestion.id)}
-                        isSuggestion={true}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-12">
-                      <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No suggestions found</h3>
-                      <p className="text-muted-foreground mb-4">Check back later for new suggestions</p>
-                      <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Add Connection</Button>
-                    </div>
-                  )}
+                  <SuggestionsContent skeleton={MobileConnectionsSkeleton} />
                 </TabsContent>
 
                 <TabsContent value="friends" className="mt-0 px-4 py-4 space-y-3">
@@ -389,7 +508,7 @@ const Connections = () => {
                       </p>
                       <div className="space-y-2">
                         <Button onClick={() => setActiveTab("suggestions")}>Browse Suggestions</Button>
-                        <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Add Connection</Button>
+                        <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Invite a Friend</Button>
                       </div>
                     </div>
                   )}
@@ -444,36 +563,20 @@ const Connections = () => {
           </div>
         </MobileBottomSheet>
 
-        {/* FAB */}
-        <AddConnectionFAB onClick={() => setShowInviteSheet(true)} />
-
         {/* Add Connection Sheet */}
         <AddConnectionSheet
           isOpen={showInviteSheet}
-          onClose={() => setShowInviteSheet(false)}
+          onClose={() => { setShowInviteSheet(false); setInvitePrefill(''); }}
           onConnectionAdded={() => {
             refreshPendingConnections();
             triggerHapticFeedback('success');
           }}
         />
-
-        {/* Find Friends Dialog */}
-        <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Find New Connections</DialogTitle>
-            </DialogHeader>
-            <EnhancedConnectionSearch onInvite={(prefill) => {
-              setShowFindFriendsDialog(false);
-              setShowInviteSheet(true);
-            }} />
-          </DialogContent>
-        </Dialog>
       </div>
     );
   }
 
-  // ========== TABLET LAYOUT (same as mobile) ==========
+  // ========== TABLET LAYOUT ==========
   if (isTablet) {
     return (
       <div className="min-h-screen bg-background pb-20">
@@ -484,23 +587,14 @@ const Connections = () => {
           <ConnectionsHeroSection
             friendsCount={safeFriends.length}
             pendingCount={safePending.length}
-            onFindFriends={() => setShowFindFriendsDialog(true)}
-            onInviteNew={() => setShowInviteSheet(true)}
+            onInvite={() => setShowInviteSheet(true)}
             isMobile={true}
           />
         </div>
         
         {/* Search Bar */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border px-4 py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search connections..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11"
-            />
-          </div>
+          <SearchBar />
         </div>
 
         {/* Tabs */}
@@ -534,26 +628,7 @@ const Connections = () => {
             </TabsList>
 
             <TabsContent value="suggestions" className="mt-0 px-4 py-4 space-y-3">
-              {connectionsLoading ? (
-                <MobileConnectionsSkeleton count={4} />
-              ) : filteredSuggestions.length > 0 ? (
-                filteredSuggestions.map((suggestion) => (
-                  <OptimizedMobileConnectionCard
-                    key={suggestion.id}
-                    connection={suggestion}
-                    onSwipeLeft={() => handleSwipeLeft(suggestion.id)}
-                    onSwipeRight={() => handleSwipeRight(suggestion.id)}
-                    isSuggestion={true}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No suggestions found</h3>
-                  <p className="text-muted-foreground mb-4">Check back later for new suggestions</p>
-                  <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Add Connection</Button>
-                </div>
-              )}
+              <SuggestionsContent skeleton={MobileConnectionsSkeleton} />
             </TabsContent>
 
             <TabsContent value="friends" className="mt-0 px-4 py-4 space-y-3">
@@ -578,7 +653,7 @@ const Connections = () => {
                   </p>
                   <div className="space-y-2">
                     <Button onClick={() => setActiveTab("suggestions")}>Browse Suggestions</Button>
-                    <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Add Connection</Button>
+                    <Button variant="outline" onClick={() => setShowInviteSheet(true)}>Invite a Friend</Button>
                   </div>
                 </div>
               )}
@@ -631,36 +706,18 @@ const Connections = () => {
           </div>
         </MobileBottomSheet>
 
-        {/* FAB */}
-        <AddConnectionFAB onClick={() => setShowInviteSheet(true)} />
-
         {/* Add Connection Sheet */}
         <AddConnectionSheet
           isOpen={showInviteSheet}
-          onClose={() => setShowInviteSheet(false)}
+          onClose={() => { setShowInviteSheet(false); setInvitePrefill(''); }}
           onConnectionAdded={() => {
             refreshPendingConnections();
             triggerHapticFeedback('success');
           }}
         />
-
-        {/* Find Friends Dialog */}
-        <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Find New Connections</DialogTitle>
-            </DialogHeader>
-            <EnhancedConnectionSearch onInvite={(prefill) => {
-              setShowFindFriendsDialog(false);
-              setShowInviteSheet(true);
-            }} />
-          </DialogContent>
-        </Dialog>
       </div>
     );
   }
-
-
 
   // ========== DESKTOP LAYOUT ==========
   return (
@@ -674,9 +731,20 @@ const Connections = () => {
                 friendsCount={safeFriends.length}
                 pendingCount={safePending.length}
                 userName={profile?.name?.split(' ')[0]}
-                onFindFriends={() => setShowFindFriendsDialog(true)}
-                onInviteNew={() => setShowInviteSheet(true)}
+                onInvite={() => setShowInviteSheet(true)}
               />
+
+              {/* Desktop Search */}
+              <div className="max-w-2xl">
+                <SearchBar />
+              </div>
+
+              {/* Email invite CTA */}
+              {isEmailSearch && (
+                <div className="max-w-2xl">
+                  <EmailInviteCTA />
+                </div>
+              )}
 
               {/* Tabs */}
               <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -697,8 +765,23 @@ const Connections = () => {
                 
                 <TabsContent value="suggestions" className="mt-6">
                   <Suspense fallback={<ConnectionsSkeleton count={6} />}>
-                    {suggestions.length > 0 ? (
-                      <SuggestionsTabContent suggestions={suggestions} />
+                    {connectionsLoading || globalSearchLoading ? (
+                      <ConnectionsSkeleton count={6} />
+                    ) : mergedSuggestions.length > 0 ? (
+                      <>
+                        {searchTerm.length >= 2 && globalResultsAsConnections.length > 0 && filteredSuggestions.length > 0 && (
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Suggested for you</p>
+                        )}
+                        <SuggestionsTabContent suggestions={filteredSuggestions} />
+                        {searchTerm.length >= 2 && globalResultsAsConnections.length > 0 && (
+                          <>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-6 mb-3">People on Elyphant</p>
+                            <SuggestionsTabContent suggestions={globalResultsAsConnections} />
+                          </>
+                        )}
+                      </>
+                    ) : searchTerm.length >= 2 ? (
+                      <NoResultsInvite />
                     ) : (
                       <div className="text-center py-12">
                         <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -706,8 +789,8 @@ const Connections = () => {
                         <p className="text-muted-foreground mb-4">
                           We'll suggest people you might know
                         </p>
-                        <Button onClick={() => window.location.href = window.location.pathname}>
-                          Explore Suggestions
+                        <Button onClick={() => setShowInviteSheet(true)}>
+                          Invite a Friend
                         </Button>
                       </div>
                     )}
@@ -753,23 +836,10 @@ const Connections = () => {
         )}
       </div>
 
-      {/* Find Friends Dialog */}
-      <Dialog open={showFindFriendsDialog} onOpenChange={setShowFindFriendsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Find New Connections</DialogTitle>
-          </DialogHeader>
-          <EnhancedConnectionSearch onInvite={(prefill) => {
-            setShowFindFriendsDialog(false);
-            setShowInviteSheet(true);
-          }} />
-        </DialogContent>
-      </Dialog>
-
       {/* Invite New Connection Sheet */}
       <AddConnectionSheet
         isOpen={showInviteSheet}
-        onClose={() => setShowInviteSheet(false)}
+        onClose={() => { setShowInviteSheet(false); setInvitePrefill(''); }}
         onConnectionAdded={() => {
           toast.success("Invitation sent!");
         }}

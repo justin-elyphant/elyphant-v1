@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Percent, PiggyBank, Crown, Handshake, Settings2, RotateCcw } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
+import { InfoTooltip } from "./InfoTooltip";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
 import { useDashboardLayout } from "@/hooks/trunkline/useDashboardLayout";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';

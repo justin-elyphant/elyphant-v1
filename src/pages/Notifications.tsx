@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/contexts/notifications/NotificationsContext";

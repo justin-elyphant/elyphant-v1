@@ -1,43 +1,32 @@
 
 
-## Post-Onboarding Welcome Modal
+## Redesign Post-Onboarding Welcome Modal
 
-### Overview
-Create a welcome modal that appears immediately after signup, greeting the user by name and offering 3 clear next actions. It reuses the existing Dialog + framer-motion patterns from `OnboardingIntentModal`.
+### What changes
 
-### Files to create
+Restyle the modal to match the Lululemon-inspired minimalist aesthetic and update the 3 action cards:
 
-**`src/components/onboarding/PostOnboardingWelcome.tsx`**
-- Dialog-based modal matching onboarding aesthetic (blurred backdrop, centered)
-- Props: `open`, `userName`, `onDismiss`
-- Content:
-  - Sparkle/elephant icon header
-  - "Welcome to Elyphant, {firstName}!" title
-  - Brief subtitle: "Here's what you can do"
-  - 3 motion-animated action cards (same style as `OnboardingIntentModal`):
-    - **Find a Gift** (Gift icon) → navigates to `/gifts`
-    - **Create a Wishlist** (List icon) → navigates to `/wishlists`
-    - **Explore the Shop** (Search icon) → navigates to `/marketplace`
-  - "Just browsing" skip link at bottom
-- On any action or dismiss: sets `localStorage.setItem("postOnboardingWelcomeSeen", "true")`
-- iOS-safe: uses `pb-safe`, `touch-manipulation`, `whileTap={{ scale: 0.97 }}`, 44px min touch targets
+1. **Explore the Shop** (ShoppingBag icon) → `/marketplace` — "Discover gifts from top brands"
+2. **Create a Wishlist** (List icon) → `/wishlists` — "Build and share your perfect list"
+3. **Find Friends** (Users icon) → `/connections` — "Connect with friends & family"
 
-### Files to modify
+### Style updates to `PostOnboardingWelcome.tsx`
 
-**`src/components/auth/stepped/SteppedAuthFlow.tsx`**
-- Add `localStorage.setItem("justCompletedSignup", "true")` before `navigate("/")` in both the OAuth path (line ~242) and the email path (line ~342)
+- **Remove** the colored Sparkles circle header — replace with clean, minimal typography only (no icon bubble)
+- **Heading**: "Welcome, {firstName}" in large semibold text, no "to Elyphant" branding clutter
+- **Subtitle**: "What would you like to do first?" — warmer, action-oriented
+- **Action cards**: Remove the `border-2` outlined button style. Use clean white cards with subtle shadow on hover, left-aligned icon + text, generous whitespace — matching the airy Lululemon feel
+- **Icons**: Thin stroke, muted color (text-muted-foreground), not the current blue/primary fill
+- **Skip link**: Keep "Just browsing" but style as lighter, more understated
+- **Dialog**: Clean white background, more padding, no heavy borders
 
-**`src/components/home/HomeContent.tsx`**
-- Import `PostOnboardingWelcome` and `useProfile`
-- Add state: `showWelcomeModal`
-- In the existing `useEffect`, instead of just clearing `justCompletedSignup`, also check that `postOnboardingWelcomeSeen` is not set — if both conditions met, set `showWelcomeModal = true`
-- Render `<PostOnboardingWelcome>` with user's first name from profile context
-- On dismiss, clear flag and close modal
+### Technical details
 
-### Technical notes
-- No backend changes, no new DB tables
-- Reuses existing `Dialog`, `Button`, `motion` patterns
-- localStorage-gated: shows only once per user ever
-- Works for both OAuth and email signup paths
-- Consistent with existing iOS Capacitor compliance (safe areas, touch targets, overscroll)
+**Single file edit**: `src/components/onboarding/PostOnboardingWelcome.tsx`
+- Update the `actions` array with new items, labels, descriptions, icons, and routes
+- Restyle the header section (remove icon circle, simplify typography)
+- Restyle action cards from `Button variant="outline"` to clean `div` cards with hover states
+- Keep all existing localStorage logic, haptics, navigation, and iOS compliance (pb-safe, touch-manipulation, 44px targets) unchanged
+
+No new files, no backend changes, no route changes.
 

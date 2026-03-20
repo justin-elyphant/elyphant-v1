@@ -175,8 +175,8 @@ const renderShippingAddress = (shippingAddress: any): string => {
   ].filter(Boolean);
   if (parts.length === 0) return '';
   return `
-    <h3 style="margin: 24px 0 12px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">📍 Shipping Address</h3>
-    <p style="margin: 0 0 24px 0; font-size: 14px; color: #666666; line-height: 22px;">
+    <p style="margin: 24px 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Shipping address</p>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 22px;">
       ${parts.join('<br>')}
     </p>
   `;
@@ -188,11 +188,11 @@ const renderGiftShippingAddress = (shippingAddress: any): string => {
   const name = shippingAddress.name || 'Recipient';
   const cityState = [shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ');
   return `
-    <h3 style="margin: 24px 0 12px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">📍 Delivery Address</h3>
-    <p style="margin: 0 0 4px 0; font-size: 14px; color: #1a1a1a; font-weight: 600;">${name}</p>
-    ${cityState ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #666666;">${cityState}</p>` : ''}
-    <p style="margin: 0 0 24px 0; font-size: 12px; color: #999999;">
-      🔒 Full address securely stored for delivery
+    <p style="margin: 24px 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Delivery address</p>
+    <p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 14px; color: #1a1a1a; font-weight: 600;">${name}</p>
+    ${cityState ? `<p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">${cityState}</p>` : ''}
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 12px; color: #9ca3af;">
+      Full address securely stored for delivery
     </p>
   `;
 };

@@ -239,7 +239,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
-        localStorage.setItem("justCompletedSignup", "true");
         await refetchProfile();
         navigate("/", { replace: true });
       } else {

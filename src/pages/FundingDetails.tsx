@@ -97,6 +97,7 @@ const FundingDetails = () => {
   
   if (isLoading) {
     return (
+      <MainLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-center">
           <div className="w-full max-w-4xl">

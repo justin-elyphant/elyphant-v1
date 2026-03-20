@@ -390,6 +390,7 @@ const ConnectionDetails = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </SidebarLayout>
   );
 };
 

@@ -35,6 +35,7 @@ const ConnectionDetails = () => {
 
   if (loading) {
     return (
+      <SidebarLayout>
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <div className="flex items-center space-x-4 mb-6">
           <Button variant="ghost" asChild className="p-0">

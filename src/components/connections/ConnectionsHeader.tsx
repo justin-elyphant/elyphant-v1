@@ -1,11 +1,9 @@
 
-import React, { useState } from "react";
-import { Search, UserPlus, Filter } from "lucide-react";
+import React from "react";
+import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConnectionFilters } from "@/types/connection-filters";
-import EnhancedConnectionSearch from "./EnhancedConnectionSearch";
 
 interface ConnectionsHeaderProps {
   searchTerm: string;
@@ -20,8 +18,6 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({
   filters,
   setFilters
 }) => {
-  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
       <div className="w-full sm:w-auto">
@@ -35,10 +31,10 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Filter connections..."
+            placeholder="Search by name, username, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full sm:w-64"
+            className="pl-10 w-full sm:w-72"
           />
         </div>
         
@@ -46,21 +42,6 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({
           <Filter className="h-4 w-4 mr-2" />
           Filter
         </Button>
-        
-        <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Find Friends
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Find New Connections</DialogTitle>
-            </DialogHeader>
-            <EnhancedConnectionSearch onInvite={() => setSearchDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

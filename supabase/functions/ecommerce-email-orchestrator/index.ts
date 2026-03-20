@@ -913,7 +913,7 @@ const guestOrderConfirmationTemplate = (props: any): string => {
 const vendorNewOrderTemplate = (props: any): string => {
   const content = `
     <h1 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px 0;">
-      New Order Received 📦
+      New Order Received
     </h1>
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; margin: 0 0 24px 0;">
       Hi ${props.vendor_name || 'Vendor'}, you have a new order to fulfill.

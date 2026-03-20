@@ -311,13 +311,16 @@ export const searchFriendsWithPrivacy = async (
     // Enrich with mutual connection counts if we have a current user
     if (currentUserId && results.length > 0) {
       try {
-        const mutualPromises = results.map(r =>
-          supabase.rpc('get_mutual_friends_count', { user_a: currentUserId, user_b: r.id })
-            .then(({ data }) => ({ id: r.id, count: Number(data) || 0 }))
-            .catch(() => ({ id: r.id, count: 0 }))
-        );
+        const mutualPromises = results.map(async (r) => {
+          try {
+            const { data } = await supabase.rpc('get_mutual_friends_count', { user_a: currentUserId, user_b: r.id });
+            return { id: r.id, count: Number(data) || 0 };
+          } catch {
+            return { id: r.id, count: 0 };
+          }
+        });
         const mutualCounts = await Promise.all(mutualPromises);
-        const mutualMap = new Map(mutualCounts.map(m => [m.id, m.count]));
+        const mutualMap = new Map(mutualCounts.map((m: { id: string; count: number }) => [m.id, m.count]));
         results.forEach(r => {
           r.mutualConnections = mutualMap.get(r.id) || 0;
         });

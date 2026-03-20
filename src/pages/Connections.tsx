@@ -317,6 +317,14 @@ const Connections = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full h-12 bg-transparent p-0">
               <TabsTrigger 
+                value="suggestions"
+                className="connections-tab-button"
+                onClick={() => triggerHapticFeedback('selection')}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Suggestions
+              </TabsTrigger>
+              <TabsTrigger 
                 value="friends" 
                 className="connections-tab-button"
                 onClick={() => triggerHapticFeedback('selection')}
@@ -331,14 +339,6 @@ const Connections = () => {
               >
                 <Clock className="h-4 w-4 mr-2" />
                 Pending
-              </TabsTrigger>
-              <TabsTrigger 
-                value="suggestions"
-                className="connections-tab-button"
-                onClick={() => triggerHapticFeedback('selection')}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Suggestions
               </TabsTrigger>
             </TabsList>
 

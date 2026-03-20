@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useParams, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

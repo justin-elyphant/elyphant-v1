@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useSearchParams } from "react-router-dom";
 import UpcomingEvents from "@/components/gifting/UpcomingEvents";
 import PastEventsContainer from "@/components/gifting/events/past-events/PastEventsContainer";

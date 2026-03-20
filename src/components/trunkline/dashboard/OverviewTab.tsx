@@ -133,7 +133,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">GMV</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    GMV <InfoTooltip content="Gross Merchandise Value — sum of total_amount from all completed/shipped/delivered orders. This is what customers paid in total." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(gmv)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />

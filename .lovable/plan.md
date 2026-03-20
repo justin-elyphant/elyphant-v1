@@ -1,62 +1,51 @@
 
 
-## Email Orchestrator — Unify and Clean Up
+## Replace Email Templates Manager with Live Orchestrator Previewer
 
-### What we found
-
-**Two template systems exist:**
-1. `ecommerce-email-orchestrator/index.ts` — the live 1,523-line monolith with ~20 inline templates. This is what actually sends emails.
-2. `render-email-template/email-templates/` — 10 standalone files with their own `base-template.ts`. **Dead code** — nothing imports these, and the `EmailTemplatesManager` even has a TODO noting they were removed. These should be deleted.
-
-**Style split inside the orchestrator:**
-- Vendor templates (application received/approved/rejected, connection request, nudge reminder, vendor new order) already use the clean Lululemon aesthetic — dark `#1a1a1a` buttons, `1px solid #e5e7eb` bordered cards, editorial `font-weight: 300` headings, no emoji.
-- Consumer templates (order confirmed, shipped, failed, pending, welcome, connection invitation, auto-gift approval, recurring gift, gift coming, auto-gift payment failed, guest order confirmation, wishlist shared, connection established, ZMA alert) still use emoji headings, gradient info cards, gradient CTA buttons, and colorful backgrounds.
+### Problem
+The current Trunkline Email Templates Manager reads from the `email_templates` database table, which is stale — it has old emoji-laden subject lines and HTML that doesn't match what actually gets sent. The live system is the inline `getEmailTemplate()` in the orchestrator edge function. The DB table and its CRUD UI are dead weight.
 
 ### Plan
 
-**1. Delete dead `render-email-template/email-templates/` directory**
-Remove all 10 standalone template files plus `base-template.ts`. These are unused duplicates.
+**1. Add a `preview` mode to the orchestrator edge function**
+Add a check at the top of the handler: if the request body includes `preview: true`, render the template with the provided sample data and return `{ html, subject }` without sending via Resend. This lets Trunkline fetch a live render of any template.
 
-**2. Redesign the base template header and footer (orchestrator)**
-- Replace the full-width purple-to-cyan gradient header with a white background, centered "Elyphant" wordmark (`font-weight: 300; font-size: 28px; color: #1a1a1a`), and a thin 40px-wide gradient accent line below
-- Clean up the footer to match vendor template style — lighter `#9ca3af` text, no pipe separators
+**2. Replace `EmailTemplatesManager` with a live previewer**
+Rebuild the component to:
+- Show a dropdown of all event types (the ~20 types from `getEmailTemplate`)
+- Pre-fill sample data per event type (order number, customer name, items, etc.)
+- Call the orchestrator with `preview: true` to get rendered HTML
+- Display in an iframe with desktop/mobile toggle
+- Show the rendered subject line above the preview
+- Keep the "Send Test" button that sends a real email to a specified address
 
-**3. Restyle all consumer templates to match vendor aesthetic**
+**3. Update `EmailPreviewModal` to use live rendering**
+Instead of substituting `{{variables}}` in stored HTML, it calls the orchestrator preview endpoint and renders the actual output.
 
-For each consumer template, apply these consistent changes:
+**4. Remove stale DB-dependent components**
+- Remove `EmailTemplateEditor` (was for editing DB templates)
+- Remove the `email_templates` / `email_template_variables` table CRUD logic
+- The DB tables themselves can stay (no migration needed) but the UI no longer reads from them
 
-| Element | Before | After |
-|---|---|---|
-| Headings | `"Order Confirmed! 🎉"` (700 weight) | `"Your order is confirmed."` (300/600 split, no emoji) |
-| Info cards | `background: linear-gradient(135deg, #faf5ff → #f3e8ff); border-left: 4px solid #9333ea` | `border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff` |
-| CTA buttons | `background: linear-gradient(90deg, #9333ea → #0ea5e9)` | `background: #1a1a1a; border-radius: 6px; font-weight: 500` |
-| Secondary buttons | `border: 2px solid #9333ea; color: #9333ea` | Same — keep as outlined, but with `#1a1a1a` border |
-| Bullet lists | `🎁 **Share wishlists** - Never guess...` | `Share wishlists — never guess...` (clean typography, no emoji) |
-| Status labels | `text-transform: uppercase; color: #9333ea` | `text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af` |
-| Gift message boxes | Green gradient bg with `🎁 Gift Message:` | Bordered card with "Gift message" label |
+**5. Deploy the updated orchestrator**
 
-**4. Clean up subject lines in `getEmailTemplate`**
-Remove all emoji from subject lines across all event types.
-
-**5. Clean up shared partials**
-- `renderShippingAddress`: remove `📍` emoji
-- `renderGiftShippingAddress`: remove `📍` and `🔒` emoji
-- `renderItemsHtml` / `renderPricingBreakdown`: already clean, keep as-is
-
-**6. Clean up `src/utils/messageTemplates.ts`**
-Remove emoji from all message template strings (birthday, anniversary, holiday, etc.).
-
-**7. Deploy**
-Redeploy the `ecommerce-email-orchestrator` edge function.
+### Event types and sample data
+Each event type gets a hardcoded sample data object in the frontend, e.g.:
+- `order_confirmation`: `{ customer_name: "Sarah", order_number: "ORD-A1B2C3", items: [...], total_amount: 89.99 }`
+- `welcome_email`: `{ first_name: "Sarah" }`
+- `auto_gift_approval`: `{ recipient_name: "Mom", occasion: "birthday", product_title: "Silk Scarf", ... }`
+- etc.
 
 ### Files affected
-- **Delete**: `supabase/functions/render-email-template/email-templates/` (11 files)
-- **Edit**: `supabase/functions/ecommerce-email-orchestrator/index.ts` (base template + ~15 consumer templates + subject lines + partials)
-- **Edit**: `src/utils/messageTemplates.ts` (remove emoji from message strings)
+- **Edit**: `supabase/functions/ecommerce-email-orchestrator/index.ts` — add preview mode (~10 lines)
+- **Rewrite**: `src/components/trunkline/communications/EmailTemplatesManager.tsx` — live previewer
+- **Rewrite**: `src/components/trunkline/communications/EmailPreviewModal.tsx` — iframe-based live render
+- **Delete**: `src/components/trunkline/communications/EmailTemplateEditor.tsx` — no longer needed
+- **Keep**: `TestEmailModal.tsx` — still useful for sending real test emails
+- **Deploy**: `ecommerce-email-orchestrator`
 
-### What stays unchanged
-- All sending logic, data fetching, Resend integration, order enrichment
-- Vendor templates (already clean)
-- Connection request and nudge reminder templates (already clean)
-- All utility functions (`formatPrice`, `getFirstName`, `possessive`, etc.)
+### What stays
+- `TestEmailModal` for sending actual test emails
+- `EmailAnalyticsDashboard` (reads from `email_send_log`, unrelated)
+- All orchestrator sending logic unchanged
 

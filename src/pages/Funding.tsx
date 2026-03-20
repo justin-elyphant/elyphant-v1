@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import MainLayout from "@/components/layout/MainLayout";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";

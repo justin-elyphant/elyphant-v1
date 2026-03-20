@@ -301,6 +301,7 @@ export default function MonthlyFundingDashboard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Order Processing Pipeline
+            <InfoTooltip content="Three-stage pipeline: Scheduled (payment authorized, not captured), Payment Confirmed (captured, awaiting Stripe payout to Chase), Processing (submitted to Zinc, ZMA funds used)." />
           </CardTitle>
         </CardHeader>
         <CardContent>

@@ -1,52 +1,45 @@
 
 
-## Fix Dashboard Numbers + Automate Stripe Payout Tracking
+## Enhance "Find New Connections" with Social Discovery Patterns
 
-### Problem 1: Dashboard Net Revenue is wrong
+### Current gaps vs. social media UX
 
-The `extractGiftingFee` function divides by 100 (line 20: `return Number(lineItems.gifting_fee) / 100`), assuming values are stored in cents. But the actual DB data shows gifting fees stored in **dollars** (e.g., `3.35`, `4.2`, `2.0`). This is why Net Revenue shows $0.85 instead of ~$84.56, and Gross Profit shows "Price not available" (it goes deeply negative).
+The search works, but the experience is purely transactional — type a name, see results, hit Connect. Modern social platforms (Instagram, LinkedIn, Snapchat) do three things differently:
 
-**Fix**: Remove the `/100` division in `extractGiftingFee`. The gifting_fee in `line_items` JSONB is already in dollars.
+1. **Show content before the user searches** — "People you may know" suggestions based on mutual connections or shared interests
+2. **Show social proof on each result** — mutual friends count, location, shared wishlists
+3. **Share/invite when no results found** — a dead-end empty state loses users; social apps pivot to "Invite them"
 
-### Problem 2: Stripe payouts not tracked
+### Changes
 
-You receive daily Stripe payout emails ($100.19, $91.45, $26.09, $64.61...) but the `zma_funding_schedule` table is empty. The funding flow is: Stripe → Chase → PayPal → Zinc ZMA. The dashboard needs to:
+**1. Pre-search state: "Suggested for you" section**
+When the search input is empty, show a short list of suggested people instead of a blank screen. Source: query profiles that share mutual connections with the current user (friends-of-friends not yet connected). Display as a horizontal scroll of avatar cards (Instagram "Discover People" pattern) with name + mutual count + Connect button.
 
-1. **Pull Stripe payout history** so you can see what's landing in Chase
-2. **Calculate the Elyphant fee deduction** — only the product cost portion should transfer to ZMA, not the gifting fee (that's your revenue to keep)
-3. **Show the net transfer amount** per payout
+- Add a new RPC function `get_suggested_connections` that finds friends-of-friends
+- Render 4-6 suggestion cards in a horizontal scroll above the search results area
 
-### Plan
+**2. Mutual connections badge on search results**
+The `mutualConnections` field exists in `FriendSearchResult` but is hardcoded to `0`. Implement the actual count:
+- Update `searchFriendsWithPrivacy` to calculate mutual connections per result (count of shared accepted connections between current user and each result)
+- Display as "N mutual friends" subtitle below username when > 0
 
-**1. Fix `extractGiftingFee` in OverviewTab.tsx**
-Remove the `/100` division on lines 20 and 25. Values are already in dollars.
+**3. Location context on results**
+The `city` and `state` fields are already fetched but never rendered. Show them as a subtle line (e.g., "San Francisco, CA") below the bio — helps users confirm they have the right person.
 
-**2. Create a `get-stripe-payouts` edge function**
-Call `stripe.payouts.list()` to fetch recent payouts with amounts, dates, and status. Return them as JSON. This replaces manual tracking — you can see exactly what Stripe is sending to Chase each day.
+**4. Empty state → Invite pivot**
+When search returns 0 results, replace the dead-end "No users found" with:
+- The current message, plus a CTA: "Invite [searchTerm] to Elyphant" that opens the existing `AddConnectionSheet` with the search term pre-filled as the name/email
 
-**3. Add a Stripe Payouts section to MonthlyFundingDashboard**
-Replace the static "Monthly Funding Checklist" with a live **Stripe Payouts → ZMA Transfer** workflow:
-- Table of recent Stripe payouts (date, amount, status, payout ID)
-- For each payout, show a calculated breakdown:
-  - **Payout amount** (from Stripe)
-  - **Elyphant fees retained** (sum of gifting_fees from orders in that payout period)
-  - **Net to transfer to ZMA** = Payout - Fees retained
-- A "Record Transfer" action per payout row that creates a `zma_funding_schedule` entry with `stripe_payout_id`, `transfer_amount` (net), and `total_markup_retained`
-
-**4. Update TransferCalculator to use real payout data**
-Instead of just comparing pending orders vs balance, also show:
-- Recent Stripe payouts arriving in Chase (with dates)
-- Suggested transfer = sum of untransferred payouts minus retained fees
+**5. Share profile link**
+Add a small share icon on each result row. Tapping it copies the user's invite link (`/invite/{username}`) or opens the native share sheet on Capacitor — leveraging the existing viral invitation strategy.
 
 ### Files affected
-- **Edit**: `src/components/trunkline/dashboard/OverviewTab.tsx` — fix `/100` bug
-- **Create**: `supabase/functions/get-stripe-payouts/index.ts` — list recent payouts
-- **Edit**: `src/components/trunkline/funding/MonthlyFundingDashboard.tsx` — add payouts table + transfer workflow
-- **Edit**: `src/components/trunkline/funding/TransferCalculator.tsx` — incorporate payout data
-- **Deploy**: `get-stripe-payouts`
+- **Create**: SQL migration — `get_suggested_connections` RPC (friends-of-friends query)
+- **Edit**: `src/services/search/privacyAwareFriendSearch.ts` — implement mutual connections count
+- **Edit**: `src/components/connections/EnhancedConnectionSearch.tsx` — add suggested section, mutual friends display, location line, invite pivot empty state, share button
+- **Edit**: `src/pages/Connections.tsx` — pass `onInvite` callback to open AddConnectionSheet from search
 
 ### What stays unchanged
-- ZMA balance polling, audit log, TransferHistory component
-- Order pipeline visualization
-- All order processing / fulfillment logic
+- All privacy filtering, blocked user logic, connection request flow
+- The Drawer/Dialog swap and Lululemon styling from the previous plan (applied separately)
 

@@ -123,6 +123,7 @@ const PurchaseSuccess = () => {
           </CardHeader>
         </Card>
       </div>
+      </MainLayout>
     );
   }
 

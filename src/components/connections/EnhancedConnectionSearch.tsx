@@ -126,33 +126,33 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
   const showEmptyState = searchTerm.length >= 2 && !loading && results.length === 0;
 
   return (
-    <div className="space-y-5">
-      {/* Search input */}
+    <div className="space-y-6">
+      {/* Search input — Lululemon quiet field */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 h-4 w-4" />
         <Input
           placeholder="Search by name, username, or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-10 h-12 rounded-xl text-base"
+          className="pl-10 pr-10 h-12 rounded-full text-base bg-muted/40 border-transparent focus-visible:border-border focus-visible:bg-background transition-colors"
         />
         {searchTerm && (
           <button
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground touch-manipulation"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground touch-manipulation active:scale-95 transition-transform p-1"
           >
             <X className="h-4 w-4" />
           </button>
         )}
         {loading && (
-          <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4 animate-spin" />
+          <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground/60 h-4 w-4 animate-spin" />
         )}
       </div>
 
       {/* Suggested connections — shown when not searching */}
       {showSuggestions && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
+          <p className="text-xs font-light tracking-[0.12em] uppercase text-muted-foreground">
             Suggested for you
           </p>
           <ScrollArea className="w-full">
@@ -160,26 +160,25 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
               {suggestions.map((person) => (
                 <div
                   key={person.id}
-                  className="flex-shrink-0 w-[140px] rounded-xl border border-border bg-card p-4 flex flex-col items-center text-center space-y-2"
+                  className="flex-shrink-0 w-[140px] rounded-2xl bg-background p-4 flex flex-col items-center text-center space-y-2.5 shadow-[0_1px_4px_hsl(var(--foreground)/0.06)] transition-shadow hover:shadow-[0_2px_8px_hsl(var(--foreground)/0.1)]"
                 >
-                  <Avatar className="h-14 w-14">
+                  <Avatar className="h-14 w-14 ring-1 ring-border/50">
                     <AvatarImage src={person.profile_image || undefined} />
-                    <AvatarFallback className="text-sm">
+                    <AvatarFallback className="text-sm font-light bg-muted">
                       {person.name?.substring(0, 2).toUpperCase() || 'UN'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="w-full min-w-0">
                     <p className="text-sm font-medium truncate">{person.name}</p>
                     {person.mutual_count > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         {person.mutual_count} mutual
                       </p>
                     )}
                   </div>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="w-full rounded-full text-xs h-8"
+                    className="w-full rounded-full text-xs h-8 bg-foreground text-background hover:bg-foreground/90 active:scale-[0.97] transition-transform"
                     onClick={() => handleSendConnectionRequest(person.id, person.name || 'User')}
                   >
                     Connect
@@ -195,10 +194,10 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
       {/* Suggestions loading skeleton */}
       {searchTerm.length < 2 && suggestionsLoading && (
         <div className="space-y-3">
-          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-28" />
           <div className="flex gap-3">
             {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-[160px] w-[140px] rounded-xl flex-shrink-0" />
+              <Skeleton key={i} className="h-[170px] w-[140px] rounded-2xl flex-shrink-0" />
             ))}
           </div>
         </div>
@@ -206,31 +205,31 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
 
       {/* Search results */}
       {results.length > 0 && (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border/60">
           {results.map((result) => {
             const location = formatLocation(result.city, result.state);
             return (
               <div key={result.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <Avatar className="h-11 w-11 flex-shrink-0">
+                  <Avatar className="h-11 w-11 flex-shrink-0 ring-1 ring-border/40">
                     <AvatarImage src={result.profile_image} />
-                    <AvatarFallback className="text-sm">
+                    <AvatarFallback className="text-sm font-light bg-muted">
                       {result.name?.substring(0, 2).toUpperCase() || 'UN'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">{result.name || 'Unknown User'}</p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-muted-foreground/70 truncate">
                       {result.username ? `@${result.username}` : ''}
                     </p>
                     {(result.mutualConnections ?? 0) > 0 && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
                         <Users className="h-3 w-3" />
                         {result.mutualConnections} mutual
                       </p>
                     )}
                     {location && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground/60 flex items-center gap-1 mt-0.5">
                         <MapPin className="h-3 w-3" />
                         {location}
                       </p>
@@ -238,26 +237,29 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {result.username && (
                     <button
                       onClick={() => handleShare(result.username, result.name)}
-                      className="p-2 text-muted-foreground hover:text-foreground touch-manipulation"
+                      className="p-2.5 text-muted-foreground/50 hover:text-foreground touch-manipulation active:scale-95 transition-all rounded-full"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
                   )}
                   {result.connectionStatus === 'connected' && (
-                    <Badge variant="secondary" className="text-xs">Connected</Badge>
+                    <span className="text-[11px] tracking-wide uppercase text-muted-foreground font-medium px-3 py-1.5">
+                      Connected
+                    </span>
                   )}
                   {result.connectionStatus === 'pending' && (
-                    <Badge variant="outline" className="text-xs">Sent</Badge>
+                    <span className="text-[11px] tracking-wide uppercase text-muted-foreground/60 font-medium px-3 py-1.5">
+                      Sent
+                    </span>
                   )}
                   {result.connectionStatus === 'none' && (
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="rounded-full text-xs h-8 px-4"
+                      className="rounded-full text-xs h-8 px-5 bg-foreground text-background hover:bg-foreground/90 active:scale-[0.97] transition-transform"
                       onClick={() => handleSendConnectionRequest(result.id, result.name)}
                     >
                       Connect
@@ -272,17 +274,16 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
 
       {/* Empty state → Invite pivot */}
       {showEmptyState && (
-        <div className="text-center py-10 space-y-3">
-          <p className="text-muted-foreground text-sm">
+        <div className="text-center py-12 space-y-3">
+          <p className="text-muted-foreground text-sm font-light">
             No one found for "{searchTerm}"
           </p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground/60 text-xs">
             Try searching by first name or email address
           </p>
           {onInvite && (
             <Button
-              variant="outline"
-              className="rounded-full mt-2"
+              className="rounded-full mt-3 bg-foreground text-background hover:bg-foreground/90 active:scale-[0.97] transition-transform"
               onClick={() => onInvite(searchTerm)}
             >
               <UserPlus className="h-4 w-4 mr-2" />

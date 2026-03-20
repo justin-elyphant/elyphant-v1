@@ -277,16 +277,16 @@ const EmailTemplatesManager = () => {
             </SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((cat) => (
-                <React.Fragment key={cat}>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <SelectGroup key={cat}>
+                  <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
                     {cat}
-                  </div>
+                  </SelectLabel>
                   {EVENT_TYPES.filter((e) => e.category === cat).map((e) => (
                     <SelectItem key={e.value} value={e.value}>
                       {e.label}
                     </SelectItem>
                   ))}
-                </React.Fragment>
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

@@ -50,7 +50,10 @@ interface EmailRequest {
 
 // ===== EMAIL TEMPLATES =====
 
-// Base Template
+// Shared font stack
+const fontStack = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`;
+
+// Base Template — minimalist, Lululemon-inspired
 const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?: string }): string => `
 <!DOCTYPE html>
 <html lang="en">
@@ -64,17 +67,9 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-    body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    .brand-gradient { background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); }
     @media screen and (max-width: 600px) {
       .email-container { width: 100% !important; }
       .mobile-padding { padding: 20px !important; }
-      .mobile-text { font-size: 16px !important; line-height: 24px !important; }
-      .mobile-heading { font-size: 24px !important; line-height: 32px !important; }
-    }
-    @media (prefers-color-scheme: dark) {
-      .dark-mode-bg { background-color: #1a1a1a !important; }
-      .dark-mode-text { color: #ffffff !important; }
     }
   </style>
 </head>
@@ -83,26 +78,30 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
     <tr>
       <td align="center" style="padding: 40px 10px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+          <!-- Header: Clean wordmark + gradient accent -->
           <tr>
-            <td align="center" style="padding: 40px 30px; background-color: #9333ea; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%);">
-              <h1 style="margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">🎁 Elyphant</h1>
+            <td align="center" style="padding: 40px 30px 24px 30px;">
+              <h1 style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">Elyphant</h1>
+              <div style="width: 40px; height: 2px; background: linear-gradient(90deg, #9333ea 0%, #0ea5e9 100%); margin: 0 auto;"></div>
             </td>
           </tr>
+          <!-- Content -->
           <tr>
-            <td class="mobile-padding" style="padding: 40px 30px;">
+            <td class="mobile-padding" style="padding: 0 30px 40px 30px;">
               ${content}
             </td>
           </tr>
+          <!-- Footer -->
           <tr>
-            <td style="padding: 30px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; text-align: center;">
-                © ${new Date().getFullYear()} Elyphant. All rights reserved.
+            <td style="padding: 30px; border-top: 1px solid #f3f4f6;">
+              <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; color: #9ca3af; text-align: center;">
+                &copy; ${new Date().getFullYear()} Elyphant. All rights reserved.
               </p>
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #999999; text-align: center;">
-                <a href="https://elyphant.ai" style="color: #9333ea; text-decoration: none;">Visit Website</a> | 
-                <a href="https://elyphant.ai/privacy" style="color: #9333ea; text-decoration: none;">Privacy Policy</a> | 
-                <a href="https://elyphant.ai/unsubscribe" style="color: #9333ea; text-decoration: none;">Unsubscribe</a>
+              <p style="margin: 0; font-family: ${fontStack}; font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.8;">
+                <a href="https://elyphant.ai" style="color: #9ca3af; text-decoration: underline;">Website</a> &nbsp;&middot;&nbsp;
+                <a href="https://elyphant.ai/privacy" style="color: #9ca3af; text-decoration: underline;">Privacy</a> &nbsp;&middot;&nbsp;
+                <a href="https://elyphant.ai/unsubscribe" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
               </p>
             </td>
           </tr>

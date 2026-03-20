@@ -87,6 +87,7 @@ const FundingSuccess = () => {
           </CardHeader>
         </Card>
       </div>
+      </MainLayout>
     );
   }
   

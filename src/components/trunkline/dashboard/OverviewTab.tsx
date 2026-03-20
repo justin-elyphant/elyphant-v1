@@ -263,6 +263,7 @@ export default function OverviewTab() {
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 Order Status Breakdown
+                <InfoTooltip content="Completed = shipped/delivered/completed. Pending = scheduled/pending/processing. Failed = failed/cancelled. Failed orders are excluded from revenue calculations." />
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -26,7 +26,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
   onConnectionAdded
 }) => {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1024);
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -131,7 +131,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
   };
 
   const formContent = (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 pb-safe touch-action-manipulation overscroll-contain">
       <div className="text-center pb-2">
         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
           <UserPlus className="w-6 h-6 text-primary" />
@@ -219,7 +219,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
       <Button
         onClick={handleSendInvitation}
         disabled={isLoading || !inviteForm.name || !inviteForm.email}
-        className="w-full"
+        className="w-full min-h-[44px] active:scale-[0.97] transition-transform"
         size="lg"
       >
         {isLoading ? (
@@ -251,7 +251,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto overscroll-contain p-0">
         <DialogHeader className="px-4 pt-4 pb-0">
           <DialogTitle>Invite Someone</DialogTitle>
         </DialogHeader>

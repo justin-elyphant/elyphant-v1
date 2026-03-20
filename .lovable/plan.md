@@ -1,32 +1,29 @@
 
 
-## Redesign Post-Onboarding Welcome Modal
+## Elevate the Post-Onboarding Welcome Modal
 
-### What changes
+### Problem
+The current modal is too plain — no branding, no visual warmth. Needs "Welcome to Elyphant" and a bit more visual personality while staying clean.
 
-Restyle the modal to match the Lululemon-inspired minimalist aesthetic and update the 3 action cards:
+### Changes (single file: `PostOnboardingWelcome.tsx`)
 
-1. **Explore the Shop** (ShoppingBag icon) → `/marketplace` — "Discover gifts from top brands"
-2. **Create a Wishlist** (List icon) → `/wishlists` — "Build and share your perfect list"
-3. **Find Friends** (Users icon) → `/connections` — "Connect with friends & family"
+**1. Add branding header**
+- Add the Elyphant logo (import the `ElyphantTextLogo` component) centered above the text
+- Change heading to **"Welcome to Elyphant, {firstName}"** or split into two lines: "Welcome to Elyphant" as the main heading and "Hey {firstName}, what would you like to do first?" as subtitle
 
-### Style updates to `PostOnboardingWelcome.tsx`
+**2. Add subtle visual warmth to action cards**
+- Give each icon a soft circular background tint (e.g., light purple/violet at ~10% opacity) — consistent with the brand gradient palette
+- Slightly increase card padding and add a subtle border (`border border-border/50`) so they feel more like tappable cards, not just rows
+- Add a gentle `hover:shadow-sm` lift effect
 
-- **Remove** the colored Sparkles circle header — replace with clean, minimal typography only (no icon bubble)
-- **Heading**: "Welcome, {firstName}" in large semibold text, no "to Elyphant" branding clutter
-- **Subtitle**: "What would you like to do first?" — warmer, action-oriented
-- **Action cards**: Remove the `border-2` outlined button style. Use clean white cards with subtle shadow on hover, left-aligned icon + text, generous whitespace — matching the airy Lululemon feel
-- **Icons**: Thin stroke, muted color (text-muted-foreground), not the current blue/primary fill
-- **Skip link**: Keep "Just browsing" but style as lighter, more understated
-- **Dialog**: Clean white background, more padding, no heavy borders
+**3. Add a thin divider or spacing**
+- A subtle `<hr>` or extra spacing between the header and the action cards to give the layout more breathing room
+
+**4. Polish the skip link**
+- Make "Just browsing" slightly more visible — bump to `text-muted-foreground` (not /70) so it doesn't feel hidden
 
 ### Technical details
-
-**Single file edit**: `src/components/onboarding/PostOnboardingWelcome.tsx`
-- Update the `actions` array with new items, labels, descriptions, icons, and routes
-- Restyle the header section (remove icon circle, simplify typography)
-- Restyle action cards from `Button variant="outline"` to clean `div` cards with hover states
-- Keep all existing localStorage logic, haptics, navigation, and iOS compliance (pb-safe, touch-manipulation, 44px targets) unchanged
-
-No new files, no backend changes, no route changes.
+- Import `ElyphantTextLogo` from `@/components/ui/ElyphantTextLogo`
+- All changes in `src/components/onboarding/PostOnboardingWelcome.tsx`
+- No new dependencies, no route changes
 

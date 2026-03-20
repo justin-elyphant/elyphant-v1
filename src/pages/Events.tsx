@@ -207,7 +207,7 @@ const EventsContent = ({ onAddEvent }: { onAddEvent: () => void }) => {
       
       {/* Gift Setup integrated into Nicole AI flow */}
     </>
-      </SidebarLayout>
+  );
   );
 };
 

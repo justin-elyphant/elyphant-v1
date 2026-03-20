@@ -37,9 +37,17 @@ const actions = [
   },
 ] as const;
 
+interface PostOnboardingWelcomeProps {
+  open: boolean;
+  userName: string;
+  userId?: string;
+  onDismiss: () => void;
+}
+
 const PostOnboardingWelcome: React.FC<PostOnboardingWelcomeProps> = ({
   open,
   userName,
+  userId,
   onDismiss,
 }) => {
   const navigate = useNavigate();
@@ -47,10 +55,17 @@ const PostOnboardingWelcome: React.FC<PostOnboardingWelcomeProps> = ({
 
   const firstName = userName?.split(" ")[0] || "there";
 
+  const markSeen = () => {
+    const key = userId
+      ? `postOnboardingWelcomeSeen_${userId}`
+      : "postOnboardingWelcomeSeen";
+    localStorage.setItem(key, "true");
+  };
+
   const handleAction = (route: string) => {
     triggerHapticFeedback("selection");
     setIsNavigating(true);
-    localStorage.setItem("postOnboardingWelcomeSeen", "true");
+    markSeen();
     setTimeout(() => {
       onDismiss();
       navigate(route);
@@ -59,7 +74,7 @@ const PostOnboardingWelcome: React.FC<PostOnboardingWelcomeProps> = ({
 
   const handleSkip = () => {
     triggerHapticFeedback("light");
-    localStorage.setItem("postOnboardingWelcomeSeen", "true");
+    markSeen();
     onDismiss();
   };
 

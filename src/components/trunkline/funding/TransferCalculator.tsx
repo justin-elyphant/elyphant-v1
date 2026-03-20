@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calculator, Copy, Check } from "lucide-react";
+import { Calculator, Copy, Check, Banknote } from "lucide-react";
 import { toast } from "sonner";
 
 interface TransferCalculatorProps {
@@ -9,6 +9,7 @@ interface TransferCalculatorProps {
   bufferAmount: number;
   currentBalance: number;
   recommendedTransfer: number;
+  untransferredNetTotal?: number;
 }
 
 export function TransferCalculator({
@@ -16,6 +17,7 @@ export function TransferCalculator({
   bufferAmount,
   currentBalance,
   recommendedTransfer,
+  untransferredNetTotal = 0,
 }: TransferCalculatorProps) {
   const [copied, setCopied] = React.useState(false);
 
@@ -33,7 +35,7 @@ export function TransferCalculator({
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          This Week's Calculation
+          Transfer Calculation
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -54,6 +56,17 @@ export function TransferCalculator({
             <span className="text-muted-foreground">Current ZMA Balance</span>
             <span className="font-medium text-green-600">- ${currentBalance.toFixed(2)}</span>
           </div>
+
+          {untransferredNetTotal > 0 && (
+            <div className="flex justify-between items-center py-2 border-b">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <Banknote className="h-4 w-4" />
+                Untransferred Payouts (net)
+              </span>
+              <span className="font-medium text-primary">${untransferredNetTotal.toFixed(2)} available</span>
+            </div>
+          )}
+
           <div className="flex justify-between items-center py-3 bg-muted/50 rounded-lg px-3 -mx-3">
             <span className="font-semibold text-foreground flex items-center gap-2">
               💰 TRANSFER RECOMMENDED
@@ -81,7 +94,7 @@ export function TransferCalculator({
         {recommendedTransfer <= 0 && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">
-              ✓ No transfer needed this week. Current balance covers pending orders with buffer.
+              ✓ No transfer needed. Current balance covers pending orders with buffer.
             </p>
           </div>
         )}
@@ -89,7 +102,12 @@ export function TransferCalculator({
         {recommendedTransfer > 0 && (
           <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
             <p className="text-sm text-foreground">
-              <strong>Transfer Instructions:</strong> Use PayPal to send ${recommendedTransfer.toFixed(2)} to your Zinc ZMA account. After transfer is confirmed, record it using the button below.
+              <strong>Transfer Instructions:</strong> Use PayPal to send ${recommendedTransfer.toFixed(2)} to your Zinc ZMA account.
+              {untransferredNetTotal > 0 && (
+                <span className="block mt-1 text-muted-foreground">
+                  You have ${untransferredNetTotal.toFixed(2)} in untransferred Stripe payouts (net of fees) available in Chase to fund this.
+                </span>
+              )}
             </p>
           </div>
         )}

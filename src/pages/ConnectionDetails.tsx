@@ -83,6 +83,7 @@ const ConnectionDetails = () => {
           </CardContent>
         </Card>
       </div>
+      </SidebarLayout>
     );
   }
 

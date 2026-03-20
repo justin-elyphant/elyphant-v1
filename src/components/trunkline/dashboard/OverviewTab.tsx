@@ -205,7 +205,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Total Orders <InfoTooltip content="All orders excluding failed and cancelled. Includes completed, shipped, delivered, pending, processing, and scheduled." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{totalOrders}</p>
                   <span className="text-xs text-muted-foreground">+{recentOrders.length} this week</span>
                 </div>

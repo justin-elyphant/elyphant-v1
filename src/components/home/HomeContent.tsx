@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Hero from "./sections/hero/Hero";
 import GiftCategoriesGrid from "./sections/GiftCategoriesGrid";
 import FeaturedCategories from "./sections/FeaturedCategories";
@@ -19,20 +20,26 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 const HomeContent = () => {
   const { trackRender } = usePerformanceMonitor();
   const { profile } = useProfile();
+  const location = useLocation();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   
   useEffect(() => {
+    // Guard: skip when HomeContent renders as Auth page background
+    if (location.pathname === '/auth') return;
+
     let isMounted = true;
     const startTime = performance.now();
     
-    // Debounce to prevent multiple rapid executions during page refresh
     const timeoutId = setTimeout(() => {
       if (!isMounted) return;
       
       try {
-        // Check if user just completed signup for welcome messaging
         const justCompletedSignup = localStorage.getItem('justCompletedSignup');
-        const welcomeSeen = localStorage.getItem('postOnboardingWelcomeSeen');
+        const userId = profile?.id;
+        const welcomeSeenKey = userId
+          ? `postOnboardingWelcomeSeen_${userId}`
+          : 'postOnboardingWelcomeSeen';
+        const welcomeSeen = localStorage.getItem(welcomeSeenKey);
         
         if (justCompletedSignup) {
           localStorage.removeItem('justCompletedSignup');
@@ -41,18 +48,15 @@ const HomeContent = () => {
             setShowWelcomeModal(true);
           }
           
-          // Set Nicole context to be helpful for new users
           LocalStorageService.setNicoleContext({
             source: 'new_user_homepage',
             currentPage: '/',
             timestamp: new Date().toISOString()
           });
         } else {
-          // Clear any lingering onboarding state for returning users
           LocalStorageService.clearProfileCompletionState();
           LocalStorageService.cleanupDeprecatedKeys();
           
-          // Set fresh context for homepage visit
           LocalStorageService.setNicoleContext({
             source: 'homepage_visit',
             currentPage: '/',
@@ -60,7 +64,6 @@ const HomeContent = () => {
           });
         }
         
-        // Preload likely next pages and critical assets during idle time
         if ('requestIdleCallback' in window) {
           requestIdleCallback(() => {
             if (isMounted) {
@@ -76,24 +79,24 @@ const HomeContent = () => {
         console.warn('LocalStorage operations failed (possibly in iframe):', error);
       }
       
-      // Only track performance outside of iframe to avoid interference
       if (!isInIframe() && isMounted) {
         const setupTime = performance.now() - startTime;
         trackRender("HomeContent", startTime);
       }
-    }, 50); // Small delay to prevent rapid re-execution
+    }, 150); // Increased debounce for Auth unmount timing
     
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, []); // Remove trackRender dependency to prevent re-execution
+  }, [location.pathname, profile?.id]);
 
   return (
     <div className="min-h-screen">
       <PostOnboardingWelcome
         open={showWelcomeModal}
         userName={profile?.name || profile?.first_name || ""}
+        userId={profile?.id}
         onDismiss={() => setShowWelcomeModal(false)}
       />
       {/* Hero section - maintains its own layout */}

@@ -1,29 +1,55 @@
 
 
-## Make Suggestions the Default Tab + Enable Search Filtering
+## Consolidate Suggestion Engine — Single Server-Side RPC
 
 ### Problem
-1. The "Friends" tab is currently the default across all layouts, but for new users (0 connections), this shows an empty state immediately. "Suggestions" should be primary to drive discovery.
-2. The search bar already filters suggestions (`filteredSuggestions`), so it does work — but users may not realize it since they land on the Friends tab.
 
-### Changes
+Two separate suggestion systems exist:
+1. **`useConnectionSuggestions` hook** — client-side N+1 monster: fetches ALL non-connected profiles, then fires an RPC per profile for mutual count. Slow, wasteful, no dismiss persistence, no pending-request filtering.
+2. **`get_suggested_connections` RPC** — efficient friends-of-friends query, but only used in the search pre-state. Misses interest matching and cold-start users (0 connections = 0 results).
 
-**1. Default to "Suggestions" tab across all layouts**
-- Line 112: Change the initial `activeTab` state from `"friends"` to `"suggestions"` (unless URL param overrides to `pending`)
-- Desktop layout (line 682): Change `defaultValue={activeTab}` — already uses `activeTab` state, so this is automatic
+Additionally, `useMutualConnections.ts` is dead code (zero imports outside itself).
 
-**2. Reorder tabs: Suggestions first**
-In all three layouts (mobile, tablet, desktop), move the Suggestions tab trigger to the first position, followed by Friends, then Pending. This applies to:
-- Mobile (lines 317-343)
-- Tablet (lines 508-533)
-- Desktop (lines 683-696)
+### Plan
 
-**3. Reorder TabsContent to match**
-Move `TabsContent value="suggestions"` before `value="friends"` in all three layouts for code consistency (not strictly required by Radix, but cleaner).
+**1. Upgrade `get_suggested_connections` RPC to handle everything**
 
-### What already works
-- The search bar filters suggestions via `filteredSuggestions` (line 217-219) — this already applies when on the Suggestions tab. No additional wiring needed.
+Extend the existing RPC to cover all scoring signals in one query:
+- Keep the friends-of-friends mutual count logic (already there)
+- Add interest overlap: accept `user_interests text[]` param, compute `array_length(array_intersect(p.interests, user_interests))` as `common_interests`
+- Add cold-start fallback: when the user has 0 accepted connections, fall back to profiles with the most connections (popular users) + interest overlap
+- Exclude pending connections (any row in `user_connections` regardless of status, not just accepted)
+- Add `profile_image` completeness flag for tie-breaking
+- Increase default limit from 6 → 15 (tab shows more than search pre-state)
+- Return `common_interests` count alongside `mutual_count`
+
+**2. Rewrite `useConnectionSuggestions` to use the RPC**
+
+Replace the entire 130-line hook with ~30 lines:
+- Fetch current user's interests from profiles
+- Call `get_suggested_connections` RPC with `requesting_user_id` and `user_interests`
+- Map results directly to `Connection[]` — no client-side scoring loop, no N+1
+- Generate `reason` string from `mutual_count` / `common_interests` returned by RPC
+
+**3. Delete `useMutualConnections.ts`**
+
+Dead code — nothing imports it. The `get_mutual_friends_count` RPC is called directly where needed.
+
+**4. Update `SuggestionCard` dismiss to persist**
+
+Store dismissed suggestion IDs in localStorage (`dismissed_suggestions`) so they survive page reloads. Filter them out in `useConnectionSuggestions` before setting state. No new DB table needed — lightweight and sufficient.
 
 ### Files affected
-- **Edit**: `src/pages/Connections.tsx` — change default tab + reorder tab triggers and content in all 3 layouts
+- **Migrate**: Update `get_suggested_connections` RPC (add interests param, cold-start, pending exclusion)
+- **Rewrite**: `src/hooks/useConnectionSuggestions.ts` — slim down to RPC caller
+- **Delete**: `src/hooks/useMutualConnections.ts` — unused
+- **Edit**: `src/components/connections/SuggestionCard.tsx` — persist dismiss to localStorage
+- **Edit**: `src/integrations/supabase/types.ts` — auto-updated by migration
+
+### What stays unchanged
+- `get_mutual_friends_count` RPC (still used by search results enrichment)
+- `EnhancedConnectionSearch.tsx` (uses `get_suggested_connections` independently for the search pre-state with limit 6)
+- `useConnectionsAdapter.tsx` — still consumes `useConnectionSuggestions`, no interface change
+- `SuggestionsTabContent.tsx` — no changes needed
+- All connection request / accept / reject logic
 

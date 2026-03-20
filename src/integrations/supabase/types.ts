@@ -5594,19 +5594,38 @@ export type Database = {
         Returns: boolean
       }
       get_security_recommendations: { Args: never; Returns: Json }
-      get_suggested_connections: {
-        Args: { requesting_user_id: string; suggestion_limit?: number }
-        Returns: {
-          bio: string
-          city: string
-          id: string
-          mutual_count: number
-          name: string
-          profile_image: string
-          state: string
-          username: string
-        }[]
-      }
+      get_suggested_connections:
+        | {
+            Args: { requesting_user_id: string; suggestion_limit?: number }
+            Returns: {
+              bio: string
+              city: string
+              id: string
+              mutual_count: number
+              name: string
+              profile_image: string
+              state: string
+              username: string
+            }[]
+          }
+        | {
+            Args: {
+              requesting_user_id: string
+              suggestion_limit?: number
+              user_interests?: string[]
+            }
+            Returns: {
+              bio: string
+              city: string
+              common_interests: number
+              id: string
+              mutual_count: number
+              name: string
+              profile_image: string
+              state: string
+              username: string
+            }[]
+          }
       get_upcoming_auto_gift_events:
         | {
             Args: { days_ahead?: number }

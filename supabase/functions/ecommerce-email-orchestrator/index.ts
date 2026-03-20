@@ -1199,78 +1199,78 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'wishlist_shared':
       return {
         html: wishlistSharedTemplate(data),
-        subject: `${data.sender_name || 'A friend'} shared a wishlist with you! 🎁`
+        subject: `${data.sender_name || 'A friend'} shared a wishlist with you`
       };
     case 'order_confirmation':
       return {
         html: orderConfirmationTemplate(data),
-        subject: `Order Confirmed - ${data.order_number || 'Your Order'}`
+        subject: `Order Confirmed — ${data.order_number || 'Your Order'}`
       };
     case 'order_pending_payment':
       return {
         html: orderPendingPaymentTemplate(data),
-        subject: `Order Scheduled - ${data.order_number || 'Your Order'}`
+        subject: `Order Scheduled — ${data.order_number || 'Your Order'}`
       };
     case 'order_shipped':
       return {
         html: orderShippedTemplate(data),
-        subject: `Your Order Has Shipped - ${data.order_number || 'Tracking Available'}`
+        subject: `Your Order Has Shipped — ${data.order_number || 'Tracking Available'}`
       };
     case 'order_failed':
       return {
         html: orderFailedTemplate(data),
-        subject: `Order Processing Issue - ${data.order_number || 'Action Required'}`
+        subject: `Order Processing Issue — ${data.order_number || 'Action Required'}`
       };
     case 'connection_invitation':
     case 'gift_invitation':
       return {
         html: connectionInvitationTemplate(data),
         subject: data.has_pending_gift 
-          ? `🎁 ${data.sender_name || 'Someone'} has a gift waiting for you!`
-          : `${data.sender_name || 'Someone'} invited you to Elyphant! 🎉`
+          ? `${data.sender_name || 'Someone'} has a gift waiting for you`
+          : `${data.sender_name || 'Someone'} invited you to Elyphant`
       };
     case 'connection_established':
       return {
         html: connectionEstablishedTemplate(data),
-        subject: `You're now connected with ${data.connection_name || 'a friend'}! 🎉`
+        subject: `You're now connected with ${data.connection_name || 'a friend'}`
       };
     case 'welcome_email':
       return {
         html: welcomeEmailTemplate(data),
-        subject: `Welcome to Elyphant! 🎉`
+        subject: `Welcome to Elyphant`
       };
     case 'auto_gift_approval':
       return {
         html: autoGiftApprovalTemplate(data),
-        subject: `Auto-Gift Approval Needed - ${possessive(data.recipient_name)} ${formatOccasion(data.occasion)} 🎁`
+        subject: `Auto-Gift Approval Needed — ${possessive(data.recipient_name)} ${formatOccasion(data.occasion)}`
       };
     case 'recurring_gift_rule_created':
-    case 'auto_gift_rule_created': // Alias for backward compatibility
+    case 'auto_gift_rule_created':
       return {
         html: recurringGiftRuleCreatedTemplate(data),
-        subject: `Recurring Gifts Set Up for ${data.recipient_name || 'Your Friend'}! 🔄`
+        subject: `Recurring Gifts Set Up for ${data.recipient_name || 'Your Friend'}`
       };
     case 'gift_coming_your_way':
       return {
         html: giftComingYourWayTemplate(data),
-        subject: `${data.sender_name || 'Someone special'} sent you a gift! 🎁`
+        subject: `${data.sender_name || 'Someone special'} sent you a gift`
       };
     case 'zma_low_balance_alert':
       return {
         html: zmaLowBalanceAlertTemplate(data),
         subject: data.is_critical 
-          ? `🚨 CRITICAL: ZMA Balance Alert - Orders Blocked`
-          : `⚠️ ZMA Low Balance Alert - Transfer Recommended`
+          ? `CRITICAL: ZMA Balance Alert — Orders Blocked`
+          : `ZMA Low Balance Alert — Transfer Recommended`
       };
     case 'auto_gift_payment_failed':
       return {
         html: autoGiftPaymentFailedTemplate(data),
-        subject: `⚠️ Payment Failed for ${possessive(data.recipient_name || 'Your')} Gift - Action Needed`
+        subject: `Payment Failed for ${possessive(data.recipient_name || 'Your')} Gift — Action Needed`
       };
     case 'guest_order_confirmation':
       return {
         html: guestOrderConfirmationTemplate(data),
-        subject: `Order Confirmed - ${data.order_number || 'Your Order'} 🎁`
+        subject: `Order Confirmed — ${data.order_number || 'Your Order'}`
       };
     case 'vendor_new_order':
       return {
@@ -1285,7 +1285,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'vendor_application_approved':
       return {
         html: vendorApplicationApprovedTemplate(data),
-        subject: `You're Approved — Welcome to Elyphant, ${data.company_name || 'Partner'}!`
+        subject: `You're Approved — Welcome to Elyphant, ${data.company_name || 'Partner'}`
       };
     case 'vendor_application_rejected':
       return {
@@ -1295,12 +1295,12 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'connection_request':
       return {
         html: connectionRequestTemplate(data),
-        subject: `${data.sender_name || 'Someone'} wants to connect with you on Elyphant! 🤝`
+        subject: `${data.sender_name || 'Someone'} wants to connect with you on Elyphant`
       };
     case 'nudge_reminder':
       return {
         html: nudgeReminderTemplate(data),
-        subject: `Reminder: ${data.sender_name || 'Someone'} is waiting to connect with you 🔔`
+        subject: `Reminder: ${data.sender_name || 'Someone'} is waiting to connect with you`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

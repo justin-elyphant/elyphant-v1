@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ZMABalanceCard } from "./ZMABalanceCard";
 import { TransferCalculator } from "./TransferCalculator";
 import { TransferHistory } from "./TransferHistory";
+import { InfoTooltip } from "../dashboard/InfoTooltip";
 import { format, addDays } from "date-fns";
 import { PAYMENT_LEAD_TIME } from "@/lib/constants/paymentLeadTime";
 import {
@@ -300,6 +301,7 @@ export default function MonthlyFundingDashboard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Order Processing Pipeline
+            <InfoTooltip content="Three-stage pipeline: Scheduled (payment authorized, not captured), Payment Confirmed (captured, awaiting Stripe payout to Chase), Processing (submitted to Zinc, ZMA funds used)." />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -343,7 +345,7 @@ export default function MonthlyFundingDashboard() {
         />
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Untransferred Payouts</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">Untransferred Payouts <InfoTooltip content="Stripe payouts with status 'paid' that haven't been recorded as transferred to ZMA yet. Total = gross payout amount. Net = after subtracting estimated Elyphant fees you retain." /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{untransferredPayouts.length}</div>
@@ -354,7 +356,7 @@ export default function MonthlyFundingDashboard() {
         </Card>
         <Card className={recommendedTransfer > 0 ? 'border-primary' : ''}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Transfer Recommended</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">Transfer Recommended <InfoTooltip content={`Formula: (Pending Orders Value + $${PAYMENT_LEAD_TIME.ZMA_BUFFER_AMOUNT} buffer) − Current ZMA Balance. If result is ≤ 0, no transfer needed.`} /></CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${recommendedTransfer > 0 ? 'text-primary' : 'text-green-600'}`}>
@@ -373,6 +375,7 @@ export default function MonthlyFundingDashboard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Banknote className="h-5 w-5" />
             Stripe Payouts → ZMA Transfers
+            <InfoTooltip content="Live data from stripe.payouts.list(). 'Fees Retained' is estimated by applying the ratio of total gifting fees to total paid payouts. 'Net to ZMA' = Payout Amount − Fees Retained. Click 'Record' to log the transfer in zma_funding_schedule." />
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Total Elyphant fees retained across all completed orders: <strong className="text-foreground">${totalFeesRetained.toFixed(2)}</strong>

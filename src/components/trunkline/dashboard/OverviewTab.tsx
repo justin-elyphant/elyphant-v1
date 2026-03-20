@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Percent, PiggyBank, Crown, Handshake, Settings2, RotateCcw } from "lucide-react";
 import { useOrders } from "@/hooks/trunkline/useOrders";
+import { InfoTooltip } from "./InfoTooltip";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
 import { useDashboardLayout } from "@/hooks/trunkline/useDashboardLayout";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -108,7 +109,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Net Revenue</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Net Revenue <InfoTooltip content="Sum of gifting_fee from all completed/shipped/delivered orders. This is the platform fee Elyphant retains — stored in line_items.gifting_fee (dollars)." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(netRevenue)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
@@ -130,7 +133,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">GMV</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    GMV <InfoTooltip content="Gross Merchandise Value — sum of total_amount from all completed/shipped/delivered orders. This is what customers paid in total." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(gmv)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
@@ -152,7 +157,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Gross Profit</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Gross Profit <InfoTooltip content="Net Revenue minus Zinc fulfillment costs ($1.00 per order). Formula: Sum(gifting_fee) − (completed_order_count × $1.00)." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{formatPrice(grossProfit)}</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className={`h-3 w-3 mr-1 ${grossProfit > 0 ? 'text-green-600' : 'text-orange-600'}`} />
@@ -174,7 +181,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Take Rate</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Take Rate <InfoTooltip content="Percentage of GMV that Elyphant keeps as revenue. Formula: (Net Revenue ÷ GMV) × 100. Represents platform fee efficiency." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{takeRate.toFixed(1)}%</p>
                   <div className="flex items-center mt-2">
                     <TrendingUp className={`h-3 w-3 mr-1 ${takeRate > 0 ? 'text-green-600' : 'text-orange-600'}`} />
@@ -196,7 +205,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Total Orders <InfoTooltip content="All orders excluding failed and cancelled. Includes completed, shipped, delivered, pending, processing, and scheduled." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{totalOrders}</p>
                   <span className="text-xs text-muted-foreground">+{recentOrders.length} this week</span>
                 </div>
@@ -213,7 +224,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Customers</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Customers <InfoTooltip content="Unique profiles from the customers/profiles table. Represents all registered users on the platform." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{totalCustomers}</p>
                   <span className="text-xs text-muted-foreground">Active users</span>
                 </div>
@@ -230,7 +243,9 @@ export default function OverviewTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Orders</p>
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    Pending Orders <InfoTooltip content="Orders with status: scheduled, pending, or processing. These need attention or are awaiting fulfillment." />
+                  </p>
                   <p className="text-2xl font-bold text-foreground mt-1">{pendingOrders.length}</p>
                   <span className="text-xs text-orange-600">Needs attention</span>
                 </div>
@@ -248,6 +263,7 @@ export default function OverviewTab() {
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 Order Status Breakdown
+                <InfoTooltip content="Completed = shipped/delivered/completed. Pending = scheduled/pending/processing. Failed = failed/cancelled. Failed orders are excluded from revenue calculations." />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -275,6 +291,7 @@ export default function OverviewTab() {
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 Revenue Breakdown
+                <InfoTooltip content="Net Revenue = sum of gifting fees from completed orders. Zinc Costs = $1.00 per fulfilled order. Gross Profit = Net Revenue − Zinc Costs." />
               </CardTitle>
             </CardHeader>
             <CardContent>

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import MainLayout from "@/components/layout/MainLayout";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";

@@ -1,32 +1,60 @@
 
 
-## Fix Invite Sheet Scrolling + iOS/Capacitor Polish
+## Wire Referral Tracking for Beta — $100 Invite Incentive
 
-### Problem
-The desktop Dialog on line 254 of `AddConnectionSheet.tsx` uses `overflow-hidden`, which clips the form content — users can't scroll to reach the message field or send button. The mobile bottom sheet already scrolls correctly via `overflow-y-auto`.
+### Concept
+Create a lightweight `beta_referrals` table to track who invited whom and whether the $100 reward has been fulfilled. Surface this in Trunkline as a new "Referrals" tab so the team can see all referrals and manually mark rewards as paid. Update the avatar dropdown (mobile + desktop) and connections hero with the "$100" incentive copy.
 
-### Production wiring — confirmed working
-- `handleSendInvitation` creates a pending connection via `unifiedGiftManagementService.createPendingConnection`
-- Fires `connection_invitation` event to `ecommerce-email-orchestrator` with proper sender/recipient data and invitation URL
-- Invitation URL uses the real `elyphant.ai` domain with the invitation token
-- Analytics tracking via `invitationAnalyticsService` is wired
-- Copy invite link generates the correct `/invite/{username}` URL
-- No gaps — this is production-ready
+### Database
 
-### Changes
+**New table: `beta_referrals`**
+```text
+id              uuid PK
+referrer_id     uuid FK → profiles(id)     -- the person who invited
+referred_id     uuid FK → profiles(id)     -- the person who signed up
+referred_email  text                        -- email used in invitation
+connection_id   uuid FK → user_connections  -- link to the invitation record
+status          text DEFAULT 'pending'      -- pending | signed_up | reward_paid
+reward_amount   numeric DEFAULT 100.00
+reward_paid_at  timestamptz
+reward_notes    text                        -- admin notes (e.g., "Paid via Venmo")
+created_at      timestamptz DEFAULT now()
+```
 
-**1. Fix desktop Dialog scroll** (`AddConnectionSheet.tsx` line 254)
-- Change `overflow-hidden` to `overflow-y-auto` on `DialogContent` so the form scrolls when content exceeds viewport height
+RLS: employees can read/update all rows. Users can read their own rows (where `referrer_id = auth.uid()`).
 
-**2. iOS/Capacitor polish on the form content**
-- Add `pb-safe` (safe area bottom padding) to the form container for Capacitor notch handling
-- Add `overscroll-contain` to prevent background scroll bleed on iOS
-- Ensure the Send button has proper `min-h-[44px]` touch target (currently uses `size="lg"` which is close but not guaranteed)
-- Add `touch-action-manipulation` on the form to prevent double-tap zoom
+**Auto-populate on signup**: Add a trigger that fires when a `user_connections` row transitions from `pending_invitation` to `accepted` — insert a `beta_referrals` row with `status = 'signed_up'` linking `user_id` as referrer and `connected_user_id` as referred.
 
-**3. Tablet handling**
-- The current breakpoint uses `useIsMobile(768)` — tablets (768-1024px) get the desktop Dialog. Change to use the bottom sheet for tablets too by bumping the breakpoint to `useIsMobile(1024)`, consistent with the Lululemon-style pattern used elsewhere in the app
+### Trunkline: Referrals Tab
+
+New page at `/trunkline/referrals` showing a table with:
+- Referrer name/email
+- Referred name/email
+- Signup date
+- Status badge (pending → signed up → reward paid)
+- "Mark as Paid" button with optional notes field
+- Summary stats at top: total referrals, pending rewards, total paid out
+
+Add to `TrunklineSidebar` under Main section and `TrunklineRouter`.
+
+### Avatar Dropdown: Referral CTA
+
+Insert a highlighted row after the Social section (before Account) in both mobile and desktop layouts of `UserButton.tsx`:
+- Gradient background (`from-purple-50 to-pink-50`) to stand out
+- Gift icon + "Invite Friends, Get $100" text
+- On click: navigate to `/connections`
+
+### Connections Hero: Update Copy
+
+In `ConnectionsHeroSection.tsx`:
+- Primary CTA: "Invite a Friend, Get $100"
+- Add subtitle: "Share your link and earn $100 for every friend who joins"
 
 ### Files affected
-- **Edit**: `src/components/connections/AddConnectionSheet.tsx` — fix overflow, add iOS safe area, adjust tablet breakpoint
+- **Migration**: Create `beta_referrals` table + trigger on `user_connections` status change
+- **Create**: `src/components/trunkline/TrunklineReferralsTab.tsx` — referral management UI
+- **Edit**: `src/components/trunkline/TrunklineRouter.tsx` — add `/referrals` route
+- **Edit**: `src/components/trunkline/TrunklineSidebar.tsx` — add Referrals nav item
+- **Edit**: `src/components/auth/UserButton.tsx` — add referral CTA in both mobile + desktop dropdowns
+- **Edit**: `src/components/connections/ConnectionsHeroSection.tsx` — update CTA copy
 

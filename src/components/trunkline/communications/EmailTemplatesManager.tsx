@@ -3,7 +3,7 @@ import { Eye, Send, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import EmailPreviewModal from "./EmailPreviewModal";
 import TestEmailModal from "./TestEmailModal";
@@ -277,16 +277,16 @@ const EmailTemplatesManager = () => {
             </SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((cat) => (
-                <React.Fragment key={cat}>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <SelectGroup key={cat}>
+                  <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
                     {cat}
-                  </div>
+                  </SelectLabel>
                   {EVENT_TYPES.filter((e) => e.category === cat).map((e) => (
                     <SelectItem key={e.value} value={e.value}>
                       {e.label}
                     </SelectItem>
                   ))}
-                </React.Fragment>
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

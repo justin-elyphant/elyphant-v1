@@ -201,44 +201,46 @@ const renderGiftShippingAddress = (shippingAddress: any): string => {
 const orderConfirmationTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Order Confirmed! 🎉
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Your order is confirmed.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
       Hi ${firstName}, thank you for your order. We're preparing your items for shipment.
     </p>
     ${props.scheduled_delivery_date ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
-      <tr><td>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Delivery</p>
-        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Scheduled delivery</p>
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 600;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
+    </div>
     ` : ''}
-    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Total</p>
-        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Order number</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_number}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Total</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 18px; font-weight: 700; color: #1a1a1a;">${formatPrice(props.total_amount)}</td>
+        </tr>
+      </table>
+    </div>
     ${props.items ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Order items</p>
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
     ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
     ${props.is_gift && props.gift_message ? `
-    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
-      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Gift message</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #4b5563; font-style: italic; font-size: 15px; line-height: 1.6;">"${props.gift_message}"</p>
     </div>
     ` : ''}
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Order Details
         </a>
       </td></tr>
@@ -252,57 +254,55 @@ const orderPendingPaymentTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
   
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Order Scheduled! 📅
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Your order is scheduled.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
       Hi ${firstName}, your gift has been scheduled for future delivery.
     </p>
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
-      <tr><td>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Arrival</p>
-        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'Pending'}</p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
-          Your payment will be processed 7 days before delivery. We'll send you a confirmation when your order ships.
-        </p>
-      </td></tr>
-    </table>
-    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Scheduled arrival</p>
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'Pending'}</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">
+        Your payment will be processed 7 days before delivery. We'll send you a confirmation when your order ships.
+      </p>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Order number</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_number}</td>
+        </tr>
+      </table>
+    </div>
     
     ${props.items && props.items.length > 0 ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Order items</p>
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : `
-    <table style="background: linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%); border-radius: 8px; padding: 24px; margin-bottom: 20px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Estimated Total</p>
-        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Estimated total</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 20px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
+    </div>
     `}
     
     ${props.shipping_address ? renderGiftShippingAddress(props.shipping_address) : ''}
     
     ${props.is_gift && props.gift_message ? `
-    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
-      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Gift message</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #4b5563; font-style: italic; font-size: 15px; line-height: 1.6;">"${props.gift_message}"</p>
     </div>
     ` : ''}
     
-    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #b45309; font-size: 14px;">💳 Payment Not Yet Charged</p>
-      <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">Your payment method has been saved securely. We'll charge your card 7 days before the scheduled delivery date.</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-weight: 600; color: #1a1a1a; font-size: 14px;">Payment not yet charged</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #6b7280; font-size: 14px; line-height: 1.6;">Your payment method has been saved securely. We'll charge your card 7 days before the scheduled delivery date.</p>
     </div>
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Order Details
         </a>
       </td></tr>
@@ -311,119 +311,123 @@ const orderPendingPaymentTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Order ${props.order_number} scheduled for ${props.scheduled_date ? formatScheduledDate(props.scheduled_date) : 'delivery'}` });
 };
 
-// Order Shipped Template (ENRICHED with items, address, formatted dates)
+// Order Shipped Template
 const orderShippedTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
   const formattedDelivery = props.estimated_delivery ? formatScheduledDate(props.estimated_delivery) : null;
   
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Your Order Has Shipped! 📦</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${firstName}, your order is on its way!</p>
-    <table style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">${props.order_number}</p>
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">Your order has shipped.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">Hi ${firstName}, your order is on its way.</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Order number</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_number}</td>
+        </tr>
         ${props.tracking_number ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Tracking Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; font-family: monospace;">${props.tracking_number}</p>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Tracking</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; font-weight: 600; color: #1a1a1a; font-variant-numeric: tabular-nums;">${props.tracking_number}</td>
+        </tr>
         ` : ''}
         ${formattedDelivery ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #0ea5e9; text-transform: uppercase;">Estimated Delivery</p>
-        <p style="margin: 0; font-size: 16px; font-weight: 600;">${formattedDelivery}</p>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Estimated delivery</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${formattedDelivery}</td>
+        </tr>
         ` : ''}
-      </td></tr>
-    </table>
+      </table>
+    </div>
     ${props.items && props.items.length > 0 ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Items in This Shipment</h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Items in this shipment</p>
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
     ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="margin-top: 32px; width: 100%;">
       ${props.tracking_url ? `
       <tr><td align="center" style="padding-bottom: 12px;">
-        <a href="${props.tracking_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="${props.tracking_url}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Track Your Package
         </a>
       </td></tr>
       ` : ''}
       <tr><td align="center">
-        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: ${props.tracking_url ? '#ffffff' : 'linear-gradient(90deg, #9333ea 0%, #7c3aed 100%)'}; color: ${props.tracking_url ? '#9333ea' : '#ffffff'}; text-decoration: none; border-radius: 8px; font-weight: 600; ${props.tracking_url ? 'border: 2px solid #9333ea;' : ''}">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 40px; background: ${props.tracking_url ? '#ffffff' : '#1a1a1a'}; color: ${props.tracking_url ? '#1a1a1a' : '#ffffff'}; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em; ${props.tracking_url ? 'border: 1px solid #1a1a1a;' : ''}">
           View Order Details
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} has shipped${formattedDelivery ? ` - arrives ${formattedDelivery}` : ''}` });
+  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} has shipped${formattedDelivery ? ` — arrives ${formattedDelivery}` : ''}` });
 };
 
-// Order Failed Template (ENRICHED with items and first-name greeting)
+// Order Failed Template
 const orderFailedTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Order Processing Issue ⚠️</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${firstName}, we encountered an issue with your order.</p>
-    <table style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #ef4444; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">${props.order_number}</p>
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">There's an issue with your order.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">Hi ${firstName}, we encountered an issue processing your order.</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Order number</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_number}</td>
+        </tr>
         ${props.error_message ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #ef4444; text-transform: uppercase;">Issue Details</p>
-        <p style="margin: 0; font-size: 14px; color: #666666;">${props.error_message}</p>
+        <tr>
+          <td colspan="2" style="padding: 12px 0 0 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">${props.error_message}</td>
+        </tr>
         ` : ''}
-      </td></tr>
-    </table>
+      </table>
+    </div>
     ${props.items && props.items.length > 0 ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Affected Items</h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Affected items</p>
     ${renderItemsHtml(props.items)}
     ` : ''}
-    <p style="margin: 0 0 20px 0; font-size: 14px; color: #666666;">Our team has been notified and is working to resolve this. You may also contact support for assistance.</p>
-    <table style="margin-top: 30px; width: 100%;">
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">Our team has been notified and is working to resolve this. You may also contact support for assistance.</p>
+    <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center" style="padding-bottom: 12px;">
-        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/orders/${props.order_id}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Order Details
         </a>
       </td></tr>
       <tr><td align="center">
-        <a href="https://elyphant.ai/support" style="display: inline-block; padding: 14px 32px; background: #ffffff; color: #9333ea; text-decoration: none; border-radius: 8px; font-weight: 600; border: 2px solid #9333ea;">
+        <a href="https://elyphant.ai/support" style="display: inline-block; padding: 14px 40px; background: #ffffff; color: #1a1a1a; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em; border: 1px solid #1a1a1a;">
           Contact Support
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Issue with order ${props.order_number} - we're on it` });
+  return baseEmailTemplate({ content, preheader: `Issue with order ${props.order_number} — we're on it` });
 };
 
 // Connection Invitation Template (also used for gift invitations)
 const connectionInvitationTemplate = (props: any): string => {
-  // Build gift context banner if this invitation has a pending gift
   const giftContextBanner = props.has_pending_gift ? `
-    <table style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #f97316; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #c2410c;">🎁 ${props.sender_name} has a gift waiting for you!</p>
-        ${props.gift_occasion ? `<p style="margin: 0; font-size: 14px; color: #ea580c;">For your ${props.gift_occasion}</p>` : ''}
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.sender_name} has a gift waiting for you</p>
+      ${props.gift_occasion ? `<p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">For your ${props.gift_occasion}</p>` : ''}
+    </div>
   ` : '';
 
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">You've been invited! 🎉</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">${props.sender_name} wants to connect with you on Elyphant!</p>
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">You've been invited.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">${props.sender_name} wants to connect with you on Elyphant.</p>
     ${giftContextBanner}
     ${props.custom_message ? `
-    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #9333ea; width: 100%;">
-      <tr><td>
-        <p style="margin: 0; font-size: 14px; color: #6b21a8; font-style: italic;">"${props.custom_message}"</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; font-style: italic; line-height: 1.6;">"${props.custom_message}"</p>
+    </div>
     ` : ''}
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Why connect on Elyphant?</h3>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🎁 <strong>Share wishlists</strong> - Never guess what to give again</p>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🤖 <strong>Auto-gift special occasions</strong> - Set it and forget it</p>
-    <p style="margin: 0 0 30px 0; font-size: 14px;">💬 <strong>Stay connected</strong> - Chat and coordinate group gifts</p>
-    <table style="margin-top: 30px; width: 100%;">
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Why connect on Elyphant</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Share wishlists</strong> — never guess what to give again</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Auto-gift special occasions</strong> — set it and forget it</p>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Stay connected</strong> — chat and coordinate group gifts</p>
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="${props.invitation_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="${props.invitation_url}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Accept Invitation
         </a>
       </td></tr>
@@ -431,7 +435,7 @@ const connectionInvitationTemplate = (props: any): string => {
   `;
   
   const preheader = props.has_pending_gift 
-    ? `🎁 ${props.sender_name} has a gift waiting for you on Elyphant!`
+    ? `${props.sender_name} has a gift waiting for you on Elyphant`
     : `${props.sender_name} invited you to connect`;
     
   return baseEmailTemplate({ content, preheader });
@@ -440,27 +444,29 @@ const connectionInvitationTemplate = (props: any): string => {
 // Welcome Email Template
 const welcomeEmailTemplate = (props: any): string => {
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">Welcome to Elyphant! 🎉</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.first_name}, we're excited to have you here!</p>
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Get started with these features:</h3>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🎁 <strong>Create wishlists</strong> - Share what you actually want</p>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🤝 <strong>Connect with friends</strong> - Exchange gifts effortlessly</p>
-    <p style="margin: 0 0 30px 0; font-size: 14px;">🤖 <strong>Set up auto-gifts</strong> - Never miss a special occasion</p>
-    <table style="margin-top: 30px; width: 100%;">
-      <tr><td align="center">
-        <a href="${props.wishlists_url || 'https://elyphant.ai/wishlists'}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-right: 10px;">
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">Welcome to Elyphant.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">Hi ${props.first_name}, we're excited to have you here.</p>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Get started</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Create wishlists</strong> — share what you actually want</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Connect with friends</strong> — exchange gifts effortlessly</p>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Set up auto-gifts</strong> — never miss a special occasion</p>
+    <table style="width: 100%;">
+      <tr><td align="center" style="padding-bottom: 12px;">
+        <a href="${props.wishlists_url || 'https://elyphant.ai/wishlists'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Create Your First Wishlist
         </a>
-        <a href="${props.gifting_url || 'https://elyphant.ai/gifting'}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #7c3aed 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+      </td></tr>
+      <tr><td align="center">
+        <a href="${props.gifting_url || 'https://elyphant.ai/gifting'}" style="display: inline-block; padding: 14px 40px; background: #ffffff; color: #1a1a1a; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em; border: 1px solid #1a1a1a;">
           Start Gifting
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Welcome to Elyphant, ${props.first_name}!` });
+  return baseEmailTemplate({ content, preheader: `Welcome to Elyphant, ${props.first_name}` });
 };
 
-// Helper to format occasion names (birthday -> Birthday, mothers_day -> Mother's Day)
+// Helper to format occasion names
 const formatOccasion = (occasion: string): string => {
   if (!occasion) return 'Special Occasion';
   const occasionMap: Record<string, string> = {
@@ -483,52 +489,46 @@ const formatOccasion = (occasion: string): string => {
     .join(' ');
 };
 
-// Auto-gift Approval Template - Enhanced with event context and next steps
+// Auto-gift Approval Template
 const autoGiftApprovalTemplate = (props: any): string => {
   const formattedOccasion = formatOccasion(props.occasion);
   const budgetDisplay = props.budget ? formatPrice(props.budget) : 'Flexible';
   
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Auto-Gift Approval Needed 🎁
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Auto-gift approval needed.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666; line-height: 24px;">
-      Hi ${props.first_name}, it's time to approve your upcoming auto-gift for <strong>${props.recipient_name}</strong>!
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Hi ${props.first_name}, it's time to approve your upcoming auto-gift for <strong>${props.recipient_name}</strong>.
     </p>
     
     <!-- Upcoming Event Card -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #9333ea;">
-      <tr><td style="padding: 24px;">
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #9333ea; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-          📅 UPCOMING EVENT
-        </p>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; color: #1a1a1a; font-weight: 700;">
-          ${possessive(props.recipient_name)} ${formattedOccasion}
-        </p>
-        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #1a1a1a; font-weight: 600;">
-          ${props.event_date || props.execution_date || 'Coming soon'}
-        </p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
-          Budget: Up to ${budgetDisplay}
-        </p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Upcoming event</p>
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 600;">
+        ${possessive(props.recipient_name)} ${formattedOccasion}
+      </p>
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 15px; color: #1a1a1a; font-weight: 600;">
+        ${props.event_date || props.execution_date || 'Coming soon'}
+      </p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">
+        Budget: Up to ${budgetDisplay}
+      </p>
+    </div>
     
     ${props.suggested_gifts && props.suggested_gifts.length > 0 ? `
-    <h3 style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1a1a1a;">
-      Suggested Gifts from Wishlist:
-    </h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Suggested gifts from wishlist</p>
     ${props.suggested_gifts.map((gift: any) => `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 1px solid #e5e5e5; padding: 16px 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 1px solid #f3f4f6; padding: 16px 0;">
       <tr>
         <td style="padding-right: 16px; vertical-align: top; width: 80px;">
-          ${gift.image_url ? `<img src="${gift.image_url}" alt="${truncateProductTitle(gift.name || 'Gift')}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />` : '<div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 8px;"></div>'}
+          ${gift.image_url ? `<img src="${gift.image_url}" alt="${truncateProductTitle(gift.name || 'Gift')}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; display: block;" />` : '<div style="width: 80px; height: 80px; background: #f3f4f6; border-radius: 8px;"></div>'}
         </td>
         <td style="vertical-align: top;">
-          <p style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; color: #1a1a1a; font-size: 14px;">
+          <p style="margin: 0 0 5px 0; font-family: ${fontStack}; font-weight: 600; color: #1a1a1a; font-size: 14px;">
             ${truncateProductTitle(gift.name || 'Gift Item')}
           </p>
-          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #666666; font-size: 14px;">
+          <p style="margin: 0; font-family: ${fontStack}; color: #6b7280; font-size: 14px;">
             ${typeof gift.price === 'number' ? formatPrice(gift.price) : (gift.price || '')}
           </p>
         </td>
@@ -537,45 +537,40 @@ const autoGiftApprovalTemplate = (props: any): string => {
     `).join('')}
     ` : ''}
     
-    <!-- What Happens Next Card -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; margin: 30px 0; border-left: 4px solid #0ea5e9;">
-      <tr><td style="padding: 24px;">
-        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-          🔔 WHAT HAPPENS NEXT
-        </p>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
-          ${props.deadline_date ? `• <strong>Approve by ${props.deadline_date}</strong> to ensure on-time delivery` : '• Approve soon to ensure on-time delivery'}
-        </p>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
-          • We'll order the gift and handle everything for you
-        </p>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
-          • Payment charged 4 days before their special day
-        </p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 22px;">
-          • Gift arrives right on time! 🎉
-        </p>
+    <!-- What Happens Next -->
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin: 24px 0;">
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">What happens next</p>
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        ${props.deadline_date ? `Approve by <strong>${props.deadline_date}</strong> to ensure on-time delivery` : 'Approve soon to ensure on-time delivery'}
+      </p>
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        We'll order the gift and handle everything for you
+      </p>
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        Payment charged 4 days before their special day
+      </p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        Gift arrives right on time
+      </p>
+    </div>
+    
+    <!-- Action Buttons -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 32px;">
+      <tr><td align="center" style="padding-bottom: 12px;">
+        <a href="${props.approve_url}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Approve Gift
+        </a>
+      </td></tr>
+      <tr><td align="center">
+        <a href="${props.reject_url}" style="display: inline-block; padding: 14px 40px; background: #ffffff; color: #1a1a1a; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em; border: 1px solid #1a1a1a;">
+          Decline
+        </a>
       </td></tr>
     </table>
     
-    <!-- Action Buttons -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-      <tr>
-        <td align="center">
-          <a href="${props.approve_url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; margin-right: 12px;">
-            ✅ Approve Gift
-          </a>
-          <a href="${props.reject_url}" style="display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600;">
-            ❌ Reject
-          </a>
-        </td>
-      </tr>
-    </table>
-    
-    <!-- Footer Help -->
-    <p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; text-align: center; line-height: 22px;">
-      Questions? Reply to this email or visit your<br>
-      <a href="https://elyphant.ai/auto-gifts" style="color: #9333ea; text-decoration: none; font-weight: 500;">Recurring Gifts Dashboard</a>
+    <p style="margin: 32px 0 0 0; font-family: ${fontStack}; font-size: 13px; color: #9ca3af; text-align: center; line-height: 1.6;">
+      Questions? Reply to this email or visit your
+      <a href="https://elyphant.ai/auto-gifts" style="color: #9ca3af; text-decoration: underline;">Recurring Gifts Dashboard</a>
     </p>
   `;
   return baseEmailTemplate({ content, preheader: `Approve your auto-gift for ${possessive(props.recipient_name)} ${formattedOccasion}` });
@@ -584,15 +579,15 @@ const autoGiftApprovalTemplate = (props: any): string => {
 // Connection Established Template
 const connectionEstablishedTemplate = (props: any): string => {
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">You're Now Connected! 🎉</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Hi ${props.recipient_name}, you and ${props.connection_name} are now connected on Elyphant!</p>
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">What you can do now:</h3>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🎁 <strong>View each other's wishlists</strong> - See what they really want</p>
-    <p style="margin: 0 0 10px 0; font-size: 14px;">🤖 <strong>Set up auto-gifts</strong> - Never miss their special occasions</p>
-    <p style="margin: 0 0 30px 0; font-size: 14px;">💬 <strong>Start chatting</strong> - Coordinate gifts and stay in touch</p>
-    <table style="margin-top: 30px; width: 100%;">
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">You're now connected.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">Hi ${props.recipient_name}, you and ${props.connection_name} are now connected on Elyphant.</p>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">What you can do now</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>View each other's wishlists</strong> — see what they really want</p>
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Set up auto-gifts</strong> — never miss their special occasions</p>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;"><strong>Start chatting</strong> — coordinate gifts and stay in touch</p>
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/gifting" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/gifting" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Explore Gifting
         </a>
       </td></tr>
@@ -603,50 +598,52 @@ const connectionEstablishedTemplate = (props: any): string => {
 
 // ZMA Low Balance Alert Template
 const zmaLowBalanceAlertTemplate = (props: any): string => {
-  const alertColor = props.is_critical ? '#dc2626' : '#f59e0b';
-  const alertBg = props.is_critical ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)';
-  const alertIcon = props.is_critical ? '🚨' : '⚠️';
-  
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 700; color: #1a1a1a;">${alertIcon} ZMA Balance Alert</h2>
-    <p style="margin: 0 0 30px 0; font-size: 16px; color: #666666;">Your Zinc Managed Account balance requires attention.</p>
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">${props.is_critical ? 'Critical:' : ''} ZMA balance alert.</h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">Your Zinc Managed Account balance requires attention.</p>
     
-    <table style="background: ${alertBg}; border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%; border-left: 4px solid ${alertColor};">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Current Balance</p>
-        <p style="margin: 0 0 20px 0; font-size: 32px; font-weight: 700; color: #1a1a1a;">${formatPrice(props.current_balance)}</p>
-        
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: ${alertColor}; text-transform: uppercase; font-weight: 600;">Alert Threshold</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.threshold)}</p>
-        
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Current balance</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 24px; font-weight: 700; color: ${props.is_critical ? '#b91c1c' : '#1a1a1a'};">${formatPrice(props.current_balance)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Alert threshold</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.threshold)}</td>
+        </tr>
         ${props.pending_orders_value ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666666; text-transform: uppercase;">Pending Orders Value</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.pending_orders_value)}</p>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Pending orders value</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${formatPrice(props.pending_orders_value)}</td>
+        </tr>
         ` : ''}
-        
         ${props.orders_waiting > 0 ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #dc2626; text-transform: uppercase; font-weight: 600;">Orders Waiting for Funds</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #dc2626;">${props.orders_waiting} orders on hold</p>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Orders on hold</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #b91c1c;">${props.orders_waiting} orders</td>
+        </tr>
         ` : ''}
-        
         ${props.recommended_transfer > 0 ? `
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #059669; text-transform: uppercase; font-weight: 600;">Recommended Transfer</p>
-        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #059669;">${formatPrice(props.recommended_transfer)}</p>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Recommended transfer</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 18px; font-weight: 700; color: #047857;">${formatPrice(props.recommended_transfer)}</td>
+        </tr>
         ` : ''}
-      </td></tr>
-    </table>
+      </table>
+    </div>
     
-    <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">Action Required:</h3>
-    <ol style="margin: 0 0 30px 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Action required</p>
+    <ol style="margin: 0 0 32px 0; padding-left: 20px; font-family: ${fontStack}; color: #4b5563; font-size: 14px; line-height: 1.8;">
       <li>Log into your Chase bank account</li>
       <li>Transfer funds to Zinc via PayPal</li>
       <li>Record the transfer in the Trunkline dashboard</li>
       <li>Click "Retry Awaiting Orders" to process held orders</li>
     </ol>
     
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/trunkline/funding" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.ai/trunkline/funding" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Funding Dashboard
         </a>
       </td></tr>
@@ -654,8 +651,8 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
   `;
   
   const preheader = props.is_critical 
-    ? `CRITICAL: ZMA balance is ${formatPrice(props.current_balance)} - orders may be blocked`
-    : `ZMA balance is ${formatPrice(props.current_balance)} - transfer recommended`;
+    ? `CRITICAL: ZMA balance is ${formatPrice(props.current_balance)} — orders may be blocked`
+    : `ZMA balance is ${formatPrice(props.current_balance)} — transfer recommended`;
     
   return baseEmailTemplate({ content, preheader });
 };
@@ -663,37 +660,33 @@ const zmaLowBalanceAlertTemplate = (props: any): string => {
 // Wishlist Shared Template
 const wishlistSharedTemplate = (props: any): string => {
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      ${props.sender_name} shared a wishlist with you! 🎁
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      ${props.sender_name} shared a wishlist with you.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hi ${props.recipient_name}, check out what ${props.sender_name} wants you to see!
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Hi ${props.recipient_name}, check out what ${props.sender_name} wants you to see.
     </p>
     
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
-      <tr><td>
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a1a;">
-          ${props.wishlist_title}
-        </p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666;">
-          ${props.item_count} items • ${formatPrice(props.total_value)}
-        </p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        ${props.wishlist_title}
+      </p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">
+        ${props.item_count} items &middot; ${formatPrice(props.total_value)}
+      </p>
+    </div>
     
     ${props.message ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #9333ea; border-radius: 0 8px 8px 0; padding: 16px; margin-bottom: 30px;">
-      <tr><td>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #6b21a8; font-style: italic;">
-          "${props.message}"
-        </p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; font-style: italic; line-height: 1.6;">
+        "${props.message}"
+      </p>
+    </div>
     ` : ''}
     
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="${props.wishlist_url}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="${props.wishlist_url}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Wishlist
         </a>
       </td></tr>
@@ -702,74 +695,64 @@ const wishlistSharedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `${props.sender_name} shared a wishlist with you` });
 };
 
-// Recurring Gift Rule Created Template (sent to shopper when they create recurring gift rules)
+// Recurring Gift Rule Created Template
 const recurringGiftRuleCreatedTemplate = (props: any): string => {
   const firstName = getFirstName(props.shopper_name);
   const recipientName = props.recipient_name || 'your friend';
   
-  // Format events list
   const eventsHtml = (props.events || []).map((event: any) => {
-    const occasionIcons: Record<string, string> = {
-      birthday: '🎂',
-      christmas: '🎄',
-      valentine: '❤️',
-      valentines_day: '❤️',
-      mothers_day: '💐',
-      fathers_day: '👔',
-      anniversary: '💍',
-    };
-    const icon = occasionIcons[event.date_type?.toLowerCase()] || '🎁';
     const occasionName = event.occasion_name || formatOccasion(event.date_type) || 'Special Occasion';
-    return `<li style="margin: 8px 0; color: #374151;">${icon} <strong>${occasionName}</strong>${event.date ? ` - ${event.date}` : ''}</li>`;
+    return `<li style="margin: 8px 0; font-family: ${fontStack}; color: #4b5563;"><strong>${occasionName}</strong>${event.date ? ` — ${event.date}` : ''}</li>`;
   }).join('');
 
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Recurring Gifts Set Up! 🔄
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Recurring gifts set up.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
       Hi ${firstName}, you've successfully set up recurring gifts for <strong>${recipientName}</strong>.
     </p>
     
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #10b981;">
-      <tr><td>
-        <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Configured Events</p>
-        <ul style="margin: 0; padding-left: 20px; font-size: 16px;">
-          ${eventsHtml || `<li style="color: #374151;">🎁 <strong>${formatOccasion(props.occasion || props.rule_details?.occasion || '')}</strong>${props.scheduled_date ? ` - ${props.scheduled_date}` : ''}</li>`}
-        </ul>
-      </td></tr>
-    </table>
-    
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Budget Per Gift</p>
-        <p style="margin: 0 0 20px 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">Up to ${formatPrice(props.budget || props.budget_limit || props.rule_details?.budget_limit || 50)}</p>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Auto-Approve</p>
-        <p style="margin: 0; font-size: 16px; color: #374151;">${(props.auto_approve || props.auto_approve_enabled) ? '✅ Enabled - Gifts will be sent automatically' : '🔔 Disabled - You\'ll approve each gift'}</p>
-      </td></tr>
-    </table>
-    
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1d4ed8; font-size: 14px;">💡 How It Works</p>
-      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">We'll notify you 7 days before each event with gift suggestions from ${possessive(recipientName)} wishlist. ${(props.auto_approve || props.auto_approve_enabled) ? 'Gifts will be purchased and shipped automatically.' : 'You\'ll review and approve before we purchase.'}</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Configured events</p>
+      <ul style="margin: 0; padding-left: 20px; font-size: 15px;">
+        ${eventsHtml || `<li style="font-family: ${fontStack}; color: #4b5563;"><strong>${formatOccasion(props.occasion || props.rule_details?.occasion || '')}</strong>${props.scheduled_date ? ` — ${props.scheduled_date}` : ''}</li>`}
+      </ul>
     </div>
     
-    <table style="margin-top: 30px; width: 100%;">
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Budget per gift</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 700;">Up to ${formatPrice(props.budget || props.budget_limit || props.rule_details?.budget_limit || 50)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Auto-approve</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; color: #1a1a1a;">${(props.auto_approve || props.auto_approve_enabled) ? 'Enabled — gifts sent automatically' : 'Disabled — you approve each gift'}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-weight: 600; color: #1a1a1a; font-size: 14px;">How it works</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #6b7280; font-size: 14px; line-height: 1.6;">We'll notify you 7 days before each event with gift suggestions from ${possessive(recipientName)} wishlist. ${(props.auto_approve || props.auto_approve_enabled) ? 'Gifts will be purchased and shipped automatically.' : "You'll review and approve before we purchase."}</p>
+    </div>
+    
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Manage Recurring Gifts
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Recurring gifts for ${recipientName} are all set!` });
+  return baseEmailTemplate({ content, preheader: `Recurring gifts for ${recipientName} are all set` });
 };
 
-// Gift Coming Your Way Template (sent to recipient when a gift is purchased for them)
+// Gift Coming Your Way Template
 const giftComingYourWayTemplate = (props: any): string => {
   const firstName = getFirstName(props.recipient_name);
   
-  // Format occasion nicely
   const getOccasionText = (occasion: string | null): string => {
     if (!occasion) return '';
     const occasionMap: Record<string, string> = {
@@ -787,44 +770,39 @@ const giftComingYourWayTemplate = (props: any): string => {
   const occasionText = getOccasionText(props.occasion);
   
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      A Gift Is On Its Way! 🎁
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      A gift is on its way.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
-      Hey ${firstName}, exciting news! <strong>${props.sender_name || 'Someone special'}</strong> just sent you a gift${occasionText}!
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Hey ${firstName}, exciting news — <strong>${props.sender_name || 'Someone special'}</strong> just sent you a gift${occasionText}.
     </p>
     
     ${props.arrival_date ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
-      <tr><td align="center">
-        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📦 Expected Arrival</p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.arrival_date)}</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Expected arrival</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 600;">${formatScheduledDate(props.arrival_date)}</p>
+    </div>
     ` : ''}
     
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px;">
-      <tr><td align="center">
-        <p style="margin: 0 0 12px 0; font-size: 48px;">🤫</p>
-        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #6b21a8; font-style: italic;">
-          We're keeping the details a surprise!
-        </p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 15px; color: #6b7280; font-style: italic;">
+        We're keeping the details a surprise.
+      </p>
+    </div>
     
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; text-align: center;">
-      Want to make sure ${props.sender_name?.split(' ')[0] || 'they'} knows exactly what you'd love? Keep your wishlist updated!
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.6;">
+      Want to make sure ${props.sender_name?.split(' ')[0] || 'they'} knows exactly what you'd love? Keep your wishlist updated.
     </p>
     
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.lovable.app/dashboard" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Your Dashboard
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `${props.sender_name || 'Someone special'} sent you a gift! 🎁` });
+  return baseEmailTemplate({ content, preheader: `${props.sender_name || 'Someone special'} sent you a gift` });
 };
 
 // Auto-Gift Payment Failed Template
@@ -833,26 +811,26 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
   const occasion = props.occasion?.replace(/_/g, ' ') || 'upcoming event';
   
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Payment Issue ⚠️
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Payment issue.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
       Hi ${firstName}, we tried to process payment for <strong>${possessive(props.recipient_name || 'your recipient')}</strong> ${occasion} gift, but your saved card was declined.
     </p>
     
-    <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #dc2626; font-size: 14px;">❌ Payment Declined</p>
-      <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">${props.error_summary || 'Your card could not be charged. Please update your payment method.'}</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-weight: 600; color: #b91c1c; font-size: 14px;">Payment declined</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #6b7280; font-size: 14px; line-height: 1.6;">${props.error_summary || 'Your card could not be charged. Please update your payment method.'}</p>
     </div>
     
-    <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1d4ed8; font-size: 14px;">💡 What To Do</p>
-      <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">Update your payment method and we'll retry. If no action is taken, you'll be redirected to a checkout page to complete the purchase manually.</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-weight: 600; color: #1a1a1a; font-size: 14px;">What to do</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #6b7280; font-size: 14px; line-height: 1.6;">Update your payment method and we'll retry. If no action is taken, you'll be redirected to a checkout page to complete the purchase manually.</p>
     </div>
     
-    <table style="margin-top: 30px; width: 100%;">
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Update Payment Method
         </a>
       </td></tr>
@@ -865,76 +843,70 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
 const guestOrderConfirmationTemplate = (props: any): string => {
   const firstName = getFirstName(props.customer_name);
   const content = `
-    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a1a;">
-      Order Confirmed! 🎉
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Your order is confirmed.
     </h2>
-    <p style="margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #666666;">
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
       Hi ${firstName}, thank you for your order. We're preparing your items for shipment.
     </p>
     ${props.scheduled_delivery_date ? `
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; border-left: 4px solid #0ea5e9;">
-      <tr><td>
-        <p style="margin: 0 0 8px 0; font-size: 14px; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📅 Scheduled Delivery</p>
-        <p style="margin: 0 0 12px 0; font-size: 20px; color: #1a1a1a; font-weight: 700;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
-        <p style="margin: 0; font-size: 14px; color: #64748b; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Scheduled delivery</p>
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 18px; color: #1a1a1a; font-weight: 600;">${formatScheduledDate(props.scheduled_delivery_date)}</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">Your payment will be processed and your order will ship on the scheduled delivery date.</p>
+    </div>
     ` : ''}
-    <table style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; padding: 24px; margin-bottom: 30px; width: 100%;">
-      <tr><td>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Order Number</p>
-        <p style="margin: 0 0 20px 0; font-size: 18px; color: #1a1a1a; font-weight: 600;">${props.order_number}</p>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #9333ea; text-transform: uppercase;">Total</p>
-        <p style="margin: 0; font-size: 24px; color: #1a1a1a; font-weight: 700;">${formatPrice(props.total_amount)}</p>
-      </td></tr>
-    </table>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Order number</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_number}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Total</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 18px; font-weight: 700; color: #1a1a1a;">${formatPrice(props.total_amount)}</td>
+        </tr>
+      </table>
+    </div>
     ${props.items ? `
-    <h3 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">Order Items</h3>
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Order items</p>
     ${renderItemsHtml(props.items)}
     ${renderPricingBreakdown(props)}
     ` : ''}
     ${props.shipping_address ? (props.is_gift ? renderGiftShippingAddress(props.shipping_address) : renderShippingAddress(props.shipping_address)) : ''}
     ${props.is_gift && props.gift_message ? `
-    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; border-radius: 8px;">
-      <p style="margin: 0 0 8px 0; font-weight: 600; color: #047857; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">🎁 Gift Message:</p>
-      <p style="margin: 0; color: #065f46; font-style: italic; font-size: 16px; line-height: 1.6;">"${props.gift_message}"</p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Gift message</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #4b5563; font-style: italic; font-size: 15px; line-height: 1.6;">"${props.gift_message}"</p>
     </div>
     ` : ''}
 
-    <!-- Viral Signup CTA for Guest -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 50%, #e0f2fe 100%); border-radius: 12px; padding: 32px 24px; margin: 30px 0; border: 1px solid #c4b5fd;">
-      <tr><td align="center">
-        <p style="margin: 0 0 8px 0; font-size: 24px;">🐘</p>
-        <h3 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #1a1a1a;">
-          You're almost an Elyphant!
-        </h3>
-        <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #666666; line-height: 22px;">
-          Create a free account to track your order, save wishlists, set up auto-gifts, and get AI-powered gift recommendations.
-        </p>
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="padding-right: 12px;">
-              <a href="https://elyphant.ai/auth/signup?email=${encodeURIComponent(props.guest_email || '')}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(90deg, #9333ea 0%, #7c3aed 50%, #0ea5e9 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600;">
-                Create Free Account
-              </a>
-            </td>
-          </tr>
-        </table>
-        <p style="margin: 16px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #9333ea;">
-          ✨ Track orders · Wishlists · Auto-Gifts · AI Recommendations
-        </p>
-      </td></tr>
-    </table>
+    <!-- Signup CTA -->
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px 24px; margin: 32px 0; text-align: center;">
+      <h3 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 18px; font-weight: 600; color: #1a1a1a;">
+        Create your free account.
+      </h3>
+      <p style="margin: 0 0 20px 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">
+        Track your order, save wishlists, set up auto-gifts, and get AI-powered gift recommendations.
+      </p>
+      <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td>
+          <a href="https://elyphant.ai/auth/signup?email=${encodeURIComponent(props.guest_email || '')}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+            Create Free Account
+          </a>
+        </td></tr>
+      </table>
+    </div>
 
-    <table style="margin-top: 10px; width: 100%;">
+    <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/order-confirmation?session_id=${props.checkout_session_id || ''}" style="display: inline-block; padding: 14px 32px; background: #ffffff; color: #9333ea; text-decoration: none; border-radius: 8px; font-weight: 600; border: 2px solid #9333ea; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px;">
+        <a href="https://elyphant.ai/order-confirmation?session_id=${props.checkout_session_id || ''}" style="display: inline-block; padding: 14px 40px; background: #ffffff; color: #1a1a1a; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em; border: 1px solid #1a1a1a;">
           View Order Details
         </a>
       </td></tr>
     </table>
   `;
-  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} confirmed! Create a free account to track it 🎁` });
+  return baseEmailTemplate({ content, preheader: `Order ${props.order_number} confirmed — create a free account to track it` });
 };
 
 // Vendor New Order Template

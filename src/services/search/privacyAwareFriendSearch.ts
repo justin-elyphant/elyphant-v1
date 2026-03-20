@@ -301,12 +301,33 @@ export const searchFriendsWithPrivacy = async (
           city: (profile as any).city || (profile as any).shipping_address?.city || undefined,
           state: (profile as any).state || (profile as any).shipping_address?.state || undefined,
           connectionStatus: connectionStatus as 'connected' | 'pending' | 'none' | 'blocked',
-          mutualConnections: 0, // TODO: Implement mutual connections count
+          mutualConnections: 0, // Will be enriched below
           privacyLevel: privacyLevel as 'public' | 'limited' | 'private',
           isPrivacyRestricted: !canConnect,
           canGift: canGift
         };
       });
+
+    // Enrich with mutual connection counts if we have a current user
+    if (currentUserId && results.length > 0) {
+      try {
+        const mutualPromises = results.map(async (r) => {
+          try {
+            const { data } = await supabase.rpc('get_mutual_friends_count', { user_a: currentUserId, user_b: r.id });
+            return { id: r.id, count: Number(data) || 0 };
+          } catch {
+            return { id: r.id, count: 0 };
+          }
+        });
+        const mutualCounts = await Promise.all(mutualPromises);
+        const mutualMap = new Map(mutualCounts.map((m: { id: string; count: number }) => [m.id, m.count]));
+        results.forEach(r => {
+          r.mutualConnections = mutualMap.get(r.id) || 0;
+        });
+      } catch (e) {
+        console.warn('Could not fetch mutual connection counts:', e);
+      }
+    }
 
     return results;
   } catch (error) {

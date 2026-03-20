@@ -1315,7 +1315,17 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { eventType, recipientEmail, data, orderId, metadata }: EmailRequest & { orderId?: string; metadata?: any } = await req.json();
+    const { eventType, recipientEmail, data, orderId, metadata, preview }: EmailRequest & { orderId?: string; metadata?: any; preview?: boolean } = await req.json();
+
+    // Preview mode: render template with provided data and return HTML without sending
+    if (preview) {
+      const previewData = data || metadata || {};
+      const { html, subject } = getEmailTemplate(eventType, previewData);
+      return new Response(
+        JSON.stringify({ html, subject }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log(`📧 Orchestrating ${eventType} email for ${recipientEmail || 'recipient'}`);
 

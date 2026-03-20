@@ -681,6 +681,10 @@ const Connections = () => {
               {/* Tabs */}
               <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
                 <TabsList className="w-full max-w-2xl">
+                  <TabsTrigger value="suggestions" className="flex-1">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Suggestions
+                  </TabsTrigger>
                   <TabsTrigger value="friends" className="flex-1">
                     <Users className="h-4 w-4 mr-2" />
                     Friends
@@ -689,12 +693,27 @@ const Connections = () => {
                     <Clock className="h-4 w-4 mr-2" />
                     Pending
                   </TabsTrigger>
-                  <TabsTrigger value="suggestions" className="flex-1">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Suggestions
-                  </TabsTrigger>
                 </TabsList>
                 
+                <TabsContent value="suggestions" className="mt-6">
+                  <Suspense fallback={<ConnectionsSkeleton count={6} />}>
+                    {suggestions.length > 0 ? (
+                      <SuggestionsTabContent suggestions={suggestions} />
+                    ) : (
+                      <div className="text-center py-12">
+                        <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-medium mb-2">Discover new connections</h3>
+                        <p className="text-muted-foreground mb-4">
+                          We'll suggest people you might know
+                        </p>
+                        <Button onClick={() => window.location.href = window.location.pathname}>
+                          Explore Suggestions
+                        </Button>
+                      </div>
+                    )}
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="friends" className="mt-6">
                   <Suspense fallback={<ConnectionsSkeleton />}>
                     <FriendsTabContent
@@ -714,25 +733,6 @@ const Connections = () => {
                       searchTerm={searchTerm}
                       onRefresh={refreshPendingConnections}
                     />
-                  </Suspense>
-                </TabsContent>
-                
-                <TabsContent value="suggestions" className="mt-6">
-                  <Suspense fallback={<ConnectionsSkeleton count={6} />}>
-                    {suggestions.length > 0 ? (
-                      <SuggestionsTabContent suggestions={suggestions} />
-                    ) : (
-                      <div className="text-center py-12">
-                        <UserPlus className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium mb-2">Discover new connections</h3>
-                        <p className="text-muted-foreground mb-4">
-                          We'll suggest people you might know
-                        </p>
-                        <Button onClick={() => window.location.href = window.location.pathname}>
-                          Explore Suggestions
-                        </Button>
-                      </div>
-                    )}
                   </Suspense>
                 </TabsContent>
               </Tabs>

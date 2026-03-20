@@ -75,6 +75,12 @@ const navigationItems = [
     icon: MessageSquare,
     badge: "12",
   },
+  {
+    title: "Referrals",
+    url: "/trunkline/referrals",
+    icon: Gift,
+    badge: null,
+  },
 ];
 
 const communicationItems = [

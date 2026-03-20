@@ -58,7 +58,7 @@ const ConnectionsHeader: React.FC<ConnectionsHeaderProps> = ({
             <DialogHeader>
               <DialogTitle>Find New Connections</DialogTitle>
             </DialogHeader>
-            <EnhancedConnectionSearch />
+            <EnhancedConnectionSearch onInvite={() => setSearchDialogOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>

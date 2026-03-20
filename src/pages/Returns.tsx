@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "@/components/gifting/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";

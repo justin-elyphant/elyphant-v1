@@ -513,6 +513,24 @@ const TrunklineReferralsTab: React.FC = () => {
             <DialogTitle>Issue Manual Credit</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium">First Name</label>
+                <Input
+                  placeholder="Jane"
+                  value={creditFirstName}
+                  onChange={(e) => setCreditFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Last Name</label>
+                <Input
+                  placeholder="Doe"
+                  value={creditLastName}
+                  onChange={(e) => setCreditLastName(e.target.value)}
+                />
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium">User Email</label>
               <Input

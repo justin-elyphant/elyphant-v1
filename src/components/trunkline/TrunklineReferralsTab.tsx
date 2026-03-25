@@ -14,9 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface BetaReferral {
   id: string;
@@ -391,8 +388,7 @@ const TrunklineReferralsTab: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {testerBalances.map((tester) => (
-                  <Collapsible key={tester.userId} open={expandedTester === tester.userId} onOpenChange={(open) => setExpandedTester(open ? tester.userId : null)} asChild>
-                    <>
+                  <React.Fragment key={tester.userId}>
                       <TableRow>
                         <TableCell>
                           <div>
@@ -409,14 +405,12 @@ const TrunklineReferralsTab: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-right">{tester.orderCount}</TableCell>
                         <TableCell>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </Button>
-                          </CollapsibleTrigger>
+                          <Button variant="ghost" size="sm" onClick={() => setExpandedTester(expandedTester === tester.userId ? null : tester.userId)}>
+                            {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
                         </TableCell>
                       </TableRow>
-                      <CollapsibleContent asChild>
+                      {expandedTester === tester.userId && (
                         <tr>
                           <td colSpan={6} className="p-4 bg-muted/50">
                             <div className="space-y-2">
@@ -437,9 +431,8 @@ const TrunklineReferralsTab: React.FC = () => {
                             </div>
                           </td>
                         </tr>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
+                      )}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>

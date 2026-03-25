@@ -140,12 +140,30 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
           </div>
         </div>
 
+        {appliedCredit > 0 && (
+          <>
+            <Separator />
+            <div className="flex justify-between text-sm items-center">
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <Gift className="h-4 w-4" />
+                Beta Credit Applied
+              </span>
+              <span className="text-primary font-medium">-{formatPrice(appliedCredit)}</span>
+            </div>
+          </>
+        )}
+
         <Separator />
 
         <div className="flex justify-between font-semibold text-lg">
           <span>Total</span>
-          <span>{formatPrice(totalAmount)}</span>
+          <span>{formatPrice(adjustedTotal)}</span>
         </div>
+        {appliedCredit > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Remaining beta credit after this order: {formatPrice(betaCreditBalance - appliedCredit)}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

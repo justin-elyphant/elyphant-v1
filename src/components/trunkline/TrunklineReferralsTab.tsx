@@ -196,18 +196,38 @@ const TrunklineReferralsTab: React.FC = () => {
     onError: (err: any) => toast.error(err.message || "Failed to issue credit"),
   });
 
+  // Fetch profiles for tester name resolution (fallback for manual credits)
+  const creditUserIds = React.useMemo(() => {
+    return [...new Set(allCredits.map(c => c.user_id))];
+  }, [allCredits]);
+
+  const { data: creditProfiles = [] } = useQuery({
+    queryKey: ["beta-credit-profiles", creditUserIds],
+    queryFn: async () => {
+      if (creditUserIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", creditUserIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: creditUserIds.length > 0,
+  });
+
   // Compute tester balances
   const testerBalances: TesterBalance[] = React.useMemo(() => {
     const balanceMap = new Map<string, TesterBalance>();
     
     for (const credit of allCredits) {
       if (!balanceMap.has(credit.user_id)) {
-        // Find the profile from referrals
+        // Try referral chain first, then profiles fallback
         const referral = referrals.find(r => r.referred_id === credit.user_id);
+        const profile = creditProfiles.find(p => p.id === credit.user_id);
         balanceMap.set(credit.user_id, {
           userId: credit.user_id,
-          name: referral?.referred_profile?.name || "Unknown",
-          email: referral?.referred_profile?.email || referral?.referred_email || "Unknown",
+          name: referral?.referred_profile?.name || profile?.name || "Unknown",
+          email: referral?.referred_profile?.email || referral?.referred_email || profile?.email || "Unknown",
           issued: 0,
           spent: 0,
           remaining: 0,
@@ -226,7 +246,7 @@ const TrunklineReferralsTab: React.FC = () => {
     }
     
     return Array.from(balanceMap.values());
-  }, [allCredits, referrals]);
+  }, [allCredits, referrals, creditProfiles]);
 
   // Stats
   const pendingApproval = referrals.filter(r => r.status === "pending_approval" || r.status === "signed_up").length;

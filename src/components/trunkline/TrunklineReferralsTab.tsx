@@ -408,14 +408,12 @@ const TrunklineReferralsTab: React.FC = () => {
                         </TableCell>
                         <TableCell className="text-right">{tester.orderCount}</TableCell>
                         <TableCell>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </Button>
-                          </CollapsibleTrigger>
+                          <Button variant="ghost" size="sm" onClick={() => setExpandedTester(expandedTester === tester.userId ? null : tester.userId)}>
+                            {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
                         </TableCell>
                       </TableRow>
-                      <CollapsibleContent asChild>
+                      {expandedTester === tester.userId && (
                         <tr>
                           <td colSpan={6} className="p-4 bg-muted/50">
                             <div className="space-y-2">
@@ -436,9 +434,8 @@ const TrunklineReferralsTab: React.FC = () => {
                             </div>
                           </td>
                         </tr>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
+                      )}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>

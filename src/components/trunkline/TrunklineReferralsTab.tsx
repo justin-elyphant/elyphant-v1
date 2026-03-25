@@ -157,21 +157,41 @@ const TrunklineReferralsTab: React.FC = () => {
         .single();
       if (profileError || !profile) throw new Error("User not found with that email");
 
+      const fullName = [creditFirstName.trim(), creditLastName.trim()].filter(Boolean).join(" ") || profile.name || creditEmail;
+
       const { error } = await supabase.from("beta_credits").insert({
         user_id: profile.id,
         amount: Number(creditAmount),
         type: "issued",
-        description: creditDescription || `Manual credit — $${creditAmount}`,
+        description: creditDescription || `Manual credit — $${creditAmount} — ${fullName}`,
       });
       if (error) throw error;
+
+      // Fire beta_approved email to the tester
+      try {
+        await supabase.functions.invoke("ecommerce-email-orchestrator", {
+          body: {
+            eventType: "beta_approved",
+            recipientEmail: creditEmail.trim(),
+            data: {
+              recipient_name: fullName,
+              credit_amount: Number(creditAmount),
+            },
+          },
+        });
+      } catch (emailErr) {
+        console.error("Failed to send beta_approved email:", emailErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beta-credits-all"] });
-      toast.success("Credit issued successfully");
+      toast.success("Credit issued & welcome email sent");
       setIssueCreditOpen(false);
       setCreditEmail("");
       setCreditAmount("100");
       setCreditDescription("");
+      setCreditFirstName("");
+      setCreditLastName("");
     },
     onError: (err: any) => toast.error(err.message || "Failed to issue credit"),
   });

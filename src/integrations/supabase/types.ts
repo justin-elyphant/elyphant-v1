@@ -979,6 +979,64 @@ export type Database = {
           },
         ]
       }
+      beta_credits: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          issued_by: string | null
+          order_id: string | null
+          referral_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          issued_by?: string | null
+          order_id?: string | null
+          referral_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          issued_by?: string | null
+          order_id?: string | null
+          referral_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beta_credits_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beta_credits_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "beta_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beta_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beta_referrals: {
         Row: {
           connection_id: string | null
@@ -5434,6 +5492,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
+      approve_beta_referral: { Args: { p_referral_id: string }; Returns: Json }
       are_users_connected: {
         Args: { user_id_1: string; user_id_2: string }
         Returns: boolean
@@ -5590,6 +5649,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: number
       }
+      get_beta_credit_balance: { Args: { p_user_id: string }; Returns: number }
       get_full_shipping_address_for_gifting: {
         Args: { target_user_id: string }
         Returns: Json
@@ -5868,6 +5928,10 @@ export type Database = {
       }
       recover_stuck_orders: {
         Args: { max_age_minutes?: number }
+        Returns: Json
+      }
+      reject_beta_referral: {
+        Args: { p_notes?: string; p_referral_id: string }
         Returns: Json
       }
       reset_auth_rate_limit: {

@@ -1313,6 +1313,21 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: nudgeReminderTemplate(data),
         subject: `Reminder: ${data.sender_name || 'Someone'} is waiting to connect with you`
       };
+    case 'beta_approval_needed':
+      return {
+        html: betaApprovalNeededTemplate(data),
+        subject: `New Beta Tester Pending Approval — ${data.invitee_name || data.invitee_email || 'New Referral'}`
+      };
+    case 'beta_invite_welcome':
+      return {
+        html: betaInviteWelcomeTemplate(data),
+        subject: `You're Invited to the Elyphant Beta`
+      };
+    case 'beta_approved':
+      return {
+        html: betaApprovedTemplate(data),
+        subject: `Welcome to the Elyphant Beta — Your $${data.credit_amount || 100} Credit is Ready`
+      };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
   }

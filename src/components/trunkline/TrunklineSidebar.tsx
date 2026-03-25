@@ -77,7 +77,7 @@ const navigationItems = [
     badge: "12",
   },
   {
-    title: "Referrals",
+    title: "Beta Program",
     url: "/trunkline/referrals",
     icon: Gift,
     badge: null,

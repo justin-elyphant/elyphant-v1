@@ -58,6 +58,8 @@ const TrunklineReferralsTab: React.FC = () => {
   const [creditEmail, setCreditEmail] = useState("");
   const [creditAmount, setCreditAmount] = useState("100");
   const [creditDescription, setCreditDescription] = useState("");
+  const [creditFirstName, setCreditFirstName] = useState("");
+  const [creditLastName, setCreditLastName] = useState("");
 
   // Fetch referrals
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
@@ -155,23 +157,62 @@ const TrunklineReferralsTab: React.FC = () => {
         .single();
       if (profileError || !profile) throw new Error("User not found with that email");
 
+      const fullName = [creditFirstName.trim(), creditLastName.trim()].filter(Boolean).join(" ") || profile.name || creditEmail;
+
       const { error } = await supabase.from("beta_credits").insert({
         user_id: profile.id,
         amount: Number(creditAmount),
         type: "issued",
-        description: creditDescription || `Manual credit — $${creditAmount}`,
+        description: creditDescription || `Manual credit — $${creditAmount} — ${fullName}`,
       });
       if (error) throw error;
+
+      // Fire beta_approved email to the tester
+      try {
+        await supabase.functions.invoke("ecommerce-email-orchestrator", {
+          body: {
+            eventType: "beta_approved",
+            recipientEmail: creditEmail.trim(),
+            data: {
+              recipient_name: fullName,
+              credit_amount: Number(creditAmount),
+            },
+          },
+        });
+      } catch (emailErr) {
+        console.error("Failed to send beta_approved email:", emailErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beta-credits-all"] });
-      toast.success("Credit issued successfully");
+      toast.success("Credit issued & welcome email sent");
       setIssueCreditOpen(false);
       setCreditEmail("");
       setCreditAmount("100");
       setCreditDescription("");
+      setCreditFirstName("");
+      setCreditLastName("");
     },
     onError: (err: any) => toast.error(err.message || "Failed to issue credit"),
+  });
+
+  // Fetch profiles for tester name resolution (fallback for manual credits)
+  const creditUserIds = React.useMemo(() => {
+    return [...new Set(allCredits.map(c => c.user_id))];
+  }, [allCredits]);
+
+  const { data: creditProfiles = [] } = useQuery({
+    queryKey: ["beta-credit-profiles", creditUserIds],
+    queryFn: async () => {
+      if (creditUserIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", creditUserIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: creditUserIds.length > 0,
   });
 
   // Compute tester balances
@@ -180,12 +221,13 @@ const TrunklineReferralsTab: React.FC = () => {
     
     for (const credit of allCredits) {
       if (!balanceMap.has(credit.user_id)) {
-        // Find the profile from referrals
+        // Try referral chain first, then profiles fallback
         const referral = referrals.find(r => r.referred_id === credit.user_id);
+        const profile = creditProfiles.find(p => p.id === credit.user_id);
         balanceMap.set(credit.user_id, {
           userId: credit.user_id,
-          name: referral?.referred_profile?.name || "Unknown",
-          email: referral?.referred_profile?.email || referral?.referred_email || "Unknown",
+          name: referral?.referred_profile?.name || profile?.name || "Unknown",
+          email: referral?.referred_profile?.email || referral?.referred_email || profile?.email || "Unknown",
           issued: 0,
           spent: 0,
           remaining: 0,
@@ -204,7 +246,7 @@ const TrunklineReferralsTab: React.FC = () => {
     }
     
     return Array.from(balanceMap.values());
-  }, [allCredits, referrals]);
+  }, [allCredits, referrals, creditProfiles]);
 
   // Stats
   const pendingApproval = referrals.filter(r => r.status === "pending_approval" || r.status === "signed_up").length;
@@ -471,6 +513,24 @@ const TrunklineReferralsTab: React.FC = () => {
             <DialogTitle>Issue Manual Credit</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium">First Name</label>
+                <Input
+                  placeholder="Jane"
+                  value={creditFirstName}
+                  onChange={(e) => setCreditFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Last Name</label>
+                <Input
+                  placeholder="Doe"
+                  value={creditLastName}
+                  onChange={(e) => setCreditLastName(e.target.value)}
+                />
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium">User Email</label>
               <Input

@@ -424,6 +424,8 @@ serve(async (req) => {
       shipping_cost: String(pricingBreakdown.shippingCost),
       gifting_fee: String(pricingBreakdown.giftingFee),
       tax_amount: String(pricingBreakdown.taxAmount),
+      beta_credits_applied: String(betaCreditsApplied),
+      tax_amount: String(pricingBreakdown.taxAmount),
     };
 
     // Merge in any client-provided metadata (without overwriting core fields)

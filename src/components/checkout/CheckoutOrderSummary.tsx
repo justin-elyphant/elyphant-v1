@@ -2,12 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Check, Trash2 } from 'lucide-react';
+import { ShoppingBag, Check, Trash2, Gift } from 'lucide-react';
 import { CartItem, useCart } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
 import CartItemImage from '@/components/cart/CartItemImage';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useBetaCredits } from '@/hooks/useBetaCredits';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];

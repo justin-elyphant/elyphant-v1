@@ -34,7 +34,10 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   isLoadingShipping = false
 }) => {
   const { removeFromCart } = useCart();
+  const { balance: betaCreditBalance, isLoading: isLoadingCredits } = useBetaCredits();
   const isFreeShipping = shippingCost === 0;
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount);
+  const adjustedTotal = totalAmount - appliedCredit;
   
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
   if (process.env.NODE_ENV === 'development') {

@@ -391,8 +391,7 @@ const TrunklineReferralsTab: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {testerBalances.map((tester) => (
-                  <Collapsible key={tester.userId} open={expandedTester === tester.userId} onOpenChange={(open) => setExpandedTester(open ? tester.userId : null)} asChild>
-                    <>
+                  <React.Fragment key={tester.userId}>
                       <TableRow>
                         <TableCell>
                           <div>

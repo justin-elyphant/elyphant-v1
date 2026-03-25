@@ -610,6 +610,24 @@ async function handleCheckoutSessionCompleted(
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`✅ [STEP 6] Order created in ${elapsed}s: ${newOrder.id} | Number: ${newOrder.order_number}`);
 
+    // STEP 6.0.1: Deduct beta credits if applied
+    const betaCreditsApplied = parseFloat(metadata.beta_credits_applied || '0');
+    if (betaCreditsApplied > 0 && userId) {
+      console.log(`💳 [STEP 6.0.1] Deducting beta credits: $${betaCreditsApplied.toFixed(2)}`);
+      const { error: creditError } = await supabase.from('beta_credits').insert({
+        user_id: userId,
+        amount: -betaCreditsApplied,
+        type: 'spent',
+        description: `Order ${newOrder.order_number} — beta credit applied`,
+        order_id: newOrder.id,
+      });
+      if (creditError) {
+        console.error(`⚠️ [STEP 6.0.1] Failed to deduct beta credits:`, creditError);
+      } else {
+        console.log(`✅ [STEP 6.0.1] Beta credits deducted: $${betaCreditsApplied.toFixed(2)}`);
+      }
+    }
+
     // STEP 6.1: Track wishlist item purchases
     console.log(`📋 [STEP 6.1] Tracking wishlist item purchases...`);
     for (const item of group.items) {

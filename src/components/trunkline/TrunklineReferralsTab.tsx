@@ -4,25 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Gift, DollarSign, Users, Clock } from "lucide-react";
+import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface BetaReferral {
   id: string;
@@ -38,12 +32,38 @@ interface BetaReferral {
   referred_profile?: { name: string | null; email: string | null };
 }
 
+interface BetaCredit {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: string;
+  description: string | null;
+  order_id: string | null;
+  created_at: string;
+}
+
+interface TesterBalance {
+  userId: string;
+  name: string;
+  email: string;
+  issued: number;
+  spent: number;
+  remaining: number;
+  orderCount: number;
+}
+
 const TrunklineReferralsTab: React.FC = () => {
   const queryClient = useQueryClient();
-  const [markingId, setMarkingId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectNotes, setRejectNotes] = useState("");
+  const [expandedTester, setExpandedTester] = useState<string | null>(null);
+  const [issueCreditOpen, setIssueCreditOpen] = useState(false);
+  const [creditEmail, setCreditEmail] = useState("");
+  const [creditAmount, setCreditAmount] = useState("100");
+  const [creditDescription, setCreditDescription] = useState("");
 
-  const { data: referrals = [], isLoading } = useQuery({
+  // Fetch referrals
+  const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
     queryKey: ["beta-referrals"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,45 +74,158 @@ const TrunklineReferralsTab: React.FC = () => {
           referred_profile:profiles!beta_referrals_referred_id_fkey(name, email)
         `)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return (data || []) as unknown as BetaReferral[];
     },
   });
 
-  const markPaidMutation = useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
-      const { error } = await supabase
-        .from("beta_referrals")
-        .update({
-          status: "reward_paid",
-          reward_paid_at: new Date().toISOString(),
-          reward_notes: notes || null,
-        })
-        .eq("id", id);
+  // Fetch all credits for tester balances
+  const { data: allCredits = [] } = useQuery({
+    queryKey: ["beta-credits-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("beta_credits")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
+      return (data || []) as unknown as BetaCredit[];
+    },
+  });
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: async (referralId: string) => {
+      const { data, error } = await supabase.rpc("approve_beta_referral", {
+        p_referral_id: referralId,
+      });
+      if (error) throw error;
+      const result = data as any;
+      if (!result?.success) throw new Error(result?.error || "Approval failed");
+
+      // Fire beta_approved email
+      const referral = referrals.find(r => r.id === referralId);
+      if (referral?.referred_profile?.email) {
+        await supabase.functions.invoke("ecommerce-email-orchestrator", {
+          body: {
+            eventType: "beta_approved",
+            recipientEmail: referral.referred_profile.email,
+            data: {
+              recipient_name: referral.referred_profile.name || referral.referred_email,
+              credit_amount: referral.reward_amount,
+            },
+          },
+        });
+      }
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["beta-referrals"] });
-      toast.success("Referral marked as paid");
-      setMarkingId(null);
-      setNotes("");
+      queryClient.invalidateQueries({ queryKey: ["beta-credits-all"] });
+      toast.success("Beta tester approved — $100 credit issued");
     },
-    onError: () => toast.error("Failed to update referral"),
+    onError: (err: any) => toast.error(err.message || "Failed to approve"),
   });
 
-  const totalReferrals = referrals.length;
-  const pendingRewards = referrals.filter((r) => r.status === "signed_up").length;
-  const totalPaid = referrals
-    .filter((r) => r.status === "reward_paid")
-    .reduce((sum, r) => sum + (r.reward_amount || 0), 0);
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      const { data, error } = await supabase.rpc("reject_beta_referral", {
+        p_referral_id: id,
+        p_notes: notes || null,
+      });
+      if (error) throw error;
+      const result = data as any;
+      if (!result?.success) throw new Error(result?.error || "Rejection failed");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beta-referrals"] });
+      toast.success("Referral rejected");
+      setRejectingId(null);
+      setRejectNotes("");
+    },
+    onError: () => toast.error("Failed to reject referral"),
+  });
+
+  // Issue manual credit
+  const issueManualCreditMutation = useMutation({
+    mutationFn: async () => {
+      // Look up user by email
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .eq("email", creditEmail.trim())
+        .single();
+      if (profileError || !profile) throw new Error("User not found with that email");
+
+      const { error } = await supabase.from("beta_credits").insert({
+        user_id: profile.id,
+        amount: Number(creditAmount),
+        type: "issued",
+        description: creditDescription || `Manual credit — $${creditAmount}`,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beta-credits-all"] });
+      toast.success("Credit issued successfully");
+      setIssueCreditOpen(false);
+      setCreditEmail("");
+      setCreditAmount("100");
+      setCreditDescription("");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to issue credit"),
+  });
+
+  // Compute tester balances
+  const testerBalances: TesterBalance[] = React.useMemo(() => {
+    const balanceMap = new Map<string, TesterBalance>();
+    
+    for (const credit of allCredits) {
+      if (!balanceMap.has(credit.user_id)) {
+        // Find the profile from referrals
+        const referral = referrals.find(r => r.referred_id === credit.user_id);
+        balanceMap.set(credit.user_id, {
+          userId: credit.user_id,
+          name: referral?.referred_profile?.name || "Unknown",
+          email: referral?.referred_profile?.email || referral?.referred_email || "Unknown",
+          issued: 0,
+          spent: 0,
+          remaining: 0,
+          orderCount: 0,
+        });
+      }
+
+      const tester = balanceMap.get(credit.user_id)!;
+      if (credit.type === "issued" || credit.type === "refunded") {
+        tester.issued += credit.amount;
+      } else if (credit.type === "spent") {
+        tester.spent += Math.abs(credit.amount);
+        if (credit.order_id) tester.orderCount++;
+      }
+      tester.remaining = tester.issued - tester.spent;
+    }
+    
+    return Array.from(balanceMap.values());
+  }, [allCredits, referrals]);
+
+  // Stats
+  const pendingApproval = referrals.filter(r => r.status === "pending_approval" || r.status === "signed_up").length;
+  const totalApproved = referrals.filter(r => r.status === "credit_issued").length;
+  const totalCreditsIssued = testerBalances.reduce((sum, t) => sum + t.issued, 0);
+  const totalCreditsSpent = testerBalances.reduce((sum, t) => sum + t.spent, 0);
+  const remainingLiability = totalCreditsIssued - totalCreditsSpent;
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
+      case "pending_approval":
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Pending Approval</Badge>;
       case "signed_up":
-        return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Signed Up</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Signed Up</Badge>;
+      case "credit_issued":
+        return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Credit Issued</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejected</Badge>;
       case "reward_paid":
         return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Paid</Badge>;
       default:
@@ -102,28 +235,34 @@ const TrunklineReferralsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Beta Referrals</h1>
-        <p className="text-muted-foreground">Track invite-driven signups and $100 reward payouts.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Beta Program</h1>
+          <p className="text-muted-foreground">Manage beta testers, approve referrals, and track $100 store credits.</p>
+        </div>
+        <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
+          <CreditCard className="h-4 w-4 mr-2" />
+          Issue Credit
+        </Button>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <Users className="h-8 w-8 text-muted-foreground" />
+            <Clock className="h-8 w-8 text-amber-500" />
             <div>
-              <p className="text-2xl font-bold">{totalReferrals}</p>
-              <p className="text-xs text-muted-foreground">Total Referrals</p>
+              <p className="text-2xl font-bold">{pendingApproval}</p>
+              <p className="text-xs text-muted-foreground">Pending Approval</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <Clock className="h-8 w-8 text-amber-500" />
+            <Users className="h-8 w-8 text-muted-foreground" />
             <div>
-              <p className="text-2xl font-bold">{pendingRewards}</p>
-              <p className="text-xs text-muted-foreground">Pending Rewards</p>
+              <p className="text-2xl font-bold">{totalApproved}</p>
+              <p className="text-xs text-muted-foreground">Active Testers</p>
             </div>
           </CardContent>
         </Card>
@@ -131,37 +270,45 @@ const TrunklineReferralsTab: React.FC = () => {
           <CardContent className="flex items-center gap-3 p-4">
             <DollarSign className="h-8 w-8 text-emerald-500" />
             <div>
-              <p className="text-2xl font-bold">${totalPaid.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Paid Out</p>
+              <p className="text-2xl font-bold">${totalCreditsIssued.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Issued</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <Gift className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-2xl font-bold">${remainingLiability.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Remaining Liability</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Referrals Table */}
+      {/* Section 1: Approval Queue */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            All Referrals
+            Referral Chain & Approval Queue
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <p className="text-center text-muted-foreground py-8">Loading referrals…</p>
+          {loadingReferrals ? (
+            <p className="text-center text-muted-foreground py-8">Loading...</p>
           ) : referrals.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No referrals yet. Invite links will populate this table automatically.</p>
+            <p className="text-center text-muted-foreground py-8">No referrals yet.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Referrer</TableHead>
-                  <TableHead>Referred</TableHead>
+                  <TableHead>Invitee</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,26 +331,33 @@ const TrunklineReferralsTab: React.FC = () => {
                     </TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell className="font-medium">${r.reward_amount}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                      {r.reward_notes || "—"}
-                    </TableCell>
                     <TableCell className="text-right">
-                      {r.status === "signed_up" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setMarkingId(r.id);
-                            setNotes("");
-                          }}
-                        >
-                          Mark Paid
-                        </Button>
+                      {(r.status === "pending_approval" || r.status === "signed_up") && (
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => approveMutation.mutate(r.id)}
+                            disabled={approveMutation.isPending}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setRejectingId(r.id); setRejectNotes(""); }}
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
                       )}
-                      {r.status === "reward_paid" && r.reward_paid_at && (
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(r.reward_paid_at).toLocaleDateString()}
-                        </span>
+                      {r.status === "credit_issued" && (
+                        <span className="text-xs text-emerald-600 font-medium">Approved</span>
+                      )}
+                      {r.status === "rejected" && (
+                        <span className="text-xs text-muted-foreground">{r.reward_notes || "Rejected"}</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -214,24 +368,148 @@ const TrunklineReferralsTab: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Mark as Paid Dialog */}
-      <Dialog open={!!markingId} onOpenChange={() => setMarkingId(null)}>
+      {/* Section 2: Tester Balances */}
+      {testerBalances.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Beta Tester Balances
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tester</TableHead>
+                  <TableHead className="text-right">Issued</TableHead>
+                  <TableHead className="text-right">Spent</TableHead>
+                  <TableHead className="text-right">Remaining</TableHead>
+                  <TableHead className="text-right">Orders</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {testerBalances.map((tester) => (
+                  <Collapsible key={tester.userId} open={expandedTester === tester.userId} onOpenChange={(open) => setExpandedTester(open ? tester.userId : null)} asChild>
+                    <>
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{tester.name}</p>
+                            <p className="text-xs text-muted-foreground">{tester.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">${tester.issued.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${tester.spent.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          <span className={tester.remaining > 0 ? "text-emerald-600" : "text-muted-foreground"}>
+                            ${tester.remaining.toFixed(2)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{tester.orderCount}</TableCell>
+                        <TableCell>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                          </CollapsibleTrigger>
+                        </TableCell>
+                      </TableRow>
+                      <CollapsibleContent asChild>
+                        <tr>
+                          <td colSpan={6} className="p-4 bg-muted/50">
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Transaction History</p>
+                              {allCredits
+                                .filter(c => c.user_id === tester.userId)
+                                .map(c => (
+                                  <div key={c.id} className="flex justify-between text-sm py-1 border-b border-border/50">
+                                    <div>
+                                      <span className={c.amount > 0 ? "text-emerald-600" : "text-destructive"}>
+                                        {c.amount > 0 ? "+" : ""}{c.amount.toFixed(2)}
+                                      </span>
+                                      <span className="text-muted-foreground ml-2">{c.description || c.type}</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </td>
+                        </tr>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reject Dialog */}
+      <Dialog open={!!rejectingId} onOpenChange={() => setRejectingId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Mark Reward as Paid</DialogTitle>
+            <DialogTitle>Reject Referral</DialogTitle>
           </DialogHeader>
           <Textarea
-            placeholder="Optional notes (e.g., Paid via Venmo, PayPal ref #123)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional reason for rejection"
+            value={rejectNotes}
+            onChange={(e) => setRejectNotes(e.target.value)}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setMarkingId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRejectingId(null)}>Cancel</Button>
             <Button
-              onClick={() => markingId && markPaidMutation.mutate({ id: markingId, notes })}
-              disabled={markPaidMutation.isPending}
+              variant="destructive"
+              onClick={() => rejectingId && rejectMutation.mutate({ id: rejectingId, notes: rejectNotes })}
+              disabled={rejectMutation.isPending}
             >
-              {markPaidMutation.isPending ? "Saving…" : "Confirm Paid ($100)"}
+              {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Issue Credit Dialog */}
+      <Dialog open={issueCreditOpen} onOpenChange={setIssueCreditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Issue Manual Credit</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">User Email</label>
+              <Input
+                placeholder="user@example.com"
+                value={creditEmail}
+                onChange={(e) => setCreditEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Amount ($)</label>
+              <Input
+                type="number"
+                value={creditAmount}
+                onChange={(e) => setCreditAmount(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description (optional)</label>
+              <Input
+                placeholder="e.g., Top-up credit for extra testing"
+                value={creditDescription}
+                onChange={(e) => setCreditDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIssueCreditOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => issueManualCreditMutation.mutate()}
+              disabled={issueManualCreditMutation.isPending || !creditEmail}
+            >
+              {issueManualCreditMutation.isPending ? "Issuing..." : `Issue $${creditAmount}`}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,12 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingBag, Check, Trash2 } from 'lucide-react';
+import { ShoppingBag, Check, Trash2, Gift } from 'lucide-react';
 import { CartItem, useCart } from '@/contexts/CartContext';
 import ContextualHelp from '@/components/help/ContextualHelp';
 import CartItemImage from '@/components/cart/CartItemImage';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useBetaCredits } from '@/hooks/useBetaCredits';
 
 interface CheckoutOrderSummaryProps {
   items: CartItem[];
@@ -33,7 +34,10 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   isLoadingShipping = false
 }) => {
   const { removeFromCart } = useCart();
+  const { balance: betaCreditBalance, isLoading: isLoadingCredits } = useBetaCredits();
   const isFreeShipping = shippingCost === 0;
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount);
+  const adjustedTotal = totalAmount - appliedCredit;
   
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production
   if (process.env.NODE_ENV === 'development') {
@@ -136,12 +140,30 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
           </div>
         </div>
 
+        {appliedCredit > 0 && (
+          <>
+            <Separator />
+            <div className="flex justify-between text-sm items-center">
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <Gift className="h-4 w-4" />
+                Beta Credit Applied
+              </span>
+              <span className="text-primary font-medium">-{formatPrice(appliedCredit)}</span>
+            </div>
+          </>
+        )}
+
         <Separator />
 
         <div className="flex justify-between font-semibold text-lg">
           <span>Total</span>
-          <span>{formatPrice(totalAmount)}</span>
+          <span>{formatPrice(adjustedTotal)}</span>
         </div>
+        {appliedCredit > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Remaining beta credit after this order: {formatPrice(betaCreditBalance - appliedCredit)}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

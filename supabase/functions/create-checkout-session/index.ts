@@ -206,7 +206,93 @@ serve(async (req) => {
 
     // Calculate total amount
     const totalAmount = pricingBreakdown.subtotal + pricingBreakdown.shippingCost + pricingBreakdown.giftingFee + pricingBreakdown.taxAmount;
-    const amountInCents = Math.round(totalAmount * 100);
+    
+    // ── Beta Credit Balance Check ──
+    let betaCreditsApplied = 0;
+    if (!isGuestCheckout && user.id && !user.id.startsWith('guest_')) {
+      try {
+        const { data: creditBalance, error: creditError } = await supabaseService.rpc('get_beta_credit_balance', { p_user_id: user.id });
+        if (!creditError && creditBalance && Number(creditBalance) > 0) {
+          betaCreditsApplied = Math.min(Number(creditBalance), totalAmount);
+          logStep("Beta credits available", { balance: Number(creditBalance), applying: betaCreditsApplied, totalAmount });
+        }
+      } catch (e) {
+        logStep("Beta credit check failed (non-blocking)", { error: (e as Error).message });
+      }
+    }
+    
+    const adjustedTotal = totalAmount - betaCreditsApplied;
+    const amountInCents = Math.round(adjustedTotal * 100);
+    
+    // ── Fully covered by credits — bypass Stripe ──
+    if (amountInCents <= 0 && betaCreditsApplied > 0) {
+      logStep("Order fully covered by beta credits", { betaCreditsApplied });
+      
+      // Create order directly
+      const orderData = {
+        user_id: user.id,
+        checkout_session_id: `beta_credits_${Date.now()}`,
+        status: 'payment_confirmed',
+        payment_status: 'paid_by_credits',
+        total_amount: totalAmount,
+        currency: 'usd',
+        line_items: {
+          items: cartItems.map((item: any) => ({
+            product_id: item.product_id || item.product?.product_id,
+            title: item.name || item.product?.name,
+            quantity: item.quantity,
+            unit_price: item.price || item.product?.price,
+            image_url: item.image_url || item.product?.image,
+          })),
+          subtotal: pricingBreakdown.subtotal,
+          shipping: pricingBreakdown.shippingCost,
+          tax: pricingBreakdown.taxAmount,
+          gifting_fee: pricingBreakdown.giftingFee,
+        },
+        shipping_address: shippingInfo || null,
+        gift_options: giftOptions || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      const { data: newOrder, error: orderError } = await supabaseService
+        .from('orders')
+        .insert(orderData)
+        .select('id, order_number')
+        .single();
+      
+      if (orderError) throw new Error(`Failed to create credit-paid order: ${orderError.message}`);
+      
+      // Deduct credits
+      await supabaseService.from('beta_credits').insert({
+        user_id: user.id,
+        amount: -betaCreditsApplied,
+        type: 'spent',
+        description: `Order ${newOrder.order_number} — fully paid by beta credits`,
+        order_id: newOrder.id,
+      });
+      
+      logStep("Credit-paid order created", { orderId: newOrder.id, orderNumber: newOrder.order_number });
+      
+      // Trigger process-order-v2 for Zinc fulfillment
+      try {
+        await supabaseService.functions.invoke('process-order-v2', {
+          body: { orderId: newOrder.id }
+        });
+      } catch (e) {
+        logStep("process-order-v2 trigger failed (non-blocking)", { error: (e as Error).message });
+      }
+      
+      return new Response(
+        JSON.stringify({
+          url: `${req.headers.get('origin') || 'https://elyphant.ai'}/order-confirmation?order_id=${newOrder.id}&paid_by_credits=true`,
+          session_id: orderData.checkout_session_id,
+          paid_by_credits: true,
+          order_id: newOrder.id,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     // Build line items for Stripe (no metadata limits here!)
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = isGroupGift ? [{
@@ -337,6 +423,8 @@ serve(async (req) => {
       subtotal: String(pricingBreakdown.subtotal),
       shipping_cost: String(pricingBreakdown.shippingCost),
       gifting_fee: String(pricingBreakdown.giftingFee),
+      tax_amount: String(pricingBreakdown.taxAmount),
+      beta_credits_applied: String(betaCreditsApplied),
       tax_amount: String(pricingBreakdown.taxAmount),
     };
 

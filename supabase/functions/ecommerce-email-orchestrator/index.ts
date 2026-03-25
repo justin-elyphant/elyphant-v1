@@ -1204,6 +1204,161 @@ const nudgeReminderTemplate = (data: any): string => {
   return baseEmailTemplate({ content, preheader: `${senderName} is waiting to connect with you` });
 };
 
+// Beta Approval Needed Template — Internal alert to justin@elyphant.com
+const betaApprovalNeededTemplate = (props: any): string => {
+  const content = `
+    <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Internal — Beta Program</p>
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      New beta tester pending approval.
+    </h2>
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      A new referral has come in and needs your review before a $${props.credit_amount || 100} credit is issued.
+    </p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Referred by</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.referrer_name || 'Unknown'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Referrer email</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">${props.referrer_email || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Invitee</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.invitee_name || 'Unknown'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Invitee email</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">${props.invitee_email || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af;">Credit amount</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 18px; font-weight: 700; color: #1a1a1a;">$${props.credit_amount || 100}.00</td>
+        </tr>
+      </table>
+    </div>
+    <table style="margin-top: 32px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/trunkline?tab=referrals" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Review in Trunkline
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `New beta referral: ${props.invitee_name || props.invitee_email} needs approval` });
+};
+
+// Beta Invite Welcome Template — Sent to invitee
+const betaInviteWelcomeTemplate = (props: any): string => {
+  const firstName = getFirstName(props.recipient_name);
+  const content = `
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      You're invited to the Elyphant beta.
+    </h2>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Hi ${firstName}, ${props.sender_name || 'a friend'} has invited you to join the Elyphant beta program — a smarter way to discover and send gifts to the people you care about.
+    </p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">What you'll receive</p>
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 24px; color: #1a1a1a; font-weight: 700;">$${props.credit_amount || 100} store credit</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; line-height: 1.6;">
+        Once your account is approved, you'll receive $${props.credit_amount || 100} in store credit to shop, test gifting features, and explore the platform — across as many orders as you'd like.
+      </p>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">How it works</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">1.</strong> Sign up using the link below
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">2.</strong> Complete your profile and preferences
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">3.</strong> Once approved, your $${props.credit_amount || 100} credit is ready to use
+          </td>
+        </tr>
+      </table>
+    </div>
+    ${props.custom_message ? `
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Message from ${props.sender_name || 'your friend'}</p>
+      <p style="margin: 0; font-family: ${fontStack}; color: #4b5563; font-style: italic; font-size: 15px; line-height: 1.6;">"${props.custom_message}"</p>
+    </div>
+    ` : ''}
+    <table style="margin-top: 32px; width: 100%;">
+      <tr><td align="center">
+        <a href="${props.invitation_url || 'https://elyphant.ai/auth'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Join the Beta
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `${props.sender_name || 'A friend'} invited you to the Elyphant beta — $${props.credit_amount || 100} credit awaits` });
+};
+
+// Beta Approved Template — Sent to approved tester
+const betaApprovedTemplate = (props: any): string => {
+  const firstName = getFirstName(props.tester_name);
+  const content = `
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Welcome to the beta, ${firstName}.
+    </h2>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      You've been approved as an Elyphant beta tester. Your store credit is loaded and ready to use.
+    </p>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Your beta credit</p>
+      <p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 36px; color: #1a1a1a; font-weight: 700;">$${props.credit_amount || 100}.00</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">Available across multiple orders</p>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">What we need from you</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 10px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Make purchases</strong> — Browse and buy products. Your credit is applied automatically at checkout.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Test gifting</strong> — Send gifts to friends and family. Try scheduled deliveries, gift messages, and wishlists.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Invite others</strong> — Share the love. Invite friends and family so they can test alongside you.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Share feedback</strong> — Tell us what works, what doesn't, and what you'd love to see.
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">How credits work</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        Your $${props.credit_amount || 100} credit is automatically applied at checkout. You can split it across multiple orders — no minimum purchase required. Your remaining balance is always visible in your account.
+      </p>
+    </div>
+    <table style="margin-top: 32px; width: 100%;">
+      <tr><td align="center">
+        <a href="https://elyphant.ai/shop" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Start Shopping
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Your $${props.credit_amount || 100} beta credit is ready — start shopping on Elyphant` });
+};
 
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {

@@ -322,6 +322,7 @@ function AppContent() {
            <Route path="/trunkline/communications/orchestrator-test" element={<Trunkline />} />
            <Route path="/trunkline/funding" element={<Trunkline />} />
            <Route path="/trunkline/auto-gift-testing" element={<Trunkline />} />
+            <Route path="/trunkline/referrals" element={<Trunkline />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />

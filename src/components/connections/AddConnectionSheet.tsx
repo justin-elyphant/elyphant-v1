@@ -13,6 +13,7 @@ import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementSe
 import { invitationAnalyticsService } from "@/services/analytics/invitationAnalyticsService";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 
 interface AddConnectionSheetProps {
   isOpen: boolean;

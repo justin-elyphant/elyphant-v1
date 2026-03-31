@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
+import BetaFeedbackViewer from "@/components/trunkline/beta/BetaFeedbackViewer";
 
 interface BetaReferral {
   id: string;
@@ -291,6 +292,7 @@ const TrunklineReferralsTab: React.FC = () => {
         <TabsList>
           <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
           <TabsTrigger value="analytics">Tester Analytics</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
 
         <TabsContent value="approvals" className="space-y-6 mt-4">
@@ -496,6 +498,10 @@ const TrunklineReferralsTab: React.FC = () => {
 
         <TabsContent value="analytics" className="mt-4">
           <BetaTesterAnalytics />
+        </TabsContent>
+
+        <TabsContent value="feedback" className="mt-4">
+          <BetaFeedbackViewer />
         </TabsContent>
       </Tabs>
 

@@ -97,6 +97,7 @@ const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const Investors = lazy(() => import("./pages/Investors"));
 const OAuthComplete = lazy(() => import("./pages/OAuthComplete"));
 const InvitePage = lazy(() => import("./pages/InvitePage"));
+const BetaFeedback = lazy(() => import("./pages/BetaFeedback"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
@@ -323,6 +324,7 @@ function AppContent() {
            <Route path="/trunkline/funding" element={<Trunkline />} />
            <Route path="/trunkline/auto-gift-testing" element={<Trunkline />} />
             <Route path="/trunkline/referrals" element={<Trunkline />} />
+           <Route path="/beta-feedback" element={<BetaFeedback />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />

@@ -156,6 +156,9 @@ verify_jwt = false
 [functions.google-place-details]
 verify_jwt = false
 
+[functions.beta-checkin-emailer]
+verify_jwt = false
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================
@@ -209,3 +212,8 @@ schedule = "0 8 * * *"
 [[crons.nicole_weekly_curator]]
 function_name = "nicole-weekly-curator"
 schedule = "0 3 * * 0"
+
+# Beta Check-In Emailer - weekly personalized progress emails (Mondays 10 AM)
+[[crons.beta_checkin_emailer]]
+function_name = "beta-checkin-emailer"
+schedule = "0 10 * * 1"

@@ -229,17 +229,21 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                   connection_id: conn.id
                                 });
 
-                                // Invoke orchestrator with standardized payload
+                                // Invoke orchestrator — swap to beta_invite_welcome if inviter is a beta tester
+                                const isBetaTester = betaCreditBalance > 0;
+                                const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
+                                
                                 const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                                   body: {
-                                    eventType: 'connection_invitation',
+                                    eventType: emailEventType,
                                     recipientEmail: conn.pending_recipient_email,
                                     data: {
                                       sender_name: senderName,
                                       recipient_email: conn.pending_recipient_email,
                                       recipient_name: conn.pending_recipient_name,
                                       connection_id: conn.id,
-                                      invitation_url: inviteUrl
+                                      invitation_url: inviteUrl,
+                                      credit_amount: isBetaTester ? 100 : undefined,
                                     }
                                   }
                                 });

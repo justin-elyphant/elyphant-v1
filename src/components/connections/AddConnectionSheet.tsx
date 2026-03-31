@@ -97,16 +97,20 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         }
       });
 
-      // Send invitation email
+      // Send invitation email — swap to beta_invite_welcome if inviter is a beta tester
+      const isBetaTester = betaCreditBalance > 0;
+      const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
+      
       const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
         body: {
-          eventType: 'connection_invitation',
+          eventType: emailEventType,
           recipientEmail: inviteForm.email,
           data: {
             sender_name: user.user_metadata?.name || user.email || 'Someone',
             recipient_name: inviteForm.name,
             recipient_email: inviteForm.email,
             invitation_url: invitationUrl,
+            credit_amount: isBetaTester ? 100 : undefined,
             custom_message: inviteForm.message || `Hi ${inviteForm.name}! I'd love to connect with you on Elyphant so we can share wishlists and find perfect gifts for each other.`
           }
         }

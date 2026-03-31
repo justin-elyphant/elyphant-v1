@@ -9,6 +9,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { getAppUrl } from "@/utils/urlUtils";
 import { searchFriends, FriendSearchResult } from "@/services/search/privacyAwareFriendSearch";
 import { sendConnectionRequest } from "@/services/connections/connectionService";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,7 +102,7 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
   };
 
   const handleShare = async (username: string, name: string) => {
-    const url = `${window.location.origin}/invite/${username}`;
+    const url = `${getAppUrl()}/invite/${username}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: `Connect with ${name} on Elyphant`, url });

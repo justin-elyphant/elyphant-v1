@@ -85,7 +85,7 @@ const baseEmailTemplate = ({ content, preheader }: { content: string; preheader?
               <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                 <tr>
                   <td valign="middle" style="padding-right: 8px;">
-                    <img src="https://elyphant.lovable.app/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" alt="Elyphant" width="36" height="36" style="display: block; border: 0;" />
+                    <img src="https://elyphant.ai/lovable-uploads/9b4f3dc7-ff8b-46c4-9eb3-56681e8c73b9.png" alt="Elyphant" width="36" height="36" style="display: block; border: 0;" />
                   </td>
                   <td valign="middle">
                     <h1 style="margin: 0; font-family: ${fontStack}; font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">
@@ -751,7 +751,7 @@ const recurringGiftRuleCreatedTemplate = (props: any): string => {
     
     <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Manage Recurring Gifts
         </a>
       </td></tr>
@@ -807,7 +807,7 @@ const giftComingYourWayTemplate = (props: any): string => {
     
     <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/dashboard" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/dashboard" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           View Your Dashboard
         </a>
       </td></tr>
@@ -841,7 +841,7 @@ const autoGiftPaymentFailedTemplate = (props: any): string => {
     
     <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.lovable.app/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/recurring-gifts" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Update Payment Method
         </a>
       </td></tr>
@@ -1013,7 +1013,7 @@ const vendorApplicationApprovedTemplate = (props: any): string => {
     <!-- CTA -->
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr><td align="center" style="padding: 0 0 40px 0;">
-        <a href="https://elyphant.lovable.app/vendor-portal" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/vendor-portal" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Open Your Vendor Portal
         </a>
       </td></tr>
@@ -1387,7 +1387,7 @@ const betaApprovedTemplate = (props: any): string => {
     </div>
     <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/shop" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/marketplace" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Start Shopping
         </a>
       </td></tr>
@@ -1466,7 +1466,7 @@ const betaCheckinTemplate = (props: any): string => {
     </p>
     <table style="margin-top: 0; width: 100%;">
       <tr><td align="center">
-        <a href="${props.feedback_url || 'https://elyphant.lovable.app/beta-feedback'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="${props.feedback_url || 'https://elyphant.ai/beta-feedback'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Give Feedback
         </a>
       </td></tr>

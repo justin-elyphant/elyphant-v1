@@ -22,6 +22,7 @@ const FEATURE_LABELS: Record<string, string> = {
 
 const BetaFeedbackViewer: React.FC = () => {
   const [featureFilter, setFeatureFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
 
   const { data: feedback = [], isLoading } = useQuery({
     queryKey: ["beta-feedback-all"],

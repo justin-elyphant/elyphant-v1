@@ -21,9 +21,47 @@ const FEATURE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const BetaFeedbackViewer: React.FC = () => {
+const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = ({ onNewCount }) => {
   const [featureFilter, setFeatureFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
+  const [newCount, setNewCount] = useState(0);
+  const queryClient = useQueryClient();
+
+  // Real-time subscription for new feedback
+  useEffect(() => {
+    const channel = supabase
+      .channel("beta-feedback-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "beta_feedback" },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["beta-feedback-all"] });
+          setNewCount((prev) => {
+            const next = prev + 1;
+            onNewCount?.(next);
+            return next;
+          });
+          toast.info("New beta feedback received!", {
+            description: `A tester just submitted feedback for ${FEATURE_LABELS[(payload.new as any).feature_area] || "a feature"}.`,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, onNewCount]);
+
+  // Reset new count when component is visible
+  const resetNewCount = useCallback(() => {
+    setNewCount(0);
+    onNewCount?.(0);
+  }, [onNewCount]);
+
+  useEffect(() => {
+    resetNewCount();
+  }, [resetNewCount]);
 
   const { data: feedback = [], isLoading } = useQuery({
     queryKey: ["beta-feedback-all"],

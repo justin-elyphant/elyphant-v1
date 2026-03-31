@@ -278,6 +278,22 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
       invitation_url: "https://elyphant.com/invite/beta-abc123",
     },
   },
+  {
+    value: "beta_checkin",
+    label: "Beta Weekly Check-In",
+    category: "Beta Program",
+    sampleData: {
+      recipient_name: "Sarah Chen",
+      feedback_url: "https://elyphant.lovable.app/beta-feedback?token=sample-token",
+      has_wishlist: true,
+      has_invited: false,
+      has_scheduled_gift: false,
+      has_purchased: true,
+      wishlist_count: 3,
+      order_count: 1,
+      features_used: 4,
+    },
+  },
 ];
 
 const CATEGORIES = [...new Set(EVENT_TYPES.map((e) => e.category))];

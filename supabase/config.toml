@@ -156,6 +156,9 @@ verify_jwt = false
 [functions.google-place-details]
 verify_jwt = false
 
+[functions.beta-checkin-emailer]
+verify_jwt = false
+
 # ============================================
 # CRON JOBS - V2 MODERNIZED SYSTEM
 # ============================================

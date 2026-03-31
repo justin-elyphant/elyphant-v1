@@ -1371,6 +1371,84 @@ const betaApprovedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Your $${props.credit_amount || 100} beta credit is ready — start shopping on Elyphant` });
 };
 
+// Beta Check-In Template — Weekly personalized progress email
+const betaCheckinTemplate = (props: any): string => {
+  const firstName = getFirstName(props.recipient_name);
+  
+  const stepRow = (label: string, done: boolean): string => `
+    <tr>
+      <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: ${done ? '#1a1a1a' : '#9ca3af'}; line-height: 1.6;">
+        <span style="display: inline-block; width: 20px; text-align: center; margin-right: 8px;">${done ? '&#10003;' : '&#9675;'}</span>
+        ${label}
+      </td>
+    </tr>
+  `;
+
+  const content = `
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
+      Your weekly beta check-in, ${firstName}.
+    </h2>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Here's a look at what you've explored so far — and what's still waiting for you.
+    </p>
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Your progress</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        ${stepRow('Signed up and approved', true)}
+        ${stepRow('Built a wishlist', props.has_wishlist)}
+        ${stepRow('Invited a friend', props.has_invited)}
+        ${stepRow('Scheduled a gift', props.has_scheduled_gift)}
+        ${stepRow('Made a purchase', props.has_purchased)}
+      </table>
+    </div>
+
+    ${props.wishlist_count > 0 || props.order_count > 0 ? `
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Your activity</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">Wishlists created</td>
+          <td align="right" style="padding: 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.wishlist_count || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">Orders placed</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.order_count || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563;">Features explored</td>
+          <td align="right" style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">${props.features_used || 0}</td>
+        </tr>
+      </table>
+    </div>
+    ` : ''}
+
+    ${!props.has_wishlist || !props.has_invited || !props.has_scheduled_gift || !props.has_purchased ? `
+    <div style="margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">What to try next</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        ${!props.has_wishlist ? 'Start by searching for products and building your first wishlist. ' : ''}
+        ${!props.has_invited ? 'Invite a friend or family member so you can test gifting to each other. ' : ''}
+        ${!props.has_scheduled_gift ? 'Try scheduling a gift for someone — it tests our core delivery engine. ' : ''}
+        ${!props.has_purchased ? 'Use your beta credit to make a purchase and experience the full checkout flow. ' : ''}
+      </p>
+    </div>
+    ` : ''}
+
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      We'd love to hear what's working and what's not. Click below to share quick feedback on each feature.
+    </p>
+    <table style="margin-top: 0; width: 100%;">
+      <tr><td align="center">
+        <a href="${props.feedback_url || 'https://elyphant.lovable.app/beta-feedback'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Give Feedback
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `See your beta progress and share feedback, ${firstName}` });
+};
+
 const getEmailTemplate = (eventType: string, data: any): { html: string; subject: string } => {
   switch (eventType) {
     case 'wishlist_shared':

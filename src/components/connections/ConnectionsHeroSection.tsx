@@ -8,6 +8,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { useProfileSharing } from "@/hooks/useProfileSharing";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { toast } from "sonner";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 
 interface ConnectionsHeroSectionProps {
   friendsCount: number;

@@ -36,7 +36,8 @@ const CheckoutOrderSummary: React.FC<CheckoutOrderSummaryProps> = ({
   const { removeFromCart } = useCart();
   const { balance: betaCreditBalance, isLoading: isLoadingCredits } = useBetaCredits();
   const isFreeShipping = shippingCost === 0;
-  const appliedCredit = Math.min(betaCreditBalance, totalAmount);
+  const BETA_CREDIT_PER_ORDER_CAP = 25; // $25 max per order
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
   const adjustedTotal = totalAmount - appliedCredit;
   
   // 🛡️ DEVELOPMENT SAFEGUARDS - Remove in production

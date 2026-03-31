@@ -29,6 +29,8 @@ const UserButton = () => {
   const location = useLocation();
   const { user, signOut, isEmployee } = useAuth();
   const { profile } = useProfile();
+  const { balance: betaCreditBalance } = useBetaCredits();
+  const isBetaTester = betaCreditBalance > 0;
   const { hasIssues, checkDataIntegrity } = useProfileDataIntegrity();
   const { unreadCount: notificationsCount } = useNotifications();
   const unreadMessagesCount = useUnreadMessagesCount();

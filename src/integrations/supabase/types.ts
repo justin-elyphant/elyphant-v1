@@ -5650,6 +5650,7 @@ export type Database = {
         Returns: number
       }
       get_beta_credit_balance: { Args: { p_user_id: string }; Returns: number }
+      get_beta_tester_analytics: { Args: never; Returns: Json }
       get_full_shipping_address_for_gifting: {
         Args: { target_user_id: string }
         Returns: Json

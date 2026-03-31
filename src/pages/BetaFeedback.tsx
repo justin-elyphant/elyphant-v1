@@ -7,20 +7,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Star, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
-const FEATURE_AREAS = [
-  { key: "product_search", label: "Product Search", description: "Finding and browsing products on the marketplace" },
-  { key: "wishlists", label: "Wishlists", description: "Creating, managing, and sharing wishlists" },
-  { key: "gift_scheduling", label: "Gift Scheduling", description: "Scheduling gifts for future delivery" },
-  { key: "checkout", label: "Checkout", description: "The purchasing and payment experience" },
-  { key: "auto_gifts", label: "Auto-Gifts", description: "Setting up recurring/automatic gifts" },
-  { key: "connections", label: "Connections & Invites", description: "Connecting with friends and family on the platform" },
-];
+interface StageQuestion {
+  feature_area: string;
+  label: string;
+  description: string;
+}
 
 interface FeedbackEntry {
   feature_area: string;
   rating: number | null;
   feedback_text: string;
 }
+
+const STAGE_LABELS: Record<string, string> = {
+  first_impressions: "First Impressions",
+  explorer: "Explorer",
+  engaged: "Engaged",
+  activated: "Activated",
+  power_user: "Power User",
+};
 
 const BetaFeedback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -30,12 +35,13 @@ const BetaFeedback: React.FC = () => {
   const [valid, setValid] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const [feedback, setFeedback] = useState<FeedbackEntry[]>(
-    FEATURE_AREAS.map((f) => ({ feature_area: f.key, rating: null, feedback_text: "" }))
-  );
+  const [questions, setQuestions] = useState<StageQuestion[]>([]);
+  const [stage, setStage] = useState<string>("first_impressions");
+  const [feedback, setFeedback] = useState<FeedbackEntry[]>([]);
   const [otherComments, setOtherComments] = useState("");
 
   useEffect(() => {
@@ -55,6 +61,7 @@ const BetaFeedback: React.FC = () => {
           setValid(true);
           const firstName = result.name?.split(" ")[0] || "";
           setUserName(firstName);
+          setUserId(result.user_id || null);
         } else {
           setErrorMsg(result?.error || "Invalid token.");
         }
@@ -65,6 +72,45 @@ const BetaFeedback: React.FC = () => {
     };
     validate();
   }, [token]);
+
+  // Load stage and questions after we know the user
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadStageQuestions = async () => {
+      try {
+        // Get tester's current stage
+        const { data: stageData } = await supabase.rpc("get_tester_feedback_stage", {
+          p_user_id: userId,
+        });
+        const currentStage = (stageData as any)?.stage || "first_impressions";
+        setStage(currentStage);
+
+        // Load questions for this stage
+        const { data: stageQuestions, error } = await supabase
+          .from("beta_feedback_stages")
+          .select("feature_area, label, description")
+          .eq("stage_key", currentStage)
+          .order("sort_order");
+
+        if (error) throw error;
+
+        const qs = (stageQuestions || []) as StageQuestion[];
+        setQuestions(qs);
+        setFeedback(qs.map((q) => ({ feature_area: q.feature_area, rating: null, feedback_text: "" })));
+      } catch (err) {
+        console.error("Failed to load stage questions:", err);
+        // Fallback to a generic set
+        const fallback: StageQuestion[] = [
+          { feature_area: "general", label: "General Feedback", description: "How is your experience so far?" },
+        ];
+        setQuestions(fallback);
+        setFeedback(fallback.map((q) => ({ feature_area: q.feature_area, rating: null, feedback_text: "" })));
+      }
+    };
+
+    loadStageQuestions();
+  }, [userId]);
 
   const setRating = (featureKey: string, rating: number) => {
     setFeedback((prev) =>
@@ -145,6 +191,14 @@ const BetaFeedback: React.FC = () => {
     );
   }
 
+  const stageIntro: Record<string, string> = {
+    first_impressions: "You just joined — tell us about your first experience.",
+    explorer: "You've been exploring — how's the browsing experience?",
+    engaged: "You're getting active — how are wishlists and invites working?",
+    activated: "You've made a purchase — tell us about checkout and gifting.",
+    power_user: "You're a power user — what would make Elyphant indispensable?",
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -164,56 +218,65 @@ const BetaFeedback: React.FC = () => {
             {userName ? `Thanks for testing, ${userName}.` : "Beta Feedback"}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Rate each feature and share your thoughts. Your feedback directly shapes what we build.
+            {stageIntro[stage] || "Rate each area and share your thoughts."}
           </p>
+          <span className="inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+            {STAGE_LABELS[stage] || stage}
+          </span>
         </div>
       </div>
 
       {/* Feedback Form */}
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-        {FEATURE_AREAS.map((feature) => {
-          const entry = feedback.find((f) => f.feature_area === feature.key)!;
-          return (
-            <Card key={feature.key}>
-              <CardContent className="p-5 space-y-3">
-                <div>
-                  <h3 className="font-medium text-foreground">{feature.label}</h3>
-                  <p className="text-xs text-muted-foreground">{feature.description}</p>
-                </div>
-                {/* Star rating */}
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(feature.key, star)}
-                      className="p-0.5 transition-colors"
-                    >
-                      <Star
-                        className={`h-6 w-6 ${
-                          entry.rating && star <= entry.rating
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-muted-foreground/30"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  {entry.rating && (
-                    <span className="text-xs text-muted-foreground ml-2 self-center">
-                      {entry.rating}/5
-                    </span>
-                  )}
-                </div>
-                <Textarea
-                  placeholder={`What worked well? What could be better?`}
-                  value={entry.feedback_text}
-                  onChange={(e) => setText(feature.key, e.target.value)}
-                  className="min-h-[60px] text-sm"
-                />
-              </CardContent>
-            </Card>
-          );
-        })}
+        {questions.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          questions.map((question) => {
+            const entry = feedback.find((f) => f.feature_area === question.feature_area)!;
+            return (
+              <Card key={question.feature_area}>
+                <CardContent className="p-5 space-y-3">
+                  <div>
+                    <h3 className="font-medium text-foreground">{question.label}</h3>
+                    <p className="text-xs text-muted-foreground">{question.description}</p>
+                  </div>
+                  {/* Star rating */}
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(question.feature_area, star)}
+                        className="p-0.5 transition-colors"
+                      >
+                        <Star
+                          className={`h-6 w-6 ${
+                            entry.rating && star <= entry.rating
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-muted-foreground/30"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    {entry.rating && (
+                      <span className="text-xs text-muted-foreground ml-2 self-center">
+                        {entry.rating}/5
+                      </span>
+                    )}
+                  </div>
+                  <Textarea
+                    placeholder="What worked well? What could be better?"
+                    value={entry.feedback_text}
+                    onChange={(e) => setText(question.feature_area, e.target.value)}
+                    className="min-h-[60px] text-sm"
+                  />
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
 
         {/* Other comments */}
         <Card>

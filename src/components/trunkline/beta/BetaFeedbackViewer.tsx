@@ -10,20 +10,28 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Star, MessageSquare, BarChart3, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-const FEATURE_LABELS: Record<string, string> = {
-  product_search: "Product Search",
-  wishlists: "Wishlists",
-  gift_scheduling: "Gift Scheduling",
-  checkout: "Checkout",
-  auto_gifts: "Auto-Gifts",
-  connections: "Connections",
-  other: "Other",
+const STAGE_LABELS: Record<string, string> = {
+  first_impressions: "First Impressions",
+  explorer: "Explorer",
+  engaged: "Engaged",
+  activated: "Activated",
+  power_user: "Power User",
+};
+
+const STAGE_COLORS: Record<string, string> = {
+  first_impressions: "bg-blue-100 text-blue-800",
+  explorer: "bg-amber-100 text-amber-800",
+  engaged: "bg-emerald-100 text-emerald-800",
+  activated: "bg-purple-100 text-purple-800",
+  power_user: "bg-red-100 text-red-800",
 };
 
 const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = ({ onNewCount }) => {
   const [featureFilter, setFeatureFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
   const [newCount, setNewCount] = useState(0);
   const queryClient = useQueryClient();
 
@@ -42,7 +50,7 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
             return next;
           });
           toast.info("New beta feedback received!", {
-            description: `A tester just submitted feedback for ${FEATURE_LABELS[(payload.new as any).feature_area] || "a feature"}.`,
+            description: `A tester just submitted feedback for ${(payload.new as any).feature_area || "a feature"}.`,
           });
         }
       )
@@ -92,13 +100,30 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
     enabled: userIds.length > 0,
   });
 
+  // Load all stage questions for label lookup
+  const { data: stageQuestions = [] } = useQuery({
+    queryKey: ["beta-feedback-stage-questions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("beta_feedback_stages")
+        .select("feature_area, label")
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const featureLabelMap = new Map(stageQuestions.map((q: any) => [q.feature_area, q.label]));
+  const getFeatureLabel = (key: string) => featureLabelMap.get(key) || key;
+
   const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
 
   // Filter
   const filtered = feedback.filter((f: any) => {
     const matchesFeature = featureFilter === "all" || f.feature_area === featureFilter;
     const matchesUser = userFilter === "all" || f.user_id === userFilter;
-    return matchesFeature && matchesUser;
+    const matchesStage = stageFilter === "all" || f.feedback_stage === stageFilter;
+    return matchesFeature && matchesUser && matchesStage;
   });
 
   // Stats
@@ -109,14 +134,8 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
     ? (ratedEntries.reduce((sum: number, f: any) => sum + f.rating, 0) / ratedEntries.length).toFixed(1)
     : "—";
 
-  // Per-feature avg ratings
-  const featureRatings = Object.keys(FEATURE_LABELS).reduce((acc, key) => {
-    const entries = feedback.filter((f: any) => f.feature_area === key && f.rating != null);
-    acc[key] = entries.length > 0
-      ? (entries.reduce((s: number, f: any) => s + f.rating, 0) / entries.length).toFixed(1)
-      : null;
-    return acc;
-  }, {} as Record<string, string | null>);
+  // Unique feature areas in feedback for filter dropdown
+  const uniqueFeatures = [...new Set(feedback.map((f: any) => f.feature_area))];
 
   if (isLoading) {
     return <p className="text-center text-muted-foreground py-12">Loading feedback...</p>;
@@ -155,39 +174,27 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
         </Card>
       </div>
 
-      {/* Per-Feature Ratings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BarChart3 className="h-4 w-4" />
-            Satisfaction by Feature
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {Object.entries(FEATURE_LABELS).filter(([k]) => k !== "other").map(([key, label]) => (
-              <div key={key} className="border rounded-lg p-3">
-                <p className="text-sm font-medium text-foreground">{label}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Star className={`h-4 w-4 ${featureRatings[key] ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
-                  <span className="text-lg font-semibold">
-                    {featureRatings[key] || "—"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/5</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Feedback Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <CardTitle className="text-base">All Feedback</CardTitle>
-          <div className="flex items-center gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            All Feedback
+          </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={stageFilter} onValueChange={setStageFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Filter by stage" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stages</SelectItem>
+                {Object.entries(STAGE_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={userFilter} onValueChange={setUserFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="Filter by tester" />
               </SelectTrigger>
               <SelectContent>
@@ -200,13 +207,13 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
               </SelectContent>
             </Select>
             <Select value={featureFilter} onValueChange={setFeatureFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder="Filter by feature" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Features</SelectItem>
-                {Object.entries(FEATURE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                {uniqueFeatures.map((key: string) => (
+                  <SelectItem key={key} value={key}>{getFeatureLabel(key)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -220,6 +227,7 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
               <TableHeader>
                 <TableRow>
                   <TableHead>Tester</TableHead>
+                  <TableHead>Stage</TableHead>
                   <TableHead>Feature</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Comment</TableHead>
@@ -234,8 +242,17 @@ const BetaFeedbackViewer: React.FC<{ onNewCount?: (count: number) => void }> = (
                       <TableCell>
                         <p className="font-medium text-sm">{profile?.name || "Unknown"}</p>
                       </TableCell>
+                      <TableCell>
+                        {entry.feedback_stage ? (
+                          <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${STAGE_COLORS[entry.feedback_stage] || "bg-muted text-muted-foreground"}`}>
+                            {STAGE_LABELS[entry.feedback_stage] || entry.feedback_stage}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">
-                        {FEATURE_LABELS[entry.feature_area] || entry.feature_area}
+                        {getFeatureLabel(entry.feature_area)}
                       </TableCell>
                       <TableCell>
                         {entry.rating ? (

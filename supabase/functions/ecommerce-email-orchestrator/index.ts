@@ -1371,9 +1371,10 @@ const betaApprovedTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Your $${props.credit_amount || 100} beta credit is ready — start shopping on Elyphant` });
 };
 
-// Beta Check-In Template — Weekly personalized progress email
+// Beta Check-In Template — Stage-aware personalized progress email
 const betaCheckinTemplate = (props: any): string => {
   const firstName = getFirstName(props.recipient_name);
+  const stageIntro = props.stage_intro || 'Here\'s a look at what you\'ve explored so far — and what\'s still waiting for you.';
   
   const stepRow = (label: string, done: boolean): string => `
     <tr>
@@ -1386,10 +1387,10 @@ const betaCheckinTemplate = (props: any): string => {
 
   const content = `
     <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
-      Your weekly beta check-in, ${firstName}.
+      Hey ${firstName}, quick check-in.
     </h2>
     <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
-      Here's a look at what you've explored so far — and what's still waiting for you.
+      ${stageIntro}
     </p>
 
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
@@ -1436,7 +1437,7 @@ const betaCheckinTemplate = (props: any): string => {
     ` : ''}
 
     <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
-      We'd love to hear what's working and what's not. Click below to share quick feedback on each feature.
+      We'd love to hear what's working and what's not. Click below to share quick feedback tailored to where you are in the beta.
     </p>
     <table style="margin-top: 0; width: 100%;">
       <tr><td align="center">
@@ -1575,7 +1576,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'beta_checkin':
       return {
         html: betaCheckinTemplate(data),
-        subject: `Your Elyphant Beta Check-In`
+        subject: data.stage_subject || `Your Elyphant Beta Check-In`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

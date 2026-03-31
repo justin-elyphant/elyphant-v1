@@ -106,7 +106,6 @@ const BetaTesterAnalytics: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        </Card>
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <ShoppingBag className="h-8 w-8 text-muted-foreground" />

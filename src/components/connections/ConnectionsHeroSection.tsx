@@ -26,6 +26,8 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
   isMobile = false
 }) => {
   const { profile } = useProfile();
+  const { balance: betaCreditBalance } = useBetaCredits();
+  const isBetaTester = betaCreditBalance > 0;
   const displayName = userName || profile?.name?.split(' ')[0] || '';
   
   const { quickShare, profileUrl } = useProfileSharing({

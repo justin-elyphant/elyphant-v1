@@ -16,18 +16,63 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('📧 Beta check-in emailer started');
+    // Parse optional target_email from request body
+    let targetEmail: string | null = null;
+    try {
+      const body = await req.json();
+      targetEmail = body?.target_email || null;
+    } catch {
+      // No body or invalid JSON — process all testers (cron mode)
+    }
 
-    // Get all active beta testers (users with issued credits)
-    const { data: testers, error: testerError } = await supabase
-      .from('beta_credits')
-      .select('user_id')
-      .eq('type', 'issued');
+    console.log(`📧 Beta check-in emailer started${targetEmail ? ` (target: ${targetEmail})` : ' (all testers)'}`);
 
-    if (testerError) throw testerError;
+    let uniqueUserIds: string[];
 
-    const uniqueUserIds = [...new Set((testers || []).map((t: any) => t.user_id))];
-    console.log(`Found ${uniqueUserIds.length} active beta testers`);
+    if (targetEmail) {
+      // Single-tester mode: look up user by email
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', targetEmail.trim())
+        .single();
+
+      if (profileError || !profile) {
+        return new Response(
+          JSON.stringify({ success: false, error: `No user found with email: ${targetEmail}` }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify they're a beta tester (have issued credits)
+      const { data: credits } = await supabase
+        .from('beta_credits')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('type', 'issued')
+        .limit(1);
+
+      if (!credits || credits.length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: `${targetEmail} is not an active beta tester` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      uniqueUserIds = [profile.id];
+    } else {
+      // Bulk mode: get all active beta testers
+      const { data: testers, error: testerError } = await supabase
+        .from('beta_credits')
+        .select('user_id')
+        .eq('type', 'issued');
+
+      if (testerError) throw testerError;
+
+      uniqueUserIds = [...new Set((testers || []).map((t: any) => t.user_id))];
+    }
+
+    console.log(`Found ${uniqueUserIds.length} tester(s) to email`);
 
     if (uniqueUserIds.length === 0) {
       return new Response(JSON.stringify({ success: true, message: 'No testers to email' }), {

@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, Mail, Send } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
 import BetaFeedbackViewer from "@/components/trunkline/beta/BetaFeedbackViewer";
@@ -63,6 +63,9 @@ const TrunklineReferralsTab: React.FC = () => {
   const [creditDescription, setCreditDescription] = useState("");
   const [creditFirstName, setCreditFirstName] = useState("");
   const [creditLastName, setCreditLastName] = useState("");
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [checkinEmail, setCheckinEmail] = useState("");
+  const [sendingCheckin, setSendingCheckin] = useState(false);
 
   // Fetch referrals
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
@@ -282,10 +285,16 @@ const TrunklineReferralsTab: React.FC = () => {
           <h1 className="text-2xl font-bold">Beta Program</h1>
           <p className="text-muted-foreground">Manage beta testers, approve referrals, and track $100 store credits.</p>
         </div>
-        <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
-          <CreditCard className="h-4 w-4 mr-2" />
-          Issue Credit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setCheckinOpen(true)} variant="outline">
+            <Mail className="h-4 w-4 mr-2" />
+            Send Check-In
+          </Button>
+          <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Issue Credit
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="approvals" className="w-full">
@@ -458,7 +467,33 @@ const TrunklineReferralsTab: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">{tester.orderCount}</TableCell>
-                        <TableCell>
+                        <TableCell className="flex items-center gap-1 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Send check-in email"
+                            disabled={sendingCheckin}
+                            onClick={async () => {
+                              setSendingCheckin(true);
+                              try {
+                                const { data, error } = await supabase.functions.invoke('beta-checkin-emailer', {
+                                  body: { target_email: tester.email },
+                                });
+                                if (error) throw error;
+                                if (data?.success) {
+                                  toast.success(`Check-in email sent to ${tester.email}`);
+                                } else {
+                                  throw new Error(data?.error || 'Failed to send');
+                                }
+                              } catch (err: any) {
+                                toast.error(err.message || 'Failed to send check-in email');
+                              } finally {
+                                setSendingCheckin(false);
+                              }
+                            }}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => setExpandedTester(expandedTester === tester.userId ? null : tester.userId)}>
                             {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
@@ -585,6 +620,69 @@ const TrunklineReferralsTab: React.FC = () => {
               disabled={issueManualCreditMutation.isPending || !creditEmail}
             >
               {issueManualCreditMutation.isPending ? "Issuing..." : `Issue $${creditAmount}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Check-In Dialog */}
+      <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Check-In Email</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Send a personalized weekly check-in email with a working "Give Feedback" link to a specific beta tester.
+          </p>
+          <div>
+            <label className="text-sm font-medium">Tester Email</label>
+            <Input
+              placeholder="justncmeeks@gmail.com"
+              value={checkinEmail}
+              onChange={(e) => setCheckinEmail(e.target.value)}
+            />
+          </div>
+          {testerBalances.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {testerBalances.map((t) => (
+                <Button
+                  key={t.userId}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => setCheckinEmail(t.email)}
+                >
+                  {t.name}
+                </Button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckinOpen(false)}>Cancel</Button>
+            <Button
+              disabled={sendingCheckin || !checkinEmail}
+              onClick={async () => {
+                setSendingCheckin(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('beta-checkin-emailer', {
+                    body: { target_email: checkinEmail.trim() },
+                  });
+                  if (error) throw error;
+                  if (data?.success) {
+                    toast.success(`Check-in email sent to ${checkinEmail}`);
+                    setCheckinOpen(false);
+                    setCheckinEmail("");
+                  } else {
+                    throw new Error(data?.error || 'Failed to send');
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to send check-in email');
+                } finally {
+                  setSendingCheckin(false);
+                }
+              }}
+            >
+              {sendingCheckin ? "Sending..." : "Send Check-In"}
             </Button>
           </DialogFooter>
         </DialogContent>

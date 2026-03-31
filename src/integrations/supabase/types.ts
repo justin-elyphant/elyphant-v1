@@ -1037,6 +1037,60 @@ export type Database = {
           },
         ]
       }
+      beta_feedback: {
+        Row: {
+          created_at: string
+          feature_area: string
+          feedback_text: string | null
+          id: string
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_area: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_area?: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      beta_feedback_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       beta_referrals: {
         Row: {
           connection_id: string | null
@@ -5978,6 +6032,10 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_order_processing: { Args: { order_uuid: string }; Returns: Json }
+      submit_beta_feedback: {
+        Args: { p_feedback: Json; p_token: string }
+        Returns: Json
+      }
       terminate_other_sessions: {
         Args: { current_session_token: string; target_user_id: string }
         Returns: undefined
@@ -6013,6 +6071,7 @@ export type Database = {
         Args: { token: string; user_uuid: string }
         Returns: boolean
       }
+      validate_beta_feedback_token: { Args: { p_token: string }; Returns: Json }
       validate_webhook_token: {
         Args: { order_uuid: string; provided_token: string }
         Returns: boolean

@@ -63,6 +63,9 @@ const TrunklineReferralsTab: React.FC = () => {
   const [creditDescription, setCreditDescription] = useState("");
   const [creditFirstName, setCreditFirstName] = useState("");
   const [creditLastName, setCreditLastName] = useState("");
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [checkinEmail, setCheckinEmail] = useState("");
+  const [sendingCheckin, setSendingCheckin] = useState(false);
 
   // Fetch referrals
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({

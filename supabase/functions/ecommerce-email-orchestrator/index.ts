@@ -1316,29 +1316,40 @@ const betaApprovedTemplate = (props: any): string => {
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
       <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Your beta credit</p>
       <p style="margin: 0 0 4px 0; font-family: ${fontStack}; font-size: 36px; color: #1a1a1a; font-weight: 700;">$${props.credit_amount || 100}.00</p>
-      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">Available across multiple orders</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280;">Up to $25 per order across multiple purchases</p>
+    </div>
+    <div style="margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">Why your testing matters</p>
+      <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+        You're part of a small group of testers shaping Elyphant before our public launch. Every purchase you make, gift you schedule, and piece of feedback you share directly influences the product we ship. This isn't just free shopping — your real-world usage is how we find and fix what matters.
+      </p>
     </div>
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
-      <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">What we need from you</p>
+      <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">Your testing guide</p>
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td style="padding: 10px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">Make purchases</strong> — Browse and buy products. Your credit is applied automatically at checkout.
+            <strong style="color: #1a1a1a;">1. Build your wishlist</strong> — Search for products and add items you'd actually want. This tests our product search and wishlist system.
           </td>
         </tr>
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">Test gifting</strong> — Send gifts to friends and family. Try scheduled deliveries, gift messages, and wishlists.
+            <strong style="color: #1a1a1a;">2. Invite a friend or family member</strong> — Share your invite link so you can test gifting to each other. They'll get $100 in credit too.
           </td>
         </tr>
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">Invite others</strong> — Share the love. Invite friends and family so they can test alongside you.
+            <strong style="color: #1a1a1a;">3. Schedule a gift</strong> — Pick something from their wishlist and schedule it for delivery. This tests our core gifting and scheduling engine.
           </td>
         </tr>
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">Share feedback</strong> — Tell us what works, what doesn't, and what you'd love to see.
+            <strong style="color: #1a1a1a;">4. Buy something for yourself</strong> — Use your credit on a personal purchase to test the standard checkout experience.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">5. Tell us what you think</strong> — Reply to this email or message us in the app. Every piece of feedback helps us build a better platform.
           </td>
         </tr>
       </table>
@@ -1346,7 +1357,7 @@ const betaApprovedTemplate = (props: any): string => {
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
       <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">How credits work</p>
       <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-        Your $${props.credit_amount || 100} credit is automatically applied at checkout. You can split it across multiple orders — no minimum purchase required. Your remaining balance is always visible in your account.
+        Your $${props.credit_amount || 100} credit is automatically applied at checkout — up to $25 per order, so you can spread it across at least 4 purchases and test different parts of the platform. No minimum purchase required. Your remaining balance is always visible in your account.
       </p>
     </div>
     <table style="margin-top: 32px; width: 100%;">

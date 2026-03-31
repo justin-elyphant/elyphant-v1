@@ -97,6 +97,7 @@ const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const Investors = lazy(() => import("./pages/Investors"));
 const OAuthComplete = lazy(() => import("./pages/OAuthComplete"));
 const InvitePage = lazy(() => import("./pages/InvitePage"));
+const BetaFeedback = lazy(() => import("./pages/BetaFeedback"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();

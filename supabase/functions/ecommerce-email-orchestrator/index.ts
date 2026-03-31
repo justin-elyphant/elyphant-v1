@@ -1576,7 +1576,7 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
     case 'beta_checkin':
       return {
         html: betaCheckinTemplate(data),
-        subject: `Your Elyphant Beta Check-In`
+        subject: data.stage_subject || `Your Elyphant Beta Check-In`
       };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);

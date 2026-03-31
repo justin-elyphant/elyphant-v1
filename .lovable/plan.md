@@ -1,73 +1,91 @@
 
 
-## Beta Tester Analytics Dashboard — Trunkline /referrals Enhancement
+## Beta Feedback System — Weekly Check-In Email + Token-Gated Feedback Page + Trunkline Viewer
 
-### What this solves
-Right now the Beta Program page only shows approval status and credit balances. You have no visibility into **what testers are actually doing** — are they searching products? Building wishlists? Scheduling gifts? Completing the onboarding steps from the welcome email? Industry-standard SaaS beta tracking focuses on **activation, engagement, and feature adoption** — all achievable with data you already capture.
+### Overview
 
-### What we'll build
-Add a new **"Tester Activity & Insights"** tab/section to the existing Beta Program page with four components:
+Three connected pieces: (1) a **weekly** personalized check-in email showing each tester's progress, (2) a **token-gated** feedback page (not publicly accessible — requires a valid token from the email), and (3) a Feedback tab in Trunkline to review all submissions.
 
 ---
 
-**1. Activation Funnel (Are testers completing onboarding?)**
+### Cadence: 7 days, not 14
 
-A visual step funnel showing how many testers have completed each step from the welcome email:
-
-| Step | Data Source | How we check |
-|------|-----------|--------------|
-| Signed up | `beta_referrals` status = credit_issued | Already tracked |
-| Built a wishlist | `wishlists` table — any wishlist created by tester | JOIN on user_id |
-| Invited a friend | `beta_referrals` — tester appears as referrer_id | Already tracked |
-| Scheduled a gift | `orders` — where scheduled_delivery_date is set | JOIN on user_id |
-| Made a purchase | `beta_credits` — any "spent" type entry | Already tracked |
-
-Displayed as a horizontal funnel with percentages (e.g., "80% signed up → 40% built wishlist → 20% scheduled gift").
-
-**2. Per-Tester Activity Summary (What has each tester done?)**
-
-Extend the existing Tester Balances table with new columns:
-- **Last Active**: timestamp of most recent `user_interaction_events` entry
-- **Wishlists**: count from `wishlists` table
-- **Searches**: count from `product_analytics` where event_type = search
-- **Status Icons**: green/grey dots for each funnel step completed
-
-This lets you see at a glance who's engaged vs dormant.
-
-**3. Engagement Summary Cards (Top-line metrics)**
-
-Add a second row of stat cards below the existing financial ones:
-- **Avg Orders per Tester**: total orders / active testers
-- **Avg Credit Utilization**: % of issued credits spent
-- **Active Last 7 Days**: testers with any `user_interaction_events` in past week
-- **Feature Coverage**: % of testers who've tried 3+ distinct features
-
-**4. Feature Adoption Heatmap (Which features are being tested?)**
-
-A simple bar chart or grid showing usage counts across key features:
-- Product search, Wishlist creation, Gift scheduling, Auto-gifts, Connections/invites, Checkout
-
-Data source: `user_interaction_events.event_type` and `product_analytics.event_type`, filtered to beta tester user IDs.
+Weekly is the industry standard for early-stage SaaS betas. It keeps testers engaged while their experience is fresh. Can be dialed back to biweekly later by changing the cron schedule.
 
 ---
 
-### Technical approach
+### Part 1: Database
 
-- **No new tables needed** — all data comes from existing tables (`user_interaction_events`, `product_analytics`, `wishlists`, `orders`, `beta_credits`, `beta_referrals`)
-- **One new Supabase RPC function** `get_beta_tester_analytics` that aggregates all the above in a single call (avoids N+1 queries per tester)
-- **Frontend**: Add a `Tabs` component to the Beta Program page — "Approvals & Credits" (current content) and "Tester Analytics" (new content)
-- **Charting**: Use a lightweight bar/funnel visualization with Recharts (already available in the project)
+**New tables (via migration):**
 
-### Files affected
-- **New migration**: Create `get_beta_tester_analytics` RPC function
-- **New file**: `src/components/trunkline/beta/BetaTesterAnalytics.tsx` — the analytics tab content
-- **New file**: `src/hooks/trunkline/useBetaTesterAnalytics.ts` — hook calling the RPC
-- **Edit**: `src/components/trunkline/TrunklineReferralsTab.tsx` — wrap existing content in tabs, add analytics tab
+- `beta_feedback` — stores structured feedback (user_id, feature_area, rating 1-5, feedback_text, created_at). RLS: authenticated users insert their own; admins select all.
+- `beta_feedback_tokens` — maps a unique UUID token to a user_id with an expiry (7 days). Used to gate the feedback page. RLS: no public access; only the edge function (service role) creates tokens; the feedback page validates via an RPC.
 
-### What this gives you (without any third-party tool)
-- See which onboarding steps testers skip (fix the email or UX)
-- Spot dormant testers early (nudge them or follow up)
-- Know which features are under-tested before public launch
-- Track credit burn rate to forecast ZMA runway
-- All built on first-party data you already collect
+**New RPC:** `validate_beta_feedback_token(p_token uuid)` — returns user_id if token is valid and not expired, null otherwise. Security definer so it bypasses RLS.
+
+---
+
+### Part 2: Weekly Check-In Email
+
+**New email template** `beta_checkin` added to `ecommerce-email-orchestrator`:
+- Personalized greeting with first name
+- "What you've done" — green checks for completed funnel steps
+- "What to try next" — greyed steps not yet completed, with encouragement
+- "Give Feedback" CTA button linking to `/beta-feedback?token={unique_token}`
+- Same Lululemon-inspired style (baseEmailTemplate, 300-weight type, no emojis)
+
+Subject: `Your Elyphant Beta Check-In`
+
+**New edge function** `beta-checkin-emailer`:
+- Triggered by pg_cron **every 7 days**
+- Queries all active beta testers (users with issued credits)
+- For each tester: generates a feedback token, assembles personalized data (funnel steps completed, activity counts), calls the orchestrator with `beta_checkin` event
+- Inserts token into `beta_feedback_tokens` with 7-day expiry
+
+---
+
+### Part 3: Token-Gated Feedback Page
+
+**New route** `/beta-feedback` — but **NOT publicly browsable**:
+- On load, reads `?token=` from URL
+- Calls `validate_beta_feedback_token` RPC to verify token
+- If invalid/expired/missing → shows "Invalid or expired link" message, no form
+- If valid → shows personalized feedback form with the tester's first name
+
+**Feedback form contents:**
+- Feature cards: Product Search, Wishlists, Gift Scheduling, Checkout, Auto-Gifts, Connections — each with 1-5 rating + text area
+- "Other Comments" open text area
+- Submit button → inserts rows into `beta_feedback`
+
+**Access control:** No login required (testers click from email), but the token is single-use or time-limited. Without a valid token, the page shows nothing useful.
+
+---
+
+### Part 4: Trunkline Feedback Viewer
+
+**New tab** "Feedback" added to the existing Tabs in `TrunklineReferralsTab.tsx` (alongside "Approvals & Credits" and "Tester Analytics").
+
+Shows:
+- Summary cards: total submissions, average rating per feature, response rate
+- Sortable/filterable table: tester name, feature area, rating, comment, date
+- Filter by feature area
+
+**New component:** `src/components/trunkline/beta/BetaFeedbackViewer.tsx`
+
+---
+
+### Technical details
+
+**Files to create:**
+- `supabase/migrations/...` — `beta_feedback` table, `beta_feedback_tokens` table, `validate_beta_feedback_token` RPC, RLS policies
+- `supabase/functions/beta-checkin-emailer/index.ts` — weekly cron edge function
+- `src/pages/BetaFeedback.tsx` — token-gated feedback form
+- `src/components/trunkline/beta/BetaFeedbackViewer.tsx` — Trunkline feedback tab
+
+**Files to edit:**
+- `supabase/functions/ecommerce-email-orchestrator/index.ts` — add `beta_checkin` template + case
+- `src/components/trunkline/TrunklineReferralsTab.tsx` — add "Feedback" tab trigger + content
+- `src/App.tsx` — add `/beta-feedback` route
+- `src/components/trunkline/communications/EmailTemplatesManager.tsx` — add `beta_checkin` to preview list
+- `supabase/config.toml` — add `beta-checkin-emailer` function config + cron entry
 

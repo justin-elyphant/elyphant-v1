@@ -106,6 +106,16 @@ const BetaTesterAnalytics: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="text-2xl font-bold">{totalOrders}</p>
+              <p className="text-xs text-muted-foreground">Total Orders</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Activation Funnel */}

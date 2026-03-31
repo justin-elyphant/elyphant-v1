@@ -1,40 +1,40 @@
 
 
-## Gaps Found + Issue Credit Modal Fix
+## Option A: Conditional Email Swap — Yes, This Sets You Up Well
 
-### Identified Gaps
+### Why It Works for Both Phases
 
-1. **Issue Credit modal has no first/last name fields** — only email. The tester shows as "Unknown / Unknown" because manual credits bypass the referral chain (no matching referral = no profile lookup for display).
+**Phase 1 (Now — Beta, 10-20 testers, $100 credit):**
+The invite flow in `AddConnectionSheet.tsx` currently sends `connection_invitation` to every invitee. With Option A, we add a simple check: "Is this inviter a beta tester?" If yes, send `beta_invite_welcome` (which mentions the $100 credit) instead of the generic `connection_invitation`.
 
-2. **Issue Credit does NOT fire any email** — it just inserts a `beta_credits` row. No `beta_approved` or `beta_invite_welcome` email is triggered. The approve mutation (via referral queue) does fire `beta_approved`, but the manual "Issue Credit" path skips it entirely.
+**Phase 2 (Production — 30% off gifting fee for referrals):**
+You'd add a third email template (e.g., `referral_invite`) and extend the same conditional routing: beta tester → `beta_invite_welcome`, regular user → `referral_invite` (mentioning 30% off), no program → standard `connection_invitation`. The routing logic is already in place — you just add another branch.
 
-3. **Tester balance name resolution is broken for manual credits** — the `testerBalances` memo only looks up names from the referrals list (`referrals.find(r => r.referred_id === credit.user_id)`). If the credit was issued manually (no referral row), the tester shows "Unknown".
+### What Changes
 
-4. **No `beta_approval_needed` internal alert fires on manual issue** — the internal alert to `justin@elyphant.com` only fires from `AddConnectionSheet` (connection invitation flow), not from the Issue Credit modal.
+**One file**: `src/components/connections/AddConnectionSheet.tsx`
 
-### Plan
+The current code (line 99-111) always fires `connection_invitation`. We replace it with:
 
-**Step 1 — Add first name + last name fields to Issue Credit modal**
+```text
+if inviter has beta credits → fire beta_invite_welcome
+else → fire connection_invitation (standard)
+```
 
-Add `creditFirstName` and `creditLastName` state fields. Add two input fields above the email field in the dialog. These are used for display and passed to the email template.
+The check is simple: query `beta_credits` for the current user. If they have a balance, they're a beta tester.
 
-**Step 2 — Fire `beta_approved` email from Issue Credit mutation**
+**Also fire from**: `PendingTabContent.tsx` (resend button) and `UnifiedGiftManagementService.ts` (gift invitations) — same conditional swap so the beta messaging is consistent everywhere invitations are sent.
 
-After the credit insert succeeds, invoke `ecommerce-email-orchestrator` with `eventType: "beta_approved"`, passing the recipient email, name, and credit amount. This ensures the tester gets their welcome email regardless of whether they came through the referral queue or manual issuance.
+### Technical Detail
 
-**Step 3 — Fix tester name resolution for manual credits**
+- Query the `get_beta_credit_balance` RPC for the current user on mount or before sending
+- Pass the result into the email routing conditional
+- `beta_invite_welcome` template already exists in the orchestrator and mentions the $100 credit
+- No new templates, no orchestrator changes — just wiring the trigger
 
-When building `testerBalances`, if no referral match is found, fall back to fetching the profile name/email from the `profiles` table. Since we already have the profile data from the issue credit lookup, we can also store the name in the `description` or use a separate profiles query. Simplest fix: run a secondary profiles query keyed by the unique user_ids in `allCredits` to populate names.
+### Files Affected
 
-**Step 4 — Fire `beta_approval_needed` internal alert on manual issue (optional)**
-
-Not needed for manual credits since you (the admin) are already in Trunkline issuing it. Skip this — only relevant for self-service referral signups.
-
-### Files affected
-
-- **Edit**: `src/components/trunkline/TrunklineReferralsTab.tsx`
-  - Add `creditFirstName`, `creditLastName` state
-  - Add name input fields to Issue Credit dialog
-  - Fire `beta_approved` email after credit insert
-  - Add profiles query for tester name resolution fallback
+- **Edit**: `src/components/connections/AddConnectionSheet.tsx` — conditional email swap
+- **Edit**: `src/components/connections/PendingTabContent.tsx` — same swap for resend
+- **Optional**: `src/services/UnifiedGiftManagementService.ts` — same swap for gift-based invites
 

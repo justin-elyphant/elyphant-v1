@@ -246,6 +246,38 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     category: "Vendor",
     sampleData: { company_name: "Artisan Co.", contact_name: "Jamie", rejection_reason: "Incomplete product catalog" },
   },
+  // Beta Program
+  {
+    value: "beta_approved",
+    label: "Beta Approved (Welcome)",
+    category: "Beta Program",
+    sampleData: {
+      customer_name: "Sarah Chen",
+      first_name: "Sarah",
+      credit_amount: 100,
+    },
+  },
+  {
+    value: "beta_approval_needed",
+    label: "Beta Approval Needed (Internal)",
+    category: "Beta Program",
+    sampleData: {
+      applicant_name: "Alex Rivera",
+      applicant_email: "alex@example.com",
+      referrer_name: "Michael Chen",
+    },
+  },
+  {
+    value: "beta_invite_welcome",
+    label: "Beta Invite Welcome",
+    category: "Beta Program",
+    sampleData: {
+      sender_name: "Michael Chen",
+      recipient_name: "Sarah",
+      credit_amount: 100,
+      invitation_url: "https://elyphant.com/invite/beta-abc123",
+    },
+  },
 ];
 
 const CATEGORIES = [...new Set(EVENT_TYPES.map((e) => e.category))];

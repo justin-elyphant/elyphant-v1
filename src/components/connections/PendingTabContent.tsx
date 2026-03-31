@@ -37,6 +37,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
   const [activeTab, setActiveTab] = useState("gifts");
   const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
   const [confirmDeleteConnectionId, setConfirmDeleteConnectionId] = useState<string | null>(null);
+  const { balance: betaCreditBalance } = useBetaCredits();
 
   console.log('🔍 [PendingTabContent] Received pendingConnections:', pendingConnections);
   console.log('🔍 [PendingTabContent] pendingConnections length:', pendingConnections.length);

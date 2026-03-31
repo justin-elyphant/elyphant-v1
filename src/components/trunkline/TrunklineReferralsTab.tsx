@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
+import BetaFeedbackViewer from "@/components/trunkline/beta/BetaFeedbackViewer";
 
 interface BetaReferral {
   id: string;

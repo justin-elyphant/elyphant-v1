@@ -292,6 +292,7 @@ const TrunklineReferralsTab: React.FC = () => {
         <TabsList>
           <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
           <TabsTrigger value="analytics">Tester Analytics</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
 
         <TabsContent value="approvals" className="space-y-6 mt-4">

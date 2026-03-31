@@ -28,6 +28,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile(1024);
+  const { balance: betaCreditBalance } = useBetaCredits();
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 

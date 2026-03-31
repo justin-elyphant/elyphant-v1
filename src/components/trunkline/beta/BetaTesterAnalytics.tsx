@@ -52,6 +52,7 @@ const BetaTesterAnalytics: React.FC = () => {
 
   const { funnel, engagement, feature_usage, per_tester } = data;
   const total = funnel.signed_up || 1;
+  const totalOrders = (per_tester || []).reduce((sum, t) => sum + (t.order_count || 0), 0);
 
   const funnelChartData = FUNNEL_STEPS.map((step) => ({
     name: step.label,

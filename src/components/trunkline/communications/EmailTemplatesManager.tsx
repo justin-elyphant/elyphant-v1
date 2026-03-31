@@ -261,9 +261,10 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     label: "Beta Approval Needed (Internal)",
     category: "Beta Program",
     sampleData: {
-      applicant_name: "Alex Rivera",
-      applicant_email: "alex@example.com",
+      invitee_name: "Alex Rivera",
+      invitee_email: "alex@example.com",
       referrer_name: "Michael Chen",
+      referrer_email: "michael@example.com",
     },
   },
   {

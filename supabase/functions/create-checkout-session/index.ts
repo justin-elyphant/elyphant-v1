@@ -208,13 +208,14 @@ serve(async (req) => {
     const totalAmount = pricingBreakdown.subtotal + pricingBreakdown.shippingCost + pricingBreakdown.giftingFee + pricingBreakdown.taxAmount;
     
     // ── Beta Credit Balance Check ──
+    const BETA_CREDIT_PER_ORDER_CAP = 25; // $25 max per order to encourage multiple test purchases
     let betaCreditsApplied = 0;
     if (!isGuestCheckout && user.id && !user.id.startsWith('guest_')) {
       try {
         const { data: creditBalance, error: creditError } = await supabaseService.rpc('get_beta_credit_balance', { p_user_id: user.id });
         if (!creditError && creditBalance && Number(creditBalance) > 0) {
-          betaCreditsApplied = Math.min(Number(creditBalance), totalAmount);
-          logStep("Beta credits available", { balance: Number(creditBalance), applying: betaCreditsApplied, totalAmount });
+          betaCreditsApplied = Math.min(Number(creditBalance), totalAmount, BETA_CREDIT_PER_ORDER_CAP);
+          logStep("Beta credits available", { balance: Number(creditBalance), applying: betaCreditsApplied, totalAmount, perOrderCap: BETA_CREDIT_PER_ORDER_CAP });
         }
       } catch (e) {
         logStep("Beta credit check failed (non-blocking)", { error: (e as Error).message });

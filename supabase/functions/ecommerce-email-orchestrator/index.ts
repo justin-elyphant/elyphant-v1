@@ -1349,7 +1349,7 @@ const betaApprovedTemplate = (props: any): string => {
         </tr>
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">5. Tell us what you think</strong> — Reply to this email or message us in the app. Every piece of feedback helps us build a better platform.
+            <strong style="color: #1a1a1a;">5. Share your feedback</strong> — We'll email you a short feedback survey starting on Day 2, then weekly after that. Each survey takes about 2 minutes and adapts to what you've actually tried. Your responses directly shape what we build.
           </td>
         </tr>
       </table>
@@ -1359,6 +1359,31 @@ const betaApprovedTemplate = (props: any): string => {
       <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
         Your $${props.credit_amount || 100} credit is automatically applied at checkout — up to $25 per order, so you can spread it across at least 4 purchases and test different parts of the platform. No minimum purchase required. Your remaining balance is always visible in your account.
       </p>
+    </div>
+    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">What to expect</p>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 8px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Day 2</strong> — Your first feedback check-in covering onboarding impressions
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Weekly after that</strong> — Short surveys that evolve based on what you've actually used
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">Secure links</strong> — Each email includes a direct link, no login required
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+            <strong style="color: #1a1a1a;">7-day window</strong> — Links expire after a week, so respond when it's fresh
+          </td>
+        </tr>
+      </table>
     </div>
     <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center">

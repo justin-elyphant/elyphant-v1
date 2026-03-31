@@ -21,6 +21,7 @@ import { getNavigationConfig } from "@/components/navigation/config/navigationCo
 import { navigationStyles } from "@/components/navigation/shared/NavigationStyles";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 
 const UserButton = () => {
   const [open, setOpen] = useState(false);

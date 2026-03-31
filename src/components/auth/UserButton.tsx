@@ -423,11 +423,11 @@ const UserButton = () => {
         {/* Referral CTA - Desktop */}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
-          className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30 cursor-pointer mx-1 rounded-md my-1"
+          className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer mx-1 rounded-md my-1 ${isBetaTester ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30' : ''}`}
           onClick={() => navigate("/connections")}
         >
-          <Gift className="h-4 w-4 text-pink-500" />
-          <span className="font-semibold flex-1 text-sm">Invite Friends, Get $100</span>
+          <Gift className={`h-4 w-4 ${isBetaTester ? 'text-pink-500' : 'text-muted-foreground'}`} />
+          <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Invite Friends, Get $100' : 'Invite Friends'}</span>
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </DropdownMenuItem>
         

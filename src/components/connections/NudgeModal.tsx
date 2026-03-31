@@ -73,7 +73,7 @@ const NudgeModal: React.FC<NudgeModalProps> = ({
             recipientName: connection.name,
             senderName: userProfile?.name || userProfile?.first_name || 'Your friend',
             customMessage: messageTemplate === 'custom' ? customMessage : messageTemplates[messageTemplate],
-            invitationUrl: window.location.origin + '/signup'
+            invitationUrl: 'https://elyphant.ai/auth'
           }
         }
       });

@@ -101,7 +101,7 @@ const EnhancedConnectionSearch: React.FC<EnhancedConnectionSearchProps> = ({ onI
   };
 
   const handleShare = async (username: string, name: string) => {
-    const url = `${window.location.origin}/invite/${username}`;
+    const url = `${getAppUrl()}/invite/${username}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: `Connect with ${name} on Elyphant`, url });

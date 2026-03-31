@@ -46,7 +46,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 
   const handleCopyInviteLink = async () => {
     const username = user?.user_metadata?.username || user?.id;
-    const link = `${window.location.origin}/invite/${username}`;
+    const link = `${getAppUrl()}/invite/${username}`;
     await navigator.clipboard.writeText(link);
     setLinkCopied(true);
     triggerHapticFeedback('success');

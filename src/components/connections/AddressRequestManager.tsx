@@ -185,7 +185,7 @@ const AddressRequestManager: React.FC = () => {
             recipientName: selectedConnection.name,
             requesterName: 'You',
             message: requestMessage || 'Could you please share your address for gift delivery?',
-            requestUrl: window.location.origin + '/address-request'
+            requestUrl: getAppUrl() + '/address-request'
           }
         }
       });
@@ -218,7 +218,7 @@ const AddressRequestManager: React.FC = () => {
             recipientName: request.recipient_name || 'User',
             requesterName: request.requester_name,
             message: request.message,
-            requestUrl: window.location.origin + '/address-request'
+            requestUrl: getAppUrl() + '/address-request'
           }
         }
       });

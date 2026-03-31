@@ -252,8 +252,7 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     label: "Beta Approved (Welcome)",
     category: "Beta Program",
     sampleData: {
-      customer_name: "Sarah Chen",
-      first_name: "Sarah",
+      recipient_name: "Sarah Chen",
       credit_amount: 100,
     },
   },

@@ -55,6 +55,7 @@ interface TesterBalance {
 const TrunklineReferralsTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [feedbackNewCount, setFeedbackNewCount] = useState(0);
   const [rejectNotes, setRejectNotes] = useState("");
   const [expandedTester, setExpandedTester] = useState<string | null>(null);
   const [issueCreditOpen, setIssueCreditOpen] = useState(false);

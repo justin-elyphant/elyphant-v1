@@ -2077,9 +2077,14 @@ class UnifiedGiftManagementService {
           
           const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
           
+          // Check if inviter is a beta tester for conditional email swap
+          const { data: betaBalance } = await supabase.rpc("get_beta_credit_balance", { p_user_id: user.user.id });
+          const isBetaTester = Number(betaBalance) > 0;
+          const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
+          
           const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
-              eventType: 'connection_invitation',
+              eventType: emailEventType,
               recipientEmail: sanitizedEmail,
               data: {
                 sender_name: senderName,
@@ -2087,6 +2092,7 @@ class UnifiedGiftManagementService {
                 recipient_name: sanitizedName,
                 connection_id: data.id,
                 invitation_url: `https://elyphant.ai/auth?invite=${data.invitation_token}`,
+                credit_amount: isBetaTester ? 100 : undefined,
                 custom_message: relationshipContext?.custom_message
               }
             }

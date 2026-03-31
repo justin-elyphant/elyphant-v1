@@ -285,10 +285,16 @@ const TrunklineReferralsTab: React.FC = () => {
           <h1 className="text-2xl font-bold">Beta Program</h1>
           <p className="text-muted-foreground">Manage beta testers, approve referrals, and track $100 store credits.</p>
         </div>
-        <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
-          <CreditCard className="h-4 w-4 mr-2" />
-          Issue Credit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setCheckinOpen(true)} variant="outline">
+            <Mail className="h-4 w-4 mr-2" />
+            Send Check-In
+          </Button>
+          <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Issue Credit
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="approvals" className="w-full">

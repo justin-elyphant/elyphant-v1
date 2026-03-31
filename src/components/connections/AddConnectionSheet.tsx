@@ -124,23 +124,25 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         toast.success(`Invitation sent to ${inviteForm.name}!`);
       }
 
-      // Fire beta_approval_needed internal alert to justin@elyphant.com
-      try {
-        await supabase.functions.invoke('ecommerce-email-orchestrator', {
-          body: {
-            eventType: 'beta_approval_needed',
-            recipientEmail: 'justin@elyphant.com',
-            data: {
-              referrer_name: user.user_metadata?.name || user.email || 'Unknown',
-              referrer_email: user.email || '',
-              invitee_name: inviteForm.name,
-              invitee_email: inviteForm.email,
-              credit_amount: 100,
+      // Fire beta_approval_needed internal alert only for beta testers
+      if (isBetaTester) {
+        try {
+          await supabase.functions.invoke('ecommerce-email-orchestrator', {
+            body: {
+              eventType: 'beta_approval_needed',
+              recipientEmail: 'justin@elyphant.com',
+              data: {
+                referrer_name: user.user_metadata?.name || user.email || 'Unknown',
+                referrer_email: user.email || '',
+                invitee_name: inviteForm.name,
+                invitee_email: inviteForm.email,
+                credit_amount: 100,
+              }
             }
-          }
-        });
-      } catch (alertError) {
-        console.error('Failed to send beta approval alert:', alertError);
+          });
+        } catch (alertError) {
+          console.error('Failed to send beta approval alert:', alertError);
+        }
       }
 
       triggerHapticFeedback('success');

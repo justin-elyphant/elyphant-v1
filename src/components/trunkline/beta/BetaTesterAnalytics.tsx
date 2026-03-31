@@ -8,6 +8,7 @@ import {
   useBetaTesterAnalytics,
   FunnelData,
 } from "@/hooks/trunkline/useBetaTesterAnalytics";
+import { ShoppingBag } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";

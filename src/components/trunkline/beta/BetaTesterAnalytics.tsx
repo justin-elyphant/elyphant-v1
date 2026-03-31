@@ -69,7 +69,7 @@ const BetaTesterAnalytics: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Engagement Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <TrendingUp className="h-8 w-8 text-muted-foreground" />

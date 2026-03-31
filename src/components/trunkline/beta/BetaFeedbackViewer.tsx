@@ -56,9 +56,11 @@ const BetaFeedbackViewer: React.FC = () => {
   const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
 
   // Filter
-  const filtered = featureFilter === "all"
-    ? feedback
-    : feedback.filter((f: any) => f.feature_area === featureFilter);
+  const filtered = feedback.filter((f: any) => {
+    const matchesFeature = featureFilter === "all" || f.feature_area === featureFilter;
+    const matchesUser = userFilter === "all" || f.user_id === userFilter;
+    return matchesFeature && matchesUser;
+  });
 
   // Stats
   const totalSubmissions = feedback.length;

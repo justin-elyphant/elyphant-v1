@@ -50,7 +50,7 @@ serve(async (req: Request) => {
     }
 
     // Get app URL for feedback links
-    const appUrl = Deno.env.get('APP_URL') || 'https://elyphant.lovable.app';
+    const appUrl = Deno.env.get('APP_URL') || 'https://elyphant.ai';
 
     let sent = 0;
     let failed = 0;

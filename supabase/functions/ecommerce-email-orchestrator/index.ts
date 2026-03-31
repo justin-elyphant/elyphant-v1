@@ -1240,7 +1240,7 @@ const betaApprovalNeededTemplate = (props: any): string => {
     </div>
     <table style="margin-top: 32px; width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/trunkline?tab=referrals" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+        <a href="https://elyphant.ai/trunkline/referrals" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
           Review in Trunkline
         </a>
       </td></tr>
@@ -1305,7 +1305,7 @@ const betaInviteWelcomeTemplate = (props: any): string => {
 
 // Beta Approved Template — Sent to approved tester
 const betaApprovedTemplate = (props: any): string => {
-  const firstName = getFirstName(props.tester_name);
+  const firstName = getFirstName(props.recipient_name);
   const content = `
     <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
       Welcome to the beta, ${firstName}.

@@ -198,9 +198,20 @@ function getSampleDataForEvent(eventType: string): Record<string, any> {
     vendor_application_received: { company_name: "Artisan Co.", contact_name: "Jamie" },
     vendor_application_approved: { company_name: "Artisan Co.", contact_name: "Jamie" },
     vendor_application_rejected: { company_name: "Artisan Co.", contact_name: "Jamie", rejection_reason: "Incomplete catalog" },
-    beta_approved: { customer_name: "Sarah Chen", first_name: "Sarah", credit_amount: 100 },
-    beta_approval_needed: { applicant_name: "Alex Rivera", applicant_email: "alex@example.com", referrer_name: "Michael Chen" },
+    beta_approved: { recipient_name: "Sarah Chen", credit_amount: 100 },
+    beta_approval_needed: { invitee_name: "Alex Rivera", invitee_email: "alex@example.com", referrer_name: "Michael Chen", referrer_email: "michael@example.com" },
     beta_invite_welcome: { sender_name: "Michael Chen", recipient_name: "Sarah", credit_amount: 100, invitation_url: "https://elyphant.com/invite/beta-test" },
+    beta_checkin: {
+      recipient_name: "Sarah Chen",
+      feedback_url: "https://elyphant.ai/beta-feedback?token=sample-token",
+      has_wishlist: true,
+      has_invited: false,
+      has_scheduled_gift: false,
+      has_purchased: true,
+      wishlist_count: 3,
+      order_count: 1,
+      features_used: 4,
+    },
   };
   return samples[eventType] || {};
 }

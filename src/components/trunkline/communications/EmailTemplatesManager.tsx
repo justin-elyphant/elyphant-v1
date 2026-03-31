@@ -252,8 +252,7 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     label: "Beta Approved (Welcome)",
     category: "Beta Program",
     sampleData: {
-      customer_name: "Sarah Chen",
-      first_name: "Sarah",
+      recipient_name: "Sarah Chen",
       credit_amount: 100,
     },
   },
@@ -262,9 +261,10 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     label: "Beta Approval Needed (Internal)",
     category: "Beta Program",
     sampleData: {
-      applicant_name: "Alex Rivera",
-      applicant_email: "alex@example.com",
+      invitee_name: "Alex Rivera",
+      invitee_email: "alex@example.com",
       referrer_name: "Michael Chen",
+      referrer_email: "michael@example.com",
     },
   },
   {

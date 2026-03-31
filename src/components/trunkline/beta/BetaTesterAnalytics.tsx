@@ -8,6 +8,7 @@ import {
   useBetaTesterAnalytics,
   FunnelData,
 } from "@/hooks/trunkline/useBetaTesterAnalytics";
+import { ShoppingBag } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
@@ -51,6 +52,7 @@ const BetaTesterAnalytics: React.FC = () => {
 
   const { funnel, engagement, feature_usage, per_tester } = data;
   const total = funnel.signed_up || 1;
+  const totalOrders = (per_tester || []).reduce((sum, t) => sum + (t.order_count || 0), 0);
 
   const funnelChartData = FUNNEL_STEPS.map((step) => ({
     name: step.label,
@@ -67,7 +69,7 @@ const BetaTesterAnalytics: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Engagement Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -101,6 +103,15 @@ const BetaTesterAnalytics: React.FC = () => {
             <div>
               <p className="text-2xl font-bold">{engagement.total_testers}</p>
               <p className="text-xs text-muted-foreground">Total Testers</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="text-2xl font-bold">{totalOrders}</p>
+              <p className="text-xs text-muted-foreground">Total Orders</p>
             </div>
           </CardContent>
         </Card>

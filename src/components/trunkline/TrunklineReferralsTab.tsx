@@ -298,10 +298,10 @@ const TrunklineReferralsTab: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="approvals" className="w-full">
+      <Tabs defaultValue="analytics" className="w-full">
         <TabsList>
-          <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
           <TabsTrigger value="analytics">Tester Analytics</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
           <TabsTrigger value="feedback" className="relative">
             Feedback
             {feedbackNewCount > 0 && (

@@ -6,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const STAGE_SUBJECT_LINES: Record<string, string> = {
+  first_impressions: "How's your first day on Elyphant?",
+  explorer: "You've been exploring — tell us what you think",
+  engaged: "You're getting active — we'd love your feedback",
+  activated: "You've been busy — tell us how checkout went",
+  power_user: "You're a power user — help us shape what's next",
+};
+
+const STAGE_INTROS: Record<string, string> = {
+  first_impressions: "You just joined the beta — we'd love to hear your first impressions while everything is fresh.",
+  explorer: "You've been browsing around the platform — we'd love to know how the search and product experience feels.",
+  engaged: "You've started building wishlists and connecting with people — tell us how those features are working for you.",
+  activated: "You've made a purchase and experienced the gifting flow — your feedback on checkout is invaluable.",
+  power_user: "You're one of our most active testers — your insights on what to build next matter the most.",
+};
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -25,7 +41,7 @@ serve(async (req: Request) => {
       // No body or invalid JSON — process all testers (cron mode)
     }
 
-    console.log(`📧 Beta check-in emailer started${targetEmail ? ` (target: ${targetEmail})` : ' (all testers)'}`);
+    console.log(`Beta check-in emailer started${targetEmail ? ` (target: ${targetEmail})` : ' (all testers)'}`);
 
     let uniqueUserIds: string[];
 
@@ -102,6 +118,12 @@ serve(async (req: Request) => {
 
     for (const userId of uniqueUserIds) {
       try {
+        // Get tester's feedback stage
+        const { data: stageData, error: stageError } = await supabase.rpc('get_tester_feedback_stage', {
+          p_user_id: userId,
+        });
+        const stage = (stageData as any)?.stage || 'first_impressions';
+
         // Generate feedback token (7-day expiry)
         const { data: tokenData, error: tokenError } = await supabase
           .from('beta_feedback_tokens')
@@ -121,7 +143,7 @@ serve(async (req: Request) => {
         const testerData = testerMap.get(userId);
         const feedbackUrl = `${appUrl}/beta-feedback?token=${tokenData.token}`;
 
-        // Build personalized data
+        // Build personalized data with stage info
         const emailData = {
           recipient_name: testerData?.name || 'Beta Tester',
           feedback_url: feedbackUrl,
@@ -132,6 +154,9 @@ serve(async (req: Request) => {
           wishlist_count: testerData?.wishlist_count || 0,
           order_count: testerData?.order_count || 0,
           features_used: testerData?.features_used || 0,
+          feedback_stage: stage,
+          stage_intro: STAGE_INTROS[stage] || STAGE_INTROS.first_impressions,
+          stage_subject: STAGE_SUBJECT_LINES[stage] || STAGE_SUBJECT_LINES.first_impressions,
         };
 
         // Get tester's email
@@ -157,21 +182,21 @@ serve(async (req: Request) => {
         });
 
         sent++;
-        console.log(`✅ Check-in sent to ${profile.email}`);
+        console.log(`Check-in sent to ${profile.email} (stage: ${stage})`);
       } catch (err) {
         console.error(`Failed to process tester ${userId}:`, err);
         failed++;
       }
     }
 
-    console.log(`📧 Check-in complete: ${sent} sent, ${failed} failed`);
+    console.log(`Check-in complete: ${sent} sent, ${failed} failed`);
 
     return new Response(
       JSON.stringify({ success: true, sent, failed, total: uniqueUserIds.length }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('❌ Beta check-in emailer error:', error);
+    console.error('Beta check-in emailer error:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

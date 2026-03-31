@@ -1041,6 +1041,7 @@ export type Database = {
         Row: {
           created_at: string
           feature_area: string
+          feedback_stage: string | null
           feedback_text: string | null
           id: string
           rating: number | null
@@ -1049,6 +1050,7 @@ export type Database = {
         Insert: {
           created_at?: string
           feature_area: string
+          feedback_stage?: string | null
           feedback_text?: string | null
           id?: string
           rating?: number | null
@@ -1057,10 +1059,41 @@ export type Database = {
         Update: {
           created_at?: string
           feature_area?: string
+          feedback_stage?: string | null
           feedback_text?: string | null
           id?: string
           rating?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      beta_feedback_stages: {
+        Row: {
+          created_at: string
+          description: string
+          feature_area: string
+          id: string
+          label: string
+          sort_order: number
+          stage_key: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          feature_area: string
+          id?: string
+          label: string
+          sort_order?: number
+          stage_key: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          feature_area?: string
+          id?: string
+          label?: string
+          sort_order?: number
+          stage_key?: string
         }
         Relationships: []
       }
@@ -5802,6 +5835,7 @@ export type Database = {
               username: string
             }[]
           }
+      get_tester_feedback_stage: { Args: { p_user_id: string }; Returns: Json }
       get_upcoming_auto_gift_events:
         | {
             Args: { days_ahead?: number }

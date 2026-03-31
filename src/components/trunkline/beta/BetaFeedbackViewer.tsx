@@ -22,6 +22,7 @@ const FEATURE_LABELS: Record<string, string> = {
 
 const BetaFeedbackViewer: React.FC = () => {
   const [featureFilter, setFeatureFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
 
   const { data: feedback = [], isLoading } = useQuery({
     queryKey: ["beta-feedback-all"],
@@ -55,9 +56,11 @@ const BetaFeedbackViewer: React.FC = () => {
   const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
 
   // Filter
-  const filtered = featureFilter === "all"
-    ? feedback
-    : feedback.filter((f: any) => f.feature_area === featureFilter);
+  const filtered = feedback.filter((f: any) => {
+    const matchesFeature = featureFilter === "all" || f.feature_area === featureFilter;
+    const matchesUser = userFilter === "all" || f.user_id === userFilter;
+    return matchesFeature && matchesUser;
+  });
 
   // Stats
   const totalSubmissions = feedback.length;
@@ -141,19 +144,34 @@ const BetaFeedbackViewer: React.FC = () => {
 
       {/* Feedback Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <CardTitle className="text-base">All Feedback</CardTitle>
-          <Select value={featureFilter} onValueChange={setFeatureFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by feature" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Features</SelectItem>
-              {Object.entries(FEATURE_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by tester" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Testers</SelectItem>
+                {profiles.map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name || p.email || "Unknown"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={featureFilter} onValueChange={setFeatureFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by feature" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Features</SelectItem>
+                {Object.entries(FEATURE_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (

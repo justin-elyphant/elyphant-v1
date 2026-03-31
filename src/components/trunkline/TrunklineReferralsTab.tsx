@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
 
 interface BetaReferral {
   id: string;
@@ -285,6 +287,14 @@ const TrunklineReferralsTab: React.FC = () => {
         </Button>
       </div>
 
+      <Tabs defaultValue="approvals" className="w-full">
+        <TabsList>
+          <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
+          <TabsTrigger value="analytics">Tester Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="approvals" className="space-y-6 mt-4">
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -482,7 +492,13 @@ const TrunklineReferralsTab: React.FC = () => {
         </Card>
       )}
 
-      {/* Reject Dialog */}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          <BetaTesterAnalytics />
+        </TabsContent>
+      </Tabs>
+
       <Dialog open={!!rejectingId} onOpenChange={() => setRejectingId(null)}>
         <DialogContent>
           <DialogHeader>

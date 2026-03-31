@@ -21,6 +21,7 @@ import IncomingConnectionRequests from "./IncomingConnectionRequests";
 import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];

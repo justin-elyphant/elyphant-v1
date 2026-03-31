@@ -544,7 +544,7 @@ const TrunklineReferralsTab: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="feedback" className="mt-4">
-          <BetaFeedbackViewer />
+          <BetaFeedbackViewer onNewCount={setFeedbackNewCount} />
         </TabsContent>
       </Tabs>
 

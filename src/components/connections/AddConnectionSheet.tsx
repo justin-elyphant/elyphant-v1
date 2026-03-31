@@ -8,6 +8,7 @@ import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { Send, UserPlus, Link2, Check } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { getAppUrl } from "@/utils/urlUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { invitationAnalyticsService } from "@/services/analytics/invitationAnalyticsService";

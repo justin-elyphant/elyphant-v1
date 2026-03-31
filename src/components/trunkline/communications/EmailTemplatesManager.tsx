@@ -284,7 +284,7 @@ const EVENT_TYPES: { value: string; label: string; category: string; sampleData:
     category: "Beta Program",
     sampleData: {
       recipient_name: "Sarah Chen",
-      feedback_url: "https://elyphant.lovable.app/beta-feedback?token=sample-token",
+      feedback_url: "https://elyphant.ai/beta-feedback?token=sample-token",
       has_wishlist: true,
       has_invited: false,
       has_scheduled_gift: false,

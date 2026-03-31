@@ -624,6 +624,69 @@ const TrunklineReferralsTab: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Send Check-In Dialog */}
+      <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Check-In Email</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Send a personalized weekly check-in email with a working "Give Feedback" link to a specific beta tester.
+          </p>
+          <div>
+            <label className="text-sm font-medium">Tester Email</label>
+            <Input
+              placeholder="justncmeeks@gmail.com"
+              value={checkinEmail}
+              onChange={(e) => setCheckinEmail(e.target.value)}
+            />
+          </div>
+          {testerBalances.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {testerBalances.map((t) => (
+                <Button
+                  key={t.userId}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => setCheckinEmail(t.email)}
+                >
+                  {t.name}
+                </Button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckinOpen(false)}>Cancel</Button>
+            <Button
+              disabled={sendingCheckin || !checkinEmail}
+              onClick={async () => {
+                setSendingCheckin(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('beta-checkin-emailer', {
+                    body: { target_email: checkinEmail.trim() },
+                  });
+                  if (error) throw error;
+                  if (data?.success) {
+                    toast.success(`Check-in email sent to ${checkinEmail}`);
+                    setCheckinOpen(false);
+                    setCheckinEmail("");
+                  } else {
+                    throw new Error(data?.error || 'Failed to send');
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to send check-in email');
+                } finally {
+                  setSendingCheckin(false);
+                }
+              }}
+            >
+              {sendingCheckin ? "Sending..." : "Send Check-In"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

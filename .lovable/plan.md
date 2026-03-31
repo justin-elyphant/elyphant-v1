@@ -1,21 +1,19 @@
 
 
-## Fix: "cannot call json_array_elements on a scalar"
+## Add User Filter to Beta Feedback Viewer
 
-### Root cause
+### What changes
 
-In `BetaFeedback.tsx` line 98, `JSON.stringify(entries)` converts the array to a string before passing it to Supabase. The Supabase client automatically serializes parameters, so the RPC receives a doubly-encoded scalar string like `"[{...}]"` instead of an actual JSON array `[{...}]`.
+Add a **user dropdown** next to the existing feature filter in the "All Feedback" table header. This lets you filter by tester so you can view one person's feedback at a time as the list grows.
 
-### Fix
+### Implementation
 
-**`src/pages/BetaFeedback.tsx`** — line 98: change `JSON.stringify(entries)` to just `entries`:
+**File: `src/components/trunkline/beta/BetaFeedbackViewer.tsx`**
 
-```typescript
-const { data, error } = await supabase.rpc("submit_beta_feedback", {
-  p_token: token!,
-  p_feedback: entries,  // was: JSON.stringify(entries)
-});
-```
+1. Add a `userFilter` state (`"all"` | user_id string)
+2. Add a second `<Select>` dropdown next to the feature filter, populated from the `profiles` data (tester names)
+3. Apply the user filter alongside the existing feature filter when computing `filtered`
+4. Group the two dropdowns in a flex row for clean layout
 
-One file, one line. No other changes needed.
+No new files, no backend changes — purely a UI filter addition to the existing component.
 

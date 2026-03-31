@@ -21,6 +21,7 @@ import IncomingConnectionRequests from "./IncomingConnectionRequests";
 import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];
@@ -36,6 +37,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
   const [activeTab, setActiveTab] = useState("gifts");
   const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
   const [confirmDeleteConnectionId, setConfirmDeleteConnectionId] = useState<string | null>(null);
+  const { balance: betaCreditBalance } = useBetaCredits();
 
   console.log('🔍 [PendingTabContent] Received pendingConnections:', pendingConnections);
   console.log('🔍 [PendingTabContent] pendingConnections length:', pendingConnections.length);
@@ -227,17 +229,21 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                   connection_id: conn.id
                                 });
 
-                                // Invoke orchestrator with standardized payload
+                                // Invoke orchestrator — swap to beta_invite_welcome if inviter is a beta tester
+                                const isBetaTester = betaCreditBalance > 0;
+                                const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
+                                
                                 const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
                                   body: {
-                                    eventType: 'connection_invitation',
+                                    eventType: emailEventType,
                                     recipientEmail: conn.pending_recipient_email,
                                     data: {
                                       sender_name: senderName,
                                       recipient_email: conn.pending_recipient_email,
                                       recipient_name: conn.pending_recipient_name,
                                       connection_id: conn.id,
-                                      invitation_url: inviteUrl
+                                      invitation_url: inviteUrl,
+                                      credit_amount: isBetaTester ? 100 : undefined,
                                     }
                                   }
                                 });

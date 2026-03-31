@@ -2077,9 +2077,14 @@ class UnifiedGiftManagementService {
           
           const senderName = senderProfile?.first_name || senderProfile?.name || 'Someone';
           
+          // Check if inviter is a beta tester for conditional email swap
+          const { data: betaBalance } = await supabase.rpc("get_beta_credit_balance", { p_user_id: user.user.id });
+          const isBetaTester = Number(betaBalance) > 0;
+          const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
+          
           const { error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
-              eventType: 'connection_invitation',
+              eventType: emailEventType,
               recipientEmail: sanitizedEmail,
               data: {
                 sender_name: senderName,
@@ -2087,6 +2092,7 @@ class UnifiedGiftManagementService {
                 recipient_name: sanitizedName,
                 connection_id: data.id,
                 invitation_url: `https://elyphant.ai/auth?invite=${data.invitation_token}`,
+                credit_amount: isBetaTester ? 100 : undefined,
                 custom_message: relationshipContext?.custom_message
               }
             }
@@ -2194,16 +2200,22 @@ class UnifiedGiftManagementService {
         console.log('📧 [EMAIL] About to invoke ecommerce-email-orchestrator...');
         
         // Invoke email orchestrator with proper payload structure
+        // Check if inviter is a beta tester for conditional email swap
+        const { data: betaBalance2 } = await supabase.rpc("get_beta_credit_balance", { p_user_id: user.user.id });
+        const isBetaTester2 = Number(betaBalance2) > 0;
+        const emailEventType2 = isBetaTester2 ? 'beta_invite_welcome' : 'connection_invitation';
+        
         const { data: emailData, error: emailError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
           body: {
-            eventType: 'connection_invitation',
-            recipientEmail: sanitizedEmail,  // Add at top level for the orchestrator
+            eventType: emailEventType2,
+            recipientEmail: sanitizedEmail,
             data: {
               sender_name: senderName,
               recipient_email: sanitizedEmail,
               recipient_name: sanitizedName,
               connection_id: data.id,
               invitation_url: `https://elyphant.ai/auth?invite=${data.invitation_token}`,
+              credit_amount: isBetaTester2 ? 100 : undefined,
               custom_message: relationshipContext?.custom_message
             }
           }

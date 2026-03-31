@@ -1305,7 +1305,7 @@ const betaInviteWelcomeTemplate = (props: any): string => {
 
 // Beta Approved Template — Sent to approved tester
 const betaApprovedTemplate = (props: any): string => {
-  const firstName = getFirstName(props.tester_name);
+  const firstName = getFirstName(props.recipient_name);
   const content = `
     <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">
       Welcome to the beta, ${firstName}.

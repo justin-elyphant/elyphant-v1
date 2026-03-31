@@ -287,6 +287,14 @@ const TrunklineReferralsTab: React.FC = () => {
         </Button>
       </div>
 
+      <Tabs defaultValue="approvals" className="w-full">
+        <TabsList>
+          <TabsTrigger value="approvals">Approvals & Credits</TabsTrigger>
+          <TabsTrigger value="analytics">Tester Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="approvals" className="space-y-6 mt-4">
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>

@@ -492,7 +492,13 @@ const TrunklineReferralsTab: React.FC = () => {
         </Card>
       )}
 
-      {/* Reject Dialog */}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-4">
+          <BetaTesterAnalytics />
+        </TabsContent>
+      </Tabs>
+
       <Dialog open={!!rejectingId} onOpenChange={() => setRejectingId(null)}>
         <DialogContent>
           <DialogHeader>

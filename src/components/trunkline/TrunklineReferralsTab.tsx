@@ -467,7 +467,33 @@ const TrunklineReferralsTab: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">{tester.orderCount}</TableCell>
-                        <TableCell>
+                        <TableCell className="flex items-center gap-1 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Send check-in email"
+                            disabled={sendingCheckin}
+                            onClick={async () => {
+                              setSendingCheckin(true);
+                              try {
+                                const { data, error } = await supabase.functions.invoke('beta-checkin-emailer', {
+                                  body: { target_email: tester.email },
+                                });
+                                if (error) throw error;
+                                if (data?.success) {
+                                  toast.success(`Check-in email sent to ${tester.email}`);
+                                } else {
+                                  throw new Error(data?.error || 'Failed to send');
+                                }
+                              } catch (err: any) {
+                                toast.error(err.message || 'Failed to send check-in email');
+                              } finally {
+                                setSendingCheckin(false);
+                              }
+                            }}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => setExpandedTester(expandedTester === tester.userId ? null : tester.userId)}>
                             {expandedTester === tester.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>

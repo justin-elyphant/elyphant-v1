@@ -95,7 +95,7 @@ const BetaFeedback: React.FC = () => {
     try {
       const { data, error } = await supabase.rpc("submit_beta_feedback", {
         p_token: token!,
-        p_feedback: entries,
+        p_feedback: entries as unknown as Json,
       });
       if (error) throw error;
       const result = data as any;

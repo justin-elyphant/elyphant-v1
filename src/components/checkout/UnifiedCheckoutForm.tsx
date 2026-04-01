@@ -64,6 +64,7 @@ import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { triggerHapticFeedback, HapticPatterns } from '@/utils/haptics';
+import { useBetaCredits } from '@/hooks/useBetaCredits';
 
 /*
  * 🎯 CORE CHECKOUT COMPONENT

@@ -37,6 +37,21 @@ const UserButton = () => {
   const unreadMessagesCount = useUnreadMessagesCount();
   const pendingConnectionsCount = usePendingConnectionsCount();
   const isMobile = useIsMobile();
+  
+  const { quickShare } = useProfileSharing({
+    profileId: user?.id || '',
+    profileName: profile?.name || '',
+    profileUsername: profile?.username,
+    isBetaTester,
+  });
+
+  const handleReferralClick = () => {
+    if (isMobile) {
+      quickShare();
+    } else {
+      navigate("/connections");
+    }
+  };
 
   // Get unified navigation configuration
   const badges = {

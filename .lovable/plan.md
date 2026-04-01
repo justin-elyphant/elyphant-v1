@@ -1,12 +1,14 @@
 
 
-## Remove Duplicate "Share Invite Link" Button on Mobile
+## Update Beta Share Text
 
-Since both buttons now trigger the same native share sheet on mobile, the "Share Invite Link" button is redundant. Hide it on mobile, keep it on desktop/tablet.
+### Changes
 
-### Change
+**`src/hooks/useProfileSharing.ts`** — Update the `isBetaTester` share text:
+- **title**: `"Join Elyphant's Beta & Get $100 🎁"`
+- **text**: `"Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and we both get $100 in credits!"`
 
-**`src/components/connections/ConnectionsHeroSection.tsx`**
+**`src/components/user-profile/ProfileSharingDialog.tsx`** — Match the same beta text for social sharing channels.
 
-Wrap the "Share Invite Link" button's `motion.div` with a conditional that only renders it when `!isMobile`. The "Invite a Friend, Get $100" button remains as the single CTA on mobile.
+Two files, copy changes only.
 

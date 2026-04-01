@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Heart, ArrowLeft } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const WishlistAdd = () => {
   const [searchParams] = useSearchParams();

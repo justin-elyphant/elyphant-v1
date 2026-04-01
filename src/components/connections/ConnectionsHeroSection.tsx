@@ -33,7 +33,8 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
   const { quickShare, profileUrl } = useProfileSharing({
     profileId: profile?.id || '',
     profileName: profile?.name || '',
-    profileUsername: profile?.username || undefined
+    profileUsername: profile?.username || undefined,
+    isBetaTester
   });
 
   const springConfig = { type: "spring", stiffness: 300, damping: 25 };

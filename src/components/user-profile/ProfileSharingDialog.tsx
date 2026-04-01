@@ -30,6 +30,7 @@ interface ProfileSharingDialogProps {
   profileUrl: string;
   profileName: string;
   profileUsername?: string;
+  isBetaTester?: boolean;
 }
 
 const ProfileSharingDialog = ({ 
@@ -37,7 +38,8 @@ const ProfileSharingDialog = ({
   onOpenChange, 
   profileUrl, 
   profileName,
-  profileUsername 
+  profileUsername,
+  isBetaTester = false
 }: ProfileSharingDialogProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -55,7 +57,9 @@ const ProfileSharingDialog = ({
     }
   };
 
-  const shareText = `Join me on Elyphant so we can see each other's wishlists! Perfect for birthdays, holidays, or just because gifts 💝`;
+  const shareText = isBetaTester
+    ? `Join me on Elyphant and we both get $100! Create wishlists and discover perfect gifts together 💝`
+    : `Join me on Elyphant so we can see each other's wishlists! Perfect for birthdays, holidays, or just because gifts 💝`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(profileUrl);
 

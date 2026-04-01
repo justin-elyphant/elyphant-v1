@@ -2,7 +2,7 @@
 import React from "react";
 import { useAuth } from "@/contexts/auth";
 import { useNavigate } from "react-router-dom";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Heart, TrendingUp } from "lucide-react";
@@ -22,8 +22,8 @@ const Crowdfunding = () => {
   }
 
   return (
+    <SidebarLayout>
     <div className="min-h-screen bg-background">
-      <UnifiedShopperHeader />
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Group Gifting & Crowdfunding</h1>
@@ -90,6 +90,7 @@ const Crowdfunding = () => {
         </Card>
       </div>
     </div>
+    </SidebarLayout>
   );
 };
 

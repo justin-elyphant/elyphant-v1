@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/dashboard/tabs/OverviewTab";
@@ -112,9 +112,8 @@ const Dashboard = () => {
   // Phone layout - single column, bottom nav
   if (isPhone) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen w-full overflow-x-hidden">
-        {/* Always render Header for mobile */}
-        <UnifiedShopperHeader mode="main" />
         
         {/* Mobile dashboard content */}
         <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>
@@ -171,15 +170,15 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+      </SidebarLayout>
     );
   }
 
   // Tablet layout - 2-column content with iOS shell (bottom nav still visible)
   if (isTablet) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen w-full overflow-x-hidden">
-        {/* Header for tablet */}
-        <UnifiedShopperHeader mode="main" />
         
         {/* Tablet dashboard content - wider container, 2-column grid */}
         <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>
@@ -236,6 +235,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+      </SidebarLayout>
     );
   }
 

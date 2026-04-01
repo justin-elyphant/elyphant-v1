@@ -11,7 +11,7 @@ import ProductDetailsSidebar from "@/components/marketplace/product-details/Prod
 import ProductDetailsSkeleton from "@/components/marketplace/product-details/ProductDetailsSkeleton";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useProductVariations } from "@/hooks/useProductVariations";
 
 const ProductDetailsPage: React.FC = () => {
@@ -204,10 +204,9 @@ const ProductDetailsPage: React.FC = () => {
   // Show skeleton only when we have no data at all
   if (loading && !productDetail) {
     return (
-      <>
-        <UnifiedShopperHeader mode="main" />
+      <SidebarLayout>
         <ProductDetailsSkeleton />
-      </>
+      </SidebarLayout>
     );
   }
   
@@ -225,6 +224,7 @@ const ProductDetailsPage: React.FC = () => {
   }
   
   return (
+    <SidebarLayout>
     <motion.div 
       className="min-h-screen bg-elyphant-grey pb-safe"
       initial={{ opacity: 0, x: 20 }}
@@ -232,8 +232,6 @@ const ProductDetailsPage: React.FC = () => {
       exit={{ opacity: 0, x: -20 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      {/* Unified Header */}
-      <UnifiedShopperHeader mode="main" />
       
       {/* Back navigation below header */}
       <div className="bg-white border-b">
@@ -281,6 +279,7 @@ const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
     </motion.div>
+    </SidebarLayout>
   );
 };
 

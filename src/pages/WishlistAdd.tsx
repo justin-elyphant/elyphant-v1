@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Heart, ArrowLeft } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 const WishlistAdd = () => {
   const [searchParams] = useSearchParams();
@@ -106,6 +107,7 @@ const WishlistAdd = () => {
   const isAlreadyWishlisted = user ? isProductWishlisted(productData.id) : false;
 
   return (
+    <SidebarLayout>
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -176,6 +178,7 @@ const WishlistAdd = () => {
         </CardContent>
       </Card>
     </div>
+    </SidebarLayout>
   );
 };
 

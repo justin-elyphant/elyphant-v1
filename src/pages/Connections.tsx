@@ -717,6 +717,7 @@ const Connections = () => {
           }}
         />
       </div>
+      </SidebarLayout>
     );
   }
 

@@ -100,7 +100,8 @@ const OrderProgressStepper = ({
     // PRIORITY 3: Fallback to order status mapping
     const statusProgressMap: Record<string, string[]> = {
       "pending": ["placed"],
-      "payment_confirmed": ["placed"], 
+      "payment_confirmed": ["placed"],
+      "awaiting_funds": ["placed"],
       "processing": ["placed", "processing"],
       "submitted_to_zinc": ["placed", "processing"],
       "shipped": ["placed", "processing", "shipped"],

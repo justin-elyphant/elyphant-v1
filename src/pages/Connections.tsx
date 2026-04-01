@@ -17,7 +17,7 @@ import ConnectionDetailPanel from "@/components/connections/ConnectionDetailPane
 import MobileConnectionDetail from "@/components/connections/MobileConnectionDetail";
 import ConnectionsHeroSection from "@/components/connections/ConnectionsHeroSection";
 import { AddConnectionSheet } from "@/components/connections/AddConnectionSheet";
-import { MobileConnectionsHeader } from "@/components/connections/MobileConnectionsHeader";
+
 import { OptimizedMobileConnectionCard } from "@/components/connections/OptimizedMobileConnectionCard";
 import { MobilePullToRefresh } from "@/components/mobile/MobilePullToRefresh";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
@@ -432,8 +432,8 @@ const Connections = () => {
   // ========== MOBILE LAYOUT ==========
   if (isMobile) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen bg-background pb-20">
-        <MobileConnectionsHeader />
         
         {/* Hero Section */}
         <div className="px-4 pt-4">
@@ -573,14 +573,15 @@ const Connections = () => {
           }}
         />
       </div>
+      </SidebarLayout>
     );
   }
 
   // ========== TABLET LAYOUT ==========
   if (isTablet) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen bg-background pb-20">
-        <MobileConnectionsHeader />
         
         {/* Hero Section */}
         <div className="px-4 pt-4">
@@ -716,6 +717,7 @@ const Connections = () => {
           }}
         />
       </div>
+      </SidebarLayout>
     );
   }
 

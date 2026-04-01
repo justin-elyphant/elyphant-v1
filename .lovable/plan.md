@@ -1,14 +1,21 @@
 
 
-## Update Beta Share Text
+## Fix: Beta Share Text Not Updating
 
-### Changes
+### Problem
 
-**`src/hooks/useProfileSharing.ts`** — Update the `isBetaTester` share text:
-- **title**: `"Join Elyphant's Beta & Get $100 🎁"`
-- **text**: `"Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and we both get $100 in credits!"`
+The `quickShare` function in `useProfileSharing.ts` uses `useCallback` with dependency array `[profileUrl, profileName]` (line 70), but **`isBetaTester` is not included**. This means the callback captures the initial `false` default value and never re-creates when `isBetaTester` becomes `true` after the beta credits load. The old generic text gets locked in.
 
-**`src/components/user-profile/ProfileSharingDialog.tsx`** — Match the same beta text for social sharing channels.
+### Fix
 
-Two files, copy changes only.
+**`src/hooks/useProfileSharing.ts`** — Add `isBetaTester` to the `useCallback` dependency array on line 70:
+
+```typescript
+// Line 70: change from
+}, [profileUrl, profileName]);
+// to
+}, [profileUrl, profileName, isBetaTester]);
+```
+
+One line, one missing dependency. That's the entire fix.
 

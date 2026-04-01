@@ -580,8 +580,8 @@ const Connections = () => {
   // ========== TABLET LAYOUT ==========
   if (isTablet) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen bg-background pb-20">
-        <MobileConnectionsHeader />
         
         {/* Hero Section */}
         <div className="px-4 pt-4">

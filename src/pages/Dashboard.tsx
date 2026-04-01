@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ResponsiveContainer } from "@/components/layout/ResponsiveContainer";
 import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from "@/components/dashboard/tabs/OverviewTab";

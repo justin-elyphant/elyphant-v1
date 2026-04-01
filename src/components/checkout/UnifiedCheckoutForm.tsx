@@ -170,6 +170,10 @@ const UnifiedCheckoutForm: React.FC = () => {
 
   // Pricing settings for dynamic gifting fee calculation
   const { calculatePriceBreakdown } = usePricingSettings();
+  const { balance: betaCreditBalance } = useBetaCredits();
+  const BETA_CREDIT_PER_ORDER_CAP = 25;
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
+  const adjustedTotal = totalAmount - appliedCredit;
 
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);

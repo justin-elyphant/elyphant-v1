@@ -895,7 +895,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           <div>
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-lg font-bold">
-              {isLoadingShipping ? 'Calculating...' : formatPrice(totalAmount)}
+              {isLoadingShipping ? 'Calculating...' : formatPrice(adjustedTotal)}
             </p>
           </div>
           <Button

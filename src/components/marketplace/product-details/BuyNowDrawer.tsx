@@ -72,6 +72,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
   // Shared iOS keyboard resize hook — sets --keyboard-viewport-height CSS var
   useIOSKeyboardResize();
+  const { balance: betaCreditBalance } = useBetaCredits();
 
   const handleTextareaFocus = () => {
     setTimeout(() => {

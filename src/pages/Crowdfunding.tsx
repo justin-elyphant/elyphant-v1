@@ -22,8 +22,8 @@ const Crowdfunding = () => {
   }
 
   return (
+    <SidebarLayout>
     <div className="min-h-screen bg-background">
-      <UnifiedShopperHeader />
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Group Gifting & Crowdfunding</h1>

@@ -38,7 +38,8 @@ const ProfileSharingDialog = ({
   onOpenChange, 
   profileUrl, 
   profileName,
-  profileUsername 
+  profileUsername,
+  isBetaTester = false
 }: ProfileSharingDialogProps) => {
   const [copied, setCopied] = useState(false);
 

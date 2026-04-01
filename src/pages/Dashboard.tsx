@@ -112,9 +112,8 @@ const Dashboard = () => {
   // Phone layout - single column, bottom nav
   if (isPhone) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen w-full overflow-x-hidden">
-        {/* Always render Header for mobile */}
-        <UnifiedShopperHeader mode="main" />
         
         {/* Mobile dashboard content */}
         <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>

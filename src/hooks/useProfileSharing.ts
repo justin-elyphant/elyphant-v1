@@ -7,6 +7,7 @@ interface UseProfileSharingProps {
   profileId: string;
   profileName: string;
   profileUsername?: string;
+  isBetaTester?: boolean;
 }
 
 export const useProfileSharing = ({ 

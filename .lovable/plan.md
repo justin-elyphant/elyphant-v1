@@ -1,66 +1,44 @@
 
 
-## Fix: Beta Credit Not Applied to Stripe Checkout Session Amount
+## Fix Order Status Display for Awaiting-Funds Orders
 
 ### Problem
 
-The `create-checkout-session` edge function correctly calculates `adjustedTotal` (line 225) and stores `beta_credits_applied` in metadata (line 428). However, in **standard Checkout Session mode** (line 569-572), Stripe receives `lineItems` built from product + shipping + gifting fee — the beta credit is never subtracted.
+The order detail page shows "Processing" for orders that are actually in `awaiting_funds` status. This is misleading — the order hasn't been submitted to Zinc yet. The stepper UI should reflect that the order is waiting to be fulfilled, not actively processing.
 
-Result: Stripe shows **$62.92** instead of **$37.92**. The credit metadata is stored but the actual charge amount is wrong.
+### Investigation Needed
 
-The Apple Pay / Payment Intent path (line 476) uses `amountInCents` correctly, so it's only the redirect-based Checkout Session that's broken.
+I need to check how the order detail page maps status values to display labels and stepper states.
 
-### Root Cause
+### Proposed Changes
 
-Line 572: `sessionParams.line_items = lineItems` — these line items sum to the full pre-credit total. No discount line item is added for beta credits.
+**1. Order Detail Status Mapping**
 
-### Fix
+Find the order detail component and ensure `awaiting_funds` is mapped to a distinct, user-friendly label like "Order Received" or "Confirmed" — not "Processing" (which implies Zinc submission has occurred).
 
-**`supabase/functions/create-checkout-session/index.ts`**
+**2. Stepper Accuracy**
 
-After the existing gifting fee and tax line items are added (after line 391), add a conditional **discount line item** when `betaCreditsApplied > 0`:
+The 4-step stepper (Order Placed → Processing → Shipped → Delivered) should only advance to "Processing" when `status` is `processing` or `submitted_to_zinc`. For `awaiting_funds`, it should stay on step 1 ("Order Placed").
 
-```typescript
-// Add beta credit discount as a negative-price line item
-if (betaCreditsApplied > 0) {
-  lineItems.push({
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: 'Beta Credit',
-        description: 'Beta tester credit applied to this order',
-      },
-      unit_amount: -Math.round(betaCreditsApplied * 100), // Negative amount
-    },
-    quantity: 1,
-  });
-}
+### No Backend Changes
+
+The Stripe → webhook → process-order-v2 → Zinc pipeline is correctly wired. The ZMA balance check is working as designed. This is a **display-only** fix.
+
+### Files to Investigate/Change
+
+- Order detail page component (likely `src/components/orders/OrderDetail.tsx` or similar)
+- Status mapping utility if one exists
+
+### Technical Details
+
+Current status flow:
+```text
+paid → awaiting_funds (ZMA insufficient) → processing (ZMA funded) → submitted_to_zinc → completed
 ```
 
-**Important caveat**: Stripe Checkout Sessions do **not** support negative `unit_amount` values in line items. Instead, the correct approach is to use a **Stripe Coupon / Discount**:
-
-```typescript
-if (betaCreditsApplied > 0) {
-  const coupon = await stripe.coupons.create({
-    amount_off: Math.round(betaCreditsApplied * 100),
-    currency: 'usd',
-    duration: 'once',
-    name: 'Beta Credit',
-  });
-  sessionParams.discounts = [{ coupon: coupon.id }];
-}
-```
-
-This creates a one-time Stripe coupon for the exact credit amount and attaches it to the session. Stripe will display "Beta Credit -$25.00" in the checkout UI and charge only the adjusted total.
-
-### Files Changed
-
-1. **`supabase/functions/create-checkout-session/index.ts`** — Add coupon creation + discount attachment (~8 lines, after line 391 and before session creation at line 515)
-
-### What This Fixes
-
-- Stripe Checkout page will show the correct discounted total ($37.92 instead of $62.92)
-- The coupon approach is Stripe's official pattern for order-level discounts
-- No changes needed to webhook handler (already reads `beta_credits_applied` from metadata)
-- No changes needed to Buy Now drawer or checkout form (display is already correct)
+The UI currently collapses `awaiting_funds` and `processing` into the same visual state. They should be distinct:
+- `awaiting_funds` = Step 1 complete (Order Placed), Step 2 pending
+- `processing` / `submitted_to_zinc` = Step 2 active (Processing)
+- `shipped` = Step 3 active
+- `delivered` / `completed` = Step 4 active
 

@@ -96,16 +96,18 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
                 {isBetaTester ? 'Invite a Friend, Get $100' : 'Invite a Friend'}
               </Button>
             </motion.div>
-            <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
-              <Button 
-                onClick={handleShareLink}
-                variant="ghost" 
-                className="text-white hover:bg-white/10 min-h-[44px] w-full sm:w-auto touch-manipulation"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share Invite Link
-              </Button>
-            </motion.div>
+            {!isMobile && (
+              <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
+                <Button 
+                  onClick={handleShareLink}
+                  variant="ghost" 
+                  className="text-white hover:bg-white/10 min-h-[44px] w-full sm:w-auto touch-manipulation"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share Invite Link
+                </Button>
+              </motion.div>
+            )}
           </div>
         </CardContent>
       </Card>

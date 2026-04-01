@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { calculateDynamicPricingBreakdown } from "@/utils/orderPricingUtils";
+import { useBetaCredits } from "@/hooks/useBetaCredits";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 

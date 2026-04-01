@@ -219,6 +219,9 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + (shippingCost ?? 0) + giftingFee + taxAmount;
+  const BETA_CREDIT_PER_ORDER_CAP = 25;
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
+  const adjustedTotal = totalAmount - appliedCredit;
 
   // 🔍 Address completeness validation helper
   const isCompleteAddress = (addr: any): boolean => {

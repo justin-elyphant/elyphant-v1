@@ -432,8 +432,8 @@ const Connections = () => {
   // ========== MOBILE LAYOUT ==========
   if (isMobile) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen bg-background pb-20">
-        <MobileConnectionsHeader />
         
         {/* Hero Section */}
         <div className="px-4 pt-4">

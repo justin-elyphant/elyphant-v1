@@ -1,52 +1,49 @@
 
 
-## Audit & Fix: Beta Program Links, Buttons, and URLs for Production
+## Auto-Connect Invited Users — Fix Share Link Gap
 
-### Issues Found
+### Current state
 
-**1. Broken route in beta approval email: `/shop` does not exist**
-The "Start Shopping" CTA in the beta approval email links to `https://elyphant.ai/shop`, but there is no `/shop` route — the marketplace lives at `/marketplace`.
+There are two invitation paths:
 
-**2. ~30 hardcoded `elyphant.lovable.app` URLs in the email orchestrator**
-Links for recurring gifts, dashboard, vendor portal, and the beta check-in fallback still use the staging domain (`elyphant.lovable.app`) instead of the production domain (`elyphant.ai`). These are clickable links inside emails sent to real users.
+| Path | Entry point | Auto-connects? |
+|------|-------------|----------------|
+| **Email invite** (AddConnectionSheet) | Token in URL → `accept_invitation_by_token` RPC | Yes — status set to `accepted` immediately |
+| **Share link** (`/invite/:username`) | User ID stored in session → `sendConnectionRequest` | No — creates a `pending` request |
 
-**3. NudgeModal uses `window.location.origin + '/signup'` for invitation URL**
-This means in local dev or preview environments, nudge reminder emails send localhost/preview links instead of the production `elyphant.ai` URL. The AddConnectionSheet and PendingTabContent already correctly hardcode `https://elyphant.ai/auth?invite=...`, but NudgeModal does not.
+When Heather shares her invite link and a friend signs up, they land in a pending state — Heather has to manually accept. That defeats the purpose.
 
-**4. AddConnectionSheet copy-link uses `window.location.origin`**
-The "Copy invite link" button builds URLs from `window.location.origin`, which produces preview URLs in non-production environments. Same issue in `EnhancedConnectionSearch.tsx`.
+### What to fix
 
-**5. AddressRequestManager uses `window.location.origin`**
-Address request emails use the current origin for the request URL link.
+Make the share link path behave like the token path: **auto-accept the connection** instead of leaving it pending.
 
-**6. EmailTemplatesManager sample data uses `elyphant.lovable.app`**
-The beta_checkin sample URL in the test email previewer uses the staging domain — minor but inconsistent.
+### Approach — reuse existing code
 
-### Plan
+The `connectionService.ts` already has an `acceptConnectionRequest` function. Rather than creating new logic, we'll call it immediately after `sendConnectionRequest` succeeds in the post-signup flow.
 
-**File 1: `supabase/functions/ecommerce-email-orchestrator/index.ts`**
-- Replace all `elyphant.lovable.app` references with `elyphant.ai` (~30 occurrences across recurring gift, dashboard, vendor portal, and beta check-in templates)
-- Fix `/shop` → `/marketplace` in the beta approval template CTA
-- Redeploy edge function
+### Changes
 
-**File 2: `src/components/connections/NudgeModal.tsx`**
-- Change `window.location.origin + '/signup'` to `https://elyphant.ai/auth` (consistent with other invite flows)
+**File 1: `src/pages/Auth.tsx`** (post-signup linking, ~line 132-145)
 
-**File 3: `src/components/connections/AddConnectionSheet.tsx`**
-- Change copy-link from `window.location.origin` to production URL using `getAppUrl()` from `urlUtils.ts` (which already handles localhost fallback)
+Currently sends a connection request and leaves it pending. Change to:
+1. After `sendConnectionRequest` succeeds, immediately call `acceptConnectionRequest` with the returned connection ID
+2. Update the toast from "Connection request sent!" to "Connection established!"
+3. This mirrors what `accept_invitation_by_token` does — both paths end in `accepted` status
 
-**File 4: `src/components/connections/EnhancedConnectionSearch.tsx`**
-- Same fix: use `getAppUrl()` for the share URL
+**File 2: `src/pages/InvitePage.tsx`** (logged-in user clicking "Connect", ~line 86-115)
 
-**File 5: `src/components/connections/AddressRequestManager.tsx`**
-- Use `getAppUrl()` for the address request URL in emails
+When a logged-in user visits `/invite/:username`, the same issue exists — it sends a pending request. Change to:
+1. After `sendConnectionRequest` succeeds, auto-accept from the inviter's side since the invite link itself is the intent signal
+2. Update toast to "Connected with [name]!"
 
-**File 6: `src/components/trunkline/communications/EmailTemplatesManager.tsx`**
-- Update sample `feedback_url` from `elyphant.lovable.app` to `elyphant.ai`
+### What stays the same
 
-### Technical details
+- `sendConnectionRequest` in `connectionService.ts` — no changes needed
+- `accept_invitation_by_token` RPC — already works for the email invite path
+- `AddConnectionSheet` — already uses the token path correctly
+- All email templates — unchanged
 
-- `src/utils/urlUtils.ts` already exists with `getAppUrl()` that returns `elyphant.ai` in production and `localhost` in dev — perfect for the frontend fixes
-- The edge function runs server-side so it should always use the hardcoded production domain
-- Total: 6 files modified, 1 edge function redeployed
+### Technical detail
+
+The `acceptConnectionRequest` function in `connectionService.ts` updates the `user_connections` row to `status = 'accepted'`. We'll import and call it with the connection ID returned by `sendConnectionRequest`. This is ~5 lines of additional code per file, fully reusing existing logic.
 

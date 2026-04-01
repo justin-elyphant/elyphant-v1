@@ -344,7 +344,7 @@ export const useCheckoutState = () => {
    * This function saves the current checkout address to the user's profile
    * for future use. This improves user experience for repeat customers.
    */
-  const saveCurrentAddressToProfile = async (name: string = 'Checkout Address', setAsDefault: boolean = false): Promise<boolean> => {
+  const saveCurrentAddressToProfile = async (name: string = 'Home', setAsDefault: boolean = false): Promise<boolean> => {
     if (!user) return false;
 
     const formAddress: FormAddress = {

@@ -152,7 +152,8 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         zip_code: recipientAddr.zip_code || recipientAddr.zipCode || "",
         country: recipientAddr.country || "US",
       } : {
-        name: defaultAddress!.name,
+        // Use buyer's actual name from auth, not the address label (e.g. "Checkout Address")
+        name: [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(' ') || defaultAddress!.name,
         address_line1: defaultAddress!.address.street,
         address_line2: defaultAddress!.address.address_line2 || "",
         city: defaultAddress!.address.city,

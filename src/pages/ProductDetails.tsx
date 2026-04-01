@@ -11,7 +11,7 @@ import ProductDetailsSidebar from "@/components/marketplace/product-details/Prod
 import ProductDetailsSkeleton from "@/components/marketplace/product-details/ProductDetailsSkeleton";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { useProductVariations } from "@/hooks/useProductVariations";
 
 const ProductDetailsPage: React.FC = () => {

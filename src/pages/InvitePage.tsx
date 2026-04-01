@@ -100,8 +100,16 @@ const InvitePage: React.FC = () => {
       );
       const result = await sendConnectionRequest(inviter.id, "friend");
 
-      if (result.success) {
-        toast.success(`Connection request sent to ${inviter.name}!`);
+      if (result.success && result.data?.id) {
+        // Auto-accept: invite link is the intent signal, skip pending state
+        const { acceptConnectionRequest } = await import(
+          "@/services/connections/connectionService"
+        );
+        await acceptConnectionRequest(result.data.id);
+        toast.success(`Connected with ${inviter.name}!`);
+        navigate("/connections");
+      } else if (result.success) {
+        toast.success(`Connected with ${inviter.name}!`);
         navigate("/connections");
       } else {
         toast.error(result.error?.message || "Failed to connect");

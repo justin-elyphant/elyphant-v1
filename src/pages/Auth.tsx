@@ -135,9 +135,14 @@ const Auth = () => {
               "@/services/connections/connectionService"
             );
             const result = await sendConnectionRequest(storedInviteUser, 'friend');
-            if (result.success) {
+            if (result.success && result.data?.id) {
+              // Auto-accept: invite link is the intent signal, skip pending state
+              const { acceptConnectionRequest } = await import(
+                "@/services/connections/connectionService"
+              );
+              await acceptConnectionRequest(result.data.id);
               inviterProfileId = storedInviteUser;
-              toast.success('🤝 Connection request sent!');
+              toast.success('🤝 Connection established!');
             }
           } catch (err) {
             console.error('[Auth] Error auto-connecting to inviter:', err);

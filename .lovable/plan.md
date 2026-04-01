@@ -1,26 +1,45 @@
 
 
-## Add Unified Header to Connections Page (Mobile & Tablet)
+## Fix: Beta Credit Not Reflected in Mobile Sticky Total
 
 ### Problem
 
-The `/connections` page on mobile and tablet renders its own `MobileConnectionsHeader` (back arrow + "Connections" title + settings gear) instead of the unified app header (`UnifiedShopperHeader` via `SidebarLayout`). This means shoppers lose access to the search bar, cart, and main navigation — inconsistent with every other authenticated page (Settings, Dashboard, Orders, etc.).
+The sticky bottom "Pay Now" bar on mobile (line 893 of `UnifiedCheckoutForm.tsx`) displays `totalAmount` — the pre-credit total. The `CheckoutOrderSummary` component independently calculates the credit-adjusted total using `useBetaCredits()`, but that adjusted value never flows back to the parent form.
+
+The bottom bar shows **$25.79** while the order summary card correctly shows **$0.79**.
+
+### Stripe → Zinc Pipeline Status
+
+**Confirmed working correctly:**
+- `create-checkout-session` edge function independently fetches beta credit balance, calculates `adjustedTotal`, and charges Stripe only the reduced amount
+- `beta_credits_applied` is stored in Stripe session metadata
+- `stripe-webhook-v2` reads `beta_credits_applied` from metadata and deducts credits from the user's balance
+- `process-order-v2` uses `line_items.subtotal` (product cost) for Zinc's `max_price` — unaffected by credits
+- No changes needed on the backend
 
 ### Fix
 
-Wrap the mobile and tablet layouts in `SidebarLayout`, matching the pattern used by the desktop layout and all other authenticated pages. Remove `MobileConnectionsHeader` since `SidebarLayout` already provides the header.
+**`src/components/checkout/UnifiedCheckoutForm.tsx`**
 
-### Changes
+1. Import `useBetaCredits` hook
+2. Calculate `appliedCredit` and `adjustedTotal` at the form level (same logic as `CheckoutOrderSummary`)
+3. Update the sticky bottom bar (line 893) to display `adjustedTotal` instead of `totalAmount`
+4. Update the desktop inline button area to also show the adjusted total if displayed there
 
-**`src/pages/Connections.tsx`**
+```
+const { balance: betaCreditBalance } = useBetaCredits();
+const BETA_CREDIT_PER_ORDER_CAP = 25;
+const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
+const adjustedTotal = totalAmount - appliedCredit;
+```
 
-1. **Mobile layout (line ~433)**: Wrap the mobile return block in `<SidebarLayout>`, remove `<MobileConnectionsHeader />`
-2. **Tablet layout (line ~580)**: Wrap the tablet return block in `<SidebarLayout>`, remove `<MobileConnectionsHeader />`
-3. The "Connections" title context is already provided by the hero section, so no information is lost
+Sticky bar change:
+```
+// Line 893: change from
+formatPrice(totalAmount)
+// to
+formatPrice(adjustedTotal)
+```
 
-**`src/components/connections/MobileConnectionsHeader.tsx`** — Can be deleted if no other file imports it (it's only used in Connections.tsx)
-
-### Result
-
-All three layouts (mobile, tablet, desktop) will be wrapped in `SidebarLayout`, giving shoppers consistent access to search, cart, and navigation on every device — matching Settings, Dashboard, Orders, and all other pages.
+One file, ~6 lines added/changed. No backend changes needed.
 

@@ -179,6 +179,7 @@ const WishlistAdd = () => {
       </Card>
     </div>
     </SidebarLayout>
+  );
 };
 
 export default WishlistAdd;

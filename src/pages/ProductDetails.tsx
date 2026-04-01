@@ -280,6 +280,7 @@ const ProductDetailsPage: React.FC = () => {
       </div>
     </motion.div>
     </SidebarLayout>
+  );
 };
 
 export default ProductDetailsPage;

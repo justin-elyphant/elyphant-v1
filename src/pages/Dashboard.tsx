@@ -235,6 +235,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+      </SidebarLayout>
     );
   }
 

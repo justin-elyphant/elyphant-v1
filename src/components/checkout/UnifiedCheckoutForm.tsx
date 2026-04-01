@@ -64,6 +64,7 @@ import CheckoutProgressIndicator from './CheckoutProgressIndicator';
 import { usePricingSettings } from '@/hooks/usePricingSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { triggerHapticFeedback, HapticPatterns } from '@/utils/haptics';
+import { useBetaCredits } from '@/hooks/useBetaCredits';
 
 /*
  * 🎯 CORE CHECKOUT COMPONENT
@@ -169,6 +170,7 @@ const UnifiedCheckoutForm: React.FC = () => {
 
   // Pricing settings for dynamic gifting fee calculation
   const { calculatePriceBreakdown } = usePricingSettings();
+  const { balance: betaCreditBalance } = useBetaCredits();
 
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -217,6 +219,9 @@ const UnifiedCheckoutForm: React.FC = () => {
   const taxRate = 0.0875; // 8.75% tax rate
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + (shippingCost ?? 0) + giftingFee + taxAmount;
+  const BETA_CREDIT_PER_ORDER_CAP = 25;
+  const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
+  const adjustedTotal = totalAmount - appliedCredit;
 
   // 🔍 Address completeness validation helper
   const isCompleteAddress = (addr: any): boolean => {
@@ -890,7 +895,7 @@ const UnifiedCheckoutForm: React.FC = () => {
           <div>
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-lg font-bold">
-              {isLoadingShipping ? 'Calculating...' : formatPrice(totalAmount)}
+              {isLoadingShipping ? 'Calculating...' : formatPrice(adjustedTotal)}
             </p>
           </div>
           <Button

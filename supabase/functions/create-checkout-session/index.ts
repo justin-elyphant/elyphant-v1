@@ -570,6 +570,19 @@ serve(async (req) => {
       // Standard payment mode with line items
       sessionParams.mode = 'payment';
       sessionParams.line_items = lineItems;
+
+      // Apply beta credit as a Stripe coupon discount
+      if (betaCreditsApplied > 0) {
+        const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+        const coupon = await stripe.coupons.create({
+          amount_off: Math.round(betaCreditsApplied * 100),
+          currency: 'usd',
+          duration: 'once',
+          name: 'Beta Credit',
+        });
+        sessionParams.discounts = [{ coupon: coupon.id }];
+        logStep("Beta credit coupon created", { couponId: coupon.id, amountOff: betaCreditsApplied });
+      }
     }
 
     // For group gifts, hold funds in escrow until project completes

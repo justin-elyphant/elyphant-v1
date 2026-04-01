@@ -44,7 +44,11 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
 
   const handleInvite = () => {
     triggerHapticFeedback('light');
-    onInvite();
+    if (isMobile) {
+      quickShare();
+    } else {
+      onInvite();
+    }
   };
 
   const handleShareLink = async () => {

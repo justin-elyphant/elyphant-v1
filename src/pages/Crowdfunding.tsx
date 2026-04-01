@@ -90,7 +90,7 @@ const Crowdfunding = () => {
         </Card>
       </div>
     </div>
-  );
+    </SidebarLayout>
 };
 
 export default Crowdfunding;

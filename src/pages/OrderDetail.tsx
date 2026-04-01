@@ -343,7 +343,7 @@ const OrderDetail = () => {
         onReorder={() => handleReorder()}
       />
       </div>
-    </>
+    </SidebarLayout>
   );
 };
 

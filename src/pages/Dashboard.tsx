@@ -177,9 +177,8 @@ const Dashboard = () => {
   // Tablet layout - 2-column content with iOS shell (bottom nav still visible)
   if (isTablet) {
     return (
+      <SidebarLayout>
       <div className="min-h-screen w-full overflow-x-hidden">
-        {/* Header for tablet */}
-        <UnifiedShopperHeader mode="main" />
         
         {/* Tablet dashboard content - wider container, 2-column grid */}
         <div className="ios-scroll" style={{ height: 'calc(100vh - 80px)' }}>

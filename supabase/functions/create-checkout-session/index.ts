@@ -573,7 +573,7 @@ serve(async (req) => {
 
       // Apply beta credit as a Stripe coupon discount
       if (betaCreditsApplied > 0) {
-        const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+        // Reuse existing stripe instance from line 190
         const coupon = await stripe.coupons.create({
           amount_off: Math.round(betaCreditsApplied * 100),
           currency: 'usd',

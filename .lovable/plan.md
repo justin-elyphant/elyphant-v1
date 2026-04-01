@@ -1,42 +1,29 @@
 
 
-## Fix: Beta Credits Not Applied in Buy Now Drawer
+## Save Elyphant Gift Credit as Future Enhancement Doc
 
-### Problem
+### What
 
-The Buy Now drawer (`BuyNowDrawer.tsx`) calculates pricing via `calculateDynamicPricingBreakdown` but never imports or applies beta credits. The order summary (lines 492-516) shows the full total without any credit deduction, and the `handlePlaceOrder` function (line 162) also sends the full price to `create-checkout-session`.
+Create a markdown file documenting the Elyphant Gift Credit feature concept for future implementation.
 
-The screenshot confirms: Total shows **$62.92** with no credit line item.
+### File
 
-### Fix
+**`src/docs/FUTURE_ELYPHANT_GIFT_CREDIT.md`**
 
-**`src/components/marketplace/product-details/BuyNowDrawer.tsx`**
+Contents will capture the key points from our earlier discussion:
 
-1. Import `useBetaCredits` hook
-2. Calculate `appliedCredit` and `adjustedTotal` (same pattern as `UnifiedCheckoutForm`)
-3. In the order summary section (line 492-516): add a beta credit line item row (e.g., "Beta Credit  -$25.00") and display `adjustedTotal` instead of `breakdown.grandTotal`
-4. No backend change needed — `create-checkout-session` already independently calculates credits server-side, so Stripe is charged correctly regardless. This is a **display-only** fix.
+- **Concept**: Users purchase Elyphant credit as a gift for someone else to spend on the platform
+- **Infrastructure**: Leverages existing `beta_credit_transactions` ledger, `get_beta_credit_balance` RPC, and checkout credit-deduction logic
+- **Stripe flow**: Digital product checkout session (no Zinc involvement at purchase time); webhook deposits credit into recipient's account via new `gift_credit` transaction type
+- **Zinc**: Only involved when recipient redeems credit for physical goods (already wired)
+- **Key changes needed**:
+  - New transaction type (`gift_credit`) in the ledger
+  - "Gift Credit" purchase UI (amount selector, recipient picker)
+  - Lightweight digital-only checkout session (no shipping)
+  - Webhook handler branch to deposit credit on payment confirmation
+  - Notification to recipient ("You received $X in Elyphant credit!")
+  - Remove or make configurable the $25 per-order cap for general credits
+- **Revenue model**: Elyphant keeps float on unspent credits; drives platform retention
 
-```
-const { balance: betaCreditBalance } = useBetaCredits();
-const BETA_CREDIT_PER_ORDER_CAP = 25;
-
-// In the summary render:
-const appliedCredit = Math.min(betaCreditBalance, breakdown.grandTotal, BETA_CREDIT_PER_ORDER_CAP);
-const adjustedTotal = breakdown.grandTotal - appliedCredit;
-```
-
-Add a conditional row before the total:
-```
-{appliedCredit > 0 && (
-  <div className="flex justify-between text-sm text-green-600">
-    <span>Beta Credit</span>
-    <span>-${appliedCredit.toFixed(2)}</span>
-  </div>
-)}
-```
-
-Display `adjustedTotal` in the Total row instead of `breakdown.grandTotal`.
-
-One file, ~10 lines added.
+One file, documentation only, no code changes.
 

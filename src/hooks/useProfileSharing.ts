@@ -67,7 +67,7 @@ export const useProfileSharing = ({
         toast.error("Failed to copy link");
       }
     }
-  }, [profileUrl, profileName]);
+  }, [profileUrl, profileName, isBetaTester]);
   
   const copyProfileLink = useCallback(async () => {
     try {

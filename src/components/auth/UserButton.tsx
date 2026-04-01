@@ -22,6 +22,7 @@ import { navigationStyles } from "@/components/navigation/shared/NavigationStyle
 import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizeImageUrl } from "@/utils/normalizeImageUrl";
 import { useBetaCredits } from "@/hooks/useBetaCredits";
+import { useProfileSharing } from "@/hooks/useProfileSharing";
 
 const UserButton = () => {
   const [open, setOpen] = useState(false);
@@ -36,6 +37,21 @@ const UserButton = () => {
   const unreadMessagesCount = useUnreadMessagesCount();
   const pendingConnectionsCount = usePendingConnectionsCount();
   const isMobile = useIsMobile();
+  
+  const { quickShare } = useProfileSharing({
+    profileId: user?.id || '',
+    profileName: profile?.name || '',
+    profileUsername: profile?.username,
+    isBetaTester,
+  });
+
+  const handleReferralClick = () => {
+    if (isMobile) {
+      quickShare();
+    } else {
+      navigate("/connections");
+    }
+  };
 
   // Get unified navigation configuration
   const badges = {
@@ -250,7 +266,7 @@ const UserButton = () => {
           {/* Referral CTA */}
           <DropdownMenuItem 
             className={`flex items-center gap-3 px-4 py-3 min-h-[44px] cursor-pointer mx-1 rounded-md my-1 ${isBetaTester ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30' : ''}`}
-            onClick={() => navigate("/connections")}
+            onClick={handleReferralClick}
           >
             <Gift className={`h-4 w-4 ${isBetaTester ? 'text-pink-500' : 'text-muted-foreground'}`} />
             <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Invite Friends, Get $100' : 'Invite Friends'}</span>

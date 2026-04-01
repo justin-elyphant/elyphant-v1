@@ -243,13 +243,9 @@ const OrderDetail = () => {
   }
 
   return (
-    <>
-      <UnifiedShopperHeader />
+    <SidebarLayout>
       <div 
         className="container max-w-6xl mx-auto px-4 pb-20 lg:pb-8 overflow-x-hidden"
-        style={{ 
-          paddingTop: 'max(1.5rem, calc(env(safe-area-inset-top, 0px) + 1.5rem))'
-        }}
       >
         <div className="mb-4">
           <Button 

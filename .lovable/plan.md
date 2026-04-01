@@ -1,23 +1,26 @@
 
 
-## Make Avatar Referral CTA Trigger Native Share on Mobile
+## Add Unified Header to Connections Page (Mobile & Tablet)
 
-### Current behavior
-Both the mobile and desktop avatar dropdown "Invite Friends, Get $100" CTAs navigate to `/connections`. On mobile, this is friction — the user lands on connections and then has to tap the hero CTA to trigger the share sheet.
+### Problem
 
-### Proposed behavior
-- **Mobile**: Avatar dropdown CTA triggers the native share sheet directly (same `quickShare` from `useProfileSharing`), matching the connections hero behavior.
-- **Desktop/Tablet**: Keeps navigating to `/connections` (unchanged).
+The `/connections` page on mobile and tablet renders its own `MobileConnectionsHeader` (back arrow + "Connections" title + settings gear) instead of the unified app header (`UnifiedShopperHeader` via `SidebarLayout`). This means shoppers lose access to the search bar, cart, and main navigation — inconsistent with every other authenticated page (Settings, Dashboard, Orders, etc.).
 
-### Technical changes
+### Fix
 
-**`src/components/auth/UserButton.tsx`**
+Wrap the mobile and tablet layouts in `SidebarLayout`, matching the pattern used by the desktop layout and all other authenticated pages. Remove `MobileConnectionsHeader` since `SidebarLayout` already provides the header.
 
-1. Import `useProfileSharing` hook.
-2. Initialize it with the existing `profile` data and `isBetaTester` flag (all already available in scope).
-3. Create a handler that checks `isMobile`: if mobile, call `quickShare()`; otherwise, `navigate("/connections")`.
-4. Update the mobile referral CTA's `onClick` (line 253) to use this handler.
-5. Desktop CTA (line 427) stays as `navigate("/connections")`.
+### Changes
 
-No new files. ~10 lines changed total.
+**`src/pages/Connections.tsx`**
+
+1. **Mobile layout (line ~433)**: Wrap the mobile return block in `<SidebarLayout>`, remove `<MobileConnectionsHeader />`
+2. **Tablet layout (line ~580)**: Wrap the tablet return block in `<SidebarLayout>`, remove `<MobileConnectionsHeader />`
+3. The "Connections" title context is already provided by the hero section, so no information is lost
+
+**`src/components/connections/MobileConnectionsHeader.tsx`** — Can be deleted if no other file imports it (it's only used in Connections.tsx)
+
+### Result
+
+All three layouts (mobile, tablet, desktop) will be wrapped in `SidebarLayout`, giving shoppers consistent access to search, cart, and navigation on every device — matching Settings, Dashboard, Orders, and all other pages.
 

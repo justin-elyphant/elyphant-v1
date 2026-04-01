@@ -13,7 +13,8 @@ interface UseProfileSharingProps {
 export const useProfileSharing = ({ 
   profileId, 
   profileName, 
-  profileUsername 
+  profileUsername,
+  isBetaTester = false
 }: UseProfileSharingProps) => {
   const [sharingDialogOpen, setSharingDialogOpen] = useState(false);
   

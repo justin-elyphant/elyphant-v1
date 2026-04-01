@@ -1,44 +1,52 @@
 
 
-## Fix Order Status Display for Awaiting-Funds Orders
+## Fix: Confirmation Email Shows "Hi Checkout" Instead of Buyer's Name
 
 ### Problem
 
-The order detail page shows "Processing" for orders that are actually in `awaiting_funds` status. This is misleading — the order hasn't been submitted to Zinc yet. The stepper UI should reflect that the order is waiting to be fulfilled, not actively processing.
+The order confirmation email says "Hi Checkout" because the email orchestrator (line 1677) pulls the customer name from `shippingAddress.name` — which is the **recipient's** shipping name, not the buyer's name. When someone sends a gift, the shipping address has the recipient's name (in this test case, apparently "Checkout").
 
-### Investigation Needed
+### Stripe → Zinc Pipeline: No Gaps
 
-I need to check how the order detail page maps status values to display labels and stepper states.
+The Stripe session data confirms the credit is working correctly:
+- `amount_subtotal`: 6292 ($62.92 pre-credit)
+- `amount_total`: 3792 ($37.92 after $25 coupon)
+- `amount_discount`: 2500
 
-### Proposed Changes
+Zinc `max_price` uses `line_items.subtotal` (product cost only), unaffected by credits. The pipeline is correctly wired.
 
-**1. Order Detail Status Mapping**
+### Fix
 
-Find the order detail component and ensure `awaiting_funds` is mapped to a distinct, user-friendly label like "Order Received" or "Confirmed" — not "Processing" (which implies Zinc submission has occurred).
+**`supabase/functions/ecommerce-email-orchestrator/index.ts`** — Line 1677
 
-**2. Stepper Accuracy**
+Change the `customerName` resolution to prefer the **buyer's profile name** over the shipping address name:
 
-The 4-step stepper (Order Placed → Processing → Shipped → Delivered) should only advance to "Processing" when `status` is `processing` or `submitted_to_zinc`. For `awaiting_funds`, it should stay on step 1 ("Order Placed").
+```
+Current (line 1677):
+  const customerName = shippingAddress?.name || 'Customer';
 
-### No Backend Changes
-
-The Stripe → webhook → process-order-v2 → Zinc pipeline is correctly wired. The ZMA balance check is working as designed. This is a **display-only** fix.
-
-### Files to Investigate/Change
-
-- Order detail page component (likely `src/components/orders/OrderDetail.tsx` or similar)
-- Status mapping utility if one exists
-
-### Technical Details
-
-Current status flow:
-```text
-paid → awaiting_funds (ZMA insufficient) → processing (ZMA funded) → submitted_to_zinc → completed
+New logic:
+  // Prefer buyer's profile name for the greeting (shipping name may be the gift recipient)
+  let customerName = 'Customer';
+  if (order.user_id) {
+    const { data: buyerProfile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', order.user_id)
+      .single();
+    if (buyerProfile) {
+      customerName = [buyerProfile.first_name, buyerProfile.last_name].filter(Boolean).join(' ') || shippingAddress?.name || 'Customer';
+    }
+  } else {
+    customerName = shippingAddress?.name || 'Customer';
+  }
 ```
 
-The UI currently collapses `awaiting_funds` and `processing` into the same visual state. They should be distinct:
-- `awaiting_funds` = Step 1 complete (Order Placed), Step 2 pending
-- `processing` / `submitted_to_zinc` = Step 2 active (Processing)
-- `shipped` = Step 3 active
-- `delivered` / `completed` = Step 4 active
+This reuses the same `profiles` lookup already done 10 lines later (line 1689) for the gift-detection heuristic. We can consolidate both into a single query.
+
+### Result
+
+- Authenticated buyers see "Hi Justin" (from their profile)
+- Guest buyers see the shipping address name (fallback)
+- One file changed, ~8 lines
 

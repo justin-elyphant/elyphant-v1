@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
 import { Product } from "@/types/product";
-import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 
 // Import our components
 import OrderStatusBadge from "@/components/orders/OrderStatusBadge";

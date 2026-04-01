@@ -224,6 +224,7 @@ const ProductDetailsPage: React.FC = () => {
   }
   
   return (
+    <SidebarLayout>
     <motion.div 
       className="min-h-screen bg-elyphant-grey pb-safe"
       initial={{ opacity: 0, x: 20 }}
@@ -231,8 +232,6 @@ const ProductDetailsPage: React.FC = () => {
       exit={{ opacity: 0, x: -20 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      {/* Unified Header */}
-      <UnifiedShopperHeader mode="main" />
       
       {/* Back navigation below header */}
       <div className="bg-white border-b">

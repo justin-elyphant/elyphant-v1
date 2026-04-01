@@ -491,8 +491,11 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
 
               {/* Step 4: Order Summary */}
               <div className="py-3 space-y-1.5">
-                {(() => {
+              {(() => {
                   const breakdown = calculateDynamicPricingBreakdown(price, 6.99);
+                  const BETA_CREDIT_PER_ORDER_CAP = 25;
+                  const appliedCredit = Math.min(betaCreditBalance, breakdown.grandTotal, BETA_CREDIT_PER_ORDER_CAP);
+                  const adjustedTotal = breakdown.grandTotal - appliedCredit;
                   return (
                     <>
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -507,10 +510,16 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                         <span>{breakdown.giftingFeeName}</span>
                         <span>${breakdown.giftingFee.toFixed(2)}</span>
                       </div>
+                      {appliedCredit > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Beta Credit</span>
+                          <span>-${appliedCredit.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="border-t border-muted my-1" />
                       <div className="flex justify-between font-medium">
                         <span>Total</span>
-                        <span className="text-lg font-bold">${breakdown.grandTotal.toFixed(2)}</span>
+                        <span className="text-lg font-bold">${adjustedTotal.toFixed(2)}</span>
                       </div>
                     </>
                   );

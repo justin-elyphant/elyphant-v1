@@ -30,6 +30,7 @@ interface ProfileSharingDialogProps {
   profileUrl: string;
   profileName: string;
   profileUsername?: string;
+  isBetaTester?: boolean;
 }
 
 const ProfileSharingDialog = ({ 

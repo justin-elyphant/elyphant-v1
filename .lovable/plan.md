@@ -1,49 +1,37 @@
 
 
-## Auto-Connect Invited Users — Fix Share Link Gap
+## Mobile: Make "Invite a Friend, Get $100" Trigger Native Share Sheet
 
-### Current state
+### What changes
 
-There are two invitation paths:
+On **mobile only**, the "Invite a Friend, Get $100" button should behave identically to the "Share Invite Link" button — triggering the native OS share sheet (iMessage, WhatsApp, etc.) instead of opening the AddConnectionSheet email form.
 
-| Path | Entry point | Auto-connects? |
-|------|-------------|----------------|
-| **Email invite** (AddConnectionSheet) | Token in URL → `accept_invitation_by_token` RPC | Yes — status set to `accepted` immediately |
-| **Share link** (`/invite/:username`) | User ID stored in session → `sendConnectionRequest` | No — creates a `pending` request |
+On **desktop and tablet**, both buttons remain as they are today: "Invite a Friend" opens the email invite sheet, "Share Invite Link" opens the sharing dialog.
 
-When Heather shares her invite link and a friend signs up, they land in a pending state — Heather has to manually accept. That defeats the purpose.
+### Single file change
 
-### What to fix
+**`src/components/connections/ConnectionsHeroSection.tsx`** (~line 45-48)
 
-Make the share link path behave like the token path: **auto-accept the connection** instead of leaving it pending.
+Update `handleInvite` to check if the device is mobile:
+- If mobile: call `quickShare()` (native share sheet) instead of `onInvite()` (email form)
+- If desktop/tablet: keep calling `onInvite()` as before
 
-### Approach — reuse existing code
+Use the existing `isMobile` prop already passed to this component — no new dependencies needed.
 
-The `connectionService.ts` already has an `acceptConnectionRequest` function. Rather than creating new logic, we'll call it immediately after `sendConnectionRequest` succeeds in the post-signup flow.
+```text
+Current:
+  [Invite a Friend, Get $100] → opens email form (all devices)
+  [Share Invite Link]         → native share / clipboard (all devices)
 
-### Changes
+After:
+  Mobile:
+    [Invite a Friend, Get $100] → native share sheet (text, iMessage, etc.)
+    [Share Invite Link]         → native share sheet (same behavior)
 
-**File 1: `src/pages/Auth.tsx`** (post-signup linking, ~line 132-145)
+  Desktop/Tablet:
+    [Invite a Friend, Get $100] → opens email invite form (unchanged)
+    [Share Invite Link]         → opens sharing dialog (unchanged)
+```
 
-Currently sends a connection request and leaves it pending. Change to:
-1. After `sendConnectionRequest` succeeds, immediately call `acceptConnectionRequest` with the returned connection ID
-2. Update the toast from "Connection request sent!" to "Connection established!"
-3. This mirrors what `accept_invitation_by_token` does — both paths end in `accepted` status
-
-**File 2: `src/pages/InvitePage.tsx`** (logged-in user clicking "Connect", ~line 86-115)
-
-When a logged-in user visits `/invite/:username`, the same issue exists — it sends a pending request. Change to:
-1. After `sendConnectionRequest` succeeds, auto-accept from the inviter's side since the invite link itself is the intent signal
-2. Update toast to "Connected with [name]!"
-
-### What stays the same
-
-- `sendConnectionRequest` in `connectionService.ts` — no changes needed
-- `accept_invitation_by_token` RPC — already works for the email invite path
-- `AddConnectionSheet` — already uses the token path correctly
-- All email templates — unchanged
-
-### Technical detail
-
-The `acceptConnectionRequest` function in `connectionService.ts` updates the `user_connections` row to `status = 'accepted'`. We'll import and call it with the connection ID returned by `sendConnectionRequest`. This is ~5 lines of additional code per file, fully reusing existing logic.
+This is a ~3-line change in the `handleInvite` function. No new files, no new imports.
 

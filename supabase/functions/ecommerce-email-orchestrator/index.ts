@@ -1674,7 +1674,23 @@ const handler = async (req: Request): Promise<Response> => {
       // Format order data for email template
       const lineItems = (order.line_items as any)?.items || [];
       const shippingAddress = order.shipping_address as any;
-      const customerName = shippingAddress?.name || 'Customer';
+      // Look up buyer's profile name for greeting (shipping name may be the gift recipient)
+      let customerName = shippingAddress?.name || 'Customer';
+      let buyerProfileName = '';
+      if (order.user_id) {
+        const { data: buyerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', order.user_id)
+          .single();
+        if (buyerProfile) {
+          buyerProfileName = [buyerProfile.first_name, buyerProfile.last_name].filter(Boolean).join(' ');
+        }
+      }
+      // Prefer buyer's profile name for the email greeting
+      if (buyerProfileName) {
+        customerName = buyerProfileName;
+      }
       
       // Detect gift: check both camelCase (webhook) and snake_case variants,
       // plus heuristic: if shipping name differs from buyer profile, it's a gift
@@ -1683,20 +1699,12 @@ const handler = async (req: Request): Promise<Response> => {
       const hasGiftFlag = giftOpts?.isGift || giftOpts?.is_gift || false;
       const hasRecipientInItems = lineItems_raw?.items?.some((item: any) => item.recipient_id || item.recipient_name);
       
-      // Look up buyer's name from profile to compare with shipping name
+      // Compare buyer profile name with shipping name to detect gift
       let isGiftByNameMismatch = false;
-      if (!hasGiftFlag && order.user_id) {
-        const { data: buyerProfile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', order.user_id)
-          .single();
-        if (buyerProfile) {
-          const buyerName = `${buyerProfile.first_name || ''} ${buyerProfile.last_name || ''}`.trim().toLowerCase();
-          const shippingName = (shippingAddress?.name || '').trim().toLowerCase();
-          if (buyerName && shippingName && buyerName !== shippingName) {
-            isGiftByNameMismatch = true;
-          }
+      if (!hasGiftFlag && buyerProfileName) {
+        const shippingName = (shippingAddress?.name || '').trim().toLowerCase();
+        if (buyerProfileName.toLowerCase() !== shippingName && shippingName) {
+          isGiftByNameMismatch = true;
         }
       }
       

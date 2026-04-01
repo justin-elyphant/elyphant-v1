@@ -1,45 +1,42 @@
 
 
-## Fix: Beta Credit Not Reflected in Mobile Sticky Total
+## Fix: Beta Credits Not Applied in Buy Now Drawer
 
 ### Problem
 
-The sticky bottom "Pay Now" bar on mobile (line 893 of `UnifiedCheckoutForm.tsx`) displays `totalAmount` — the pre-credit total. The `CheckoutOrderSummary` component independently calculates the credit-adjusted total using `useBetaCredits()`, but that adjusted value never flows back to the parent form.
+The Buy Now drawer (`BuyNowDrawer.tsx`) calculates pricing via `calculateDynamicPricingBreakdown` but never imports or applies beta credits. The order summary (lines 492-516) shows the full total without any credit deduction, and the `handlePlaceOrder` function (line 162) also sends the full price to `create-checkout-session`.
 
-The bottom bar shows **$25.79** while the order summary card correctly shows **$0.79**.
-
-### Stripe → Zinc Pipeline Status
-
-**Confirmed working correctly:**
-- `create-checkout-session` edge function independently fetches beta credit balance, calculates `adjustedTotal`, and charges Stripe only the reduced amount
-- `beta_credits_applied` is stored in Stripe session metadata
-- `stripe-webhook-v2` reads `beta_credits_applied` from metadata and deducts credits from the user's balance
-- `process-order-v2` uses `line_items.subtotal` (product cost) for Zinc's `max_price` — unaffected by credits
-- No changes needed on the backend
+The screenshot confirms: Total shows **$62.92** with no credit line item.
 
 ### Fix
 
-**`src/components/checkout/UnifiedCheckoutForm.tsx`**
+**`src/components/marketplace/product-details/BuyNowDrawer.tsx`**
 
 1. Import `useBetaCredits` hook
-2. Calculate `appliedCredit` and `adjustedTotal` at the form level (same logic as `CheckoutOrderSummary`)
-3. Update the sticky bottom bar (line 893) to display `adjustedTotal` instead of `totalAmount`
-4. Update the desktop inline button area to also show the adjusted total if displayed there
+2. Calculate `appliedCredit` and `adjustedTotal` (same pattern as `UnifiedCheckoutForm`)
+3. In the order summary section (line 492-516): add a beta credit line item row (e.g., "Beta Credit  -$25.00") and display `adjustedTotal` instead of `breakdown.grandTotal`
+4. No backend change needed — `create-checkout-session` already independently calculates credits server-side, so Stripe is charged correctly regardless. This is a **display-only** fix.
 
 ```
 const { balance: betaCreditBalance } = useBetaCredits();
 const BETA_CREDIT_PER_ORDER_CAP = 25;
-const appliedCredit = Math.min(betaCreditBalance, totalAmount, BETA_CREDIT_PER_ORDER_CAP);
-const adjustedTotal = totalAmount - appliedCredit;
+
+// In the summary render:
+const appliedCredit = Math.min(betaCreditBalance, breakdown.grandTotal, BETA_CREDIT_PER_ORDER_CAP);
+const adjustedTotal = breakdown.grandTotal - appliedCredit;
 ```
 
-Sticky bar change:
+Add a conditional row before the total:
 ```
-// Line 893: change from
-formatPrice(totalAmount)
-// to
-formatPrice(adjustedTotal)
+{appliedCredit > 0 && (
+  <div className="flex justify-between text-sm text-green-600">
+    <span>Beta Credit</span>
+    <span>-${appliedCredit.toFixed(2)}</span>
+  </div>
+)}
 ```
 
-One file, ~6 lines added/changed. No backend changes needed.
+Display `adjustedTotal` in the Total row instead of `breakdown.grandTotal`.
+
+One file, ~10 lines added.
 

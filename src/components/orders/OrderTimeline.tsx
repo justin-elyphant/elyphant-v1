@@ -1,6 +1,5 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Package, Clock, Truck, Home, X, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
@@ -280,22 +279,10 @@ const OrderTimeline = ({
                   <Icon className="h-3 w-3 text-white" />
                 </div>
                  <div className="space-y-1">
-                   <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                      <h4 className="font-medium">{event.title}</h4>
-                     <Badge 
-                       variant={
-                         event.status === "completed" ? "default" : 
-                         event.status === "active" ? "secondary" : 
-                         "outline"
-                       }
-                       className="text-xs"
-                     >
-                       {event.status}
-                     </Badge>
-                     {event.source === 'zinc' && (
-                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                         Live
-                       </Badge>
+                     {event.status === "active" && (
+                       <span className="inline-block h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
                      )}
                    </div>
                    <p className="text-sm text-muted-foreground">

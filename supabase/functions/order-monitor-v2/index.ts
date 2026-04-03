@@ -6,6 +6,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/** Status hierarchy — higher index = more advanced. Never downgrade. */
+const STATUS_RANK: Record<string, number> = {
+  'pending': 0,
+  'scheduled': 1,
+  'processing': 2,
+  'requires_attention': 3,
+  'shipped': 4,
+  'delivered': 5,
+  'completed': 6,
+  'cancelled': 7,
+  'failed': 8,
+  'returned': 9,
+};
+
+/** Returns true if transitioning from currentStatus to newStatus would be a downgrade. */
+function isStatusDowngrade(currentStatus: string, newStatus: string): boolean {
+  const current = STATUS_RANK[currentStatus] ?? -1;
+  const next = STATUS_RANK[newStatus] ?? -1;
+  // Special: never downgrade delivered/completed to shipped
+  if ((currentStatus === 'delivered' || currentStatus === 'completed') && newStatus === 'shipped') return true;
+  return next < current;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,7 +42,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
-    // Query 1: Existing logic - orders with zinc_order_id (webhook received)
+    // Query 1: Processing orders with zinc_order_id (webhook received)
     const { data: processingOrders, error: fetchError1 } = await supabase
       .from('orders')
       .select('*')
@@ -31,7 +54,7 @@ serve(async (req) => {
       throw fetchError1;
     }
 
-    // Query 2: NEW - orders missing webhooks (zinc_request_id exists but no zinc_order_id)
+    // Query 2: Orders missing webhooks (zinc_request_id exists but no zinc_order_id)
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     
@@ -47,12 +70,34 @@ serve(async (req) => {
       console.warn('⚠️ Error fetching webhook-timeout orders:', fetchError2);
     }
 
+    // Query 3: NEW — Shipped orders to detect delivery transitions
+    const { data: shippedOrders, error: fetchError3 } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'shipped')
+      .not('zinc_request_id', 'is', null)
+      .or(`last_polling_check_at.is.null,last_polling_check_at.lt.${fifteenMinutesAgo}`)
+      .order('created_at', { ascending: true });
+
+    if (fetchError3) {
+      console.warn('⚠️ Error fetching shipped orders:', fetchError3);
+    }
+
     const allOrders = [
       ...(processingOrders || []),
-      ...(webhookTimeoutOrders || [])
+      ...(webhookTimeoutOrders || []),
+      ...(shippedOrders || []),
     ];
 
-    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing orders + ${webhookTimeoutOrders?.length || 0} webhook-timeout orders`);
+    // Deduplicate by order id (an order could match multiple queries)
+    const seen = new Set<string>();
+    const uniqueOrders = allOrders.filter(o => {
+      if (seen.has(o.id)) return false;
+      seen.add(o.id);
+      return true;
+    });
+
+    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped orders (${uniqueOrders.length} unique)`);
 
     const results = {
       updated: [] as string[],
@@ -60,11 +105,8 @@ serve(async (req) => {
       failed: [] as { orderId: string; error: string }[],
     };
 
-    for (const order of allOrders) {
+    for (const order of uniqueOrders) {
       try {
-        // Zinc API requires zinc_request_id (not zinc_order_id which is Amazon's merchant order ID)
-        // zinc_request_id: Zinc's internal request ID (e.g., '4421915eeffeacacd596eea63c2ac85a')
-        // zinc_order_id: Amazon's merchant order ID (e.g., '113-7307475-6287460')
         if (!order.zinc_request_id) {
           console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
           continue;
@@ -72,7 +114,7 @@ serve(async (req) => {
         const zincIdentifier = order.zinc_request_id;
         const isWebhookTimeout = !order.zinc_order_id;
 
-        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
+        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}, current_status: ${order.status}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
 
         // Check Zinc API for order status
         const zincResponse = await fetch(
@@ -102,37 +144,37 @@ serve(async (req) => {
         const zincData = await zincResponse.json();
         console.log(`📋 Zinc response for ${order.id}:`, JSON.stringify(zincData).substring(0, 500));
         
-        // Handle request_processing - this means Zinc is actively working on it (NOT a failure!)
+        // Handle request_processing - Zinc is actively working on it (NOT a failure)
         if (zincData._type === 'error' && zincData.code === 'request_processing') {
           console.log(`⏳ Order ${order.id} still processing in Zinc queue (request_processing state)`);
-          continue; // Don't mark as failed, just wait for next poll
+          continue;
         }
         
-        // Update order based on Zinc status
         const updates: any = {
           updated_at: new Date().toISOString(),
         };
 
-        // Parse Zinc response - handle actual API structure
-        // Zinc returns: _type: 'order_response', merchant_order_ids: [{merchant_order_id, tracking_url}], delivery_dates: [{date}]
+        // Parse Zinc response
         const isSuccessful = zincData._type === 'order_response' ||
           zincData.status_updates?.some((u: any) => u.type === 'request.finished' && u.data?.success);
         
-        // Extract merchant order ID from correct nested location
         const merchantOrderId = zincData.merchant_order_ids?.[0]?.merchant_order_id ||
           zincData.merchant_order_id;
         
-        // Extract delivery date from correct location
         const estimatedDelivery = zincData.delivery_dates?.[0]?.date ||
           zincData.tracking?.estimated_delivery;
         
-        // Extract tracking info
-        const trackingUrl = zincData.merchant_order_ids?.[0]?.tracking_url ||
-          zincData.tracking?.tracking_url;
+        const trackingUrl = zincData.merchant_order_ids?.[0]?.tracking_url;
         
-        const trackingNumber = zincData.tracking?.tracking_number;
+        // NEW: Check tracking[] array for delivery status (the correct Zinc format)
+        const trackingEntries: any[] = Array.isArray(zincData.tracking) ? zincData.tracking : [];
+        const deliveredEntry = trackingEntries.find((t: any) => t.delivery_status?.toLowerCase() === 'delivered');
+        const isDelivered = !!deliveredEntry;
+        const bestTracking = deliveredEntry || trackingEntries[0];
+        const trackingNumber = bestTracking?.tracking_number || bestTracking?.retailer_tracking_number || 
+          (typeof zincData.tracking === 'object' && !Array.isArray(zincData.tracking) ? zincData.tracking?.tracking_number : null);
         
-        // Check for actual failed status - exclude request_processing (still in progress)
+        // Check for actual failed status
         const isFailed = zincData.code === 'failed' || 
           zincData.code === 'cancelled' ||
           zincData.code === 'out_of_stock' ||
@@ -141,78 +183,140 @@ serve(async (req) => {
            zincData.code !== 'request_processing' &&
            zincData.code !== 'pending');
 
+        // Build existing notes as proper object
+        const existingNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+
         // NEW: If we found the order via polling (webhook timeout), populate zinc_order_id
         if (isWebhookTimeout && merchantOrderId) {
           console.log(`🔄 WEBHOOK TIMEOUT RECOVERY: Found order via polling for ${order.id}`);
           updates.zinc_order_id = merchantOrderId;
-          updates.webhook_received_at = null; // Indicate this was caught by polling, not webhook
-          
-          // Add metadata about recovery method
-          updates.notes = order.notes 
-            ? `${order.notes} | Recovered via polling (webhook timeout)` 
-            : 'Recovered via polling (webhook timeout)';
+          updates.webhook_received_at = null;
+          updates.notes = { ...existingNotes, recovered_via: 'polling', recovered_at: new Date().toISOString() };
         }
 
-        if (isSuccessful && merchantOrderId) {
-          updates.status = 'shipped';
-          updates.zinc_order_id = merchantOrderId;
-          if (trackingNumber) updates.tracking_number = trackingNumber;
-          if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
-          if (trackingUrl) {
-            // Store tracking URL in notes or a dedicated field
-            const trackingNote = `Tracking: ${trackingUrl}`;
-            updates.notes = updates.notes ? `${updates.notes} | ${trackingNote}` : trackingNote;
-          }
-          
-          console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
-          results.updated.push(order.id);
-          
-          // Queue shipped email (mirrors zinc-webhook behavior)
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('email, name')
-              .eq('id', order.user_id)
-              .single();
+        if (isDelivered) {
+          // DELIVERY DETECTED — highest priority status
+          if (isStatusDowngrade(order.status, 'delivered')) {
+            console.log(`⚠️ Skipping: order ${order.id} already at ${order.status}, won't downgrade to delivered`);
+          } else {
+            updates.status = 'delivered';
+            updates.fulfilled_at = new Date().toISOString();
+            if (merchantOrderId) updates.zinc_order_id = merchantOrderId;
+            if (trackingNumber) updates.tracking_number = trackingNumber;
+            if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
+            
+            updates.notes = {
+              ...existingNotes,
+              ...(updates.notes || {}),
+              zinc_delivery_status: 'Delivered',
+              delivery_detected_via: 'polling',
+              delivery_detected_at: new Date().toISOString(),
+              ...(deliveredEntry?.delivery_proof_image ? { delivery_proof_image: deliveredEntry.delivery_proof_image } : {}),
+              ...(deliveredEntry?.tracking_url || deliveredEntry?.retailer_tracking_url ? { zinc_tracking_url: deliveredEntry.retailer_tracking_url || deliveredEntry.tracking_url } : {}),
+              ...(trackingUrl ? { merchant_tracking_url: trackingUrl } : {}),
+            };
 
-            const shippingAddr = order.shipping_address as any;
-            const toEmail = shippingAddr?.email || profile?.email;
-            const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+            console.log(`📬 Order ${order.id} DELIVERED (detected via polling)`);
+            results.updated.push(order.id);
 
-            if (toEmail) {
-              await supabase.from('email_queue').insert({
-                recipient_email: toEmail,
-                recipient_name: recipientName,
-                event_type: 'order_shipped',
-                template_variables: {
-                  order_number: order.order_number,
-                  customer_name: recipientName,
-                  tracking_number: trackingNumber || null,
-                  tracking_url: trackingUrl || null,
-                  estimated_delivery: estimatedDelivery || null,
-                },
-                priority: 'normal',
-                scheduled_for: new Date().toISOString(),
-                status: 'pending',
-              });
-              console.log(`📧 Queued shipped email for order ${order.id} to ${toEmail}`);
+            // Queue delivery email
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('email, name')
+                .eq('id', order.user_id)
+                .single();
+
+              const shippingAddr = order.shipping_address as any;
+              const toEmail = shippingAddr?.email || profile?.email;
+              const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+
+              if (toEmail) {
+                await supabase.from('email_queue').insert({
+                  recipient_email: toEmail,
+                  recipient_name: recipientName,
+                  event_type: 'order_delivered',
+                  template_variables: {
+                    order_number: order.order_number,
+                    customer_name: recipientName,
+                    tracking_number: trackingNumber || null,
+                    delivery_proof_image: deliveredEntry?.delivery_proof_image || null,
+                  },
+                  priority: 'normal',
+                  scheduled_for: new Date().toISOString(),
+                  status: 'pending',
+                });
+                console.log(`📧 Queued delivery email for order ${order.id} to ${toEmail}`);
+              }
+            } catch (emailErr) {
+              console.error('⚠️ Failed to queue delivery email:', emailErr);
             }
-          } catch (emailErr) {
-            console.error('⚠️ Failed to queue shipped email:', emailErr);
+          }
+        } else if (isSuccessful && merchantOrderId) {
+          const newStatus = 'shipped';
+
+          // Guard against status downgrade
+          if (isStatusDowngrade(order.status, newStatus)) {
+            console.log(`⚠️ Skipping: order ${order.id} already at ${order.status}, won't downgrade to ${newStatus}`);
+          } else {
+            updates.status = newStatus;
+            updates.zinc_order_id = merchantOrderId;
+            if (trackingNumber) updates.tracking_number = trackingNumber;
+            if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
+            
+            // JSONB merge for tracking info
+            const trackingNotes: Record<string, any> = {};
+            if (trackingUrl) trackingNotes.zinc_tracking_url = trackingUrl;
+            if (bestTracking?.tracking_url || bestTracking?.retailer_tracking_url) {
+              trackingNotes.tracking_url = bestTracking.retailer_tracking_url || bestTracking.tracking_url;
+            }
+            updates.notes = { ...existingNotes, ...(updates.notes || {}), ...trackingNotes };
+            
+            console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
+            results.updated.push(order.id);
+            
+            // Queue shipped email only if transitioning from non-shipped
+            if (order.status !== 'shipped') {
+              try {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('email, name')
+                  .eq('id', order.user_id)
+                  .single();
+
+                const shippingAddr = order.shipping_address as any;
+                const toEmail = shippingAddr?.email || profile?.email;
+                const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+
+                if (toEmail) {
+                  await supabase.from('email_queue').insert({
+                    recipient_email: toEmail,
+                    recipient_name: recipientName,
+                    event_type: 'order_shipped',
+                    template_variables: {
+                      order_number: order.order_number,
+                      customer_name: recipientName,
+                      tracking_number: trackingNumber || null,
+                      tracking_url: trackingUrl || null,
+                      estimated_delivery: estimatedDelivery || null,
+                    },
+                    priority: 'normal',
+                    scheduled_for: new Date().toISOString(),
+                    status: 'pending',
+                  });
+                  console.log(`📧 Queued shipped email for order ${order.id} to ${toEmail}`);
+                }
+              } catch (emailErr) {
+                console.error('⚠️ Failed to queue shipped email:', emailErr);
+              }
+            }
           }
         } 
-        else if (zincData.code === 'delivered') {
-          updates.status = 'delivered';
-          updates.fulfilled_at = new Date().toISOString();
-          
-          console.log(`📬 Order ${order.id} delivered`);
-          results.updated.push(order.id);
-        }
         else if (isFailed) {
           updates.status = 'failed';
-          updates.notes = zincData.message || zincData.error?.message || 'Order failed in Zinc';
+          updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
           
-          console.log(`❌ Order ${order.id} failed in Zinc: ${updates.notes}`);
+          console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
           results.updated.push(order.id);
         }
         else {
@@ -227,7 +331,6 @@ serve(async (req) => {
           console.warn(`⚠️ Order ${order.id} stuck for ${hoursSinceCreated.toFixed(1)} hours`);
           results.stuck.push(order.id);
           
-          // Send notification
           await supabase.from('notifications').insert({
             user_id: order.user_id,
             type: 'order_delayed',
@@ -262,7 +365,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        monitored: processingOrders?.length || 0,
+        monitored: uniqueOrders.length,
+        processing: processingOrders?.length || 0,
+        shipped_polled: shippedOrders?.length || 0,
+        webhook_timeout: webhookTimeoutOrders?.length || 0,
         updated: results.updated.length,
         stuck: results.stuck.length,
         failed: results.failed.length,

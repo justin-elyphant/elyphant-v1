@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface TrackingEntry {
+  tracking_number?: string;
+  retailer_tracking_number?: string;
+  carrier?: string;
+  tracking_url?: string;
+  retailer_tracking_url?: string;
+  delivery_status?: string;
+  delivery_proof_image?: string;
+  merchant_order_id?: string;
+  product_id?: string;
+  product_ids?: string[];
+  obtained_at?: string;
+  zinc_tracking_number?: string;
+}
+
 interface ZincWebhookPayload {
   type?: string;
   _type?: string;
@@ -25,11 +40,7 @@ interface ZincWebhookPayload {
     days?: number;
     delivery_date?: string;
   }>;
-  tracking?: {
-    tracking_number: string;
-    carrier: string;
-    tracking_url?: string;
-  };
+  tracking?: TrackingEntry | TrackingEntry[];
   status?: string;
   case_details?: {
     type?: string;
@@ -61,6 +72,40 @@ interface ZincWebhookPayload {
 }
 
 /**
+ * Normalizes Zinc's tracking data which can be a single object or an array.
+ * Returns the most relevant tracking entry with delivery status info.
+ */
+function resolveTrackingData(payload: ZincWebhookPayload): {
+  trackingNumber: string | null;
+  carrier: string | null;
+  trackingUrl: string | null;
+  deliveryStatus: string | null;
+  deliveryProofImage: string | null;
+  merchantOrderId: string | null;
+  allEntries: TrackingEntry[];
+} | null {
+  const tracking = payload.tracking;
+  if (!tracking) return null;
+
+  const entries: TrackingEntry[] = Array.isArray(tracking) ? tracking : [tracking];
+  if (entries.length === 0) return null;
+
+  // Find the most advanced entry: prefer one with delivery_status === 'Delivered', else first with tracking number
+  const deliveredEntry = entries.find(e => e.delivery_status?.toLowerCase() === 'delivered');
+  const best = deliveredEntry || entries.find(e => e.tracking_number || e.retailer_tracking_number) || entries[0];
+
+  return {
+    trackingNumber: best.tracking_number || best.retailer_tracking_number || best.zinc_tracking_number || null,
+    carrier: best.carrier || null,
+    trackingUrl: best.retailer_tracking_url || best.tracking_url || null,
+    deliveryStatus: best.delivery_status || null,
+    deliveryProofImage: best.delivery_proof_image || null,
+    merchantOrderId: best.merchant_order_id || null,
+    allEntries: entries,
+  };
+}
+
+/**
  * Resolves the event type from Zinc's payload.
  * Zinc sends `_type` (with underscore), not `type`.
  * Maps Zinc's internal types to our expected event names.
@@ -79,10 +124,26 @@ function resolveEventType(payload: ZincWebhookPayload): string {
     return 'request_failed';
   }
 
-  // Fallback: infer from payload shape
+  // Detect root-level tracking array (Zinc sends tracking_updated this way)
+  if (Array.isArray(payload.tracking) && payload.tracking.length > 0) return 'tracking_updated';
   if (payload.tracking) return 'tracking_obtained';
 
   return payload._type || 'unknown';
+}
+
+/**
+ * Merges new notes into existing order notes (JSONB-safe).
+ * Fetches existing notes from the order, spreads them, and adds new fields.
+ */
+async function mergeOrderNotes(supabase: any, orderId: string, newNotes: Record<string, any>): Promise<Record<string, any>> {
+  const { data: order } = await supabase
+    .from('orders')
+    .select('notes')
+    .eq('id', orderId)
+    .single();
+
+  const existing = (typeof order?.notes === 'object' && order?.notes !== null) ? order.notes : {};
+  return { ...existing, ...newNotes };
 }
 
 serve(async (req) => {
@@ -161,7 +222,6 @@ serve(async (req) => {
 
     if (logError) {
       console.error('❌ Failed to log webhook:', logError);
-      // Continue processing even if logging fails
     }
     
     console.log(`📊 Webhook logged to database: ${eventType} for order ${internalOrderId || 'unknown'}`);
@@ -220,8 +280,6 @@ serve(async (req) => {
 
       case 'request_processing':
         console.log('⏳ Zinc order still processing (not a failure). No action needed.');
-        // This is an in-progress state — Zinc will send a final callback later.
-        // Do NOT change order status or send any emails.
         break;
 
       case 'tracking_obtained':
@@ -290,7 +348,6 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
       );
       
-      // Try to parse the body again for logging - may fail if already consumed
       let errorEventType = 'unknown';
       let errorEventId = 'unknown';
       try {
@@ -338,29 +395,29 @@ async function handleRequestSucceeded(supabase: any, orderId: string, payload: Z
     updated_at: new Date().toISOString(),
   };
 
-  // Save tracking URL in notes (no tracking_url column exists)
-  // tracking_url will be stored in notes.zinc_tracking_url
-
-  // Save estimated delivery date if available
   if (estimatedDelivery) {
     updateData.estimated_delivery = estimatedDelivery;
   }
 
-  // Save tracking URL, price components, and merchant info in notes
-  {
-    const { data: existingOrder } = await supabase
-      .from('orders')
-      .select('notes')
-      .eq('id', orderId)
-      .single();
+  // Also check if tracking data is already present in the success payload
+  const resolved = resolveTrackingData(payload);
+  const notesMerge: Record<string, any> = {};
+  if (trackingUrl) notesMerge.zinc_tracking_url = trackingUrl;
+  if (payload.price_components) notesMerge.zinc_price_components = payload.price_components;
+  if (merchantInfo) notesMerge.zinc_merchant_info = merchantInfo;
+  if (resolved?.trackingNumber) notesMerge.tracking_number = resolved.trackingNumber;
+  if (resolved?.deliveryProofImage) notesMerge.delivery_proof_image = resolved.deliveryProofImage;
 
-    updateData.notes = {
-      ...(existingOrder?.notes || {}),
-      ...(trackingUrl ? { zinc_tracking_url: trackingUrl } : {}),
-      ...(payload.price_components ? { zinc_price_components: payload.price_components } : {}),
-      ...(merchantInfo ? { zinc_merchant_info: merchantInfo } : {}),
-    };
+  // If tracking shows delivered already, update status accordingly
+  if (resolved?.deliveryStatus?.toLowerCase() === 'delivered') {
+    updateData.status = 'delivered';
+    updateData.fulfilled_at = new Date().toISOString();
+    if (resolved.trackingNumber) updateData.tracking_number = resolved.trackingNumber;
+    notesMerge.delivery_detected_via = 'request_succeeded_webhook';
+    notesMerge.delivery_status = resolved.deliveryStatus;
   }
+
+  updateData.notes = await mergeOrderNotes(supabase, orderId, notesMerge);
 
   const { error } = await supabase
     .from('orders')
@@ -370,7 +427,7 @@ async function handleRequestSucceeded(supabase: any, orderId: string, payload: Z
   if (error) {
     console.error('❌ Failed to update order on request_succeeded:', error);
   } else {
-    console.log(`✅ Order ${orderId} marked as placed with merchant order ID: ${merchantOrderId}, tracking: ${trackingUrl || 'none'}, delivery: ${estimatedDelivery || 'unknown'}`);
+    console.log(`✅ Order ${orderId} marked as ${updateData.status} with merchant order ID: ${merchantOrderId}`);
   }
 }
 
@@ -519,27 +576,55 @@ async function handleRequestFailed(supabase: any, orderId: string, payload: Zinc
 }
 
 async function handleTrackingUpdate(supabase: any, orderId: string, payload: ZincWebhookPayload) {
-  if (!payload.tracking) {
-    console.log('⚠️ Tracking update received but no tracking data in payload');
+  const resolved = resolveTrackingData(payload);
+
+  if (!resolved) {
+    console.log('⚠️ Tracking update received but no tracking data could be resolved from payload');
     return;
   }
 
+  const isDelivered = resolved.deliveryStatus?.toLowerCase() === 'delivered';
+  console.log(`📦 Tracking resolved: number=${resolved.trackingNumber}, status=${resolved.deliveryStatus}, delivered=${isDelivered}`);
+
+  // Build update with proper status based on delivery_status
+  const updateData: any = {
+    status: isDelivered ? 'delivered' : 'shipped',
+    updated_at: new Date().toISOString(),
+  };
+
+  if (resolved.trackingNumber) {
+    updateData.tracking_number = resolved.trackingNumber;
+  }
+
+  if (isDelivered) {
+    updateData.fulfilled_at = new Date().toISOString();
+  }
+
+  // Merge tracking info into notes (JSONB-safe)
+  const notesMerge: Record<string, any> = {
+    tracking_updated_at: new Date().toISOString(),
+  };
+  if (resolved.trackingUrl) notesMerge.zinc_tracking_url = resolved.trackingUrl;
+  if (resolved.carrier) notesMerge.carrier = resolved.carrier;
+  if (resolved.deliveryProofImage) notesMerge.delivery_proof_image = resolved.deliveryProofImage;
+  if (resolved.deliveryStatus) notesMerge.zinc_delivery_status = resolved.deliveryStatus;
+  if (resolved.merchantOrderId) notesMerge.zinc_merchant_order_id = resolved.merchantOrderId;
+  notesMerge.delivery_detected_via = 'tracking_webhook';
+
+  updateData.notes = await mergeOrderNotes(supabase, orderId, notesMerge);
+
   const { error } = await supabase
     .from('orders')
-    .update({
-      tracking_number: payload.tracking.tracking_number,
-      status: 'shipped',
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', orderId);
 
   if (error) {
     console.error('❌ Failed to update tracking:', error);
   } else {
-    console.log(`✅ Tracking updated for order ${orderId}: ${payload.tracking.tracking_number}`);
+    console.log(`✅ Order ${orderId} → ${updateData.status} (tracking: ${resolved.trackingNumber})`);
   }
 
-  // Queue shipping notification email with fallback
+  // Queue appropriate notification email
   try {
     const { data: order } = await supabase
       .from('orders')
@@ -556,21 +641,23 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     const toEmail = order?.shipping_address?.email || order?.customer_email || profile?.email || null;
     const recipientName = order?.shipping_address?.name || profile?.name || 'Customer';
 
-    console.log(`[email-queue] order_shipped toEmail=${toEmail} order=${order?.order_number}`);
+    const emailEventType = isDelivered ? 'order_delivered' : 'order_shipped';
+    console.log(`[email-queue] ${emailEventType} toEmail=${toEmail} order=${order?.order_number}`);
 
     if (!toEmail) {
-      console.warn(`⚠️ No recipient email for shipped order ${order?.order_number}`);
+      console.warn(`⚠️ No recipient email for ${emailEventType} order ${order?.order_number}`);
     } else {
       await supabase.from('email_queue').insert({
         recipient_email: toEmail,
         recipient_name: recipientName,
-        event_type: 'order_shipped',
+        event_type: emailEventType,
         template_variables: {
           order_number: order.order_number,
           customer_name: recipientName,
-          tracking_number: payload.tracking.tracking_number,
-          carrier: payload.tracking.carrier,
-          tracking_url: payload.tracking.tracking_url,
+          tracking_number: resolved.trackingNumber,
+          carrier: resolved.carrier,
+          tracking_url: resolved.trackingUrl,
+          ...(isDelivered ? { delivery_proof_image: resolved.deliveryProofImage } : {}),
         },
         priority: 'normal',
         scheduled_for: new Date().toISOString(),
@@ -578,11 +665,18 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
       });
     }
   } catch (emailErr) {
-    console.error('⚠️ Failed to queue shipping email:', emailErr);
+    console.error('⚠️ Failed to queue notification email:', emailErr);
   }
 }
 
 async function handleStatusUpdate(supabase: any, orderId: string, payload: ZincWebhookPayload) {
+  // First check if tracking array has delivery info (Zinc sometimes embeds it here)
+  const resolved = resolveTrackingData(payload);
+  if (resolved?.deliveryStatus?.toLowerCase() === 'delivered') {
+    console.log('📦 status_updated contains delivered tracking data — delegating to handleTrackingUpdate');
+    return handleTrackingUpdate(supabase, orderId, payload);
+  }
+
   const statusMap: Record<string, string> = {
     'placed': 'processing',
     'shipped': 'shipped',
@@ -593,12 +687,18 @@ async function handleStatusUpdate(supabase: any, orderId: string, payload: ZincW
 
   const newStatus = statusMap[payload.status || ''] || 'processing';
 
+  const updateData: any = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (newStatus === 'delivered') {
+    updateData.fulfilled_at = new Date().toISOString();
+  }
+
   const { error } = await supabase
     .from('orders')
-    .update({
-      status: newStatus,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', orderId);
 
   if (error) {
@@ -622,28 +722,31 @@ async function handleCaseUpdate(supabase: any, orderId: string, payload: ZincWeb
   // Handle forced cancellation - order was cancelled, ZMA refund may follow
   if (caseType === 'case.opened.cancel.forced_cancellation') {
     console.log('🚫 Forced cancellation case - ZMA refund expected');
+    const mergedNotes = await mergeOrderNotes(supabase, orderId, {
+      case_details: payload.case_details,
+      case_updated_at: new Date().toISOString(),
+      awaiting_zma_refund: true,
+    });
     await supabase.from('orders').update({
       status: 'cancelled',
       updated_at: new Date().toISOString(),
-      notes: {
-        case_details: payload.case_details,
-        case_updated_at: new Date().toISOString(),
-        awaiting_zma_refund: true,
-      },
+      notes: mergedNotes,
     }).eq('id', orderId);
     return;
   }
 
   // Default: mark as requires_attention for manual review
+  const mergedNotes = await mergeOrderNotes(supabase, orderId, {
+    case_details: payload.case_details,
+    case_updated_at: new Date().toISOString(),
+  });
+
   const { error } = await supabase
     .from('orders')
     .update({
       status: 'requires_attention',
       updated_at: new Date().toISOString(),
-      notes: {
-        case_details: payload.case_details,
-        case_updated_at: new Date().toISOString(),
-      },
+      notes: mergedNotes,
     })
     .eq('id', orderId);
 
@@ -658,26 +761,18 @@ async function handleOrderCancelled(supabase: any, orderId: string, payload: Zin
   const cancellationReason = payload.status_updates?.find(u => u.type === 'order.cancelled')?.data?.reason;
   console.log(`🚫 Order cancelled, reason: ${cancellationReason}`);
 
-  // Get current order notes
-  const { data: order } = await supabase
-    .from('orders')
-    .select('notes')
-    .eq('id', orderId)
-    .single();
-
-  const currentNotes = order?.notes || {};
+  const mergedNotes = await mergeOrderNotes(supabase, orderId, {
+    cancellation_reason: cancellationReason,
+    cancelled_at: new Date().toISOString(),
+    awaiting_zma_refund: cancellationReason === 'payment',
+  });
 
   const { error } = await supabase
     .from('orders')
     .update({
       status: 'cancelled',
       updated_at: new Date().toISOString(),
-      notes: {
-        ...currentNotes,
-        cancellation_reason: cancellationReason,
-        cancelled_at: new Date().toISOString(),
-        awaiting_zma_refund: cancellationReason === 'payment',
-      },
+      notes: mergedNotes,
     })
     .eq('id', orderId);
 
@@ -745,12 +840,13 @@ async function createPendingRefund(supabase: any, orderId: string, payload: Zinc
 
   console.log(`✅ Pending refund request created for order ${orderId}: $${refundAmount}`);
 
-  // Update order status
+  // Update order status with merged notes
+  const currentNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
   await supabase.from('orders').update({
     status: 'cancelled',
     updated_at: new Date().toISOString(),
     notes: {
-      ...order.notes,
+      ...currentNotes,
       zma_refunded: true,
       zma_refund_amount: refundAmount,
       pending_customer_refund: true,
@@ -789,22 +885,19 @@ async function createPendingRefund(supabase: any, orderId: string, payload: Zinc
 }
 
 async function handleCancellationWebhook(supabase: any, orderId: string, payload: ZincWebhookPayload, eventType: string) {
-  /**
-   * Handles cancellation-specific webhook responses from Zinc.
-   * Uses resolved eventType instead of payload.type directly.
-   */
-  
   if (eventType === 'request_succeeded') {
     console.log('✅ Cancellation succeeded for order:', orderId);
     
+    const mergedNotes = await mergeOrderNotes(supabase, orderId, {
+      cancellation_confirmed_at: new Date().toISOString(),
+      zinc_cancellation_status: 'succeeded',
+    });
+
     const { error } = await supabase
       .from('orders')
       .update({
         status: 'cancelled',
-        notes: {
-          cancellation_confirmed_at: new Date().toISOString(),
-          zinc_cancellation_status: 'succeeded',
-        }
+        notes: mergedNotes,
       })
       .eq('id', orderId);
 
@@ -815,26 +908,18 @@ async function handleCancellationWebhook(supabase: any, orderId: string, payload
   } else if (eventType === 'request_failed') {
     console.log('❌ Cancellation failed for order:', orderId);
     
-    // Get current order to preserve existing data
-    const { data: order } = await supabase
-      .from('orders')
-      .select('notes, status')
-      .eq('id', orderId)
-      .single();
-    
-    const currentNotes = order?.notes || {};
-    
+    const mergedNotes = await mergeOrderNotes(supabase, orderId, {
+      cancellation_failed_at: new Date().toISOString(),
+      zinc_cancellation_status: 'failed',
+      cancellation_error: payload.error?.message || 'Cancellation attempt failed',
+      cancellation_error_code: payload.error?.code,
+    });
+
     const { error } = await supabase
       .from('orders')
       .update({
-        status: 'processing', // Revert to processing since cancellation failed
-        notes: {
-          ...currentNotes,
-          cancellation_failed_at: new Date().toISOString(),
-          zinc_cancellation_status: 'failed',
-          cancellation_error: payload.error?.message || 'Cancellation attempt failed',
-          cancellation_error_code: payload.error?.code,
-        }
+        status: 'processing',
+        notes: mergedNotes,
       })
       .eq('id', orderId);
 

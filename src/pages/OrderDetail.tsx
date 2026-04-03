@@ -319,8 +319,8 @@ const OrderDetail = () => {
         <div className="space-y-4 min-w-0">
           <ShippingInfoCard order={order} />
           
-          {/* Tracking Information */}
-          {order.tracking_number && (
+          {/* Tracking Information — show for shipped/delivered even without tracking number */}
+          {(order.tracking_number || order.status === "shipped" || order.status === "delivered") && (
             <div id="tracking-card">
               <TrackingInfoCard order={order} />
             </div>

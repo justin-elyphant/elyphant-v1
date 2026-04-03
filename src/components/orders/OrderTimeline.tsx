@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Clock, Truck, Home, X, ExternalLink } from "lucide-react";
-import { Package, Clock, Truck, Home, X, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 
 interface TimelineEvent {

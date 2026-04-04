@@ -1,75 +1,61 @@
 
 
-## Cleanup: Remove Dead Components + Extract Shared Order Status Logic
+## Fix: max_price_exceeded + "Checkout Address" Recipient Name
 
-### Dead components to delete (safe — zero imports)
+### Bug 1: max_price too low for credit orders
 
-These files are not imported anywhere in the codebase:
+**Root cause** (line 369): `subtotalDollars = order.line_items?.subtotal` — for beta credit orders, this is the credit-adjusted amount ($30.10) not the actual Amazon price ($49.94). Zinc sees max_price=5112 but Amazon charges 5431.
 
-1. **`src/components/orders/OrderStatusChecker.tsx`** — Hardcoded debug tool with a specific Zinc order ID baked in. Replaced by `order-monitor-v2` polling.
-2. **`src/components/orders/OrderMonitoring.tsx`** — Admin monitoring card that calls legacy `check-zinc-order-status`. Not mounted in any page/route.
-3. **`src/components/orders/OrdersTable.tsx`** — Unused duplicate. `OrderTable.tsx` is the one actually imported by `Orders.tsx`.
-4. **`src/components/orders/OrderItemsTable.tsx`** — Superseded by `EnhancedOrderItemsTable.tsx` (the one `OrderDetail.tsx` imports).
+**Fix** (line 366-372 in `process-order-v2/index.ts`): Calculate max_price from the sum of `items[].unit_price * quantity` instead of `line_items.subtotal`. The unit_price is always the real Amazon retail price regardless of credits applied.
 
-### Duplicated logic to consolidate
+```typescript
+// Replace subtotal-based calc with item-level calc
+const productSubtotalCents = itemsArray.reduce((sum, item) => {
+  const unitPrice = item.unit_price || item.price || 0;
+  const qty = item.quantity || 1;
+  return sum + Math.round(unitPrice * 100) * qty;
+}, 0);
+// Fallback to order-level subtotal if no item prices found
+const finalSubtotalCents = productSubtotalCents > 0 
+  ? productSubtotalCents 
+  : Math.round((order.line_items?.subtotal ?? order.total_amount) * 100);
+```
 
-Three components independently compute "order status → step progression":
-- `OrderProgressStepper` (horizontal stepper at page top)
-- `TrackingInfoCard` (progress bar + tracking details in sidebar)
-- `OrderTimeline` (vertical timeline in sidebar)
+For order #96d709: 49.94 * 100 = 4994 → max_price = ceil(4994 * 1.20) + 1500 = **7493** — safely above 5431.
 
-All three build the same 4-step pipeline (Ordered → Processing → Shipped → Delivered), map `zincTimelineEvents` to timestamps, and resolve step statuses. This is ~120 lines of duplicated logic.
+### Bug 2: "Checkout Address" as recipient name
 
-**Extract a shared utility:**
+**Root cause** (line 212): `requiredShippingFields.name = shippingAddress.name` — for self-purchase orders, `shippingAddress` comes from the order's `shipping_address` JSONB, which contains `name: "Checkout Address"` (the address label, not the person's name).
 
-**New file: `src/utils/orderTrackingUtils.ts`**
-- `resolveCarrierName(order)` — carrier detection from tracking prefix / notes (currently only in TrackingInfoCard)
-- `getExternalTrackingUrl(order)` — carrier-specific URL builder (currently only in TrackingInfoCard)
-- `computeOrderSteps(status, zincTimelineEvents, orderDate, fulfilledAt)` — returns step array with statuses and timestamps. Replaces `buildSteps()` in TrackingInfoCard, `getStepStatus()` in OrderProgressStepper, and `synthesizeTimelineFromStatus()` + `getTimelineEvents()` in OrderTimeline.
+**Frontend fix** (BuyNowDrawer line 156): Add `user?.user_metadata?.name` to the fallback chain:
+```typescript
+name: [user?.user_metadata?.first_name, user?.user_metadata?.last_name]
+  .filter(Boolean).join(' ')
+  || user?.user_metadata?.name
+  || defaultAddress!.name,
+```
 
-**Then simplify:**
-
-- **`TrackingInfoCard`** — imports from shared util, removes ~50 lines of inline logic
-- **`OrderProgressStepper`** — imports `computeOrderSteps`, removes its own 60-line `getStepStatus` + `statusProgressMap`
-- **`OrderTimeline`** — imports `computeOrderSteps`, removes `synthesizeTimelineFromStatus` (50 lines) and the 4-priority fallback chain. Keeps its vertical timeline rendering but sources data from the shared function.
-
-### Style fix (while we're here)
-
-`OrderProgressStepper` uses purple-to-blue gradients (`from-purple-600 to-sky-500`) for active steps — this violates the monochromatic + red accent design system. Change active indicator to use `bg-destructive` (red) consistent with `TrackingInfoCard`.
-
-### Summary of changes
-
-| Action | File | Lines saved |
-|--------|------|------------|
-| Delete | `OrderStatusChecker.tsx` | 147 |
-| Delete | `OrderMonitoring.tsx` | 374 |
-| Delete | `OrdersTable.tsx` | 129 |
-| Delete | `OrderItemsTable.tsx` | 87 |
-| Create | `orderTrackingUtils.ts` | +60 |
-| Simplify | `TrackingInfoCard.tsx` | -50 |
-| Simplify | `OrderProgressStepper.tsx` | -60 |
-| Simplify | `OrderTimeline.tsx` | -80 |
-| **Net** | | **~860 lines removed** |
-
-### Technical details
-
-The shared `computeOrderSteps` function signature:
-
-```text
-computeOrderSteps(
-  status: string,
-  zincTimelineEvents: ZincTimelineEvent[],
-  orderDate: string,
-  fulfilledAt?: string
-) => OrderStep[]
-
-OrderStep = {
-  id: string,
-  label: string,
-  status: 'completed' | 'active' | 'upcoming',
-  timestamp?: string
+**Server-side guard** (process-order-v2 after line 211): Detect address-label names and substitute with profile name:
+```typescript
+const addressLabelPatterns = /^(checkout address|home|work|office|default|my address|address)$/i;
+if (addressLabelPatterns.test(shippingAddress.name?.trim())) {
+  const profileName = profile?.name || profile?.first_name;
+  if (profileName) shippingAddress.name = profileName;
 }
 ```
 
-Each consumer maps `OrderStep[]` to its own visual representation (horizontal stepper, progress bar, vertical timeline) — no UI coupling in the shared layer.
+### Bug 2b: Notes string concatenation (line 343)
+
+While we're here — line 343 still uses string concatenation for notes (`order.notes + ' | '`), which was supposed to be fixed in the pipeline restructure. Will fix to use JSONB merge.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `supabase/functions/process-order-v2/index.ts` | max_price from item unit_prices; name guard for address labels; notes JSONB fix |
+| `src/components/marketplace/product-details/BuyNowDrawer.tsx` | Add `user_metadata.name` to name fallback chain |
+
+### What this does NOT change
+- No credit logic changes — credits work correctly, it's just the max_price calc that was reading the wrong field
+- No address storage changes — the guard catches bad names at fulfillment time
 

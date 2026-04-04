@@ -1,101 +1,83 @@
 
 
-## Email Template Audit: Gaps in the Ecommerce Email Orchestrator
+## Product Caching System: Gap Analysis and Recommendations
 
-### Methodology
-I reviewed all 22 email templates in `ecommerce-email-orchestrator/index.ts` and the data passed by each caller (`stripe-webhook-v2`, `zinc-webhook`, `order-monitor-v2`, `approve-auto-gift`, etc.) against e-commerce best practices (Amazon, Shopify, Lululemon transactional email standards).
+### How It Works Today
+
+The caching system has two tiers:
+
+1. **Search caching (DB-first):** When a user searches, `get-products` checks the `products` table first via `getCachedProductsForQuery()`. If enough cached results exist (80% of requested limit), those are returned without a Zinc API call. Otherwise, Zinc is called and results are cached via `cacheSearchResults()`.
+
+2. **Detail caching:** When a user views a product detail page, `get-product-detail` checks the `products` table first. On cache miss, it calls Zinc, then upserts the full response into the `products` table.
+
+3. **Popularity sorting:** Cached products get a `popularity_score` calculated from `view_count`, ratings, reviews, badges. The `sortByPopularity()` function sorts by this score when `sortBy=popularity` (the default).
 
 ---
 
-### Critical Gaps Found
+### Gaps Found
 
-#### 1. `order_shipped` — Missing product photos and item list (the issue you spotted)
+#### Gap 1: Category/discovery rows NEVER use the cache
+Lines 1142-1179 — when `activeCategory` is set (homepage rows like "Best Selling", "Gifts for Her", etc.), the code jumps directly to `searchCategoryBatch()` which calls Zinc API every time. It skips `getCachedProductsForQuery()` entirely. This means:
+- Every homepage load costs multiple Zinc API calls
+- Previously cached products for those categories are ignored
+- Discovery rows never benefit from organic catalog growth
 
-**Problem:** When triggered by `zinc-webhook` or `order-monitor-v2`, the `template_variables` passed are:
+**Fix:** Add a cache-first lookup for category queries before calling `searchCategoryBatch()`. Use the category's query terms to check the `products` table. Only call Zinc if the cache returns insufficient results.
+
+#### Gap 2: `popularity_score` is calculated at read-time but never persisted
+`calculatePopularityScore()` runs during every search request but the computed score is never written back to the `products` table. This means:
+- The DB can't sort by popularity in SQL — sorting only happens in-memory after fetching
+- `getCachedProductsForQuery()` sorts by `view_count` only (line 320), not by the full popularity score
+- Products with high ratings + badges but low view counts get buried
+
+**Fix:** Persist `popularity_score` in the `products` table. Update it during `cacheSearchResults()` and `get-product-detail` upserts. Change `getCachedProductsForQuery()` to `ORDER BY popularity_score DESC` instead of `view_count`.
+
+#### Gap 3: Cache threshold is too aggressive — forces unnecessary Zinc calls
+The cache threshold is `Math.ceil(limit * 0.8)` (line 303). For a default `limit=20`, that's 16. If a query has 15 cached products, it's a "cache miss" and triggers a full Zinc API call. Additionally, the supplement threshold at line 1226 is `Math.max(limit, 20)` — so even if 19 products are cached, it supplements with Zinc.
+
+**Fix:** Lower the cache threshold to `Math.ceil(limit * 0.5)` (50%). If 10+ products exist in cache for a 20-item request, serve them. Only supplement when results are truly sparse (< 8).
+
+#### Gap 4: Cached products have no staleness refresh strategy
+Products cached from searches have `last_refreshed_at` set once but are never refreshed unless a user happens to view the detail page (which calls `get-product-detail`). There's no mechanism to refresh stale cached data for products that haven't been individually viewed.
+
+The `nicole-weekly-curator` cron is referenced in documentation but does not appear to be implemented/deployed.
+
+**Fix:** This is a known gap per the project knowledge doc. Recommend implementing the Nicole weekly curator to refresh products with 10+ searches in 7 days, as designed.
+
+#### Gap 5: Merge logic puts cached products BEFORE Zinc products (line 1379)
+When supplementing sparse cache results with Zinc data, the merge is:
 ```
-order_number, customer_name, tracking_number, carrier, tracking_url, estimated_delivery
+filteredResults = [...cachedProductsForMerge, ...newZincProducts].slice(0, limit);
 ```
-No `items` array is included. The template has `renderItemsHtml(props.items)` support but the data is never provided from these callers. The only way items appear is if the orchestrator fetches from DB via `orderId` — but these callers pass `template_variables` directly, not `orderId`.
+This places cached products first regardless of relevance or popularity. If old/stale cached products have low scores, they still appear above fresh, higher-quality Zinc results.
 
-**Result:** Shipped emails show order number, tracking, and delivery date but NO product photos, titles, quantities, or pricing breakdown. Your screenshot confirms this — just "Your order has shipped" with metadata but no item details.
+**Fix:** After merging, re-sort by `popularity_score` so the best products surface regardless of source. This directly addresses your observation that cached products aren't consistently in primary position — the issue is that sorting happens before the merge, not after.
 
-**Fix:** In `zinc-webhook` and `order-monitor-v2`, either:
-- Pass `orderId` instead of inline `template_variables` (lets the orchestrator's DB-fetch logic handle it), OR
-- Fetch `line_items` from the order and include an `items` array in `template_variables`
+#### Gap 6: `view_count` increment happens only on detail page views
+`view_count` is only incremented in `get-product-detail` (line 164). Products that appear in search results but are never clicked get `view_count = 0` and therefore low `popularity_score`. This creates a cold-start problem — new cached products can't rank highly until someone clicks them.
 
-#### 2. `order_shipped` — Missing shipping address
-
-Same root cause. The shipped email template supports `renderShippingAddress()` but callers don't pass `shipping_address`. When the orchestrator doesn't fetch from DB, this section is blank.
-
-#### 3. `order_failed` — Same data gap as shipped
-
-`order-monitor-v2` doesn't queue `order_failed` emails at all when Zinc reports failure (it updates the order status but doesn't send an email). The `zinc-webhook` handler for `request_failed` also doesn't queue a notification email.
-
-**Fix:** Add email queue insertion for failed orders in both `zinc-webhook` (request_failed handler) and `order-monitor-v2` (failure detection), passing `orderId` so the orchestrator fetches full context.
-
-#### 4. `guest_order_confirmation` — No "View Order Details" link works for guests
-
-The CTA links to `/order-confirmation?session_id=...` which is fine, but the secondary CTA pattern from `order_confirmation` that links to `/orders/{order_id}` requires authentication. Guest confirmation correctly avoids this, but there's no tracking CTA for guests post-purchase.
-
-#### 5. `vendor_new_order` — Missing product details
-
-Shows item count and total but NO individual product names, photos, quantities, or shipping address. A vendor receiving a "New Order" email can't see what was ordered without logging into the portal.
-
-**Fix:** Pass `items` array and shipping address from `stripe-webhook-v2` vendor notification block (line ~1163) to the template.
-
-#### 6. `gift_coming_your_way` — No arrival date passed from most callers
-
-The template supports `props.arrival_date` but `stripe-webhook-v2` (lines 1028, 1077) doesn't pass it. The `estimated_delivery` from the order record isn't known yet at webhook time (Zinc hasn't processed it), but `scheduled_delivery_date` could be passed for scheduled gifts.
-
-#### 7. No `order_delivered` template exists
-
-`zinc-webhook` queues `order_delivered` as an event type (line 644) but there's no matching case in `getEmailTemplate()`. This would throw "Unknown email event type: order_delivered" — meaning delivery confirmation emails silently fail.
-
-**Fix:** Create a new `orderDeliveredTemplate` with product photos, delivery confirmation, and a "Leave a Review" or "Rate Your Experience" CTA.
+**Fix:** Add a lightweight impression counter. When products are returned in search results, batch-increment a `search_impression_count` field. Factor this into `popularity_score` at a lower weight (e.g., +1 per 10 impressions, capped at 20 points).
 
 ---
 
-### Template Quality Summary
+### Recommended Implementation Priority
 
-| Template | Photos | Items | Pricing | Address | Tracking | Status |
-|----------|--------|-------|---------|---------|----------|--------|
-| `order_confirmation` | Yes | Yes | Yes | Yes | N/A | Complete |
-| `guest_order_confirmation` | Yes | Yes | Yes | Yes | N/A | Complete |
-| `order_pending_payment` | Yes | Yes | Yes | Yes | N/A | Complete |
-| `order_shipped` | NO | NO | NO | NO | Yes | **Broken** |
-| `order_failed` | NO | NO | NO | NO | N/A | **Broken** |
-| `order_delivered` | — | — | — | — | — | **Missing** |
-| `gift_coming_your_way` | N/A (surprise) | N/A | N/A | N/A | NO | Partial |
-| `vendor_new_order` | NO | NO | NO | NO | N/A | **Incomplete** |
-| `auto_gift_approval` | Yes | Yes | N/A | N/A | N/A | Complete |
-| All social/beta/vendor-app | N/A | N/A | N/A | N/A | N/A | Complete |
+| Priority | Fix | Impact | Effort |
+|----------|-----|--------|--------|
+| 1 | Persist `popularity_score` + sort by it in cache queries | Cached products appear in correct order | Medium |
+| 2 | Add cache-first lookup for category/discovery rows | Eliminates repeated Zinc calls on homepage | Medium |
+| 3 | Re-sort merged results after Zinc supplement | Best products surface regardless of source | Small |
+| 4 | Lower cache threshold from 80% to 50% | Fewer unnecessary Zinc API calls | Small |
+| 5 | Add search impression counting | Solves cold-start ranking problem | Medium |
+| 6 | Implement Nicole weekly curator | Keeps catalog fresh without manual intervention | Large |
 
----
-
-### Proposed Fix (7 changes)
-
-1. **`zinc-webhook` + `order-monitor-v2`**: Change shipped email queue insertions to pass `orderId` instead of inline `template_variables`, so the orchestrator's DB-fetch logic populates items, photos, pricing, and address automatically
-
-2. **`zinc-webhook`**: Add `order_failed` email queue insertion in `request_failed` handler, passing `orderId`
-
-3. **`order-monitor-v2`**: Add `order_failed` email queue insertion when Zinc failure is detected
-
-4. **Orchestrator**: Add `order_delivered` template — product photos, "Your order has been delivered" headline, delivery date, and "Rate Your Experience" CTA
-
-5. **`zinc-webhook`**: Ensure `order_delivered` event passes `orderId` for full context
-
-6. **`vendor_new_order`**: Enhance to include individual item names, photos, quantities, and shipping address (data already available in `stripe-webhook-v2`)
-
-7. **`gift_coming_your_way`**: Pass `scheduled_delivery_date` as `arrival_date` from `stripe-webhook-v2` callers when available
-
-### Files touched
-- `supabase/functions/zinc-webhook/index.ts`
-- `supabase/functions/order-monitor-v2/index.ts`
-- `supabase/functions/ecommerce-email-orchestrator/index.ts`
-- `supabase/functions/stripe-webhook-v2/index.ts`
+### Files to touch
+- `supabase/functions/get-products/index.ts` — fixes 1-5
+- `supabase/functions/get-product-detail/index.ts` — fix 1 (persist score on detail view)
+- New migration for `popularity_score` column + `search_impression_count` on `products` table (fixes 1, 5)
 
 ### What stays unchanged
-- All social, beta, vendor application, connection, and welcome templates (already complete for their purpose)
-- Email queue infrastructure, Resend integration, base template styling
-- Stripe checkout, payment flows, Zinc order submission
+- `ProductCatalogService.ts` client-side — no changes needed
+- `EnhancedCacheService.ts` — Redis layer is orthogonal to these DB-level fixes
+- Zinc API integration, order flows, email orchestrator — all untouched
 

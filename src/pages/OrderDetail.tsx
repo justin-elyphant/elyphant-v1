@@ -268,9 +268,13 @@ const OrderDetail = () => {
 
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Order {formatOrderNumberWithHash(order.id)}</h1>
+          <h1 className="text-2xl font-bold">
+            {order.isRecipientView ? "Incoming Gift" : `Order ${formatOrderNumberWithHash(order.id)}`}
+          </h1>
           <p className="text-muted-foreground">
-            Placed on {new Date(order.date).toLocaleDateString()} • 
+            {order.isRecipientView
+              ? `A gift is on its way • `
+              : `Placed on ${new Date(order.date).toLocaleDateString()} • `}
             <OrderStatusBadge 
               status={order.status}
               orderId={order.id}
@@ -278,13 +282,11 @@ const OrderDetail = () => {
               stripeSessionId={order.stripe_session_id}
               createdAt={order.created_at}
               onStatusUpdate={(newStatus) => {
-                // Refresh order data when status updates
                 window.location.reload();
               }}
             />
           </p>
         </div>
-        {/* Message Vendor functionality removed per user request */}
         <div className="hidden md:flex gap-2">
           {order.status === "shipped" && (
             <Button onClick={handleTrackPackage}>

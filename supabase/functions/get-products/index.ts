@@ -1308,7 +1308,7 @@ serve(async (req) => {
         // 2. Brand-specific search returns sparse results (< 8 products)
         // This accelerates organic catalog growth for brand searches
         // ============================================================
-        const MIN_RESULTS_THRESHOLD = Math.max(limit, 20);
+        const MIN_RESULTS_THRESHOLD = Math.ceil(limit * 0.5);
         const needsSupplement = sortedProducts.length < MIN_RESULTS_THRESHOLD;
         
         if (sortedProducts.length === 0 || needsSupplement) {

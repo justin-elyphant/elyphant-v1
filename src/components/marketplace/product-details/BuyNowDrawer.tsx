@@ -320,19 +320,35 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                         } : undefined,
                       } : null}
                       onChange={(selected) => {
-                        handleSelectRecipient({
-                          type: selected.type === 'self' ? 'self' : 'connection',
-                          name: selected.connectionName || userName,
-                          address: selected.shippingAddress ? {
-                            address_line1: selected.shippingAddress.address,
-                            address_line2: selected.shippingAddress.addressLine2 || '',
-                            city: selected.shippingAddress.city,
-                            state: selected.shippingAddress.state,
-                            zip_code: selected.shippingAddress.zipCode,
-                            country: selected.shippingAddress.country || 'US',
-                          } : defaultAddress?.address,
-                          connectionId: selected.connectionId,
-                        });
+                        if (selected.type === 'manual_address') {
+                          handleSelectRecipient({
+                            type: 'manual_address',
+                            name: selected.recipientName || selected.connectionName || 'Recipient',
+                            address: selected.shippingAddress ? {
+                              address_line1: selected.shippingAddress.address,
+                              address_line2: selected.shippingAddress.addressLine2 || '',
+                              city: selected.shippingAddress.city,
+                              state: selected.shippingAddress.state,
+                              zip_code: selected.shippingAddress.zipCode,
+                              country: selected.shippingAddress.country || 'US',
+                            } : null,
+                            recipientEmail: selected.recipientEmail,
+                          });
+                        } else {
+                          handleSelectRecipient({
+                            type: selected.type === 'self' ? 'self' : 'connection',
+                            name: selected.connectionName || userName,
+                            address: selected.shippingAddress ? {
+                              address_line1: selected.shippingAddress.address,
+                              address_line2: selected.shippingAddress.addressLine2 || '',
+                              city: selected.shippingAddress.city,
+                              state: selected.shippingAddress.state,
+                              zip_code: selected.shippingAddress.zipCode,
+                              country: selected.shippingAddress.country || 'US',
+                            } : defaultAddress?.address,
+                            connectionId: selected.connectionId,
+                          });
+                        }
                       }}
                       userAddress={defaultAddress?.address}
                       userName={userName}

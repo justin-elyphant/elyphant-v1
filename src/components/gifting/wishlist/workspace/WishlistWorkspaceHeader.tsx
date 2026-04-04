@@ -116,7 +116,7 @@ const WishlistWorkspaceHeader = ({
                 {/* Public/Private Badge */}
                 <Badge 
                   variant="secondary" 
-                  className="bg-white/20 text-white border-0 backdrop-blur-sm gap-1.5"
+                  className="bg-background/60 text-foreground border-0 backdrop-blur-sm gap-1.5"
                 >
                   {currentIsPublic ? (
                     <>

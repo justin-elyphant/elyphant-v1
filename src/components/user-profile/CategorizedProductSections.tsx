@@ -1,9 +1,8 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Target, Bot, TrendingUp, ExternalLink } from "lucide-react";
+import { Heart, Target, Bot, TrendingUp } from "lucide-react";
 import { Product } from "@/types/product";
-import { formatPrice } from "@/lib/utils";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 interface CategorizedProductSectionsProps {
   wishlistProducts: Product[];
@@ -24,39 +23,6 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
   isOwnProfile,
   isPreviewMode = false
 }) => {
-  const renderProductCard = (product: Product, source: string, size: 'large' | 'medium' | 'small' = 'medium') => {
-    const sizeClasses = {
-      large: 'col-span-2 row-span-2',
-      medium: 'col-span-1 row-span-1',
-      small: 'col-span-1 row-span-1'
-    };
-
-    return (
-      <Card 
-        key={product.product_id}
-        className={`${sizeClasses[size]} cursor-pointer hover:shadow-lg transition-shadow group overflow-hidden`}
-        onClick={() => onProductClick(product, source)}
-      >
-        <CardContent className="p-0 relative h-full">
-          <div className="aspect-square relative overflow-hidden">
-            <img 
-              src={product.image || '/placeholder.svg'} 
-              alt={product.title}
-              className="w-full h-full object-cover transition-transform group-hover:scale-110"
-            />
-            {/* Overlay with product info */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                <h4 className="font-semibold text-sm line-clamp-2 mb-1">{product.title}</h4>
-                <p className="text-lg font-bold">{formatPrice(product.price)}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   const renderSection = (
     title: string,
     products: Product[],
@@ -79,15 +45,19 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
           <Badge variant="secondary" className="ml-auto">{products.length} items</Badge>
         </div>
         
-        {/* Grid layout - larger cards for wishlist, smaller for others */}
         <div className={`grid gap-3 ${
           source === 'wishlist' 
             ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' 
             : 'grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
         }`}>
-          {products.slice(0, source === 'wishlist' ? 12 : 6).map((product) => 
-            renderProductCard(product, source, source === 'wishlist' ? 'medium' : 'small')
-          )}
+          {products.slice(0, source === 'wishlist' ? 12 : 6).map((product) => (
+            <ProductCard
+              key={product.product_id}
+              product={product}
+              onProductClick={() => onProductClick(product, source)}
+              viewMode="grid"
+            />
+          ))}
         </div>
       </div>
     );
@@ -95,7 +65,6 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Primary Section: Wishlist Items */}
       {renderSection(
         "Their Wishlist",
         wishlistProducts,
@@ -104,7 +73,6 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
         "Items they actually want - perfect gift ideas!"
       )}
 
-      {/* Secondary Section: Interest-Based */}
       {renderSection(
         "Based on Their Interests",
         interestProducts,
@@ -113,7 +81,6 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
         "Products matching their hobbies and preferences"
       )}
 
-      {/* Tertiary Section: AI Recommendations (only for others viewing) */}
       {!isOwnProfile && !isPreviewMode && renderSection(
         "AI Gift Suggestions",
         aiProducts,
@@ -122,7 +89,6 @@ const CategorizedProductSections: React.FC<CategorizedProductSectionsProps> = ({
         "Smart recommendations based on their profile"
       )}
 
-      {/* Quaternary Section: Trending */}
       {renderSection(
         "Popular Right Now",
         trendingProducts,

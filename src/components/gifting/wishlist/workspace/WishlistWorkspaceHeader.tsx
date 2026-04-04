@@ -168,7 +168,7 @@ const WishlistWorkspaceHeader = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleShare}
-                  className="h-11 w-11 bg-white/20 hover:bg-white/30 text-white border-0"
+                  className="h-11 w-11 bg-background/50 hover:bg-background text-foreground border-0"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>

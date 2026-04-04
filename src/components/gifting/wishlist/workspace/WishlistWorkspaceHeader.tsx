@@ -133,7 +133,7 @@ const WishlistWorkspaceHeader = ({
               </div>
 
               {/* Stats line */}
-              <p className="text-white/80 text-sm lg:text-base">
+              <p className="text-muted-foreground text-sm lg:text-base">
                 {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
                 {totalValue > 0 && (
                   <>

@@ -36,7 +36,7 @@ import { useOptimizedIntersectionObserver } from "@/hooks/useOptimizedIntersecti
 
 import { Sparkles } from "lucide-react";
 import ProductGrid from "./product-grid/ProductGrid";
-import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import ProductCard from "./ProductCard";
 import AdvancedFiltersDrawer from "./AdvancedFiltersDrawer";
 import FilterPills from "./FilterPills";
 import { getCategoryDisplayNameFromSearchTerm, getCategoryDisplayNameFromValue, isCategorySearchTerm } from "@/utils/categoryDisplayMapper";

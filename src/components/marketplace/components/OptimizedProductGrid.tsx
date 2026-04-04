@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useCallback } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AirbnbStyleProductCard from "../AirbnbStyleProductCard";
+import ProductCard from "../ProductCard";
 
 interface OptimizedProductGridProps {
   products: Product[];
@@ -92,7 +92,7 @@ const MemoizedProductCard = memo<{
   statusBadge?: { badge: string; color: string } | null;
 }>(({ product, onProductClick, onAddToCart, onShare, statusBadge }) => {
   return (
-    <AirbnbStyleProductCard
+    <ProductCard
       product={product}
       onProductClick={onProductClick}
       statusBadge={statusBadge}

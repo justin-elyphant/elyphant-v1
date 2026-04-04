@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useCallback, useRef, useEffect, useState } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AirbnbStyleProductCard from "../AirbnbStyleProductCard";
+import ProductCard from "../ProductCard";
 import { calculateVisibleRange } from "@/utils/performanceOptimization";
 
 interface VirtualizedProductGridProps {
@@ -147,7 +147,7 @@ const VirtualizedProductCard = memo<{
 }>(({ product, onProductClick, onAddToCart, onShare, statusBadge, style }) => {
   return (
     <div style={style}>
-      <AirbnbStyleProductCard
+      <ProductCard
         product={product}
         onProductClick={onProductClick}
         statusBadge={statusBadge}

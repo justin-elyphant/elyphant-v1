@@ -14,7 +14,7 @@ import { useMarketplace } from "@/hooks/useMarketplace";
 import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { productCatalogService } from "@/services/ProductCatalogService";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 
 interface ShoppingPanelProps {
@@ -206,7 +206,7 @@ const ShoppingPanel = ({
           ) : (
             <div className="flex flex-col gap-3">
               {displayProducts.map((product) => (
-                <AirbnbStyleProductCard
+                <ProductCard
                   key={product.id || product.product_id}
                   product={product}
                   onProductClick={() => handleProductClick(product)}

@@ -8,7 +8,7 @@ import { useNicoleRecommendations } from "@/hooks/useNicoleRecommendations";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import { toast } from "sonner";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 interface NicoleAISuggestionsProps {
   className?: string;
@@ -100,7 +100,7 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
   const renderProductGrid = (productList: any[]) => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
       {productList.map((product) => (
-        <AirbnbStyleProductCard
+        <ProductCard
           key={product.product_id || product.id}
           product={product}
           onProductClick={() => {}}

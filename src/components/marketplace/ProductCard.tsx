@@ -24,7 +24,7 @@ import ProductRating from "@/components/shared/ProductRating";
 import { getDisplayTitle } from "@/utils/productTitleUtils";
 import TrustBadges from "./TrustBadges";
 
-interface AirbnbStyleProductCardProps {
+interface ProductCardProps {
   product: Product;
   onProductClick: () => void;
   statusBadge?: { badge: string; color: string } | null;
@@ -52,7 +52,7 @@ interface AirbnbStyleProductCardProps {
   hideTopRightAction?: boolean;
 }
 
-const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
+const ProductCard: React.FC<ProductCardProps> = memo(({
   product,
   onProductClick,
   statusBadge,
@@ -502,6 +502,6 @@ const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
   );
 });
 
-AirbnbStyleProductCard.displayName = "AirbnbStyleProductCard";
+ProductCard.displayName = "ProductCard";
 
-export default AirbnbStyleProductCard;
+export default ProductCard;

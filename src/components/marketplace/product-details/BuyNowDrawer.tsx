@@ -141,7 +141,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         variationText: variationText || undefined,
       };
 
-      const isGift = selectedRecipient?.type === 'connection';
+      const isGift = selectedRecipient?.type === 'connection' || selectedRecipient?.type === 'manual_address';
       const recipientAddr = selectedRecipient?.address;
 
       const shippingInfo = isGift && recipientAddr ? {

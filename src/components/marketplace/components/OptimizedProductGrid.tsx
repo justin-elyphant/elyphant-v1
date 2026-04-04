@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useCallback } from "react";
 import { Product } from "@/contexts/ProductContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AirbnbStyleProductCard from "../AirbnbStyleProductCard";
+import ProductCard from "../ProductCard";
 
 interface OptimizedProductGridProps {
   products: Product[];

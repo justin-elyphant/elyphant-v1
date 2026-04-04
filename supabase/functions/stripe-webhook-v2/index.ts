@@ -1037,6 +1037,53 @@ async function sendRecipientGiftNotification(
 }
 
 // ============================================================================
+// HELPER: Send gift notification to non-platform recipient (manual address)
+// ============================================================================
+async function sendManualRecipientGiftNotification(
+  recipientEmail: string,
+  recipientName: string,
+  orderId: string,
+  senderId: string,
+  supabase: any
+) {
+  try {
+    console.log(`📧 [MANUAL RECIPIENT] Sending gift notification to ${recipientEmail}...`);
+    
+    // Fetch sender name
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', senderId)
+      .single();
+    
+    const senderName = senderProfile?.name?.split(' ')[0] || 'Someone special';
+    
+    const signupUrl = `https://elyphant.ai/signup?email=${encodeURIComponent(recipientEmail)}&ref=gift&order=${orderId}`;
+    
+    const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
+      body: {
+        eventType: 'gift_coming_your_way',
+        recipientEmail: recipientEmail,
+        data: {
+          recipient_name: recipientName,
+          sender_name: senderName,
+          signup_url: signupUrl,
+          is_new_user: true,
+        }
+      }
+    });
+    
+    if (error) {
+      console.error(`❌ [MANUAL RECIPIENT] Failed to send:`, error);
+    } else {
+      console.log(`✅ [MANUAL RECIPIENT] Gift notification sent to ${recipientEmail} with signup CTA`);
+    }
+  } catch (err: any) {
+    console.error(`❌ [MANUAL RECIPIENT] Exception:`, err.message);
+  }
+}
+
+// ============================================================================
 // HELPER: Create vendor orders for vendor_direct items (Phase C)
 // ============================================================================
 async function createVendorOrders(

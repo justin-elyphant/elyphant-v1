@@ -1442,11 +1442,14 @@ serve(async (req) => {
       }
 
       // MERGE: If we have cached products from sparse results, combine with Zinc results
+      // GAP 5 FIX: Re-sort merged results by popularity_score so best products surface
       if (typeof cachedProductsForMerge !== 'undefined' && cachedProductsForMerge.length > 0) {
         const cachedIds = new Set(cachedProductsForMerge.map((p: any) => p.product_id || p.asin));
         const newZincProducts = filteredResults.filter((p: any) => !cachedIds.has(p.product_id || p.asin));
         console.log(`🔀 Merging ${cachedProductsForMerge.length} cached + ${newZincProducts.length} new Zinc products`);
-        filteredResults = [...cachedProductsForMerge, ...newZincProducts].slice(0, limit);
+        const merged = [...cachedProductsForMerge, ...newZincProducts];
+        // Re-sort by popularity so best products take primary position regardless of source
+        filteredResults = sortByPopularity(merged).slice(0, limit);
       }
 
       // Use unified processor for regular search results

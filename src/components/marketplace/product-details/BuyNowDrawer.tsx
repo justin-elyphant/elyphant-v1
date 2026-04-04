@@ -191,6 +191,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               delivery_scenario: isGift ? "gift" : "self",
               payment_method_id: activePayment?.stripe_payment_method_id || "",
               ...(isGift && selectedRecipient?.connectionId ? { recipient_connection_id: selectedRecipient.connectionId } : {}),
+              ...(selectedRecipient?.type === 'manual_address' && selectedRecipient?.recipientEmail ? { recipient_email: selectedRecipient.recipientEmail, recipient_name: selectedRecipient.name } : {}),
               ...(giftNote.trim() ? { gift_message: giftNote.trim() } : {}),
             },
           },

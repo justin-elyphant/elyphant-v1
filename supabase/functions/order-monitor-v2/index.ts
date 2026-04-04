@@ -232,16 +232,14 @@ serve(async (req) => {
               const recipientName = shippingAddr?.name || profile?.name || 'Customer';
 
               if (toEmail) {
+                // Pass orderId via metadata so the orchestrator's DB-fetch logic
+                // populates items, photos, and full context automatically
                 await supabase.from('email_queue').insert({
                   recipient_email: toEmail,
                   recipient_name: recipientName,
                   event_type: 'order_delivered',
-                  template_variables: {
-                    order_number: order.order_number,
-                    customer_name: recipientName,
-                    tracking_number: trackingNumber || null,
-                    delivery_proof_image: deliveredEntry?.delivery_proof_image || null,
-                  },
+                  metadata: { orderId: order.id },
+                  template_variables: {},
                   priority: 'normal',
                   scheduled_for: new Date().toISOString(),
                   status: 'pending',

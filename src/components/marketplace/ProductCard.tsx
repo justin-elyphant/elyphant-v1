@@ -52,7 +52,7 @@ interface ProductCardProps {
   hideTopRightAction?: boolean;
 }
 
-const AirbnbStyleProductCard: React.FC<AirbnbStyleProductCardProps> = memo(({
+const ProductCard: React.FC<ProductCardProps> = memo(({
   product,
   onProductClick,
   statusBadge,

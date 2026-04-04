@@ -647,18 +647,14 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     if (!toEmail) {
       console.warn(`⚠️ No recipient email for ${emailEventType} order ${order?.order_number}`);
     } else {
+      // Pass orderId via metadata so the orchestrator's DB-fetch logic
+      // populates items, photos, pricing, and shipping address automatically
       await supabase.from('email_queue').insert({
         recipient_email: toEmail,
         recipient_name: recipientName,
         event_type: emailEventType,
-        template_variables: {
-          order_number: order.order_number,
-          customer_name: recipientName,
-          tracking_number: resolved.trackingNumber,
-          carrier: resolved.carrier,
-          tracking_url: resolved.trackingUrl,
-          ...(isDelivered ? { delivery_proof_image: resolved.deliveryProofImage } : {}),
-        },
+        metadata: { orderId: orderId },
+        template_variables: {},
         priority: 'normal',
         scheduled_for: new Date().toISOString(),
         status: 'pending',

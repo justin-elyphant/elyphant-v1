@@ -44,6 +44,7 @@ export interface UnifiedWishlistCollectionCardProps {
   onShare?: (wishlist: Wishlist) => void;
   onUpdateSharing?: (wishlistId: string, isPublic: boolean) => Promise<boolean>;
   className?: string;
+  readOnly?: boolean;
 }
 
 const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps> = ({

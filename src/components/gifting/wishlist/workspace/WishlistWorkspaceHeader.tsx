@@ -145,7 +145,7 @@ const WishlistWorkspaceHeader = ({
 
               {/* Description - Desktop only */}
               {wishlist.description && !isMobileOrTablet && (
-                <p className="text-white/70 mt-2 text-sm max-w-xl line-clamp-2">
+                <p className="text-muted-foreground mt-2 text-sm max-w-xl line-clamp-2">
                   {wishlist.description}
                 </p>
               )}

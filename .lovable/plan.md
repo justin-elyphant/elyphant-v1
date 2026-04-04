@@ -1,32 +1,42 @@
 
 
-## Fix: Add Phone Number to Guest Checkout Inline Address Form
+## Hide Schedule Delivery for Guest Users
 
 ### Problem
-Guest checkout collects name, address, city, state, zip, country — but **no phone number**. The `checkoutShippingInfo` interface in `CheckoutShippingReview.tsx` lacks a `phone` field. This causes `process-order-v2` to fall back to `0000000000`, meaning:
-- No carrier delivery SMS notifications
-- Amazon may flag orders with invalid phone numbers
-- Potential delivery issues if carrier needs to contact recipient
+The "Schedule Delivery" card on `/checkout` is shown to all users, including guests. Scheduled deliveries use `capture_method: manual` — funds are authorized but not captured until T-7 before the arrival date. For guests:
+- No account to receive status updates or manage the order
+- No saved payment method for potential re-authorization if the hold expires
+- No notification channel for delivery confirmations
+- Creates a confusing experience for a one-time buyer
 
 ### Fix
+In `src/components/checkout/UnifiedCheckoutForm.tsx` (~line 817-822), wrap the `ScheduleDeliveryCard` in a `user` check so only authenticated users see it.
 
-**`src/components/checkout/CheckoutShippingReview.tsx`**
-1. Add `phone` to the `checkoutShippingInfo` interface (line 33, after `country`)
-2. Add a phone input field in the guest inline address form (alongside the existing fields)
-3. Pass `phone` through `onUpdateShippingInfo` callback
+### Change
 
-**`src/components/checkout/UnifiedCheckoutForm.tsx`** (or wherever `checkoutShippingInfo` state is managed)
-- Add `phone` to the shipping info state object
-- Ensure `phone` is included in the Stripe session metadata so `stripe-webhook-v2` stores it in the order's `shipping_address`
+**`src/components/checkout/UnifiedCheckoutForm.tsx`** (line 817-822)
 
-**`supabase/functions/stripe-webhook-v2/index.ts`**
-- Verify that `phone` from session metadata is written to `shipping_address.phone` in the order record (likely already handled if metadata passes it through)
+Before:
+```tsx
+{/* Schedule Delivery - Applies to all items in the order */}
+<ScheduleDeliveryCard ... />
+```
+
+After:
+```tsx
+{/* Schedule Delivery - Only for authenticated users (scheduled orders require account for hold management) */}
+{user && (
+  <ScheduleDeliveryCard ... />
+)}
+```
 
 ### What stays unchanged
-- `process-order-v2` already reads `shippingAddress.phone` correctly (line 348) — it just needs a real value
-- `UnifiedShippingForm.tsx` already has phone collection (for non-guest flows) — no changes needed
-- ZMA balance, Zinc webhooks, email orchestrator — all untouched
+- Authenticated user scheduling — fully intact
+- Guest inline address form, phone collection — untouched
+- Wishlist purchase flow — untouched
+- Stripe webhook, fulfillment pipeline — untouched
+- `ScheduleDeliveryCard` component itself — no changes
 
 ### Scope
-3 files touched. The phone field uses `type="tel"` with placeholder `(555) 123-4567`, matching `UnifiedShippingForm`.
+1 file, 1 conditional wrap.
 

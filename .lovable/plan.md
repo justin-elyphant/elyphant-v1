@@ -1,53 +1,75 @@
 
 
-## Build Native Package Tracking UI (Replace 17Track Links)
+## Cleanup: Remove Dead Components + Extract Shared Order Status Logic
 
-### Problem
+### Dead components to delete (safe — zero imports)
 
-Clicking "Track Package" opens 17Track — a third-party site with banner ads, "Zinc" carrier branding, and no connection to Elyphant. This undermines the premium gifting experience.
+These files are not imported anywhere in the codebase:
 
-### Solution
+1. **`src/components/orders/OrderStatusChecker.tsx`** — Hardcoded debug tool with a specific Zinc order ID baked in. Replaced by `order-monitor-v2` polling.
+2. **`src/components/orders/OrderMonitoring.tsx`** — Admin monitoring card that calls legacy `check-zinc-order-status`. Not mounted in any page/route.
+3. **`src/components/orders/OrdersTable.tsx`** — Unused duplicate. `OrderTable.tsx` is the one actually imported by `Orders.tsx`.
+4. **`src/components/orders/OrderItemsTable.tsx`** — Superseded by `EnhancedOrderItemsTable.tsx` (the one `OrderDetail.tsx` imports).
 
-Build a branded, in-app tracking view using data already available from Zinc's `tracking[]` array. Keep external links as a secondary "View on carrier site" option, but make the primary experience native.
+### Duplicated logic to consolidate
 
-### What changes
+Three components independently compute "order status → step progression":
+- `OrderProgressStepper` (horizontal stepper at page top)
+- `TrackingInfoCard` (progress bar + tracking details in sidebar)
+- `OrderTimeline` (vertical timeline in sidebar)
 
-**File 1: `src/components/orders/TrackingInfoCard.tsx`** — Redesign from a simple "copy tracking number + external link" card into a rich tracking timeline card:
+All three build the same 4-step pipeline (Ordered → Processing → Shipped → Delivered), map `zincTimelineEvents` to timestamps, and resolve step statuses. This is ~120 lines of duplicated logic.
 
-- Show a visual step-by-step timeline (Ordered → Shipped → In Transit → Out for Delivery → Delivered) with timestamps pulled from `order.notes` and `order.merchant_tracking_data`
-- Display carrier name as "Amazon Logistics" or "USPS" (never "Zinc" or "Zinc Logistics")
-- Show delivery proof image when available (from `notes.delivery_proof_image`)
-- Include estimated delivery date prominently
-- Demote "Track on carrier site" to a small secondary link at the bottom (use Amazon's `retailer_tracking_url` when available, fall back to 17Track only as last resort)
-- Keep copy-tracking-number functionality
+**Extract a shared utility:**
 
-**File 2: `src/components/orders/TrackingInfoCard.tsx` — Carrier detection cleanup:**
+**New file: `src/utils/orderTrackingUtils.ts`**
+- `resolveCarrierName(order)` — carrier detection from tracking prefix / notes (currently only in TrackingInfoCard)
+- `getExternalTrackingUrl(order)` — carrier-specific URL builder (currently only in TrackingInfoCard)
+- `computeOrderSteps(status, zincTimelineEvents, orderDate, fulfilledAt)` — returns step array with statuses and timestamps. Replaces `buildSteps()` in TrackingInfoCard, `getStepStatus()` in OrderProgressStepper, and `synthesizeTimelineFromStatus()` + `getTimelineEvents()` in OrderTimeline.
 
-- Rename "Zinc Logistics" → "Package Carrier" or resolve to actual carrier (Amazon Logistics, USPS, etc.) using `merchant_tracking_data.carrier` or `notes.carrier`
-- For ZPY-prefix tracking numbers, prefer the Amazon `retailer_tracking_url` over 17Track
-- For TBA-prefix numbers, link directly to Amazon tracking
+**Then simplify:**
 
-**File 3: `src/components/orders/OrderTimeline.tsx`** — Enhance with Zinc tracking data:
+- **`TrackingInfoCard`** — imports from shared util, removes ~50 lines of inline logic
+- **`OrderProgressStepper`** — imports `computeOrderSteps`, removes its own 60-line `getStepStatus` + `statusProgressMap`
+- **`OrderTimeline`** — imports `computeOrderSteps`, removes `synthesizeTimelineFromStatus` (50 lines) and the 4-priority fallback chain. Keeps its vertical timeline rendering but sources data from the shared function.
 
-- Parse `tracking[].delivery_status` events into timeline steps with locations and timestamps
-- Show delivery location text (e.g., "Package delivered near the rear door or porch") when available from Zinc data
-- Add delivery proof photo thumbnail for delivered orders
+### Style fix (while we're here)
 
-**File 4: `src/pages/OrderDetail.tsx`** — Wire up the enhanced tracking:
+`OrderProgressStepper` uses purple-to-blue gradients (`from-purple-600 to-sky-500`) for active steps — this violates the monochromatic + red accent design system. Change active indicator to use `bg-destructive` (red) consistent with `TrackingInfoCard`.
 
-- Pass `notes` data (carrier, delivery_proof_image, zinc_delivery_status) to TrackingInfoCard
-- Always show TrackingInfoCard for shipped/delivered orders, even without a tracking number (show status from Zinc)
+### Summary of changes
 
-### Design direction
+| Action | File | Lines saved |
+|--------|------|------------|
+| Delete | `OrderStatusChecker.tsx` | 147 |
+| Delete | `OrderMonitoring.tsx` | 374 |
+| Delete | `OrdersTable.tsx` | 129 |
+| Delete | `OrderItemsTable.tsx` | 87 |
+| Create | `orderTrackingUtils.ts` | +60 |
+| Simplify | `TrackingInfoCard.tsx` | -50 |
+| Simplify | `OrderProgressStepper.tsx` | -60 |
+| Simplify | `OrderTimeline.tsx` | -80 |
+| **Net** | | **~860 lines removed** |
 
-- Clean, minimal timeline matching Lululemon aesthetic (grey background, black text, red accent for current step)
-- Delivery proof image shown in a rounded card with subtle shadow
-- No external site branding visible — fully Elyphant-branded
-- Mobile-optimized with proper spacing
+### Technical details
 
-### What this does NOT change
+The shared `computeOrderSteps` function signature:
 
-- No edge function changes — all data already flows from the pipeline fix
-- No new API calls — uses existing order data (notes, merchant_tracking_data, zinc_timeline_events)
-- External tracking links still available as secondary option for customers who want carrier-native tracking
+```text
+computeOrderSteps(
+  status: string,
+  zincTimelineEvents: ZincTimelineEvent[],
+  orderDate: string,
+  fulfilledAt?: string
+) => OrderStep[]
+
+OrderStep = {
+  id: string,
+  label: string,
+  status: 'completed' | 'active' | 'upcoming',
+  timestamp?: string
+}
+```
+
+Each consumer maps `OrderStep[]` to its own visual representation (horizontal stepper, progress bar, vertical timeline) — no UI coupling in the shared layer.
 

@@ -162,6 +162,11 @@ const Cart = () => {
         } : undefined,
         isPrivateAddress: recipient.status === 'pending_invitation' || recipient.source === 'pending',
         connectionStatus: recipient.status,
+        // Pass manual recipient metadata for checkout
+        ...(recipient.email && recipient.id.startsWith('manual_') && {
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+        }),
         ...(isUsingUserAddress && {
           address_verified: unifiedProfile?.address_verified,
           address_verification_method: unifiedProfile?.address_verification_method,

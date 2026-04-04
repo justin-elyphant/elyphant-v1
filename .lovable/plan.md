@@ -1,48 +1,80 @@
 
 
-## Extend "Send to Someone New" to /checkout + Responsive QA
+## Add "Incoming Gifts" Tracking for Platform Recipients
+
+### Problem
+
+Platform recipients get a "gift coming your way" email — but when they log in, there's nothing to see. Orders are only queried by `user_id` (the buyer), so recipients can't view or track gifts sent to them. The email is a dead end.
 
 ### Current state
-- `manual_address` works in the **Buy Now drawer** via `SimpleRecipientSelector`
-- The **/checkout page** uses `UnifiedRecipientSelection` which still only has the old "Invite New" flow (creates a platform invitation, recipient must sign up first)
-- `UnifiedRecipientSelection` already imports `SimpleRecipientSelector` (line 16) but doesn't pass through `manual_address` selections to its parent
 
-### Plan
+- `stripe-webhook-v2` stores `recipient_id` in each order's `line_items` JSONB (per-item) and calls `sendRecipientGiftNotification` for platform users
+- All order queries in the app filter by `.eq('user_id', user.id)` — buyer only
+- No "incoming gifts" page, tab, or widget exists
+- The `gift_coming_your_way` email template links to the dashboard, but the dashboard shows nothing about incoming gifts
 
-**Step 1 — Wire `manual_address` through `UnifiedRecipientSelection`**
+### Solution
 
-In `src/components/cart/UnifiedRecipientSelection.tsx`:
-- The component already renders `SimpleRecipientSelector` internally and handles its `onChange`
-- Update the `onChange` handler to detect `type: 'manual_address'` and convert it to a `UnifiedRecipient` with the shipping address fields populated
-- Pass the address data through to `onRecipientSelect` so the checkout page receives it
+**1. Database: Add `recipient_id` column to `orders` table**
 
-**Step 2 — Handle `manual_address` in Cart/Checkout flow**
+Currently, recipient info is buried inside `line_items` JSONB (per-item `recipient_id`). To query efficiently, add a top-level `recipient_id` column:
 
-In `src/pages/Cart.tsx` (or wherever `handleRecipientSelect` processes the selection):
-- Add a branch for `manual_address` recipients so the checkout metadata includes `recipient_email`, `recipient_name`, and the manually entered shipping address
-- Mirror the same metadata pattern already working in `BuyNowDrawer`
+```sql
+ALTER TABLE orders ADD COLUMN recipient_id uuid REFERENCES profiles(id);
+CREATE INDEX idx_orders_recipient_id ON orders(recipient_id);
+```
 
-**Step 3 — Update `create-checkout-session` if needed**
+Populate it in `stripe-webhook-v2` when creating orders (it already has `group.recipientId` available).
 
-Verify the edge function accepts `recipient_email` / `recipient_name` in metadata from the cart checkout path (it likely already does since metadata is passed through generically).
+**2. RLS: Allow recipients to read their incoming orders**
 
-**Step 4 — Responsive QA for the address form**
+Add a SELECT policy so recipients can see orders sent to them:
 
-The form inputs already use mobile-friendly sizing (`h-11 text-base`, `grid grid-cols-3`). Verify:
-- On phone (< 768px): the 3-column city/state/zip grid doesn't overflow — may need `grid-cols-1` or `grid-cols-[2fr_1fr_1fr]` for narrow screens
-- On tablet (768-1024px): form renders well within the drawer/dialog
-- On desktop: no issues expected
+```sql
+CREATE POLICY "Recipients can view their incoming gift orders"
+ON orders FOR SELECT TO authenticated
+USING (recipient_id = auth.uid());
+```
+
+**3. "Incoming Gifts" section on Dashboard**
+
+Add a widget to the StreamlinedDashboard showing gifts where `recipient_id = user.id`:
+- Card per incoming gift showing: sender name, order status, tracking timeline (reusing `computeOrderSteps`), estimated delivery
+- Gift message displayed if present
+- Surprise mode: hide product details if `gift_options.keepSurprise` is true, show only "A gift is on its way!" with sender name and delivery estimate
+
+**4. Order tracking for recipients**
+
+Update `OrderDetail.tsx` to allow access when `recipient_id = user.id` (not just `user_id`). Recipients see the same tracking timeline but with limited info (no pricing, no Zinc internals) — just status steps, carrier, and delivery estimate.
+
+**5. Update `gift_coming_your_way` email CTA**
+
+For existing platform users, the email CTA should link to `/orders/{order_id}` (or a new `/gifts/incoming` route) instead of the generic dashboard.
 
 ### Files changed
 
 | File | Change |
 |------|--------|
-| `src/components/cart/UnifiedRecipientSelection.tsx` | Handle `manual_address` from `SimpleRecipientSelector`, convert to `UnifiedRecipient` with address |
-| `src/pages/Cart.tsx` | Process `manual_address` recipient in checkout metadata |
-| `src/components/marketplace/product-details/SimpleRecipientSelector.tsx` | Minor responsive tweak: stack city/state/zip on very small screens |
+| Migration SQL | Add `recipient_id` column + index + RLS policy |
+| `stripe-webhook-v2/index.ts` | Set `recipient_id` on order record at creation time |
+| `src/components/dashboard/widgets/IncomingGiftsWidget.tsx` | New widget querying orders by `recipient_id` |
+| `src/components/dashboard/StreamlinedDashboard.tsx` | Add IncomingGiftsWidget |
+| `src/pages/OrderDetail.tsx` | Allow recipient access with limited view |
+| `ecommerce-email-orchestrator/index.ts` | Update platform-user CTA link in `gift_coming_your_way` template |
 
 ### What this does NOT change
-- Buy Now drawer flow — already working, untouched
-- `stripe-webhook-v2` — already handles `recipient_email` generically
-- No new components — reuses `SimpleRecipientSelector` already embedded in `UnifiedRecipientSelection`
+
+- Buy Now / checkout flows — untouched
+- Non-platform recipient flow (manual address) — already handled separately
+- Order data model for buyers — no columns removed
+- Gift surprise/privacy logic — recipients see limited info by default
+
+### Technical detail: `recipient_id` population
+
+In `stripe-webhook-v2`, when creating an order from a delivery group, `group.recipientId` is already resolved. The insert just needs:
+```
+recipient_id: group.recipientId !== userId ? group.recipientId : null
+```
+
+For existing historical orders, a one-time backfill migration can extract `recipient_id` from `line_items` JSONB.
 

@@ -31,6 +31,7 @@ interface CheckoutShippingReviewProps {
     state: string;
     zipCode: string;
     country: string;
+    phone: string;
   };
 }
 
@@ -112,6 +113,8 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
     if (!checkoutShippingInfo?.state?.trim()) errors.state = 'State is required';
     if (!checkoutShippingInfo?.zipCode?.trim()) errors.zipCode = 'ZIP code is required';
     else if (!/^\d{5}(-\d{4})?$/.test(checkoutShippingInfo.zipCode.trim())) errors.zipCode = 'Invalid ZIP code';
+    if (!checkoutShippingInfo?.phone?.trim()) errors.phone = 'Phone number is required';
+    else if (!/[\d]{7,}/.test(checkoutShippingInfo.phone.replace(/\D/g, ''))) errors.phone = 'Enter a valid phone number';
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -249,6 +252,19 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               />
               {addressErrors.zipCode && <p className="text-xs text-destructive mt-1">{addressErrors.zipCode}</p>}
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="guest-phone" className="text-sm">Phone Number <span className="text-destructive">*</span></Label>
+            <Input
+              id="guest-phone"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={checkoutShippingInfo?.phone || ''}
+              onChange={(e) => handleGuestFieldChange('phone', e.target.value)}
+              className={`mt-1 ${addressErrors.phone ? 'border-destructive' : ''}`}
+            />
+            {addressErrors.phone && <p className="text-xs text-destructive mt-1">{addressErrors.phone}</p>}
           </div>
 
           <Button

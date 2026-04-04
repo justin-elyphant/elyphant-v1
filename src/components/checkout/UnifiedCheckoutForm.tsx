@@ -460,6 +460,7 @@ const UnifiedCheckoutForm: React.FC = () => {
         state: checkoutData.shippingInfo.state,
         zipCode: checkoutData.shippingInfo.zipCode,
         country: checkoutData.shippingInfo.country,
+        phone: checkoutData.shippingInfo.phone,
         address_line1: checkoutData.shippingInfo.address,
         address_line2: checkoutData.shippingInfo.addressLine2 || '',
         zip_code: checkoutData.shippingInfo.zipCode

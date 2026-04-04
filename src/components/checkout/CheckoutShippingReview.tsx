@@ -74,7 +74,7 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   const hasIncompleteShipping = !isWishlistPurchase && !hasCompleteAddress && unassignedItems.length > 0;
 
   // Determine if we need the inline address form (guest or logged-in user without saved address)
-  const needsInlineAddressForm = !hasCompleteProfileAddress && onUpdateShippingInfo;
+  const needsInlineAddressForm = !isWishlistPurchase && !hasCompleteProfileAddress && onUpdateShippingInfo;
 
   // For wishlist purchases, count as 1 destination (owner)
   const totalDestinations = isWishlistPurchase 

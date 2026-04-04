@@ -54,6 +54,7 @@ const OrderDetail = () => {
       setIsLoading(true);
       
       try {
+        // RLS allows both buyer (user_id) and recipient (recipient_id) to see the order
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -66,6 +67,9 @@ const OrderDetail = () => {
           navigate("/orders");
           return;
         }
+
+        // Determine if current user is the recipient (not the buyer)
+        const isRecipientView = data.recipient_id === user.id && data.user_id !== user.id;
 
         if (data) {
           // Get complete pricing breakdown with backward compatibility

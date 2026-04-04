@@ -1,57 +1,38 @@
 
 
-## Fix: Guest Checkout Missing Shipping Address Form
+## Fix: Guest Cart "Add Shipping Address" Dead End on Desktop
 
 ### Problem
 
-The guest checkout at `/checkout` is a dead end. A guest sees:
-1. **Red error**: "Shipping setup is incomplete. Please return to cart to configure your shipping address." — but the cart has no address form either
-2. **"Your Address"** section shows "No shipping address configured" — with no way to enter one
-3. The "Proceed to Payment" button is effectively blocked since there's no shipping address
+Two issues on the `/cart` page:
 
-This violates basic e-commerce UX — every major retailer (Amazon, Lululemon, Target) collects the shipping address **inline on the checkout page** for guests. Sending them back to the cart is a conversion killer.
+1. **Desktop sidebar** — The "Proceed to Checkout" button uses `disabled={!hasCompleteAddress}`. For guests, `profile` is null, so `hasCompleteAddress` is always false. The button shows "Add Shipping Address" but has no form and no link — it's a dead end. This is the screenshot you're seeing.
 
-### Solution
+2. **Mobile sticky bar** — Already has correct guest logic (`!isWishlistPurchase && user ? !hasCompleteAddress : false`), so guests CAN proceed on mobile. Desktop and mobile are inconsistent.
 
-Add an **inline shipping address form** for guests (and logged-in users without a saved address) directly in `CheckoutShippingReview`. When no address exists, instead of showing an error, show a clean address entry form that saves to checkout state.
+The "Send to Someone New" manual address flow is separate — it works via the recipient assignment modal ("Assign" button), which is correctly wired. The issue here is specifically about **self-purchase shipping for guests** on the cart page's desktop CTA.
 
 ### What changes
 
-**`src/components/checkout/CheckoutShippingReview.tsx`**
-- When `!user` (guest) OR `!hasCompleteAddress`: replace the red error alert and "No shipping address configured" message with an inline address form
-- Form fields: Full Name, Address Line 1, Address Line 2 (optional), City, State, ZIP Code
-- On completion, call `handleUpdateShippingInfo()` to store in checkout state (not DB — guests have no profile)
-- Show a green checkmark + address summary once entered, with an "Edit" button to modify
+**`src/pages/Cart.tsx`** — 3 edits:
 
-**`src/components/checkout/UnifiedCheckoutForm.tsx`**
-- Pass `handleUpdateShippingInfo` down to `CheckoutShippingReview` as a prop so the inline form can update checkout state
-- Remove the `hasIncompleteShipping` error condition for guests — the inline form replaces it
-- Ensure `createCheckoutSession` reads the guest-entered address from checkout state
+1. **Desktop sidebar button** (line ~641): Match the mobile logic — guests bypass the `hasCompleteAddress` check since they'll enter their address inline at `/checkout`
+   - Change: `disabled={!hasCompleteAddress}` → `disabled={!isWishlistPurchase && user ? !hasCompleteAddress : false}`
+   - Change button label: show "Proceed to Checkout" for guests instead of "Add Shipping Address"
 
-**`src/components/marketplace/checkout/useCheckoutState.tsx`**
-- Verify `shippingInfo` state already supports name, address, city, state, zip fields (it likely does — just confirming the form can write to it)
+2. **`hasCompleteAddress` derivation** (line ~264): For guests (`!user`), treat as true so the Order Summary section doesn't show misleading states
+   - Change: `const hasCompleteAddress = isWishlistPurchase || !user || (shippingAddress && ...)`
 
-### UX flow after fix
-
-```text
-Guest arrives at /checkout
-  → Shipping section shows inline address form
-  → Guest fills in name + address
-  → Form validates inline (required fields, ZIP format)
-  → Address summary appears with checkmark
-  → Guest enters email
-  → "Proceed to Payment" becomes active
-  → Redirects to Stripe
-```
+3. **`handleCheckout` guard** (line ~61): Already scoped to `if (user && ...)` so guests pass through — no change needed, just confirming
 
 ### What this does NOT change
-- Authenticated users with saved addresses — unchanged, address shows as before
-- Wishlist purchase flow — unchanged, uses owner's address
-- Payment processing, Stripe integration, order creation — untouched
-- The "return to cart" link for authenticated users with incomplete addresses stays (they can edit in cart)
+- The `/checkout` page inline address form (already working for guests)
+- The "Assign" → "Send to Someone New" manual address flow (already working)
+- Authenticated user experience (still requires saved address for self-purchase)
+- Stripe webhook or fulfillment pipeline — untouched
 
-### Responsive considerations
-- Form uses standard Tailwind grid: single column on mobile, city/state/zip in a row on tablet+
-- Touch targets meet 44px minimum
-- Consistent with existing Lululemon-minimal card styling
+### Files touched
+| File | Change |
+|------|--------|
+| `src/pages/Cart.tsx` | Fix desktop CTA disabled state + label for guests |
 

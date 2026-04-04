@@ -638,9 +638,9 @@ const Cart = () => {
                     <Button 
                       onClick={handleCheckout}
                       className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500 hover:from-purple-700 hover:via-purple-600 hover:to-sky-600 text-white min-h-[44px]"
-                      disabled={!hasCompleteAddress}
+                      disabled={!isWishlistPurchase && user ? !hasCompleteAddress : false}
                     >
-                      {hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address'}
+                      {user ? (hasCompleteAddress ? 'Proceed to Checkout' : 'Add Shipping Address') : 'Proceed to Checkout'}
                     </Button>
                     
                     <Button 

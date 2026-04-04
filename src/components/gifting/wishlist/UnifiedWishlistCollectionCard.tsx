@@ -54,7 +54,8 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
   onDelete,
   onShare,
   onUpdateSharing,
-  className
+  className,
+  readOnly = false
 }) => {
   const navigate = useNavigate();
   const [isPressed, setIsPressed] = useState(false);

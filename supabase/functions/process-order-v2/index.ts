@@ -349,8 +349,9 @@ serve(async (req) => {
     if (finalPhoneNumber === '0000000000') {
       console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - using fallback 0000000000 for Zinc`);
       // Log to orders table for admin visibility
+      const existingNotes = typeof order.notes === 'object' && order.notes !== null ? order.notes : {};
       await supabase.from('orders').update({
-        notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'
+        notes: { ...existingNotes, phone_warning: 'No phone number provided - may affect delivery notifications' }
       }).eq('id', orderId);
     } else {
       console.log(`✅ [PHONE] Phone number present for carrier notifications: ${finalPhoneNumber.substring(0, 3)}***`);

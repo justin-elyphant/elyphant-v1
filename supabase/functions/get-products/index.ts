@@ -629,6 +629,18 @@ const processAndReturnResults = async (
   
   EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, sourceQuery));
   
+  // GAP 6 FIX: Batch-increment search_impression_count for returned products (non-blocking)
+  const impressionProductIds = processedResults.map((p: any) => p.product_id || p.asin).filter(Boolean);
+  if (supabase && impressionProductIds.length > 0) {
+    EdgeRuntime.waitUntil(
+      supabase.rpc('increment_search_impressions', { product_ids: impressionProductIds }).then(() => {
+        console.log(`📊 Incremented search impressions for ${impressionProductIds.length} products`);
+      }).catch((err: any) => {
+        console.warn('⚠️ Impression increment failed:', err);
+      })
+    );
+  }
+  
   const { products: enrichedProducts, cacheHits, cacheMisses } = 
     await enrichWithCachedData(supabase, processedResults);
   

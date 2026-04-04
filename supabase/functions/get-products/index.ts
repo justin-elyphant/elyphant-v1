@@ -83,6 +83,9 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
   // View count contributes to popularity (max 50 points)
   score += Math.min(50, (cached.view_count || 0) * 2);
   
+  // Search impressions contribute to popularity (max 20 points, +1 per 10 impressions)
+  score += Math.min(20, Math.floor((cached.search_impression_count || 0) / 10));
+  
   // Tiered ratings bonus
   const hasStars = metadata.stars && metadata.stars > 0;
   const hasReviews = metadata.review_count && metadata.review_count > 0;

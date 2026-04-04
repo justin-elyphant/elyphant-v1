@@ -57,9 +57,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [inviteName, setInviteName] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientEmail, setNewRecipientEmail] = useState("");
+  const [newRecipientStreet, setNewRecipientStreet] = useState("");
+  const [newRecipientCity, setNewRecipientCity] = useState("");
+  const [newRecipientState, setNewRecipientState] = useState("");
+  const [newRecipientZip, setNewRecipientZip] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   

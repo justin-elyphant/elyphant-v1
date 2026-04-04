@@ -814,12 +814,14 @@ const UnifiedCheckoutForm: React.FC = () => {
             </Card>
           )}
 
-          {/* Schedule Delivery - Applies to all items in the order */}
-          <ScheduleDeliveryCard
-            scheduledDeliveryDate={giftOptions.scheduledDeliveryDate}
-            onConfirm={(date) => handleUpdateGiftOptions({ scheduledDeliveryDate: date })}
-            onRemove={() => handleUpdateGiftOptions({ scheduledDeliveryDate: '' })}
-          />
+          {/* Schedule Delivery - Only for authenticated users (scheduled orders require account for hold management) */}
+          {user && (
+            <ScheduleDeliveryCard
+              scheduledDeliveryDate={giftOptions.scheduledDeliveryDate}
+              onConfirm={(date) => handleUpdateGiftOptions({ scheduledDeliveryDate: date })}
+              onRemove={() => handleUpdateGiftOptions({ scheduledDeliveryDate: '' })}
+            />
+          )}
 
           <Card>
             <CardHeader>

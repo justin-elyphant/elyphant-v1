@@ -1003,6 +1003,21 @@ const vendorNewOrderTemplate = (props: any): string => {
       </table>
     </div>
 
+    ${props.items && props.items.length > 0 ? `
+    <!-- Item Details -->
+    <p style="margin: 0 0 16px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Order items</p>
+    ${renderItemsHtml(props.items)}
+    ` : ''}
+
+    ${props.shipping_address ? `
+    <!-- Shipping Address (masked for vendor - city/state only) -->
+    <p style="margin: 24px 0 8px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Ship to</p>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 22px;">
+      ${props.shipping_address.name || 'Customer'}<br>
+      ${[props.shipping_address.city, props.shipping_address.state, props.shipping_address.postal_code].filter(Boolean).join(', ')}
+    </p>
+    ` : ''}
+
     <!-- CTA -->
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr><td align="center">

@@ -13,6 +13,7 @@ import LoadingFallback from "@/components/common/LoadingFallback";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import CoreNicoleExperience from "@/components/ai/nicole/CoreNicoleExperience";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
+import IncomingGiftsWidget from "@/components/dashboard/widgets/IncomingGiftsWidget";
 
 interface ActionCard {
   id: string;

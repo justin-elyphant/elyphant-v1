@@ -307,25 +307,50 @@ const OrderDetail = () => {
 
       {/* Order Summary and Details Grid */}
       <div className="grid gap-4 lg:grid-cols-3 mb-4 min-w-0">
-        <div className="lg:col-span-2 space-y-4 min-w-0">
-          <OrderSummaryCard order={order} />
-          
-          {/* Order Items - Responsive */}
-          {isMobile ? (
-            <MobileOrderItemsList 
-              order={order} 
-              onReorder={handleReorder}
-            />
-          ) : (
-            <EnhancedOrderItemsTable 
-              order={order} 
-              onReorder={handleReorder}
-            />
-          )}
-        </div>
+        {/* Left column: hide order items/summary for recipients */}
+        {!order.isRecipientView && (
+          <div className="lg:col-span-2 space-y-4 min-w-0">
+            <OrderSummaryCard order={order} />
+            
+            {/* Order Items - Responsive */}
+            {isMobile ? (
+              <MobileOrderItemsList 
+                order={order} 
+                onReorder={handleReorder}
+              />
+            ) : (
+              <EnhancedOrderItemsTable 
+                order={order} 
+                onReorder={handleReorder}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Recipient view: gift message card in place of items */}
+        {order.isRecipientView && (
+          <div className="lg:col-span-2 space-y-4 min-w-0">
+            <Card className="border border-border">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+                  <Gift className="h-8 w-8 text-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">A gift is on its way!</h3>
+                {order.gift_options?.giftMessage && !order.gift_options?.isSurpriseGift && (
+                  <p className="text-muted-foreground italic max-w-md mx-auto">
+                    "{order.gift_options.giftMessage}"
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  From {order.customerName || "Someone special"}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
-        <div className="space-y-4 min-w-0">
-          <ShippingInfoCard order={order} />
+        <div className={`space-y-4 min-w-0 ${order.isRecipientView ? 'lg:col-span-1' : ''}`}>
+          {!order.isRecipientView && <ShippingInfoCard order={order} />}
           
           {/* Tracking Information — show for shipped/delivered even without tracking number */}
           {(order.tracking_number || order.status === "shipped" || order.status === "delivered") && (

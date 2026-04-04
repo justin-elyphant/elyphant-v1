@@ -1034,6 +1034,8 @@ async function sendRecipientGiftNotification(
           sender_name: senderName,
           arrival_date: scheduledDate,
           occasion: occasion,
+          order_id: orderId,
+          is_new_user: false,
         }
       }
     });

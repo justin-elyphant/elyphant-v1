@@ -203,6 +203,9 @@ const StreamlinedDashboard = () => {
       <div className="space-y-8">
         {/* Profile Data Integrity Panel - Top Priority */}
         <ProfileDataIntegrityPanel />
+
+        {/* Incoming Gifts - Show if recipient has gifts */}
+        <IncomingGiftsWidget />
         
         {/* Welcome Header */}
       <div className="text-center space-y-2">

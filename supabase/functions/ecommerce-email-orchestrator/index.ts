@@ -801,17 +801,29 @@ const giftComingYourWayTemplate = (props: any): string => {
       </p>
     </div>
     
+    ${props.is_new_user ? `
     <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.6;">
-      Want to make sure ${props.sender_name?.split(' ')[0] || 'they'} knows exactly what you'd love? Keep your wishlist updated.
+      Join Elyphant to track your delivery and create wishlists for future gifts.
     </p>
-    
     <table style="width: 100%;">
       <tr><td align="center">
-        <a href="https://elyphant.ai/dashboard" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
-          View Your Dashboard
+        <a href="${props.signup_url || 'https://elyphant.ai/signup'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Join Elyphant
         </a>
       </td></tr>
     </table>
+    ` : `
+    <p style="margin: 0 0 32px 0; font-family: ${fontStack}; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.6;">
+      Want to make sure ${props.sender_name?.split(' ')[0] || 'they'} knows exactly what you'd love? Keep your wishlist updated.
+    </p>
+    <table style="width: 100%;">
+      <tr><td align="center">
+        <a href="${props.order_id ? `https://elyphant.ai/orders/${props.order_id}` : 'https://elyphant.ai/dashboard'}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Track Your Gift
+        </a>
+      </td></tr>
+    </table>
+    `}
   `;
   return baseEmailTemplate({ content, preheader: `${props.sender_name || 'Someone special'} sent you a gift` });
 };

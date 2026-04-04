@@ -564,7 +564,7 @@ const Cart = () => {
                               item={item}
                               updateRecipientAssignment={updateRecipientAssignment}
                             />
-                          ) : (
+                          ) : user ? (
                             <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">
                                 No recipient assigned
@@ -579,6 +579,10 @@ const Cart = () => {
                                 Assign
                               </Button>
                             </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Shipping address collected at checkout
+                            </p>
                           )}
                         </div>
                       </div>

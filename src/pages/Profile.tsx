@@ -4,9 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { publicProfileService } from "@/services/publicProfileService";
 import { connectionService } from "@/services/connectionService";
-import { useSignupCTA } from "@/hooks/useSignupCTA";
 import UnifiedProfileLayout from "@/components/layout/UnifiedProfileLayout";
-import SignupCTA from "@/components/user-profile/SignupCTA";
 import ProfileShell from "@/components/user-profile/ProfileShell";
 import PublicWishlistView from "@/components/gifting/wishlist/PublicWishlistView";
 import type { PublicProfileData } from "@/services/publicProfileService";
@@ -26,10 +24,8 @@ const Profile: React.FC = () => {
   const context = searchParams.get('context');
   const isPreviewMode = searchParams.get('preview') === 'true';
 
-  // Strict authentication check
   const isAuthenticated = Boolean(user && !authLoading);
 
-  // Determine if this is the user's own profile
   const isOwnProfile = isAuthenticated && ownProfile && (
     !identifier ||
     identifier === ownProfile.username ||
@@ -37,13 +33,6 @@ const Profile: React.FC = () => {
     identifier === ownProfile.id
   );
 
-  // ** Own profile → redirect to /wishlists **
-  // Must be after hooks but before effects that depend on profile type
-  if (!authLoading && !ownProfileLoading && isOwnProfile && !isPreviewMode) {
-    return <Navigate to="/wishlists" replace />;
-  }
-
-  // Determine profile viewing mode
   const isConnectionProfile = context === 'connection' && identifier && isAuthenticated && !isOwnProfile;
   const shouldLoadPublicProfile = !isOwnProfile && !isConnectionProfile && identifier;
 
@@ -54,7 +43,6 @@ const Profile: React.FC = () => {
     const loadConnectionProfile = async () => {
       setIsLoadingConnection(true);
       setProfileNotFound(false);
-      
       try {
         const profile = await connectionService.getConnectionProfile(user.id, identifier);
         if (profile) {
@@ -80,7 +68,6 @@ const Profile: React.FC = () => {
     const loadPublicProfile = async () => {
       setIsLoadingPublic(true);
       setProfileNotFound(false);
-      
       try {
         const profile = await publicProfileService.getProfileByIdentifier(identifier!);
         if (profile) {
@@ -98,6 +85,11 @@ const Profile: React.FC = () => {
 
     loadPublicProfile();
   }, [shouldLoadPublicProfile, identifier]);
+
+  // Own profile → redirect to /wishlists
+  if (!authLoading && !ownProfileLoading && isOwnProfile && !isPreviewMode) {
+    return <Navigate to="/wishlists" replace />;
+  }
 
   // Loading states
   if (authLoading) {
@@ -120,7 +112,7 @@ const Profile: React.FC = () => {
     );
   }
 
-  // Handle error states
+  // Error states
   if ((isConnectionProfile && (profileNotFound || !connectionProfile)) || 
       (shouldLoadPublicProfile && (profileNotFound || !publicProfile))) {
     const errorTitle = isConnectionProfile ? "Connection Not Found" : "Profile Not Found";
@@ -140,12 +132,12 @@ const Profile: React.FC = () => {
     );
   }
 
-  // ** Public profile → render unified wishlist view **
+  // Public profile → unified wishlist view
   if (shouldLoadPublicProfile && publicProfile) {
     return <PublicWishlistView profile={publicProfile} />;
   }
 
-  // Connection profile → use existing ProfileShell with connection data
+  // Connection profile → existing ProfileShell
   if (isConnectionProfile && connectionProfile) {
     return (
       <UnifiedProfileLayout isOwnProfile={false}>
@@ -161,7 +153,7 @@ const Profile: React.FC = () => {
     );
   }
 
-  // Fallback - shouldn't normally reach here
+  // Fallback
   return (
     <UnifiedProfileLayout isOwnProfile={false}>
       <div className="w-full py-10 px-4 flex-grow flex items-center justify-center min-h-[50vh]">

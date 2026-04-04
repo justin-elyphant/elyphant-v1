@@ -1,53 +1,48 @@
 
 
-## Rename Product Card Files and Consolidate to Single Lululemon-Inspired Card
+## Seed Baby & Wedding Subcollections
 
 ### What We're Doing
 
-Rename `AirbnbStyleProductCard` to `ProductCard` (the Lululemon-inspired design), rename `UnifiedProductCard` to `UnifiedProductCardAdapter`, and replace the 3 rogue card implementations that bypass the primary design system.
+The Baby and Wedding landing pages each have 5 subcollections (plus "All Items") that trigger specific search queries. Currently, these subcollection search terms have no cached products, so clicking them hits the Zinc API live or returns empty results. We need to pre-seed each subcollection.
 
-### Current State
+### Subcollections to Seed
 
-- **`AirbnbStyleProductCard.tsx`** — the primary Lululemon-inspired card, used in 11 files. Misnamed.
-- **`UnifiedProductCard.tsx`** — adapter/wrapper that delegates to AirbnbStyleProductCard, used in 9 files. Fine as-is but references the old name.
-- **`gifting/ProductCard.tsx`** — a completely separate card implementation with its own styling. Used only by `ProductGallery.tsx`. Does NOT use the Lululemon design.
-- **`user-profile/CategorizedProductSections.tsx`** — renders inline custom cards with `<Card>` + manual image/price layout. Does NOT use the Lululemon card.
-- **`vendor/products/VendorProductGrid.tsx`** — vendor dashboard card. Different context (admin view), so this one stays as-is.
+**Wedding (5 subcollections):**
 
-### Plan
+| Subcollection | Search Term | Target Products |
+|---|---|---|
+| Bride & Groom | "wedding gifts for couple" | 20 |
+| Bridal Party | "bridal party gifts" | 20 |
+| Registry Favorites | "wedding registry gifts" | 20 |
+| Wedding Decor | "wedding decorations" | 20 |
+| Honeymoon | "honeymoon essentials" | 20 |
 
-**Step 1: Rename `AirbnbStyleProductCard` to `ProductCard`**
-- Rename file: `marketplace/AirbnbStyleProductCard.tsx` → `marketplace/ProductCard.tsx`
-- Update the component name, displayName, and interface name inside the file
-- Update all 11 import references across the codebase
+**Baby (5 subcollections):**
 
-**Step 2: Update `UnifiedProductCard.tsx`**
-- Update its import to point to the renamed `ProductCard`
-- No other changes needed (it's a valid adapter pattern)
+| Subcollection | Search Term | Target Products |
+|---|---|---|
+| Baby Essentials | "baby essentials" | 20 |
+| Diapers & Wipes | "diapers and wipes" | 20 |
+| Top Baby Brands | "top baby products" | 20 |
+| Nursery Decor | "nursery decor" | 20 |
+| Baby Clothing | "baby clothing" | 20 |
 
-**Step 3: Replace `gifting/ProductCard.tsx` with the primary card**
-- Rename existing `gifting/ProductCard.tsx` → delete (or rename to `LegacyProductCard.tsx` temporarily)
-- Update `ProductGallery.tsx` to import from `marketplace/ProductCard` instead
-- Map the gifting-specific props (isWishlisted, isGifteeView, onToggleWishlist) through the card's existing interface (which already supports these props)
+### Cost Estimate
 
-**Step 4: Replace inline cards in `CategorizedProductSections.tsx`**
-- Replace the custom `renderProductCard` function with the primary `ProductCard` component
-- Map existing props (product, onClick) to the card's interface
+- 10 subcollections x 20 products = 200 Zinc API calls
+- At $0.01/call = **$2.00 total**
 
-**Step 5: Leave `VendorProductGrid.tsx` alone**
-- This is an admin/vendor dashboard view, not customer-facing. Different context, different card is appropriate.
+### Implementation
+
+**Step 1: Call `seed-product-catalog` with subcollection search terms**
+- Invoke the existing seeding function with each subcollection's exact `searchTerm` value
+- Tag each product's `search_terms` column with the subcollection search term so cache lookups match
+- Run in 2 batches (Wedding batch, Baby batch) to avoid timeouts
+
+**Step 2: Verify cache hits**
+- After seeding, confirm that clicking each subcollection card returns cached products instead of triggering live Zinc calls
 
 ### Files Modified
-- **Renamed:** `src/components/marketplace/AirbnbStyleProductCard.tsx` → `src/components/marketplace/ProductCard.tsx`
-- **Updated imports (11 files):** `OptimizedProductGrid.tsx`, `ProductGridDisplay.tsx`, `StreamlinedMarketplaceWrapper.tsx`, `MarketplaceProductsSection.tsx`, `TrendingSection.tsx`, `ShoppingPanel.tsx`, `NicoleAISuggestions.tsx`, `UnifiedProductCard.tsx`, `MobileProductGrid.tsx` (via UnifiedProductCard), plus 2 others
-- **Replaced:** `src/components/gifting/ProductCard.tsx` (rewired to use primary card)
-- **Updated:** `src/components/gifting/ProductGallery.tsx` (new import path)
-- **Updated:** `src/components/user-profile/CategorizedProductSections.tsx` (use primary card)
-- **Untouched:** `src/components/vendor/products/VendorProductGrid.tsx`
-
-### What Stays Unchanged
-- All card styling, behavior, and props — zero visual changes
-- `UnifiedProductCard` adapter pattern — still valid
-- Vendor dashboard cards — different context
-- All backend, API, and data flows
+- None -- uses the existing `seed-product-catalog` edge function with new search terms passed at invocation time
 

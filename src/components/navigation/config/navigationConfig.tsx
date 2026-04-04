@@ -74,7 +74,7 @@ export const getNavigationConfig = (isAuthenticated: boolean, badges: {
         {
           id: "profile",
           label: "My Profile",
-          href: "/profile",
+          href: "/wishlists",
           icon: <User className="h-5 w-5" />,
           section: "account" as const,
           requiresAuth: true

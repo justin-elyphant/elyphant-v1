@@ -306,7 +306,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
     
     if (searchTerms.length === 0) return null;
 
-    const threshold = Math.ceil(limit * 0.8);
+    const threshold = Math.ceil(limit * 0.5);
     
     // Step 1: For multi-word queries, try AND logic first (products must contain ALL terms)
     if (searchTerms.length >= 2) {

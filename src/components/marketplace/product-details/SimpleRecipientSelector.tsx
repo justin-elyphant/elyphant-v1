@@ -186,21 +186,37 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     setSearchQuery("");
   };
 
-  const handleInviteSubmit = () => {
-    if (inviteName.trim() && inviteEmail.trim() && onInviteNew) {
+  const handleNewRecipientSubmit = () => {
+    if (newRecipientName.trim() && newRecipientEmail.trim() && newRecipientStreet.trim() && newRecipientCity.trim() && newRecipientState.trim() && newRecipientZip.trim()) {
       triggerHapticFeedback('success');
-      onInviteNew(inviteName.trim(), inviteEmail.trim());
-      setInviteName("");
-      setInviteEmail("");
-      setShowInviteForm(false);
+      onChange({
+        type: 'manual_address',
+        connectionName: newRecipientName.trim(),
+        recipientName: newRecipientName.trim(),
+        recipientEmail: newRecipientEmail.trim(),
+        shippingAddress: {
+          name: newRecipientName.trim(),
+          address: newRecipientStreet.trim(),
+          city: newRecipientCity.trim(),
+          state: newRecipientState.trim(),
+          zipCode: newRecipientZip.trim(),
+          country: 'US',
+        },
+        addressVerified: true,
+      });
+      resetNewRecipientForm();
       setOpen(false);
     }
   };
 
-  const resetInviteForm = () => {
-    setShowInviteForm(false);
-    setInviteName("");
-    setInviteEmail("");
+  const resetNewRecipientForm = () => {
+    setShowNewRecipientForm(false);
+    setNewRecipientName("");
+    setNewRecipientEmail("");
+    setNewRecipientStreet("");
+    setNewRecipientCity("");
+    setNewRecipientState("");
+    setNewRecipientZip("");
   };
 
   // The inner content (search, connections list, invite form)

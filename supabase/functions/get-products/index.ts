@@ -1173,11 +1173,12 @@ serve(async (req) => {
         };
         
         // GAP 2 FIX: Cache-first lookup for category queries
-        // Check products table before calling Zinc API
+        // Check products table before calling Zinc API — includes seeded products via search_terms
         const categoryQueries = categoryConfig.queries;
-        const categoryOrConditions = categoryQueries
-          .map((q: string) => `title.ilike.%${q.replace(/\s+/g, '%')}%`)
-          .join(',');
+        const categoryOrConditions = [
+          ...categoryQueries.map((q: string) => `title.ilike.%${q.replace(/\s+/g, '%')}%`),
+          `search_terms.ilike.%${activeCategory}%`
+        ].join(',');
         
         let categoryCacheHit = false;
         if (supabase && page === 1) {

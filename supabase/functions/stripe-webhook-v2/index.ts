@@ -1172,6 +1172,18 @@ async function createVendorOrders(
                 item_count: items.length,
                 total_amount: totalAmount,
                 vendor_payout: vendorPayout,
+                items: items.map((item: any) => ({
+                  title: item.title || item.product_name || 'Product',
+                  quantity: item.quantity || 1,
+                  price: item.unit_price || 0,
+                  image_url: item.image_url || item.image || null,
+                })),
+                shipping_address: shippingAddress ? {
+                  name: shippingAddress.name || '',
+                  city: shippingAddress.city || '',
+                  state: shippingAddress.state || '',
+                  postal_code: shippingAddress.postal_code || '',
+                } : null,
               }
             }
           });

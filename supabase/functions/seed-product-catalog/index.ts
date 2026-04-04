@@ -31,6 +31,18 @@ const SEED_CATEGORIES = [
   { value: "best-selling", searchTerm: "best selling top rated popular trending most bought bestseller" },
   { value: "gifts", searchTerm: "best selling gifts birthday christmas holiday gift sets gift baskets gift cards" },
   { value: "bags-purses", searchTerm: "best selling bags purses handbags tote crossbody backpacks designer bags wallets" },
+  // Wedding subcollections
+  { value: "wedding gifts for couple", searchTerm: "wedding gifts for couple" },
+  { value: "bridal party gifts", searchTerm: "bridal party gifts" },
+  { value: "wedding registry gifts", searchTerm: "wedding registry gifts" },
+  { value: "wedding decorations", searchTerm: "wedding decorations" },
+  { value: "honeymoon essentials", searchTerm: "honeymoon essentials" },
+  // Baby subcollections
+  { value: "baby essentials", searchTerm: "baby essentials" },
+  { value: "diapers and wipes", searchTerm: "diapers and wipes" },
+  { value: "top baby products", searchTerm: "top baby products" },
+  { value: "nursery decor", searchTerm: "nursery decor" },
+  { value: "baby clothing", searchTerm: "baby clothing" },
 ];
 
 const calculatePopularityScore = (product: any) => {

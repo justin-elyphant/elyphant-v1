@@ -438,27 +438,25 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
               </div>
             )}
 
-            {/* 4. Invite New Recipient - BOTTOM (least common action) */}
-            {onInviteNew && (
-              <div className="p-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHapticFeedback('light');
-                    setShowInviteForm(true);
-                  }}
-                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
-                    <UserPlus className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Invite New Recipient</div>
-                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
-                  </div>
-                </button>
-              </div>
-            )}
+            {/* 4. Send to Someone New - BOTTOM */}
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback('light');
+                  setShowNewRecipientForm(true);
+                }}
+                className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600">
+                  <UserPlus className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Send to Someone New</div>
+                  <div className="text-xs text-muted-foreground">Enter their name & shipping address</div>
+                </div>
+              </button>
+            </div>
 
             {/* Assign Later Option */}
             {!embedded && (

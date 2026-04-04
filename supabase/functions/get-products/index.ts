@@ -1145,7 +1145,7 @@ serve(async (req) => {
     }
     
     try {
-      // UNIFIED CATEGORY HANDLER
+      // UNIFIED CATEGORY HANDLER (with cache-first lookup)
       if (activeCategory && CATEGORY_REGISTRY[activeCategory]) {
         const categoryConfig = CATEGORY_REGISTRY[activeCategory];
         console.log(`Processing category "${activeCategory}" (${categoryConfig.name})`);
@@ -1157,6 +1157,70 @@ serve(async (req) => {
             : priceFilter.max
         };
         
+        // GAP 2 FIX: Cache-first lookup for category queries
+        // Check products table before calling Zinc API
+        const categoryQueries = categoryConfig.queries;
+        const categoryOrConditions = categoryQueries
+          .map((q: string) => `title.ilike.%${q.replace(/\s+/g, '%')}%`)
+          .join(',');
+        
+        let categoryCacheHit = false;
+        if (supabase && page === 1) {
+          try {
+            const { data: cachedCategoryProducts, error: catCacheError } = await supabase
+              .from('products')
+              .select('*')
+              .or(categoryOrConditions)
+              .order('popularity_score', { ascending: false, nullsFirst: false })
+              .limit(limit);
+            
+            const catThreshold = Math.ceil(limit * 0.5);
+            if (!catCacheError && cachedCategoryProducts && cachedCategoryProducts.length >= catThreshold) {
+              console.log(`✅ Category Cache HIT: ${cachedCategoryProducts.length} products for "${activeCategory}" (threshold: ${catThreshold})`);
+              categoryCacheHit = true;
+              
+              let sortedCategoryProducts = cachedCategoryProducts.map((p: any) => transformCachedProduct(p));
+              
+              if (sortBy === 'price-low') {
+                sortedCategoryProducts.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
+              } else if (sortBy === 'price-high') {
+                sortedCategoryProducts.sort((a: any, b: any) => (b.price || 0) - (a.price || 0));
+              } else {
+                sortedCategoryProducts = sortByPopularity(sortedCategoryProducts);
+              }
+              
+              // Batch-increment search_impression_count (non-blocking)
+              const impressionIds = sortedCategoryProducts.map((p: any) => p.product_id).filter(Boolean);
+              if (impressionIds.length > 0) {
+                EdgeRuntime.waitUntil(
+                  supabase.rpc('increment_search_impressions', { product_ids: impressionIds }).then(() => {
+                    console.log(`📊 Incremented impressions for ${impressionIds.length} category products`);
+                  }).catch(() => {})
+                );
+              }
+              
+              return new Response(JSON.stringify({
+                products: sortedCategoryProducts,
+                results: sortedCategoryProducts,
+                total: sortedCategoryProducts.length,
+                hasMore: true,
+                currentPage: page,
+                categoryBatch: true,
+                fromCache: true,
+                cacheStats: { hits: sortedCategoryProducts.length, misses: 0 }
+              }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              });
+            } else {
+              console.log(`⏳ Category cache miss for "${activeCategory}": ${cachedCategoryProducts?.length || 0} products (need ${catThreshold})`);
+            }
+          } catch (catCacheErr) {
+            console.warn('⚠️ Category cache lookup failed:', catCacheErr);
+          }
+        }
+        
+        // Cache miss — fall through to Zinc API
         const categoryData = await searchCategoryBatch(
           api_key, 
           categoryConfig.queries, 

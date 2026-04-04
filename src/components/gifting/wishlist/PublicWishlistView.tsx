@@ -127,7 +127,7 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
           user_id: user!.id,
           connected_user_id: profile.id,
           status: 'pending',
-          relationship: 'friend'
+          relationship_type: 'friend'
         }]);
 
       if (error) throw error;

@@ -157,7 +157,7 @@ const WishlistWorkspaceHeader = ({
                 <motion.div whileTap={{ scale: 0.95 }}>
                   <Button
                     onClick={onAddItems}
-                    className="h-11 px-6 bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg gap-2"
+                    className="h-11 px-6 bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold shadow-lg gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     Add Items

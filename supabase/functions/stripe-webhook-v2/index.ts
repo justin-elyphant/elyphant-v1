@@ -763,6 +763,11 @@ async function handleCheckoutSessionCompleted(
       const groupTaxCents = Math.round(taxAmount * groupProportion);
       const groupGiftingFeeCents = Math.round(giftingFeeAmount * groupProportion);
       
+      // Resolve recipient_id for child orders
+      const childRecipientId = (group.recipientId && group.recipientId !== 'self' && group.recipientId !== userId)
+        ? group.recipientId
+        : null;
+
       const childOrderData = {
         user_id: userId,
         guest_email: guestEmail,
@@ -770,6 +775,7 @@ async function handleCheckoutSessionCompleted(
         payment_intent_id: session.payment_intent as string || null,
         parent_order_id: parentOrder.id,
         delivery_group_id: group.deliveryGroupId,
+        recipient_id: childRecipientId,
         status: isScheduled ? 'scheduled' : 'payment_confirmed',
         payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
         total_amount: calculateGroupTotal(group.items),

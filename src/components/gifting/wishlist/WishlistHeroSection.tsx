@@ -50,19 +50,19 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
       transition={{ duration: 0.3 }}
       style={{ transform: 'translate3d(0,0,0)' }}
     >
-      {/* Orange Hero Banner with integrated welcome message */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-[#EF4444] via-[#F97316] to-[#FB923C] border-0 text-white">
+      {/* Clean monochromatic hero card */}
+      <Card className="relative overflow-hidden bg-muted/50 border-border/40">
         <CardContent className={padding}>
           {/* Welcome greeting */}
-          <p className="text-white/80 text-sm font-medium mb-1 uppercase tracking-wide">My Wishlists</p>
-          <h1 className={`${titleSize} font-bold mb-1 leading-tight text-white`}>
+          <p className="text-muted-foreground text-sm font-medium mb-1 uppercase tracking-wide">My Wishlists</p>
+          <h1 className={`${titleSize} font-bold mb-1 leading-tight text-foreground`}>
             Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}!
           </h1>
-          <p className={`${subtitleSize} text-white/90 mb-4 lg:mb-5 leading-relaxed`}>
+          <p className={`${subtitleSize} text-muted-foreground mb-4 lg:mb-5 leading-relaxed`}>
             You have{' '}
-            <span className="font-bold text-white">{wishlistCount}</span>{' '}
+            <span className="font-semibold text-foreground">{wishlistCount}</span>{' '}
             {wishlistCount === 1 ? 'wishlist' : 'wishlists'} with{' '}
-            <span className="font-bold text-white">{totalItemCount}</span> total items.
+            <span className="font-semibold text-foreground">{totalItemCount}</span> total items.
             Build your collections and share with friends &amp; family.
           </p>
           
@@ -70,7 +70,7 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleCreateClick}
-                className="bg-white hover:bg-white/90 text-[#EF4444] border-0 min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation shadow-md"
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0 min-h-[48px] font-semibold w-full sm:w-auto touch-manipulation shadow-md"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create New Wishlist
@@ -78,8 +78,9 @@ const WishlistHeroSection: React.FC<WishlistHeroSectionProps> = ({
             </motion.div>
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
+                variant="outline"
                 onClick={handleBrowseClick}
-                className="bg-white/20 hover:bg-white/30 border-2 border-white text-white min-h-[48px] w-full sm:w-auto touch-manipulation"
+                className="min-h-[48px] w-full sm:w-auto touch-manipulation"
               >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Browse Marketplace

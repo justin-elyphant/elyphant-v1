@@ -136,8 +136,8 @@ const MobileWishlistHub: React.FC<MobileWishlistHubProps> = ({
                 /* Empty State - First Wishlist CTA */
                 <div className="pt-8">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-600/20 to-sky-500/20 flex items-center justify-center mx-auto mb-4">
-                      <Heart className="h-8 w-8 text-primary" />
+                    <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                      <Heart className="h-8 w-8 text-destructive" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">Start Your First Wishlist</h3>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">

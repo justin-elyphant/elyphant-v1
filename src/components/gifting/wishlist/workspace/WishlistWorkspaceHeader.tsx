@@ -73,12 +73,11 @@ const WishlistWorkspaceHeader = ({
   return (
     <>
       {/* Gradient Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500">
-        {/* Decorative pattern overlay */}
-        <div className="absolute inset-0 opacity-10">
+      <div className="relative overflow-hidden bg-muted border-b border-border">
+        <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-                             radial-gradient(circle at 75% 75%, white 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 1px, transparent 1px),
+                             radial-gradient(circle at 75% 75%, currentColor 1px, transparent 1px)`,
             backgroundSize: '40px 40px'
           }} />
         </div>
@@ -90,7 +89,7 @@ const WishlistWorkspaceHeader = ({
               variant="ghost"
               size="sm"
               onClick={() => navigate('/wishlists')}
-              className="text-white/90 hover:text-white hover:bg-white/10 gap-2 min-h-[44px]"
+              className="text-muted-foreground hover:text-foreground hover:bg-background/50 gap-2 min-h-[44px]"
             >
               <ArrowLeft className="h-4 w-4" />
               {!isMobileOrTablet && "Back to Wishlists"}
@@ -100,9 +99,9 @@ const WishlistWorkspaceHeader = ({
           {/* Main header content */}
           <div className="flex items-start gap-4 lg:gap-6">
             {/* Avatar */}
-            <Avatar className="h-16 w-16 lg:h-24 lg:w-24 border-4 border-white/20 shadow-xl flex-shrink-0">
+            <Avatar className="h-16 w-16 lg:h-24 lg:w-24 border-4 border-border/20 shadow-xl flex-shrink-0">
               <AvatarImage src={ownerProfile?.image} alt={ownerProfile?.name || 'Owner'} />
-              <AvatarFallback className="text-xl lg:text-3xl bg-white/20 text-white">
+              <AvatarFallback className="text-xl lg:text-3xl bg-muted text-foreground">
                 {userInitials}
               </AvatarFallback>
             </Avatar>
@@ -110,14 +109,14 @@ const WishlistWorkspaceHeader = ({
             {/* Title & metadata */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 lg:gap-3 flex-wrap mb-1 lg:mb-2">
-                <h1 className="text-xl lg:text-3xl font-bold text-white truncate">
+                <h1 className="text-xl lg:text-3xl font-bold text-foreground truncate">
                   {wishlist.title}
                 </h1>
                 
                 {/* Public/Private Badge */}
                 <Badge 
                   variant="secondary" 
-                  className="bg-white/20 text-white border-0 backdrop-blur-sm gap-1.5"
+                  className="bg-background/60 text-foreground border-0 backdrop-blur-sm gap-1.5"
                 >
                   {currentIsPublic ? (
                     <>
@@ -134,7 +133,7 @@ const WishlistWorkspaceHeader = ({
               </div>
 
               {/* Stats line */}
-              <p className="text-white/80 text-sm lg:text-base">
+              <p className="text-muted-foreground text-sm lg:text-base">
                 {wishlist.items.length} {wishlist.items.length === 1 ? 'item' : 'items'}
                 {totalValue > 0 && (
                   <>
@@ -146,7 +145,7 @@ const WishlistWorkspaceHeader = ({
 
               {/* Description - Desktop only */}
               {wishlist.description && !isMobileOrTablet && (
-                <p className="text-white/70 mt-2 text-sm max-w-xl line-clamp-2">
+                <p className="text-muted-foreground mt-2 text-sm max-w-xl line-clamp-2">
                   {wishlist.description}
                 </p>
               )}
@@ -158,7 +157,7 @@ const WishlistWorkspaceHeader = ({
                 <motion.div whileTap={{ scale: 0.95 }}>
                   <Button
                     onClick={onAddItems}
-                    className="h-11 px-6 bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg gap-2"
+                    className="h-11 px-6 bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold shadow-lg gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     Add Items
@@ -169,7 +168,7 @@ const WishlistWorkspaceHeader = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleShare}
-                  className="h-11 w-11 bg-white/20 hover:bg-white/30 text-white border-0"
+                  className="h-11 w-11 bg-background/50 hover:bg-background text-foreground border-0"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>

@@ -102,6 +102,24 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         } : null
       };
       onRecipientSelect(unifiedRecipient);
+    } else if (selected.type === 'manual_address' && selected.shippingAddress) {
+      const unifiedRecipient: UnifiedRecipient = {
+        id: `manual_${Date.now()}`,
+        name: selected.recipientName || selected.connectionName || 'Recipient',
+        email: selected.recipientEmail,
+        source: 'pending',
+        status: 'accepted',
+        address: {
+          name: selected.shippingAddress.name,
+          address: selected.shippingAddress.address,
+          city: selected.shippingAddress.city,
+          state: selected.shippingAddress.state,
+          zipCode: selected.shippingAddress.zipCode,
+          country: selected.shippingAddress.country,
+          phone: selected.shippingAddress.phone
+        }
+      };
+      onRecipientSelect(unifiedRecipient);
     } else if (selected.type === 'connection' && selected.connectionId) {
       const unifiedRecipient: UnifiedRecipient = {
         id: selected.connectionId,

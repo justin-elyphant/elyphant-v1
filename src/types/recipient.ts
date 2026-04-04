@@ -23,6 +23,9 @@ export interface RecipientAssignment {
   // Privacy control fields
   isPrivateAddress?: boolean;  // Hide full address if true
   connectionStatus?: string;    // 'pending_invitation', 'accepted', etc.
+  // Manual address recipient fields
+  recipientEmail?: string;
+  recipientName?: string;
 }
 
 export interface CartItemWithRecipient {

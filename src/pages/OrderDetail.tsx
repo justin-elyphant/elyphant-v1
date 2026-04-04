@@ -121,24 +121,26 @@ const OrderDetail = () => {
             scheduled_delivery_date: data.scheduled_delivery_date,
             isScheduledGift: !!isScheduledGift,
             isGiftOrder: isGift,
-            total: data.total_amount,
-            subtotal: pricingBreakdown.subtotal,
-            shipping_cost: pricingBreakdown.shipping_cost,
-            tax_amount: pricingBreakdown.tax_amount,
-            gifting_fee: pricingBreakdown.gifting_fee,
-            gifting_fee_name: pricingBreakdown.gifting_fee_name,
-            gifting_fee_description: pricingBreakdown.gifting_fee_description,
-            items: (data.line_items as any)?.items || [],
+            isRecipientView,
+            // Hide pricing from recipients
+            total: isRecipientView ? undefined : data.total_amount,
+            subtotal: isRecipientView ? undefined : pricingBreakdown.subtotal,
+            shipping_cost: isRecipientView ? undefined : pricingBreakdown.shipping_cost,
+            tax_amount: isRecipientView ? undefined : pricingBreakdown.tax_amount,
+            gifting_fee: isRecipientView ? undefined : pricingBreakdown.gifting_fee,
+            gifting_fee_name: isRecipientView ? undefined : pricingBreakdown.gifting_fee_name,
+            gifting_fee_description: isRecipientView ? undefined : pricingBreakdown.gifting_fee_description,
+            items: isRecipientView ? [] : ((data.line_items as any)?.items || []),
             shipping_info: displayShippingInfo,
             customerName: shopperName,
             recipientName: recipientName,
             tracking_number: data.tracking_number || null,
-            zinc_order_id: data.zinc_order_id || null,
+            zinc_order_id: isRecipientView ? null : (data.zinc_order_id || null),
             fulfilled_at: data.fulfilled_at || null,
             // Include timeline data for OrderTimeline component (cast to access JSONB fields)
             zinc_timeline_events: Array.isArray((data as any).zinc_timeline_events) ? (data as any).zinc_timeline_events : [],
             merchant_tracking_data: (data as any).merchant_tracking_data || {},
-            notes: typeof data.notes === 'object' ? data.notes : {}
+            notes: isRecipientView ? {} : (typeof data.notes === 'object' ? data.notes : {})
           };
           setOrder(transformedOrder);
         }

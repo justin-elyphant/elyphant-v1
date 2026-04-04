@@ -765,7 +765,11 @@ const UnifiedCheckoutForm: React.FC = () => {
             </Card>
           ) : (
             /* Standard Shipping Review Section - Mobile: Collapsible */
-            <CheckoutShippingReview shippingCost={shippingCost} />
+            <CheckoutShippingReview 
+              shippingCost={shippingCost}
+              onUpdateShippingInfo={handleUpdateShippingInfo}
+              checkoutShippingInfo={checkoutData.shippingInfo}
+            />
           )}
           
           {/* Guest Email Collection - For non-logged-in users buying from wishlists */}

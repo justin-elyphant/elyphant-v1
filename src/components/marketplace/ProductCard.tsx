@@ -24,7 +24,7 @@ import ProductRating from "@/components/shared/ProductRating";
 import { getDisplayTitle } from "@/utils/productTitleUtils";
 import TrustBadges from "./TrustBadges";
 
-interface AirbnbStyleProductCardProps {
+interface ProductCardProps {
   product: Product;
   onProductClick: () => void;
   statusBadge?: { badge: string; color: string } | null;

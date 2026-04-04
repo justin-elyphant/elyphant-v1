@@ -359,7 +359,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       .from('products')
       .select('*')
       .or(orConditions)
-      .order('view_count', { ascending: false, nullsFirst: false })
+      .order('popularity_score', { ascending: false, nullsFirst: false })
       .limit(limit);
 
     if (error) {

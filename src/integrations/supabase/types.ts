@@ -5957,6 +5957,10 @@ export type Database = {
         Args: { order_uuid: string }
         Returns: undefined
       }
+      increment_search_impressions: {
+        Args: { product_ids: string[] }
+        Returns: undefined
+      }
       initialize_default_auto_gifting_settings: {
         Args: { target_user_id: string }
         Returns: string

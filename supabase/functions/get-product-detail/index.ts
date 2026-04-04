@@ -396,6 +396,20 @@ serve(async (req) => {
         last_refreshed_at: now.toISOString(),
         freshness_score: 1.0,
         view_count: (cachedProduct?.view_count || 0) + 1,
+        // Persist popularity_score so DB can sort by it in cache queries
+        popularity_score: (() => {
+          let score = 20; // baseline for cached products
+          const viewCount = (cachedProduct?.view_count || 0) + 1;
+          score += Math.min(50, viewCount * 2);
+          score += Math.min(20, Math.floor((cachedProduct?.search_impression_count || 0) / 10));
+          const stars = (enhancedData.stars !== null && enhancedData.stars !== undefined) ? enhancedData.stars : (cachedProduct?.metadata?.stars || 0);
+          const reviewCount = enhancedData.review_count || enhancedData.num_reviews || cachedProduct?.metadata?.review_count || 0;
+          if (stars && reviewCount) { score += 50; } else if (reviewCount) { score += 30; } else if (stars) { score += 25; }
+          if (stars && stars >= 4) { score += (stars - 3) * 25; }
+          if (reviewCount) { score += Math.min(25, Math.log10(reviewCount + 1) * 10); }
+          if (enhancedData.isBestSeller || enhancedData.bestSellerType) { score += 50; }
+          return score;
+        })(),
         metadata: {
           // Store ALL rating/review data in metadata JSONB
           // PRESERVE cached review data if Zinc API returns null (search results may have had reviews)
@@ -424,6 +438,10 @@ serve(async (req) => {
           digital: enhancedData.digital,
           num_offers: enhancedData.num_offers,
           num_sales: enhancedData.num_sales,
+          // Best seller data
+          isBestSeller: enhancedData.isBestSeller || false,
+          bestSellerType: enhancedData.bestSellerType || null,
+          badgeText: enhancedData.badgeText || null,
           // Preserve all other fields from Zinc API
           ...Object.keys(data).reduce((acc, key) => {
             if (!['product_id', 'title', 'price', 'retailer'].includes(key)) {

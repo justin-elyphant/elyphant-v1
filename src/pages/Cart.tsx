@@ -261,7 +261,7 @@ const Cart = () => {
   });
   
   const shippingAddress = profile?.shipping_address;
-  const hasCompleteAddress = isWishlistPurchase || (shippingAddress && 
+  const hasCompleteAddress = isWishlistPurchase || !user || (shippingAddress && 
     profile?.name &&
     (shippingAddress.address_line1 || shippingAddress.street) &&
     shippingAddress.city &&

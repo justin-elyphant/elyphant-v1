@@ -89,7 +89,7 @@ const WishlistWorkspaceHeader = ({
               variant="ghost"
               size="sm"
               onClick={() => navigate('/wishlists')}
-              className="text-white/90 hover:text-white hover:bg-white/10 gap-2 min-h-[44px]"
+              className="text-muted-foreground hover:text-foreground hover:bg-background/50 gap-2 min-h-[44px]"
             >
               <ArrowLeft className="h-4 w-4" />
               {!isMobileOrTablet && "Back to Wishlists"}

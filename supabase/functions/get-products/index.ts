@@ -199,6 +199,23 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
       // Price already normalized by normalizePrices() before caching
       // Do NOT divide again - that was causing $300 items to cache as $3.00
 
+      const metadata = {
+        stars: p.stars || p.rating || null,
+        review_count: p.review_count || p.num_reviews || null,
+        num_sales: p.num_sales || null,
+        main_image: p.main_image || p.image,
+        images: p.images || [p.main_image || p.image].filter(Boolean),
+        isBestSeller: p.isBestSeller || false,
+        bestSellerType: p.bestSellerType || null,
+        badgeText: p.badgeText || null,
+        source: 'search_results',
+        source_query: sourceQuery || null,
+        cached_at: new Date().toISOString()
+      };
+
+      // Persist popularity_score so DB can sort by it
+      const score = calculatePopularityScore({ view_count: p.view_count || 0, product_id: p.product_id || p.asin }, metadata);
+
       return {
         product_id: p.product_id || p.asin,
         title: p.title,
@@ -208,19 +225,8 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
         brand: p.brand || null,
         category: p.category || p.categories?.[0] || null,
         last_refreshed_at: new Date().toISOString(),
-        metadata: {
-          stars: p.stars || p.rating || null,
-          review_count: p.review_count || p.num_reviews || null,
-          num_sales: p.num_sales || null,
-          main_image: p.main_image || p.image,
-          images: p.images || [p.main_image || p.image].filter(Boolean),
-          isBestSeller: p.isBestSeller || false,
-          bestSellerType: p.bestSellerType || null,
-          badgeText: p.badgeText || null,
-          source: 'search_results',
-          source_query: sourceQuery || null,
-          cached_at: new Date().toISOString()
-        }
+        popularity_score: score,
+        metadata
       };
     }).filter(p => p.product_id && p.price > 0);
 

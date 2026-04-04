@@ -122,6 +122,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     if (!value) return "Select recipient";
     if (value.type === 'self') return `Ship to ${userName}`;
     if (value.type === 'later') return "Assign recipient in cart";
+    if (value.type === 'manual_address') return `Send to ${value.recipientName || value.connectionName}`;
     if (value.connectionName) return value.connectionName;
     return "Select recipient";
   };

@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { MapPin, Users, Package, User, AlertCircle, Edit, ChevronDown, ChevronUp, MessageSquare, Info, Gift } from 'lucide-react';
+import { MapPin, Users, Package, User, AlertCircle, Edit, ChevronDown, ChevronUp, MessageSquare, Info, Gift, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useProfile } from '@/contexts/profile/ProfileContext';
@@ -20,12 +22,24 @@ interface CheckoutShippingReviewProps {
   shippingCost: number | null;
   isWishlistPurchase?: boolean;
   wishlistOwnerInfo?: { name: string; id: string; shipping: any } | null;
+  onUpdateShippingInfo?: (data: Record<string, string>) => void;
+  checkoutShippingInfo?: {
+    name: string;
+    address: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
 }
 
 const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   shippingCost,
   isWishlistPurchase = false,
-  wishlistOwnerInfo = null
+  wishlistOwnerInfo = null,
+  onUpdateShippingInfo,
+  checkoutShippingInfo
 }) => {
   const navigate = useNavigate();
   const { cartItems, deliveryGroups, getUnassignedItems, updateRecipientAssignment } = useCart();
@@ -34,19 +48,33 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
   const { profile: unifiedProfile } = useUnifiedProfile();
   const unassignedItems = getUnassignedItems();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isEditingGuestAddress, setIsEditingGuestAddress] = useState(true);
+  const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
   
-  // Check if user has a complete address
+  // Check if user has a complete address from their profile
   const shippingAddress = profile?.shipping_address;
-  const hasCompleteAddress = shippingAddress && 
+  const hasCompleteProfileAddress = shippingAddress && 
     profile?.name &&
     (shippingAddress.address_line1 || shippingAddress.street) &&
     shippingAddress.city &&
     shippingAddress.state &&
     (shippingAddress.zip_code || shippingAddress.zipCode);
 
+  // Check if guest has entered a complete address via the inline form
+  const hasCompleteGuestAddress = checkoutShippingInfo &&
+    checkoutShippingInfo.name?.trim() &&
+    checkoutShippingInfo.address?.trim() &&
+    checkoutShippingInfo.city?.trim() &&
+    checkoutShippingInfo.state?.trim() &&
+    checkoutShippingInfo.zipCode?.trim();
+
+  const hasCompleteAddress = hasCompleteProfileAddress || hasCompleteGuestAddress;
+
   // For wishlist purchases, shipping is always complete (uses owner's address)
-  // Only show incomplete shipping warning for non-wishlist purchases with unassigned items
   const hasIncompleteShipping = !isWishlistPurchase && !hasCompleteAddress && unassignedItems.length > 0;
+
+  // Determine if we need the inline address form (guest or logged-in user without saved address)
+  const needsInlineAddressForm = !hasCompleteProfileAddress && onUpdateShippingInfo;
 
   // For wishlist purchases, count as 1 destination (owner)
   const totalDestinations = isWishlistPurchase 
@@ -76,6 +104,165 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
     }
   };
 
+  const validateGuestAddress = () => {
+    const errors: Record<string, string> = {};
+    if (!checkoutShippingInfo?.name?.trim()) errors.name = 'Full name is required';
+    if (!checkoutShippingInfo?.address?.trim()) errors.address = 'Street address is required';
+    if (!checkoutShippingInfo?.city?.trim()) errors.city = 'City is required';
+    if (!checkoutShippingInfo?.state?.trim()) errors.state = 'State is required';
+    if (!checkoutShippingInfo?.zipCode?.trim()) errors.zipCode = 'ZIP code is required';
+    else if (!/^\d{5}(-\d{4})?$/.test(checkoutShippingInfo.zipCode.trim())) errors.zipCode = 'Invalid ZIP code';
+    setAddressErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleGuestAddressConfirm = () => {
+    if (validateGuestAddress()) {
+      setIsEditingGuestAddress(false);
+    }
+  };
+
+  const handleGuestFieldChange = (field: string, value: string) => {
+    if (onUpdateShippingInfo) {
+      onUpdateShippingInfo({ [field]: value });
+    }
+    if (addressErrors[field]) {
+      setAddressErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  // Inline guest address form
+  const renderInlineAddressForm = () => {
+    if (!needsInlineAddressForm) return null;
+
+    // If address is confirmed, show summary
+    if (hasCompleteGuestAddress && !isEditingGuestAddress) {
+      return (
+        <div className="w-full p-3 bg-muted/30 rounded-lg border border-border">
+          <div className="flex items-start gap-3 w-full">
+            <div className="p-2 bg-green-100 rounded-full flex-shrink-0">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <p className="font-medium text-foreground">Shipping Address</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingGuestAddress(true)}
+                  className="h-8 px-2 text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                >
+                  Edit
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">{checkoutShippingInfo?.name}</p>
+                <p>{checkoutShippingInfo?.address}</p>
+                {checkoutShippingInfo?.addressLine2 && <p>{checkoutShippingInfo.addressLine2}</p>}
+                <p>{checkoutShippingInfo?.city}, {checkoutShippingInfo?.state} {checkoutShippingInfo?.zipCode}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Show the address entry form
+    return (
+      <div className="w-full p-4 bg-muted/30 rounded-lg border border-border space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <p className="font-medium text-sm">Enter Shipping Address</p>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="guest-name" className="text-sm">Full Name <span className="text-destructive">*</span></Label>
+            <Input
+              id="guest-name"
+              placeholder="Jane Doe"
+              value={checkoutShippingInfo?.name || ''}
+              onChange={(e) => handleGuestFieldChange('name', e.target.value)}
+              className={`mt-1 ${addressErrors.name ? 'border-destructive' : ''}`}
+            />
+            {addressErrors.name && <p className="text-xs text-destructive mt-1">{addressErrors.name}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="guest-address" className="text-sm">Street Address <span className="text-destructive">*</span></Label>
+            <Input
+              id="guest-address"
+              placeholder="123 Main St"
+              value={checkoutShippingInfo?.address || ''}
+              onChange={(e) => handleGuestFieldChange('address', e.target.value)}
+              className={`mt-1 ${addressErrors.address ? 'border-destructive' : ''}`}
+            />
+            {addressErrors.address && <p className="text-xs text-destructive mt-1">{addressErrors.address}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="guest-address2" className="text-sm">Apt, Suite, etc. <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Input
+              id="guest-address2"
+              placeholder="Apt 4B"
+              value={checkoutShippingInfo?.addressLine2 || ''}
+              onChange={(e) => handleGuestFieldChange('addressLine2', e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="col-span-2 sm:col-span-1">
+              <Label htmlFor="guest-city" className="text-sm">City <span className="text-destructive">*</span></Label>
+              <Input
+                id="guest-city"
+                placeholder="New York"
+                value={checkoutShippingInfo?.city || ''}
+                onChange={(e) => handleGuestFieldChange('city', e.target.value)}
+                className={`mt-1 ${addressErrors.city ? 'border-destructive' : ''}`}
+              />
+              {addressErrors.city && <p className="text-xs text-destructive mt-1">{addressErrors.city}</p>}
+            </div>
+            <div>
+              <Label htmlFor="guest-state" className="text-sm">State <span className="text-destructive">*</span></Label>
+              <Input
+                id="guest-state"
+                placeholder="NY"
+                value={checkoutShippingInfo?.state || ''}
+                onChange={(e) => handleGuestFieldChange('state', e.target.value)}
+                className={`mt-1 ${addressErrors.state ? 'border-destructive' : ''}`}
+              />
+              {addressErrors.state && <p className="text-xs text-destructive mt-1">{addressErrors.state}</p>}
+            </div>
+            <div>
+              <Label htmlFor="guest-zip" className="text-sm">ZIP <span className="text-destructive">*</span></Label>
+              <Input
+                id="guest-zip"
+                placeholder="10001"
+                value={checkoutShippingInfo?.zipCode || ''}
+                onChange={(e) => handleGuestFieldChange('zipCode', e.target.value)}
+                className={`mt-1 ${addressErrors.zipCode ? 'border-destructive' : ''}`}
+              />
+              {addressErrors.zipCode && <p className="text-xs text-destructive mt-1">{addressErrors.zipCode}</p>}
+            </div>
+          </div>
+
+          <Button
+            onClick={handleGuestAddressConfirm}
+            className="w-full mt-2"
+            size="sm"
+          >
+            Confirm Address
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -97,19 +284,20 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
             >
               {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={async () => {
-                console.log('🔄 [CheckoutShippingReview] Flushing cart before Edit in Cart navigation');
-                await unifiedPaymentService.flushPendingSaves();
-                navigate('/cart');
-              }}
-              className="flex items-center gap-1 h-11 px-3 touch-target-44 underline underline-offset-4 text-muted-foreground hover:text-foreground"
-            >
-              <span className="hidden sm:inline">Edit</span>
-              <span className="sm:hidden">Edit</span>
-            </Button>
+            {hasCompleteProfileAddress && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  console.log('🔄 [CheckoutShippingReview] Flushing cart before Edit in Cart navigation');
+                  await unifiedPaymentService.flushPendingSaves();
+                  navigate('/cart');
+                }}
+                className="flex items-center gap-1 h-11 px-3 touch-target-44 underline underline-offset-4 text-muted-foreground hover:text-foreground"
+              >
+                <span>Edit</span>
+              </Button>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -120,7 +308,6 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
           <CardContent className="space-y-4">
             {/* Registry-style Wishlist Purchase Banner - Coral-Orange Theme */}
             {isWishlistPurchase && wishlistOwnerInfo && (() => {
-              // Extract city and state with fallbacks for different field naming conventions
               const shipping = wishlistOwnerInfo.shipping || {};
               const city = shipping.city || '';
               const state = shipping.state || '';
@@ -150,7 +337,8 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               );
             })()}
             
-            {hasIncompleteShipping && (
+            {/* Show incomplete shipping alert ONLY for authenticated users without address */}
+            {hasIncompleteShipping && !needsInlineAddressForm && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -171,6 +359,9 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Inline Address Form for guests / users without saved address */}
+            {renderInlineAddressForm()}
 
             {/* Gift Recipients (Delivery Groups) - Hide for wishlist purchases */}
             {!isWishlistPurchase && deliveryGroups.map((group) => {
@@ -325,8 +516,8 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
               );
             })}
 
-            {/* Your Address (Unassigned Items) - Hide for wishlist purchases */}
-            {!isWishlistPurchase && unassignedItems.length > 0 && (
+            {/* Your Address (Unassigned Items) - Hide for wishlist purchases, hide if guest form handles it */}
+            {!isWishlistPurchase && !needsInlineAddressForm && unassignedItems.length > 0 && (
               <div className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-start gap-3 w-full">
                   <div className="p-2 bg-gray-100 rounded-full flex-shrink-0">

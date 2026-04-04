@@ -537,7 +537,20 @@ const UnifiedCheckoutForm: React.FC = () => {
             guest_email: checkoutData.shippingInfo.email,
             order_type: 'marketplace_purchase',
             item_count: cartItems.length,
-            is_wishlist_purchase: isWishlistPurchase || false
+            is_wishlist_purchase: isWishlistPurchase || false,
+            // Pass manual recipient info for gift notification email
+            ...(() => {
+              const manualItem = cartItems.find(item => 
+                (item.recipientAssignment as any)?.recipientEmail
+              );
+              if (manualItem) {
+                return {
+                  recipient_email: (manualItem.recipientAssignment as any).recipientEmail,
+                  recipient_name: (manualItem.recipientAssignment as any).recipientName || manualItem.recipientAssignment?.connectionName,
+                };
+              }
+              return {};
+            })()
           }
         }
       });

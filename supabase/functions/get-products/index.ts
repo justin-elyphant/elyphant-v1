@@ -1265,6 +1265,43 @@ serve(async (req) => {
         });
       }
       
+      // FALLBACK: Category not in registry but may have seeded products via search_terms
+      if (activeCategory && !CATEGORY_REGISTRY[activeCategory] && supabase) {
+        console.log(`📦 Category "${activeCategory}" not in registry — checking search_terms cache`);
+        try {
+          const { data: fallbackProducts, error: fbError } = await supabase
+            .from('products')
+            .select('*')
+            .ilike('search_terms', `%${activeCategory}%`)
+            .order('popularity_score', { ascending: false, nullsFirst: false })
+            .limit(limit);
+          
+          if (!fbError && fallbackProducts && fallbackProducts.length > 0) {
+            console.log(`✅ Found ${fallbackProducts.length} seeded products for unregistered category "${activeCategory}"`);
+            let results = fallbackProducts.map((p: any) => transformCachedProduct(p));
+            if (sortBy === 'price-low') results.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
+            else if (sortBy === 'price-high') results.sort((a: any, b: any) => (b.price || 0) - (a.price || 0));
+            else results = sortByPopularity(results);
+            
+            return new Response(JSON.stringify({
+              products: results,
+              results: results,
+              total: results.length,
+              hasMore: true,
+              currentPage: page,
+              categoryBatch: true,
+              fromCache: true,
+              cacheStats: { hits: results.length, misses: 0 }
+            }), {
+              status: 200,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+        } catch (fbErr) {
+          console.warn('⚠️ Fallback category lookup failed:', fbErr);
+        }
+      }
+      
       // Handle brand categories search
       if (brandCategories && query) {
         console.log(`Processing brand categories request for: ${query}`);

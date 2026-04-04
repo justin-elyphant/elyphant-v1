@@ -313,6 +313,35 @@ serve(async (req) => {
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
           results.updated.push(order.id);
+
+          // Queue order_failed email with orderId for full context
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, name')
+              .eq('id', order.user_id)
+              .single();
+
+            const shippingAddr = order.shipping_address as any;
+            const toEmail = shippingAddr?.email || profile?.email;
+            const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+
+            if (toEmail) {
+              await supabase.from('email_queue').insert({
+                recipient_email: toEmail,
+                recipient_name: recipientName,
+                event_type: 'order_failed',
+                metadata: { orderId: order.id },
+                template_variables: {},
+                priority: 'high',
+                scheduled_for: new Date().toISOString(),
+                status: 'pending',
+              });
+              console.log(`📧 Queued failed email for order ${order.id} to ${toEmail}`);
+            }
+          } catch (emailErr) {
+            console.error('⚠️ Failed to queue failure email:', emailErr);
+          }
         }
         else {
           console.log(`⏳ Order ${order.id} still processing (no final status yet)`);

@@ -31,6 +31,7 @@ interface CheckoutShippingReviewProps {
     state: string;
     zipCode: string;
     country: string;
+    phone: string;
   };
 }
 

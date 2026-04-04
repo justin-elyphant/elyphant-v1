@@ -91,13 +91,19 @@ const handler = async (req: Request): Promise<Response> => {
             ? email.metadata
             : (email.template_variables || {});
           
-          console.log(`📤 Sending to orchestrator with data keys: ${Object.keys(emailData).join(', ')}`);
+          // Extract orderId from metadata for DB-fetch pattern (shipped/delivered/failed emails)
+          const orderId = emailData.orderId || null;
+          // If orderId is the only key, pass empty data so orchestrator uses DB fetch
+          const dataToSend = orderId && Object.keys(emailData).length === 1 ? {} : emailData;
+          
+          console.log(`📤 Sending to orchestrator with data keys: ${Object.keys(dataToSend).join(', ')}${orderId ? ` | orderId: ${orderId}` : ''}`);
           
           const { error: orchestratorError } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
             body: {
               eventType: eventType,
               recipientEmail: email.recipient_email,
-              data: emailData
+              data: dataToSend,
+              ...(orderId ? { orderId } : {}),
             }
           });
 

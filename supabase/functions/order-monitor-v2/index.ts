@@ -232,16 +232,14 @@ serve(async (req) => {
               const recipientName = shippingAddr?.name || profile?.name || 'Customer';
 
               if (toEmail) {
+                // Pass orderId via metadata so the orchestrator's DB-fetch logic
+                // populates items, photos, and full context automatically
                 await supabase.from('email_queue').insert({
                   recipient_email: toEmail,
                   recipient_name: recipientName,
                   event_type: 'order_delivered',
-                  template_variables: {
-                    order_number: order.order_number,
-                    customer_name: recipientName,
-                    tracking_number: trackingNumber || null,
-                    delivery_proof_image: deliveredEntry?.delivery_proof_image || null,
-                  },
+                  metadata: { orderId: order.id },
+                  template_variables: {},
                   priority: 'normal',
                   scheduled_for: new Date().toISOString(),
                   status: 'pending',
@@ -288,18 +286,15 @@ serve(async (req) => {
                 const toEmail = shippingAddr?.email || profile?.email;
                 const recipientName = shippingAddr?.name || profile?.name || 'Customer';
 
-                if (toEmail) {
+              if (toEmail) {
+                  // Pass orderId via metadata so the orchestrator's DB-fetch logic
+                  // populates items, photos, pricing, and address automatically
                   await supabase.from('email_queue').insert({
                     recipient_email: toEmail,
                     recipient_name: recipientName,
                     event_type: 'order_shipped',
-                    template_variables: {
-                      order_number: order.order_number,
-                      customer_name: recipientName,
-                      tracking_number: trackingNumber || null,
-                      tracking_url: trackingUrl || null,
-                      estimated_delivery: estimatedDelivery || null,
-                    },
+                    metadata: { orderId: order.id },
+                    template_variables: {},
                     priority: 'normal',
                     scheduled_for: new Date().toISOString(),
                     status: 'pending',
@@ -318,6 +313,35 @@ serve(async (req) => {
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
           results.updated.push(order.id);
+
+          // Queue order_failed email with orderId for full context
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, name')
+              .eq('id', order.user_id)
+              .single();
+
+            const shippingAddr = order.shipping_address as any;
+            const toEmail = shippingAddr?.email || profile?.email;
+            const recipientName = shippingAddr?.name || profile?.name || 'Customer';
+
+            if (toEmail) {
+              await supabase.from('email_queue').insert({
+                recipient_email: toEmail,
+                recipient_name: recipientName,
+                event_type: 'order_failed',
+                metadata: { orderId: order.id },
+                template_variables: {},
+                priority: 'high',
+                scheduled_for: new Date().toISOString(),
+                status: 'pending',
+              });
+              console.log(`📧 Queued failed email for order ${order.id} to ${toEmail}`);
+            }
+          } catch (emailErr) {
+            console.error('⚠️ Failed to queue failure email:', emailErr);
+          }
         }
         else {
           console.log(`⏳ Order ${order.id} still processing (no final status yet)`);

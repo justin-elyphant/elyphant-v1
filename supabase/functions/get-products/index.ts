@@ -323,7 +323,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       }
       
       const { data: andResults, error: andError } = await andQuery
-        .order('view_count', { ascending: false, nullsFirst: false })
+        .order('popularity_score', { ascending: false, nullsFirst: false })
         .limit(limit);
       
       if (!andError && andResults && andResults.length >= threshold) {

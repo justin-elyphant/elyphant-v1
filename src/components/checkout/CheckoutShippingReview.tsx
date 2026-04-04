@@ -252,6 +252,19 @@ const CheckoutShippingReview: React.FC<CheckoutShippingReviewProps> = ({
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="guest-phone" className="text-sm">Phone Number <span className="text-destructive">*</span></Label>
+            <Input
+              id="guest-phone"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={checkoutShippingInfo?.phone || ''}
+              onChange={(e) => handleGuestFieldChange('phone', e.target.value)}
+              className={`mt-1 ${addressErrors.phone ? 'border-destructive' : ''}`}
+            />
+            {addressErrors.phone && <p className="text-xs text-destructive mt-1">{addressErrors.phone}</p>}
+          </div>
+
           <Button
             onClick={handleGuestAddressConfirm}
             className="w-full mt-2"

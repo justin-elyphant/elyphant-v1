@@ -222,47 +222,91 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
   // The inner content (search, connections list, invite form)
   const innerContent = (
     <div ref={contentRef} className={cn(!embedded && "mt-2 rounded-lg border bg-background shadow-sm")}>
-      {/* Invite Form */}
-      {showInviteForm ? (
+      {/* Send to Someone New Form */}
+      {showNewRecipientForm ? (
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-sm">Invite New Recipient</h3>
-            <Button variant="ghost" size="sm" onClick={resetInviteForm} className="h-8 px-2">
+            <h3 className="font-semibold text-sm">Send to Someone New</h3>
+            <Button variant="ghost" size="sm" onClick={resetNewRecipientForm} className="h-8 px-2">
               Cancel
             </Button>
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="invite-name" className="text-xs">Name</Label>
+              <Label htmlFor="new-recipient-name" className="text-xs">Recipient's Name</Label>
               <Input
-                id="invite-name"
-                placeholder="Recipient's name"
-                value={inviteName}
-                onChange={(e) => setInviteName(e.target.value)}
+                id="new-recipient-name"
+                placeholder="e.g. Grandma Jane"
+                value={newRecipientName}
+                onChange={(e) => setNewRecipientName(e.target.value)}
                 className="h-11 text-base"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="invite-email" className="text-xs">Email</Label>
+              <Label htmlFor="new-recipient-email" className="text-xs">Email</Label>
               <Input
-                id="invite-email"
+                id="new-recipient-email"
                 type="email"
                 placeholder="recipient@email.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                value={newRecipientEmail}
+                onChange={(e) => setNewRecipientEmail(e.target.value)}
                 className="h-11 text-base"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-recipient-street" className="text-xs">Street Address</Label>
+              <Input
+                id="new-recipient-street"
+                placeholder="123 Main St, Apt 4"
+                value={newRecipientStreet}
+                onChange={(e) => setNewRecipientStreet(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-city" className="text-xs">City</Label>
+                <Input
+                  id="new-recipient-city"
+                  placeholder="City"
+                  value={newRecipientCity}
+                  onChange={(e) => setNewRecipientCity(e.target.value)}
+                  className="h-11 text-base"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-state" className="text-xs">State</Label>
+                <Input
+                  id="new-recipient-state"
+                  placeholder="CA"
+                  value={newRecipientState}
+                  onChange={(e) => setNewRecipientState(e.target.value)}
+                  className="h-11 text-base"
+                  maxLength={2}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-zip" className="text-xs">ZIP</Label>
+                <Input
+                  id="new-recipient-zip"
+                  placeholder="90210"
+                  value={newRecipientZip}
+                  onChange={(e) => setNewRecipientZip(e.target.value)}
+                  className="h-11 text-base"
+                  maxLength={10}
+                />
+              </div>
+            </div>
           </div>
           <Button
-            onClick={handleInviteSubmit}
-            disabled={!inviteName.trim() || !inviteEmail.trim()}
-            className="w-full h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
+            onClick={handleNewRecipientSubmit}
+            disabled={!newRecipientName.trim() || !newRecipientEmail.trim() || !newRecipientStreet.trim() || !newRecipientCity.trim() || !newRecipientState.trim() || !newRecipientZip.trim()}
+            className="w-full h-11 bg-red-600 hover:bg-red-700 text-white"
           >
-            Send Invitation
+            Use This Address
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            They'll receive an email to share their shipping address
+            They'll get an email about their gift with an invite to join Elyphant
           </p>
         </div>
       ) : (

@@ -207,6 +207,16 @@ serve(async (req) => {
     // CRITICAL: Accept both postal_code (preferred) and zip_code (legacy)
     const zipCode = shippingAddress.postal_code || shippingAddress.zip_code || shippingAddress.zipCode;
     
+    // Guard: detect address-label names and substitute with actual profile name
+    const addressLabelPatterns = /^(checkout address|home|work|office|default|my address|address)$/i;
+    if (addressLabelPatterns.test(shippingAddress.name?.trim())) {
+      const profileName = profile?.name || profile?.shipping_address?.name;
+      if (profileName && !addressLabelPatterns.test(profileName.trim())) {
+        console.log(`🔄 [NAME GUARD] Replaced address label "${shippingAddress.name}" with profile name "${profileName}"`);
+        shippingAddress.name = profileName;
+      }
+    }
+
     console.log('🔍 Validating shipping address fields...');
     const requiredShippingFields = {
       name: shippingAddress.name,
@@ -339,8 +349,9 @@ serve(async (req) => {
     if (finalPhoneNumber === '0000000000') {
       console.warn(`⚠️ [PHONE] No phone number for order ${orderId} - using fallback 0000000000 for Zinc`);
       // Log to orders table for admin visibility
+      const existingNotes = typeof order.notes === 'object' && order.notes !== null ? order.notes : {};
       await supabase.from('orders').update({
-        notes: (order.notes ? order.notes + ' | ' : '') + 'Warning: No phone number provided - may affect delivery notifications'
+        notes: { ...existingNotes, phone_warning: 'No phone number provided - may affect delivery notifications' }
       }).eq('id', orderId);
     } else {
       console.log(`✅ [PHONE] Phone number present for carrier notifications: ${finalPhoneNumber.substring(0, 3)}***`);
@@ -363,13 +374,20 @@ serve(async (req) => {
       console.log(`🔄 Retry detected (status: ${order.status}) - using fresh idempotency key: ${idempotencyKey}`);
     }
 
-    // Determine product subtotal in cents
-    // Both line_items.subtotal and total_amount are stored in DOLLARS (Unified Pricing Standard)
-    // Must convert to cents for Zinc's max_price parameter
-    const subtotalDollars = order.line_items?.subtotal ?? order.total_amount;
-    const productSubtotalCents = Math.round(subtotalDollars * 100);
+    // Determine product subtotal in cents from ITEM-LEVEL unit_prices
+    // For credit orders, line_items.subtotal is the credit-adjusted amount (too low for Zinc).
+    // unit_price is always the real Amazon retail price regardless of credits applied.
+    const itemSubtotalCents = itemsArray.reduce((sum: number, item: any) => {
+      const unitPrice = item.unit_price || item.price || 0;
+      const qty = item.quantity || 1;
+      return sum + Math.round(unitPrice * 100) * qty;
+    }, 0);
+    // Fallback to order-level subtotal only if no item prices found
+    const productSubtotalCents = itemSubtotalCents > 0
+      ? itemSubtotalCents
+      : Math.round((order.line_items?.subtotal ?? order.total_amount) * 100);
 
-    console.log(`💰 max_price calc: subtotal=${subtotalDollars} (dollars) → ${productSubtotalCents} cents → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
+    console.log(`💰 max_price calc: itemSubtotal=${itemSubtotalCents}¢, fallbackSubtotal=${Math.round((order.line_items?.subtotal ?? order.total_amount) * 100)}¢ → used=${productSubtotalCents}¢ → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
 
     const zincRequest = {
       addax: true, // CRITICAL: Enables ZMA processing

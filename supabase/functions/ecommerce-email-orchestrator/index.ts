@@ -1553,6 +1553,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: orderFailedTemplate(data),
         subject: `Order Processing Issue — ${data.order_number || 'Action Required'}`
       };
+    case 'order_delivered':
+      return {
+        html: orderDeliveredTemplate(data),
+        subject: `Your Order Has Been Delivered — ${data.order_number || 'Enjoy!'}`
+      };
     case 'connection_invitation':
     case 'gift_invitation':
       return {

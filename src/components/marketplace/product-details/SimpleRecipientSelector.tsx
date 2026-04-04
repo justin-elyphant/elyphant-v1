@@ -12,7 +12,7 @@ import { useEnhancedConnections, EnhancedConnection } from "@/hooks/profile/useE
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 export interface SelectedRecipient {
-  type: 'self' | 'connection' | 'later';
+  type: 'self' | 'connection' | 'later' | 'manual_address';
   connectionId?: string;
   connectionName?: string;
   shippingAddress?: {
@@ -26,14 +26,16 @@ export interface SelectedRecipient {
     phone?: string;
   };
   addressVerified?: boolean;
-  recipientDob?: string; // Birthday in MM-DD format from profile
+  recipientDob?: string;
   recipientImportantDates?: Array<{
     id?: string;
     title: string;
     date: string;
     type: string;
     description?: string;
-  }>; // Important dates like anniversaries from profile
+  }>;
+  recipientEmail?: string;
+  recipientName?: string;
 }
 
 interface SimpleRecipientSelectorProps {

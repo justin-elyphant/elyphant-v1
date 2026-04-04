@@ -4,7 +4,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Heart, Share2 } from "lucide-react";
+import { Plus, Heart, Share2, Users } from "lucide-react";
 import { Wishlist } from "@/types/profile";
 import { WishlistPurchaseTrackingService } from "@/services/wishlistPurchaseTracking";
 import { cn } from "@/lib/utils";

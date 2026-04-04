@@ -8,7 +8,6 @@ interface WishlistBenefitsGridProps {
 }
 
 const WishlistBenefitsGrid: React.FC<WishlistBenefitsGridProps> = ({ className }) => {
-  // Check for reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' 
     && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -17,19 +16,16 @@ const WishlistBenefitsGrid: React.FC<WishlistBenefitsGridProps> = ({ className }
       icon: Share2,
       title: "Share & Get What You Want",
       description: "Make your lists public and share with friends and family. No more guessing games—everyone knows exactly what you want.",
-      gradient: "from-rose-500 to-pink-500"
     },
     {
       icon: CheckCircle2,
       title: "Avoid Duplicate Gifts",
       description: "Friends can see when items are purchased, so you'll never receive the same gift twice. Perfect coordination, every time.",
-      gradient: "from-amber-500 to-orange-500"
     },
     {
       icon: Sparkles,
       title: "Power AI Recommendations",
       description: "Your wishlists help our AI understand your style and preferences, making gift suggestions from others even more on-point.",
-      gradient: "from-purple-500 to-indigo-500"
     }
   ];
 
@@ -53,8 +49,8 @@ const WishlistBenefitsGrid: React.FC<WishlistBenefitsGridProps> = ({ className }
             >
               <Card className="h-full hover:shadow-lg transition-shadow duration-200 border-border/50">
                 <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center mb-4`}>
-                    <Icon className="h-6 w-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-4">
+                    <Icon className="h-6 w-6 text-foreground" />
                   </div>
                   <h3 className="font-semibold text-lg mb-2">{benefit.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">

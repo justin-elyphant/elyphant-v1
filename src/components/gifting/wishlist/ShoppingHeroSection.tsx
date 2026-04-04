@@ -40,8 +40,8 @@ const ShoppingHeroSection: React.FC<ShoppingHeroSectionProps> = ({
 }) => {
   return (
     <div className="relative overflow-hidden py-4 px-4 sm:px-6 lg:px-8 bg-background z-50">
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-primary/5 to-pink-500/5 -z-10" />
+      {/* Subtle muted background */}
+      <div className="absolute inset-0 bg-muted/30 -z-10" />
       
       <div className="relative max-w-4xl mx-auto space-y-3">
         <div className="flex items-center justify-center gap-2">

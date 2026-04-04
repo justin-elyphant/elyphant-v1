@@ -224,8 +224,8 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-              <Sparkles className="h-4 w-4 text-purple-600" />
+            <div className="p-1.5 rounded-lg bg-muted">
+              <Sparkles className="h-4 w-4 text-foreground" />
             </div>
             <h3 className="font-semibold text-foreground">
               Nicole AI Suggestions

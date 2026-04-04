@@ -12,11 +12,25 @@ import { motion } from "framer-motion";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import ProfileShareSheet from "@/components/user-profile/ProfileShareSheet";
 
+interface VisitorProfileData {
+  name: string;
+  avatar?: string;
+  bio?: string;
+  connectionCount?: number;
+  wishlistCount?: number;
+  itemCount?: number;
+  userId: string;
+}
+
 interface CompactProfileHeaderProps {
   wishlists: Wishlist[];
   onCreateWishlist: () => void;
   showGiftTracker?: boolean;
   className?: string;
+  visitorMode?: boolean;
+  visitorProfile?: VisitorProfileData;
+  onConnect?: () => void;
+  connectionCount?: number;
 }
 
 const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({

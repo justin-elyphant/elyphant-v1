@@ -99,9 +99,9 @@ const WishlistWorkspaceHeader = ({
           {/* Main header content */}
           <div className="flex items-start gap-4 lg:gap-6">
             {/* Avatar */}
-            <Avatar className="h-16 w-16 lg:h-24 lg:w-24 border-4 border-white/20 shadow-xl flex-shrink-0">
+            <Avatar className="h-16 w-16 lg:h-24 lg:w-24 border-4 border-border/20 shadow-xl flex-shrink-0">
               <AvatarImage src={ownerProfile?.image} alt={ownerProfile?.name || 'Owner'} />
-              <AvatarFallback className="text-xl lg:text-3xl bg-white/20 text-white">
+              <AvatarFallback className="text-xl lg:text-3xl bg-muted text-foreground">
                 {userInitials}
               </AvatarFallback>
             </Avatar>

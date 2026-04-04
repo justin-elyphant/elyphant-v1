@@ -14,7 +14,7 @@ import { useMarketplace } from "@/hooks/useMarketplace";
 import TrendingSection from "./TrendingSection";
 import { WishlistItem } from "@/types/profile";
 import { productCatalogService } from "@/services/ProductCatalogService";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 
 interface ShoppingPanelProps {

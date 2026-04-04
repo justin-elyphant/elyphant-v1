@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Product } from "@/types/product";
-import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import ProductCard from "./ProductCard";
 import MobileProductGrid from "./mobile/MobileProductGrid";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 

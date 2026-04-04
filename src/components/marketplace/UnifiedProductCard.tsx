@@ -1,6 +1,6 @@
 import React from "react";
 import { Product } from "@/types/product";
-import AirbnbStyleProductCard from "./AirbnbStyleProductCard";
+import ProductCard from "./ProductCard";
 
 // Union type for all possible product card props interfaces
 type UnifiedProductCardProps = 

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Product } from "@/contexts/ProductContext";
 import { Sparkles } from "lucide-react";
 import { Wishlist } from "@/types/profile";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 

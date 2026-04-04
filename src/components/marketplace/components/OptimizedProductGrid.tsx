@@ -92,7 +92,7 @@ const MemoizedProductCard = memo<{
   statusBadge?: { badge: string; color: string } | null;
 }>(({ product, onProductClick, onAddToCart, onShare, statusBadge }) => {
   return (
-    <AirbnbStyleProductCard
+    <ProductCard
       product={product}
       onProductClick={onProductClick}
       statusBadge={statusBadge}

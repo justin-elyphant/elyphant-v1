@@ -8,7 +8,7 @@ import { useNicoleRecommendations } from "@/hooks/useNicoleRecommendations";
 import { useWishlist } from "@/components/gifting/hooks/useWishlist";
 import { triggerHapticFeedback, HapticPatterns } from "@/utils/haptics";
 import { toast } from "sonner";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 interface NicoleAISuggestionsProps {
   className?: string;

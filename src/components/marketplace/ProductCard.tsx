@@ -502,6 +502,6 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
   );
 });
 
-AirbnbStyleProductCard.displayName = "AirbnbStyleProductCard";
+ProductCard.displayName = "ProductCard";
 
-export default AirbnbStyleProductCard;
+export default ProductCard;

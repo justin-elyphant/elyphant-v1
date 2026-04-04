@@ -2,7 +2,7 @@ import React from "react";
 import { TrendingUp } from "lucide-react";
 import { WishlistItem } from "@/types/profile";
 import { Product } from "@/types/product";
-import AirbnbStyleProductCard from "@/components/marketplace/AirbnbStyleProductCard";
+import ProductCard from "@/components/marketplace/ProductCard";
 
 interface TrendingSectionProps {
   items: WishlistItem[];

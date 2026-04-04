@@ -107,7 +107,7 @@ const UnifiedRecipientSelection: React.FC<UnifiedRecipientSelectionProps> = ({
         id: `manual_${Date.now()}`,
         name: selected.recipientName || selected.connectionName || 'Recipient',
         email: selected.recipientEmail,
-        source: 'manual',
+        source: 'pending',
         status: 'accepted',
         address: {
           name: selected.shippingAddress.name,

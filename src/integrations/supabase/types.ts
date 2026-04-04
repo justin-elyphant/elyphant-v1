@@ -3625,10 +3625,12 @@ export type Database = {
           image_url: string | null
           last_refreshed_at: string | null
           metadata: Json | null
+          popularity_score: number | null
           price: number | null
           product_id: string
           purchase_count: number | null
           retailer: string | null
+          search_impression_count: number | null
           search_terms: string[] | null
           title: string
           updated_at: string | null
@@ -3645,10 +3647,12 @@ export type Database = {
           image_url?: string | null
           last_refreshed_at?: string | null
           metadata?: Json | null
+          popularity_score?: number | null
           price?: number | null
           product_id: string
           purchase_count?: number | null
           retailer?: string | null
+          search_impression_count?: number | null
           search_terms?: string[] | null
           title: string
           updated_at?: string | null
@@ -3665,10 +3669,12 @@ export type Database = {
           image_url?: string | null
           last_refreshed_at?: string | null
           metadata?: Json | null
+          popularity_score?: number | null
           price?: number | null
           product_id?: string
           purchase_count?: number | null
           retailer?: string | null
+          search_impression_count?: number | null
           search_terms?: string[] | null
           title?: string
           updated_at?: string | null

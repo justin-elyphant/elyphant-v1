@@ -83,6 +83,9 @@ const calculatePopularityScore = (cached: any, metadata: any) => {
   // View count contributes to popularity (max 50 points)
   score += Math.min(50, (cached.view_count || 0) * 2);
   
+  // Search impressions contribute to popularity (max 20 points, +1 per 10 impressions)
+  score += Math.min(20, Math.floor((cached.search_impression_count || 0) / 10));
+  
   // Tiered ratings bonus
   const hasStars = metadata.stars && metadata.stars > 0;
   const hasReviews = metadata.review_count && metadata.review_count > 0;
@@ -199,6 +202,23 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
       // Price already normalized by normalizePrices() before caching
       // Do NOT divide again - that was causing $300 items to cache as $3.00
 
+      const metadata = {
+        stars: p.stars || p.rating || null,
+        review_count: p.review_count || p.num_reviews || null,
+        num_sales: p.num_sales || null,
+        main_image: p.main_image || p.image,
+        images: p.images || [p.main_image || p.image].filter(Boolean),
+        isBestSeller: p.isBestSeller || false,
+        bestSellerType: p.bestSellerType || null,
+        badgeText: p.badgeText || null,
+        source: 'search_results',
+        source_query: sourceQuery || null,
+        cached_at: new Date().toISOString()
+      };
+
+      // Persist popularity_score so DB can sort by it
+      const score = calculatePopularityScore({ view_count: p.view_count || 0, product_id: p.product_id || p.asin }, metadata);
+
       return {
         product_id: p.product_id || p.asin,
         title: p.title,
@@ -208,19 +228,8 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
         brand: p.brand || null,
         category: p.category || p.categories?.[0] || null,
         last_refreshed_at: new Date().toISOString(),
-        metadata: {
-          stars: p.stars || p.rating || null,
-          review_count: p.review_count || p.num_reviews || null,
-          num_sales: p.num_sales || null,
-          main_image: p.main_image || p.image,
-          images: p.images || [p.main_image || p.image].filter(Boolean),
-          isBestSeller: p.isBestSeller || false,
-          bestSellerType: p.bestSellerType || null,
-          badgeText: p.badgeText || null,
-          source: 'search_results',
-          source_query: sourceQuery || null,
-          cached_at: new Date().toISOString()
-        }
+        popularity_score: score,
+        metadata
       };
     }).filter(p => p.product_id && p.price > 0);
 
@@ -300,7 +309,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
     
     if (searchTerms.length === 0) return null;
 
-    const threshold = Math.ceil(limit * 0.8);
+    const threshold = Math.ceil(limit * 0.5);
     
     // Step 1: For multi-word queries, try AND logic first (products must contain ALL terms)
     if (searchTerms.length >= 2) {
@@ -317,7 +326,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       }
       
       const { data: andResults, error: andError } = await andQuery
-        .order('view_count', { ascending: false, nullsFirst: false })
+        .order('popularity_score', { ascending: false, nullsFirst: false })
         .limit(limit);
       
       if (!andError && andResults && andResults.length >= threshold) {
@@ -353,7 +362,7 @@ const getCachedProductsForQuery = async (supabase: any, query: string, limit: nu
       .from('products')
       .select('*')
       .or(orConditions)
-      .order('view_count', { ascending: false, nullsFirst: false })
+      .order('popularity_score', { ascending: false, nullsFirst: false })
       .limit(limit);
 
     if (error) {
@@ -622,6 +631,18 @@ const processAndReturnResults = async (
   });
   
   EdgeRuntime.waitUntil(cacheSearchResults(supabase, processedResults, sourceQuery));
+  
+  // GAP 6 FIX: Batch-increment search_impression_count for returned products (non-blocking)
+  const impressionProductIds = processedResults.map((p: any) => p.product_id || p.asin).filter(Boolean);
+  if (supabase && impressionProductIds.length > 0) {
+    EdgeRuntime.waitUntil(
+      supabase.rpc('increment_search_impressions', { product_ids: impressionProductIds }).then(() => {
+        console.log(`📊 Incremented search impressions for ${impressionProductIds.length} products`);
+      }).catch((err: any) => {
+        console.warn('⚠️ Impression increment failed:', err);
+      })
+    );
+  }
   
   const { products: enrichedProducts, cacheHits, cacheMisses } = 
     await enrichWithCachedData(supabase, processedResults);
@@ -1139,7 +1160,7 @@ serve(async (req) => {
     }
     
     try {
-      // UNIFIED CATEGORY HANDLER
+      // UNIFIED CATEGORY HANDLER (with cache-first lookup)
       if (activeCategory && CATEGORY_REGISTRY[activeCategory]) {
         const categoryConfig = CATEGORY_REGISTRY[activeCategory];
         console.log(`Processing category "${activeCategory}" (${categoryConfig.name})`);
@@ -1151,6 +1172,70 @@ serve(async (req) => {
             : priceFilter.max
         };
         
+        // GAP 2 FIX: Cache-first lookup for category queries
+        // Check products table before calling Zinc API
+        const categoryQueries = categoryConfig.queries;
+        const categoryOrConditions = categoryQueries
+          .map((q: string) => `title.ilike.%${q.replace(/\s+/g, '%')}%`)
+          .join(',');
+        
+        let categoryCacheHit = false;
+        if (supabase && page === 1) {
+          try {
+            const { data: cachedCategoryProducts, error: catCacheError } = await supabase
+              .from('products')
+              .select('*')
+              .or(categoryOrConditions)
+              .order('popularity_score', { ascending: false, nullsFirst: false })
+              .limit(limit);
+            
+            const catThreshold = Math.ceil(limit * 0.5);
+            if (!catCacheError && cachedCategoryProducts && cachedCategoryProducts.length >= catThreshold) {
+              console.log(`✅ Category Cache HIT: ${cachedCategoryProducts.length} products for "${activeCategory}" (threshold: ${catThreshold})`);
+              categoryCacheHit = true;
+              
+              let sortedCategoryProducts = cachedCategoryProducts.map((p: any) => transformCachedProduct(p));
+              
+              if (sortBy === 'price-low') {
+                sortedCategoryProducts.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
+              } else if (sortBy === 'price-high') {
+                sortedCategoryProducts.sort((a: any, b: any) => (b.price || 0) - (a.price || 0));
+              } else {
+                sortedCategoryProducts = sortByPopularity(sortedCategoryProducts);
+              }
+              
+              // Batch-increment search_impression_count (non-blocking)
+              const impressionIds = sortedCategoryProducts.map((p: any) => p.product_id).filter(Boolean);
+              if (impressionIds.length > 0) {
+                EdgeRuntime.waitUntil(
+                  supabase.rpc('increment_search_impressions', { product_ids: impressionIds }).then(() => {
+                    console.log(`📊 Incremented impressions for ${impressionIds.length} category products`);
+                  }).catch(() => {})
+                );
+              }
+              
+              return new Response(JSON.stringify({
+                products: sortedCategoryProducts,
+                results: sortedCategoryProducts,
+                total: sortedCategoryProducts.length,
+                hasMore: true,
+                currentPage: page,
+                categoryBatch: true,
+                fromCache: true,
+                cacheStats: { hits: sortedCategoryProducts.length, misses: 0 }
+              }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              });
+            } else {
+              console.log(`⏳ Category cache miss for "${activeCategory}": ${cachedCategoryProducts?.length || 0} products (need ${catThreshold})`);
+            }
+          } catch (catCacheErr) {
+            console.warn('⚠️ Category cache lookup failed:', catCacheErr);
+          }
+        }
+        
+        // Cache miss — fall through to Zinc API
         const categoryData = await searchCategoryBatch(
           api_key, 
           categoryConfig.queries, 
@@ -1372,11 +1457,14 @@ serve(async (req) => {
       }
 
       // MERGE: If we have cached products from sparse results, combine with Zinc results
+      // GAP 5 FIX: Re-sort merged results by popularity_score so best products surface
       if (typeof cachedProductsForMerge !== 'undefined' && cachedProductsForMerge.length > 0) {
         const cachedIds = new Set(cachedProductsForMerge.map((p: any) => p.product_id || p.asin));
         const newZincProducts = filteredResults.filter((p: any) => !cachedIds.has(p.product_id || p.asin));
         console.log(`🔀 Merging ${cachedProductsForMerge.length} cached + ${newZincProducts.length} new Zinc products`);
-        filteredResults = [...cachedProductsForMerge, ...newZincProducts].slice(0, limit);
+        const merged = [...cachedProductsForMerge, ...newZincProducts];
+        // Re-sort by popularity so best products take primary position regardless of source
+        filteredResults = sortByPopularity(merged).slice(0, limit);
       }
 
       // Use unified processor for regular search results

@@ -263,7 +263,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
                 className="h-11 text-base"
               />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="space-y-1.5">
                 <Label htmlFor="new-recipient-city" className="text-xs">City</Label>
                 <Input

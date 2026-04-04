@@ -307,7 +307,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                     <SimpleRecipientSelector
                       embedded={true}
                       value={selectedRecipient ? {
-                        type: selectedRecipient.type === 'self' ? 'self' : 'connection',
+                        type: selectedRecipient.type === 'self' ? 'self' : selectedRecipient.type === 'manual_address' ? 'manual_address' : 'connection',
                         connectionId: selectedRecipient.connectionId,
                         connectionName: selectedRecipient.name,
                         shippingAddress: selectedRecipient.address ? {

@@ -1,193 +1,231 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// ⚠️ NIKE-ONLY TEST MODE - Full seed commented out for testing
-// const CATEGORIES = [
-//   "electronics", "flowers", "fashion", "pets", "home", "beauty", 
-//   "sports", "athleisure", "books", "toys", "food", "arts", 
-//   "health", "baby", "jewelry", "kitchen", "tech", "music", 
-//   "gaming", "wedding", "best-selling", "gifts", "bags-purses", "outdoor"
-// ];
-
-const CATEGORIES: string[] = []; // Skip categories for Nike test
-
-// Nike-only test (6 searches × $0.01 = $0.06 for ~600 products)
-const BRANDS = ["nike"];
-
-// Nike-only related products
-const BRAND_RELATIONS: Record<string, string[]> = {
-  "nike": ["nike socks", "nike bag", "nike water bottle", "nike headband", "nike shorts"]
-};
+// @ts-nocheck
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Mirror of UNIVERSAL_CATEGORIES from src/constants/categories.ts
+const SEED_CATEGORIES = [
+  { value: "electronics", searchTerm: "best selling electronics apple samsung sony bose lg hp dell canon nikon fitbit garmin" },
+  { value: "flowers", searchTerm: "fresh flowers bouquet delivery roses tulips sunflowers orchids wedding flowers sympathy arrangements seasonal blooms" },
+  { value: "fashion", searchTerm: "best selling fashion clothing apparel shoes accessories" },
+  { value: "pets", searchTerm: "best selling pet products dog cat supplies toys treats" },
+  { value: "home", searchTerm: "home decor furniture kitchen accessories bedding curtains pillows candles" },
+  { value: "beauty", searchTerm: "skincare makeup cosmetics beauty products lipstick foundation moisturizer" },
+  { value: "sports", searchTerm: "best selling sports equipment nike adidas under armour wilson spalding yeti coleman outdoor gear fitness" },
+  { value: "athleisure", searchTerm: "athletic wear yoga pants leggings activewear nike adidas lululemon under armour alo yoga" },
+  { value: "books", searchTerm: "best selling books fiction nonfiction thriller romance mystery science biography" },
+  { value: "toys", searchTerm: "toys games kids children educational puzzles building blocks dolls action figures" },
+  { value: "arts", searchTerm: "art supplies craft supplies drawing materials paint brushes canvas markers colored pencils craft kits" },
+  { value: "health", searchTerm: "best selling health wellness vitamins supplements fitness tracker massage" },
+  { value: "baby", searchTerm: "best selling baby products stroller crib diaper monitor" },
+  { value: "jewelry", searchTerm: "best selling jewelry necklace bracelet earrings rings gold silver diamond" },
+  { value: "kitchen", searchTerm: "best selling kitchen products cookware knives blender coffee maker air fryer instant pot" },
+  { value: "tech", searchTerm: "best selling tech products smart devices gadgets phone accessories chargers cables" },
+  { value: "music", searchTerm: "musical instruments headphones speakers vinyl records turntables guitar keyboard piano" },
+  { value: "gaming", searchTerm: "gaming console accessories controllers headsets keyboards mice playstation xbox nintendo" },
+  { value: "wedding", searchTerm: "wedding gifts bridal party engagement reception decorations invitations favors registry" },
+  { value: "best-selling", searchTerm: "best selling top rated popular trending most bought bestseller" },
+  { value: "gifts", searchTerm: "best selling gifts birthday christmas holiday gift sets gift baskets gift cards" },
+  { value: "bags-purses", searchTerm: "best selling bags purses handbags tote crossbody backpacks designer bags wallets" },
+];
+
+const calculatePopularityScore = (product: any) => {
+  let score = 20;
+  const stars = product.stars || product.rating || 0;
+  const reviewCount = product.review_count || product.num_reviews || 0;
+
+  if (stars > 0 && reviewCount > 0) score += 50;
+  else if (reviewCount > 0) score += 30;
+  else if (stars > 0) score += 25;
+
+  if (stars >= 4) score += (stars - 3) * 25;
+  if (reviewCount > 0) score += Math.min(25, Math.log10(reviewCount + 1) * 10);
+
+  const badge = (product.bestSellerType || product.badge_text || '').toLowerCase();
+  if (badge.includes("amazon's choice") || badge.includes("amazons choice")) score += 60;
+  else if (badge.includes("best seller")) score += 50;
+  else if (badge.includes("top rated")) score += 40;
+
+  return score;
+};
+
+const searchZinc = async (apiKey: string, query: string, page: number) => {
+  const url = `https://api.zinc.io/v1/search?query=${encodeURIComponent(query)}&page=${page}&retailer=amazon`;
+  const resp = await fetch(url, {
+    method: 'GET',
+    headers: { 'Authorization': 'Basic ' + btoa(`${apiKey}:`) }
+  });
+  if (!resp.ok) {
+    console.error(`Zinc search failed for "${query}" page ${page}: ${resp.status}`);
+    return [];
+  }
+  const data = await resp.json();
+  return data.results || [];
 };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const ZINC_API_KEY = Deno.env.get("ZINC_API_KEY");
-    if (!ZINC_API_KEY) {
-      throw new Error("ZINC_API_KEY not configured");
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const zincApiKey = Deno.env.get('ZINC_API_KEY');
+    
+    if (!zincApiKey) {
+      return new Response(JSON.stringify({ error: 'ZINC_API_KEY not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    const seedResults = {
-      categories: {} as Record<string, number>,
-      brands: {} as Record<string, number>,
-      brandRelated: {} as Record<string, number>,
-      totalProducts: 0,
-      totalCost: 0,
-      duration: 0
-    };
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const body = await req.json().catch(() => ({}));
+    const targetPerCategory = body.target_per_category || 40;
+    const requestedCategories: string[] | undefined = body.categories;
+    const dryRun = body.dry_run || false;
 
+    const categoriesToSeed = requestedCategories
+      ? SEED_CATEGORIES.filter(c => requestedCategories.includes(c.value))
+      : SEED_CATEGORIES;
+
+    const report: any[] = [];
+    let totalApiCalls = 0;
+    let totalProductsAdded = 0;
     const startTime = Date.now();
 
-    // Helper function to fetch from Zinc and preserve REAL review data
-    const fetchAndStoreProducts = async (query: string, metadata: { type: string; value: string }) => {
-      console.log(`🔍 Fetching: "${query}"`);
-      
-      try {
-        const response = await fetch("https://api.zinc.io/v1/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Basic ${btoa(ZINC_API_KEY + ":")}`
-          },
-          body: JSON.stringify({
-            query: query,
-            max_results: 100,
-            retailer: "amazon"
-          })
-        });
+    for (const cat of categoriesToSeed) {
+      // Count existing products matching this frontend category
+      const { count: existingCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .or(`search_terms.ilike.%${cat.value}%,metadata->>seeded_category.eq.${cat.value}`);
 
-        if (!response.ok) {
-          console.error(`❌ Zinc API error for "${query}": ${response.status}`);
-          return 0;
-        }
+      const current = existingCount || 0;
+      const deficit = Math.max(0, targetPerCategory - current);
 
-        const data = await response.json();
-        const results = data.results || [];
-
-        if (results.length === 0) {
-          console.warn(`⚠️ No results for "${query}"`);
-          return 0;
-        }
-
-        // CRITICAL: Preserve REAL review data from Zinc
-        const productsToInsert = results.map((p: any) => ({
-          product_id: p.product_id,
-          title: p.title,
-          description: p.product_description || p.title,
-          price: p.price,
-          image_url: p.main_image || p.image,
-          
-          // ✅ REAL Amazon review data from Zinc API
-          stars: p.stars || null,
-          review_count: p.review_count || null,
-          num_reviews: p.review_count || null,
-          question_count: p.question_count || null,
-          
-          brand: p.brand || metadata.value,
-          category: metadata.type === 'category' ? metadata.value : p.categories?.[0],
-          feature_bullets: p.feature_bullets || [],
-          
-          freshness_score: 100,
-          last_synced_at: new Date().toISOString()
-        }));
-
-        // Upsert to avoid duplicates
-        const { error } = await supabase
-          .from('products')
-          .upsert(productsToInsert, { 
-            onConflict: 'product_id',
-            ignoreDuplicates: false 
-          });
-
-        if (error) {
-          console.error(`❌ Database error for "${query}":`, error.message);
-          return 0;
-        }
-
-        console.log(`✅ Cached ${results.length} products for "${query}" with REAL review data`);
-        return results.length;
-      } catch (error) {
-        console.error(`❌ Error processing "${query}":`, error);
-        return 0;
+      if (deficit === 0) {
+        report.push({ category: cat.value, existing: current, added: 0, status: 'already_stocked' });
+        console.log(`✅ ${cat.value}: already has ${current} products, skipping`);
+        continue;
       }
+
+      if (dryRun) {
+        const pagesNeeded = Math.min(Math.ceil(deficit / 20), 3);
+        report.push({
+          category: cat.value, existing: current, deficit,
+          pages_needed: pagesNeeded,
+          estimated_cost: `$${(pagesNeeded * 0.01).toFixed(2)}`,
+          status: 'dry_run'
+        });
+        totalApiCalls += pagesNeeded;
+        continue;
+      }
+
+      // Fetch pages until we have enough (cap at 3 pages = ~60 products)
+      const pagesNeeded = Math.min(Math.ceil(deficit / 20), 3);
+      const allResults: any[] = [];
+
+      for (let page = 1; page <= pagesNeeded; page++) {
+        const results = await searchZinc(zincApiKey, cat.searchTerm, page);
+        allResults.push(...results);
+        totalApiCalls++;
+        if (page < pagesNeeded) await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Deduplicate by product_id
+      const seen = new Set<string>();
+      const uniqueProducts = allResults.filter(p => {
+        const id = p.product_id || p.asin;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+
+      // Map to DB format
+      const productsToUpsert = uniqueProducts.map(p => {
+        let price = typeof p.price === 'number' ? p.price : parseFloat(String(p.price).replace(/[$,]/g, '')) || 0;
+        if (price > 200) price = price / 100;
+
+        const metadata = {
+          stars: p.stars || p.rating || null,
+          review_count: p.review_count || p.num_reviews || null,
+          num_sales: p.num_sales || null,
+          main_image: p.main_image || p.image,
+          images: p.images || [p.main_image || p.image].filter(Boolean),
+          isBestSeller: p.isBestSeller || false,
+          bestSellerType: p.bestSellerType || null,
+          badgeText: p.badgeText || null,
+          source: 'seed_catalog',
+          source_query: cat.searchTerm,
+          seeded_category: cat.value,
+          cached_at: new Date().toISOString()
+        };
+
+        return {
+          product_id: p.product_id || p.asin,
+          title: p.title,
+          price,
+          image_url: p.main_image || p.image || p.thumbnail,
+          retailer: 'amazon',
+          brand: p.brand || null,
+          category: p.category || p.categories?.[0] || null,
+          search_terms: cat.value,
+          last_refreshed_at: new Date().toISOString(),
+          popularity_score: calculatePopularityScore(p),
+          metadata
+        };
+      }).filter(p => p.product_id && p.price > 0);
+
+      if (productsToUpsert.length > 0) {
+        for (let i = 0; i < productsToUpsert.length; i += 50) {
+          const batch = productsToUpsert.slice(i, i + 50);
+          const { error } = await supabase
+            .from('products')
+            .upsert(batch, { onConflict: 'product_id', ignoreDuplicates: false });
+          if (error) {
+            console.error(`❌ Upsert error for ${cat.value}:`, error.message);
+          }
+        }
+      }
+
+      totalProductsAdded += productsToUpsert.length;
+      report.push({
+        category: cat.value, existing: current,
+        fetched: allResults.length, added: productsToUpsert.length,
+        status: 'seeded'
+      });
+      console.log(`✅ ${cat.value}: +${productsToUpsert.length} products (was ${current})`);
+    }
+
+    const duration = Math.round((Date.now() - startTime) / 1000);
+    const summary = {
+      success: true,
+      total_categories: categoriesToSeed.length,
+      total_api_calls: totalApiCalls,
+      total_products_added: totalProductsAdded,
+      estimated_cost: `$${(totalApiCalls * 0.01).toFixed(2)}`,
+      duration_seconds: duration,
+      dry_run: dryRun,
+      report
     };
 
-    // 1. Seed categories (SKIPPED FOR NIKE TEST)
-    console.log("📦 Phase 1: Skipping categories for Nike-only test...");
-    if (CATEGORIES.length > 0) {
-      for (const category of CATEGORIES) {
-        const query = `best selling ${category}`;
-        const count = await fetchAndStoreProducts(query, { type: 'category', value: category });
-        seedResults.categories[category] = count;
-        seedResults.totalProducts += count;
-        seedResults.totalCost += 0.01;
-      }
-    }
+    console.log(`🎯 Seeding complete: ${totalProductsAdded} products, ${totalApiCalls} API calls ($${(totalApiCalls * 0.01).toFixed(2)}) in ${duration}s`);
 
-    // 2. Seed brands (20 brands × 100 products = 2,000 products, $0.20)
-    console.log("🏷️ Phase 2: Seeding brands...");
-    for (const brand of BRANDS) {
-      const query = `best selling ${brand}`;
-      const count = await fetchAndStoreProducts(query, { type: 'brand', value: brand });
-      seedResults.brands[brand] = count;
-      seedResults.totalProducts += count;
-      seedResults.totalCost += 0.01;
-    }
-
-    // 3. Seed brand-specific related products (20 brands × 5 related = 100 queries × 100 products = 10,000 products, $1.00)
-    console.log("🔗 Phase 3: Seeding related products for brands...");
-    for (const [brand, relatedQueries] of Object.entries(BRAND_RELATIONS)) {
-      for (const relatedQuery of relatedQueries) {
-        const count = await fetchAndStoreProducts(relatedQuery, { type: 'related', value: brand });
-        seedResults.brandRelated[relatedQuery] = count;
-        seedResults.totalProducts += count;
-        seedResults.totalCost += 0.01;
-      }
-    }
-
-    seedResults.duration = Math.round((Date.now() - startTime) / 1000);
-
-    console.log("🎉 Seed complete!");
-    console.log(`Total products: ${seedResults.totalProducts}`);
-    console.log(`Total cost: $${seedResults.totalCost.toFixed(2)}`);
-    console.log(`Duration: ${seedResults.duration}s`);
-
-    return new Response(JSON.stringify({
-      success: true,
-      message: `✅ Seeded ${seedResults.totalProducts} products with REAL Amazon review data for $${seedResults.totalCost.toFixed(2)}`,
-      details: {
-        ...seedResults,
-        breakdown: {
-          categories: `${CATEGORIES.length} categories → ${Object.values(seedResults.categories).reduce((a, b) => a + b, 0)} products ($${(CATEGORIES.length * 0.01).toFixed(2)})`,
-          brands: `${BRANDS.length} brands → ${Object.values(seedResults.brands).reduce((a, b) => a + b, 0)} products ($${(BRANDS.length * 0.01).toFixed(2)})`,
-          related: `${Object.keys(BRAND_RELATIONS).reduce((acc, key) => acc + BRAND_RELATIONS[key].length, 0)} related queries → ${Object.values(seedResults.brandRelated).reduce((a, b) => a + b, 0)} products ($${(Object.keys(BRAND_RELATIONS).reduce((acc, key) => acc + BRAND_RELATIONS[key].length, 0) * 0.01).toFixed(2)})`
-        }
-      }
-    }), { 
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    return new Response(JSON.stringify(summary), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error("❌ Seed error:", error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    }), { 
+    console.error('❌ Seed function error:', error);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });

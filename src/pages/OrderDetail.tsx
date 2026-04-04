@@ -4,7 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowLeft } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin, ArrowLeft, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getOrderPricingBreakdown } from "@/utils/orderPricingUtils";
@@ -54,6 +55,7 @@ const OrderDetail = () => {
       setIsLoading(true);
       
       try {
+        // RLS allows both buyer (user_id) and recipient (recipient_id) to see the order
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -66,6 +68,9 @@ const OrderDetail = () => {
           navigate("/orders");
           return;
         }
+
+        // Determine if current user is the recipient (not the buyer)
+        const isRecipientView = data.recipient_id === user.id && data.user_id !== user.id;
 
         if (data) {
           // Get complete pricing breakdown with backward compatibility
@@ -117,24 +122,26 @@ const OrderDetail = () => {
             scheduled_delivery_date: data.scheduled_delivery_date,
             isScheduledGift: !!isScheduledGift,
             isGiftOrder: isGift,
-            total: data.total_amount,
-            subtotal: pricingBreakdown.subtotal,
-            shipping_cost: pricingBreakdown.shipping_cost,
-            tax_amount: pricingBreakdown.tax_amount,
-            gifting_fee: pricingBreakdown.gifting_fee,
-            gifting_fee_name: pricingBreakdown.gifting_fee_name,
-            gifting_fee_description: pricingBreakdown.gifting_fee_description,
-            items: (data.line_items as any)?.items || [],
+            isRecipientView,
+            // Hide pricing from recipients
+            total: isRecipientView ? undefined : data.total_amount,
+            subtotal: isRecipientView ? undefined : pricingBreakdown.subtotal,
+            shipping_cost: isRecipientView ? undefined : pricingBreakdown.shipping_cost,
+            tax_amount: isRecipientView ? undefined : pricingBreakdown.tax_amount,
+            gifting_fee: isRecipientView ? undefined : pricingBreakdown.gifting_fee,
+            gifting_fee_name: isRecipientView ? undefined : pricingBreakdown.gifting_fee_name,
+            gifting_fee_description: isRecipientView ? undefined : pricingBreakdown.gifting_fee_description,
+            items: isRecipientView ? [] : ((data.line_items as any)?.items || []),
             shipping_info: displayShippingInfo,
             customerName: shopperName,
             recipientName: recipientName,
             tracking_number: data.tracking_number || null,
-            zinc_order_id: data.zinc_order_id || null,
+            zinc_order_id: isRecipientView ? null : (data.zinc_order_id || null),
             fulfilled_at: data.fulfilled_at || null,
             // Include timeline data for OrderTimeline component (cast to access JSONB fields)
             zinc_timeline_events: Array.isArray((data as any).zinc_timeline_events) ? (data as any).zinc_timeline_events : [],
             merchant_tracking_data: (data as any).merchant_tracking_data || {},
-            notes: typeof data.notes === 'object' ? data.notes : {}
+            notes: isRecipientView ? {} : (typeof data.notes === 'object' ? data.notes : {})
           };
           setOrder(transformedOrder);
         }
@@ -262,9 +269,13 @@ const OrderDetail = () => {
 
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h1 className="text-2xl font-bold">Order {formatOrderNumberWithHash(order.id)}</h1>
+          <h1 className="text-2xl font-bold">
+            {order.isRecipientView ? "Incoming Gift" : `Order ${formatOrderNumberWithHash(order.id)}`}
+          </h1>
           <p className="text-muted-foreground">
-            Placed on {new Date(order.date).toLocaleDateString()} • 
+            {order.isRecipientView
+              ? `A gift is on its way • `
+              : `Placed on ${new Date(order.date).toLocaleDateString()} • `}
             <OrderStatusBadge 
               status={order.status}
               orderId={order.id}
@@ -272,13 +283,11 @@ const OrderDetail = () => {
               stripeSessionId={order.stripe_session_id}
               createdAt={order.created_at}
               onStatusUpdate={(newStatus) => {
-                // Refresh order data when status updates
                 window.location.reload();
               }}
             />
           </p>
         </div>
-        {/* Message Vendor functionality removed per user request */}
         <div className="hidden md:flex gap-2">
           {order.status === "shipped" && (
             <Button onClick={handleTrackPackage}>
@@ -299,25 +308,50 @@ const OrderDetail = () => {
 
       {/* Order Summary and Details Grid */}
       <div className="grid gap-4 lg:grid-cols-3 mb-4 min-w-0">
-        <div className="lg:col-span-2 space-y-4 min-w-0">
-          <OrderSummaryCard order={order} />
-          
-          {/* Order Items - Responsive */}
-          {isMobile ? (
-            <MobileOrderItemsList 
-              order={order} 
-              onReorder={handleReorder}
-            />
-          ) : (
-            <EnhancedOrderItemsTable 
-              order={order} 
-              onReorder={handleReorder}
-            />
-          )}
-        </div>
+        {/* Left column: hide order items/summary for recipients */}
+        {!order.isRecipientView && (
+          <div className="lg:col-span-2 space-y-4 min-w-0">
+            <OrderSummaryCard order={order} />
+            
+            {/* Order Items - Responsive */}
+            {isMobile ? (
+              <MobileOrderItemsList 
+                order={order} 
+                onReorder={handleReorder}
+              />
+            ) : (
+              <EnhancedOrderItemsTable 
+                order={order} 
+                onReorder={handleReorder}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Recipient view: gift message card in place of items */}
+        {order.isRecipientView && (
+          <div className="lg:col-span-2 space-y-4 min-w-0">
+            <Card className="border border-border">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+                  <Gift className="h-8 w-8 text-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">A gift is on its way!</h3>
+                {order.gift_options?.giftMessage && !order.gift_options?.isSurpriseGift && (
+                  <p className="text-muted-foreground italic max-w-md mx-auto">
+                    "{order.gift_options.giftMessage}"
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  From {order.customerName || "Someone special"}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
-        <div className="space-y-4 min-w-0">
-          <ShippingInfoCard order={order} />
+        <div className={`space-y-4 min-w-0 ${order.isRecipientView ? 'lg:col-span-1' : ''}`}>
+          {!order.isRecipientView && <ShippingInfoCard order={order} />}
           
           {/* Tracking Information — show for shipped/delivered even without tracking number */}
           {(order.tracking_number || order.status === "shipped" || order.status === "delivered") && (

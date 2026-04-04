@@ -13,6 +13,7 @@ import LoadingFallback from "@/components/common/LoadingFallback";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import CoreNicoleExperience from "@/components/ai/nicole/CoreNicoleExperience";
 import ProfileDataIntegrityPanel from "@/components/settings/ProfileDataIntegrityPanel";
+import IncomingGiftsWidget from "@/components/dashboard/widgets/IncomingGiftsWidget";
 
 interface ActionCard {
   id: string;
@@ -202,6 +203,9 @@ const StreamlinedDashboard = () => {
       <div className="space-y-8">
         {/* Profile Data Integrity Panel - Top Priority */}
         <ProfileDataIntegrityPanel />
+
+        {/* Incoming Gifts - Show if recipient has gifts */}
+        <IncomingGiftsWidget />
         
         {/* Welcome Header */}
       <div className="text-center space-y-2">

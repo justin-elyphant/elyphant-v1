@@ -3177,6 +3177,7 @@ export type Database = {
           payment_intent_id: string | null
           payment_method_id: string | null
           payment_status: string | null
+          recipient_id: string | null
           scheduled_delivery_date: string | null
           setup_intent_id: string | null
           shipping_address: Json | null
@@ -3213,6 +3214,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_method_id?: string | null
           payment_status?: string | null
+          recipient_id?: string | null
           scheduled_delivery_date?: string | null
           setup_intent_id?: string | null
           shipping_address?: Json | null
@@ -3249,6 +3251,7 @@ export type Database = {
           payment_intent_id?: string | null
           payment_method_id?: string | null
           payment_status?: string | null
+          recipient_id?: string | null
           scheduled_delivery_date?: string | null
           setup_intent_id?: string | null
           shipping_address?: Json | null
@@ -3268,6 +3271,13 @@ export type Database = {
             columns: ["parent_order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

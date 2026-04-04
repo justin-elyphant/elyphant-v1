@@ -565,11 +565,17 @@ async function handleCheckoutSessionCompleted(
     console.log(`💾 [STEP 6] Single recipient detected - creating standard order...`);
     const group = deliveryGroups[0];
     
+    // Resolve recipient_id: set if this order is going to a different person
+    const resolvedRecipientId = (group.recipientId && group.recipientId !== 'self' && group.recipientId !== userId)
+      ? group.recipientId
+      : null;
+
     const orderData = {
       user_id: userId,
       guest_email: guestEmail,
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
+      recipient_id: resolvedRecipientId,
       status: isScheduled ? 'scheduled' : 'payment_confirmed',
       payment_status: session.payment_status === 'unpaid' ? 'authorized' : session.payment_status,
       total_amount: session.amount_total ? session.amount_total / 100 : 0,
@@ -757,6 +763,11 @@ async function handleCheckoutSessionCompleted(
       const groupTaxCents = Math.round(taxAmount * groupProportion);
       const groupGiftingFeeCents = Math.round(giftingFeeAmount * groupProportion);
       
+      // Resolve recipient_id for child orders
+      const childRecipientId = (group.recipientId && group.recipientId !== 'self' && group.recipientId !== userId)
+        ? group.recipientId
+        : null;
+
       const childOrderData = {
         user_id: userId,
         guest_email: guestEmail,
@@ -764,6 +775,7 @@ async function handleCheckoutSessionCompleted(
         payment_intent_id: session.payment_intent as string || null,
         parent_order_id: parentOrder.id,
         delivery_group_id: group.deliveryGroupId,
+        recipient_id: childRecipientId,
         status: isScheduled ? 'scheduled' : 'payment_confirmed',
         payment_status: session.payment_status === 'paid' ? 'paid' : 'pending',
         total_amount: calculateGroupTotal(group.items),
@@ -1022,6 +1034,8 @@ async function sendRecipientGiftNotification(
           sender_name: senderName,
           arrival_date: scheduledDate,
           occasion: occasion,
+          order_id: orderId,
+          is_new_user: false,
         }
       }
     });

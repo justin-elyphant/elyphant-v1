@@ -73,7 +73,16 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
               .order('created_at', { ascending: false });
 
             return {
-              ...wl,
+              id: wl.id,
+              user_id: wl.user_id,
+              title: wl.title,
+              description: wl.description || undefined,
+              is_public: wl.is_public,
+              created_at: wl.created_at,
+              updated_at: wl.updated_at,
+              category: (wl.category || undefined) as Wishlist['category'],
+              tags: Array.isArray(wl.tags) ? wl.tags as string[] : undefined,
+              priority: (wl.priority || undefined) as Wishlist['priority'],
               items: (items || []).map(item => ({
                 id: item.id,
                 wishlist_id: item.wishlist_id,
@@ -86,8 +95,7 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
                 brand: item.brand,
                 product_source: item.product_source,
               } as WishlistItem)),
-              category: wl.category as Wishlist['category'],
-            };
+            } as Wishlist;
           })
         );
 

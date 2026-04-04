@@ -207,6 +207,16 @@ serve(async (req) => {
     // CRITICAL: Accept both postal_code (preferred) and zip_code (legacy)
     const zipCode = shippingAddress.postal_code || shippingAddress.zip_code || shippingAddress.zipCode;
     
+    // Guard: detect address-label names and substitute with actual profile name
+    const addressLabelPatterns = /^(checkout address|home|work|office|default|my address|address)$/i;
+    if (addressLabelPatterns.test(shippingAddress.name?.trim())) {
+      const profileName = profile?.name || profile?.shipping_address?.name;
+      if (profileName && !addressLabelPatterns.test(profileName.trim())) {
+        console.log(`🔄 [NAME GUARD] Replaced address label "${shippingAddress.name}" with profile name "${profileName}"`);
+        shippingAddress.name = profileName;
+      }
+    }
+
     console.log('🔍 Validating shipping address fields...');
     const requiredShippingFields = {
       name: shippingAddress.name,

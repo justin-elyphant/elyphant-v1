@@ -360,11 +360,11 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           showLabel={purchaseStats.percentage > 0}
         />
         
-        {/* Privacy Toggle - Always visible top-left */}
-        <PrivacyToggle />
+        {/* Privacy Toggle - Always visible top-left (owner only) */}
+        {!readOnly && <PrivacyToggle />}
 
-        {/* Actions - Mobile uses dropdown, Desktop/Tablet uses delete button only */}
-        {isMobile ? <MobileActionMenu /> : <DeleteButton />}
+        {/* Actions - Mobile uses dropdown, Desktop/Tablet uses delete button only (owner only) */}
+        {!readOnly && (isMobile ? <MobileActionMenu /> : <DeleteButton />)}
 
         {/* Image Grid */}
         {renderImageGrid()}

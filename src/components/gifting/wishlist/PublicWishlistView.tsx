@@ -6,14 +6,13 @@ import CompactProfileHeader from "./CompactProfileHeader";
 import UnifiedWishlistCollectionCard from "./UnifiedWishlistCollectionCard";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Wishlist, WishlistItem } from "@/types/profile";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { connectionService } from "@/services/connectionService";
 import type { PublicProfileData } from "@/services/publicProfileService";
 import SignupCTA from "@/components/user-profile/SignupCTA";
 import { useSignupCTA } from "@/hooks/useSignupCTA";
-import InlineWishlistViewer from "./InlineWishlistViewer";
+import InlineWishlistViewer from "@/components/user-profile/InlineWishlistViewer";
 
 interface PublicWishlistViewProps {
   profile: PublicProfileData;
@@ -77,16 +76,16 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
               ...wl,
               items: (items || []).map(item => ({
                 id: item.id,
+                wishlist_id: item.wishlist_id,
+                product_id: item.product_id,
+                title: item.title || item.name,
                 name: item.name,
                 price: item.price || 0,
                 image_url: item.image_url || '/placeholder.svg',
-                product_url: item.product_url,
-                notes: item.notes,
-                priority: item.priority as WishlistItem['priority'],
-                status: (item.status || 'active') as WishlistItem['status'],
                 created_at: item.created_at,
-                product_id: item.product_id,
-              })),
+                brand: item.brand,
+                product_source: item.product_source,
+              } as WishlistItem)),
               category: wl.category as Wishlist['category'],
             };
           })
@@ -114,7 +113,16 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
       return;
     }
     try {
-      await connectionService.sendConnectionRequest(user!.id, profile.id);
+      const { error } = await supabase
+        .from('user_connections')
+        .insert({
+          user_id: user!.id,
+          connected_user_id: profile.id,
+          status: 'pending',
+          relationship: 'friend'
+        });
+
+      if (error) throw error;
       toast.success(`Connection request sent to ${profile.name}`);
     } catch (error) {
       toast.error("Failed to send connection request");
@@ -130,11 +138,25 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
     if (selectedWishlist) {
       return (
         <SidebarLayout>
-          <InlineWishlistViewer
-            wishlist={selectedWishlist}
-            onBack={() => setSelectedWishlistId(null)}
-            isOwner={false}
-          />
+          <div className="bg-background min-h-screen">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedWishlistId(null)}
+                className="gap-2 mb-4 min-h-[44px]"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to {profile.name}'s Wishlists
+              </Button>
+            </div>
+            <InlineWishlistViewer
+              wishlist={selectedWishlist}
+              profileOwner={{ id: profile.id, name: profile.name }}
+              isConnected={profile.is_connected}
+              onClose={() => setSelectedWishlistId(null)}
+            />
+          </div>
         </SidebarLayout>
       );
     }
@@ -146,7 +168,7 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
         {/* Compact Profile Header - Visitor Mode */}
         <CompactProfileHeader
           wishlists={wishlists}
-          onCreateWishlist={() => {}} // No-op for visitors
+          onCreateWishlist={() => {}}
           showGiftTracker={false}
           visitorMode={true}
           visitorProfile={{

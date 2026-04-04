@@ -56,7 +56,7 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
             
             return (
               <div key={productId} className="flex" style={{ contentVisibility: index > 10 ? 'auto' : 'visible' }}>
-                <AirbnbStyleProductCard
+                <ProductCard
                   product={product}
                   viewMode="grid"
                   onProductClick={() => handleProductClick(productId)}
@@ -86,7 +86,7 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
         
         return (
           <div key={productId} className="intersection-target">
-            <AirbnbStyleProductCard
+            <ProductCard
               product={product}
               viewMode={viewMode}
               onProductClick={() => handleProductClick(productId)}

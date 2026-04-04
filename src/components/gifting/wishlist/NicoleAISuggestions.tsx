@@ -100,7 +100,7 @@ const NicoleAISuggestions: React.FC<NicoleAISuggestionsProps> = ({
   const renderProductGrid = (productList: any[]) => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
       {productList.map((product) => (
-        <AirbnbStyleProductCard
+        <ProductCard
           key={product.product_id || product.id}
           product={product}
           onProductClick={() => {}}

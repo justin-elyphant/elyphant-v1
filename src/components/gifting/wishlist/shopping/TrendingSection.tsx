@@ -42,7 +42,7 @@ const TrendingSection = ({ items, onQuickAdd, onProductClick }: TrendingSectionP
           const product = transformToProduct(item);
           return (
             <div key={item.id} className="flex-shrink-0 w-36 snap-start">
-              <AirbnbStyleProductCard
+              <ProductCard
                 product={product}
                 onProductClick={() => {
                   onProductClick?.(product);

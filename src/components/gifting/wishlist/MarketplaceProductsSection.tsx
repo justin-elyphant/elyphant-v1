@@ -46,7 +46,7 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
   };
 
   const handleShare = (product: Product) => {
-    // Share functionality handled by AirbnbStyleProductCard
+    // Share functionality handled by ProductCard
     console.log('Share product:', product);
   };
   if (isLoading) {
@@ -80,7 +80,7 @@ const MarketplaceProductsSection: React.FC<MarketplaceProductsSectionProps> = ({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {products.slice(0, 20).map((product) => (
-            <AirbnbStyleProductCard
+            <ProductCard
               key={product.product_id || product.id}
               product={product}
               onProductClick={() => handleProductClick(product)}

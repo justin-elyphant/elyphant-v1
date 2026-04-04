@@ -4,7 +4,7 @@ import ProductCard from "./ProductCard";
 
 // Union type for all possible product card props interfaces
 type UnifiedProductCardProps = 
-  // AirbnbStyleProductCard interface (already supported)
+  // ProductCard interface (already supported)
   | {
       cardType?: "airbnb";
       product: Product;
@@ -66,7 +66,7 @@ type UnifiedProductCardProps =
 
 /**
  * UnifiedProductCard - A wrapper component that provides backward compatibility
- * for all existing product card interfaces while using the enhanced AirbnbStyleProductCard
+ * for all existing product card interfaces while using the enhanced ProductCard
  * as the underlying implementation.
  * 
  * This component maps different legacy prop interfaces to the unified interface,
@@ -75,12 +75,12 @@ type UnifiedProductCardProps =
 const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
   const { cardType = "airbnb", ...otherProps } = props;
 
-  // Map different card types to unified AirbnbStyleProductCard props
+  // Map different card types to unified ProductCard props
   switch (cardType) {
     case "modern": {
       const modernProps = props as Extract<UnifiedProductCardProps, { cardType: "modern" }>;
       return (
-        <AirbnbStyleProductCard
+        <ProductCard
           product={modernProps.product}
           onProductClick={modernProps.onClick}
           statusBadge={modernProps.statusBadge}
@@ -96,7 +96,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
       const mobileProps = props as Extract<UnifiedProductCardProps, { cardType: "mobile" }>;
       const productId = String(mobileProps.product.product_id || mobileProps.product.id);
       return (
-        <AirbnbStyleProductCard
+        <ProductCard
           product={mobileProps.product}
           onProductClick={() => mobileProps.onProductClick(productId)}
           onWishlistClick={mobileProps.onWishlistClick}
@@ -109,7 +109,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
     case "gifting": {
       const giftingProps = props as Extract<UnifiedProductCardProps, { cardType: "gifting" }>;
       return (
-        <AirbnbStyleProductCard
+        <ProductCard
           product={giftingProps.product}
           onProductClick={giftingProps.onClick || (() => {})}
           isWishlisted={giftingProps.isWishlisted}
@@ -126,7 +126,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
     case "general": {
       const generalProps = props as Extract<UnifiedProductCardProps, { cardType: "general" }>;
       return (
-        <AirbnbStyleProductCard
+        <ProductCard
           product={generalProps.product}
           onProductClick={generalProps.onClick || (() => {})}
           statusBadge={generalProps.statusBadge}
@@ -141,7 +141,7 @@ const UnifiedProductCard: React.FC<UnifiedProductCardProps> = (props) => {
     default: {
       // Default to airbnb style (direct pass-through)
       const airbnbProps = props as Extract<UnifiedProductCardProps, { cardType?: "airbnb" }>;
-      return <AirbnbStyleProductCard {...airbnbProps} />;
+      return <ProductCard {...airbnbProps} />;
     }
   }
 };

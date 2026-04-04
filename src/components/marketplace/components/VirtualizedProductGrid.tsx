@@ -147,7 +147,7 @@ const VirtualizedProductCard = memo<{
 }>(({ product, onProductClick, onAddToCart, onShare, statusBadge, style }) => {
   return (
     <div style={style}>
-      <AirbnbStyleProductCard
+      <ProductCard
         product={product}
         onProductClick={onProductClick}
         statusBadge={statusBadge}

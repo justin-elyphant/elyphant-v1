@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUnifiedWishlistSystem } from "@/hooks/useUnifiedWishlistSystem";
 import { useAuth } from "@/contexts/auth";
 import { sortProducts } from "./hooks/utils/categoryUtils";
-// ProductItem removed during consolidation - ProductGridDisplay now uses AirbnbStyleProductCard directly
+// ProductItem removed during consolidation - ProductGridDisplay now uses ProductCard directly
 import SignUpDialog from "./SignUpDialog";
 import ProductGridDisplay from "./ProductGridDisplay";
 

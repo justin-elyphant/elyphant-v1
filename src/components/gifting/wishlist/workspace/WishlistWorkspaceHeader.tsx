@@ -109,7 +109,7 @@ const WishlistWorkspaceHeader = ({
             {/* Title & metadata */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 lg:gap-3 flex-wrap mb-1 lg:mb-2">
-                <h1 className="text-xl lg:text-3xl font-bold text-white truncate">
+                <h1 className="text-xl lg:text-3xl font-bold text-foreground truncate">
                   {wishlist.title}
                 </h1>
                 

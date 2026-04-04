@@ -1343,6 +1343,14 @@ serve(async (req) => {
           
           const facets = generateFacetsFromResults(sortedProducts);
           
+          // GAP 6: Track search impressions for cached results too (non-blocking)
+          const cachedImpressionIds = sortedProducts.map((p: any) => p.product_id).filter(Boolean);
+          if (supabase && cachedImpressionIds.length > 0) {
+            EdgeRuntime.waitUntil(
+              supabase.rpc('increment_search_impressions', { product_ids: cachedImpressionIds }).catch(() => {})
+            );
+          }
+          
           return new Response(JSON.stringify({
             products: sortedProducts,
             results: sortedProducts,

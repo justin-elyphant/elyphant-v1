@@ -115,7 +115,7 @@ const MobileDashboardGrid = () => {
     { id: "search", label: "Search", icon: <Search className="h-6 w-6" />, href: "/search", category: "Communication & AI" },
     
     // Personal & Settings
-    { id: "profile", label: "Profile", icon: <User className="h-6 w-6" />, href: "/profile", category: "Personal & Settings" },
+    { id: "profile", label: "Profile", icon: <User className="h-6 w-6" />, href: "/wishlists", category: "Personal & Settings" },
     { id: "recently", label: "Recent", icon: <Calendar className="h-6 w-6" />, href: "/recently-viewed", category: "Personal & Settings" },
     { id: "payments", label: "Payments", icon: <CreditCard className="h-6 w-6" />, href: "/payments", category: "Personal & Settings" },
     { id: "settings", label: "Settings", icon: <Settings className="h-6 w-6" />, onClick: () => setShowQuickActions(true), category: "Personal & Settings" },

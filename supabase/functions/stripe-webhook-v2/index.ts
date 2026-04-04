@@ -565,11 +565,17 @@ async function handleCheckoutSessionCompleted(
     console.log(`💾 [STEP 6] Single recipient detected - creating standard order...`);
     const group = deliveryGroups[0];
     
+    // Resolve recipient_id: set if this order is going to a different person
+    const resolvedRecipientId = (group.recipientId && group.recipientId !== 'self' && group.recipientId !== userId)
+      ? group.recipientId
+      : null;
+
     const orderData = {
       user_id: userId,
       guest_email: guestEmail,
       checkout_session_id: sessionId,
       payment_intent_id: session.payment_intent as string || null,
+      recipient_id: resolvedRecipientId,
       status: isScheduled ? 'scheduled' : 'payment_confirmed',
       payment_status: session.payment_status === 'unpaid' ? 'authorized' : session.payment_status,
       total_amount: session.amount_total ? session.amount_total / 100 : 0,

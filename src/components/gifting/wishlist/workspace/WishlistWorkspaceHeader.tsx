@@ -73,12 +73,11 @@ const WishlistWorkspaceHeader = ({
   return (
     <>
       {/* Gradient Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-sky-500">
-        {/* Decorative pattern overlay */}
-        <div className="absolute inset-0 opacity-10">
+      <div className="relative overflow-hidden bg-muted border-b border-border">
+        <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-                             radial-gradient(circle at 75% 75%, white 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 1px, transparent 1px),
+                             radial-gradient(circle at 75% 75%, currentColor 1px, transparent 1px)`,
             backgroundSize: '40px 40px'
           }} />
         </div>

@@ -23,8 +23,10 @@ export interface PublicProfileData {
 }
 
 export const publicProfileService = {
-  async getProfileByIdentifier(identifier: string): Promise<PublicProfileData | null> {
+  async getProfileByIdentifier(rawIdentifier: string): Promise<PublicProfileData | null> {
     try {
+      // Strip leading @ if present (e.g. @justin → justin)
+      const identifier = rawIdentifier.startsWith('@') ? rawIdentifier.slice(1) : rawIdentifier;
       console.log("🔍 Fetching public profile for identifier:", identifier);
       
       // Get current user for connection status checks

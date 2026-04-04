@@ -39,10 +39,11 @@ interface BuyNowDrawerProps {
 }
 
 interface SelectedRecipient {
-  type: 'self' | 'connection';
+  type: 'self' | 'connection' | 'manual_address';
   name: string;
   address: any;
   connectionId?: string;
+  recipientEmail?: string;
 }
 
 const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({

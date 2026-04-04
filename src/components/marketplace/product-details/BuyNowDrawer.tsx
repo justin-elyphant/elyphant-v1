@@ -39,10 +39,11 @@ interface BuyNowDrawerProps {
 }
 
 interface SelectedRecipient {
-  type: 'self' | 'connection';
+  type: 'self' | 'connection' | 'manual_address';
   name: string;
   address: any;
   connectionId?: string;
+  recipientEmail?: string;
 }
 
 const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
@@ -140,7 +141,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
         variationText: variationText || undefined,
       };
 
-      const isGift = selectedRecipient?.type === 'connection';
+      const isGift = selectedRecipient?.type === 'connection' || selectedRecipient?.type === 'manual_address';
       const recipientAddr = selectedRecipient?.address;
 
       const shippingInfo = isGift && recipientAddr ? {
@@ -190,6 +191,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
               delivery_scenario: isGift ? "gift" : "self",
               payment_method_id: activePayment?.stripe_payment_method_id || "",
               ...(isGift && selectedRecipient?.connectionId ? { recipient_connection_id: selectedRecipient.connectionId } : {}),
+              ...(selectedRecipient?.type === 'manual_address' && selectedRecipient?.recipientEmail ? { recipient_email: selectedRecipient.recipientEmail, recipient_name: selectedRecipient.name } : {}),
               ...(giftNote.trim() ? { gift_message: giftNote.trim() } : {}),
             },
           },
@@ -305,7 +307,7 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                     <SimpleRecipientSelector
                       embedded={true}
                       value={selectedRecipient ? {
-                        type: selectedRecipient.type === 'self' ? 'self' : 'connection',
+                        type: selectedRecipient.type === 'self' ? 'self' : selectedRecipient.type === 'manual_address' ? 'manual_address' : 'connection',
                         connectionId: selectedRecipient.connectionId,
                         connectionName: selectedRecipient.name,
                         shippingAddress: selectedRecipient.address ? {
@@ -318,56 +320,38 @@ const BuyNowDrawer: React.FC<BuyNowDrawerProps> = ({
                         } : undefined,
                       } : null}
                       onChange={(selected) => {
-                        handleSelectRecipient({
-                          type: selected.type === 'self' ? 'self' : 'connection',
-                          name: selected.connectionName || userName,
-                          address: selected.shippingAddress ? {
-                            address_line1: selected.shippingAddress.address,
-                            address_line2: selected.shippingAddress.addressLine2 || '',
-                            city: selected.shippingAddress.city,
-                            state: selected.shippingAddress.state,
-                            zip_code: selected.shippingAddress.zipCode,
-                            country: selected.shippingAddress.country || 'US',
-                          } : defaultAddress?.address,
-                          connectionId: selected.connectionId,
-                        });
+                        if (selected.type === 'manual_address') {
+                          handleSelectRecipient({
+                            type: 'manual_address',
+                            name: selected.recipientName || selected.connectionName || 'Recipient',
+                            address: selected.shippingAddress ? {
+                              address_line1: selected.shippingAddress.address,
+                              address_line2: selected.shippingAddress.addressLine2 || '',
+                              city: selected.shippingAddress.city,
+                              state: selected.shippingAddress.state,
+                              zip_code: selected.shippingAddress.zipCode,
+                              country: selected.shippingAddress.country || 'US',
+                            } : null,
+                            recipientEmail: selected.recipientEmail,
+                          });
+                        } else {
+                          handleSelectRecipient({
+                            type: selected.type === 'self' ? 'self' : 'connection',
+                            name: selected.connectionName || userName,
+                            address: selected.shippingAddress ? {
+                              address_line1: selected.shippingAddress.address,
+                              address_line2: selected.shippingAddress.addressLine2 || '',
+                              city: selected.shippingAddress.city,
+                              state: selected.shippingAddress.state,
+                              zip_code: selected.shippingAddress.zipCode,
+                              country: selected.shippingAddress.country || 'US',
+                            } : defaultAddress?.address,
+                            connectionId: selected.connectionId,
+                          });
+                        }
                       }}
                       userAddress={defaultAddress?.address}
                       userName={userName}
-                      onInviteNew={async (name, email) => {
-                        try {
-                          // Create a pending_invitation connection
-                          const { data: { user: currentUser } } = await supabase.auth.getUser();
-                          if (!currentUser) return;
-
-                          const { data: newConnection, error } = await supabase
-                            .from('user_connections')
-                            .insert({
-                              user_id: currentUser.id,
-                              pending_recipient_email: email,
-                              pending_recipient_name: name,
-                              status: 'pending_invitation',
-                              relationship_type: 'friend',
-                            })
-                            .select()
-                            .single();
-
-                          if (error) throw error;
-
-                          // Auto-select the new recipient
-                          handleSelectRecipient({
-                            type: 'connection',
-                            name,
-                            address: null,
-                            connectionId: newConnection.id,
-                          });
-                          setRecipientOpen(false);
-                          toast.success(`Invitation sent to ${name}. They'll be asked for their shipping address.`);
-                        } catch (err) {
-                          console.error('Error creating invitation:', err);
-                          toast.error('Failed to send invitation');
-                        }
-                      }}
                     />
                   </div>
                 </CollapsibleContent>

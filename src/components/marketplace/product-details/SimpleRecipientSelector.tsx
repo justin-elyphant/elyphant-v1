@@ -12,7 +12,7 @@ import { useEnhancedConnections, EnhancedConnection } from "@/hooks/profile/useE
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 export interface SelectedRecipient {
-  type: 'self' | 'connection' | 'later';
+  type: 'self' | 'connection' | 'later' | 'manual_address';
   connectionId?: string;
   connectionName?: string;
   shippingAddress?: {
@@ -26,14 +26,16 @@ export interface SelectedRecipient {
     phone?: string;
   };
   addressVerified?: boolean;
-  recipientDob?: string; // Birthday in MM-DD format from profile
+  recipientDob?: string;
   recipientImportantDates?: Array<{
     id?: string;
     title: string;
     date: string;
     type: string;
     description?: string;
-  }>; // Important dates like anniversaries from profile
+  }>;
+  recipientEmail?: string;
+  recipientName?: string;
 }
 
 interface SimpleRecipientSelectorProps {
@@ -55,9 +57,13 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [inviteName, setInviteName] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [showNewRecipientForm, setShowNewRecipientForm] = useState(false);
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientEmail, setNewRecipientEmail] = useState("");
+  const [newRecipientStreet, setNewRecipientStreet] = useState("");
+  const [newRecipientCity, setNewRecipientCity] = useState("");
+  const [newRecipientState, setNewRecipientState] = useState("");
+  const [newRecipientZip, setNewRecipientZip] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
@@ -116,6 +122,7 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     if (!value) return "Select recipient";
     if (value.type === 'self') return `Ship to ${userName}`;
     if (value.type === 'later') return "Assign recipient in cart";
+    if (value.type === 'manual_address') return `Send to ${value.recipientName || value.connectionName}`;
     if (value.connectionName) return value.connectionName;
     return "Select recipient";
   };
@@ -179,67 +186,127 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
     setSearchQuery("");
   };
 
-  const handleInviteSubmit = () => {
-    if (inviteName.trim() && inviteEmail.trim() && onInviteNew) {
+  const handleNewRecipientSubmit = () => {
+    if (newRecipientName.trim() && newRecipientEmail.trim() && newRecipientStreet.trim() && newRecipientCity.trim() && newRecipientState.trim() && newRecipientZip.trim()) {
       triggerHapticFeedback('success');
-      onInviteNew(inviteName.trim(), inviteEmail.trim());
-      setInviteName("");
-      setInviteEmail("");
-      setShowInviteForm(false);
+      onChange({
+        type: 'manual_address',
+        connectionName: newRecipientName.trim(),
+        recipientName: newRecipientName.trim(),
+        recipientEmail: newRecipientEmail.trim(),
+        shippingAddress: {
+          name: newRecipientName.trim(),
+          address: newRecipientStreet.trim(),
+          city: newRecipientCity.trim(),
+          state: newRecipientState.trim(),
+          zipCode: newRecipientZip.trim(),
+          country: 'US',
+        },
+        addressVerified: true,
+      });
+      resetNewRecipientForm();
       setOpen(false);
     }
   };
 
-  const resetInviteForm = () => {
-    setShowInviteForm(false);
-    setInviteName("");
-    setInviteEmail("");
+  const resetNewRecipientForm = () => {
+    setShowNewRecipientForm(false);
+    setNewRecipientName("");
+    setNewRecipientEmail("");
+    setNewRecipientStreet("");
+    setNewRecipientCity("");
+    setNewRecipientState("");
+    setNewRecipientZip("");
   };
 
   // The inner content (search, connections list, invite form)
   const innerContent = (
     <div ref={contentRef} className={cn(!embedded && "mt-2 rounded-lg border bg-background shadow-sm")}>
-      {/* Invite Form */}
-      {showInviteForm ? (
+      {/* Send to Someone New Form */}
+      {showNewRecipientForm ? (
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-sm">Invite New Recipient</h3>
-            <Button variant="ghost" size="sm" onClick={resetInviteForm} className="h-8 px-2">
+            <h3 className="font-semibold text-sm">Send to Someone New</h3>
+            <Button variant="ghost" size="sm" onClick={resetNewRecipientForm} className="h-8 px-2">
               Cancel
             </Button>
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="invite-name" className="text-xs">Name</Label>
+              <Label htmlFor="new-recipient-name" className="text-xs">Recipient's Name</Label>
               <Input
-                id="invite-name"
-                placeholder="Recipient's name"
-                value={inviteName}
-                onChange={(e) => setInviteName(e.target.value)}
+                id="new-recipient-name"
+                placeholder="e.g. Grandma Jane"
+                value={newRecipientName}
+                onChange={(e) => setNewRecipientName(e.target.value)}
                 className="h-11 text-base"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="invite-email" className="text-xs">Email</Label>
+              <Label htmlFor="new-recipient-email" className="text-xs">Email</Label>
               <Input
-                id="invite-email"
+                id="new-recipient-email"
                 type="email"
                 placeholder="recipient@email.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                value={newRecipientEmail}
+                onChange={(e) => setNewRecipientEmail(e.target.value)}
                 className="h-11 text-base"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-recipient-street" className="text-xs">Street Address</Label>
+              <Input
+                id="new-recipient-street"
+                placeholder="123 Main St, Apt 4"
+                value={newRecipientStreet}
+                onChange={(e) => setNewRecipientStreet(e.target.value)}
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-city" className="text-xs">City</Label>
+                <Input
+                  id="new-recipient-city"
+                  placeholder="City"
+                  value={newRecipientCity}
+                  onChange={(e) => setNewRecipientCity(e.target.value)}
+                  className="h-11 text-base"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-state" className="text-xs">State</Label>
+                <Input
+                  id="new-recipient-state"
+                  placeholder="CA"
+                  value={newRecipientState}
+                  onChange={(e) => setNewRecipientState(e.target.value)}
+                  className="h-11 text-base"
+                  maxLength={2}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-recipient-zip" className="text-xs">ZIP</Label>
+                <Input
+                  id="new-recipient-zip"
+                  placeholder="90210"
+                  value={newRecipientZip}
+                  onChange={(e) => setNewRecipientZip(e.target.value)}
+                  className="h-11 text-base"
+                  maxLength={10}
+                />
+              </div>
+            </div>
           </div>
           <Button
-            onClick={handleInviteSubmit}
-            disabled={!inviteName.trim() || !inviteEmail.trim()}
-            className="w-full h-11 bg-gradient-to-r from-purple-600 to-sky-500 hover:from-purple-700 hover:to-sky-600 text-white"
+            onClick={handleNewRecipientSubmit}
+            disabled={!newRecipientName.trim() || !newRecipientEmail.trim() || !newRecipientStreet.trim() || !newRecipientCity.trim() || !newRecipientState.trim() || !newRecipientZip.trim()}
+            className="w-full h-11 bg-red-600 hover:bg-red-700 text-white"
           >
-            Send Invitation
+            Use This Address
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            They'll receive an email to share their shipping address
+            They'll get an email about their gift with an invite to join Elyphant
           </p>
         </div>
       ) : (
@@ -371,27 +438,25 @@ export const SimpleRecipientSelector: React.FC<SimpleRecipientSelectorProps> = (
               </div>
             )}
 
-            {/* 4. Invite New Recipient - BOTTOM (least common action) */}
-            {onInviteNew && (
-              <div className="p-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHapticFeedback('light');
-                    setShowInviteForm(true);
-                  }}
-                  className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-sky-500">
-                    <UserPlus className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Invite New Recipient</div>
-                    <div className="text-xs text-muted-foreground">Send an invitation via email</div>
-                  </div>
-                </button>
-              </div>
-            )}
+            {/* 4. Send to Someone New - BOTTOM */}
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback('light');
+                  setShowNewRecipientForm(true);
+                }}
+                className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent cursor-pointer min-h-[44px] touch-manipulation"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600">
+                  <UserPlus className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Send to Someone New</div>
+                  <div className="text-xs text-muted-foreground">Enter their name & shipping address</div>
+                </div>
+              </button>
+            </div>
 
             {/* Assign Later Option */}
             {!embedded && (

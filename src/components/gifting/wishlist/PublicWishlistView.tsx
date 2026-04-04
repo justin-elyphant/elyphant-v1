@@ -123,12 +123,12 @@ const PublicWishlistView: React.FC<PublicWishlistViewProps> = ({ profile }) => {
     try {
       const { error } = await supabase
         .from('user_connections')
-        .insert({
+        .insert([{
           user_id: user!.id,
           connected_user_id: profile.id,
           status: 'pending',
           relationship: 'friend'
-        });
+        }]);
 
       if (error) throw error;
       toast.success(`Connection request sent to ${profile.name}`);

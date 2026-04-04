@@ -1646,7 +1646,7 @@ const handler = async (req: Request): Promise<Response> => {
     let emailRecipient = recipientEmail;
 
     // If orderId provided for order events, fetch full order details from DB
-    const orderFetchEventTypes = ['order_confirmation', 'guest_order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed'];
+    const orderFetchEventTypes = ['order_confirmation', 'guest_order_confirmation', 'order_pending_payment', 'order_shipped', 'order_failed', 'order_delivered'];
     if (orderFetchEventTypes.includes(eventType) && orderId && !emailData) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

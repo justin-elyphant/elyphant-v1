@@ -35,7 +35,7 @@ const PopularBrands = () => {
     {
       id: "adidas",
       name: "Adidas",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png",
+      logo: "/images/brands/adidas-logo.png",
       searchTerm: "adidas"
     },
     {

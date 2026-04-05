@@ -355,6 +355,13 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           </span>
         </div>
 
+        {/* Brand Name - Trust Signal */}
+        {product.brand && (
+          <p className="text-xs text-muted-foreground mb-1 truncate">
+            {product.brand}
+          </p>
+        )}
+
         {/* Rating - Using Shared Component */}
         <ProductRating 
           rating={getRating()}

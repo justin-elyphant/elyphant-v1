@@ -36,7 +36,7 @@ const popularBrands = [
   { 
     id: 5, 
     name: "Adidas", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png", 
+    logoUrl: "/images/brands/adidas-logo.png", 
     productCount: 134 
   },
   { 

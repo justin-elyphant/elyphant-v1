@@ -87,7 +87,7 @@ export const brandData: Record<string, BrandData> = {
   adidas: {
     id: "adidas",
     name: "Adidas",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png",
+    logo: "/images/brands/adidas-logo.png",
     searchTerm: "adidas",
     heroTagline: "Impossible is Nothing",
     description: "Discover Adidas' iconic three stripes collection featuring premium sportswear and lifestyle products.",

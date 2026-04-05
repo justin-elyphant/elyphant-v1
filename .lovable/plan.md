@@ -1,48 +1,29 @@
 
 
-## Seed Baby & Wedding Subcollections
+## Add Brand Name to Product Card Tile
 
-### What We're Doing
+### Problem
+The brand name (`product.brand`) exists in the data and is passed around for wishlist buttons and title cleaning, but it's never displayed on the card tile. Adding it increases trust and helps shoppers identify products quickly.
 
-The Baby and Wedding landing pages each have 5 subcollections (plus "All Items") that trigger specific search queries. Currently, these subcollection search terms have no cached products, so clicking them hits the Zinc API live or returns empty results. We need to pre-seed each subcollection.
+### Change
 
-### Subcollections to Seed
+**File: `src/components/marketplace/ProductCard.tsx`**
 
-**Wedding (5 subcollections):**
+Add the brand name below the title/price row (around line 357), styled as a subtle gray text — consistent with the Lululemon aesthetic:
 
-| Subcollection | Search Term | Target Products |
-|---|---|---|
-| Bride & Groom | "wedding gifts for couple" | 20 |
-| Bridal Party | "bridal party gifts" | 20 |
-| Registry Favorites | "wedding registry gifts" | 20 |
-| Wedding Decor | "wedding decorations" | 20 |
-| Honeymoon | "honeymoon essentials" | 20 |
+```tsx
+{/* Brand Name - Trust Signal */}
+{product.brand && (
+  <p className="text-xs text-muted-foreground mb-1 truncate">
+    {product.brand}
+  </p>
+)}
+```
 
-**Baby (5 subcollections):**
+This goes right after the title/price `div` (line 356) and before the `ProductRating` component (line 359). Single line, truncated, small gray text — clean and unobtrusive.
 
-| Subcollection | Search Term | Target Products |
-|---|---|---|
-| Baby Essentials | "baby essentials" | 20 |
-| Diapers & Wipes | "diapers and wipes" | 20 |
-| Top Baby Brands | "top baby products" | 20 |
-| Nursery Decor | "nursery decor" | 20 |
-| Baby Clothing | "baby clothing" | 20 |
-
-### Cost Estimate
-
-- 10 subcollections x 20 products = 200 Zinc API calls
-- At $0.01/call = **$2.00 total**
-
-### Implementation
-
-**Step 1: Call `seed-product-catalog` with subcollection search terms**
-- Invoke the existing seeding function with each subcollection's exact `searchTerm` value
-- Tag each product's `search_terms` column with the subcollection search term so cache lookups match
-- Run in 2 batches (Wedding batch, Baby batch) to avoid timeouts
-
-**Step 2: Verify cache hits**
-- After seeding, confirm that clicking each subcollection card returns cached products instead of triggering live Zinc calls
-
-### Files Modified
-- None -- uses the existing `seed-product-catalog` edge function with new search terms passed at invocation time
+### What Stays Unchanged
+- Full product detail page (`ProductDetails.tsx`) already shows brand — no changes needed there
+- No backend or data changes
+- All other card styling untouched
 

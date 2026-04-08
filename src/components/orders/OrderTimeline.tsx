@@ -53,6 +53,8 @@ const upcomingDescriptions: Record<string, string> = {
 const OrderTimeline = ({
   orderStatus,
   orderDate,
+  estimatedDelivery,
+  fulfilledAt,
   trackingEvents,
   zincTimelineEvents = [],
   merchantTrackingData,

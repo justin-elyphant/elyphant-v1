@@ -40,6 +40,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
       gifting_fee: giftingFeeFromLineItems,
       gifting_fee_name: 'Elyphant Gifting Fee',
       gifting_fee_description: 'Platform service fee',
+      beta_credits_applied: betaCreditsFromLineItems,
       total: order.total || order.total_amount
     };
   }

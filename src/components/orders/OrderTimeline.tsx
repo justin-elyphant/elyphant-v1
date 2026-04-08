@@ -72,22 +72,41 @@ const OrderTimeline = ({
 
   // Build timeline events from shared steps
   const events = steps.map((step) => {
-    const timestamp = step.timestamp
-      ? new Date(step.timestamp)
-      : new Date(baseTime + (estimatedOffsets[step.id] || 0));
+    const isUpcoming = step.status === "upcoming";
     const Icon = stepIcons[step.id] || Package;
     const trackingUrl =
       step.id === "shipped"
         ? merchantTrackingData?.merchant_order_ids?.[0]?.tracking_url
         : undefined;
 
+    // For upcoming steps, don't show a timestamp (misleading)
+    // For delivered upcoming steps, show estimated delivery if available
+    let timestamp: Date | null = null;
+    if (!isUpcoming && step.timestamp) {
+      timestamp = new Date(step.timestamp);
+    } else if (!isUpcoming) {
+      timestamp = new Date(baseTime + (estimatedOffsets[step.id] || 0));
+    }
+
+    // For the delivered step specifically, use real data
+    let description: string;
+    if (isUpcoming) {
+      if (step.id === "delivered" && estimatedDelivery) {
+        description = `Estimated delivery: ${format(new Date(estimatedDelivery), "MMM d, yyyy")}`;
+      } else {
+        description = upcomingDescriptions[step.id] || step.label;
+      }
+    } else {
+      description = stepDescriptions[step.id] || step.label;
+    }
+
     return {
       ...step,
       timestamp,
       icon: Icon,
-      description: stepDescriptions[step.id] || step.label,
+      description,
       trackingUrl,
-      displayStatus: step.status === "upcoming" ? ("inactive" as const) : step.status,
+      displayStatus: isUpcoming ? ("inactive" as const) : step.status,
     };
   });
 

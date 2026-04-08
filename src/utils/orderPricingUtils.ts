@@ -2,7 +2,7 @@
  * Order pricing utilities for handling legacy orders and pricing calculations
  */
 
-import { usePricingSettings } from "@/hooks/usePricingSettings";
+
 
 export interface OrderPricingBreakdown {
   subtotal: number;

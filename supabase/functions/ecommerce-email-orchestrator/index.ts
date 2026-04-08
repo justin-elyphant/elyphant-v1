@@ -1791,6 +1791,7 @@ const handler = async (req: Request): Promise<Response> => {
         shipping_cost: lineItems_raw?.shipping || 0,
         tax_amount: lineItems_raw?.tax || 0,
         gifting_fee: lineItems_raw?.gifting_fee || 0,
+        beta_credits_applied: lineItems_raw?.beta_credits_applied || 0,
         items: lineItems.map((item: any) => ({
           title: item.title || item.product_name || 'Product',
           quantity: item.quantity || 1,

@@ -7,6 +7,8 @@ import { computeOrderSteps, ZincTimelineEvent } from "@/utils/orderTrackingUtils
 interface OrderTimelineProps {
   orderStatus: string;
   orderDate: string;
+  estimatedDelivery?: string | null;
+  fulfilledAt?: string | null;
   trackingEvents?: Array<{
     date: string;
     location: string;

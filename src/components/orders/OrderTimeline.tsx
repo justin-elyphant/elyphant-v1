@@ -120,10 +120,12 @@ const OrderTimeline = ({
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">{event.description}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground">
-                      {format(event.timestamp, "MMM d, yyyy 'at' h:mm a")}
-                    </p>
+                    <div className="flex items-center gap-2">
+                    {event.displayStatus !== "inactive" && (
+                      <p className="text-xs text-muted-foreground">
+                        {format(event.timestamp, "MMM d, yyyy 'at' h:mm a")}
+                      </p>
+                    )}
                     {event.trackingUrl && (
                       <a
                         href={event.trackingUrl}

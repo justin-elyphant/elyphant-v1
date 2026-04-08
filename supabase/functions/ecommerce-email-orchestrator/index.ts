@@ -167,6 +167,12 @@ const renderPricingBreakdown = (props: any): string => {
         <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Gifting Fee</p></td>
         <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #1a1a1a; font-size: 14px;">${formatPrice(props.gifting_fee)}</p></td>
       </tr>
+      ${props.beta_credits_applied && props.beta_credits_applied > 0 ? `
+      <tr>
+        <td style="padding: 8px 0;"><p style="margin: 0; color: #666666; font-size: 14px;">Beta Credit</p></td>
+        <td align="right" style="padding: 8px 0;"><p style="margin: 0; color: #16a34a; font-size: 14px; font-weight: 600;">-${formatPrice(props.beta_credits_applied)}</p></td>
+      </tr>
+      ` : ''}
       <tr style="border-top: 2px solid #e5e5e5;">
         <td style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 700;">Total</p></td>
         <td align="right" style="padding: 16px 0 0 0;"><p style="margin: 0; color: #1a1a1a; font-size: 20px; font-weight: 700;">${formatPrice(props.total_amount)}</p></td>
@@ -1791,6 +1797,7 @@ const handler = async (req: Request): Promise<Response> => {
         shipping_cost: lineItems_raw?.shipping || 0,
         tax_amount: lineItems_raw?.tax || 0,
         gifting_fee: lineItems_raw?.gifting_fee || 0,
+        beta_credits_applied: lineItems_raw?.beta_credits_applied || 0,
         items: lineItems.map((item: any) => ({
           title: item.title || item.product_name || 'Product',
           quantity: item.quantity || 1,

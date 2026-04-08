@@ -144,6 +144,12 @@ const EnhancedOrderItemsTable = ({
                 </div>
                 <span>${pricingBreakdown.gifting_fee.toFixed(2)}</span>
               </div>
+              {pricingBreakdown.beta_credits_applied > 0 && (
+                <div className="flex justify-between py-1">
+                  <span className="text-muted-foreground">Beta Credit:</span>
+                  <span className="text-success">-${pricingBreakdown.beta_credits_applied.toFixed(2)}</span>
+                </div>
+              )}
               <div className="border-t pt-2">
                 <div className="flex justify-between py-1 text-lg font-bold">
                   <span>Total:</span>

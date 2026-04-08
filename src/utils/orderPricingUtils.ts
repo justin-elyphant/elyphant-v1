@@ -11,6 +11,7 @@ export interface OrderPricingBreakdown {
   gifting_fee: number;
   gifting_fee_name: string;
   gifting_fee_description: string;
+  beta_credits_applied: number;
   total: number;
 }
 
@@ -28,6 +29,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
   const taxFromLineItems = lineItems.tax ?? null;
   const subtotalFromLineItems = lineItems.subtotal ?? null;
   const giftingFeeFromLineItems = lineItems.gifting_fee ?? null;
+  const betaCreditsFromLineItems = lineItems.beta_credits_applied ?? 0;
   
   // For new orders with complete pricing data from line_items JSONB
   if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {
@@ -38,6 +40,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
       gifting_fee: giftingFeeFromLineItems,
       gifting_fee_name: 'Elyphant Gifting Fee',
       gifting_fee_description: 'Platform service fee',
+      beta_credits_applied: betaCreditsFromLineItems,
       total: order.total || order.total_amount
     };
   }
@@ -51,6 +54,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
       gifting_fee: order.gifting_fee,
       gifting_fee_name: order.gifting_fee_name || 'Elyphant Gifting Fee',
       gifting_fee_description: order.gifting_fee_description || 'Platform service fee',
+      beta_credits_applied: betaCreditsFromLineItems,
       total: order.total || order.total_amount
     };
   }
@@ -77,6 +81,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
     gifting_fee: Math.max(0, estimatedGiftingFee),
     gifting_fee_name: 'Elyphant Gifting Fee',
     gifting_fee_description: 'Platform service fee for streamlined delivery and customer support',
+    beta_credits_applied: 0,
     total: total
   };
 };

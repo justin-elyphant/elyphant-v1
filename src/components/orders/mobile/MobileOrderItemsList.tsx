@@ -78,6 +78,13 @@ const MobileOrderItemsList = ({
               <span className="text-body-base">${pricingBreakdown.gifting_fee.toFixed(2)}</span>
             </div>
             
+            {pricingBreakdown.beta_credits_applied > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-body-base text-muted-foreground">Beta Credit:</span>
+                <span className="text-body-base text-success">-${pricingBreakdown.beta_credits_applied.toFixed(2)}</span>
+              </div>
+            )}
+            
             <div className="border-t pt-3">
               <div className="flex justify-between items-center">
                 <span className="text-heading-4 font-bold">Total:</span>

@@ -31,7 +31,10 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
   const taxFromLineItems = lineItems.tax ?? null;
   const subtotalFromLineItems = lineItems.subtotal ?? null;
   const giftingFeeFromLineItems = lineItems.gifting_fee ?? null;
-  const betaCreditsFromLineItems = lineItems.beta_credits_applied ?? 0;
+  const betaCreditsFromLineItems = lineItems.beta_credits_applied ?? null;
+  
+  // Use line_items value first, then fallback to legacy beta_credits table lookup
+  const betaCreditsApplied = betaCreditsFromLineItems ?? legacyBetaCredit ?? 0;
   
   // For new orders with complete pricing data from line_items JSONB
   if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {

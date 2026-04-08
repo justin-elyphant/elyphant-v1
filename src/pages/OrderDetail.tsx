@@ -73,8 +73,23 @@ const OrderDetail = () => {
         const isRecipientView = data.recipient_id === user.id && data.user_id !== user.id;
 
         if (data) {
+          // Check for legacy beta credit if not in line_items
+          let legacyBetaCredit: number | undefined;
+          const lineItemsRaw = data.line_items as any;
+          if (!lineItemsRaw?.beta_credits_applied) {
+            const { data: creditData } = await supabase
+              .from('beta_credits')
+              .select('amount')
+              .eq('order_id', data.id)
+              .eq('type', 'spent')
+              .maybeSingle();
+            if (creditData?.amount) {
+              legacyBetaCredit = Math.abs(creditData.amount);
+            }
+          }
+
           // Get complete pricing breakdown with backward compatibility
-          const pricingBreakdown = getOrderPricingBreakdown(data);
+          const pricingBreakdown = getOrderPricingBreakdown(data, legacyBetaCredit);
           
           // Detect scheduled gifts OR flagged gifts
           const isScheduledGift = data.scheduled_delivery_date && 

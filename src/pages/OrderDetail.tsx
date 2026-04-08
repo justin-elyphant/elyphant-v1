@@ -73,8 +73,23 @@ const OrderDetail = () => {
         const isRecipientView = data.recipient_id === user.id && data.user_id !== user.id;
 
         if (data) {
+          // Check for legacy beta credit if not in line_items
+          let legacyBetaCredit: number | undefined;
+          const lineItemsRaw = data.line_items as any;
+          if (!lineItemsRaw?.beta_credits_applied) {
+            const { data: creditData } = await supabase
+              .from('beta_credits')
+              .select('amount')
+              .eq('order_id', data.id)
+              .eq('type', 'spent')
+              .maybeSingle();
+            if (creditData?.amount) {
+              legacyBetaCredit = Math.abs(creditData.amount);
+            }
+          }
+
           // Get complete pricing breakdown with backward compatibility
-          const pricingBreakdown = getOrderPricingBreakdown(data);
+          const pricingBreakdown = getOrderPricingBreakdown(data, legacyBetaCredit);
           
           // Detect scheduled gifts OR flagged gifts
           const isScheduledGift = data.scheduled_delivery_date && 
@@ -120,6 +135,7 @@ const OrderDetail = () => {
             created_at: data.created_at,
             status: data.status,
             scheduled_delivery_date: data.scheduled_delivery_date,
+            estimated_delivery: data.estimated_delivery || null,
             isScheduledGift: !!isScheduledGift,
             isGiftOrder: isGift,
             isRecipientView,
@@ -131,6 +147,7 @@ const OrderDetail = () => {
             gifting_fee: isRecipientView ? undefined : pricingBreakdown.gifting_fee,
             gifting_fee_name: isRecipientView ? undefined : pricingBreakdown.gifting_fee_name,
             gifting_fee_description: isRecipientView ? undefined : pricingBreakdown.gifting_fee_description,
+            beta_credits_applied: isRecipientView ? undefined : pricingBreakdown.beta_credits_applied,
             items: isRecipientView ? [] : ((data.line_items as any)?.items || []),
             shipping_info: displayShippingInfo,
             customerName: shopperName,
@@ -364,6 +381,8 @@ const OrderDetail = () => {
           <OrderTimeline 
             orderStatus={order.status}
             orderDate={order.date}
+            estimatedDelivery={order.estimated_delivery}
+            fulfilledAt={order.fulfilled_at}
             zincTimelineEvents={order.zinc_timeline_events}
             merchantTrackingData={order.merchant_tracking_data}
           />

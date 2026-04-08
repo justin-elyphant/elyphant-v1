@@ -2,7 +2,7 @@
  * Order pricing utilities for handling legacy orders and pricing calculations
  */
 
-import { usePricingSettings } from "@/hooks/usePricingSettings";
+
 
 export interface OrderPricingBreakdown {
   subtotal: number;
@@ -17,8 +17,10 @@ export interface OrderPricingBreakdown {
 
 /**
  * Get complete pricing breakdown for an order, with backward compatibility for legacy orders
+ * @param order - The order object
+ * @param legacyBetaCredit - Optional fallback beta credit amount from beta_credits table
  */
-export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
+export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number): OrderPricingBreakdown => {
   // Extract pricing from line_items JSONB if available
   const lineItems = order.line_items || {};
   
@@ -29,10 +31,25 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
   const taxFromLineItems = lineItems.tax ?? null;
   const subtotalFromLineItems = lineItems.subtotal ?? null;
   const giftingFeeFromLineItems = lineItems.gifting_fee ?? null;
-  const betaCreditsFromLineItems = lineItems.beta_credits_applied ?? 0;
+  const betaCreditsFromLineItems = lineItems.beta_credits_applied ?? null;
   
+  // Use line_items value first, then fallback to legacy beta_credits table lookup
+  const betaCreditsApplied = betaCreditsFromLineItems ?? legacyBetaCredit ?? 0;
+  
+  // Helper: compute displayed total accounting for beta credits
+  // Legacy orders store total_amount as the gross (pre-credit) amount
+  const computeDisplayTotal = (grossTotal: number, credits: number): number => {
+    return credits > 0 ? Math.max(0, grossTotal - credits) : grossTotal;
+  };
+
   // For new orders with complete pricing data from line_items JSONB
   if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {
+    const grossTotal = order.total || order.total_amount;
+    // If beta_credits_applied was already in line_items, the stored total is likely already net
+    // Only adjust if we're using the fallback (legacy credit)
+    const displayTotal = betaCreditsFromLineItems !== null 
+      ? grossTotal 
+      : computeDisplayTotal(grossTotal, betaCreditsApplied);
     return {
       subtotal: subtotalFromLineItems,
       shipping_cost: shippingFromLineItems || 0,
@@ -40,13 +57,14 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
       gifting_fee: giftingFeeFromLineItems,
       gifting_fee_name: 'Elyphant Gifting Fee',
       gifting_fee_description: 'Platform service fee',
-      beta_credits_applied: betaCreditsFromLineItems,
-      total: order.total || order.total_amount
+      beta_credits_applied: betaCreditsApplied,
+      total: displayTotal
     };
   }
   
   // For orders with explicit columns (legacy format)
   if (order.subtotal !== undefined && order.gifting_fee !== undefined) {
+    const grossTotal = order.total || order.total_amount;
     return {
       subtotal: order.subtotal,
       shipping_cost: order.shipping_cost || shippingFromLineItems || 0,
@@ -54,8 +72,8 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
       gifting_fee: order.gifting_fee,
       gifting_fee_name: order.gifting_fee_name || 'Elyphant Gifting Fee',
       gifting_fee_description: order.gifting_fee_description || 'Platform service fee',
-      beta_credits_applied: betaCreditsFromLineItems,
-      total: order.total || order.total_amount
+      beta_credits_applied: betaCreditsApplied,
+      total: computeDisplayTotal(grossTotal, betaCreditsApplied)
     };
   }
 
@@ -65,11 +83,6 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
   const taxAmount = order.tax_amount || taxFromLineItems || 0;
   
   // For legacy orders, estimate the original subtotal and gifting fee
-  // Reverse-engineer: total = subtotal + shipping + tax + giftingFee
-  // With default 15% gifting fee: giftingFee = subtotal * 0.15
-  // So: total = subtotal + shipping + tax + (subtotal * 0.15)
-  // Rearranging: subtotal = (total - shipping - tax) / 1.15
-  
   const subtotalPlusGiftingFee = total - shippingCost - taxAmount;
   const estimatedSubtotal = subtotalPlusGiftingFee / 1.15;
   const estimatedGiftingFee = estimatedSubtotal * 0.15;
@@ -81,8 +94,8 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
     gifting_fee: Math.max(0, estimatedGiftingFee),
     gifting_fee_name: 'Elyphant Gifting Fee',
     gifting_fee_description: 'Platform service fee for streamlined delivery and customer support',
-    beta_credits_applied: 0,
-    total: total
+    beta_credits_applied: betaCreditsApplied,
+    total: computeDisplayTotal(total, betaCreditsApplied)
   };
 };
 

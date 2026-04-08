@@ -17,8 +17,10 @@ export interface OrderPricingBreakdown {
 
 /**
  * Get complete pricing breakdown for an order, with backward compatibility for legacy orders
+ * @param order - The order object
+ * @param legacyBetaCredit - Optional fallback beta credit amount from beta_credits table
  */
-export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
+export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number): OrderPricingBreakdown => {
   // Extract pricing from line_items JSONB if available
   const lineItems = order.line_items || {};
   

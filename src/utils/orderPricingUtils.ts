@@ -11,6 +11,7 @@ export interface OrderPricingBreakdown {
   gifting_fee: number;
   gifting_fee_name: string;
   gifting_fee_description: string;
+  beta_credits_applied: number;
   total: number;
 }
 

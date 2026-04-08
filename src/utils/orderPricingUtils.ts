@@ -81,6 +81,7 @@ export const getOrderPricingBreakdown = (order: any): OrderPricingBreakdown => {
     gifting_fee: Math.max(0, estimatedGiftingFee),
     gifting_fee_name: 'Elyphant Gifting Fee',
     gifting_fee_description: 'Platform service fee for streamlined delivery and customer support',
+    beta_credits_applied: 0,
     total: total
   };
 };

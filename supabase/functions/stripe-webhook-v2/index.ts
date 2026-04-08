@@ -585,7 +585,8 @@ async function handleCheckoutSessionCompleted(
         subtotal: subtotalAmount / 100,
         shipping: shippingAmount / 100,
         tax: taxAmount / 100,
-        gifting_fee: giftingFeeAmount / 100
+        gifting_fee: giftingFeeAmount / 100,
+        beta_credits_applied: parseFloat(metadata.beta_credits_applied || '0')
       },
       shipping_address: group.shippingAddress,
       gift_options: {

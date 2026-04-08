@@ -1787,6 +1787,24 @@ const handler = async (req: Request): Promise<Response> => {
       
       const effectiveIsGift = hasGiftFlag || !!hasRecipientInItems || isGiftByNameMismatch;
 
+      // Fallback: look up beta credit from beta_credits table if not in line_items
+      let legacyBetaCredit = 0;
+      if (!lineItems_raw?.beta_credits_applied && order.id) {
+        try {
+          const { data: creditData } = await supabaseAdmin
+            .from('beta_credits')
+            .select('amount')
+            .eq('order_id', order.id)
+            .eq('type', 'spent')
+            .maybeSingle();
+          if (creditData?.amount) {
+            legacyBetaCredit = Math.abs(creditData.amount);
+          }
+        } catch (e) {
+          console.warn('Failed to look up legacy beta credit:', e);
+        }
+      }
+
       emailData = {
         customer_name: customerName,
         order_number: order.order_number || `ORD-${order.id.slice(0, 8)}`,

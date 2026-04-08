@@ -36,8 +36,20 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
   // Use line_items value first, then fallback to legacy beta_credits table lookup
   const betaCreditsApplied = betaCreditsFromLineItems ?? legacyBetaCredit ?? 0;
   
+  // Helper: compute displayed total accounting for beta credits
+  // Legacy orders store total_amount as the gross (pre-credit) amount
+  const computeDisplayTotal = (grossTotal: number, credits: number): number => {
+    return credits > 0 ? Math.max(0, grossTotal - credits) : grossTotal;
+  };
+
   // For new orders with complete pricing data from line_items JSONB
   if (subtotalFromLineItems !== null && giftingFeeFromLineItems !== null) {
+    const grossTotal = order.total || order.total_amount;
+    // If beta_credits_applied was already in line_items, the stored total is likely already net
+    // Only adjust if we're using the fallback (legacy credit)
+    const displayTotal = betaCreditsFromLineItems !== null 
+      ? grossTotal 
+      : computeDisplayTotal(grossTotal, betaCreditsApplied);
     return {
       subtotal: subtotalFromLineItems,
       shipping_cost: shippingFromLineItems || 0,
@@ -45,13 +57,14 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
       gifting_fee: giftingFeeFromLineItems,
       gifting_fee_name: 'Elyphant Gifting Fee',
       gifting_fee_description: 'Platform service fee',
-      beta_credits_applied: betaCreditsFromLineItems,
-      total: order.total || order.total_amount
+      beta_credits_applied: betaCreditsApplied,
+      total: displayTotal
     };
   }
   
   // For orders with explicit columns (legacy format)
   if (order.subtotal !== undefined && order.gifting_fee !== undefined) {
+    const grossTotal = order.total || order.total_amount;
     return {
       subtotal: order.subtotal,
       shipping_cost: order.shipping_cost || shippingFromLineItems || 0,
@@ -59,8 +72,8 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
       gifting_fee: order.gifting_fee,
       gifting_fee_name: order.gifting_fee_name || 'Elyphant Gifting Fee',
       gifting_fee_description: order.gifting_fee_description || 'Platform service fee',
-      beta_credits_applied: betaCreditsFromLineItems,
-      total: order.total || order.total_amount
+      beta_credits_applied: betaCreditsApplied,
+      total: computeDisplayTotal(grossTotal, betaCreditsApplied)
     };
   }
 
@@ -70,11 +83,6 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
   const taxAmount = order.tax_amount || taxFromLineItems || 0;
   
   // For legacy orders, estimate the original subtotal and gifting fee
-  // Reverse-engineer: total = subtotal + shipping + tax + giftingFee
-  // With default 15% gifting fee: giftingFee = subtotal * 0.15
-  // So: total = subtotal + shipping + tax + (subtotal * 0.15)
-  // Rearranging: subtotal = (total - shipping - tax) / 1.15
-  
   const subtotalPlusGiftingFee = total - shippingCost - taxAmount;
   const estimatedSubtotal = subtotalPlusGiftingFee / 1.15;
   const estimatedGiftingFee = estimatedSubtotal * 0.15;
@@ -86,8 +94,8 @@ export const getOrderPricingBreakdown = (order: any, legacyBetaCredit?: number):
     gifting_fee: Math.max(0, estimatedGiftingFee),
     gifting_fee_name: 'Elyphant Gifting Fee',
     gifting_fee_description: 'Platform service fee for streamlined delivery and customer support',
-    beta_credits_applied: 0,
-    total: total
+    beta_credits_applied: betaCreditsApplied,
+    total: computeDisplayTotal(total, betaCreditsApplied)
   };
 };
 

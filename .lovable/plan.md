@@ -1,48 +1,38 @@
 
+What I found
 
-## Fix Beta Credit Display and Order Timeline Mismatch
+- This order is not delivered. In the database it is still `shipped`, `fulfilled_at` is `null`, and the current `estimated_delivery` is Apr 8, 2026.
+- The timeline is misleading because `OrderTimeline.tsx` always renders a Delivered row with success-style copy, even when that step is only upcoming.
+- The missing beta credit is a legacy-order data issue: this order has a linked `beta_credits` transaction for `-25`, but `orders.line_items` does not contain `beta_credits_applied`, so the existing summary components never show the row.
+- This order also has an old total-format issue: `total_amount` still equals the gross pre-credit total ($37.92), so older beta-credit orders need a compatibility calculation, not just a missing line item.
 
-### Problem 1: Beta Credit Missing from Order Summary and Emails
+Plan
 
-Beta credits ARE deducted during checkout (stored in Stripe session metadata as `beta_credits_applied` and deducted via `beta_credits` table). However, they are **never stored on the order itself** (not in `line_items` JSONB or any column), so:
+1. Fix the timeline wording and state
+- Update `OrderTimeline` so upcoming steps look clearly upcoming: muted title/description, no “Package delivered successfully” copy, and no delivery timestamp unless the order is actually delivered.
+- Pass `estimated_delivery` and `fulfilled_at` from `OrderDetail` into the timeline.
+- For shipped orders, show the final step as an estimated delivery milestone instead of implying completion.
 
-- The order detail page has no way to show "Beta Credit: -$25.00" in the pricing breakdown
-- The email orchestrator doesn't pass `beta_credits_applied` to templates
-- The `renderPricingBreakdown` helper has no beta credit row
+2. Add a fallback source for older beta-credit orders
+- In order hydration, load/derive the applied beta credit from the linked `beta_credits` “spent” record when `line_items.beta_credits_applied` is missing.
+- Extend `getOrderPricingBreakdown` to use that fallback so the current desktop/mobile summary UIs start rendering the credit row without redesigning those components.
 
-**Fix (3 locations):**
+3. Normalize displayed totals for legacy beta-credit orders
+- If an order has an applied beta credit and its stored `total_amount` still matches the gross component sum, compute the displayed total as gross minus credit.
+- Keep that logic guarded so newer orders that already store the net total are not double-discounted.
 
-1. **`supabase/functions/stripe-webhook-v2/index.ts`** — When building the `line_items` JSONB (line ~583-588), add `beta_credits_applied` from session metadata so the value persists on the order record
+4. Keep email receipts consistent
+- Apply the same beta-credit fallback and total normalization in `ecommerce-email-orchestrator`, so re-sent receipts match the fixed order page for older orders.
 
-2. **`src/utils/orderPricingUtils.ts`** — Add `beta_credits_applied` to `OrderPricingBreakdown` interface and extract it from `line_items.beta_credits_applied`
+Files to update
 
-3. **`src/components/orders/EnhancedOrderItemsTable.tsx`** and **`src/components/orders/mobile/MobileOrderItemsList.tsx`** — Add a "Beta Credit" line item (green, negative) between Gifting Fee and Total when `beta_credits_applied > 0`
+- `src/pages/OrderDetail.tsx`
+- `src/components/orders/OrderTimeline.tsx`
+- `src/utils/orderPricingUtils.ts`
+- `supabase/functions/ecommerce-email-orchestrator/index.ts`
 
-4. **`supabase/functions/ecommerce-email-orchestrator/index.ts`** — Two changes:
-   - In the order data hydration block (~line 1784), add `beta_credits_applied: lineItems_raw?.beta_credits_applied || 0`
-   - In `renderPricingBreakdown`, add a conditional row for beta credits (styled green, negative amount) before the Total row
+Technical details
 
-### Problem 2: Order Timeline Shows "Delivered" for Shipped Orders
-
-The `OrderTimeline` component generates estimated timestamps for ALL 4 steps (including future ones) using hardcoded offsets from the order date. For a "shipped" order, the timeline renders a "Delivered" entry with a fake date (order date + 3 days), even though the order hasn't been delivered.
-
-**Root cause:** Lines 54-66 in `OrderTimeline.tsx` — the `estimatedOffsets` object creates timestamps for ALL steps, even "upcoming" ones. The timeline then renders every step with a date, making undelivered orders appear delivered.
-
-**Fix in `src/components/orders/OrderTimeline.tsx`:**
-- Only display a timestamp for steps that are "completed" or "active" — skip rendering dates for "upcoming" steps
-- This way, "Delivered" still appears in the timeline as a future milestone, but without a misleading date
-
-### Files Modified
-- **`supabase/functions/stripe-webhook-v2/index.ts`** — Store `beta_credits_applied` in `line_items` JSONB
-- **`src/utils/orderPricingUtils.ts`** — Add `beta_credits_applied` to pricing breakdown
-- **`src/components/orders/EnhancedOrderItemsTable.tsx`** — Beta credit row in pricing
-- **`src/components/orders/mobile/MobileOrderItemsList.tsx`** — Beta credit row in pricing (mobile)
-- **`supabase/functions/ecommerce-email-orchestrator/index.ts`** — Beta credit in email data + pricing template
-- **`src/components/orders/OrderTimeline.tsx`** — Don't show dates for upcoming steps
-
-### What Stays Unchanged
-- `computeOrderSteps` in `orderTrackingUtils.ts` — step status logic is correct
-- `OrderProgressStepper` — already works correctly (only highlights active step)
-- Checkout flow — beta credit deduction logic is fine
-- `OrderSummaryCard` — shows total only, no breakdown needed there
-
+- I would keep `computeOrderSteps` as the canonical step-status source and fix the timeline presentation layer to match the existing progress-stepper behavior.
+- The beta-credit row already exists in the order summary components; the missing piece is reliable legacy data hydration.
+- Optional cleanup after this fix: add a one-time backfill so historical orders also persist `line_items.beta_credits_applied`, but the fallback above will fix this order immediately once implemented.

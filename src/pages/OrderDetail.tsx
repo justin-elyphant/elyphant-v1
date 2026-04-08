@@ -366,6 +366,8 @@ const OrderDetail = () => {
           <OrderTimeline 
             orderStatus={order.status}
             orderDate={order.date}
+            estimatedDelivery={order.estimated_delivery}
+            fulfilledAt={order.fulfilled_at}
             zincTimelineEvents={order.zinc_timeline_events}
             merchantTrackingData={order.merchant_tracking_data}
           />

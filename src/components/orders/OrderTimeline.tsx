@@ -144,14 +144,14 @@ const OrderTimeline = ({
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-medium">{event.label}</h4>
+                    <h4 className={`font-medium ${event.displayStatus === "inactive" ? "text-muted-foreground" : ""}`}>{event.label}</h4>
                     {event.displayStatus === "active" && (
                       <span className="inline-block h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{event.description}</p>
+                  <p className={`text-sm ${event.displayStatus === "inactive" ? "text-muted-foreground/60 italic" : "text-muted-foreground"}`}>{event.description}</p>
                     <div className="flex items-center gap-2">
-                    {event.displayStatus !== "inactive" && (
+                    {event.timestamp && event.displayStatus !== "inactive" && (
                       <p className="text-xs text-muted-foreground">
                         {format(event.timestamp, "MMM d, yyyy 'at' h:mm a")}
                       </p>

@@ -43,6 +43,13 @@ const stepDescriptions: Record<string, string> = {
   delivered: "Package delivered successfully",
 };
 
+const upcomingDescriptions: Record<string, string> = {
+  ordered: "Awaiting confirmation",
+  processing: "Will be prepared for shipment",
+  shipped: "Will ship once ready",
+  delivered: "Estimated delivery pending",
+};
+
 const OrderTimeline = ({
   orderStatus,
   orderDate,

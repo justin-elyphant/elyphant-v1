@@ -27,13 +27,6 @@ export const useProfileData = () => {
     },
     interests: [],
     importantDates: [],
-    data_sharing_settings: {
-      dob: 'friends',
-      shipping_address: 'private',
-      interests: 'public',
-      gift_preferences: 'public',
-      email: 'friends'
-    },
     next_steps_option: undefined
   });
 
@@ -61,15 +54,6 @@ export const useProfileData = () => {
           const shippingAddressData = profile.shipping_address as any;
           const giftPreferencesData = profile.gift_preferences as any;
           const importantDatesData = profile.important_dates as any;
-          
-          // Use static defaults — actual privacy is managed via usePrivacySettings hook
-          const completeDataSharingSettings = {
-            dob: 'friends' as const,
-            shipping_address: 'private' as const,
-            interests: 'public' as const,
-            gift_preferences: 'public' as const,
-            email: 'friends' as const
-          };
 
           // Convert stored birthday back to full date
           let fullBirthDate: Date | null = null;
@@ -103,7 +87,6 @@ export const useProfileData = () => {
                   description: date.description || date.title || ""
                 })).filter((date: any) => date.date && date.description)
               : [],
-            data_sharing_settings: completeDataSharingSettings
           };
 
           setProfileData(prev => ({ ...prev, ...mappedData }));

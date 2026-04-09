@@ -30,7 +30,6 @@ export type Profile = {
   shipping_address?: ShippingAddress;
   gift_preferences?: GiftPreference[];
   important_dates?: ImportantDate[];
-  data_sharing_settings?: DataSharingSettings;
   onboarding_completed?: boolean;
   updated_at?: string;
   recently_viewed?: RecentlyViewedItem[];
@@ -75,16 +74,6 @@ export type UserAddress = {
   is_default?: boolean;
   created_at?: string;
   updated_at?: string;
-};
-
-/** @deprecated Privacy now lives in privacy_settings table. Use usePrivacySettings hook. */
-export type DataSharingSettings = {
-  dob?: FieldVisibility;
-  shipping_address?: FieldVisibility;
-  interests?: FieldVisibility;
-  /** @deprecated Use `interests` field instead. Maintained for backwards compatibility during transition. */
-  gift_preferences?: FieldVisibility;
-  email?: FieldVisibility;
 };
 
 // Export types needed elsewhere

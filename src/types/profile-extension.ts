@@ -1,4 +1,4 @@
-import { Profile, GiftPreference, ShippingAddress, ImportantDate, DataSharingSettings } from "@/types/profile";
+import { Profile, GiftPreference, ShippingAddress, ImportantDate } from "@/types/profile";
 
 /**
  * Extended Profile interface that includes fields needed by various components
@@ -14,7 +14,6 @@ export interface ExtendedProfile extends Profile {
   user_id: string;
   shipping_address?: ShippingAddress;
   important_dates?: ImportantDate[];
-  data_sharing_settings?: DataSharingSettings;
 }
 
 /**

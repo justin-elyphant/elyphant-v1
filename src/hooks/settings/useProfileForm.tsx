@@ -30,12 +30,6 @@ export const useProfileForm = () => {
       },
       interests: [],
       importantDates: [],
-      // data_sharing_settings deprecated — privacy now managed via usePrivacySettings hook
-      data_sharing_settings: {
-        dob: "friends",
-        shipping_address: "private",
-        gift_preferences: "friends"
-      }
     }
   });
 
@@ -108,16 +102,6 @@ export const useProfileForm = () => {
         country: profile.shipping_address?.country || ""
       };
       
-      // data_sharing_settings — keep loading legacy defaults for form compat
-      // Actual privacy reads/writes go through usePrivacySettings hook
-      const dataSharingSettings = {
-        dob: "friends",
-        shipping_address: "private",
-        interests: "public",
-        gift_preferences: "public",
-        email: "friends"
-      };
-      
       form.reset({
         name: profile.name || "",
         email: profile.email || "",
@@ -127,7 +111,6 @@ export const useProfileForm = () => {
         address: address,
         interests: interests,
         importantDates: importantDates,
-        data_sharing_settings: dataSharingSettings
       });
       
       console.log("Form reset with profile data");
@@ -174,13 +157,6 @@ export const useProfileForm = () => {
           description: date.description,
           type: "custom"
         })),
-        // data_sharing_settings deprecated — privacy managed via usePrivacySettings hook
-        // Keep writing minimal defaults for backward compat with legacy code paths
-        data_sharing_settings: {
-          dob: "friends" as const, 
-          shipping_address: "private" as const, 
-          gift_preferences: "public" as const
-        },
         updated_at: new Date().toISOString(),
         // Set onboarding_completed to true to indicate profile is complete
         onboarding_completed: true

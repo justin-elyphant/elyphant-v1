@@ -38,14 +38,13 @@ export const useProfileCompletion = (shouldRedirect = true) => {
           return;
         }
         
-        // Check if required fields are present
+        // Check if required fields are present (privacy is managed separately via privacy_settings table)
         const isProfileComplete = !!(
           data.name && 
           data.dob &&
           data.shipping_address &&
           data.gift_preferences && 
-          data.gift_preferences.length > 0 &&
-          data.data_sharing_settings
+          data.gift_preferences.length > 0
         );
         
         console.log("Profile completion check result:", isProfileComplete);

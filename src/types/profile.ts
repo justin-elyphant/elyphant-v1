@@ -19,7 +19,6 @@ export interface Profile {
    */
   gift_preferences?: GiftPreference[];
   important_dates?: ImportantDate[];
-  data_sharing_settings?: DataSharingSettings;
   wishlists?: Wishlist[];
   wishlist_count?: number;
   connection_count?: number;
@@ -107,17 +106,6 @@ export interface ImportantDate {
   type: string;
   reminder_days?: number;
   description?: string; // Add description as an alias for title for backwards compatibility
-}
-
-export interface DataSharingSettings {
-  dob?: 'private' | 'friends' | 'public';
-  shipping_address?: 'private' | 'friends' | 'public';
-  interests?: 'private' | 'friends' | 'public';
-  /**
-   * @deprecated Use `interests` privacy setting instead. This field is maintained for backwards compatibility.
-   */
-  gift_preferences?: 'private' | 'friends' | 'public';
-  email?: 'private' | 'friends' | 'public';
 }
 
 export interface Wishlist {
@@ -306,13 +294,10 @@ export function profileFormToApiData(formData: any): Partial<Profile> {
     email: formData.email,
     username: formData.username || null,
     bio: formData.bio || '',
-    birth_year: formData.date_of_birth ? formData.date_of_birth.getFullYear() : new Date().getFullYear() - 25, // Default to 25 years old if no date provided
+    birth_year: formData.date_of_birth ? formData.date_of_birth.getFullYear() : new Date().getFullYear() - 25,
     dob: dobString,
     shipping_address: formData.address ? mapFormAddressToApiAddress(formData.address) : undefined,
-    // NOTE: gift_preferences is DEPRECATED - no longer mapping from interests
-    // The ProfileContext will handle backwards compatibility sync if needed
-    interests: formData.interests,  // PRIMARY source of truth for user interests
-    data_sharing_settings: formData.data_sharing_settings,
+    interests: formData.interests,
     important_dates: processedImportantDates
   };
 

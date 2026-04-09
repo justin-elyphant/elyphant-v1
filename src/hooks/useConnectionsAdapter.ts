@@ -129,8 +129,14 @@ export const useConnectionsAdapter = () => {
       // Fetch privacy settings AND connection permissions for all friends in batch
       const { data: privacyProfiles, error: privacyError } = await supabase
         .from('profiles')
-        .select('id, data_sharing_settings, dob, email, shipping_address')
+        .select('id, dob, email, shipping_address')
         .in('id', friendProfileIds);
+
+      // Fetch unified privacy_settings for all friends
+      const { data: privacySettings, error: psError } = await supabase
+        .from('privacy_settings')
+        .select('user_id, dob_visibility, email_visibility, shipping_address_visibility')
+        .in('user_id', friendProfileIds);
 
       // Fetch connection-level permissions
       const { data: connectionPermissions, error: permError } = await supabase
@@ -146,6 +152,10 @@ export const useConnectionsAdapter = () => {
         console.error('❌ [useConnectionsAdapter] Connection permissions fetch error:', permError);
       }
 
+      // Build privacy_settings lookup by user_id
+      const psMap = new Map<string, any>();
+      privacySettings?.forEach(ps => psMap.set(ps.user_id, ps));
+
       // Create connection permissions map
       const permissionsMap = new Map();
       connectionPermissions?.forEach(conn => {
@@ -157,25 +167,30 @@ export const useConnectionsAdapter = () => {
       // Create privacy map with hierarchical checking (connection-level overrides global)
       const privacyMap = new Map();
       privacyProfiles?.forEach(profile => {
-        const settings = profile.data_sharing_settings || {};
+        const ps = psMap.get(profile.id) || {};
         const connectionPerms = permissionsMap.get(profile.id) || {};
         
         // Check if this friend is blocked from specific data types
         const isShippingBlocked = connectionPerms.shipping_address === false;
         const isBirthdayBlocked = connectionPerms.dob === false;
         const isEmailBlocked = connectionPerms.email === false;
+
+        // Use unified privacy_settings columns (fallback to 'friends' defaults)
+        const shippingVis = ps.shipping_address_visibility || 'private';
+        const dobVis = ps.dob_visibility || 'friends';
+        const emailVis = ps.email_visibility || 'friends';
         
         privacyMap.set(profile.id, {
           shipping: isShippingBlocked ? 'blocked' as const :
-            ((settings as any)?.shipping_address === 'friends' || (settings as any)?.shipping_address === 'public') 
+            (shippingVis === 'friends' || shippingVis === 'public') 
               ? ((profile.shipping_address as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           birthday: isBirthdayBlocked ? 'blocked' as const :
-            ((settings as any)?.dob === 'friends' || (settings as any)?.dob === 'public') 
+            (dobVis === 'friends' || dobVis === 'public') 
               ? ((profile.dob as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           email: isEmailBlocked ? 'blocked' as const :
-            ((settings as any)?.email === 'friends' || (settings as any)?.email === 'public') 
+            (emailVis === 'friends' || emailVis === 'public') 
               ? ((profile.email as any) ? 'verified' as const : 'missing' as const)
               : 'missing' as const,
           isBlocked: isShippingBlocked || isBirthdayBlocked || isEmailBlocked

@@ -5679,42 +5679,23 @@ export type Database = {
       cleanup_failed_orders: { Args: never; Returns: number }
       cleanup_payment_intent_cache: { Args: never; Returns: number }
       cleanup_zma_validation_cache: { Args: never; Returns: number }
-      complete_onboarding:
-        | {
-            Args: {
-              p_birth_year: number
-              p_data_sharing_settings: Json
-              p_dob: string
-              p_email: string
-              p_first_name: string
-              p_gift_preferences: Json
-              p_interests: Json
-              p_last_name: string
-              p_profile_image?: string
-              p_shipping_address: Json
-              p_user_id: string
-              p_user_type?: string
-              p_username: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_birth_year: number
-              p_dob: string
-              p_email: string
-              p_first_name: string
-              p_gift_preferences: Json
-              p_interests: Json
-              p_last_name: string
-              p_profile_image?: string
-              p_shipping_address: Json
-              p_user_id: string
-              p_user_type?: string
-              p_username: string
-            }
-            Returns: boolean
-          }
+      complete_onboarding: {
+        Args: {
+          p_birth_year: number
+          p_dob: string
+          p_email: string
+          p_first_name: string
+          p_gift_preferences: Json
+          p_interests: Json
+          p_last_name: string
+          p_profile_image?: string
+          p_shipping_address: Json
+          p_user_id: string
+          p_user_type?: string
+          p_username: string
+        }
+        Returns: boolean
+      }
       complete_order_processing: {
         Args: {
           error_message_param?: string

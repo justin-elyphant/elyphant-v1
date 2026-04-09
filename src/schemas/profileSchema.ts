@@ -10,12 +10,6 @@ export const addressSchema = z.object({
   phone: z.string().min(10, "Phone required for delivery notifications").optional(),
 });
 
-/** @deprecated Privacy now lives in privacy_settings table */
-export const dataSharingSchema = z.object({
-  dob: z.enum(["public", "friends", "private"]).optional(),
-  shipping_address: z.enum(["public", "friends", "private"]).optional(),
-  gift_preferences: z.enum(["public", "friends", "private"]).optional(),
-}).optional();
 
 export const importantDateSchema = z.object({
   date: z.date(),
@@ -32,8 +26,6 @@ export const profileSchema = z.object({
   interests: z.array(z.string()),
   importantDates: z.array(importantDateSchema),
   profile_image: z.string().nullable().optional(),
-  /** @deprecated Privacy now managed by privacy_settings table */
-  data_sharing_settings: dataSharingSchema,
 });
 
 export type ProfileFormSchema = z.infer<typeof profileSchema>;

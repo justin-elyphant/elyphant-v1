@@ -4,17 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
+export type FieldVisibility = 'private' | 'friends' | 'public';
+
 export interface PrivacySettings {
+  // Social Controls (existing)
   allow_connection_requests_from: 'everyone' | 'connections_only' | 'nobody';
   profile_visibility: 'public' | 'connections_only' | 'private';
   block_list_visibility: 'hidden' | 'visible_to_connections';
   show_follower_count: boolean;
   show_following_count: boolean;
   allow_message_requests: boolean;
-  // Gifting-specific privacy controls
   auto_gift_consent: 'everyone' | 'connections_only' | 'nobody';
   gift_surprise_mode: boolean;
   wishlist_visibility: 'public' | 'connections_only' | 'private';
+  // Field Visibility (migrated from data_sharing_settings)
+  dob_visibility: FieldVisibility;
+  shipping_address_visibility: FieldVisibility;
+  interests_visibility: FieldVisibility;
+  email_visibility: FieldVisibility;
 }
 
 const DEFAULT_SETTINGS: PrivacySettings = {
@@ -27,6 +34,11 @@ const DEFAULT_SETTINGS: PrivacySettings = {
   auto_gift_consent: 'connections_only',
   gift_surprise_mode: true,
   wishlist_visibility: 'public',
+  // Field visibility defaults
+  dob_visibility: 'friends',
+  shipping_address_visibility: 'private',
+  interests_visibility: 'public',
+  email_visibility: 'friends',
 };
 
 /** Normalize legacy DB values to current terminology */
@@ -53,25 +65,17 @@ function normalizeSettings(data: Record<string, unknown>): PrivacySettings {
     auto_gift_consent: (data.auto_gift_consent as PrivacySettings['auto_gift_consent']) ?? 'connections_only',
     gift_surprise_mode: data.gift_surprise_mode !== undefined ? !!data.gift_surprise_mode : true,
     wishlist_visibility: (data.wishlist_visibility as PrivacySettings['wishlist_visibility']) ?? 'public',
+    // Field visibility
+    dob_visibility: (data.dob_visibility as FieldVisibility) ?? DEFAULT_SETTINGS.dob_visibility,
+    shipping_address_visibility: (data.shipping_address_visibility as FieldVisibility) ?? DEFAULT_SETTINGS.shipping_address_visibility,
+    interests_visibility: (data.interests_visibility as FieldVisibility) ?? DEFAULT_SETTINGS.interests_visibility,
+    email_visibility: (data.email_visibility as FieldVisibility) ?? DEFAULT_SETTINGS.email_visibility,
   };
 }
 
-/** Map UI values back to DB-compatible values (keep legacy for existing rows) */
+/** Map UI values back to DB-compatible values */
 function toDbValues(settings: Partial<PrivacySettings>): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...settings };
-
-  // Map connections_only back to legacy DB values for existing columns
-  if (result.profile_visibility === 'connections_only') {
-    result.profile_visibility = 'connections_only'; // new rows use new value
-  }
-  if (result.allow_connection_requests_from === 'connections_only') {
-    result.allow_connection_requests_from = 'connections_only';
-  }
-  if (result.block_list_visibility === 'visible_to_connections') {
-    result.block_list_visibility = 'visible_to_connections';
-  }
-
-  return result;
+  return { ...settings };
 }
 
 export const usePrivacySettings = () => {

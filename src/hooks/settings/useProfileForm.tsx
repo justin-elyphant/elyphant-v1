@@ -30,8 +30,9 @@ export const useProfileForm = () => {
       },
       interests: [],
       importantDates: [],
+      // data_sharing_settings deprecated — privacy now managed via usePrivacySettings hook
       data_sharing_settings: {
-        dob: "private",
+        dob: "friends",
         shipping_address: "private",
         gift_preferences: "friends"
       }
@@ -107,13 +108,14 @@ export const useProfileForm = () => {
         country: profile.shipping_address?.country || ""
       };
       
-      // Ensure we have valid data sharing settings
+      // data_sharing_settings — keep loading legacy defaults for form compat
+      // Actual privacy reads/writes go through usePrivacySettings hook
       const dataSharingSettings = {
-        dob: profile.data_sharing_settings?.dob || "private",
-        shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-        interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || "friends",
-        gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || "friends",
-        email: profile.data_sharing_settings?.email || "friends"
+        dob: "friends",
+        shipping_address: "private",
+        interests: "public",
+        gift_preferences: "public",
+        email: "friends"
       };
       
       form.reset({

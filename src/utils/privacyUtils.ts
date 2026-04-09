@@ -14,21 +14,28 @@ export function getReadablePrivacyLevel(level: PrivacyLevel): string {
   }
 }
 
-// Add the missing getSharingLevelLabel function
 export function getSharingLevelLabel(level: PrivacyLevel): string {
   return getReadablePrivacyLevel(level);
 }
 
+/**
+ * @deprecated Privacy settings now live in the privacy_settings table.
+ * Use usePrivacySettings hook instead. Kept for backward compatibility during transition.
+ */
 export function getDefaultDataSharingSettings(): DataSharingSettings {
   return {
     dob: 'friends',
-    shipping_address: 'private', // Most sensitive data - private by default
+    shipping_address: 'private',
     interests: 'public',
-    gift_preferences: 'public', // Deprecated, sync'd from interests
+    gift_preferences: 'public',
     email: 'friends'
   };
 }
 
+/**
+ * @deprecated Privacy settings now live in the privacy_settings table.
+ * Use usePrivacySettings hook instead.
+ */
 export function normalizeDataSharingSettings(settings?: DataSharingSettings | null): DataSharingSettings {
   const defaultSettings = getDefaultDataSharingSettings();
 
@@ -37,8 +44,8 @@ export function normalizeDataSharingSettings(settings?: DataSharingSettings | nu
   return {
     dob: settings.dob || defaultSettings.dob,
     shipping_address: settings.shipping_address || defaultSettings.shipping_address,
-    interests: settings.interests || settings.gift_preferences || defaultSettings.interests, // Fallback to gift_preferences for transition
-    gift_preferences: settings.gift_preferences || settings.interests || defaultSettings.gift_preferences, // Sync from interests
+    interests: settings.interests || settings.gift_preferences || defaultSettings.interests,
+    gift_preferences: settings.gift_preferences || settings.interests || defaultSettings.gift_preferences,
     email: settings.email || defaultSettings.email
   };
 }

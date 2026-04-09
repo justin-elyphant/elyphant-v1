@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
-import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
+
 import { ShippingAddress, DataSharingSettings } from "@/types/profile";
 import { parseBirthdayFromStorage, formatBirthdayForStorage, mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
 

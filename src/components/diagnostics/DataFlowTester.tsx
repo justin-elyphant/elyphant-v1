@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { useConsistentProfile } from "@/hooks/useConsistentProfile";
 import { useAuth } from "@/contexts/auth";
-import { normalizeDataSharingSettings } from "@/utils/privacyUtils";
+
 import { supabase } from "@/integrations/supabase/client";
 
 const DataFlowTester: React.FC = () => {

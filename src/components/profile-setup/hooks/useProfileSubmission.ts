@@ -47,7 +47,7 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
             last_name: apiData.last_name || profileData.name?.split(' ').slice(1).join(' ') || 'Name', // Ensure last_name with fallback
             username: apiData.username || profileData.email?.split('@')[0] || `user${Date.now()}`, // Generate username from email if missing
             updated_at: new Date().toISOString(),
-            data_sharing_settings: apiData.data_sharing_settings ? JSON.stringify(apiData.data_sharing_settings) : null,
+            // data_sharing_settings removed — privacy now in privacy_settings table
             gift_preferences: apiData.gift_preferences ? JSON.stringify(apiData.gift_preferences) : null,
             important_dates: apiData.important_dates ? JSON.stringify(apiData.important_dates) : null,
             shipping_address: apiData.shipping_address ? JSON.stringify(apiData.shipping_address) : null,

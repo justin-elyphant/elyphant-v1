@@ -99,13 +99,7 @@ const StreamlinedSignUp: React.FC<StreamlinedSignUpProps> = ({
           importance: "medium"
         })),
         onboarding_completed: true,
-        user_type: 'shopper', // Set user_type for UX purposes
-        data_sharing_settings: {
-          dob: "friends",
-          shipping_address: "private",
-          gift_preferences: "public",
-          email: "private"
-        }
+        user_type: 'shopper'
       };
       
       // Insert profile

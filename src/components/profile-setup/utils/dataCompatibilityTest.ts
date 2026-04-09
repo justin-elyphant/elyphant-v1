@@ -2,7 +2,7 @@
 import { ProfileData } from "../hooks/types";
 import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
 import { convertProfileDataToSettingsForm, validateDataStructureCompatibility } from "./dataStructureValidator";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+
 
 /**
  * Test function to validate complete data flow from onboarding to settings

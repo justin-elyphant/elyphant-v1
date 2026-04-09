@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileData } from "./types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils"; // kept for form compat
+
 import { parseBirthdayFromStorage } from "@/utils/dataFormatUtils";
 
 export const useProfileData = () => {

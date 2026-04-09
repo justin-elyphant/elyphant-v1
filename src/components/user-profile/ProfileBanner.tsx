@@ -61,9 +61,8 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     // Hide email if user doesn't have email data
     if (!userData?.email) return false;
     
-    // Check data sharing settings for email
-    // Read from unified privacy_settings (passed via userData.privacy_settings or fallback to legacy)
-    const emailSetting = userData?.privacy_settings?.email_visibility || userData?.data_sharing_settings?.email;
+    // Check privacy settings for email visibility
+    const emailSetting = userData?.privacy_settings?.email_visibility;
     
     // If set to private, never show
     if (emailSetting === 'private') return false;

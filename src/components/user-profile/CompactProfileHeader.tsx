@@ -18,6 +18,7 @@ interface CompactProfileHeaderProps {
   onConnect: () => void;
   onShare: () => void;
   connectionCount?: number;
+  showConnectionCount?: boolean;
   wishlistCount?: number;
   canConnect?: boolean;
   canMessage?: boolean;
@@ -41,6 +42,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   onConnect,
   onShare,
   connectionCount = 0,
+  showConnectionCount = true,
   wishlistCount = 0,
   canConnect = true,
   canMessage = true,

@@ -174,10 +174,12 @@ export const useProfileForm = () => {
           description: date.description,
           type: "custom"
         })),
-        data_sharing_settings: data.data_sharing_settings || {
-          dob: "private", 
+        // data_sharing_settings deprecated — privacy managed via usePrivacySettings hook
+        // Keep writing minimal defaults for backward compat with legacy code paths
+        data_sharing_settings: {
+          dob: "friends", 
           shipping_address: "private", 
-          gift_preferences: "friends"
+          gift_preferences: "public"
         },
         updated_at: new Date().toISOString(),
         // Set onboarding_completed to true to indicate profile is complete

@@ -56,12 +56,15 @@ export const useProfileSubmission = ({ onComplete, onSkip }) => {
           
           const { data, error } = await supabase
             .from('profiles')
-            .upsert({
-              id: user.id,
-              ...dbData
-            }, {
-              onConflict: 'id'
-            });
+            .upsert(
+              {
+                id: user.id,
+                ...dbData
+              } as any,
+              {
+                onConflict: 'id'
+              }
+            );
 
           if (error) {
             console.error(`Error saving profile (attempt ${attempts}):`, error);

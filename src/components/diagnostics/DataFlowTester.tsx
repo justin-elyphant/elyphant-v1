@@ -78,7 +78,7 @@ const DataFlowTester: React.FC = () => {
           // Try to fix data sharing settings
           try {
             await updateProfile({ 
-              data_sharing_settings: normalized
+              data_sharing_settings: dss as any
             });
             addTestResult("Auto-fix Data Sharing", true, "Data sharing settings normalized automatically");
           } catch (e) {

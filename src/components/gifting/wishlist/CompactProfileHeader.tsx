@@ -31,6 +31,7 @@ interface CompactProfileHeaderProps {
   visitorProfile?: VisitorProfileData;
   onConnect?: () => void;
   connectionCount?: number;
+  showConnectionCount?: boolean;
 }
 
 const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
@@ -41,7 +42,8 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   visitorMode = false,
   visitorProfile,
   onConnect,
-  connectionCount
+  connectionCount,
+  showConnectionCount = true
 }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -123,9 +125,11 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     : `${window.location.origin}/profile/${profile?.username ? `@${profile.username}` : user?.id}`;
 
   // Build stats line
+  const connectionsSuffix = showConnectionCount && stats.connectionCount ? ` • ${stats.connectionCount} connections` : '';
+  const ownerConnectionsSuffix = showConnectionCount && connectionCount ? ` • ${connectionCount} connections` : '';
   const statsLine = visitorMode
-    ? `${stats.totalWishlists} ${stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • ${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}${stats.connectionCount ? ` • ${stats.connectionCount} connections` : ''}`
-    : `${stats.totalWishlists} ${stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • ${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}${connectionCount ? ` • ${connectionCount} connections` : ''}`;
+    ? `${stats.totalWishlists} ${stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • ${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}${connectionsSuffix}`
+    : `${stats.totalWishlists} ${stats.totalWishlists === 1 ? 'wishlist' : 'wishlists'} • ${stats.totalItems} ${stats.totalItems === 1 ? 'item' : 'items'}${ownerConnectionsSuffix}`;
 
   return (
     <div className={cn("bg-background border-b border-border", className)}>

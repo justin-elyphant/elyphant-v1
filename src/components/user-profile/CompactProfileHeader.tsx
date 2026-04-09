@@ -18,6 +18,7 @@ interface CompactProfileHeaderProps {
   onConnect: () => void;
   onShare: () => void;
   connectionCount?: number;
+  showConnectionCount?: boolean;
   wishlistCount?: number;
   canConnect?: boolean;
   canMessage?: boolean;
@@ -41,6 +42,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
   onConnect,
   onShare,
   connectionCount = 0,
+  showConnectionCount = true,
   wishlistCount = 0,
   canConnect = true,
   canMessage = true,
@@ -304,12 +306,14 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
         <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-wrap justify-end pr-4 md:pr-6">
           {/* Enhanced Stats with Social Proof */}
           <div className="hidden sm:flex items-center gap-4 text-white">
-            <button className="text-center hover:opacity-80 transition-opacity">
-              <div className="text-lg font-bold">{connectionCount}</div>
-              <div className="text-xs opacity-90">
-                {connectionCount === 1 ? 'connection' : 'connections'}
-              </div>
-            </button>
+            {(isCurrentUser || showConnectionCount) && (
+              <button className="text-center hover:opacity-80 transition-opacity">
+                <div className="text-lg font-bold">{connectionCount}</div>
+                <div className="text-xs opacity-90">
+                  {connectionCount === 1 ? 'connection' : 'connections'}
+                </div>
+              </button>
+            )}
             <button className="text-center hover:opacity-80 transition-opacity">
               <div className="text-lg font-bold">{wishlistCount}</div>
               <div className="text-xs opacity-90">
@@ -328,12 +332,14 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
       {/* Mobile Stats Row with Social Proof */}
       <div className="sm:hidden relative px-4 pb-3">
         <div className="flex justify-center gap-8 text-white">
-          <div className="text-center">
-            <div className="text-lg font-bold">{connectionCount}</div>
-            <div className="text-xs opacity-90">
-              {connectionCount === 1 ? 'connection' : 'connections'}
+          {(isCurrentUser || showConnectionCount) && (
+            <div className="text-center">
+              <div className="text-lg font-bold">{connectionCount}</div>
+              <div className="text-xs opacity-90">
+                {connectionCount === 1 ? 'connection' : 'connections'}
+              </div>
             </div>
-          </div>
+          )}
           <div className="text-center">
             <div className="text-lg font-bold">{wishlistCount}</div>
             <div className="text-xs opacity-90">

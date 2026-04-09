@@ -16,9 +16,11 @@ interface ProfileInfoProps {
     shipping_address_visibility?: string;
     email_visibility?: string;
   };
+  /** Viewer's relationship to this profile owner */
+  viewerRelationship?: 'self' | 'friend' | 'public';
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) => {
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings, viewerRelationship = 'public' }) => {
   const {
     name,
     username,
@@ -34,7 +36,15 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
   const interestsVisibility = (privacySettings?.interests_visibility || profile.data_sharing_settings?.interests || 'public') as FieldVisibility;
 
   const formattedBirthday = formatBirthdayForDisplay(dob);
-  const showBirthday = shouldDisplayBirthday(dobVisibility, 'public');
+  const showBirthday = shouldDisplayBirthday(dobVisibility, viewerRelationship);
+
+  // Determine if interests should be shown based on visibility and viewer relationship
+  const showInterests = (() => {
+    if (viewerRelationship === 'self') return true;
+    if (interestsVisibility === 'public') return true;
+    if (interestsVisibility === 'friends' && viewerRelationship === 'friend') return true;
+    return false;
+  })();
 
   const formatAddress = () => {
     if (!shipping_address) return null;
@@ -91,7 +101,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
       </Card>
 
       {((interests && interests.length > 0) || (gift_preferences && gift_preferences.length > 0)) && 
-       interestsVisibility !== 'private' && (
+       showInterests && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">

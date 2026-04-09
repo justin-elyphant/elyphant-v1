@@ -24,6 +24,7 @@ interface InstagramProfileLayoutProps {
   onConnect: () => void;
   onShare: () => void;
   connectionCount?: number;
+  showConnectionCount?: boolean;
   wishlistCount?: number;
   canConnect?: boolean;
   canMessage?: boolean;
@@ -52,6 +53,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
   onConnect,
   onShare,
   connectionCount = 0,
+  showConnectionCount = true,
   wishlistCount = 0,
   canConnect = true,
   canMessage = true,
@@ -88,6 +90,7 @@ const InstagramProfileLayout: React.FC<InstagramProfileLayoutProps> = ({
           onConnect={onConnect}
           onShare={onShare}
           connectionCount={connectionCount}
+          showConnectionCount={showConnectionCount}
           wishlistCount={wishlistCount}
           canConnect={canConnect}
           canMessage={canMessage}

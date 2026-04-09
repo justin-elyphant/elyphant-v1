@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Shield, Eye, Users, MessageSquare, Heart, Gift, Lock, Sparkles } from "lucide-react";
+import { Shield, Eye, Users, MessageSquare, Heart, Gift, Sparkles } from "lucide-react";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings";
 import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";
@@ -208,26 +208,6 @@ const PrivacySharingSettings: React.FC = () => {
               </Select>
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  Gift surprise mode
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Hide who purchased a gift until after the delivery date
-                </p>
-              </div>
-              <Switch
-                checked={settings.gift_surprise_mode}
-                onCheckedChange={(checked) =>
-                  updateSettings({ gift_surprise_mode: checked })
-                }
-                disabled={loading}
-              />
-            </div>
           </div>
         </CardContent>
       </Card>

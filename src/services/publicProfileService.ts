@@ -14,6 +14,7 @@ export interface PublicProfileData {
   // Privacy-filtered fields
   connection_count?: number;
   wishlist_count?: number;
+  show_follower_count?: boolean;
   is_public: boolean;
   can_connect: boolean;
   can_message: boolean;
@@ -65,9 +66,11 @@ export const publicProfileService = {
       // Get privacy settings
       const { data: privacySettings } = await supabase
         .from('privacy_settings')
-        .select('allow_message_requests, wishlist_visibility')
+        .select('allow_message_requests, wishlist_visibility, show_follower_count, interests_visibility')
         .eq('user_id', profile.id)
         .single();
+      
+      const showFollowerCount = privacySettings?.show_follower_count ?? true;
       
       const finalProfile = {
         id: profile.id,
@@ -77,14 +80,16 @@ export const publicProfileService = {
         bio: profile.bio || undefined,
         location: profile.location || undefined,
         created_at: profile.created_at,
-        connection_count: connectionCount,
+        connection_count: showFollowerCount ? connectionCount : undefined,
         wishlist_count: wishlistCount,
+        show_follower_count: showFollowerCount,
         is_public: true,
         can_connect: connectionStatus.can_connect,
         can_message: privacySettings?.allow_message_requests ?? true,
         is_connected: connectionStatus.is_connected,
         connection_status: connectionStatus.status,
-        wishlist_visibility: (privacySettings?.wishlist_visibility as 'public' | 'connections_only' | 'private') ?? 'public'
+        wishlist_visibility: (privacySettings?.wishlist_visibility as 'public' | 'connections_only' | 'private') ?? 'public',
+        interests_visibility: (privacySettings?.interests_visibility as 'private' | 'friends' | 'public') ?? 'public'
       };
       
       console.log("🎯 Final profile object:", finalProfile);

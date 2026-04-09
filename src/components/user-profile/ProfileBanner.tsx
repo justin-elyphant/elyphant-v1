@@ -17,6 +17,7 @@ export interface ProfileBannerProps {
   onShare: () => void;
   // Real data props
   connectionCount?: number;
+  showConnectionCount?: boolean;
   wishlistCount?: number;
   // New props for public profile handling
   canConnect?: boolean;
@@ -41,6 +42,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
   onConnect,
   onShare,
   connectionCount = 0,
+  showConnectionCount = true,
   wishlistCount = 0,
   canConnect = true,
   canMessage = true,
@@ -266,10 +268,12 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
 
               {/* Additional Info - Row 2 */}
               <div className="flex items-center space-x-6 text-sm opacity-90">
-                <div className="flex items-center space-x-2">
-                  <UserPlus className="h-4 w-4" />
-                  <span>{connectionCount} connections</span>
-                </div>
+                {(isCurrentUser || showConnectionCount) && (
+                  <div className="flex items-center space-x-2">
+                    <UserPlus className="h-4 w-4" />
+                    <span>{connectionCount} connections</span>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2">
                   <Heart className="h-4 w-4" />
                   <span>{wishlistCount} wishlists</span>

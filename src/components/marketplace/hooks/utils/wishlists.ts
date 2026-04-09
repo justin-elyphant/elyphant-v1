@@ -27,7 +27,7 @@ export async function createWishlist(userId: string, title: string, description?
       description: description || "",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      is_public: false,
+      is_public: true,
       items: []
     });
     

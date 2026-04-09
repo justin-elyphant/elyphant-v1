@@ -160,7 +160,7 @@ export function useWishlistState() {
             description: "Items I've saved",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            is_public: false,
+            is_public: true,
             items: profileWishlistedProducts.map(productId => normalizeWishlistItem({
               id: crypto.randomUUID(),
               wishlist_id: crypto.randomUUID(), // This will be updated
@@ -188,7 +188,7 @@ export function useWishlistState() {
         description: "Items I've saved",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        is_public: false,
+        is_public: true,
         items: []
       });
       

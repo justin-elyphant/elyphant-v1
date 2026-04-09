@@ -195,7 +195,7 @@ export const useUnifiedWishlistSystem = () => {
         description: description?.trim() || "",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        is_public: false,
+        is_public: true,
         items: [],
       });
 

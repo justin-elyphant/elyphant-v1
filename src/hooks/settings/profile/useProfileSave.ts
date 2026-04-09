@@ -4,13 +4,13 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { ProfileFormData } from "../types";
 
 /**
- * UPDATED: Now uses ProfileContext for profile updates instead of direct database calls
+ * UPDATED: Now uses ProfileContext for profile updates instead of direct database calls.
+ * data_sharing_settings is NO LONGER saved here — it lives in privacy_settings table.
  */
 export const useProfileSave = () => {
   const { user } = useAuth();
   const { updateProfile } = useProfile();
 
-  // Save profile information through ProfileContext
   const saveProfile = async (data: ProfileFormData) => {
     if (!user) return null;
     
@@ -31,7 +31,7 @@ export const useProfileSave = () => {
         description: date.description
       }));
       
-      // Prepare data for update
+      // Prepare data for update — NO data_sharing_settings (now in privacy_settings table)
       const updateData = {
         name: data.name,
         email: data.email,
@@ -41,10 +41,8 @@ export const useProfileSave = () => {
         shipping_address: data.address,
         gift_preferences: gift_preferences,
         important_dates: important_dates,
-        data_sharing_settings: data.data_sharing_settings
       };
       
-      // Use ProfileContext instead of direct database call
       const result = await updateProfile(updateData);
       
       console.log('Profile updated successfully through ProfileContext');

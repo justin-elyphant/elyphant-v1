@@ -47,6 +47,7 @@ export const formSchema = z.object({
     date: z.date(), 
     description: z.string()
   })),
+  /** @deprecated Privacy settings now live in privacy_settings table. Kept for form compat. */
   data_sharing_settings: z.object({
     dob: z.enum(["private", "friends", "public"]).optional(),
     shipping_address: z.enum(["private", "friends", "public"]).optional(),

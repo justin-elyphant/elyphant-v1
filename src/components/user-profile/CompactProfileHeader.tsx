@@ -55,7 +55,8 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
     if (isCurrentUser) return true;
     if (!userData?.email) return false;
     
-    const emailSetting = userData?.data_sharing_settings?.email;
+    // Read from unified privacy_settings (passed via userData.privacy_settings or fallback to legacy)
+    const emailSetting = userData?.privacy_settings?.email_visibility || userData?.data_sharing_settings?.email;
     if (emailSetting === 'private') return false;
     if (emailSetting === 'friends') return isConnected;
     return !isAnonymousUser;

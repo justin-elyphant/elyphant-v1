@@ -60,7 +60,8 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
     if (!userData?.email) return false;
     
     // Check data sharing settings for email
-    const emailSetting = userData?.data_sharing_settings?.email;
+    // Read from unified privacy_settings (passed via userData.privacy_settings or fallback to legacy)
+    const emailSetting = userData?.privacy_settings?.email_visibility || userData?.data_sharing_settings?.email;
     
     // If set to private, never show
     if (emailSetting === 'private') return false;

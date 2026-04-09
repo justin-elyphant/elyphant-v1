@@ -1,31 +1,42 @@
 
 
-## Privacy Policy Calibration — Completed
+## Finish Privacy Unification: Steps 4-6
 
-### Changes Made
+### Step 4 -- Remove all active `data_sharing_settings` reads/writes
 
-**Step 1 — Removed 3 dead settings**
-- Deleted `gift_surprise_mode`, `block_list_visibility`, `show_following_count` from `PrivacySettings` interface, `DEFAULT_SETTINGS`, and `normalizeSettings()` in `usePrivacySettings.ts`
-- Removed "Gift surprise mode" toggle from Settings UI (`PrivacySharingSettings.tsx`)
-- Removed unused `Lock` icon import
+Files with active code (not just comments) to clean up:
 
-**Step 2 — Enforced `show_follower_count`**
-- `publicProfileService.ts` now fetches `show_follower_count` and conditionally omits `connection_count` from response
-- `ProfileBanner.tsx` accepts `showConnectionCount` prop and conditionally hides the count
-- `CompactProfileHeader.tsx` (user-profile version) accepts `showConnectionCount` and gates both desktop and mobile stats
-- `InstagramProfileLayout.tsx` passes `showConnectionCount` through to `CompactProfileHeader`
-- Owner always sees their own count; visitors only see it if enabled
+| File | What to do |
+|------|-----------|
+| `useConsistentProfile.ts` | Remove `data_sharing_settings` from the returned object |
+| `useProfileFetch.ts` | Stop reading `profile.data_sharing_settings`, remove from mapped output |
+| `CompactProfileHeader.tsx` | Remove `data_sharing_settings` fallback (already reads `privacy_settings`) |
+| `dataFormatUtils.ts` | Remove `dataSharingSettings` construction and `data_sharing_settings` from return |
+| `useProfileForm.tsx` | Remove static `dataSharingSettings` object from form loading |
+| `hooks/settings/useProfileData.ts` | Remove `data_sharing_settings` from `initialFormData` |
+| `profile-setup/hooks/useProfileData.ts` | Remove `data_sharing_settings` from `profileData` state and mapping |
+| `sharedValidation.ts` | Remove case 4 data_sharing validation (privacy handled by its own hook) |
+| `DataFlowTester.tsx` | Remove test 3 checking data_sharing_settings |
+| `onboardingSettingsSync.ts` | Remove `hasDataSharingSettings` check |
+| `dataCompatibilityTest.ts` | Remove `hasDataSharingSettings` field |
 
-**Step 3 — Enforced `interests_visibility`**
-- `ProfileInfo.tsx` now accepts `viewerRelationship` prop and checks visibility against it
-- Interests are shown only when: viewer is self, visibility is public, or visibility is friends AND viewer is a friend
-- Replaces the previous weak check (`!== 'private'`) with proper relationship-aware gating
+### Step 5 -- Delete `DataSharingSettings` type
 
-**Step 4 — DB migration**
-- Dropped `gift_surprise_mode`, `block_list_visibility`, `show_following_count` columns from `privacy_settings` table
-- Updated `create_default_privacy_settings` trigger to stop setting dropped columns
+- Delete from `types/profile.ts` (the interface + export)
+- Delete from `hooks/settings/types.ts` (the interface + remove from `ProfileFormData`)
+- Delete from `types/supabase.ts` (the deprecated type alias)
+- Remove all imports of `DataSharingSettings` across ~13 files
+- Remove `data_sharing_settings` field from `ProfileFormData`, `ProfileData`, `Profile`, `ExtendedProfile` interfaces
 
-### Result
-- 13 privacy settings → 10, all properly enforced
-- No dead settings remain
-- `show_follower_count` and `interests_visibility` now work as advertised
+### Step 6 -- Database column deprecation
+
+- Migration to drop `data_sharing_settings` column from `profiles` table
+- Update `complete_onboarding` RPC to remove the `p_data_sharing_settings` parameter
+- Clean up `profileFormToApiData()` and `profileDataMapper.ts` to stop producing `data_sharing_settings` in API payloads
+
+### Risk
+Low-medium. The privacy_settings table is already the enforced source of truth. These are all dead code paths writing/reading values that nothing consumes. The RPC change needs care to match all callers.
+
+### Estimated scope
+~15 files edited, 1 DB migration, 1 RPC update.
+

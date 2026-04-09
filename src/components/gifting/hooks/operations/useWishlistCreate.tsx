@@ -11,6 +11,7 @@ export function useWishlistCreate(
 ) {
   const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
+  const { profile } = useProfile();
 
   const createWishlist = async (
     title: string, 

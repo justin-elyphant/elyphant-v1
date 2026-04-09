@@ -636,11 +636,14 @@ const processAndReturnResults = async (
   const impressionProductIds = processedResults.map((p: any) => p.product_id || p.asin).filter(Boolean);
   if (supabase && impressionProductIds.length > 0) {
     EdgeRuntime.waitUntil(
-      supabase.rpc('increment_search_impressions', { product_ids: impressionProductIds }).then(() => {
-        console.log(`📊 Incremented search impressions for ${impressionProductIds.length} products`);
-      }).catch((err: any) => {
-        console.warn('⚠️ Impression increment failed:', err);
-      })
+      (async () => {
+        try {
+          await supabase.rpc('increment_search_impressions', { product_ids: impressionProductIds });
+          console.log(`📊 Incremented search impressions for ${impressionProductIds.length} products`);
+        } catch (err) {
+          console.warn('⚠️ Impression increment failed:', err);
+        }
+      })()
     );
   }
   
@@ -1209,9 +1212,12 @@ serve(async (req) => {
               const impressionIds = sortedCategoryProducts.map((p: any) => p.product_id).filter(Boolean);
               if (impressionIds.length > 0) {
                 EdgeRuntime.waitUntil(
-                  supabase.rpc('increment_search_impressions', { product_ids: impressionIds }).then(() => {
-                    console.log(`📊 Incremented impressions for ${impressionIds.length} category products`);
-                  }).catch(() => {})
+                  (async () => {
+                    try {
+                      await supabase.rpc('increment_search_impressions', { product_ids: impressionIds });
+                      console.log(`📊 Incremented impressions for ${impressionIds.length} category products`);
+                    } catch (_) { /* non-critical */ }
+                  })()
                 );
               }
               
@@ -1385,7 +1391,11 @@ serve(async (req) => {
           const cachedImpressionIds = sortedProducts.map((p: any) => p.product_id).filter(Boolean);
           if (supabase && cachedImpressionIds.length > 0) {
             EdgeRuntime.waitUntil(
-              supabase.rpc('increment_search_impressions', { product_ids: cachedImpressionIds }).catch(() => {})
+              (async () => {
+                try {
+                  await supabase.rpc('increment_search_impressions', { product_ids: cachedImpressionIds });
+                } catch (_) { /* non-critical */ }
+              })()
             );
           }
           

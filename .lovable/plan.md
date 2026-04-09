@@ -1,80 +1,68 @@
 
 
-## Unify Privacy: Merge `data_sharing_settings` into `privacy_settings`
+## Privacy System Cleanup: Duplicates and Unnecessary Enforcement
 
-### Current State (Two Systems)
+### Issues Found
 
-| System | Storage | Fields | Used In |
-|--------|---------|--------|---------|
-| `privacy_settings` table | Dedicated columns per user | `profile_visibility`, `allow_connection_requests_from`, `allow_message_requests`, `wishlist_visibility`, `auto_gift_consent`, `gift_surprise_mode`, `block_list_visibility`, `show_follower_count`, `show_following_count` | 7 files |
-| `data_sharing_settings` JSONB | Column on `profiles` table | `dob`, `shipping_address`, `interests`, `gift_preferences` (deprecated), `email` | ~50 files |
+**1. `DataSharingStep` and `PrivacyStep` are identical components**
+Both files are character-for-character the same UI (Birthday + Interests selects using `usePrivacySettings`). Only the subtitle text differs slightly. One should be deleted and the other reused.
 
-### Target State (One System)
+**2. Three duplicate type aliases for the same concept**
+- `FieldVisibility` in `usePrivacySettings.ts` = `'private' | 'friends' | 'public'`
+- `PrivacyLevel` in `utils/privacyUtils.ts` = `'private' | 'friends' | 'public'`
+- `PrivacyLevel` in `gifting/events/types.ts` = `'private' | 'shared' | 'public'` (different values -- "shared" vs "friends")
 
-Add 4 new columns to `privacy_settings` table, retire `data_sharing_settings` JSONB from profiles.
+The first two are identical. They should be consolidated into one canonical type exported from `usePrivacySettings.ts`.
 
-```text
-privacy_settings table (unified)
-├── Social Controls (existing)
-│   ├── profile_visibility
-│   ├── allow_connection_requests_from
-│   ├── allow_message_requests
-│   ├── wishlist_visibility
-│   ├── auto_gift_consent
-│   ├── gift_surprise_mode
-│   ├── block_list_visibility
-│   ├── show_follower_count
-│   └── show_following_count
-└── Field Visibility (NEW - migrated from data_sharing_settings)
-    ├── dob_visibility          (default: 'friends')
-    ├── shipping_address_visibility (default: 'private')
-    ├── interests_visibility    (default: 'public')
-    └── email_visibility        (default: 'friends')
-```
+**3. `PrivacyNotice` and `PrivacyIndicator` overlap significantly**
+Both render privacy-level badges/alerts with the same icon logic (Eye/EyeOff/Users) and the same color mapping (public=warning, friends=info, private=success). `PrivacyIndicator` is the more capable version (reads from the unified table, supports labels). `PrivacyNotice` is a simpler Alert wrapper used in only 1 file (`ProfileInfo.tsx`). They should merge into one component.
 
-`gift_preferences` is dropped entirely (deprecated, always mirrored `interests`).
+**4. `shouldDisplayBirthday` in `birthdayUtils.ts` duplicates enforcement logic**
+This function takes `dataSharingSettings.dob` and does visibility gating. But `BirthdayCountdown.tsx` and `useConnectionsAdapter.ts` already query `privacy_settings.dob_visibility` directly and do the same check inline. There are now two parallel birthday-visibility enforcement paths. Should consolidate into one utility that takes the `dob_visibility` value directly.
 
-### Implementation Steps
+**5. `privacyUtils.ts` is mostly dead code**
+- `getDefaultDataSharingSettings()` -- deprecated, only used for legacy form compat
+- `normalizeDataSharingSettings()` -- deprecated, used in 2 files
+- `PrivacyLevel` type -- duplicate of `FieldVisibility`
+- `getReadablePrivacyLevel()` / `getSharingLevelLabel()` -- useful but should move to the unified hook or a slim helper
 
-**Step 1 — Database migration**
-- Add 4 columns (`dob_visibility`, `shipping_address_visibility`, `interests_visibility`, `email_visibility`) to `privacy_settings` with defaults
-- Create a one-time migration function that copies existing `data_sharing_settings` values from `profiles` into the new columns
-- Do NOT drop `profiles.data_sharing_settings` yet (backward compat during transition)
+**6. Legacy `data_sharing_settings` still written in 3 onboarding paths**
+`UnifiedOnboarding.tsx`, `StreamlinedSignUp.tsx`, and `useProfileSubmission.ts` still write static defaults to the JSONB column. These writes are unnecessary since privacy now lives in `privacy_settings` table.
 
-**Step 2 — Update `usePrivacySettings` hook** (1 file)
-- Add the 4 new fields to `PrivacySettings` interface
-- Read/write them alongside existing columns
-- Export a single unified hook that replaces both privacy sources
+### Proposed Cleanup
 
-**Step 3 — Update `DataSharingSection` component** (1 file)
-- Read from `usePrivacySettings` instead of form context `data_sharing_settings`
-- Write to `privacy_settings` table via `updateSettings()`
+**Step 1 -- Delete `DataSharingStep`, keep `PrivacyStep` as the single onboarding privacy component**
+Update any imports referencing `DataSharingStep` to use `PrivacyStep`.
 
-**Step 4 — Update consumers (~15 key files)**
-- `useProfileData.ts`, `useProfileSave.ts`, `useProfileForm.tsx` — stop reading/writing `data_sharing_settings`
-- `publicProfileService.ts`, `privacyAwareFriendSearch.ts` — read from `privacy_settings` table
-- `birthdayUtils.ts`, `UnifiedGiftManagementService.ts` — use `privacy_settings` for visibility checks
-- Onboarding steps (`DataSharingStep`, `PrivacyStep`) — wire to `usePrivacySettings`
-- `dataExportUtils.ts` — export from `privacy_settings`
-- Profile fetch contexts — stop mapping `data_sharing_settings`
+**Step 2 -- Merge `PrivacyNotice` into `PrivacyIndicator`**
+Add a `mode="inline"` or `variant="alert"` prop to `PrivacyIndicator` for the Alert-style rendering. Delete `PrivacyNotice.tsx`. Update `ProfileInfo.tsx`.
 
-**Step 5 — Clean up types** (3-4 files)
-- Remove `DataSharingSettings` type from `src/hooks/settings/types.ts`, `src/types/supabase.ts`, `src/utils/privacyUtils.ts`
-- Consolidate into the `PrivacySettings` interface in `usePrivacySettings.ts`
-- Remove `gift_preferences` references everywhere
+**Step 3 -- Consolidate types: kill `PrivacyLevel`, use `FieldVisibility` everywhere**
+- Delete `PrivacyLevel` export from `privacyUtils.ts`
+- Update `types/supabase.ts`, `ProfileInfo.tsx`, `PrivacyNotice` consumers to import `FieldVisibility` from `usePrivacySettings`
+- Leave the gifting events `PrivacyLevel` alone (it uses "shared" which is a different concept)
 
-**Step 6 — Mark `profiles.data_sharing_settings` as deprecated**
-- Leave the column in the DB but stop writing to it
-- Can be dropped in a future cleanup migration
+**Step 4 -- Refactor `shouldDisplayBirthday` to accept a visibility string**
+Change signature from `(dataSharingSettings, viewerRelationship)` to `(visibility: FieldVisibility, viewerRelationship)`. Update callers. This becomes the single birthday-visibility check.
 
-### What This Fixes
-- Single source of truth for all privacy — one table, one hook, one settings page
-- Eliminates the `gift_preferences` deprecated field
-- Reduces privacy-related code from ~50 files to ~7 files touching the hook
-- Settings UI reads/writes one place instead of two
+**Step 5 -- Delete `privacyUtils.ts` entirely**
+- Move `getReadablePrivacyLevel()` to `usePrivacySettings.ts` as a standalone export
+- Remove all imports of the dead file
+
+**Step 6 -- Stop writing `data_sharing_settings` in onboarding**
+Remove the JSONB writes from `UnifiedOnboarding.tsx`, `StreamlinedSignUp.tsx`, and `useProfileSubmission.ts`.
+
+### Impact Summary
+
+| What | Before | After |
+|------|--------|-------|
+| Duplicate components | 2 (DataSharingStep + PrivacyStep) | 1 |
+| Privacy display components | 2 (PrivacyNotice + PrivacyIndicator) | 1 |
+| Type aliases for same concept | 3 | 1 (`FieldVisibility`) |
+| Birthday visibility check paths | 3 | 1 |
+| Dead utility files | 1 (`privacyUtils.ts`) | 0 |
+| Legacy JSONB write points | 3 | 0 |
 
 ### Risk
-- Low: no schema breaking changes, backward-compatible migration
-- The `profiles.data_sharing_settings` column stays but becomes read-only during transition
-- All 50 consumer files need updating but each change is mechanical (swap data source)
+Low. All changes are mechanical consolidations. No schema changes needed.
 

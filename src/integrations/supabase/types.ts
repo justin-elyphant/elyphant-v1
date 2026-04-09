@@ -5991,11 +5991,11 @@ export type Database = {
       is_business_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_elyphant_domain: { Args: { email_address: string }; Returns: boolean }
       is_group_admin: {
-        Args: { group_id: string; user_id: string }
+        Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
       is_group_member: {
-        Args: { group_id: string; user_id: string }
+        Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_blocked: {

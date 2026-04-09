@@ -177,9 +177,9 @@ export const useProfileForm = () => {
         // data_sharing_settings deprecated — privacy managed via usePrivacySettings hook
         // Keep writing minimal defaults for backward compat with legacy code paths
         data_sharing_settings: {
-          dob: "friends", 
-          shipping_address: "private", 
-          gift_preferences: "public"
+          dob: "friends" as const, 
+          shipping_address: "private" as const, 
+          gift_preferences: "public" as const
         },
         updated_at: new Date().toISOString(),
         // Set onboarding_completed to true to indicate profile is complete

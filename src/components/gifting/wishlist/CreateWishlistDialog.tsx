@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,20 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import EnhancedTagInput from "./EnhancedTagInput";
-import { normalizeTags } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 const wishlistFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title cannot exceed 100 characters"),
   description: z.string().max(500, "Description cannot exceed 500 characters").optional(),
-  category: z.string().optional(),
-  tags: z.array(z.string()).max(10, "Cannot add more than 10 tags").optional(),
-  priority: z.enum(["low", "medium", "high"]).default("medium")
 });
 
 type FormValues = z.infer<typeof wishlistFormSchema>;
@@ -34,42 +28,47 @@ type FormValues = z.infer<typeof wishlistFormSchema>;
 interface CreateWishlistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: FormValues) => Promise<void>;
+  onSubmit: (values: { title: string; description?: string; category?: string; tags?: string[]; priority?: "low" | "medium" | "high" }) => Promise<void>;
 }
 
-const WISHLIST_CATEGORIES = [
-  { value: "birthday", label: "Birthday" },
-  { value: "holiday", label: "Holiday" },
-  { value: "anniversary", label: "Anniversary" },
-  { value: "wedding", label: "Wedding" },
-  { value: "baby", label: "Baby" },
-  { value: "personal", label: "Personal" },
-  { value: "shopping", label: "Shopping" },
-  { value: "gift-ideas", label: "Gift Ideas" },
-  { value: "other", label: "Other" },
-];
+const INTEREST_PLACEHOLDERS: Record<string, string> = {
+  fitness: "My Running Gear",
+  technology: "Tech Wishlist",
+  cooking: "Kitchen Must-Haves",
+  gaming: "Gaming Setup",
+  fashion: "Style Picks",
+  beauty: "Beauty Favorites",
+  travel: "Travel Essentials",
+  reading: "Book List",
+  music: "Music Gear",
+  sports: "Sports Equipment",
+  outdoor: "Outdoor Adventures",
+  home: "Home Décor Ideas",
+};
 
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-];
+function getSmartPlaceholder(interests?: string[]): string {
+  if (!interests?.length) return "My Birthday Picks";
+  for (const interest of interests) {
+    const key = interest.toLowerCase();
+    for (const [k, v] of Object.entries(INTEREST_PLACEHOLDERS)) {
+      if (key.includes(k)) return v;
+    }
+  }
+  return "My Birthday Picks";
+}
 
 const CreateWishlistDialog = ({ 
   open, 
   onOpenChange, 
   onSubmit 
 }: CreateWishlistDialogProps) => {
-  const [tags, setTags] = useState<string[]>([]);
+  const { profile } = useProfile();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(wishlistFormSchema),
     defaultValues: {
       title: "",
       description: "",
-      category: "personal",
-      tags: [],
-      priority: "medium"
     }
   });
   
@@ -77,52 +76,54 @@ const CreateWishlistDialog = ({
   const isSubmitting = formState.isSubmitting;
   
   const handleSubmit = async (values: FormValues) => {
-    // Normalize tags before submission
-    const normalizedValues = {
-      ...values,
-      tags: normalizeTags(tags)
-    };
-    
-    await onSubmit(normalizedValues);
-    // Reset form and tags after submission
+    await onSubmit({
+      title: values.title,
+      description: values.description,
+      category: "personal",
+      tags: [],
+      priority: "medium",
+    });
     reset();
-    setTags([]);
   };
 
-  // Reset the form when dialog is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       reset();
-      setTags([]);
     }
     onOpenChange(open);
   };
 
+  const placeholder = getSmartPlaceholder(profile?.interests as string[] | undefined);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto pb-safe-or-6"
+      <DialogContent className="sm:max-w-[440px] bg-white p-6 md:p-8"
         style={{
           marginBottom: 'env(safe-area-inset-bottom, 0px)',
           paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))'
         }}
       >
-        <DialogHeader>
-          <DialogTitle>Create New Wishlist</DialogTitle>
-          <DialogDescription>
-            Create a wishlist to save and share gift ideas.
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-xl font-semibold tracking-tight text-foreground">Create New Wishlist</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Save and share your gift ideas.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="uppercase tracking-wider text-xs text-muted-foreground font-medium">Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="My Wishlist" {...field} />
+                    <Input 
+                      placeholder={placeholder} 
+                      {...field} 
+                      className="border-border/60 focus:bg-[#F7F7F7] transition-colors"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -134,129 +135,37 @@ const CreateWishlistDialog = ({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel className="uppercase tracking-wider text-xs text-muted-foreground font-medium">
+                    Description <span className="normal-case tracking-normal">(optional)</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="What's this wishlist for?" 
                       {...field}
                       value={field.value || ""}
-                      className="resize-none"
+                      className="resize-none border-border/60 focus:bg-[#F7F7F7] transition-colors min-h-[80px]"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <Separator className="my-4" />
             
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Organization</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value || "personal"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {WISHLIST_CATEGORIES.map((category) => (
-                            <SelectItem key={category.value} value={category.value}>
-                              {category.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose a category for your wishlist
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PRIORITY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Set the importance level
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="tags"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Tags (optional)</FormLabel>
-                    <FormControl>
-                      <EnhancedTagInput 
-                        tags={tags}
-                        onChange={setTags}
-                        placeholder="Add tags to organize your wishlist..."
-                        disabled={isSubmitting}
-                        maxTags={10}
-                        wishlistTitle={form.watch("title")}
-                        wishlistDescription={form.watch("description")}
-                        category={form.watch("category")}
-                        showSuggestions={true}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Smart suggestions help you organize and find your wishlist later
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <DialogFooter className="pt-4 pb-safe-or-4"
-              style={{
-                paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))'
-              }}
-            >
+            <DialogFooter className="pt-2 gap-2 sm:gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
+                className="border-foreground/20 hover:bg-muted/50"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-foreground text-background hover:bg-foreground/90"
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

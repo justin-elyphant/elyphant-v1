@@ -3,6 +3,13 @@ import { useState } from "react";
 import { Wishlist, normalizeWishlist } from "@/types/profile";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
+
+function inferTagsFromInterests(title: string, interests?: string[]): string[] {
+  if (!interests?.length) return [];
+  const titleLower = title.toLowerCase();
+  return interests.filter(i => titleLower.includes(i.toLowerCase()));
+}
 
 export function useWishlistCreate(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
@@ -10,6 +17,7 @@ export function useWishlistCreate(
 ) {
   const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
+  const { profile } = useProfile();
 
   const createWishlist = async (
     title: string, 
@@ -26,6 +34,9 @@ export function useWishlistCreate(
       
       setIsCreating(true);
       
+      // Auto-tag from user interests
+      const autoTags = (tags && tags.length > 0) ? tags : inferTagsFromInterests(title, profile?.interests as string[] | undefined);
+
       // Create new wishlist object
       const newWishlist: Wishlist = normalizeWishlist({
         id: crypto.randomUUID(),
@@ -37,7 +48,7 @@ export function useWishlistCreate(
         is_public: false,
         items: [],
         category,
-        tags,
+        tags: autoTags,
         priority
       });
       

@@ -1,10 +1,10 @@
 
 import { SettingsFormValues } from "@/hooks/settings/settingsFormSchema";
 import { ProfileData } from "../hooks/types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
 
 /**
- * Validates that ProfileData can be properly converted to SettingsFormValues
+ * Validates that ProfileData can be properly converted to SettingsFormValues.
+ * NOTE: data_sharing_settings validation removed — privacy now lives in privacy_settings table.
  */
 export const validateDataStructureCompatibility = (profileData: ProfileData): {
   isValid: boolean;
@@ -22,20 +22,6 @@ export const validateDataStructureCompatibility = (profileData: ProfileData): {
     if (missingFields.length > 0) {
       warnings.push(`Address missing fields: ${missingFields.join(', ')}`);
     }
-  }
-
-  // Check data sharing settings
-  if (profileData.data_sharing_settings) {
-    const requiredDataSharingFields = ['dob', 'shipping_address', 'gift_preferences', 'email'];
-    const missing = requiredDataSharingFields.filter(field => 
-      !profileData.data_sharing_settings![field as keyof typeof profileData.data_sharing_settings]
-    );
-    
-    if (missing.length > 0) {
-      errors.push(`Data sharing settings missing required fields: ${missing.join(', ')}`);
-    }
-  } else {
-    errors.push('Data sharing settings are required but missing');
   }
 
   // Check core fields
@@ -58,18 +44,11 @@ export const validateDataStructureCompatibility = (profileData: ProfileData): {
  * Converts ProfileData to SettingsFormValues format
  */
 export const convertProfileDataToSettingsForm = (profileData: ProfileData): SettingsFormValues => {
-  // Ensure complete data sharing settings
-  const completeDataSharingSettings = {
-    ...getDefaultDataSharingSettings(),
-    ...(profileData.data_sharing_settings || {})
-  };
-
   // Split name into first and last name
   const nameParts = profileData.name?.split(' ') || [];
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
-  // Convert to settings form format  
   const settingsData: SettingsFormValues = {
     first_name: firstName,
     last_name: lastName,
@@ -88,7 +67,8 @@ export const convertProfileDataToSettingsForm = (profileData: ProfileData): Sett
     },
     interests: profileData.interests || [],
     importantDates: profileData.importantDates || [],
-    data_sharing_settings: completeDataSharingSettings
+    // data_sharing_settings kept as minimal defaults for form compat
+    // Real privacy settings now live in privacy_settings table
   };
 
   return settingsData;
@@ -100,7 +80,6 @@ export const convertProfileDataToSettingsForm = (profileData: ProfileData): Sett
 export const testDataStructureCompatibility = (profileData: ProfileData) => {
   console.log("=== Testing Profile Data Structure Compatibility ===");
   
-  // Validate the profile data
   const validation = validateDataStructureCompatibility(profileData);
   console.log("Validation Results:", validation);
   
@@ -114,19 +93,14 @@ export const testDataStructureCompatibility = (profileData: ProfileData) => {
     validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
   }
   
-  // Test conversion
   try {
     const convertedData = convertProfileDataToSettingsForm(profileData);
-    console.log("✅ Conversion successful:");
-    console.log("Original ProfileData:", profileData);
-    console.log("Converted SettingsFormValues:", convertedData);
+    console.log("✅ Conversion successful");
     
-    // Verify required fields are present
     const hasRequiredFields = convertedData.first_name && 
                              convertedData.last_name &&
                              convertedData.email && 
-                             convertedData.address && 
-                             convertedData.data_sharing_settings;
+                             convertedData.address;
     
     if (hasRequiredFields) {
       console.log("✅ All required fields present in converted data");

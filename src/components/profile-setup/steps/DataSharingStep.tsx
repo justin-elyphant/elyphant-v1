@@ -2,23 +2,19 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProfileData } from "../hooks/types";
+import { usePrivacySettings, FieldVisibility } from "@/hooks/usePrivacySettings";
 
 interface DataSharingStepProps {
-  profileData: ProfileData;
-  updateProfileData: (key: keyof ProfileData, value: any) => void;
+  profileData: any;
+  updateProfileData: (key: string, value: any) => void;
 }
 
-const DataSharingStep: React.FC<DataSharingStepProps> = ({ 
-  profileData, 
-  updateProfileData 
-}) => {
-  const handlePrivacyChange = (field: string, value: string) => {
-    updateProfileData('data_sharing_settings', {
-      ...profileData.data_sharing_settings,
-      [field]: value
-    });
-  };
+/**
+ * Onboarding step for privacy settings.
+ * Now reads/writes directly from the unified privacy_settings table.
+ */
+const DataSharingStep: React.FC<DataSharingStepProps> = () => {
+  const { settings, updateSettings } = usePrivacySettings();
 
   return (
     <div className="space-y-6">
@@ -33,8 +29,8 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({
         <div className="space-y-2">
           <Label>Birthday</Label>
           <Select
-            value={profileData.data_sharing_settings?.dob || "friends"}
-            onValueChange={(value) => handlePrivacyChange("dob", value)}
+            value={settings.dob_visibility}
+            onValueChange={(value) => updateSettings({ dob_visibility: value as FieldVisibility })}
           >
             <SelectTrigger>
               <SelectValue />
@@ -50,8 +46,8 @@ const DataSharingStep: React.FC<DataSharingStepProps> = ({
         <div className="space-y-2">
           <Label>Interests</Label>
           <Select
-            value={profileData.data_sharing_settings?.interests || "public"}
-            onValueChange={(value) => handlePrivacyChange("interests", value)}
+            value={settings.interests_visibility}
+            onValueChange={(value) => updateSettings({ interests_visibility: value as FieldVisibility })}
           >
             <SelectTrigger>
               <SelectValue />

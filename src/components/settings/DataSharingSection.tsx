@@ -1,71 +1,54 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormField, FormItem } from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
 import { Shield } from "lucide-react";
-import { SharingLevel } from "@/types/supabase";
-import PrivacySelector from "./PrivacySelector";
 import { Separator } from "@/components/ui/separator";
+import { usePrivacySettings, FieldVisibility } from "@/hooks/usePrivacySettings";
+import PrivacySelector from "./PrivacySelector";
 
 interface DataSharingSectionProps {
   embedded?: boolean;
 }
 
 /**
- * Section for managing data sharing settings in user profile
+ * Section for managing data sharing settings in user profile.
+ * Now reads/writes directly from the unified privacy_settings table.
  */
 const DataSharingSection: React.FC<DataSharingSectionProps> = ({ embedded = false }) => {
-  const form = useFormContext();
+  const { settings, updateSettings } = usePrivacySettings();
 
-  const handleSharingChange = (field: string, value: SharingLevel) => {
-    form.setValue(`data_sharing_settings.${field}`, value, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+  const handleSharingChange = (field: keyof typeof fieldMap, value: FieldVisibility) => {
+    updateSettings({ [fieldMap[field]]: value });
+  };
+
+  const fieldMap = {
+    dob: 'dob_visibility' as const,
+    interests: 'interests_visibility' as const,
   };
 
   const content = (
     <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="data_sharing_settings.dob"
-        render={({ field }) => (
-          <FormItem>
-            <PrivacySelector
-              value={field.value as SharingLevel}
-              onChange={(value) => handleSharingChange("dob", value)}
-              label="Birthday Visibility"
-              description="Who can see your date of birth (year is never shown)"
-            />
-          </FormItem>
-        )}
+      <PrivacySelector
+        value={settings.dob_visibility as any}
+        onChange={(value) => handleSharingChange("dob", value as FieldVisibility)}
+        label="Birthday Visibility"
+        description="Who can see your date of birth (year is never shown)"
       />
 
       <Separator />
 
-      <FormField
-        control={form.control}
-        name="data_sharing_settings.interests"
-        render={({ field }) => (
-          <FormItem>
-            <PrivacySelector
-              value={field.value as SharingLevel}
-              onChange={(value) => handleSharingChange("interests", value)}
-              label="Interests Visibility"
-              description="Who can see your interests and preferences"
-            />
-          </FormItem>
-        )}
+      <PrivacySelector
+        value={settings.interests_visibility as any}
+        onChange={(value) => handleSharingChange("interests", value as FieldVisibility)}
+        label="Interests Visibility"
+        description="Who can see your interests and preferences"
       />
     </div>
   );
 
-  // When embedded in PrivacySharingSettings, return content without Card wrapper
   if (embedded) {
     return content;
   }
 
-  // Standalone view with Card wrapper
   return (
     <Card>
       <CardHeader>

@@ -2,33 +2,40 @@
 import React from "react";
 import { Calendar, Gift, Globe, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import PrivacyNotice from "./PrivacyNotice";
 import { Profile } from "@/types/profile";
 import { formatBirthdayForDisplay, shouldDisplayBirthday } from "@/utils/birthdayUtils";
+import { PrivacyLevel } from "@/utils/privacyUtils";
 
 interface ProfileInfoProps {
   profile: Profile;
+  /** Field visibility from privacy_settings table */
+  privacySettings?: {
+    dob_visibility?: string;
+    interests_visibility?: string;
+    shipping_address_visibility?: string;
+    email_visibility?: string;
+  };
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) => {
   const {
     name,
     username,
-    email,
     bio,
     dob,
     shipping_address,
     gift_preferences,
     interests,
-    data_sharing_settings
   } = profile;
 
-  // Format birthday for display
-  const formattedBirthday = formatBirthdayForDisplay(dob);
-  const showBirthday = shouldDisplayBirthday(data_sharing_settings, 'public');
+  // Use privacy_settings table values (fallback to legacy data_sharing_settings for transition)
+  const dobVisibility = privacySettings?.dob_visibility || profile.data_sharing_settings?.dob || 'private';
+  const interestsVisibility = privacySettings?.interests_visibility || profile.data_sharing_settings?.interests || 'public';
 
-  // Format address for display
+  const formattedBirthday = formatBirthdayForDisplay(dob);
+  const showBirthday = shouldDisplayBirthday({ dob: dobVisibility }, 'public');
+
   const formatAddress = () => {
     if (!shipping_address) return null;
     const parts = [];
@@ -42,7 +49,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
 
   return (
     <div className="space-y-4">
-      {/* Contact Information */}
       {username && (
         <Card>
           <CardHeader className="pb-3">
@@ -62,7 +68,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
         </Card>
       )}
 
-      {/* Personal Information */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Personal Info</CardTitle>
@@ -77,30 +82,26 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
                 <div className="text-sm font-medium">Birthday</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   {formattedBirthday}
-                  <PrivacyNotice level={data_sharing_settings?.dob || 'private'} />
+                  <PrivacyNotice level={dobVisibility as PrivacyLevel} />
                 </div>
               </div>
             </div>
           )}
-
         </CardContent>
       </Card>
 
-      {/* Interests - Show as gift preferences for UI */}
       {((interests && interests.length > 0) || (gift_preferences && gift_preferences.length > 0)) && 
-       (data_sharing_settings?.interests || data_sharing_settings?.gift_preferences) && 
-       (data_sharing_settings?.interests !== 'private' && data_sharing_settings?.gift_preferences !== 'private') && (
+       interestsVisibility !== 'private' && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Gift className="h-5 w-5" />
               Gift Preferences
-              <PrivacyNotice level={data_sharing_settings.interests || data_sharing_settings.gift_preferences || 'private'} />
+              <PrivacyNotice level={interestsVisibility as PrivacyLevel} />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {/* Show interests first (primary source from settings) */}
               {interests && Array.isArray(interests) && interests.slice(0, 6).map((interest, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <span className="text-sm">{interest}</span>
@@ -108,7 +109,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
                 </div>
               ))}
               
-              {/* Fallback to gift_preferences if no interests */}
               {(!interests || interests.length === 0) && gift_preferences && Array.isArray(gift_preferences) && 
                gift_preferences.slice(0, 6).map((pref, i) => {
                 const category = typeof pref === 'string' ? pref : pref.category;
@@ -125,7 +125,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
                 );
               })}
               
-              {/* Show count of additional preferences */}
               {interests && interests.length > 6 && (
                 <div className="text-xs text-muted-foreground pt-2">
                   +{interests.length - 6} more interests
@@ -136,7 +135,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile }) => {
         </Card>
       )}
 
-      {/* Privacy Settings */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">

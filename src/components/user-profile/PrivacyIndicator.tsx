@@ -7,6 +7,13 @@ import { UnifiedProfileData } from "@/services/profiles/UnifiedProfileService";
 interface PrivacyIndicatorProps {
   field: string;
   profile: UnifiedProfileData;
+  /** Field visibility from privacy_settings table */
+  privacySettings?: {
+    dob_visibility?: string;
+    interests_visibility?: string;
+    shipping_address_visibility?: string;
+    email_visibility?: string;
+  };
   showLabel?: boolean;
   className?: string;
 }
@@ -14,20 +21,36 @@ interface PrivacyIndicatorProps {
 /**
  * PRIVACY INDICATOR
  * 
- * Shows users exactly how their data sharing settings affect visibility.
- * Helps users understand the privacy implications of their choices.
+ * Shows users exactly how their privacy settings affect visibility.
+ * Now reads from unified privacy_settings table with fallback to legacy data_sharing_settings.
  */
 const PrivacyIndicator: React.FC<PrivacyIndicatorProps> = ({ 
   field, 
   profile, 
+  privacySettings,
   showLabel = false, 
   className 
 }) => {
-  // Get the privacy setting for this field
+  // Get the privacy setting for this field — prefer privacy_settings table, fallback to legacy
   const getPrivacySetting = (fieldName: string) => {
+    // Map field names to privacy_settings columns
+    const fieldToColumn: Record<string, string> = {
+      dob: 'dob_visibility',
+      email: 'email_visibility',
+      interests: 'interests_visibility',
+      gift_preferences: 'interests_visibility',
+      shipping_address: 'shipping_address_visibility',
+    };
+
+    const column = fieldToColumn[fieldName];
+    if (column && privacySettings) {
+      const val = privacySettings[column as keyof typeof privacySettings];
+      if (val) return val;
+    }
+
+    // Fallback to legacy data_sharing_settings
     const settings = profile.data_sharing_settings;
-    if (!settings) return 'public'; // Default to public if no settings
-    
+    if (!settings) return 'public';
     return settings[fieldName as keyof typeof settings] || 'public';
   };
 
@@ -52,7 +75,6 @@ const PrivacyIndicator: React.FC<PrivacyIndicatorProps> = ({
   const privacySetting = getPrivacySetting(field);
   const hasFieldContent = hasContent(field);
 
-  // Get appropriate icon and styling
   const getPrivacyDisplay = () => {
     if (!hasFieldContent) {
       return {

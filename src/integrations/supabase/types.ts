@@ -3540,9 +3540,13 @@ export type Database = {
           auto_gift_consent: string
           block_list_visibility: string
           created_at: string | null
+          dob_visibility: string
+          email_visibility: string
           gift_surprise_mode: boolean
           id: string
+          interests_visibility: string
           profile_visibility: string
+          shipping_address_visibility: string
           show_follower_count: boolean | null
           show_following_count: boolean | null
           updated_at: string | null
@@ -3555,9 +3559,13 @@ export type Database = {
           auto_gift_consent?: string
           block_list_visibility?: string
           created_at?: string | null
+          dob_visibility?: string
+          email_visibility?: string
           gift_surprise_mode?: boolean
           id?: string
+          interests_visibility?: string
           profile_visibility?: string
+          shipping_address_visibility?: string
           show_follower_count?: boolean | null
           show_following_count?: boolean | null
           updated_at?: string | null
@@ -3570,9 +3578,13 @@ export type Database = {
           auto_gift_consent?: string
           block_list_visibility?: string
           created_at?: string | null
+          dob_visibility?: string
+          email_visibility?: string
           gift_surprise_mode?: boolean
           id?: string
+          interests_visibility?: string
           profile_visibility?: string
+          shipping_address_visibility?: string
           show_follower_count?: boolean | null
           show_following_count?: boolean | null
           updated_at?: string | null
@@ -5896,9 +5908,13 @@ export type Database = {
           auto_gift_consent: string
           block_list_visibility: string
           created_at: string | null
+          dob_visibility: string
+          email_visibility: string
           gift_surprise_mode: boolean
           id: string
+          interests_visibility: string
           profile_visibility: string
+          shipping_address_visibility: string
           show_follower_count: boolean | null
           show_following_count: boolean | null
           updated_at: string | null

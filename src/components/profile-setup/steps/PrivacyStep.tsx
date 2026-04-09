@@ -2,25 +2,19 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProfileData } from "../hooks/types";
+import { usePrivacySettings, FieldVisibility } from "@/hooks/usePrivacySettings";
 
 interface PrivacyStepProps {
-  profileData: ProfileData;
-  updateProfileData: (key: keyof ProfileData, value: any) => void;
+  profileData: any;
+  updateProfileData: (key: string, value: any) => void;
 }
 
-const PrivacyStep: React.FC<PrivacyStepProps> = ({ 
-  profileData, 
-  updateProfileData 
-}) => {
-  const handlePrivacyChange = (field: string, value: string) => {
-    updateProfileData('data_sharing_settings', {
-      ...profileData.data_sharing_settings,
-      [field]: value
-    });
-  };
-
-  const currentSettings = profileData.data_sharing_settings || {};
+/**
+ * Onboarding privacy step.
+ * Now reads/writes directly from the unified privacy_settings table.
+ */
+const PrivacyStep: React.FC<PrivacyStepProps> = () => {
+  const { settings, updateSettings } = usePrivacySettings();
 
   return (
     <div className="space-y-6">
@@ -35,8 +29,8 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         <div className="space-y-2">
           <Label>Birthday</Label>
           <Select
-            value={currentSettings.dob || "friends"}
-            onValueChange={(value) => handlePrivacyChange("dob", value)}
+            value={settings.dob_visibility}
+            onValueChange={(value) => updateSettings({ dob_visibility: value as FieldVisibility })}
           >
             <SelectTrigger>
               <SelectValue />
@@ -52,11 +46,8 @@ const PrivacyStep: React.FC<PrivacyStepProps> = ({
         <div className="space-y-2">
           <Label>Interests</Label>
           <Select
-            value={currentSettings.interests || currentSettings.gift_preferences || "public"}
-            onValueChange={(value) => {
-              handlePrivacyChange("interests", value);
-              handlePrivacyChange("gift_preferences", value); // Backwards compat
-            }}
+            value={settings.interests_visibility}
+            onValueChange={(value) => updateSettings({ interests_visibility: value as FieldVisibility })}
           >
             <SelectTrigger>
               <SelectValue />

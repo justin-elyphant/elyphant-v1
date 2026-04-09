@@ -5,6 +5,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 
+function inferTagsFromInterests(title: string, interests?: string[]): string[] {
+  if (!interests?.length) return [];
+  const titleLower = title.toLowerCase();
+  return interests.filter(i => titleLower.includes(i.toLowerCase()));
+}
+
 export function useWishlistCreate(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,
   syncWishlistToProfile: (wishlists: Wishlist[]) => Promise<boolean>

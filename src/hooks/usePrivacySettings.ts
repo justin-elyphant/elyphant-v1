@@ -6,8 +6,20 @@ import { toast } from "sonner";
 
 export type FieldVisibility = 'private' | 'friends' | 'public';
 
+export const FIELD_VISIBILITY_OPTIONS: FieldVisibility[] = ['private', 'friends', 'public'];
+
+/** Human-readable label for a FieldVisibility value */
+export function getReadableVisibilityLabel(level: FieldVisibility): string {
+  switch (level) {
+    case 'private': return 'Only Me';
+    case 'friends': return 'Friends Only';
+    case 'public': return 'Everyone';
+    default: return 'Unknown';
+  }
+}
+
 export interface PrivacySettings {
-  // Social Controls (existing)
+  // Social Controls
   allow_connection_requests_from: 'everyone' | 'connections_only' | 'nobody';
   profile_visibility: 'public' | 'connections_only' | 'private';
   block_list_visibility: 'hidden' | 'visible_to_connections';
@@ -17,7 +29,7 @@ export interface PrivacySettings {
   auto_gift_consent: 'everyone' | 'connections_only' | 'nobody';
   gift_surprise_mode: boolean;
   wishlist_visibility: 'public' | 'connections_only' | 'private';
-  // Field Visibility (migrated from data_sharing_settings)
+  // Field Visibility
   dob_visibility: FieldVisibility;
   shipping_address_visibility: FieldVisibility;
   interests_visibility: FieldVisibility;

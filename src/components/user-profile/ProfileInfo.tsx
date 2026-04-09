@@ -2,10 +2,10 @@
 import React from "react";
 import { Calendar, Gift, Globe, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PrivacyNotice from "./PrivacyNotice";
+import PrivacyIndicator from "./PrivacyIndicator";
 import { Profile } from "@/types/profile";
 import { formatBirthdayForDisplay, shouldDisplayBirthday } from "@/utils/birthdayUtils";
-import { PrivacyLevel } from "@/utils/privacyUtils";
+import { FieldVisibility } from "@/hooks/usePrivacySettings";
 
 interface ProfileInfoProps {
   profile: Profile;
@@ -30,11 +30,11 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
   } = profile;
 
   // Use privacy_settings table values (fallback to legacy data_sharing_settings for transition)
-  const dobVisibility = privacySettings?.dob_visibility || profile.data_sharing_settings?.dob || 'private';
-  const interestsVisibility = privacySettings?.interests_visibility || profile.data_sharing_settings?.interests || 'public';
+  const dobVisibility = (privacySettings?.dob_visibility || profile.data_sharing_settings?.dob || 'private') as FieldVisibility;
+  const interestsVisibility = (privacySettings?.interests_visibility || profile.data_sharing_settings?.interests || 'public') as FieldVisibility;
 
   const formattedBirthday = formatBirthdayForDisplay(dob);
-  const showBirthday = shouldDisplayBirthday({ dob: dobVisibility }, 'public');
+  const showBirthday = shouldDisplayBirthday(dobVisibility, 'public');
 
   const formatAddress = () => {
     if (!shipping_address) return null;
@@ -82,7 +82,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
                 <div className="text-sm font-medium">Birthday</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   {formattedBirthday}
-                  <PrivacyNotice level={dobVisibility as PrivacyLevel} />
+                  <PrivacyIndicator level={dobVisibility} />
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
             <CardTitle className="text-lg flex items-center gap-2">
               <Gift className="h-5 w-5" />
               Gift Preferences
-              <PrivacyNotice level={interestsVisibility as PrivacyLevel} />
+              <PrivacyIndicator level={interestsVisibility} />
             </CardTitle>
           </CardHeader>
           <CardContent>

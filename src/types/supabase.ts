@@ -1,7 +1,10 @@
 
 // Import types we need
-import { PrivacyLevel } from "@/utils/privacyUtils";
+import { FieldVisibility } from "@/hooks/usePrivacySettings";
 import { ShippingAddress, ImportantDate, GiftPreference, RecentlyViewedItem } from "@/types/profile";
+
+/** @deprecated Use FieldVisibility from usePrivacySettings instead */
+export type PrivacyLevel = FieldVisibility;
 
 // Define types for Supabase-related data structures
 export type Database = {
@@ -74,18 +77,18 @@ export type UserAddress = {
   updated_at?: string;
 };
 
-// Data sharing settings
+/** @deprecated Privacy now lives in privacy_settings table. Use usePrivacySettings hook. */
 export type DataSharingSettings = {
-  dob?: PrivacyLevel;
-  shipping_address?: PrivacyLevel;
-  interests?: PrivacyLevel;
+  dob?: FieldVisibility;
+  shipping_address?: FieldVisibility;
+  interests?: FieldVisibility;
   /** @deprecated Use `interests` field instead. Maintained for backwards compatibility during transition. */
-  gift_preferences?: PrivacyLevel;
-  email?: PrivacyLevel;
+  gift_preferences?: FieldVisibility;
+  email?: FieldVisibility;
 };
 
 // Export types needed elsewhere
-export type { PrivacyLevel, PrivacyLevel as SharingLevel };
+export type { FieldVisibility as SharingLevel };
 
 // Re-export types from profile.ts for backward compatibility
 export type { ShippingAddress, ImportantDate, GiftPreference, RecentlyViewedItem };

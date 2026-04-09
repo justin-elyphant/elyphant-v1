@@ -39,7 +39,7 @@ export const testOnboardingSettingsSync = async (userId: string) => {
     console.log("✅ Successfully mapped to settings format:", settingsData);
 
     // Verify required fields are present
-    const requiredFields = ['name', 'email', 'address', 'data_sharing_settings'];
+    const requiredFields = ['name', 'email', 'address'];
     const missingFields = requiredFields.filter(field => !settingsData[field as keyof typeof settingsData]);
     
     if (missingFields.length > 0) {
@@ -62,7 +62,6 @@ export const testOnboardingSettingsSync = async (userId: string) => {
         hasAddress: !!settingsData.address && Object.keys(settingsData.address).length > 0,
         hasInterests: settingsData.interests.length > 0,
         hasImportantDates: settingsData.importantDates.length > 0,
-        hasDataSharingSettings: !!settingsData.data_sharing_settings
       }
     };
 

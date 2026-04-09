@@ -26,12 +26,8 @@ export const validateProfileStep = (step: number, data: ProfileData): boolean =>
       case 3: // Interests
         return Array.isArray(data.interests) && data.interests.length > 0;
       
-      case 4: // Data sharing
-        return !!(data.data_sharing_settings && 
-                 data.data_sharing_settings.dob &&
-                 data.data_sharing_settings.shipping_address &&
-                 (data.data_sharing_settings.interests || data.data_sharing_settings.gift_preferences) &&
-                 data.data_sharing_settings.email);
+      case 4: // Privacy — handled by usePrivacySettings hook, always valid here
+        return true;
       
       case 5: // Next steps (always valid)
         return true;

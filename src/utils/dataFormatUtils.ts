@@ -249,14 +249,6 @@ export function mapDatabaseToSettingsForm(profile: Profile) {
       ).filter(Boolean);
     }
 
-    // Ensure data sharing settings have all required fields
-    const dataSharingSettings = {
-      dob: profile.data_sharing_settings?.dob || "private",
-      shipping_address: profile.data_sharing_settings?.shipping_address || "private",
-      gift_preferences: profile.data_sharing_settings?.gift_preferences || "friends",
-      email: profile.data_sharing_settings?.email || "private"
-    };
-
     const mappedData = {
       first_name: profile.first_name || "",
       last_name: profile.last_name || "",
@@ -269,7 +261,6 @@ export function mapDatabaseToSettingsForm(profile: Profile) {
       address: address,
       interests: interests,
       importantDates: importantDates,
-      data_sharing_settings: dataSharingSettings
     };
 
     console.log("✅ mapDatabaseToSettingsForm output:", JSON.stringify(mappedData, null, 2));

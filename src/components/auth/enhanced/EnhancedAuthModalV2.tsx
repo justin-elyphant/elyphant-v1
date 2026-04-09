@@ -392,12 +392,6 @@ const EnhancedAuthModalV2: React.FC<EnhancedAuthModalProps> = ({
         country: "US"
       },
       gift_preferences: [],
-      data_sharing_settings: {
-        dob: 'friends' as const,
-        shipping_address: 'private' as const,
-        gift_preferences: 'public' as const,
-        email: 'private' as const
-      }
     });
 
     useEffect(() => {

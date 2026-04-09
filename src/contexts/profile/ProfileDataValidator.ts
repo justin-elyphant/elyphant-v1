@@ -46,12 +46,8 @@ const profileValidationSchema = z.object({
     reminder_days: z.number().min(0).max(365).optional(),
     description: z.string().max(255, "Description too long").optional()
   })).optional().or(z.any()),
-  data_sharing_settings: z.object({
-    dob: z.enum(['private', 'friends', 'public']).optional(),
-    shipping_address: z.enum(['private', 'friends', 'public']).optional(),
-    gift_preferences: z.enum(['private', 'friends', 'public']).optional(),
-    email: z.enum(['private', 'friends', 'public']).optional()
-  }).optional().or(z.any()),
+  /** @deprecated Privacy now managed by privacy_settings table */
+  data_sharing_settings: z.any().optional(),
   onboarding_completed: z.boolean().optional(),
   user_id: z.string().uuid().optional(),
   created_at: z.string().optional(),

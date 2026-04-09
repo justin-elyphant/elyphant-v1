@@ -60,38 +60,8 @@ const DataFlowTester: React.FC = () => {
         return;
       }
       
-      // Test 3: Check data sharing settings
-      const hasDataSharingSettings = profile.data_sharing_settings && 
-                                    typeof profile.data_sharing_settings === 'object' &&
-                                    Object.keys(profile.data_sharing_settings).length > 0;
-      
-      if (hasDataSharingSettings) {
-        const dss = profile.data_sharing_settings as Record<string, string>;
-        const isComplete = dss.dob && dss.shipping_address && 
-                        (dss.gift_preferences || dss.interests) && dss.email;
-                        
-        if (isComplete) {
-          addTestResult("Data Sharing Settings", true, "Data sharing settings are complete and normalized");
-        } else {
-          addTestResult("Data Sharing Settings", false, "Data sharing settings need normalization");
-          
-          // Try to fix data sharing settings
-          try {
-            await updateProfile({ 
-              data_sharing_settings: dss as any
-            });
-            addTestResult("Auto-fix Data Sharing", true, "Data sharing settings normalized automatically");
-          } catch (e) {
-            addTestResult("Auto-fix Data Sharing", false, "Failed to normalize data sharing settings");
-          }
-        }
-      } else {
-        addTestResult("Data Sharing Settings", false, "Missing data sharing settings");
-      }
-      
-      // Test 4: Check if we can update profile data
+      // Test 3: Check if we can update profile data
       try {
-        const testUpdateField = `test_${Date.now()}`;
         await updateProfile({ 
           updated_at: new Date().toISOString()
         });
@@ -100,7 +70,7 @@ const DataFlowTester: React.FC = () => {
         addTestResult("Profile Updates", false, "Failed to update profile data");
       }
       
-      // Test 5: Check if we can fetch updated profile
+      // Test 4: Check if we can fetch updated profile
       try {
         const refreshed = await refetchProfile();
         if (refreshed) {

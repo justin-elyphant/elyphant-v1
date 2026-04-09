@@ -205,12 +205,6 @@ const SimpleProfileForm: React.FC<SimpleProfileFormProps> = ({ onComplete }) => 
         address_last_updated: new Date().toISOString(),
         interests: [],
         important_dates: [],
-        data_sharing_settings: {
-          dob: "friends" as const,
-          shipping_address: "private" as const,
-          gift_preferences: "friends" as const,
-          email: "private" as const
-        }
       };
 
       console.log("🚀 Saving simple profile data with verification:", {

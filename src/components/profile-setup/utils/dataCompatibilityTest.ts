@@ -31,13 +31,6 @@ export const testOnboardingToSettingsCompatibility = () => {
         description: "Christmas"
       }
     ],
-    data_sharing_settings: {
-      dob: 'friends',
-      shipping_address: 'private',
-      interests: 'public',
-      gift_preferences: 'public',
-      email: 'friends'
-    },
     next_steps_option: "dashboard"
   };
 
@@ -58,23 +51,12 @@ export const testOnboardingToSettingsCompatibility = () => {
     console.log("3. Converted to settings format:", settingsData);
 
     // Verify all required fields are present
-    const requiredFields = ['first_name', 'last_name', 'email', 'address', 'data_sharing_settings'];
+    const requiredFields = ['first_name', 'last_name', 'email', 'address'];
     const missingFields = requiredFields.filter(field => !settingsData[field as keyof SettingsFormValues]);
     
     if (missingFields.length > 0) {
       console.error("❌ Missing required fields:", missingFields);
       return { success: false, errors: [`Missing fields: ${missingFields.join(', ')}`] };
-    }
-
-    // Verify data_sharing_settings has all required fields including email
-    const requiredPrivacyFields = ['dob', 'shipping_address', 'gift_preferences', 'email'];
-    const missingPrivacyFields = requiredPrivacyFields.filter(field => 
-      !settingsData.data_sharing_settings[field as keyof typeof settingsData.data_sharing_settings]
-    );
-
-    if (missingPrivacyFields.length > 0) {
-      console.error("❌ Missing privacy fields:", missingPrivacyFields);
-      return { success: false, errors: [`Missing privacy fields: ${missingPrivacyFields.join(', ')}`] };
     }
 
     console.log("✅ All compatibility tests passed!");
@@ -83,8 +65,6 @@ export const testOnboardingToSettingsCompatibility = () => {
       hasLastName: !!settingsData.last_name,
       hasEmail: !!settingsData.email,
       hasAddress: !!settingsData.address,
-      hasDataSharingSettings: !!settingsData.data_sharing_settings,
-      dataSharingFields: Object.keys(settingsData.data_sharing_settings),
       interestsCount: settingsData.interests.length,
       importantDatesCount: settingsData.importantDates.length
     });

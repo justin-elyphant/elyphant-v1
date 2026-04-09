@@ -8,15 +8,6 @@ export interface ShippingAddress {
   country: string;
 }
 
-export interface DataSharingSettings {
-  dob: "public" | "friends" | "private";
-  shipping_address: "public" | "friends" | "private";
-  interests: "public" | "friends" | "private";
-  /** @deprecated Use `interests` field instead. Maintained for backwards compatibility. */
-  gift_preferences: "public" | "friends" | "private";
-  email: "public" | "friends" | "private";
-}
-
 export interface ImportantDateType {
   date: Date;
   description: string;
@@ -32,5 +23,4 @@ export interface ProfileFormData {
   address: ShippingAddress;
   interests: string[];
   importantDates: ImportantDateType[];
-  data_sharing_settings: DataSharingSettings;
 }

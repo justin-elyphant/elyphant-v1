@@ -100,8 +100,7 @@ export const useProfileCreate = () => {
           type: "custom",
           description: date.description
         })),
-        // data_sharing_settings: kept as legacy defaults — privacy managed via privacy_settings table
-        data_sharing_settings: formattedData.data_sharing_settings || { dob: 'friends', shipping_address: 'private', interests: 'public', email: 'friends' },
+        // data_sharing_settings removed — privacy managed via privacy_settings table
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };

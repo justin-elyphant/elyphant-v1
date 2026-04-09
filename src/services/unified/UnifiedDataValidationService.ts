@@ -76,14 +76,8 @@ export class UnifiedDataValidationService {
       interests: z.array(z.string()).min(1, "At least one interest is required")
     }));
     
-    this.validationSchemas.set('profile-privacy', z.object({
-      data_sharing_settings: z.object({
-        dob: z.enum(["private", "friends", "public"]),
-        shipping_address: z.enum(["private", "friends", "public"]),
-        gift_preferences: z.enum(["private", "friends", "public"]),
-        email: z.enum(["private", "friends", "public"])
-      })
-    }));
+    // Privacy validation now handled by privacy_settings table via usePrivacySettings hook
+    this.validationSchemas.set('profile-privacy', z.object({}).optional());
   }
 
   /**

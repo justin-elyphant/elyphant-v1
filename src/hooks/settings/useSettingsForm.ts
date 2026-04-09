@@ -7,7 +7,7 @@ import { useProfile } from "@/contexts/profile/ProfileContext";
 import { toast } from "sonner";
 import { formSchema, SettingsFormValues } from "./settingsFormSchema";
 
-import { ShippingAddress, DataSharingSettings } from "@/types/profile";
+import { ShippingAddress } from "@/types/profile";
 import { parseBirthdayFromStorage, formatBirthdayForStorage, mapDatabaseToSettingsForm } from "@/utils/dataFormatUtils";
 
 export const useSettingsForm = () => {
@@ -36,12 +36,6 @@ export const useSettingsForm = () => {
       },
       interests: [],
       importantDates: [],
-      data_sharing_settings: {
-        dob: "private",
-        shipping_address: "private",
-        gift_preferences: "friends",
-        email: "private"
-      }
     }
   });
 
@@ -74,13 +68,6 @@ export const useSettingsForm = () => {
             date: new Date(date.date),
             description: date.title || date.description || ""
           })) || [],
-          data_sharing_settings: {
-            dob: profile.data_sharing_settings?.dob || 'friends',
-            shipping_address: profile.data_sharing_settings?.shipping_address || 'private',
-            interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || 'public',
-            gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || 'public',
-            email: profile.data_sharing_settings?.email || 'friends'
-          }
         });
       }
     }
@@ -116,7 +103,7 @@ export const useSettingsForm = () => {
         birthYear = date.getFullYear();
       }
       
-      // Format the data for Supabase — data_sharing_settings no longer saved here
+      // Format the data for Supabase
       // Privacy settings now live in the privacy_settings table via usePrivacySettings hook
       const updateData = {
         first_name: data.first_name,

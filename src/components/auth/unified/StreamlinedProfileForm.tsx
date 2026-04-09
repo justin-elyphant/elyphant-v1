@@ -185,12 +185,6 @@ const StreamlinedProfileForm: React.FC<StreamlinedProfileFormProps> = ({ onCompl
         },
         interests: [],
         importantDates: [],
-        data_sharing_settings: {
-          dob: "friends" as const,
-          shipping_address: "private" as const,
-          gift_preferences: "public" as const,
-          email: "private" as const
-        }
       };
 
       console.log("🚀 Creating profile with auto-verification...");

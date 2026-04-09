@@ -41,13 +41,6 @@ export function useConsistentProfile(autoFix: boolean = true) {
     gift_preferences: Array.isArray(profile?.gift_preferences) ? profile.gift_preferences : [],
     shipping_address: profile?.shipping_address || {},
     important_dates: Array.isArray(profile?.important_dates) ? profile.important_dates : [],
-    // data_sharing_settings: legacy fallback — actual privacy is in privacy_settings table
-    data_sharing_settings: profile?.data_sharing_settings || {
-      dob: "friends",
-      shipping_address: "private",
-      gift_preferences: "public",
-      email: "friends"
-    }
   } as Profile;
 
   return {

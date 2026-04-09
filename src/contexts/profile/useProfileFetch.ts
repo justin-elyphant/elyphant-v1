@@ -56,18 +56,11 @@ export function useProfileFetch() {
       // Add the user_id field that's expected by certain components
       const enhancedProfile: Profile = {
         ...profile,
-        user_id: user.id,  // Add user_id based on id to match expectations
+        user_id: user.id,
         gift_preferences: Array.isArray(profile.gift_preferences) ? profile.gift_preferences as any[] : 
           (profile.gift_preferences ? [profile.gift_preferences] as any[] : [] as any[]),
         important_dates: Array.isArray(profile.important_dates) ? profile.important_dates as any[] :
           (profile.important_dates ? [profile.important_dates] as any[] : [] as any[]),
-        // data_sharing_settings: kept as legacy defaults — privacy managed via privacy_settings table
-        data_sharing_settings: (typeof profile.data_sharing_settings === 'object' && profile.data_sharing_settings) ? profile.data_sharing_settings as any : {
-          dob: 'friends',
-          shipping_address: 'private', 
-          gift_preferences: 'public',
-          email: 'friends'
-        },
       } as Profile;
       
       // Set counts to 0 (fetch separately if needed)

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ShippingAddress, DataSharingSettings, ImportantDateType, ProfileFormData } from "../types";
+import { ShippingAddress, ImportantDateType, ProfileFormData } from "../types";
 
 export const useProfileData = () => {
   const { user } = useAuth();
@@ -21,13 +21,6 @@ export const useProfileData = () => {
     },
     interests: [],
     importantDates: [],
-    data_sharing_settings: {
-      dob: "private",
-      shipping_address: "private",
-      interests: "friends",
-      gift_preferences: "friends",
-      email: "private"
-    }
   });
 
   useEffect(() => {
@@ -110,15 +103,6 @@ export const useProfileData = () => {
             address: address,
             interests: interests,
             importantDates: importantDates,
-            // data_sharing_settings is deprecated — privacy now lives in privacy_settings table
-            // Keep minimal defaults for form compatibility during transition
-            data_sharing_settings: {
-              dob: "friends",
-              shipping_address: "private",
-              interests: "public",
-              gift_preferences: "public",
-              email: "friends"
-            }
           });
         }
         

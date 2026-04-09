@@ -1,62 +1,80 @@
 
 
-# Create Zinc V1 → V2 Migration Reference Document
+## Unify Privacy: Merge `data_sharing_settings` into `privacy_settings`
 
-## What
-A permanent `.md` file in the repo documenting every V1 endpoint we use, its V2 equivalent, migration steps, and a phased rollout plan.
+### Current State (Two Systems)
 
-## Document Structure
+| System | Storage | Fields | Used In |
+|--------|---------|--------|---------|
+| `privacy_settings` table | Dedicated columns per user | `profile_visibility`, `allow_connection_requests_from`, `allow_message_requests`, `wishlist_visibility`, `auto_gift_consent`, `gift_surprise_mode`, `block_list_visibility`, `show_follower_count`, `show_following_count` | 7 files |
+| `data_sharing_settings` JSONB | Column on `profiles` table | `dob`, `shipping_address`, `interests`, `gift_preferences` (deprecated), `email` | ~50 files |
 
-The document will cover:
+### Target State (One System)
 
-### 1. Endpoint Inventory (6 V1 endpoints across 9 edge functions)
+Add 4 new columns to `privacy_settings` table, retire `data_sharing_settings` JSONB from profiles.
 
 ```text
-V1 Endpoint                              Edge Functions Using It           V2 Equivalent
-─────────────────────────────────────────────────────────────────────────────────────────
-GET  /v1/search                          get-products, seed-product-       GET /v2/search (adds pagination,
-                                         catalog, nicole-weekly-curator    Bearer auth, retailer required)
-
-GET  /v1/products/{id}                   get-product-detail                GET /v2/products/{id}
-
-GET  /v1/products/{id}/offers            get-product-detail,               GET /v2/products/{id}/offers
-                                         get-shipping-quote
-
-POST /v1/orders                          process-order-v2                  POST /v2/orders (URL-based,
-                                                                           postal_code, name field changes)
-
-GET  /v1/orders/{id}                     order-monitor-v2                  GET /v2/orders/{id}
-
-POST /v1/orders/{id}/cancel              cancel-zinc-order                 POST /v2/orders/{id}/cancel
-
-GET  /v1/addax/balance                   manage-zma-accounts               Auto wallet top-up replaces
-GET  /v1/addax/transactions              manage-zma-accounts               manual balance checks
+privacy_settings table (unified)
+├── Social Controls (existing)
+│   ├── profile_visibility
+│   ├── allow_connection_requests_from
+│   ├── allow_message_requests
+│   ├── wishlist_visibility
+│   ├── auto_gift_consent
+│   ├── gift_surprise_mode
+│   ├── block_list_visibility
+│   ├── show_follower_count
+│   └── show_following_count
+└── Field Visibility (NEW - migrated from data_sharing_settings)
+    ├── dob_visibility          (default: 'friends')
+    ├── shipping_address_visibility (default: 'private')
+    ├── interests_visibility    (default: 'public')
+    └── email_visibility        (default: 'friends')
 ```
 
-### 2. Breaking Changes Checklist
-- Auth: `Basic btoa(key + ':')` → `Bearer zn_...` (all 9 functions)
-- Base URL: `api.zinc.io/v1` → `api.zinc.io/v2`
-- Order schema: `product_id` → `url`, `zip_code` → `postal_code`, `first_name`/`last_name` → `name`
-- Search: `retailer` param now required (already included in our calls)
-- Wallet: manual balance polling → auto top-up configuration
+`gift_preferences` is dropped entirely (deprecated, always mirrored `interests`).
 
-### 3. Phased Migration Plan
-- **Phase 0**: Create shared `supabase/functions/shared/zincClient.ts` abstraction
-- **Phase 1**: Search endpoints (lowest risk — get-products, seed-product-catalog, nicole-weekly-curator)
-- **Phase 2**: Product detail + offers (get-product-detail, get-shipping-quote)
-- **Phase 3**: Order submission (process-order-v2 — highest risk, test thoroughly)
-- **Phase 4**: Order monitoring + cancellation (order-monitor-v2, cancel-zinc-order)
-- **Phase 5**: Wallet management (manage-zma-accounts — auto top-up)
+### Implementation Steps
 
-### 4. Abstraction Layer Design
-Single `zincClient.ts` with methods like `zincClient.search()`, `zincClient.getProduct()`, `zincClient.createOrder()` etc., with a `ZINC_API_VERSION` env var toggle.
+**Step 1 — Database migration**
+- Add 4 columns (`dob_visibility`, `shipping_address_visibility`, `interests_visibility`, `email_visibility`) to `privacy_settings` with defaults
+- Create a one-time migration function that copies existing `data_sharing_settings` values from `profiles` into the new columns
+- Do NOT drop `profiles.data_sharing_settings` yet (backward compat during transition)
 
-## File Created
-- `src/docs/ZINC_V2_MIGRATION.md` — the complete reference document
+**Step 2 — Update `usePrivacySettings` hook** (1 file)
+- Add the 4 new fields to `PrivacySettings` interface
+- Read/write them alongside existing columns
+- Export a single unified hook that replaces both privacy sources
 
-## Technical Details
-- No code changes, no edge function modifications — document only
-- Covers all 9 edge functions and 6 V1 endpoints
-- Includes V2 request/response schema diffs for each endpoint
-- References official V2 docs URLs
+**Step 3 — Update `DataSharingSection` component** (1 file)
+- Read from `usePrivacySettings` instead of form context `data_sharing_settings`
+- Write to `privacy_settings` table via `updateSettings()`
+
+**Step 4 — Update consumers (~15 key files)**
+- `useProfileData.ts`, `useProfileSave.ts`, `useProfileForm.tsx` — stop reading/writing `data_sharing_settings`
+- `publicProfileService.ts`, `privacyAwareFriendSearch.ts` — read from `privacy_settings` table
+- `birthdayUtils.ts`, `UnifiedGiftManagementService.ts` — use `privacy_settings` for visibility checks
+- Onboarding steps (`DataSharingStep`, `PrivacyStep`) — wire to `usePrivacySettings`
+- `dataExportUtils.ts` — export from `privacy_settings`
+- Profile fetch contexts — stop mapping `data_sharing_settings`
+
+**Step 5 — Clean up types** (3-4 files)
+- Remove `DataSharingSettings` type from `src/hooks/settings/types.ts`, `src/types/supabase.ts`, `src/utils/privacyUtils.ts`
+- Consolidate into the `PrivacySettings` interface in `usePrivacySettings.ts`
+- Remove `gift_preferences` references everywhere
+
+**Step 6 — Mark `profiles.data_sharing_settings` as deprecated**
+- Leave the column in the DB but stop writing to it
+- Can be dropped in a future cleanup migration
+
+### What This Fixes
+- Single source of truth for all privacy — one table, one hook, one settings page
+- Eliminates the `gift_preferences` deprecated field
+- Reduces privacy-related code from ~50 files to ~7 files touching the hook
+- Settings UI reads/writes one place instead of two
+
+### Risk
+- Low: no schema breaking changes, backward-compatible migration
+- The `profiles.data_sharing_settings` column stays but becomes read-only during transition
+- All 50 consumer files need updating but each change is mechanical (swap data source)
 

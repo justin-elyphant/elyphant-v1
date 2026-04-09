@@ -521,12 +521,6 @@ const UnifiedOnboarding: React.FC = () => {
         ),
         interests: selectedInterests,
         important_dates: [],
-        data_sharing_settings: {
-          dob: "friends" as const,
-          shipping_address: "private" as const,
-          gift_preferences: "friends" as const,
-          email: "private" as const
-        },
         onboarding_completed: true
       };
 

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database, Json } from "@/integrations/supabase/types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+
 import { toast } from "sonner";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -163,8 +163,7 @@ class UnifiedProfileService {
         gift_preferences: profileData.gift_preferences || [],
         important_dates: [],
         
-        // Settings
-        data_sharing_settings: getDefaultDataSharingSettings(),
+        // Privacy settings now live in privacy_settings table
         onboarding_completed: true,
         updated_at: new Date().toISOString()
       };
@@ -177,7 +176,7 @@ class UnifiedProfileService {
           shipping_address: completeProfileData.shipping_address as Json,
           interests: completeProfileData.interests as Json,
           gift_preferences: completeProfileData.gift_preferences as Json,
-          data_sharing_settings: completeProfileData.data_sharing_settings as Json,
+          
         }, {
           onConflict: 'id'
         })

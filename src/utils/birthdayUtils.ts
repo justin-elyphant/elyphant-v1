@@ -1,5 +1,6 @@
 
 import { parseBirthdayFromStorage } from "./dataFormatUtils";
+import { FieldVisibility } from "@/hooks/usePrivacySettings";
 
 /**
  * Formats birthday for display on profile pages
@@ -20,21 +21,17 @@ export const formatBirthdayForDisplay = (dob: string | null, birth_year?: number
 };
 
 /**
- * Checks if birthday should be displayed based on privacy settings
+ * Checks if birthday should be displayed based on privacy settings.
+ * Accepts a FieldVisibility value directly from the privacy_settings table.
  */
 export const shouldDisplayBirthday = (
-  dataSharingSettings: any,
+  visibility: FieldVisibility,
   viewerRelationship: 'self' | 'friend' | 'public' = 'public'
 ): boolean => {
-  if (!dataSharingSettings?.dob) return false;
-  
-  const privacyLevel = dataSharingSettings.dob;
-  
-  switch (privacyLevel) {
+  switch (visibility) {
     case 'private':
       return viewerRelationship === 'self';
     case 'friends':
-    case 'connections': // normalize both terms
       return viewerRelationship === 'self' || viewerRelationship === 'friend';
     case 'public':
       return true;

@@ -1,68 +1,80 @@
 
 
-## Privacy System Cleanup: Duplicates and Unnecessary Enforcement
+## Privacy Policy Analysis: Calibration Assessment
+
+### Summary of All 13 Privacy Controls
+
+| # | Setting | Default | Enforced? | Assessment |
+|---|---------|---------|-----------|------------|
+| 1 | `profile_visibility` | **public** | Yes (search + public profiles) | Appropriate |
+| 2 | `allow_connection_requests_from` | **everyone** | Yes (search service) | Appropriate |
+| 3 | `allow_message_requests` | **true** | Yes (public profile service) | Appropriate |
+| 4 | `wishlist_visibility` | **public** | Yes (gift service + wishlist grid) | Appropriate |
+| 5 | `auto_gift_consent` | **connections_only** | Yes (gift management service) | Appropriate |
+| 6 | `gift_surprise_mode` | **true** | **Not enforced** | Dead setting |
+| 7 | `block_list_visibility` | **hidden** | **Not enforced** | Dead setting |
+| 8 | `show_follower_count` | **true** | **UI only, not enforced on public profiles** | Weak |
+| 9 | `show_following_count` | **true** | **Not enforced anywhere** | Dead setting |
+| 10 | `dob_visibility` | **friends** | Yes (birthday utils + connections adapter) | Appropriate |
+| 11 | `shipping_address_visibility` | **private** | Yes (connections adapter) | Appropriate |
+| 12 | `interests_visibility` | **public** | Partially (indicator only, not gated) | Weak |
+| 13 | `email_visibility` | **friends** | Yes (profile banner + compact header) | Appropriate |
+
+---
 
 ### Issues Found
 
-**1. `DataSharingStep` and `PrivacyStep` are identical components**
-Both files are character-for-character the same UI (Birthday + Interests selects using `usePrivacySettings`). Only the subtitle text differs slightly. One should be deleted and the other reused.
+**1. Three Dead Settings (stored but never enforced)**
 
-**2. Three duplicate type aliases for the same concept**
-- `FieldVisibility` in `usePrivacySettings.ts` = `'private' | 'friends' | 'public'`
-- `PrivacyLevel` in `utils/privacyUtils.ts` = `'private' | 'friends' | 'public'`
-- `PrivacyLevel` in `gifting/events/types.ts` = `'private' | 'shared' | 'public'` (different values -- "shared" vs "friends")
+- **`gift_surprise_mode`** -- Togglable in Settings UI, saved to DB, but no code anywhere checks this value to hide the gift sender's identity. It's a promise to the user that isn't kept.
+- **`block_list_visibility`** -- Saved to DB but never read by any component or service. There's no UI that shows a user's block list to connections regardless of this setting.
+- **`show_following_count`** -- In the DB and hook but not in the Settings UI and not enforced on any profile view. The Settings UI only shows `show_follower_count` (labeled "Show connection count"). This is a vestigial field from a follower/following model that no longer exists -- the platform uses symmetric connections.
 
-The first two are identical. They should be consolidated into one canonical type exported from `usePrivacySettings.ts`.
+**Recommendation**: Delete all three. They add complexity, give users false confidence, and increase the settings surface for no benefit.
 
-**3. `PrivacyNotice` and `PrivacyIndicator` overlap significantly**
-Both render privacy-level badges/alerts with the same icon logic (Eye/EyeOff/Users) and the same color mapping (public=warning, friends=info, private=success). `PrivacyIndicator` is the more capable version (reads from the unified table, supports labels). `PrivacyNotice` is a simpler Alert wrapper used in only 1 file (`ProfileInfo.tsx`). They should merge into one component.
+**2. Two Weak Enforcement Settings**
 
-**4. `shouldDisplayBirthday` in `birthdayUtils.ts` duplicates enforcement logic**
-This function takes `dataSharingSettings.dob` and does visibility gating. But `BirthdayCountdown.tsx` and `useConnectionsAdapter.ts` already query `privacy_settings.dob_visibility` directly and do the same check inline. There are now two parallel birthday-visibility enforcement paths. Should consolidate into one utility that takes the `dob_visibility` value directly.
+- **`show_follower_count`** -- The Settings UI lets users toggle this, but `publicProfileService.ts` always returns `connection_count` to any viewer. The toggle is only checked in `PrivacySharingSettings.tsx` (the settings page itself), not on the actual profile views (`InstagramProfileLayout`, `CompactProfileHeader`, `ProfileBanner`). A user who turns this off still has their count visible to everyone.
 
-**5. `privacyUtils.ts` is mostly dead code**
-- `getDefaultDataSharingSettings()` -- deprecated, only used for legacy form compat
-- `normalizeDataSharingSettings()` -- deprecated, used in 2 files
-- `PrivacyLevel` type -- duplicate of `FieldVisibility`
-- `getReadablePrivacyLevel()` / `getSharingLevelLabel()` -- useful but should move to the unified hook or a slim helper
+- **`interests_visibility`** -- Saved and shown as a privacy badge via `PrivacyIndicator`, but no code actually gates whether interests/gift preferences are visible to non-friends. Profile views render interests regardless of this setting. The indicator tells users their interests are "Friends Only" while displaying them publicly.
 
-**6. Legacy `data_sharing_settings` still written in 3 onboarding paths**
-`UnifiedOnboarding.tsx`, `StreamlinedSignUp.tsx`, and `useProfileSubmission.ts` still write static defaults to the JSONB column. These writes are unnecessary since privacy now lives in `privacy_settings` table.
+**Recommendation**: Either enforce these properly (check the setting before rendering the data) or remove the toggle to avoid misleading users.
 
-### Proposed Cleanup
+**3. Default Calibration Issues**
 
-**Step 1 -- Delete `DataSharingStep`, keep `PrivacyStep` as the single onboarding privacy component**
-Update any imports referencing `DataSharingStep` to use `PrivacyStep`.
+- **`interests_visibility` defaults to `public`** -- This is intentional per the "maximum sharing" strategy for AI gift recommendations. However, combined with the fact it's not enforced, changing the default wouldn't matter until enforcement is added. No action needed on the default itself.
 
-**Step 2 -- Merge `PrivacyNotice` into `PrivacyIndicator`**
-Add a `mode="inline"` or `variant="alert"` prop to `PrivacyIndicator` for the Alert-style rendering. Delete `PrivacyNotice.tsx`. Update `ProfileInfo.tsx`.
+- **`email_visibility` defaults to `friends`** -- Good. The memory docs say emails should never be rendered in UI, so this setting is somewhat redundant with the hardcoded rule. But having it as a belt-and-suspenders approach is fine.
 
-**Step 3 -- Consolidate types: kill `PrivacyLevel`, use `FieldVisibility` everywhere**
-- Delete `PrivacyLevel` export from `privacyUtils.ts`
-- Update `types/supabase.ts`, `ProfileInfo.tsx`, `PrivacyNotice` consumers to import `FieldVisibility` from `usePrivacySettings`
-- Leave the gifting events `PrivacyLevel` alone (it uses "shared" which is a different concept)
+- No defaults are too conservative for a social gifting platform. The "maximum sharing" defaults (public profile, public wishlists, public interests) are appropriate for discoverability.
 
-**Step 4 -- Refactor `shouldDisplayBirthday` to accept a visibility string**
-Change signature from `(dataSharingSettings, viewerRelationship)` to `(visibility: FieldVisibility, viewerRelationship)`. Update callers. This becomes the single birthday-visibility check.
+---
 
-**Step 5 -- Delete `privacyUtils.ts` entirely**
-- Move `getReadablePrivacyLevel()` to `usePrivacySettings.ts` as a standalone export
-- Remove all imports of the dead file
+### Recommended Changes
 
-**Step 6 -- Stop writing `data_sharing_settings` in onboarding**
-Remove the JSONB writes from `UnifiedOnboarding.tsx`, `StreamlinedSignUp.tsx`, and `useProfileSubmission.ts`.
+**Step 1 -- Remove 3 dead settings**
+- Delete `gift_surprise_mode`, `block_list_visibility`, `show_following_count` from:
+  - `PrivacySettings` interface in `usePrivacySettings.ts`
+  - `DEFAULT_SETTINGS` object
+  - `normalizeSettings()` function
+  - Settings UI (`PrivacySharingSettings.tsx` -- remove the gift surprise toggle and block list card)
+- DB migration to drop columns (or leave them and stop reading/writing)
 
-### Impact Summary
+**Step 2 -- Enforce `show_follower_count`**
+- In `InstagramProfileLayout`, `CompactProfileHeader`, and `ProfileBanner`: fetch or pass `show_follower_count` and conditionally hide the connection count
+- In `publicProfileService.ts`: conditionally omit `connection_count` based on the setting
 
-| What | Before | After |
-|------|--------|-------|
-| Duplicate components | 2 (DataSharingStep + PrivacyStep) | 1 |
-| Privacy display components | 2 (PrivacyNotice + PrivacyIndicator) | 1 |
-| Type aliases for same concept | 3 | 1 (`FieldVisibility`) |
-| Birthday visibility check paths | 3 | 1 |
-| Dead utility files | 1 (`privacyUtils.ts`) | 0 |
-| Legacy JSONB write points | 3 | 0 |
+**Step 3 -- Enforce `interests_visibility`**
+- In profile views that render interests/gift preferences: check `interests_visibility` against viewer relationship before rendering
+- This aligns the `PrivacyIndicator` badge with actual behavior
 
-### Risk
-Low. All changes are mechanical consolidations. No schema changes needed.
+**Step 4 -- DB migration** (optional cleanup)
+- Drop `gift_surprise_mode`, `block_list_visibility`, `show_following_count` columns
+- Update the `create_default_privacy_settings` trigger to stop setting them
+
+### Impact
+- Removes 3 settings that do nothing (reduces user confusion)
+- Fixes 2 settings that lie to users (badge says "Friends Only" but data is public)
+- No changes to defaults or settings that are working correctly
+- Net reduction: 13 settings to 10, all properly enforced
 

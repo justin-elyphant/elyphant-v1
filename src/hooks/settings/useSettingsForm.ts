@@ -90,15 +90,6 @@ export const useSettingsForm = () => {
     try {
       setIsLoading(true);
       
-      // Ensure all required fields in data_sharing_settings are provided
-      const dataSharingSettings: DataSharingSettings = {
-        dob: data.data_sharing_settings.dob || "private",
-        shipping_address: data.data_sharing_settings.shipping_address || "private",
-        interests: data.data_sharing_settings.interests || data.data_sharing_settings.gift_preferences || "friends",
-        gift_preferences: data.data_sharing_settings.gift_preferences || data.data_sharing_settings.interests || "friends",
-        email: data.data_sharing_settings.email || "private"
-      };
-      
       // Convert form address to API format
       const shippingAddress: ShippingAddress = {
         address_line1: data.address.street || "",
@@ -106,7 +97,6 @@ export const useSettingsForm = () => {
         state: data.address.state || "",
         zip_code: data.address.zipCode || "",
         country: data.address.country || "",
-        // Also keep aliases for compatibility
         street: data.address.street || "",
         zipCode: data.address.zipCode || ""
       };
@@ -120,7 +110,8 @@ export const useSettingsForm = () => {
         birthYear = date.getFullYear();
       }
       
-      // Format the data for Supabase
+      // Format the data for Supabase — data_sharing_settings no longer saved here
+      // Privacy settings now live in the privacy_settings table via usePrivacySettings hook
       const updateData = {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -134,10 +125,9 @@ export const useSettingsForm = () => {
         interests: data.interests,
         important_dates: data.importantDates.map(date => ({
           date: date.date.toISOString(),
-          title: date.description, // Map description to title
+          title: date.description,
           type: "custom"
         })),
-        data_sharing_settings: dataSharingSettings
       };
       
       await updateProfile(updateData);

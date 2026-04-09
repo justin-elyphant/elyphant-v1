@@ -1,61 +1,20 @@
 
 
-## Simplify Wishlist Creation Dialog with Lululemon Styling
+## Make Wishlists Public by Default
 
-### What Changes
+### Why
+The `/wishlists` route now serves as the social profile hub. Defaulting wishlists to public aligns with the "maximum sharing" privacy model already established for interests and wishlist visibility. Users can still toggle individual wishlists to private.
 
-Strip the dialog down to 2 fields (Title + Description) and apply the monochromatic Lululemon design system.
+### Changes
 
-### Visual Design
+**5 files — flip `is_public: false` → `is_public: true`:**
 
-```text
-┌─────────────────────────────────────┐
-│                                     │
-│  Create New Wishlist                │
-│  Save and share your gift ideas.    │
-│                                     │
-│  NAME                               │
-│  ┌─────────────────────────────┐    │
-│  │ My Birthday Picks           │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  DESCRIPTION (OPTIONAL)             │
-│  ┌─────────────────────────────┐    │
-│  │                             │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌───────────┐  ┌─────────────┐    │
-│  │  Cancel    │  │   Create    │    │
-│  │  (outline) │  │ (black bg)  │    │
-│  └───────────┘  └─────────────┘    │
-└─────────────────────────────────────┘
-```
+1. **`src/components/gifting/hooks/operations/useWishlistCreate.tsx`** (line 48) — primary creation hook
+2. **`src/hooks/useUnifiedWishlistSystem.tsx`** (line 198) — unified system default wishlist
+3. **`src/components/gifting/hooks/useWishlistState.tsx`** (lines 163, 191) — auto-generated wishlists from profile products and empty default
+4. **`src/components/marketplace/hooks/utils/wishlists.ts`** (line 30) — marketplace wishlist helper
 
-### Styling Details (Lululemon System)
-- **Dialog background**: white, clean with generous padding
-- **Labels**: uppercase tracking-wide text-xs text-muted-foreground (like Lululemon form labels)
-- **Inputs**: minimal border, rounded-md, bg-[#F7F7F7] on focus
-- **Create button**: `bg-black text-white hover:bg-gray-900` (Lululemon primary CTA)
-- **Cancel button**: outline with black border, no color
-- **No separator, no "Organization" section** -- removed entirely
-- **Title placeholder**: contextual based on user interests (e.g., "Summer Running Gear")
+Each is a single-line change from `false` to `true`.
 
-### File Changes
-
-**`src/components/gifting/wishlist/CreateWishlistDialog.tsx`**
-- Remove: Category dropdown, Priority selector, Tags/EnhancedTagInput, Separator, "Organization" heading
-- Remove imports: `Select*`, `EnhancedTagInput`, `normalizeTags`, `Separator`
-- Strip schema to just `title` (required) + `description` (optional)
-- Style labels with `uppercase tracking-wider text-xs`
-- Style Create button with `bg-black text-white hover:bg-gray-900`
-- Auto-assign defaults on submit: `category: "personal"`, `priority: "medium"`, `tags: []`
-- Pull user interests from profile for smart placeholder text
-
-**`src/components/gifting/hooks/operations/useWishlistCreate.tsx`**
-- Add auto-tagging: match title words against `profile.interests` array and set as tags
-
-### What Stays Unchanged
-- `EditWishlistDialog` -- Category, Priority, Tags remain accessible for post-creation editing
-- `FormValues` type contract with consumers -- defaults supplied silently
-- Data model / Wishlist type -- no schema changes
+**No other changes needed** — the share toggle, privacy enforcement in `UnifiedGiftManagementService`, and visitor-mode read-only logic all already handle `is_public: true` correctly.
 

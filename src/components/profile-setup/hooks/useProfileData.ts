@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileData } from "./types";
-import { getDefaultDataSharingSettings } from "@/utils/privacyUtils";
+import { getDefaultDataSharingSettings } from "@/utils/privacyUtils"; // kept for form compat
 import { parseBirthdayFromStorage } from "@/utils/dataFormatUtils";
 
 export const useProfileData = () => {
@@ -52,16 +52,12 @@ export const useProfileData = () => {
         if (profile) {
           console.log("Loading existing profile data:", profile);
           
-          // Ensure complete data sharing settings with email field using consistent defaults
           const shippingAddressData = profile.shipping_address as any;
           const giftPreferencesData = profile.gift_preferences as any;
           const importantDatesData = profile.important_dates as any;
-          const dataSharingData = profile.data_sharing_settings as any;
           
-          const completeDataSharingSettings = {
-            ...getDefaultDataSharingSettings(),
-            ...(dataSharingData || {})
-          };
+          // Use static defaults — actual privacy is managed via usePrivacySettings hook
+          const completeDataSharingSettings = getDefaultDataSharingSettings();
 
           // Convert stored birthday back to full date
           let fullBirthDate: Date | null = null;

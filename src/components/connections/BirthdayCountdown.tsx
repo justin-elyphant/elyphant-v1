@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { formatBirthdayForDisplay, shouldDisplayBirthday } from "@/utils/birthdayUtils";
+import { formatBirthdayForDisplay } from "@/utils/birthdayUtils";
 
 interface BirthdayCountdownProps {
   userId: string;
@@ -14,7 +14,6 @@ interface BirthdayCountdownProps {
 export const BirthdayCountdown = ({ userId, connectionName }: BirthdayCountdownProps) => {
   const [birthdayInfo, setBirthdayInfo] = useState<{
     dob: string | null;
-    dataSharingSettings: any;
     daysUntil: number | null;
     formattedBirthday: string | null;
   } | null>(null);
@@ -25,10 +24,10 @@ export const BirthdayCountdown = ({ userId, connectionName }: BirthdayCountdownP
       try {
         setLoading(true);
 
-        // Fetch user's profile and birthday info
+        // Fetch user's profile birthday info
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('dob, birth_year, data_sharing_settings')
+          .select('dob, birth_year')
           .eq('id', userId)
           .single();
 
@@ -38,8 +37,17 @@ export const BirthdayCountdown = ({ userId, connectionName }: BirthdayCountdownP
           return;
         }
 
-        // Check if birthday should be displayed (assuming friend relationship for connections)
-        const canShowBirthday = shouldDisplayBirthday(profile.data_sharing_settings, 'friend');
+        // Check privacy_settings for dob visibility (unified source of truth)
+        const { data: privacyRow } = await supabase
+          .from('privacy_settings')
+          .select('dob_visibility')
+          .eq('user_id', userId)
+          .single();
+
+        const dobVisibility = (privacyRow as any)?.dob_visibility || 'friends';
+        // For connections page, viewer is always a 'friend'
+        const canShowBirthday =
+          dobVisibility === 'public' || dobVisibility === 'friends';
         
         if (!canShowBirthday) {
           setBirthdayInfo(null);
@@ -75,7 +83,6 @@ export const BirthdayCountdown = ({ userId, connectionName }: BirthdayCountdownP
 
         setBirthdayInfo({
           dob: profile.dob,
-          dataSharingSettings: profile.data_sharing_settings,
           daysUntil,
           formattedBirthday
         });

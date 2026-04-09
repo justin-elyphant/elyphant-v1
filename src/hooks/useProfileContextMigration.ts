@@ -140,7 +140,8 @@ export function useProfileUpdater() {
     updateAddress: (address: any) => 
       updateProfile({ shipping_address: address }),
     
-    updatePreferences: (preferences: any) => 
-      updateProfile({ data_sharing_settings: preferences })
+    // updatePreferences: deprecated — privacy managed via usePrivacySettings hook
+    updatePreferences: (_preferences: any) => 
+      Promise.resolve({ success: true, error: null } as any)
   };
 }

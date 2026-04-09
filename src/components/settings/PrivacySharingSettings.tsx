@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Shield, Eye, Users, MessageSquare, Heart, Gift, Lock, Sparkles } from "lucide-react";
+import { Shield, Eye, Users, MessageSquare, Heart, Gift, Sparkles } from "lucide-react";
 import { usePrivacySettings } from "@/hooks/usePrivacySettings";
 import { Separator } from "@/components/ui/separator";
 import DeleteAccountSection from "./DeleteAccountSection";

@@ -74,7 +74,13 @@ export const useSettingsForm = () => {
             date: new Date(date.date),
             description: date.title || date.description || ""
           })) || [],
-          data_sharing_settings: normalizeDataSharingSettings(profile.data_sharing_settings)
+          data_sharing_settings: {
+            dob: profile.data_sharing_settings?.dob || 'friends',
+            shipping_address: profile.data_sharing_settings?.shipping_address || 'private',
+            interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || 'public',
+            gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || 'public',
+            email: profile.data_sharing_settings?.email || 'friends'
+          }
         });
       }
     }

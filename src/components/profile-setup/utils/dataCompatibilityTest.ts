@@ -31,7 +31,13 @@ export const testOnboardingToSettingsCompatibility = () => {
         description: "Christmas"
       }
     ],
-    data_sharing_settings: getDefaultDataSharingSettings(),
+    data_sharing_settings: {
+      dob: 'friends',
+      shipping_address: 'private',
+      interests: 'public',
+      gift_preferences: 'public',
+      email: 'friends'
+    },
     next_steps_option: "dashboard"
   };
 

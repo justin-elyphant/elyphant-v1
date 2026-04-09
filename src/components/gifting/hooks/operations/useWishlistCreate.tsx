@@ -28,6 +28,9 @@ export function useWishlistCreate(
       
       setIsCreating(true);
       
+      // Auto-tag from user interests
+      const autoTags = (tags && tags.length > 0) ? tags : inferTagsFromInterests(title, profile?.interests as string[] | undefined);
+
       // Create new wishlist object
       const newWishlist: Wishlist = normalizeWishlist({
         id: crypto.randomUUID(),
@@ -39,7 +42,7 @@ export function useWishlistCreate(
         is_public: false,
         items: [],
         category,
-        tags,
+        tags: autoTags,
         priority
       });
       

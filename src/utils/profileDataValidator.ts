@@ -22,7 +22,7 @@ const profileDataSchema = z.object({
   important_dates: z.array(z.any()).optional(),
   interests: z.array(z.string()).optional(),
   profile_image: z.string().nullable().optional(),
-  data_sharing_settings: z.any().optional(),
+  
 }).merge(addressVerificationSchema);
 
 export type ValidatedProfileData = z.infer<typeof profileDataSchema>;

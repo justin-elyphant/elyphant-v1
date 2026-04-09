@@ -2,11 +2,8 @@
 import { Profile } from "@/types/profile";
 
 /**
- * Validates profile data and fixes inconsistencies
- * @param profile The profile to validate
- * @param updateCallback Optional callback to update the profile if fixes are needed
- * @param autoFix Whether to automatically fix issues
- * @returns Boolean indicating if the profile is valid
+ * Validates profile data and fixes inconsistencies.
+ * NOTE: data_sharing_settings is deprecated — privacy now lives in privacy_settings table.
  */
 export async function validateAndFixProfile(
   profile: Profile | null, 
@@ -29,7 +26,6 @@ export async function validateAndFixProfile(
   if (profile.shipping_address) {
     const address = profile.shipping_address;
     
-    // Make sure we're using the standardized field names
     if ((address as any).street && !address.address_line1) {
       fixes.shipping_address = {
         ...address,
@@ -50,19 +46,6 @@ export async function validateAndFixProfile(
   // Check gift preferences
   if (!Array.isArray(profile.gift_preferences) || profile.gift_preferences.length === 0) {
     fixes.gift_preferences = [];
-    needsFixes = true;
-  }
-  
-  // Check data_sharing_settings
-  if (!profile.data_sharing_settings || !profile.data_sharing_settings.email) {
-    fixes.data_sharing_settings = {
-      ...(profile.data_sharing_settings || {}),
-      dob: profile.data_sharing_settings?.dob || 'private',
-      shipping_address: profile.data_sharing_settings?.shipping_address || 'private',
-      interests: profile.data_sharing_settings?.interests || profile.data_sharing_settings?.gift_preferences || 'public',
-      gift_preferences: profile.data_sharing_settings?.gift_preferences || profile.data_sharing_settings?.interests || 'public',
-      email: 'private'
-    };
     needsFixes = true;
   }
   

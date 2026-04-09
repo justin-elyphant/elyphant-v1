@@ -91,7 +91,7 @@ const ProfileSetupWithIntent = () => {
           category: interest,
           importance: "medium" as const
         })),
-        data_sharing_settings: data.data_sharing_settings
+        // data_sharing_settings no longer saved here — privacy lives in privacy_settings table
       };
 
       // Auto-add birthday to important dates if date_of_birth is provided

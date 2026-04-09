@@ -77,7 +77,8 @@ const CreateWishlistDialog = ({
   
   const handleSubmit = async (values: FormValues) => {
     await onSubmit({
-      ...values,
+      title: values.title,
+      description: values.description,
       category: "personal",
       tags: [],
       priority: "medium",

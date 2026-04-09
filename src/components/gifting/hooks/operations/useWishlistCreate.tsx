@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Wishlist, normalizeWishlist } from "@/types/profile";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
+import { useProfile } from "@/contexts/profile/ProfileContext";
 
 export function useWishlistCreate(
   setWishlists: React.Dispatch<React.SetStateAction<Wishlist[]>>,

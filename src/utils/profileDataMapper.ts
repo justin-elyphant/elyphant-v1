@@ -1,5 +1,5 @@
 
-import { ShippingAddress, ImportantDate, DataSharingSettings, GiftPreference } from "@/types/profile";
+import { ShippingAddress, ImportantDate, GiftPreference } from "@/types/profile";
 
 /**
  * Enhanced address mapping that handles multiple formats
@@ -179,12 +179,6 @@ export function mapDatabaseToSettingsForm(profile: any) {
       },
       interests: [],
       importantDates: [],
-      data_sharing_settings: {
-        dob: "private",
-        shipping_address: "private",
-        gift_preferences: "friends",
-        email: "private"
-      }
     };
   }
 
@@ -249,12 +243,6 @@ export function mapDatabaseToSettingsForm(profile: any) {
       ? profile.interests 
       : (profile.gift_preferences || []).map((p: any) => typeof p === 'string' ? p : p?.category).filter(Boolean),
     importantDates: mappedImportantDates,
-    data_sharing_settings: profile.data_sharing_settings || {
-      dob: "private",
-      shipping_address: "private", 
-      gift_preferences: "friends",
-      email: "private"
-    }
   };
 
   console.log("✅ mapDatabaseToSettingsForm output:", result);
@@ -283,7 +271,7 @@ export function mapSettingsFormToDatabase(formData: any) {
     shipping_address: mapFormAddressToApiAddress(formData.address),
     interests: formData.interests || [],
     important_dates: mapFormDatesToApiFormat(formData.importantDates || []),
-    data_sharing_settings: formData.data_sharing_settings,
+    
     updated_at: new Date().toISOString()
   };
 

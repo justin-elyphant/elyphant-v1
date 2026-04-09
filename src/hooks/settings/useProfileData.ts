@@ -130,12 +130,6 @@ export const useProfileData = (
         },
         interests: [],
         importantDates: [],
-        data_sharing_settings: {
-          dob: "private",
-          shipping_address: "private",
-          gift_preferences: "friends",
-          email: "private"
-        }
       };
 
       form.reset(defaultValues);

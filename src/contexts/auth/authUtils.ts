@@ -50,7 +50,7 @@ export const updateUserProfile = async (user: any, updates: Partial<Profile>) =>
       ...updates,
       gift_preferences: updates.gift_preferences ? JSON.stringify(updates.gift_preferences) : undefined,
       important_dates: updates.important_dates ? JSON.stringify(updates.important_dates) : undefined,
-      data_sharing_settings: updates.data_sharing_settings ? JSON.stringify(updates.data_sharing_settings) : undefined,
+      
       shipping_address: updates.shipping_address ? JSON.stringify(updates.shipping_address) : undefined
     };
     

@@ -77,17 +77,6 @@ export const validateProfileDataFlow = (profile: Profile, context: string = '') 
     warnings.push('No interests or gift preferences found');
   }
   
-  // Check data sharing settings
-  if (!profile.data_sharing_settings) {
-    warnings.push('Missing data sharing settings');
-  } else {
-    const requiredFields = ['dob', 'shipping_address', 'gift_preferences', 'email'];
-    requiredFields.forEach(field => {
-      if (!profile.data_sharing_settings[field]) {
-        warnings.push(`Missing data sharing setting for: ${field}`);
-      }
-    });
-  }
   
   // Check address format
   if (profile.shipping_address) {

@@ -31,9 +31,9 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings, vie
     interests,
   } = profile;
 
-  // Use privacy_settings table values (fallback to legacy data_sharing_settings for transition)
-  const dobVisibility = (privacySettings?.dob_visibility || profile.data_sharing_settings?.dob || 'private') as FieldVisibility;
-  const interestsVisibility = (privacySettings?.interests_visibility || profile.data_sharing_settings?.interests || 'public') as FieldVisibility;
+  // Use privacy_settings table values
+  const dobVisibility = (privacySettings?.dob_visibility || 'private') as FieldVisibility;
+  const interestsVisibility = (privacySettings?.interests_visibility || 'public') as FieldVisibility;
 
   const formattedBirthday = formatBirthdayForDisplay(dob);
   const showBirthday = shouldDisplayBirthday(dobVisibility, viewerRelationship);

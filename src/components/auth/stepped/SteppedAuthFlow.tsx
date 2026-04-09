@@ -223,12 +223,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             category: i,
             importance: "medium",
           })) as any,
-          p_data_sharing_settings: {
-            dob: "friends",
-            shipping_address: "private",
-            gift_preferences: "public",
-            email: "private",
-          } as any,
           p_shipping_address: state.address as any,
           p_profile_image: finalPhotoUrl || null,
         });
@@ -302,12 +296,6 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             category: i,
             importance: "medium",
           })) as any,
-          p_data_sharing_settings: {
-            dob: "friends",
-            shipping_address: "private",
-            gift_preferences: "public",
-            email: "private",
-          } as any,
           p_shipping_address: state.address as any,
           p_profile_image: emailFinalPhotoUrl || null,
         });

@@ -57,11 +57,6 @@ const PrivacyIndicator: React.FC<PrivacyIndicatorProps> = ({
       if (val) return val;
     }
 
-    // Fallback to legacy data_sharing_settings
-    if (profile) {
-      const settings = profile.data_sharing_settings;
-      if (settings) return settings[field as keyof typeof settings] || 'public';
-    }
     return 'public';
   };
 

@@ -46,13 +46,6 @@ export const useGeneralSettingsForm = () => {
       },
       interests: [],
       importantDates: [],
-      data_sharing_settings: {
-        dob: "private",
-        shipping_address: "private",
-        interests: "private",
-        gift_preferences: "friends",
-        email: "private"
-      }
     }
   });
 

@@ -6,7 +6,7 @@ export const createProfileCompletenessRule = (userId: string): ValidationRule =>
   check: async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('name, dob, shipping_address, gift_preferences, data_sharing_settings')
+      .select('name, dob, shipping_address, gift_preferences')
       .eq('id', userId)
       .single();
     
@@ -16,8 +16,7 @@ export const createProfileCompletenessRule = (userId: string): ValidationRule =>
       data?.name && 
       data?.dob && 
       data?.shipping_address && 
-      (Array.isArray(data?.gift_preferences) ? data.gift_preferences.length > 0 : false) &&
-      data?.data_sharing_settings
+      (Array.isArray(data?.gift_preferences) ? data.gift_preferences.length > 0 : false)
     );
   },
   message: "Profile is incomplete - missing required fields",

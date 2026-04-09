@@ -22,12 +22,9 @@ export interface PrivacySettings {
   // Social Controls
   allow_connection_requests_from: 'everyone' | 'connections_only' | 'nobody';
   profile_visibility: 'public' | 'connections_only' | 'private';
-  block_list_visibility: 'hidden' | 'visible_to_connections';
   show_follower_count: boolean;
-  show_following_count: boolean;
   allow_message_requests: boolean;
   auto_gift_consent: 'everyone' | 'connections_only' | 'nobody';
-  gift_surprise_mode: boolean;
   wishlist_visibility: 'public' | 'connections_only' | 'private';
   // Field Visibility
   dob_visibility: FieldVisibility;
@@ -39,12 +36,9 @@ export interface PrivacySettings {
 const DEFAULT_SETTINGS: PrivacySettings = {
   allow_connection_requests_from: 'everyone',
   profile_visibility: 'public',
-  block_list_visibility: 'hidden',
   show_follower_count: true,
-  show_following_count: true,
   allow_message_requests: true,
   auto_gift_consent: 'connections_only',
-  gift_surprise_mode: true,
   wishlist_visibility: 'public',
   // Field visibility defaults
   dob_visibility: 'friends',
@@ -67,15 +61,9 @@ function normalizeSettings(data: Record<string, unknown>): PrivacySettings {
       data.profile_visibility as string,
       { followers_only: 'connections_only' }
     ) as PrivacySettings['profile_visibility'],
-    block_list_visibility: normalize(
-      data.block_list_visibility as string,
-      { visible_to_friends: 'visible_to_connections' }
-    ) as PrivacySettings['block_list_visibility'],
     show_follower_count: !!data.show_follower_count,
-    show_following_count: !!data.show_following_count,
     allow_message_requests: !!data.allow_message_requests,
     auto_gift_consent: (data.auto_gift_consent as PrivacySettings['auto_gift_consent']) ?? 'connections_only',
-    gift_surprise_mode: data.gift_surprise_mode !== undefined ? !!data.gift_surprise_mode : true,
     wishlist_visibility: (data.wishlist_visibility as PrivacySettings['wishlist_visibility']) ?? 'public',
     // Field visibility
     dob_visibility: (data.dob_visibility as FieldVisibility) ?? DEFAULT_SETTINGS.dob_visibility,

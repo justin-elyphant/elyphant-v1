@@ -208,26 +208,6 @@ const PrivacySharingSettings: React.FC = () => {
               </Select>
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  Gift surprise mode
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Hide who purchased a gift until after the delivery date
-                </p>
-              </div>
-              <Switch
-                checked={settings.gift_surprise_mode}
-                onCheckedChange={(checked) =>
-                  updateSettings({ gift_surprise_mode: checked })
-                }
-                disabled={loading}
-              />
-            </div>
           </div>
         </CardContent>
       </Card>

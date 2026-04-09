@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PrivacyNotice from "./PrivacyNotice";
 import { Profile } from "@/types/profile";
 import { formatBirthdayForDisplay, shouldDisplayBirthday } from "@/utils/birthdayUtils";
+import { PrivacyLevel } from "@/utils/privacyUtils";
 
 interface ProfileInfoProps {
   profile: Profile;
@@ -81,7 +82,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
                 <div className="text-sm font-medium">Birthday</div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
                   {formattedBirthday}
-                  <PrivacyNotice level={dobVisibility} />
+                  <PrivacyNotice level={dobVisibility as PrivacyLevel} />
                 </div>
               </div>
             </div>
@@ -96,7 +97,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ profile, privacySettings }) =
             <CardTitle className="text-lg flex items-center gap-2">
               <Gift className="h-5 w-5" />
               Gift Preferences
-              <PrivacyNotice level={interestsVisibility} />
+              <PrivacyNotice level={interestsVisibility as PrivacyLevel} />
             </CardTitle>
           </CardHeader>
           <CardContent>

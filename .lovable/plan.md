@@ -1,23 +1,24 @@
 
 
-## Plan: Add Storage Bucket RLS Policies
+## Plan: Clean Up Duplicate Storage Policies
 
-### Goal
-Secure file storage by adding granular RLS policies on `storage.objects` for each bucket, ensuring users can only manage their own files.
+### Problem
+The `avatars` and `message-attachments` buckets have duplicate policies -- older ones assigned to the `public` role and newer ones correctly scoped to `authenticated`. The `message-attachments` bucket is particularly concerning since its older policies allow unauthenticated access.
 
-### Steps
+### Migration
 
-1. **Create a migration** with storage policies for each bucket:
-   - **avatars**: Users can upload/read/delete only their own avatar (path pattern: `{user_id}/*`)
-   - **profile-images**: Same owner-scoped access
-   - **message-attachments**: Users can upload their own; read access scoped to conversation participants
+A single SQL migration that drops the old, overly-permissive policies while keeping the correct `authenticated`-scoped ones from the recent security hardening:
 
-2. **Mark the storage RLS finding as resolved** in the security manager, noting that bucket-level policies enforce access control.
+**Drop from avatars:**
+- "Anyone can view avatars" (public role duplicate of "Avatars are publicly readable")
+- "Authenticated users can upload avatars" (public role -- misleading name, actually targets public)
+- "Users can update their own avatars" (public role duplicate)
+- "Users can delete their own avatars" (public role duplicate)
 
-### Technical Details
+**Drop from message-attachments:**
+- "Users can upload message attachments" (public role)
+- "Users can view message attachments in their conversations" (public role)
 
-- Policies use `auth.uid()::text` matched against the first path segment (`(storage.foldername(name))[1]`)
-- Public read access on avatars/profile-images (since profile photos are typically visible)
-- Insert/update/delete restricted to the file owner
-- Message attachments: insert by authenticated users, select scoped to owner (conversation-scoped read can be added later)
+### Result
+Each bucket will have only the properly scoped policies from the Phase 4 migration, all targeting `authenticated` with `auth.uid()` path checks.
 

@@ -1,5 +1,6 @@
 
 
+
 ## Privacy Unification & Pre-Beta Security Hardening — COMPLETE
 
 ### Completed Steps
@@ -24,6 +25,13 @@
 - ✅ Consolidated `privacy_settings` from 6 overlapping policies to 3 clean ones
 - ✅ Fixed `search_path` on `increment_group_gift_amount`, `decay_product_freshness`, `track_wishlist_purchase_and_notify`
 
+#### Phase 3: Extended Security Sweep — COMPLETE
+- ✅ `location_cache`: Replaced public ALL with service_role ALL + authenticated SELECT
+- ✅ `pricing_settings`: Removed authenticated read; now admin-only
+- ✅ Search path hardening: Fixed ALL 95 SECURITY DEFINER functions (`search_path=public` → `search_path=''`)
+- ✅ Verified `profiles` has no `is_admin` column; admin managed via `business_admins` table (properly secured)
+
 ### Known Limitations
 - Realtime channels: Supabase platform limitation — cannot add RLS to `realtime.messages`. Documented as known limitation.
-- Remaining linter warnings are pre-existing service_role `USING(true)` policies (intentional for backend-only tables) and extensions in public schema.
+- `storage.objects` RLS is disabled (Supabase-reserved schema — cannot fix via migrations). Must be re-enabled manually via Supabase SQL Editor: `ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;`
+- Remaining linter warnings are pre-existing service_role `USING(true)` policies (intentional for backend-only tables), extensions in public schema, and 6 non-SECURITY-DEFINER functions without search_path (low risk).

@@ -165,7 +165,15 @@ serve(async (req) => {
       }
 
       execution = executionData;
-      userId = executionData.user_id;
+      
+      // SECURITY: Verify the JWT user owns this execution
+      if (executionData.user_id !== userId) {
+        console.error('❌ User mismatch: JWT user', userId, 'does not own execution', executionId);
+        return new Response(
+          JSON.stringify({ success: false, error: 'You do not have permission to approve this gift' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
 
       // Also check for existing token
       const { data: existingToken } = await supabase

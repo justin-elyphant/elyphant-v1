@@ -95,7 +95,7 @@ const AuthCallback = () => {
                     referred_id: data.user.id,
                     referred_email: data.user.email || '',
                     connection_id: result.data.id,
-                    status: 'pending',
+                    status: 'pending_approval',
                     reward_amount: 100
                   });
                   console.log('[AuthCallback] Beta referral record created');

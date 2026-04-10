@@ -112,11 +112,11 @@ serve(async (req) => {
 
     for (const cat of categoriesToSeed) {
       // Count existing products matching this frontend category
-      // Use search_terms ILIKE for reliable matching (all seeded products have category in search_terms)
+      // search_terms is text[] array, use contains operator
       const { count: existingCount } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
-        .ilike('search_terms', `%${cat.value}%`);
+        .contains('search_terms', [cat.value]);
 
       const current = existingCount || 0;
       const deficit = Math.max(0, targetPerCategory - current);

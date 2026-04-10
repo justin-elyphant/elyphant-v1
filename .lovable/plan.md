@@ -1,33 +1,80 @@
 
 
-## Plan: Pre-Beta Security Hardening — COMPLETED
+## Plan: Scale-Ready Security Fixes (4 Findings)
 
-### What Was Done
+These fixes address the remaining vulnerabilities that become exploitable as you grow past beta.
 
-#### Migration 1: Critical Errors (3 fixes) ✅
-1. **Profiles**: Restricted "Users can view connected profiles" to `accepted` connections only (was `pending` + `accepted`). Merged two duplicate wishlist-owner policies into one.
-2. **Guest Orders**: Dropped "Guests can view recent orders by session" policy entirely.
-3. **Realtime**: Removed `orders` table from Realtime publication. Updated `useOrderRealtime.ts` to a no-op stub.
+---
 
-#### Migration 2: System Table Hardening ✅
-- Moved 16 system tables from `public` INSERT/UPDATE to `service_role` only
-- Fixed `vendor_accounts` policy from `public` to `service_role`
-- Fixed `pending_recipient_addresses` token validation to require authentication
-- Restricted email templates to authenticated users
-- Hardened `search_path` on 6 remaining functions (+ both overloads of `get_upcoming_auto_gift_events`)
+### What's Wrong and Why It Matters
 
-#### Migration 3: Remaining Quick Fixes ✅
-- `zma_funding_alerts`: authenticated INSERT → service_role
-- `email_analytics`: business admin policy from public → authenticated role
-- `get_high_converting_products`: search_path hardened
+1. **Profile PII over-exposure** (CRITICAL) — The "Public wishlist owners are discoverable" policy returns the *entire* profile row (email, shipping address, DOB) to anyone, including anonymous users. At scale, a scraper could harvest every public-wishlist user's PII in minutes.
 
-### Linter Status: 4 remaining (all non-actionable)
-- 1 INFO: Table with RLS enabled but no policies (intentional)
-- 2 WARN: Extensions in public schema (Supabase default)
-- 1 WARN: Postgres version (dashboard upgrade)
+2. **approve-auto-gift has no auth** (HIGH) — `verify_jwt=false` and the function trusts `userId` from the request body. Anyone can call this endpoint with someone else's user ID and approve/reject their auto-gifts.
 
-### Remaining Advisory Items (Future Work)
-- **Realtime channels**: `messages`, `contributions`, `funding_campaigns` still in Realtime publication — needs Supabase Dashboard Realtime authorization config
-- **Profile PII via connections**: `can_view_profile()` grants full row access to accepted connections — privacy_settings enforcement should be added inside the function
-- **approve-auto-gift**: Edge function has `verify_jwt=false` — should validate JWT in code or set to true
-- **user_type escalation**: `user_type` stored in mutable profiles table — should be in a separate role table
+3. **Edge function input validation** (MEDIUM) — `process-order-v2`, `nicole-unified-agent`, and `get-products` lack schema validation. Lower risk since they're internal/public, but formal validation prevents abuse at scale.
+
+4. **user_type privilege escalation scanner finding** (ALREADY FIXED) — The trigger we added handles this, but the scanner finding needs to be marked as resolved.
+
+---
+
+### Implementation Steps
+
+#### Step 1: Restrict Profile PII at the Database Level
+Create a migration that:
+- Drops the current "Public wishlist owners are discoverable" policy
+- Replaces it with a policy that uses a **column-restricting view** or rewrites the policy to only match on discovery queries
+- Creates a `public.profiles_public_view` view exposing ONLY: `id`, `name`, `avatar_url`, `username` (no email, DOB, shipping_address)
+- Updates the "Users can view connected profiles" policy to gate sensitive columns through `can_view_profile()` enhanced with `privacy_settings` checks
+
+Since RLS operates at row level (not column level), the cleanest approach is:
+- Keep the row-level policy as-is for connected users
+- For the public wishlist policy, create a **secure view** (`profiles_discoverable`) that only exposes safe columns, and point the wishlist-browsing UI queries at that view instead of the `profiles` table directly
+
+#### Step 2: Secure approve-auto-gift
+- Set `verify_jwt = true` in `config.toml`
+- Rewrite the function to extract `userId` from the JWT (`Authorization` header → `supabase.auth.getUser()`) instead of trusting the request body
+- Keep the token-based flow (email links) working by checking: if a valid `token` is provided, use the `user_id` from the token record; otherwise require JWT auth
+
+#### Step 3: Add Input Validation to Remaining Edge Functions
+- Add lightweight Zod schemas to `get-products` (validate `query`, `limit`, `offset` types)
+- Add Zod schema to `nicole-unified-agent` (validate `message` string, `sessionId`)
+- `process-order-v2` is internal-only (called by webhooks/cron) — add basic type checks
+
+#### Step 4: Update Security Scanner Findings
+- Mark `get_user_context_privilege_escalation` as fixed (trigger already deployed)
+- Update `profiles_public_email_shipping` after the view migration
+- Update `edge_func_validation_v2` after adding Zod schemas
+
+---
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| New migration SQL | Create `profiles_discoverable` view, update public wishlist policy |
+| `supabase/config.toml` | `approve-auto-gift` → `verify_jwt = true` |
+| `supabase/functions/approve-auto-gift/index.ts` | Extract userId from JWT, keep token fallback |
+| `supabase/functions/get-products/index.ts` | Add Zod input validation |
+| `supabase/functions/nicole-unified-agent/index.ts` | Add Zod input validation |
+| Frontend queries referencing public profiles | Point at `profiles_discoverable` view for wishlist browsing |
+
+---
+
+### Technical Detail: The Secure View Approach
+
+```text
+profiles table (full PII — gated by RLS)
+  ├── Own row: full access (auth.uid() = id)
+  ├── Connected users: full row via can_view_profile()
+  │   └── UI still masks email/address per privacy_settings
+  └── Public wishlist: BLOCKED (policy removed)
+
+profiles_discoverable view (safe columns only)
+  ├── id, name, avatar_url, username
+  ├── RLS: anyone can SELECT if user has a public wishlist
+  └── No email, DOB, shipping_address, interests, etc.
+```
+
+Frontend wishlist-browsing queries switch from `supabase.from('profiles')` to `supabase.from('profiles_discoverable')` for public contexts.
+

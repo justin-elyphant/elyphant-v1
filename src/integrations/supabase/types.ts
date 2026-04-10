@@ -116,10 +116,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "address_requests_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "address_requests_requester_id_fkey"
             columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "address_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -319,6 +333,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_gift_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -799,10 +820,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "auto_gifting_rules_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "auto_gifting_rules_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_gifting_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -1035,6 +1070,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "beta_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       beta_feedback: {
@@ -1177,10 +1219,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "beta_referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "beta_referrals_referrer_id_fkey"
             columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beta_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -1229,6 +1285,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "birthday_email_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -2094,6 +2157,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gift_proposal_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       gift_recommendation_analytics: {
@@ -2319,6 +2389,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "group_chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       group_chats: {
@@ -2361,6 +2438,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -2408,6 +2492,13 @@ export type Database = {
             columns: ["contributor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_contributions_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
           {
@@ -2492,6 +2583,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "group_gift_projects_coordinator_id_fkey"
+            columns: ["coordinator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "group_gift_projects_group_chat_id_fkey"
             columns: ["group_chat_id"]
             isOneToOne: false
@@ -2510,6 +2608,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_projects_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -2558,6 +2663,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_gift_tracking_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -2770,6 +2882,13 @@ export type Database = {
             columns: ["mentioned_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
           {
@@ -3104,6 +3223,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "order_group_contributors_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "order_group_contributors_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
@@ -3278,6 +3404,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -4027,6 +4160,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recipient_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       refund_requests: {
@@ -4487,6 +4627,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_connections: {
@@ -4580,10 +4727,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_connections_connected_user_id_fkey"
+            columns: ["connected_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_connections_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -4861,6 +5022,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_special_dates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
             referencedColumns: ["id"]
           },
         ]
@@ -5254,6 +5422,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wishlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_discoverable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       zinc_sync_logs: {
@@ -5575,7 +5750,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_discoverable: {
+        Row: {
+          id: string | null
+          name: string | null
+          profile_image: string | null
+          username: string | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+          profile_image?: string | null
+          username?: string | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+          profile_image?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_invitation_by_token: {

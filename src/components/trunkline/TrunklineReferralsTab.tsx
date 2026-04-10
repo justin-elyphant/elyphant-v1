@@ -256,7 +256,7 @@ const TrunklineReferralsTab: React.FC = () => {
   }, [allCredits, referrals, creditProfiles]);
 
   // Stats
-  const pendingApproval = referrals.filter(r => r.status === "pending_approval" || r.status === "signed_up").length;
+  const pendingApproval = referrals.filter(r => r.status === "pending_approval" || r.status === "signed_up" || r.status === "pending").length;
   const totalApproved = referrals.filter(r => r.status === "credit_issued").length;
   const totalCreditsIssued = testerBalances.reduce((sum, t) => sum + t.issued, 0);
   const totalCreditsSpent = testerBalances.reduce((sum, t) => sum + t.spent, 0);
@@ -400,7 +400,7 @@ const TrunklineReferralsTab: React.FC = () => {
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell className="font-medium">${r.reward_amount}</TableCell>
                     <TableCell className="text-right">
-                      {(r.status === "pending_approval" || r.status === "signed_up") && (
+                      {(r.status === "pending_approval" || r.status === "signed_up" || r.status === "pending") && (
                         <div className="flex items-center gap-2 justify-end">
                           <Button
                             size="sm"

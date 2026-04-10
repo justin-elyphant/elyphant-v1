@@ -43,6 +43,11 @@ const SEED_CATEGORIES = [
   { value: "top baby products", searchTerm: "top baby products" },
   { value: "nursery decor", searchTerm: "nursery decor" },
   { value: "baby clothing", searchTerm: "baby clothing" },
+  // Home subcollections
+  { value: "home decor gifts", searchTerm: "home decor gifts wall art vases picture frames decorative accents throw blankets" },
+  { value: "kitchen accessories", searchTerm: "kitchen accessories gadgets utensils organizers cutting boards spice racks kitchen gifts" },
+  { value: "home organization", searchTerm: "home organization storage baskets bins closet organizers shelf dividers decorative boxes" },
+  { value: "bathroom accessories", searchTerm: "bathroom accessories towel sets soap dispensers bath mats shower curtains candle sets" },
 ];
 
 const calculatePopularityScore = (product: any) => {

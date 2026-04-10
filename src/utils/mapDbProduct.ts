@@ -1,6 +1,26 @@
 import { Product } from "@/types/product";
 
 /**
+ * Extract brand name from product title using common Amazon-style patterns.
+ * Duplicated from productUtils.ts so this mapper has zero UI-layer dependencies.
+ */
+const extractBrandFromTitle = (title: string): string => {
+  if (!title) return "";
+  const brandPatterns = [
+    /^([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/,
+    /\(([A-Z][a-zA-Z0-9&\s]+?)\)/,
+    /by\s+([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/i,
+  ];
+  for (const pattern of brandPatterns) {
+    const match = title.match(pattern);
+    if (match && match[1] && match[1].length > 1 && match[1].length < 30) {
+      return match[1].trim();
+    }
+  }
+  return "";
+};
+
+/**
  * Shared mapper: converts a Supabase `products` table row into the Product type.
  * Includes price-validation logic:
  *  - Skips products with price <= 0 or null (returns null)
@@ -25,7 +45,7 @@ export const mapDbProductToProduct = (row: any): Product | null => {
     category: row.category || "general",
     vendor: row.retailer || "Amazon",
     retailer: row.retailer || "Amazon",
-    brand: row.brand || "",
+    brand: row.brand || extractBrandFromTitle(row.title || "") || "",
     rating: row.metadata?.stars || 0,
     stars: row.metadata?.stars || 0,
     reviewCount: row.metadata?.review_count || 0,

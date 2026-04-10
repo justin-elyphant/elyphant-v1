@@ -274,7 +274,7 @@ const transformCachedProduct = (p: any) => {
   image: p.image_url,
   main_image: p.metadata?.main_image || p.image_url,
   images: p.metadata?.images || [p.image_url],
-  brand: p.brand,
+  brand: p.brand || extractBrandFromTitle(p.title || ""),
   category: p.category,
   stars: p.metadata?.stars,
   rating: p.metadata?.stars,

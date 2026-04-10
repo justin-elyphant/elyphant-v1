@@ -20,7 +20,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.approve-auto-gift]
-verify_jwt = false
+verify_jwt = true
 
 [functions.order-monitor-v2]
 verify_jwt = false

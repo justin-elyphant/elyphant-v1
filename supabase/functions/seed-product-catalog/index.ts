@@ -187,7 +187,7 @@ serve(async (req) => {
           retailer: 'amazon',
           brand: p.brand || null,
           category: p.category || p.categories?.[0] || null,
-          search_terms: cat.value,
+          search_terms: [cat.value, cat.searchTerm],
           last_refreshed_at: new Date().toISOString(),
           popularity_score: calculatePopularityScore(p),
           metadata

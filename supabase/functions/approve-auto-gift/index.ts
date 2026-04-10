@@ -40,6 +40,39 @@ serve(async (req) => {
     let tokenRecord: any = null;
     let userId: string = '';
 
+    // =============================================
+    // AUTHENTICATE: Extract userId from JWT (required for dashboard flow)
+    // Token flow derives userId from the token record instead
+    // =============================================
+    if (!token) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Authentication required' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        );
+      }
+
+      const anonClient = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_ANON_KEY') || '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const jwtToken = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(jwtToken);
+      if (claimsError || !claimsData?.claims?.sub) {
+        console.error('❌ JWT verification failed:', claimsError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid or expired session' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        );
+      }
+
+      userId = claimsData.claims.sub as string;
+      console.log('🔐 Authenticated user from JWT:', userId);
+    }
+
     // ===========================================
     // FLOW 1: Token-based approval (from email)
     // ===========================================
@@ -132,7 +165,15 @@ serve(async (req) => {
       }
 
       execution = executionData;
-      userId = executionData.user_id;
+      
+      // SECURITY: Verify the JWT user owns this execution
+      if (executionData.user_id !== userId) {
+        console.error('❌ User mismatch: JWT user', userId, 'does not own execution', executionId);
+        return new Response(
+          JSON.stringify({ success: false, error: 'You do not have permission to approve this gift' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
 
       // Also check for existing token
       const { data: existingToken } = await supabase

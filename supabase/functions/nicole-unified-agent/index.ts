@@ -13,7 +13,29 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context = {}, sessionId, userId } = await req.json();
+    const body = await req.json();
+    
+    // Input validation
+    if (body.message !== undefined && typeof body.message !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'message must be a string', message: 'Invalid request' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (body.message && body.message.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'message too long (max 2000 chars)', message: 'Message too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (body.sessionId !== undefined && typeof body.sessionId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'sessionId must be a string', message: 'Invalid request' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { message, context = {}, sessionId, userId } = body;
     
     console.log('🤖 Nicole Unified Agent:', { message, context, sessionId, userId });
 

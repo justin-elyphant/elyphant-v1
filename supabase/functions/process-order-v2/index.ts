@@ -26,11 +26,21 @@ serve(async (req) => {
     const body = await req.json();
     orderId = body.orderId;
     
-    console.log('📦 process-order-v2: Starting processing for order', orderId);
-
-    if (!orderId) {
-      throw new Error('Missing orderId in request body');
+    // Input validation
+    if (!orderId || typeof orderId !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'orderId must be a non-empty string' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
+    if (orderId.length > 100) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid orderId format' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    console.log('📦 process-order-v2: Starting processing for order', orderId);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',

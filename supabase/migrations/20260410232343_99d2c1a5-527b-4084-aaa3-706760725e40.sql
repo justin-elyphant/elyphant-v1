@@ -1,0 +1,1 @@
+UPDATE public.beta_referrals SET status = 'pending_approval' WHERE status = 'pending';

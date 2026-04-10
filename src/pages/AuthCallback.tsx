@@ -99,6 +99,32 @@ const AuthCallback = () => {
                     reward_amount: 100
                   });
                   console.log('[AuthCallback] Beta referral record created');
+
+                  // Notify admin to approve the $100 credit
+                  try {
+                    const { data: referrerProfile } = await supabase
+                      .from('profiles')
+                      .select('name, username, email')
+                      .eq('id', storedInviteUser)
+                      .single();
+
+                    await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                      body: {
+                        eventType: 'beta_approval_needed',
+                        metadata: {
+                          referrerName: referrerProfile?.name || referrerProfile?.username || 'Unknown',
+                          referrerEmail: referrerProfile?.email || '',
+                          inviteeName: data.user.user_metadata?.name || data.user.email || 'New User',
+                          inviteeEmail: data.user.email || '',
+                          creditAmount: 100,
+                          adminEmail: 'justin@elyphant.com'
+                        }
+                      }
+                    });
+                    console.log('[AuthCallback] Beta approval email triggered');
+                  } catch (emailErr) {
+                    console.error('[AuthCallback] Error sending beta approval email:', emailErr);
+                  }
                 } catch (refErr) {
                   console.error('[AuthCallback] Error creating beta referral:', refErr);
                 }

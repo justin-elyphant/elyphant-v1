@@ -1,36 +1,40 @@
 
 
-## Plan: Seed Full Product Catalog (All 32 Categories)
+## Plan: Ensure Brand Name Displays on All Product Cards
 
-### Current State
-- Zinc API is **working** -- tested live, no 500 errors
-- Electronics category just seeded successfully (16 products added)
-- `get-products` returns cached products correctly with enrichment
-- 32 categories need seeding, estimated cost: **$0.64** (64 API calls)
-- The dry run shows `existing: 0` for electronics even after seeding -- this is a minor counting bug in the `search_terms` lookup (the seeded data uses exact match `"electronics"` but the count query uses `ilike` with `OR` across two conditions, which should work). This doesn't block seeding.
+### Problem
+- 6,020 out of 8,502 products (71%) have `brand = NULL` in the database
+- The Zinc search API doesn't always return brand data
+- The `ProductCard.tsx` already has brand display logic (lines 358-363), but it only shows when `product.brand` is truthy
+- The `standardizeProduct()` function in `productUtils.ts` already has an `extractBrandFromTitle()` fallback, but `mapDbProductToProduct()` (used by discovery rows and brand pages) does NOT use this fallback
 
-### What the Plan Does
+### Root Causes
+1. **`mapDbProductToProduct`** sets `brand: row.brand || ""` -- empty string is falsy, so the card hides it, but it doesn't attempt title extraction
+2. **`get-products` edge function** returns `brand: p.brand` which is often `null` from the DB
+3. Products pass through `standardizeProduct()` in some flows (which extracts brand from title) but NOT in others (e.g., `TrendingProductsSection`, `BrandAllItems`, `LifeEventAllItems` which use `mapDbProductsToProducts` directly)
 
-**Step 1: Run full catalog seed** (no code changes needed)
-- Call the `seed-product-catalog` edge function with all 32 categories
-- This will make ~64 Zinc API calls ($0.64) and add ~1,000-1,350 products to the `products` table
-- Categories include: electronics, fashion, home, beauty, sports, books, toys, baby, jewelry, kitchen, tech, gaming, wedding subcollections, baby subcollections, etc.
+### Solution
 
-**Step 2: Verify storefront product availability**
-- Test `get-products` for several categories to confirm cache-first serving
-- Verify the storefront displays products without hitting Zinc API (zero-cost discovery)
+**Step 1: Add brand extraction fallback to `mapDbProductToProduct`**
+- Import or duplicate the `extractBrandFromTitle` utility from `productUtils.ts` into `src/utils/mapDbProduct.ts`
+- Update the mapper to use: `brand: row.brand || extractBrandFromTitle(row.title || "") || ""`
+- This ensures ALL code paths that use this mapper (discovery rows, brand pages, life event pages) get brand names
 
-**Step 3: Fix the existing count query in seed function** (minor)
-- The `existing` count check in `seed-product-catalog` may undercount due to the OR condition. Fix it so re-running the seed function correctly skips already-stocked categories (idempotent).
+**Step 2: Add brand extraction in the `get-products` edge function response mapper**
+- Add a simple brand extraction function to the edge function (lines ~269-290)
+- Update line 277 from `brand: p.brand` to `brand: p.brand || extractBrandFromTitle(p.title || "")`
+- This ensures brand is populated at the API level for all consumers
+
+**Step 3: Verify `ProductCard.tsx` brand display works across all views**
+- No changes needed to `ProductCard.tsx` -- it already displays brand when present
+- No changes needed to `standardizeProduct()` -- it already has the fallback
 
 ### Technical Details
-- No frontend code changes needed
-- The seed function already handles deduplication via `upsert` on `product_id`
-- Products are stored with `search_terms`, `metadata.seeded_category`, and `popularity_score`
-- The `get-products` function already has cache-first lookup, brand-aware filtering, and popularity sorting
+- The `extractBrandFromTitle` function uses regex patterns to find brand names at the start of Amazon-style titles (e.g., "SAFAVIEH Area Rug" → "SAFAVIEH", "Disney Mickey Mouse" → "Disney")
+- Two files modified: `src/utils/mapDbProduct.ts` and `supabase/functions/get-products/index.ts`
+- One edge function redeployment required
 
-### Risk
-- Low: $0.64 total Zinc API cost
-- The seed function has a 3-page cap per category and 300ms delays between pages
-- Edge function timeout could be an issue for 32 categories in a single call -- may need to batch into groups of 8-10 categories per call
+### Impact
+- All 6,020 products currently missing brand will show extracted brand names where parseable from titles
+- Brand display becomes consistent across marketplace grid, discovery rows, brand pages, and life event pages
 

@@ -253,6 +253,25 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
 };
 
 /**
+ * Extract brand name from product title (Amazon-style patterns)
+ */
+const extractBrandFromTitle = (title: string): string => {
+  if (!title) return "";
+  const brandPatterns = [
+    /^([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/,
+    /\(([A-Z][a-zA-Z0-9&\s]+?)\)/,
+    /by\s+([A-Z][a-zA-Z0-9&\s]+?)[\s\-]/i,
+  ];
+  for (const pattern of brandPatterns) {
+    const match = title.match(pattern);
+    if (match && match[1] && match[1].length > 1 && match[1].length < 30) {
+      return match[1].trim();
+    }
+  }
+  return "";
+};
+
+/**
  * Transform cached product to standard format
  */
 const transformCachedProduct = (p: any) => {
@@ -274,7 +293,7 @@ const transformCachedProduct = (p: any) => {
   image: p.image_url,
   main_image: p.metadata?.main_image || p.image_url,
   images: p.metadata?.images || [p.image_url],
-  brand: p.brand,
+  brand: p.brand || extractBrandFromTitle(p.title || ""),
   category: p.category,
   stars: p.metadata?.stars,
   rating: p.metadata?.stars,

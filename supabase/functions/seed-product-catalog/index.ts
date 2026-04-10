@@ -112,10 +112,11 @@ serve(async (req) => {
 
     for (const cat of categoriesToSeed) {
       // Count existing products matching this frontend category
+      // search_terms is text[] array, use contains operator
       const { count: existingCount } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
-        .or(`search_terms.ilike.%${cat.value}%,metadata->>seeded_category.eq.${cat.value}`);
+        .contains('search_terms', [cat.value]);
 
       const current = existingCount || 0;
       const deficit = Math.max(0, targetPerCategory - current);
@@ -186,7 +187,7 @@ serve(async (req) => {
           retailer: 'amazon',
           brand: p.brand || null,
           category: p.category || p.categories?.[0] || null,
-          search_terms: cat.value,
+          search_terms: [cat.value, cat.searchTerm],
           last_refreshed_at: new Date().toISOString(),
           popularity_score: calculatePopularityScore(p),
           metadata

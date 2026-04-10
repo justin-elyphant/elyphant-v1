@@ -1,22 +1,30 @@
 
 
-## Plan: Fix Beta Program Analytics Error and Add Referral Notification Email
+## Plan: Fix Beta Referral Action Buttons and Unknown Tester Names
 
-### Problem 1: "Failed to load analytics"
-The `get_beta_tester_analytics()` database function has its `search_path` set to an empty string (`""`), so it cannot find any tables like `beta_credits`. This causes the RPC call to fail with "relation beta_credits does not exist."
+### Issue 1: No Approve/Reject Buttons
+The referral record for Justin → Heather was inserted with `status: 'pending'`, but the UI only shows action buttons when status is `pending_approval` or `signed_up`. The status `pending` doesn't match either condition.
 
-**Fix**: Recreate the function with `SET search_path = 'public'` (quoted properly so Postgres stores it correctly).
+**Fix**: Two changes needed:
+1. **Database migration**: Update the existing referral record's status from `pending` to `pending_approval`
+2. **`src/pages/AuthCallback.tsx`**: Change the status used when inserting new referral records from `'pending'` to `'pending_approval'` so future referrals show action buttons immediately
 
-### Problem 2: No email notification when a referral signs up
-The `AuthCallback.tsx` creates the `beta_referrals` record correctly, but it never calls the email orchestrator with the `beta_approval_needed` event. The template exists in the orchestrator, and the trigger exists in `AddConnectionSheet.tsx` for manual invites, but the invite-link signup flow in `AuthCallback.tsx` is missing this trigger entirely.
+Also update the `pendingApproval` counter (line 259) and the action button condition (line 403) in `TrunklineReferralsTab.tsx` to also match `'pending'` as a safety net.
 
-**Fix**: After the `beta_referrals` insert succeeds in `AuthCallback.tsx`, invoke the `ecommerce-email-orchestrator` with `eventType: 'beta_approval_needed'` to email `justin@elyphant.com` with the referral details (referrer name, invitee name/email, credit amount).
+### Issue 2: "Unknown" Names in Beta Tester Balances
+The profile lookup at line 211-222 queries `profiles` with `.in("id", creditUserIds)`. While Justin has a `business_admin` role that should allow viewing all profiles, the query may be returning empty rows due to the `is_business_admin` function using `SECURITY INVOKER` context.
+
+**Fix**: The `get_beta_tester_analytics` RPC function (which is `SECURITY DEFINER`) already fetches profile data correctly. For the Tester Balances section, the simplest fix is to make the profile lookup in the component more resilient — but first, the actual root cause is likely that the `creditProfiles` query silently returns no rows because RLS blocks it in some edge case.
+
+A more robust approach: use a `SECURITY DEFINER` RPC function to fetch beta tester profiles, bypassing RLS for this admin-only page. Alternatively, add `'pending'` to the status match so the referral chain lookup also resolves names.
 
 ### Files to Modify
-1. **New SQL migration** -- Recreate `get_beta_tester_analytics()` with correct `search_path = 'public'`
-2. **`src/pages/AuthCallback.tsx`** -- Add orchestrator email call after beta referral insert (lines ~92-104)
+1. **New SQL migration** -- Update existing referral status from `'pending'` to `'pending_approval'`
+2. **`src/pages/AuthCallback.tsx`** -- Change inserted status from `'pending'` to `'pending_approval'`
+3. **`src/components/trunkline/TrunklineReferralsTab.tsx`** -- Add `'pending'` to the status conditions for action buttons and pending counter (defensive fix)
 
 ### Technical Detail
-- The search_path fix requires quoting: `SET search_path = 'public'` to ensure Postgres stores the literal schema name
-- The email trigger needs to fetch the referrer's profile (name, email) to populate the template before calling the orchestrator
+- Line 259: Add `|| r.status === "pending"` to the pending count filter
+- Line 403: Add `|| r.status === "pending"` to the action button condition
+- The "Unknown" names should resolve once the referral status matches and the referral chain lookup finds Heather's profile via `referred_profile`; for non-referral testers (manual credits), the `creditProfiles` query should work since Justin is a business admin
 

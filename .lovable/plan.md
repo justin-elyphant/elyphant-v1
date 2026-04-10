@@ -1,40 +1,53 @@
 
 
-## Plan: Ensure Brand Name Displays on All Product Cards
+## Plan: Fix Invite Link Auto-Connect and Beta Referral Attribution
 
-### Problem
-- 6,020 out of 8,502 products (71%) have `brand = NULL` in the database
-- The Zinc search API doesn't always return brand data
-- The `ProductCard.tsx` already has brand display logic (lines 358-363), but it only shows when `product.brand` is truthy
-- The `standardizeProduct()` function in `productUtils.ts` already has an `extractBrandFromTitle()` fallback, but `mapDbProductToProduct()` (used by discovery rows and brand pages) does NOT use this fallback
+### Root Causes Found
 
-### Root Causes
-1. **`mapDbProductToProduct`** sets `brand: row.brand || ""` -- empty string is falsy, so the card hides it, but it doesn't attempt title extraction
-2. **`get-products` edge function** returns `brand: p.brand` which is often `null` from the DB
-3. Products pass through `standardizeProduct()` in some flows (which extracts brand from title) but NOT in others (e.g., `TrendingProductsSection`, `BrandAllItems`, `LifeEventAllItems` which use `mapDbProductsToProducts` directly)
+**1. Auto-connect never fires after email signup:**
+- InvitePage stores inviter ID in `sessionStorage` and navigates to `/auth?invite_user=<id>`
+- The post-signup auto-connect code lives in `Auth.tsx` (lines 132-151)
+- BUT: `emailRedirectTo` in SteppedAuthFlow points to `/profile-setup`, NOT `/auth`
+- So after email confirmation, the user lands on `/profile-setup` which has NO auto-connect logic
+- Additionally, `sessionStorage` doesn't survive the email confirmation redirect (new browser context from email link)
+
+**2. Beta referral record never created:**
+- There is literally no code anywhere in the invite flow that inserts into `beta_referrals`
+- The table exists, the admin panel reads it, but nothing writes to it during signup
+
+**3. Your specific case:** Justin invited Heather via `/invite/justin`. She signed up, confirmed email, landed on `/profile-setup`. No connection was created, no referral was tracked.
 
 ### Solution
 
-**Step 1: Add brand extraction fallback to `mapDbProductToProduct`**
-- Import or duplicate the `extractBrandFromTitle` utility from `productUtils.ts` into `src/utils/mapDbProduct.ts`
-- Update the mapper to use: `brand: row.brand || extractBrandFromTitle(row.title || "") || ""`
-- This ensures ALL code paths that use this mapper (discovery rows, brand pages, life event pages) get brand names
+**Step 1: Persist invite context in `localStorage` (not `sessionStorage`)**
+- In `InvitePage.tsx`: change `sessionStorage.setItem` to `localStorage.setItem` so it survives email confirmation redirects
+- Also store the inviter username for referral tracking
 
-**Step 2: Add brand extraction in the `get-products` edge function response mapper**
-- Add a simple brand extraction function to the edge function (lines ~269-290)
-- Update line 277 from `brand: p.brand` to `brand: p.brand || extractBrandFromTitle(p.title || "")`
-- This ensures brand is populated at the API level for all consumers
+**Step 2: Add post-signup auto-connect to the onboarding flow**
+- The real entry point after email confirmation is `/profile-setup` or the `AuthCallback` → onboarding flow
+- Add invite context processing to `AuthCallback.tsx` (which handles the email confirmation redirect)
+- On detecting stored invite context: create connection request + auto-accept + create `beta_referrals` record
 
-**Step 3: Verify `ProductCard.tsx` brand display works across all views**
-- No changes needed to `ProductCard.tsx` -- it already displays brand when present
-- No changes needed to `standardizeProduct()` -- it already has the fallback
+**Step 3: Create beta referral record on invite-based signup**
+- After auto-connect succeeds, insert into `beta_referrals`:
+  ```sql
+  INSERT INTO beta_referrals (referrer_id, referred_id, connection_id, status)
+  VALUES (inviter_id, new_user_id, connection_id, 'pending')
+  ```
+- This makes the referral visible in the admin Trunkline panel for $100 credit approval
 
-### Technical Details
-- The `extractBrandFromTitle` function uses regex patterns to find brand names at the start of Amazon-style titles (e.g., "SAFAVIEH Area Rug" → "SAFAVIEH", "Disney Mickey Mouse" → "Disney")
-- Two files modified: `src/utils/mapDbProduct.ts` and `supabase/functions/get-products/index.ts`
-- One edge function redeployment required
+**Step 4: Manually fix Justin + Heather**
+- Insert accepted connection between `a3a6e0fb-...` (Justin) and `49095bac-...` (Heather)
+- Insert beta referral record for admin approval
+
+### Files to Modify
+1. `src/pages/InvitePage.tsx` -- switch to `localStorage`, store additional context
+2. `src/pages/AuthCallback.tsx` -- add invite context processing after email confirmation
+3. `src/pages/Auth.tsx` -- keep existing logic as backup for direct auth flow
+4. Database: insert connection + referral records for Justin/Heather
 
 ### Impact
-- All 6,020 products currently missing brand will show extracted brand names where parseable from titles
-- Brand display becomes consistent across marketplace grid, discovery rows, brand pages, and life event pages
+- All future invite link signups will auto-connect and create referral records
+- Works across email confirmation redirects (localStorage persists)
+- Admin can see and approve $100 credits in Trunkline
 

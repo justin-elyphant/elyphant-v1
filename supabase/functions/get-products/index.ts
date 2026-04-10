@@ -1095,6 +1095,35 @@ serve(async (req) => {
     const supabase = getSupabaseClient();
     
     const requestBody = await req.json();
+    
+    // Input validation
+    if (requestBody.query !== undefined && typeof requestBody.query !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'query must be a string', products: [], results: [], total: 0 }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    if (requestBody.query && requestBody.query.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'query too long (max 500 chars)', products: [], results: [], total: 0 }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    const rawPage = requestBody.page;
+    const rawLimit = requestBody.limit;
+    if (rawPage !== undefined && (typeof rawPage !== 'number' || rawPage < 1 || rawPage > 100)) {
+      return new Response(
+        JSON.stringify({ error: 'page must be a number between 1 and 100', products: [], results: [], total: 0 }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    if (rawLimit !== undefined && (typeof rawLimit !== 'number' || rawLimit < 1 || rawLimit > 100)) {
+      return new Response(
+        JSON.stringify({ error: 'limit must be a number between 1 and 100', products: [], results: [], total: 0 }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const {
       query,
       retailer = "amazon",

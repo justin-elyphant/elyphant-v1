@@ -85,8 +85,9 @@ const InvitePage: React.FC = () => {
 
   const handleConnect = async () => {
     if (!user && inviter) {
-      // Store invite context for post-signup auto-connect
-      sessionStorage.setItem('elyphant_invite_user', inviter.id);
+      // Store invite context in localStorage so it survives email confirmation redirects
+      localStorage.setItem('elyphant_invite_user', inviter.id);
+      localStorage.setItem('elyphant_invite_username', inviter.username);
       navigate(`/auth?invite_user=${inviter.id}`);
       return;
     }

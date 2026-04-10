@@ -96,7 +96,7 @@ const Auth = () => {
 
     // Check if this is a fresh post-signup (has invitation tokens to process)
     const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
-    const storedInviteUser = inviteUserId || sessionStorage.getItem('elyphant_invite_user');
+    const storedInviteUser = inviteUserId || localStorage.getItem('elyphant_invite_user');
     const hasPendingLinking = storedToken || storedInviteUser;
 
     if (!hasPendingLinking) {
@@ -147,7 +147,8 @@ const Auth = () => {
           } catch (err) {
             console.error('[Auth] Error auto-connecting to inviter:', err);
           }
-          sessionStorage.removeItem('elyphant_invite_user');
+          localStorage.removeItem('elyphant_invite_user');
+          localStorage.removeItem('elyphant_invite_username');
         }
         
         const { data, error } = await supabase

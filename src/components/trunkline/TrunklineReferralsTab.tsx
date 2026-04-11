@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, Mail, Send } from "lucide-react";
+import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, Mail, Send, ShieldAlert, Plus, RefreshCw } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
 import BetaFeedbackViewer from "@/components/trunkline/beta/BetaFeedbackViewer";
@@ -67,6 +67,11 @@ const TrunklineReferralsTab: React.FC = () => {
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [checkinEmail, setCheckinEmail] = useState("");
   const [sendingCheckin, setSendingCheckin] = useState(false);
+  const [grantInvitesOpen, setGrantInvitesOpen] = useState(false);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantCount, setGrantCount] = useState("2");
+  const [reloadPoolOpen, setReloadPoolOpen] = useState(false);
+  const [newPoolSize, setNewPoolSize] = useState("");
 
   // Fetch referrals
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
@@ -95,6 +100,20 @@ const TrunklineReferralsTab: React.FC = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as BetaCredit[];
+    },
+  });
+
+  // Fetch global program settings
+  const { data: programSettings } = useQuery({
+    queryKey: ["beta-program-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("beta_program_settings" as any)
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (error) throw error;
+      return data as any as { total_credit_pool: number };
     },
   });
 
@@ -261,6 +280,54 @@ const TrunklineReferralsTab: React.FC = () => {
   const totalCreditsIssued = testerBalances.reduce((sum, t) => sum + t.issued, 0);
   const totalCreditsSpent = testerBalances.reduce((sum, t) => sum + t.spent, 0);
   const remainingLiability = totalCreditsIssued - totalCreditsSpent;
+  const globalPool = programSettings?.total_credit_pool ?? 25;
+  const poolExhausted = totalApproved >= globalPool;
+
+  // Grant invites mutation
+  const grantInvitesMutation = useMutation({
+    mutationFn: async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", grantEmail.trim())
+        .single();
+      if (profileError || !profile) throw new Error("User not found with that email");
+
+      const { error } = await supabase
+        .from("beta_invite_limits" as any)
+        .upsert({
+          user_id: profile.id,
+          bonus_invites: Number(grantCount),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`Granted ${grantCount} bonus invites`);
+      setGrantInvitesOpen(false);
+      setGrantEmail("");
+      setGrantCount("2");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to grant invites"),
+  });
+
+  // Reload pool mutation
+  const reloadPoolMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("beta_program_settings" as any)
+        .update({ total_credit_pool: Number(newPoolSize), updated_at: new Date().toISOString() })
+        .eq("id", 1);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beta-program-settings"] });
+      toast.success(`Credit pool updated to ${newPoolSize}`);
+      setReloadPoolOpen(false);
+      setNewPoolSize("");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update pool"),
+  });
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -286,17 +353,50 @@ const TrunklineReferralsTab: React.FC = () => {
           <h1 className="text-2xl font-bold">Beta Program</h1>
           <p className="text-muted-foreground">Manage beta testers, approve referrals, and track $100 store credits.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setCheckinOpen(true)} variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button onClick={() => setGrantInvitesOpen(true)} variant="outline" size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Grant Invites
+          </Button>
+          <Button onClick={() => { setNewPoolSize(String(globalPool)); setReloadPoolOpen(true); }} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Reload Pool
+          </Button>
+          <Button onClick={() => setCheckinOpen(true)} variant="outline" size="sm">
+            <Mail className="h-4 w-4 mr-1" />
             Send Check-In
           </Button>
-          <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
-            <CreditCard className="h-4 w-4 mr-2" />
+          <Button onClick={() => setIssueCreditOpen(true)} variant="outline" size="sm">
+            <CreditCard className="h-4 w-4 mr-1" />
             Issue Credit
           </Button>
         </div>
       </div>
+
+      {/* Global Pool Status */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className={`h-6 w-6 ${poolExhausted ? 'text-destructive' : 'text-emerald-500'}`} />
+            <div>
+              <p className="font-semibold">
+                Credit Pool: {totalApproved} / {globalPool} issued
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {poolExhausted
+                  ? "Pool exhausted — click Reload Pool to add more"
+                  : `${globalPool - totalApproved} credits remaining in pool`}
+              </p>
+            </div>
+          </div>
+          {poolExhausted && (
+            <Button size="sm" variant="outline" onClick={() => { setNewPoolSize(String(globalPool + 10)); setReloadPoolOpen(true); }}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Reload
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList>
@@ -402,15 +502,19 @@ const TrunklineReferralsTab: React.FC = () => {
                     <TableCell className="text-right">
                       {(r.status === "pending_approval" || r.status === "signed_up" || r.status === "pending") && (
                         <div className="flex items-center gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            onClick={() => approveMutation.mutate(r.id)}
-                            disabled={approveMutation.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                            Approve
-                          </Button>
+                          {poolExhausted ? (
+                            <span className="text-xs text-destructive font-medium">Pool exhausted</span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate(r.id)}
+                              disabled={approveMutation.isPending}
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                              Approve
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -691,6 +795,74 @@ const TrunklineReferralsTab: React.FC = () => {
               }}
             >
               {sendingCheckin ? "Sending..." : "Send Check-In"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grant Invites Dialog */}
+      <Dialog open={grantInvitesOpen} onOpenChange={setGrantInvitesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Grant Bonus Invites</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Add extra invite slots for a specific beta tester (on top of the default 2).
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Tester Email</label>
+              <Input
+                placeholder="user@example.com"
+                value={grantEmail}
+                onChange={(e) => setGrantEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Bonus Invites</label>
+              <Input
+                type="number"
+                value={grantCount}
+                onChange={(e) => setGrantCount(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGrantInvitesOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => grantInvitesMutation.mutate()}
+              disabled={grantInvitesMutation.isPending || !grantEmail}
+            >
+              {grantInvitesMutation.isPending ? "Granting..." : "Grant Invites"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reload Pool Dialog */}
+      <Dialog open={reloadPoolOpen} onOpenChange={setReloadPoolOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reload Credit Pool</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Currently {totalApproved} / {globalPool} credits issued. Set the new pool size to allow more approvals.
+          </p>
+          <div>
+            <label className="text-sm font-medium">New Pool Size</label>
+            <Input
+              type="number"
+              value={newPoolSize}
+              onChange={(e) => setNewPoolSize(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReloadPoolOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => reloadPoolMutation.mutate()}
+              disabled={reloadPoolMutation.isPending || !newPoolSize}
+            >
+              {reloadPoolMutation.isPending ? "Updating..." : `Set Pool to ${newPoolSize}`}
             </Button>
           </DialogFooter>
         </DialogContent>

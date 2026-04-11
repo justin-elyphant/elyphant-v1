@@ -15,6 +15,7 @@ import { invitationAnalyticsService } from "@/services/analytics/invitationAnaly
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useBetaCredits } from "@/hooks/useBetaCredits";
+import { useRemainingInvites } from "@/hooks/useRemainingInvites";
 
 interface AddConnectionSheetProps {
   isOpen: boolean;
@@ -30,6 +31,8 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
   const { user } = useAuth();
   const isMobile = useIsMobile(1024);
   const { balance: betaCreditBalance } = useBetaCredits();
+  const { remaining: remainingInvites, isUnlimited } = useRemainingInvites();
+  const invitesExhausted = !isUnlimited && remainingInvites <= 0;
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
@@ -170,12 +173,22 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         </p>
       </div>
 
+      {/* Invite limit info */}
+      {!isUnlimited && (
+        <div className={`text-center text-sm font-medium ${invitesExhausted ? 'text-destructive' : 'text-muted-foreground'}`}>
+          {invitesExhausted
+            ? "You've used all your invites"
+            : `${remainingInvites} invite${remainingInvites !== 1 ? 's' : ''} remaining`}
+        </div>
+      )}
+
       {/* Share link button */}
       <Button
         type="button"
         variant="outline"
         className="w-full flex items-center gap-2"
         onClick={handleCopyInviteLink}
+        disabled={invitesExhausted}
       >
         {linkCopied ? (
           <>
@@ -246,7 +259,7 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 
       <Button
         onClick={handleSendInvitation}
-        disabled={isLoading || !inviteForm.name || !inviteForm.email}
+        disabled={isLoading || !inviteForm.name || !inviteForm.email || invitesExhausted}
         className="w-full min-h-[44px] active:scale-[0.97] transition-transform"
         size="lg"
       >

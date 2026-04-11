@@ -48,6 +48,18 @@ const SEED_CATEGORIES = [
   { value: "kitchen accessories", searchTerm: "kitchen accessories gadgets utensils organizers cutting boards spice racks kitchen gifts" },
   { value: "home organization", searchTerm: "home organization storage baskets bins closet organizers shelf dividers decorative boxes" },
   { value: "bathroom accessories", searchTerm: "bathroom accessories towel sets soap dispensers bath mats shower curtains candle sets" },
+  // SubCategoryTabs filter categories
+  { value: "gifts-for-her", searchTerm: "gifts for her women birthday skincare candles jewelry spa" },
+  { value: "gifts-for-him", searchTerm: "gifts for him men grooming tech gadgets watches tools" },
+  { value: "gifts-under-50", searchTerm: "best gifts under 50 dollars stocking stuffers affordable" },
+  { value: "luxury", searchTerm: "luxury gifts designer accessories premium watches jewelry" },
+  // Lifestyle categories (homepage grid)
+  { value: "on-the-go", searchTerm: "portable electronics travel accessories commuter gear water bottles" },
+  { value: "movie-buff", searchTerm: "streaming devices home theater popcorn maker movie collectibles blankets" },
+  { value: "work-from-home", searchTerm: "home office desk accessories ergonomic keyboard monitor stand organizer" },
+  { value: "the-traveler", searchTerm: "travel luggage packing cubes neck pillow travel accessories organizer" },
+  { value: "the-home-chef", searchTerm: "kitchen gadgets cookware chef knife cutting board cooking accessories" },
+  { value: "teens", searchTerm: "teen gifts trendy accessories phone cases LED lights room decor gaming" },
 ];
 
 const calculatePopularityScore = (product: any) => {

@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Delete user data from all tables (in comprehensive order to avoid FK violations)
+    // Delete user data from all tables in correct dependency order
 
     // 1. Security and session tables (no FK dependencies)
     await safeDelete('security_logs', 'user_id', userId);
@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
     // 2. Presence and interaction tables
     await safeDelete('user_presence', 'user_id', userId);
     await safeDelete('typing_indicators', 'user_id', userId);
+    await safeDelete('typing_indicators', 'chat_with_user_id', userId);
     await safeDelete('user_interaction_events', 'user_id', userId);
     
     // 3. Analytics tables
@@ -99,9 +100,9 @@ Deno.serve(async (req) => {
     await safeDelete('invitation_rewards', 'user_id', userId);
     await safeDelete('group_gift_tracking_access', 'user_id', userId);
     
-    // 9. Pending and queue tables
-    await safeDelete('pending_gift_invitations', 'inviter_id', userId);
-    await safeDelete('pending_gift_invitations', 'invitee_id', userId);
+    // 9. Pending and queue tables (use correct column name)
+    await safeDelete('pending_gift_invitations', 'user_id', userId);
+    await safeDelete('pending_recipient_addresses', 'requested_by', userId);
     await safeDelete('offline_message_queue', 'user_id', userId);
     
     // 10. Preferences tables
@@ -117,22 +118,23 @@ Deno.serve(async (req) => {
     await safeDelete('group_gift_projects', 'coordinator_id', userId);
     await safeDelete('contributions', 'contributor_id', userId);
     await safeDelete('funding_campaigns', 'creator_id', userId);
-    
-    // 12. Orders and payment methods
-    await safeDelete('orders', 'user_id', userId);
-    await safeDelete('payment_methods', 'user_id', userId);
 
-    // 13. Auto-gifting data
-    await safeDelete('automated_gift_executions', 'user_id', userId);
-    await safeDelete('auto_gifting_rules', 'user_id', userId);
-    await safeDelete('auto_gifting_settings', 'user_id', userId);
+    // 12. Auto-gifting data (delete child tables BEFORE parents)
+    // First: tables that depend on automated_gift_executions
     await safeDelete('auto_gift_notifications', 'user_id', userId);
     await safeDelete('auto_gift_event_logs', 'user_id', userId);
     await safeDelete('auto_gift_data_access', 'user_id', userId);
-    await safeDelete('auto_gift_payment_audit', 'user_id', userId);
-    await safeDelete('auto_gift_fulfillment_queue', 'user_id', userId);
     await safeDelete('approval_conversations', 'user_id', userId);
     await safeDelete('email_approval_tokens', 'user_id', userId);
+    // auto_gift_fulfillment_queue and auto_gift_payment_audit cascade via execution_id
+    // Now delete executions (before orders, since executions reference orders)
+    await safeDelete('automated_gift_executions', 'user_id', userId);
+    await safeDelete('auto_gifting_rules', 'user_id', userId);
+    await safeDelete('auto_gifting_settings', 'user_id', userId);
+
+    // 13. Orders and payment methods (AFTER auto-gift executions)
+    await safeDelete('orders', 'user_id', userId);
+    await safeDelete('payment_methods', 'user_id', userId);
 
     // 14. Connections and related data
     await safeDelete('user_connections', 'user_id', userId);
@@ -147,9 +149,8 @@ Deno.serve(async (req) => {
     await safeDelete('address_intelligence', 'user_id', userId);
     await safeDelete('user_addresses', 'user_id', userId);
 
-    // 16. Wishlists and items
-    await safeDelete('wishlist_items', 'user_id', userId);
-    await safeDelete('wishlist_purchase_tracking', 'purchaser_id', userId);
+    // 16. Wishlists (delete items via wishlists, not user_id)
+    // wishlist_items don't have user_id - they cascade via wishlists
     await safeDelete('wishlists', 'user_id', userId);
 
     // 17. Messages and group chats
@@ -170,8 +171,7 @@ Deno.serve(async (req) => {
     // 19. Special dates
     await safeDelete('user_special_dates', 'user_id', userId);
 
-    // 20. Email and notification data
-    await safeDelete('notifications', 'user_id', userId);
+    // 20. Email and notification data (removed non-existent 'notifications' table)
     await safeDelete('birthday_email_tracking', 'user_id', userId);
     await safeDelete('email_queue', 'recipient_email', userEmail || '');
     await safeDelete('email_analytics', 'recipient_email', userEmail || '');
@@ -181,7 +181,12 @@ Deno.serve(async (req) => {
     await safeDelete('ai_suggestion_insights', 'user_id', userId);
     await safeDelete('conversation_threads', 'user_id', userId);
 
-    // 22. Profile last (has dependencies)
+    // 22. Beta data
+    await safeDelete('beta_feedback', 'user_id', userId);
+    await safeDelete('beta_credits', 'user_id', userId);
+    await safeDelete('beta_referrals', 'referrer_id', userId);
+
+    // 23. Profile last (has dependencies)
     await safeDelete('profiles', 'id', userId);
 
     console.log(`Deleted all user data for: ${userId}`);

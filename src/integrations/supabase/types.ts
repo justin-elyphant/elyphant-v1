@@ -2031,7 +2031,7 @@ export type Database = {
           signup_completed_at: string | null
           source_context: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           auto_gift_activated_at?: string | null
@@ -2053,7 +2053,7 @@ export type Database = {
           signup_completed_at?: string | null
           source_context?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           auto_gift_activated_at?: string | null
@@ -2075,7 +2075,7 @@ export type Database = {
           signup_completed_at?: string | null
           source_context?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2303,7 +2303,7 @@ export type Database = {
           recurring_schedule: Json | null
           updated_at: string
           usage_count: number
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           budget_range?: Json
@@ -2321,7 +2321,7 @@ export type Database = {
           recurring_schedule?: Json | null
           updated_at?: string
           usage_count?: number
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           budget_range?: Json
@@ -2339,7 +2339,7 @@ export type Database = {
           recurring_schedule?: Json | null
           updated_at?: string
           usage_count?: number
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -353,16 +353,50 @@ const TrunklineReferralsTab: React.FC = () => {
           <h1 className="text-2xl font-bold">Beta Program</h1>
           <p className="text-muted-foreground">Manage beta testers, approve referrals, and track $100 store credits.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setCheckinOpen(true)} variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button onClick={() => setGrantInvitesOpen(true)} variant="outline" size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Grant Invites
+          </Button>
+          <Button onClick={() => { setNewPoolSize(String(globalPool)); setReloadPoolOpen(true); }} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Reload Pool
+          </Button>
+          <Button onClick={() => setCheckinOpen(true)} variant="outline" size="sm">
+            <Mail className="h-4 w-4 mr-1" />
             Send Check-In
           </Button>
-          <Button onClick={() => setIssueCreditOpen(true)} variant="outline">
-            <CreditCard className="h-4 w-4 mr-2" />
+          <Button onClick={() => setIssueCreditOpen(true)} variant="outline" size="sm">
+            <CreditCard className="h-4 w-4 mr-1" />
             Issue Credit
           </Button>
         </div>
+      </div>
+
+      {/* Global Pool Status */}
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className={`h-6 w-6 ${poolExhausted ? 'text-destructive' : 'text-emerald-500'}`} />
+            <div>
+              <p className="font-semibold">
+                Credit Pool: {totalApproved} / {globalPool} issued
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {poolExhausted
+                  ? "Pool exhausted — click Reload Pool to add more"
+                  : `${globalPool - totalApproved} credits remaining in pool`}
+              </p>
+            </div>
+          </div>
+          {poolExhausted && (
+            <Button size="sm" variant="outline" onClick={() => { setNewPoolSize(String(globalPool + 10)); setReloadPoolOpen(true); }}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Reload
+            </Button>
+          )}
+        </CardContent>
+      </Card>
       </div>
 
       <Tabs defaultValue="analytics" className="w-full">

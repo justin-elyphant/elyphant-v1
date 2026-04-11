@@ -82,7 +82,7 @@ const PopularBrands = () => {
                   <img 
                     src={brand.logoUrl} 
                     alt={brand.name} 
-                    className="max-w-full max-h-full object-contain opacity-80 hover:opacity-100 transition-opacity"
+                    className="max-w-full max-h-full object-contain hover:opacity-90 transition-opacity"
                     loading="lazy"
                     onError={(e) => {
                       // Fallback in case image fails to load

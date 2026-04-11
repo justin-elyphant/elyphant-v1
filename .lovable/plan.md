@@ -1,37 +1,63 @@
 
 
-## Beta Emails Analysis and Share Limit Update
+## Product Seeding Gap Analysis
 
-### Current Beta Email Templates (4 total)
+### Current State
+The `seed-product-catalog` edge function seeds 32 categories (22 primary + 10 subcollections). The `CATEGORY_REGISTRY` in `get-products` has entries for the SubCategoryTabs filters (`luxury`, `gifts-for-her`, `gifts-for-him`, `gifts-under-50`).
 
-1. **`beta_approval_needed`** — Internal alert to justin@elyphant.com when a new referral arrives. Shows referrer/invitee details and links to Trunkline.
-2. **`beta_invite_welcome`** — Sent to invitee when they receive an invitation. Describes the $100 credit and how to join.
-3. **`beta_approved`** — Sent to approved tester. Includes credit details, testing guide (5 steps), and feedback schedule.
-4. **`beta_checkin`** — Stage-aware progress email with personalized feedback survey link. Shows completion checklist and activity stats.
+### What's Missing from Seeding
 
-### What Needs Updating
+**SubCategoryTabs filters (in CATEGORY_REGISTRY but NOT in seed catalog):**
+- `gifts-for-her` — has 5 query groups in registry, zero pre-seeded products
+- `gifts-for-him` — has 6 query groups in registry, zero pre-seeded products
+- `gifts-under-50` — has 6 query groups in registry, zero pre-seeded products
+- `luxury` — has 4 query groups in registry, zero pre-seeded products
 
-Three templates reference inviting friends but do not mention the 2-invite limit:
+**Lifestyle categories from homepage "Gifts for Every Lifestyle" grid (NOT in registry OR seed catalog):**
+- `on-the-go` — no registry entry, no seeded products
+- `movie-buff` — no registry entry, no seeded products
+- `work-from-home` — no registry entry, no seeded products
+- `the-traveler` — no registry entry, no seeded products
+- `the-home-chef` — no registry entry, no seeded products
+- `teens` — no registry entry, no seeded products
 
-**1. `beta_approved` template (line 1409)**
-Current: "Invite a friend or family member -- Share your invite link so you can test gifting to each other. They'll get $100 in credit too."
-Update to: "Invite up to 2 friends or family members -- Share your invite link (you get 2 invites) so you can test gifting to each other. They'll each get $100 in credit too."
+These 10 categories will return zero cached products on first click, forcing a live Zinc API call (or showing nothing if Zinc is slow/down).
 
-**2. `beta_checkin` template (line 1529)**
-Current: "Invite a friend or family member so you can test gifting to each other."
-Update to: "Invite a friend using one of your 2 invite links so you can test gifting to each other."
+### Plan
 
-**3. `beta_checkin` template (line 1498)**
-Current: step label is "Invited a friend"
-Update to: "Invited a friend (2 invites available)"
+**1. Add 10 entries to `SEED_CATEGORIES` in `seed-product-catalog/index.ts`**
 
-### What Does NOT Need Changes
+Using search terms optimized for Amazon/Zinc results:
 
-- **`beta_approval_needed`** — Admin-only internal alert, no user-facing invite language.
-- **`beta_invite_welcome`** — Sent to the invitee (recipient), not the inviter. The invite limit is irrelevant here.
-- **`beta-checkin-emailer/index.ts`** — Data pipeline only, no template text.
+```text
+gifts-for-her    → "gifts for her women birthday skincare candles jewelry spa"
+gifts-for-him    → "gifts for him men grooming tech gadgets watches tools"
+gifts-under-50   → "best gifts under 50 dollars stocking stuffers affordable"
+luxury           → "luxury gifts designer accessories premium watches jewelry"
+on-the-go        → "portable electronics travel accessories commuter gear water bottles"
+movie-buff       → "streaming devices home theater popcorn maker movie collectibles blankets"
+work-from-home   → "home office desk accessories ergonomic keyboard monitor stand organizer"
+the-traveler     → "travel luggage packing cubes neck pillow travel accessories organizer"
+the-home-chef    → "kitchen gadgets cookware chef knife cutting board cooking accessories"
+teens            → "teen gifts trendy accessories phone cases LED lights room decor gaming"
+```
 
-### Implementation
+**2. Add 6 lifestyle entries to `CATEGORY_REGISTRY` in `shared/categoryRegistry.ts`**
 
-One file change: `supabase/functions/ecommerce-email-orchestrator/index.ts` -- update 3 strings in the `betaApprovedTemplate` and `betaCheckinTemplate` functions. Then redeploy the edge function.
+So `get-products` can do proper cache-first lookups instead of falling through to the generic fallback:
+
+```text
+on-the-go, movie-buff, work-from-home, the-traveler, the-home-chef, teens
+```
+
+Each with 3-4 query groups matching their search terms.
+
+**3. Run a dry-run seed** to estimate Zinc API cost before actual seeding.
+
+Estimated cost: ~10 categories x 2-3 pages each x $0.01 = $0.20-$0.30.
+
+### Files Changed
+- `supabase/functions/seed-product-catalog/index.ts` — add 10 seed entries
+- `supabase/functions/shared/categoryRegistry.ts` — add 6 lifestyle category configs
+- Redeploy both edge functions
 

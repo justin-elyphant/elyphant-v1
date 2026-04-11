@@ -280,6 +280,54 @@ const TrunklineReferralsTab: React.FC = () => {
   const totalCreditsIssued = testerBalances.reduce((sum, t) => sum + t.issued, 0);
   const totalCreditsSpent = testerBalances.reduce((sum, t) => sum + t.spent, 0);
   const remainingLiability = totalCreditsIssued - totalCreditsSpent;
+  const globalPool = programSettings?.total_credit_pool ?? 25;
+  const poolExhausted = totalApproved >= globalPool;
+
+  // Grant invites mutation
+  const grantInvitesMutation = useMutation({
+    mutationFn: async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", grantEmail.trim())
+        .single();
+      if (profileError || !profile) throw new Error("User not found with that email");
+
+      const { error } = await supabase
+        .from("beta_invite_limits" as any)
+        .upsert({
+          user_id: profile.id,
+          bonus_invites: Number(grantCount),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`Granted ${grantCount} bonus invites`);
+      setGrantInvitesOpen(false);
+      setGrantEmail("");
+      setGrantCount("2");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to grant invites"),
+  });
+
+  // Reload pool mutation
+  const reloadPoolMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("beta_program_settings" as any)
+        .update({ total_credit_pool: Number(newPoolSize), updated_at: new Date().toISOString() })
+        .eq("id", 1);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["beta-program-settings"] });
+      toast.success(`Credit pool updated to ${newPoolSize}`);
+      setReloadPoolOpen(false);
+      setNewPoolSize("");
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to update pool"),
+  });
 
   const statusBadge = (status: string) => {
     switch (status) {

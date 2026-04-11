@@ -1,62 +1,37 @@
 
 
-## Referral Cap System with Global Program Budget
+## Beta Emails Analysis and Share Limit Update
 
-### Overview
-Two-layer cap system:
-1. **Per-user cap**: Each tester gets 2 invite shares (justin@elyphant.com unlimited). Admins can grant more.
-2. **Global program cap**: 25 total $100 credits across the entire program. Once hit, no new approvals until you reload the pool from Trunkline.
+### Current Beta Email Templates (4 total)
 
-### Database Changes (1 migration)
+1. **`beta_approval_needed`** — Internal alert to justin@elyphant.com when a new referral arrives. Shows referrer/invitee details and links to Trunkline.
+2. **`beta_invite_welcome`** — Sent to invitee when they receive an invitation. Describes the $100 credit and how to join.
+3. **`beta_approved`** — Sent to approved tester. Includes credit details, testing guide (5 steps), and feedback schedule.
+4. **`beta_checkin`** — Stage-aware progress email with personalized feedback survey link. Shows completion checklist and activity stats.
 
-**New table: `beta_invite_limits`**
-- `user_id` (uuid, PK, FK to auth.users)
-- `bonus_invites` (integer, default 0)
-- `created_at`, `updated_at`
+### What Needs Updating
 
-**New table: `beta_program_settings`**
-- Single-row config table
-- `id` (integer, default 1, PK)
-- `total_credit_pool` (integer, default 25) -- max number of $100 credits
-- `updated_at`
-- Seeded with 1 row: pool = 25
+Three templates reference inviting friends but do not mention the 2-invite limit:
 
-**New RPC: `get_remaining_invites(p_user_id)`**
-- Returns `(2 + bonus_invites) - used_referrals_count`
-- Returns -1 for justin@elyphant.com (unlimited)
+**1. `beta_approved` template (line 1409)**
+Current: "Invite a friend or family member -- Share your invite link so you can test gifting to each other. They'll get $100 in credit too."
+Update to: "Invite up to 2 friends or family members -- Share your invite link (you get 2 invites) so you can test gifting to each other. They'll each get $100 in credit too."
 
-**Update `approve_beta_referral`** to check global cap:
-- Count existing `credit_issued` referrals
-- Compare against `beta_program_settings.total_credit_pool`
-- If at cap, return error: "Program credit pool exhausted"
-- This is the enforcement point -- approval is blocked, not signup
+**2. `beta_checkin` template (line 1529)**
+Current: "Invite a friend or family member so you can test gifting to each other."
+Update to: "Invite a friend using one of your 2 invite links so you can test gifting to each other."
 
-### Frontend Changes (4 files)
+**3. `beta_checkin` template (line 1498)**
+Current: step label is "Invited a friend"
+Update to: "Invited a friend (2 invites available)"
 
-**1. New hook: `src/hooks/useRemainingInvites.ts`**
-- Calls `get_remaining_invites` RPC
-- Returns `{ remaining, isUnlimited, isLoading }`
+### What Does NOT Need Changes
 
-**2. `src/components/connections/AddConnectionSheet.tsx`**
-- Show remaining invites count
-- Disable share/invite buttons when remaining <= 0
-- Message: "You've used all your invites"
-- Skip for unlimited users
+- **`beta_approval_needed`** — Admin-only internal alert, no user-facing invite language.
+- **`beta_invite_welcome`** — Sent to the invitee (recipient), not the inviter. The invite limit is irrelevant here.
+- **`beta-checkin-emailer/index.ts`** — Data pipeline only, no template text.
 
-**3. `src/pages/AuthCallback.tsx`**
-- Before creating `beta_referrals` record, check referrer's remaining invites
-- If exhausted, skip referral creation and log warning
+### Implementation
 
-**4. `src/components/trunkline/TrunklineReferralsTab.tsx`**
-- Show global pool status: "X / 25 credits issued"
-- "Grant Invites" button per user (upserts `bonus_invites`)
-- "Reload Pool" button to increase `total_credit_pool` (input for new total)
-- Disable "Approve" button when pool is exhausted, with message
-
-### How it works end-to-end
-- Testers can share up to 2 links each (UI enforced + backend enforced)
-- New signups still create `pending_approval` referrals
-- When you click Approve in Trunkline, the DB function checks global pool before issuing credit
-- Once 25 credits issued, Approve buttons show "Pool exhausted" -- you click "Reload Pool" to add more
-- justin@elyphant.com has unlimited invites but credits still count against the global pool
+One file change: `supabase/functions/ecommerce-email-orchestrator/index.ts` -- update 3 strings in the `betaApprovedTemplate` and `betaCheckinTemplate` functions. Then redeploy the edge function.
 

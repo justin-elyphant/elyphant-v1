@@ -1456,7 +1456,7 @@ export type Database = {
         Row: {
           amount: number
           campaign_id: string
-          contributor_id: string
+          contributor_id: string | null
           created_at: string | null
           id: string
           is_anonymous: boolean | null
@@ -1467,7 +1467,7 @@ export type Database = {
         Insert: {
           amount: number
           campaign_id: string
-          contributor_id: string
+          contributor_id?: string | null
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
@@ -1478,7 +1478,7 @@ export type Database = {
         Update: {
           amount?: number
           campaign_id?: string
-          contributor_id?: string
+          contributor_id?: string | null
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
@@ -2947,9 +2947,9 @@ export type Database = {
           product_link_id: number | null
           proposal_data: Json | null
           reactions: Json | null
-          recipient_id: string
+          recipient_id: string | null
           reply_to_id: string | null
-          sender_id: string
+          sender_id: string | null
           wishlist_link_id: string | null
         }
         Insert: {
@@ -2971,9 +2971,9 @@ export type Database = {
           product_link_id?: number | null
           proposal_data?: Json | null
           reactions?: Json | null
-          recipient_id: string
+          recipient_id?: string | null
           reply_to_id?: string | null
-          sender_id: string
+          sender_id?: string | null
           wishlist_link_id?: string | null
         }
         Update: {
@@ -2995,9 +2995,9 @@ export type Database = {
           product_link_id?: number | null
           proposal_data?: Json | null
           reactions?: Json | null
-          recipient_id?: string
+          recipient_id?: string | null
           reply_to_id?: string | null
-          sender_id?: string
+          sender_id?: string | null
           wishlist_link_id?: string | null
         }
         Relationships: [
@@ -5512,7 +5512,7 @@ export type Database = {
       zma_balance_audit_log: {
         Row: {
           account_id: string
-          admin_user_id: string
+          admin_user_id: string | null
           created_at: string | null
           id: string
           new_balance: number
@@ -5522,7 +5522,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
-          admin_user_id: string
+          admin_user_id?: string | null
           created_at?: string | null
           id?: string
           new_balance: number
@@ -5532,7 +5532,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
-          admin_user_id?: string
+          admin_user_id?: string | null
           created_at?: string | null
           id?: string
           new_balance?: number

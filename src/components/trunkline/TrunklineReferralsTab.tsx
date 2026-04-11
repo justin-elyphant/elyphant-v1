@@ -799,6 +799,74 @@ const TrunklineReferralsTab: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Grant Invites Dialog */}
+      <Dialog open={grantInvitesOpen} onOpenChange={setGrantInvitesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Grant Bonus Invites</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Add extra invite slots for a specific beta tester (on top of the default 2).
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Tester Email</label>
+              <Input
+                placeholder="user@example.com"
+                value={grantEmail}
+                onChange={(e) => setGrantEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Bonus Invites</label>
+              <Input
+                type="number"
+                value={grantCount}
+                onChange={(e) => setGrantCount(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGrantInvitesOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => grantInvitesMutation.mutate()}
+              disabled={grantInvitesMutation.isPending || !grantEmail}
+            >
+              {grantInvitesMutation.isPending ? "Granting..." : "Grant Invites"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reload Pool Dialog */}
+      <Dialog open={reloadPoolOpen} onOpenChange={setReloadPoolOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reload Credit Pool</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Currently {totalApproved} / {globalPool} credits issued. Set the new pool size to allow more approvals.
+          </p>
+          <div>
+            <label className="text-sm font-medium">New Pool Size</label>
+            <Input
+              type="number"
+              value={newPoolSize}
+              onChange={(e) => setNewPoolSize(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReloadPoolOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => reloadPoolMutation.mutate()}
+              disabled={reloadPoolMutation.isPending || !newPoolSize}
+            >
+              {reloadPoolMutation.isPending ? "Updating..." : `Set Pool to ${newPoolSize}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

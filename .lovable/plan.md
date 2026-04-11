@@ -1,30 +1,47 @@
 
 
-## Plan: Fix Beta Referral Action Buttons and Unknown Tester Names
+## Problem
 
-### Issue 1: No Approve/Reject Buttons
-The referral record for Justin → Heather was inserted with `status: 'pending'`, but the UI only shows action buttons when status is `pending_approval` or `signed_up`. The status `pending` doesn't match either condition.
+You can't delete test users from the Supabase dashboard because **18 tables** have foreign keys to `auth.users` without `ON DELETE CASCADE`. The `security_logs` table is the one currently blocking, but the others will cause identical failures.
 
-**Fix**: Two changes needed:
-1. **Database migration**: Update the existing referral record's status from `pending` to `pending_approval`
-2. **`src/pages/AuthCallback.tsx`**: Change the status used when inserting new referral records from `'pending'` to `'pending_approval'` so future referrals show action buttons immediately
+## Fix
 
-Also update the `pendingApproval` counter (line 259) and the action button condition (line 403) in `TrunklineReferralsTab.tsx` to also match `'pending'` as a safety net.
+A single database migration that alters all 18 foreign key constraints to add proper delete behavior:
 
-### Issue 2: "Unknown" Names in Beta Tester Balances
-The profile lookup at line 211-222 queries `profiles` with `.in("id", creditUserIds)`. While Justin has a `business_admin` role that should allow viewing all profiles, the query may be returning empty rows due to the `is_business_admin` function using `SECURITY INVOKER` context.
+- **SET NULL** for audit/log tables where we want to preserve records but remove the user reference (security_logs, zma_balance_audit_log, zma_funding_alerts, zinc_sync_logs, email_templates, user_roles granted_by, business_admins created_by)
+- **CASCADE** for user-owned data that should be deleted with the user (messages, contributions, typing_indicators, user_presence, message_rate_limits, offline_message_queue, pending_recipient_addresses, funding_campaigns)
 
-**Fix**: The `get_beta_tester_analytics` RPC function (which is `SECURITY DEFINER`) already fetches profile data correctly. For the Tester Balances section, the simplest fix is to make the profile lookup in the component more resilient — but first, the actual root cause is likely that the `creditProfiles` query silently returns no rows because RLS blocks it in some edge case.
+For each constraint, the migration will:
+1. Drop the existing foreign key
+2. Re-create it with the appropriate ON DELETE rule
 
-A more robust approach: use a `SECURITY DEFINER` RPC function to fetch beta tester profiles, bypassing RLS for this admin-only page. Alternatively, add `'pending'` to the status match so the referral chain lookup also resolves names.
+## Tables and proposed delete behavior
 
-### Files to Modify
-1. **New SQL migration** -- Update existing referral status from `'pending'` to `'pending_approval'`
-2. **`src/pages/AuthCallback.tsx`** -- Change inserted status from `'pending'` to `'pending_approval'`
-3. **`src/components/trunkline/TrunklineReferralsTab.tsx`** -- Add `'pending'` to the status conditions for action buttons and pending counter (defensive fix)
+| Table | Column | Proposed Rule |
+|-------|--------|--------------|
+| security_logs | user_id | SET NULL |
+| messages | sender_id | SET NULL |
+| messages | recipient_id | SET NULL |
+| contributions | contributor_id | SET NULL |
+| business_admins | created_by | SET NULL |
+| email_templates | created_by | SET NULL |
+| user_roles | granted_by | SET NULL |
+| zma_balance_audit_log | admin_user_id | SET NULL |
+| zma_funding_alerts | resolved_by | SET NULL |
+| zma_funding_schedule | admin_confirmed_by | SET NULL |
+| zinc_sync_logs | triggered_by | SET NULL |
+| funding_campaigns | creator_id | CASCADE |
+| message_rate_limits | user_id | CASCADE |
+| offline_message_queue | user_id | CASCADE |
+| pending_recipient_addresses | requested_by | CASCADE |
+| typing_indicators | user_id | CASCADE |
+| typing_indicators | chat_with_user_id | CASCADE |
+| user_presence | typing_in_chat_with | SET NULL |
 
-### Technical Detail
-- Line 259: Add `|| r.status === "pending"` to the pending count filter
-- Line 403: Add `|| r.status === "pending"` to the action button condition
-- The "Unknown" names should resolve once the referral status matches and the referral chain lookup finds Heather's profile via `referred_profile`; for non-referral testers (manual credits), the `creditProfiles` query should work since Justin is a business admin
+## Technical notes
+
+- The `security_logs.user_id` column must be made nullable first (if not already) before SET NULL can work
+- Same for any other columns getting SET NULL -- they must allow NULL values
+- This is a schema-only change; no application code changes needed
+- After this migration, you'll be able to delete any user from the Supabase dashboard without errors
 

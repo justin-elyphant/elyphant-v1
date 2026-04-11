@@ -111,13 +111,13 @@ const AuthCallback = () => {
                     await supabase.functions.invoke('ecommerce-email-orchestrator', {
                       body: {
                         eventType: 'beta_approval_needed',
-                        metadata: {
-                          referrerName: referrerProfile?.name || referrerProfile?.username || 'Unknown',
-                          referrerEmail: referrerProfile?.email || '',
-                          inviteeName: data.user.user_metadata?.name || data.user.email || 'New User',
-                          inviteeEmail: data.user.email || '',
-                          creditAmount: 100,
-                          adminEmail: 'justin@elyphant.com'
+                        recipientEmail: 'justin@elyphant.com',
+                        data: {
+                          referrer_name: referrerProfile?.name || referrerProfile?.username || 'Unknown',
+                          referrer_email: referrerProfile?.email || '',
+                          invitee_name: data.user.user_metadata?.name || data.user.email || 'New User',
+                          invitee_email: data.user.email || '',
+                          credit_amount: 100,
                         }
                       }
                     });

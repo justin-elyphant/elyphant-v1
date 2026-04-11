@@ -13,7 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, Mail, Send } from "lucide-react";
+import { Gift, DollarSign, Users, Clock, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, Mail, Send, ShieldAlert, Plus, RefreshCw } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BetaTesterAnalytics from "@/components/trunkline/beta/BetaTesterAnalytics";
 import BetaFeedbackViewer from "@/components/trunkline/beta/BetaFeedbackViewer";
@@ -67,6 +67,11 @@ const TrunklineReferralsTab: React.FC = () => {
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [checkinEmail, setCheckinEmail] = useState("");
   const [sendingCheckin, setSendingCheckin] = useState(false);
+  const [grantInvitesOpen, setGrantInvitesOpen] = useState(false);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantCount, setGrantCount] = useState("2");
+  const [reloadPoolOpen, setReloadPoolOpen] = useState(false);
+  const [newPoolSize, setNewPoolSize] = useState("");
 
   // Fetch referrals
   const { data: referrals = [], isLoading: loadingReferrals } = useQuery({
@@ -95,6 +100,20 @@ const TrunklineReferralsTab: React.FC = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as BetaCredit[];
+    },
+  });
+
+  // Fetch global program settings
+  const { data: programSettings } = useQuery({
+    queryKey: ["beta-program-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("beta_program_settings" as any)
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (error) throw error;
+      return data as any as { total_credit_pool: number };
     },
   });
 

@@ -107,46 +107,46 @@ const AuthCallback = () => {
 
                 // Create beta referral record for $100 credit tracking
                 if (referrerHasInvites) {
-                try {
-                  await supabase.from('beta_referrals').insert({
-                    referrer_id: storedInviteUser,
-                    referred_id: data.user.id,
-                    referred_email: data.user.email || '',
-                    connection_id: result.data.id,
-                    status: 'pending_approval',
-                    reward_amount: 100
-                  });
-                  console.log('[AuthCallback] Beta referral record created');
-
-                  // Notify admin to approve the $100 credit
                   try {
-                    const { data: referrerProfile } = await supabase
-                      .from('profiles')
-                      .select('name, username, email')
-                      .eq('id', storedInviteUser)
-                      .single();
-
-                    await supabase.functions.invoke('ecommerce-email-orchestrator', {
-                      body: {
-                        eventType: 'beta_approval_needed',
-                        recipientEmail: 'justin@elyphant.com',
-                        data: {
-                          referrer_name: referrerProfile?.name || referrerProfile?.username || 'Unknown',
-                          referrer_email: referrerProfile?.email || '',
-                          invitee_name: data.user.user_metadata?.name || data.user.email || 'New User',
-                          invitee_email: data.user.email || '',
-                          credit_amount: 100,
-                        }
-                      }
+                    await supabase.from('beta_referrals').insert({
+                      referrer_id: storedInviteUser,
+                      referred_id: data.user.id,
+                      referred_email: data.user.email || '',
+                      connection_id: result.data.id,
+                      status: 'pending_approval',
+                      reward_amount: 100
                     });
-                    console.log('[AuthCallback] Beta approval email triggered');
-                  } catch (emailErr) {
-                    console.error('[AuthCallback] Error sending beta approval email:', emailErr);
+                    console.log('[AuthCallback] Beta referral record created');
+
+                    // Notify admin to approve the $100 credit
+                    try {
+                      const { data: referrerProfile } = await supabase
+                        .from('profiles')
+                        .select('name, username, email')
+                        .eq('id', storedInviteUser)
+                        .single();
+
+                      await supabase.functions.invoke('ecommerce-email-orchestrator', {
+                        body: {
+                          eventType: 'beta_approval_needed',
+                          recipientEmail: 'justin@elyphant.com',
+                          data: {
+                            referrer_name: referrerProfile?.name || referrerProfile?.username || 'Unknown',
+                            referrer_email: referrerProfile?.email || '',
+                            invitee_name: data.user.user_metadata?.name || data.user.email || 'New User',
+                            invitee_email: data.user.email || '',
+                            credit_amount: 100,
+                          }
+                        }
+                      });
+                      console.log('[AuthCallback] Beta approval email triggered');
+                    } catch (emailErr) {
+                      console.error('[AuthCallback] Error sending beta approval email:', emailErr);
+                    }
+                  } catch (refErr) {
+                    console.error('[AuthCallback] Error creating beta referral:', refErr);
                   }
-                } catch (refErr) {
-                  console.error('[AuthCallback] Error creating beta referral:', refErr);
                 }
-              }
             } catch (err) {
               console.error('[AuthCallback] Error auto-connecting to inviter:', err);
             } finally {

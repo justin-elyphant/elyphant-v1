@@ -88,7 +88,25 @@ const AuthCallback = () => {
                 console.log('[AuthCallback] Auto-connect successful, connection ID:', result.data.id);
                 toast.success('🤝 Connected with your friend!');
 
+                // Check referrer's remaining invites before creating referral
+                let referrerHasInvites = true;
+                try {
+                  const { data: remainingData } = await supabase.rpc(
+                    'get_remaining_invites' as any,
+                    { p_user_id: storedInviteUser }
+                  );
+                  const remaining = Number(remainingData);
+                  // -1 means unlimited, 0 means exhausted
+                  if (remaining === 0) {
+                    referrerHasInvites = false;
+                    console.warn('[AuthCallback] Referrer has no remaining invites, skipping referral creation');
+                  }
+                } catch (checkErr) {
+                  console.error('[AuthCallback] Error checking remaining invites:', checkErr);
+                }
+
                 // Create beta referral record for $100 credit tracking
+                if (referrerHasInvites) {
                 try {
                   await supabase.from('beta_referrals').insert({
                     referrer_id: storedInviteUser,

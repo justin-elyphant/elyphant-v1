@@ -15,6 +15,7 @@ import { invitationAnalyticsService } from "@/services/analytics/invitationAnaly
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useBetaCredits } from "@/hooks/useBetaCredits";
+import { useRemainingInvites } from "@/hooks/useRemainingInvites";
 
 interface AddConnectionSheetProps {
   isOpen: boolean;

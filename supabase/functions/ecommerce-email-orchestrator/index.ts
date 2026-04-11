@@ -1406,7 +1406,7 @@ const betaApprovedTemplate = (props: any): string => {
         </tr>
         <tr>
           <td style="padding: 10px 0; border-top: 1px solid #f3f4f6; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
-            <strong style="color: #1a1a1a;">2. Invite a friend or family member</strong> — Share your invite link so you can test gifting to each other. They'll get $100 in credit too.
+            <strong style="color: #1a1a1a;">2. Invite up to 2 friends or family members</strong> — Share your invite link (you get 2 invites) so you can test gifting to each other. They'll each get $100 in credit too.
           </td>
         </tr>
         <tr>
@@ -1495,7 +1495,7 @@ const betaCheckinTemplate = (props: any): string => {
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         ${stepRow('Signed up and approved', true)}
         ${stepRow('Built a wishlist', props.has_wishlist)}
-        ${stepRow('Invited a friend', props.has_invited)}
+        ${stepRow('Invited a friend (2 invites available)', props.has_invited)}
         ${stepRow('Scheduled a gift', props.has_scheduled_gift)}
         ${stepRow('Made a purchase', props.has_purchased)}
       </table>
@@ -1526,7 +1526,7 @@ const betaCheckinTemplate = (props: any): string => {
       <p style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 15px; font-weight: 600; color: #1a1a1a;">What to try next</p>
       <p style="margin: 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
         ${!props.has_wishlist ? 'Start by searching for products and building your first wishlist. ' : ''}
-        ${!props.has_invited ? 'Invite a friend or family member so you can test gifting to each other. ' : ''}
+        ${!props.has_invited ? 'Invite a friend using one of your 2 invite links so you can test gifting to each other. ' : ''}
         ${!props.has_scheduled_gift ? 'Try scheduling a gift for someone — it tests our core delivery engine. ' : ''}
         ${!props.has_purchased ? 'Use your beta credit to make a purchase and experience the full checkout flow. ' : ''}
       </p>

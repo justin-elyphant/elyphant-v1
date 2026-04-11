@@ -147,6 +147,7 @@ const AuthCallback = () => {
                     console.error('[AuthCallback] Error creating beta referral:', refErr);
                   }
                 }
+              }
             } catch (err) {
               console.error('[AuthCallback] Error auto-connecting to inviter:', err);
             } finally {

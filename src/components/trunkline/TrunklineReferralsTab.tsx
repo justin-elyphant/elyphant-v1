@@ -397,7 +397,6 @@ const TrunklineReferralsTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
-      </div>
 
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList>

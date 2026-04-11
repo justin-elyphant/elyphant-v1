@@ -1166,6 +1166,45 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_invite_limits: {
+        Row: {
+          bonus_invites: number
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_invites?: number
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_invites?: number
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      beta_program_settings: {
+        Row: {
+          id: number
+          total_credit_pool: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          total_credit_pool?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          total_credit_pool?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       beta_referrals: {
         Row: {
           connection_id: string | null
@@ -6008,6 +6047,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_remaining_invites: { Args: { p_user_id: string }; Returns: number }
       get_safe_profile_data: {
         Args: { profile_user_id: string }
         Returns: boolean

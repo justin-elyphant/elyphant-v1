@@ -239,6 +239,62 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
     ],
     priceMax: 50,
     priceMin: 1
+  },
+
+  // === Lifestyle categories (homepage "Gifts for Every Lifestyle" grid) ===
+  'on-the-go': {
+    name: 'On the Go',
+    queries: [
+      "portable electronics travel accessories",
+      "commuter gear water bottles tumblers",
+      "wireless earbuds portable chargers",
+      "backpacks crossbody bags"
+    ]
+  },
+  'movie-buff': {
+    name: 'Movie Buff',
+    queries: [
+      "streaming devices home theater accessories",
+      "popcorn maker movie night snacks",
+      "movie collectibles blankets pillows",
+      "projector screen sound bar"
+    ]
+  },
+  'work-from-home': {
+    name: 'Work from Home',
+    queries: [
+      "home office desk accessories organizer",
+      "ergonomic keyboard mouse monitor stand",
+      "desk lamp webcam microphone",
+      "office chair lumbar support"
+    ]
+  },
+  'the-traveler': {
+    name: 'The Traveler',
+    queries: [
+      "travel luggage packing cubes organizer",
+      "neck pillow travel accessories toiletry bag",
+      "travel adapter passport holder",
+      "carry on luggage travel backpack"
+    ]
+  },
+  'the-home-chef': {
+    name: 'The Home Chef',
+    queries: [
+      "kitchen gadgets cookware chef knife",
+      "cutting board cooking accessories utensils",
+      "spice sets cookbook apron",
+      "cast iron skillet kitchen tools"
+    ]
+  },
+  'teens': {
+    name: 'Teens',
+    queries: [
+      "teen gifts trendy accessories phone cases",
+      "LED lights room decor gaming accessories",
+      "bluetooth speaker headphones teens",
+      "journal stickers art supplies teens"
+    ]
   }
 };
 

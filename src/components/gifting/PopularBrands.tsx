@@ -9,54 +9,14 @@ import { cn } from "@/lib/utils";
 
 // Mock data for popular brands with real logos
 const popularBrands = [
-  { 
-    id: 1, 
-    name: "Nike", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png", 
-    productCount: 245 
-  },
-  { 
-    id: 2, 
-    name: "Apple", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg", 
-    productCount: 189 
-  },
-  { 
-    id: 3, 
-    name: "Yeti", 
-    logoUrl: "/images/brands/yeti-logo.svg", 
-    productCount: 152 
-  },
-  { 
-    id: 4, 
-    name: "Sony", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sony_logo.svg/2560px-Sony_logo.svg.png", 
-    productCount: 142 
-  },
-  { 
-    id: 5, 
-    name: "Adidas", 
-    logoUrl: "/images/brands/adidas-logo.png", 
-    productCount: 134 
-  },
-  { 
-    id: 7, 
-    name: "Made In", 
-    logoUrl: "/lovable-uploads/baaeaa58-7b69-413d-b176-6689d5eec58b.png", 
-    productCount: 87 
-  },
-  { 
-    id: 8, 
-    name: "Lego", 
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/LEGO_logo.svg/2048px-LEGO_logo.svg.png", 
-    productCount: 76 
-  },
-  { 
-    id: 9, 
-    name: "PlayStation", 
-    logoUrl: "/images/brands/playstation-logo.png", 
-    productCount: 98 
-  }
+  { id: 1, name: "Nike", logoUrl: "/images/brands/nike-logo.png", productCount: 245 },
+  { id: 2, name: "Apple", logoUrl: "/images/brands/apple-logo.png", productCount: 189 },
+  { id: 3, name: "Yeti", logoUrl: "/images/brands/yeti-logo.png", productCount: 152 },
+  { id: 4, name: "Sony", logoUrl: "/images/brands/sony-logo.png", productCount: 142 },
+  { id: 5, name: "Adidas", logoUrl: "/images/brands/adidas-logo.png", productCount: 134 },
+  { id: 7, name: "Made In", logoUrl: "/lovable-uploads/baaeaa58-7b69-413d-b176-6689d5eec58b.png", productCount: 87 },
+  { id: 8, name: "Lego", logoUrl: "/images/brands/lego-logo.png", productCount: 76 },
+  { id: 9, name: "PlayStation", logoUrl: "/images/brands/playstation-logo.png", productCount: 98 }
 ];
 
 const PopularBrands = () => {

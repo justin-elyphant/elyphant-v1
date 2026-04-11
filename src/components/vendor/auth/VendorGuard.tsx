@@ -11,7 +11,7 @@ interface VendorGuardProps {
 type AccessStatus = 'checking' | 'allowed' | 'denied' | 'unapproved-vendor' | 'not-vendor';
 
 export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isEmployee } = useAuth();
   const { userContext, isLoading: contextLoading, isVendor } = useUserContext();
   const navigate = useNavigate();
   const [accessStatus, setAccessStatus] = useState<AccessStatus>('checking');
@@ -21,6 +21,13 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
       if (!user) {
         console.log('VendorGuard: No user, redirecting to vendor portal login');
         navigate('/vendor-portal');
+        return;
+      }
+
+      // Employees/admins bypass vendor checks (superadmin access)
+      if (isEmployee) {
+        console.log('VendorGuard: Employee access granted for', user.email);
+        setAccessStatus('allowed');
         return;
       }
 
@@ -81,7 +88,7 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
     if (!isLoading && !contextLoading) {
       checkVendorAccess();
     }
-  }, [user, isLoading, contextLoading, userContext, isVendor, navigate]);
+  }, [user, isLoading, isEmployee, contextLoading, userContext, isVendor, navigate]);
 
   // Show loading while checking access
   if (isLoading || contextLoading || accessStatus === 'checking') {

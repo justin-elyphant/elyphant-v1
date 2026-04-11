@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle, Gift, ChevronRight } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings, Terminal, Package, Users, Bell, User, CreditCard, HelpCircle, Gift, ChevronRight, Store } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
@@ -319,6 +319,13 @@ const UserButton = () => {
                 <Terminal className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Trunkline</span>
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                onClick={() => navigate("/vendor")}
+              >
+                <Store className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Vendor Portal</span>
+              </DropdownMenuItem>
             </>
           )}
           
@@ -457,6 +464,13 @@ const UserButton = () => {
             >
               <Terminal className={navigationStyles.dropdownIcon} />
               <span className={navigationStyles.dropdownLabel}>Trunkline</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className={navigationStyles.dropdownItem}
+              onClick={() => navigate("/vendor")}
+            >
+              <Store className={navigationStyles.dropdownIcon} />
+              <span className={navigationStyles.dropdownLabel}>Vendor Portal</span>
             </DropdownMenuItem>
           </>
         )}

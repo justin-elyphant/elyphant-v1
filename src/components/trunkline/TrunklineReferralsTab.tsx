@@ -502,15 +502,19 @@ const TrunklineReferralsTab: React.FC = () => {
                     <TableCell className="text-right">
                       {(r.status === "pending_approval" || r.status === "signed_up" || r.status === "pending") && (
                         <div className="flex items-center gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            onClick={() => approveMutation.mutate(r.id)}
-                            disabled={approveMutation.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                            Approve
-                          </Button>
+                          {poolExhausted ? (
+                            <span className="text-xs text-destructive font-medium">Pool exhausted</span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate(r.id)}
+                              disabled={approveMutation.isPending}
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                              Approve
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"

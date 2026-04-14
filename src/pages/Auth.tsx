@@ -219,7 +219,9 @@ const Auth = () => {
       {/* Homepage as backdrop — always rendered immediately, no flash */}
       <UnifiedShopperHeader mode="main" />
       <main className="flex-1">
-        <HomeContent />
+        <Suspense fallback={<div className="min-h-screen" />}>
+          <HomeContent />
+        </Suspense>
       </main>
       <Footer />
 

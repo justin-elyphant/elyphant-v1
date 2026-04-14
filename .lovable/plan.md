@@ -1,50 +1,67 @@
+<final-text>
+## Minimal fix plan
 
+I checked the live database definitions, not just the repo.
 
-# Fix: "Account creation failed" — app_role Type Not Found
+### What I confirmed
+- `assign_default_customer_role()` is already fixed live and now uses `'shopper'::public.app_role`.
+- So the earlier enum fix was real, but it is not the only failing function.
 
-## Root Cause
+### Do I know what the issue is?
+Yes. The current signup error is still database-side, not OAuth/UI complexity.
 
-The `assign_default_customer_role()` trigger fires after every new profile INSERT. It contains:
+Two live functions are still using `SET search_path TO ''` while referencing public objects without schema qualification:
 
+1. `public.link_pending_auto_gift_rules()`
+   - currently uses `user_connections` and `auto_gifting_rules`
+   - should use `public.user_connections` and `public.auto_gifting_rules`
+   - this fires on `AFTER INSERT ON public.profiles`, which happens during `supabase.auth.signUp`, so it can still cause the password-step failure
+
+2. `public.complete_onboarding()`
+   - currently uses `profiles`, `email_queue`, and `::user_type`
+   - should use `public.profiles`, `public.email_queue`, and `::public.user_type`
+   - this will likely be the next blocker even after signup is unblocked
+
+### What I will change
+Create one small SQL migration only:
+- replace `public.link_pending_auto_gift_rules()` with schema-qualified table names
+- replace `public.complete_onboarding()` with schema-qualified table/type names
+- keep all existing onboarding and OAuth behavior exactly the same
+
+### What I will not change
+- no OAuth flow rewrite
+- no new auth-state abstraction
+- no frontend step changes
+- no extra complexity
+
+### Why this is the minimal fix
+The failure is happening inside the database trigger/function chain during account creation. Fixing those two functions addresses the actual source without touching the client flow.
+
+### After the migration
+I’ll verify:
+1. email signup succeeds past the password step
+2. onboarding completes on the final step
+3. `profiles`, `user_roles`, and `privacy_settings` rows exist for the new user
+4. OAuth resume still lands in the same stepped flow without any logic changes
+
+### Technical details
+Broken pattern:
 ```sql
-VALUES (NEW.id, 'shopper'::app_role)
+SECURITY DEFINER
+SET search_path TO ''
+...
+UPDATE user_connections ...
+INSERT INTO profiles ...
+VALUES (..., p_user_type::user_type, ...)
 ```
 
-But the function is declared with `SET search_path TO ''` (empty search path for security). This means Postgres cannot resolve the unqualified `app_role` type, causing:
-
-```
-ERROR: type "app_role" does not exist (SQLSTATE 42704)
-```
-
-This aborts the entire signup transaction — no profile is created, no confirmation email is sent.
-
-## Fix
-
-One SQL migration to schema-qualify the type reference:
-
+Fixed pattern:
 ```sql
-CREATE OR REPLACE FUNCTION public.assign_default_customer_role()
-  RETURNS trigger
-  LANGUAGE plpgsql
-  SECURITY DEFINER
-  SET search_path TO ''
-AS $function$
-BEGIN
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, 'shopper'::public.app_role)
-  ON CONFLICT (user_id, role) DO NOTHING;
-  RETURN NEW;
-END;
-$function$;
+SECURITY DEFINER
+SET search_path TO ''
+...
+UPDATE public.user_connections ...
+INSERT INTO public.profiles ...
+VALUES (..., p_user_type::public.user_type, ...)
 ```
-
-The only change is `'shopper'::app_role` → `'shopper'::public.app_role`.
-
-## Impact
-- Fixes all new user signups (email and OAuth)
-- No frontend changes needed
-- The two-phase onboarding code is working correctly — it was properly surfacing this database error at the password step instead of silently failing at the photo step
-
-## Files Changed
-- One database migration only
-
+</final-text>

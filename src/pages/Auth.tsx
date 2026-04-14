@@ -94,6 +94,15 @@ const Auth = () => {
   useEffect(() => {
     if (!user || isLoading) return;
 
+    // If signup/onboarding is still in progress, don't redirect — let SteppedAuthFlow continue
+    const isSignupMode = initialMode === 'signup';
+    const isOAuthResume = searchParams.get('oauth_resume') === 'true';
+    if (isSignupMode || isOAuthResume) {
+      if (!profileData?.onboarding_completed) {
+        return; // Stay on auth page for Phase 2 steps
+      }
+    }
+
     // Check if this is a fresh post-signup (has invitation tokens to process)
     const storedToken = localStorage.getItem(INVITATION_TOKEN_STORAGE_KEY);
     const storedInviteUser = inviteUserId || localStorage.getItem('elyphant_invite_user');

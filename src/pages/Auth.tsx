@@ -1,10 +1,11 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
-import HomeContent from "@/components/home/HomeContent";
 import UnifiedShopperHeader from "@/components/navigation/UnifiedShopperHeader";
 import Footer from "@/components/home/Footer";
+
+const HomeContent = lazy(() => import("@/components/home/HomeContent"));
 import MinimalSignInView from "@/components/auth/signin/MinimalSignInView";
 import SteppedAuthFlow from "@/components/auth/stepped/SteppedAuthFlow";
 import { useProfileRetrieval } from "@/hooks/profile/useProfileRetrieval";

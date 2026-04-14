@@ -10,6 +10,7 @@ interface PasswordStepProps {
   onBack: () => void;
   stepIndex: number;
   totalSteps: number;
+  isLoading?: boolean;
 }
 
 const PasswordStep: React.FC<PasswordStepProps> = ({

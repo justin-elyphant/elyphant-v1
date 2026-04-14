@@ -20,6 +20,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
   onBack,
   stepIndex,
   totalSteps,
+  isLoading = false,
 }) => {
   const [error, setError] = useState("");
 

@@ -360,7 +360,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
         localStorage.removeItem(DRAFT_KEY);
         await refetchProfile();
-        navigate("/", { replace: true });
+        navigate("/home", { replace: true });
       } else {
         // Email flow — Phase 2: account already created at password step
         const targetUser = createdUser;
@@ -425,7 +425,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         localStorage.removeItem(DRAFT_KEY);
         await refetchProfile();
-        navigate("/", { replace: true });
+        navigate("/home", { replace: true });
       }
     } catch (error: any) {
       console.error("Profile completion error:", error);

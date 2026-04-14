@@ -63,6 +63,7 @@ const PasswordStep: React.FC<PasswordStepProps> = ({
       onBack={onBack}
       onNext={handleNext}
       isNextDisabled={password.length < 8 || strength < 3}
+      isNextLoading={isLoading}
       stepIndex={stepIndex}
       totalSteps={totalSteps}
     >

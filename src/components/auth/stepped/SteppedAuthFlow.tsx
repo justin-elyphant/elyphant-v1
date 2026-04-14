@@ -1,11 +1,10 @@
-import React, { useReducer, useEffect, useState, useCallback } from "react";
+import React, { useReducer, useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth";
 import { useProfile } from "@/contexts/profile/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { GoogleIcon } from "@/components/ui/icons/GoogleIcon";
 import { Button } from "@/components/ui/button";
 import ElyphantTextLogo from "@/components/ui/ElyphantTextLogo";
 
@@ -17,6 +16,7 @@ import InterestsStep from "./steps/InterestsStep";
 import PhotoStep from "./steps/PhotoStep";
 import AddressStep from "./steps/AddressStep";
 import { ShippingAddress } from "@/types/shipping";
+import type { User } from "@supabase/supabase-js";
 
 // ── Types ──────────────────────────────────────────────────
 interface FormState {
@@ -58,6 +58,8 @@ const initialState: FormState = {
   photoFile: null,
 };
 
+const DRAFT_KEY = "elyphant_signup_draft";
+
 type StepId = "name" | "email" | "password" | "birthday" | "interests" | "address" | "photo";
 const EMAIL_STEPS: StepId[] = ["name", "email", "password", "birthday", "interests", "address", "photo"];
 const OAUTH_STEPS: StepId[] = ["birthday", "interests", "address", "photo"];
@@ -84,9 +86,48 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
   const [isOAuth, setIsOAuth] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEntryScreen, setShowEntryScreen] = useState(true);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+
+  // Phase 1: store the created user after the password step
+  const [createdUser, setCreatedUser] = useState<User | null>(null);
 
   const steps = isOAuth ? OAUTH_STEPS : EMAIL_STEPS;
   const totalSteps = steps.length;
+
+  // ── localStorage draft persistence ────────────────────────
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        // Don't restore password or photoFile for security
+        const { password, photoFile, ...safeFields } = draft;
+        dispatch({ type: "PREFILL", data: safeFields });
+        console.log("📋 Restored signup draft from localStorage");
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  // Save draft on each field change (debounced via state)
+  const draftSaveRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (draftSaveRef.current) clearTimeout(draftSaveRef.current);
+    draftSaveRef.current = setTimeout(() => {
+      try {
+        // Don't persist password or File objects
+        const { password, photoFile, ...safeDraft } = state;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(safeDraft));
+      } catch {
+        // quota exceeded etc
+      }
+    }, 500);
+    return () => {
+      if (draftSaveRef.current) clearTimeout(draftSaveRef.current);
+    };
+  }, [state]);
 
   // Detect OAuth resume
   useEffect(() => {
@@ -133,12 +174,96 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     if (el) el.scrollTop = 0;
   }, [currentStep]);
 
-  const goNext = useCallback(() => {
+  // ── Phase 1: Create account after password step ───────────
+  const handleSignUp = useCallback(async (): Promise<boolean> => {
+    setIsSigningUp(true);
+    try {
+      const redirectUrl = `${window.location.origin}/profile-setup`;
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: state.email,
+        password: state.password,
+        options: {
+          data: {
+            name: `${state.firstName} ${state.lastName}`.trim(),
+            first_name: state.firstName,
+            last_name: state.lastName,
+            signup_source: invitationData ? "invite" : "stepped_signup",
+            user_type: "shopper",
+          },
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (authError) {
+        const msg = authError.message || "";
+        if (msg.includes("User already registered")) {
+          toast.error("An account with this email already exists. Try signing in instead.");
+        } else if (msg.toLowerCase().includes("weak") || msg.toLowerCase().includes("password")) {
+          toast.error("Please choose a stronger password");
+        } else if (msg.toLowerCase().includes("database")) {
+          toast.error("Account creation failed. Please try again in a moment.", {
+            description: "If this keeps happening, contact support.",
+          });
+        } else {
+          toast.error(msg || "Failed to create account");
+        }
+        return false;
+      }
+
+      if (!authData.user) {
+        toast.error("Failed to create account. Please try again.");
+        return false;
+      }
+
+      console.log("✅ Phase 1: Account created successfully:", authData.user.id);
+      setCreatedUser(authData.user);
+
+      // Fire-and-forget: set user identification
+      try {
+        await supabase.rpc("set_user_identification", {
+          target_user_id: authData.user.id,
+          user_type_param: "shopper",
+          signup_source_param: invitationData ? "invite" : "header_cta",
+          metadata_param: {
+            name: `${state.firstName} ${state.lastName}`.trim(),
+            signup_timestamp: new Date().toISOString(),
+            signup_flow: "stepped_auth",
+          },
+          attribution_param: {
+            source: invitationData ? "invite" : "stepped_signup",
+            campaign: invitationData ? "connection_invitation" : "main_signup",
+            referrer: document.referrer || "direct",
+          },
+        });
+      } catch (e) {
+        console.error("Error setting user identification:", e);
+      }
+
+      return true;
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      toast.error(err.message || "Something went wrong. Please try again.");
+      return false;
+    } finally {
+      setIsSigningUp(false);
+    }
+  }, [state.email, state.password, state.firstName, state.lastName, invitationData]);
+
+  const goNext = useCallback(async () => {
+    const stepId = steps[currentStep];
+
+    // Phase 1: after password step, create account before proceeding
+    if (stepId === "password" && !isOAuth && !createdUser) {
+      const success = await handleSignUp();
+      if (!success) return; // stay on password step with error shown
+    }
+
     setDirection(1);
     if (currentStep < totalSteps - 1) {
       setCurrentStep((s) => s + 1);
     }
-  }, [currentStep, totalSteps]);
+  }, [currentStep, totalSteps, steps, isOAuth, createdUser, handleSignUp]);
 
   const goBack = useCallback(() => {
     setDirection(-1);
@@ -197,11 +322,12 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
     }
   };
 
-  // ── Final submission ──────────────────────────────────────
+  // ── Phase 2: Final submission (complete_onboarding only) ──
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
       if (isOAuth && user) {
+        // OAuth flow — user already exists
         const finalPhotoUrl = await uploadPhoto(user.id);
         const username = state.firstName && state.lastName
           ? `${state.firstName.toLowerCase()}.${state.lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, "")
@@ -229,62 +355,27 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (error) throw error;
 
-        // Fire-and-forget: process email queue immediately so welcome email sends now
         supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
+        localStorage.removeItem(DRAFT_KEY);
         await refetchProfile();
         navigate("/", { replace: true });
       } else {
-        const redirectUrl = `${window.location.origin}/profile-setup`;
-
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: state.email,
-          password: state.password,
-          options: {
-            data: {
-              name: `${state.firstName} ${state.lastName}`.trim(),
-              first_name: state.firstName,
-              last_name: state.lastName,
-              signup_source: invitationData ? "invite" : "stepped_signup",
-              user_type: "shopper",
-            },
-            emailRedirectTo: redirectUrl,
-          },
-        });
-
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("Failed to create account");
-
-        try {
-          await supabase.rpc("set_user_identification", {
-            target_user_id: authData.user.id,
-            user_type_param: "shopper",
-            signup_source_param: invitationData ? "invite" : "header_cta",
-            metadata_param: {
-              name: `${state.firstName} ${state.lastName}`.trim(),
-              signup_timestamp: new Date().toISOString(),
-              signup_flow: "stepped_auth",
-            },
-            attribution_param: {
-              source: invitationData ? "invite" : "stepped_signup",
-              campaign: invitationData ? "connection_invitation" : "main_signup",
-              referrer: document.referrer || "direct",
-            },
-          });
-        } catch (e) {
-          console.error("Error setting user identification:", e);
+        // Email flow — Phase 2: account already created at password step
+        const targetUser = createdUser;
+        if (!targetUser) {
+          toast.error("Account not found. Please restart signup.");
+          return;
         }
 
-        // Upload photo now that we have a user id
-        const emailFinalPhotoUrl = await uploadPhoto(authData.user.id);
+        const emailFinalPhotoUrl = await uploadPhoto(targetUser.id);
 
-        // Use RPC to reliably save profile + queue welcome email (bypasses RLS timing)
         const emailDobFormatted = state.birthday ? state.birthday.slice(5) : null;
         const emailBirthYear = state.birthday ? parseInt(state.birthday.slice(0, 4)) : null;
 
         const { error: profileError } = await supabase.rpc("complete_onboarding", {
-          p_user_id: authData.user.id,
+          p_user_id: targetUser.id,
           p_first_name: state.firstName,
           p_last_name: state.lastName,
           p_email: state.email,
@@ -302,21 +393,26 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
-          throw new Error(`Profile save failed: ${profileError.message}`);
+          toast.error("Failed to save profile. Please try again.", {
+            description: "Your account was created — you can complete setup in Settings if needed.",
+          });
+          return;
         }
 
-        // Verify data actually persisted before navigating
+        // Verify data actually persisted
         const { data: verifyProfile } = await supabase
           .from("profiles")
           .select("onboarding_completed, dob, shipping_address")
-          .eq("id", authData.user.id)
+          .eq("id", targetUser.id)
           .single();
 
         if (!verifyProfile?.onboarding_completed) {
-          throw new Error("Profile data did not persist. Please try again.");
+          toast.error("Profile data did not save correctly. Please try again.", {
+            description: "Your account exists — you can complete setup in Settings.",
+          });
+          return;
         }
 
-        // Fire-and-forget: process email queue immediately so welcome email sends now
         supabase.functions.invoke("process-email-queue", { body: { force: true } }).catch(console.error);
 
         toast.success("Account created! Welcome to Elyphant 🎉");
@@ -327,26 +423,18 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
           localStorage.setItem("signupContext", "gift_giver");
         }
 
-        
+        localStorage.removeItem(DRAFT_KEY);
         await refetchProfile();
         navigate("/", { replace: true });
       }
     } catch (error: any) {
-      console.error("Signup error:", error);
+      console.error("Profile completion error:", error);
       const msg = error.message || "";
-      if (msg.includes("User already registered")) {
-        toast.error("An account with this email already exists. Try signing in instead.");
-      } else if (msg.toLowerCase().includes("weak") || msg.toLowerCase().includes("password")) {
-        toast.error("Please choose a stronger password");
-        // Navigate back to the password step
-        const passwordIndex = steps.indexOf("password");
-        if (passwordIndex >= 0) {
-          setDirection(-1);
-          setCurrentStep(passwordIndex);
-        }
-      } else {
-        toast.error(msg || "Something went wrong. Please try again.");
-      }
+      toast.error(msg || "Something went wrong. Please try again.", {
+        description: createdUser
+          ? "Your account was created — you can complete setup in Settings."
+          : undefined,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -440,6 +528,7 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
             onChange={(v) => dispatch({ type: "SET_FIELD", field: "password", value: v })}
             onNext={goNext}
             onBack={goBack}
+            isLoading={isSigningUp}
             {...commonProps}
           />
         );

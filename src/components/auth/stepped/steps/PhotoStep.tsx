@@ -95,25 +95,27 @@ const PhotoStep: React.FC<PhotoStepProps> = ({
       }
     >
       <div className="flex flex-col items-center pt-8">
-        <button
-          type="button"
-          onClick={() => setShowCamera(true)}
-          className="relative w-32 h-32 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:border-primary transition-colors touch-manipulation"
-        >
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt="Profile photo"
-              className="w-full h-full object-cover"
-              onError={() => onChange("")}
-            />
-          ) : (
-            <User className="w-12 h-12 text-muted-foreground" />
-          )}
-          <div className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
+        <div className="relative w-32 h-32">
+          <button
+            type="button"
+            onClick={() => setShowCamera(true)}
+            className="w-full h-full rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden hover:border-primary transition-colors touch-manipulation"
+          >
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt="Profile photo"
+                className="w-full h-full object-cover"
+                onError={() => onChange("")}
+              />
+            ) : (
+              <User className="w-12 h-12 text-muted-foreground" />
+            )}
+          </button>
+          <div className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md pointer-events-none">
             <Camera className="w-4 h-4" />
           </div>
-        </button>
+        </div>
 
         <button
           type="button"

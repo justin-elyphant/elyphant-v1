@@ -230,6 +230,7 @@ function AppContent() {
         <Routes location={location}>
 
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/recurring-gifts" element={<RecurringGifts />} />
           <Route path="/ai-gifting" element={<Navigate to="/recurring-gifts" replace />} />

@@ -1,63 +1,53 @@
 
 
-## Product Seeding Gap Analysis
+# Two-Phase Onboarding Fix
 
-### Current State
-The `seed-product-catalog` edge function seeds 32 categories (22 primary + 10 subcollections). The `CATEGORY_REGISTRY` in `get-products` has entries for the SubCategoryTabs filters (`luxury`, `gifts-for-her`, `gifts-for-him`, `gifts-under-50`).
+## What stays the same
+- All onboarding steps remain identical: Name → Email → Password → Birthday → Interests → Address → Photo
+- Birthday and shipping address remain **mandatory** (non-skippable steps)
+- `complete_onboarding` RPC is still called at the end with all collected data
+- The user experience is unchanged — same screens, same order, same validation
 
-### What's Missing from Seeding
+## What changes
 
-**SubCategoryTabs filters (in CATEGORY_REGISTRY but NOT in seed catalog):**
-- `gifts-for-her` — has 5 query groups in registry, zero pre-seeded products
-- `gifts-for-him` — has 6 query groups in registry, zero pre-seeded products
-- `gifts-under-50` — has 6 query groups in registry, zero pre-seeded products
-- `luxury` — has 4 query groups in registry, zero pre-seeded products
+### 1. Move `supabase.auth.signUp()` to after the Password step
+**File:** `src/components/auth/stepped/SteppedAuthFlow.tsx`
 
-**Lifestyle categories from homepage "Gifts for Every Lifestyle" grid (NOT in registry OR seed catalog):**
-- `on-the-go` — no registry entry, no seeded products
-- `movie-buff` — no registry entry, no seeded products
-- `work-from-home` — no registry entry, no seeded products
-- `the-traveler` — no registry entry, no seeded products
-- `the-home-chef` — no registry entry, no seeded products
-- `teens` — no registry entry, no seeded products
+- After the user completes the Password step and taps Next, call `signUp()` immediately
+- Store the resulting `authData.user` in component state
+- The `handle_new_user` trigger fires and creates a minimal profile row (name, email, username, default birth_year)
+- If signup fails here, the user gets a clear error on the password screen — not 4 steps later
+- The user proceeds to Birthday → Interests → Address → Photo with their account already created
 
-These 10 categories will return zero cached products on first click, forcing a live Zinc API call (or showing nothing if Zinc is slow/down).
+### 2. Move `complete_onboarding` RPC to Photo step (no change)
+- The final `handleComplete` function still calls `complete_onboarding` with all collected data (DOB, address, interests, photo)
+- But now it references the already-created user ID from state instead of calling `signUp` first
+- If this call fails, the account still exists — the user can retry or complete setup later in Settings
 
-### Plan
+### 3. Add localStorage draft persistence
+- Save form state to localStorage on each step transition
+- On mount, restore any saved draft so the user doesn't re-enter their address 5 times
+- Clear the draft on successful completion
 
-**1. Add 10 entries to `SEED_CATEGORIES` in `seed-product-catalog/index.ts`**
+### 4. Improve error handling
+- Password step: show signup-specific errors (duplicate email, weak password) immediately
+- Photo step: if `complete_onboarding` fails, show a retry button instead of losing everything
+- No more generic "Database error saving new user" on the photo screen
 
-Using search terms optimized for Amazon/Zinc results:
+## Technical details
 
-```text
-gifts-for-her    → "gifts for her women birthday skincare candles jewelry spa"
-gifts-for-him    → "gifts for him men grooming tech gadgets watches tools"
-gifts-under-50   → "best gifts under 50 dollars stocking stuffers affordable"
-luxury           → "luxury gifts designer accessories premium watches jewelry"
-on-the-go        → "portable electronics travel accessories commuter gear water bottles"
-movie-buff       → "streaming devices home theater popcorn maker movie collectibles blankets"
-work-from-home   → "home office desk accessories ergonomic keyboard monitor stand organizer"
-the-traveler     → "travel luggage packing cubes neck pillow travel accessories organizer"
-the-home-chef    → "kitchen gadgets cookware chef knife cutting board cooking accessories"
-teens            → "teen gifts trendy accessories phone cases LED lights room decor gaming"
-```
+### SteppedAuthFlow.tsx changes
+- New state: `createdUser: User | null`
+- `goNext` for the password step becomes async — calls `signUp`, stores user, then advances
+- `handleComplete` no longer calls `signUp` — uses `createdUser` from state
+- Add `useEffect` to persist/restore `state` from `localStorage`
 
-**2. Add 6 lifestyle entries to `CATEGORY_REGISTRY` in `shared/categoryRegistry.ts`**
+### No database changes needed
+- `handle_new_user` trigger already creates minimal profiles correctly
+- `complete_onboarding` RPC already handles upserts
+- No new migrations required
 
-So `get-products` can do proper cache-first lookups instead of falling through to the generic fallback:
-
-```text
-on-the-go, movie-buff, work-from-home, the-traveler, the-home-chef, teens
-```
-
-Each with 3-4 query groups matching their search terms.
-
-**3. Run a dry-run seed** to estimate Zinc API cost before actual seeding.
-
-Estimated cost: ~10 categories x 2-3 pages each x $0.01 = $0.20-$0.30.
-
-### Files Changed
-- `supabase/functions/seed-product-catalog/index.ts` — add 10 seed entries
-- `supabase/functions/shared/categoryRegistry.ts` — add 6 lifestyle category configs
-- Redeploy both edge functions
+## Risk assessment
+- **Low risk**: The same two calls (`signUp` + `complete_onboarding`) happen in the same order, just at different step boundaries
+- **Rollback**: If issues arise, reverting to the single-phase approach is a one-file change
 

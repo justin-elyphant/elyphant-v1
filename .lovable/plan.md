@@ -1,38 +1,50 @@
 
 
-## Fix Photo Step Icon Layout
+# Fix: "Account creation failed" — app_role Type Not Found
 
-The camera badge is clipped by `overflow-hidden` on the circular button, making it look cut off and uneven. The fix is to move the camera badge outside the clipping container and adjust positioning so both icons look balanced.
+## Root Cause
 
-### Changes
+The `assign_default_customer_role()` trigger fires after every new profile INSERT. It contains:
 
-**File:** `src/components/auth/stepped/steps/PhotoStep.tsx`
-
-1. Wrap the circular button in a `relative` container div
-2. Move the camera badge `div` (line 113-115) outside the `overflow-hidden` button, into the wrapper
-3. Adjust badge positioning to sit visibly at the bottom-right of the circle without being clipped
-
-**Before:**
-```
-<button class="relative ... overflow-hidden">
-  <User icon />
-  <div class="absolute bottom-0 right-0 ...">  ← clipped by overflow-hidden
-    <Camera />
-  </div>
-</button>
+```sql
+VALUES (NEW.id, 'shopper'::app_role)
 ```
 
-**After:**
+But the function is declared with `SET search_path TO ''` (empty search path for security). This means Postgres cannot resolve the unqualified `app_role` type, causing:
+
 ```
-<div class="relative">
-  <button class="... overflow-hidden">
-    <User icon />
-  </button>
-  <div class="absolute bottom-1 right-1 ...">  ← outside overflow-hidden, fully visible
-    <Camera />
-  </div>
-</div>
+ERROR: type "app_role" does not exist (SQLSTATE 42704)
 ```
 
-This is a small CSS/structure fix — no logic changes.
+This aborts the entire signup transaction — no profile is created, no confirmation email is sent.
+
+## Fix
+
+One SQL migration to schema-qualify the type reference:
+
+```sql
+CREATE OR REPLACE FUNCTION public.assign_default_customer_role()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path TO ''
+AS $function$
+BEGIN
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'shopper'::public.app_role)
+  ON CONFLICT (user_id, role) DO NOTHING;
+  RETURN NEW;
+END;
+$function$;
+```
+
+The only change is `'shopper'::app_role` → `'shopper'::public.app_role`.
+
+## Impact
+- Fixes all new user signups (email and OAuth)
+- No frontend changes needed
+- The two-phase onboarding code is working correctly — it was properly surfacing this database error at the password step instead of silently failing at the photo step
+
+## Files Changed
+- One database migration only
 

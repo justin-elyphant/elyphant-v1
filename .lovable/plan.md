@@ -1,67 +1,46 @@
-<final-text>
-## Minimal fix plan
 
-I checked the live database definitions, not just the repo.
 
-### What I confirmed
-- `assign_default_customer_role()` is already fixed live and now uses `'shopper'::public.app_role`.
-- So the earlier enum fix was real, but it is not the only failing function.
+## Fix: Signup redirect interrupts Phase 2 onboarding
 
-### Do I know what the issue is?
-Yes. The current signup error is still database-side, not OAuth/UI complexity.
+### Problem
+After Phase 1 (`signUp`) succeeds at the password step, Supabase immediately sets the session user. This triggers the `useEffect` in `Auth.tsx` (lines 94-107) which sees `user` is non-null, finds no pending invitation, and redirects to `/` — skipping birthday, interests, address, and photo steps entirely.
 
-Two live functions are still using `SET search_path TO ''` while referencing public objects without schema qualification:
+### Root cause
+`Auth.tsx` line 102-106:
+```js
+if (!hasPendingLinking) {
+  navigate(redirectPath || '/', { replace: true });
+  return;
+}
+```
+No check exists for whether the user is mid-signup (onboarding incomplete).
 
-1. `public.link_pending_auto_gift_rules()`
-   - currently uses `user_connections` and `auto_gifting_rules`
-   - should use `public.user_connections` and `public.auto_gifting_rules`
-   - this fires on `AFTER INSERT ON public.profiles`, which happens during `supabase.auth.signUp`, so it can still cause the password-step failure
+### Fix
+In `Auth.tsx`, add one condition to the redirect logic: if the user's profile has `onboarding_completed === false` (or no profile yet), do NOT redirect — let the stepped flow continue.
 
-2. `public.complete_onboarding()`
-   - currently uses `profiles`, `email_queue`, and `::user_type`
-   - should use `public.profiles`, `public.email_queue`, and `::public.user_type`
-   - this will likely be the next blocker even after signup is unblocked
+**File: `src/pages/Auth.tsx`** — modify the `useEffect` at line 94:
 
-### What I will change
-Create one small SQL migration only:
-- replace `public.link_pending_auto_gift_rules()` with schema-qualified table names
-- replace `public.complete_onboarding()` with schema-qualified table/type names
-- keep all existing onboarding and OAuth behavior exactly the same
+```js
+useEffect(() => {
+  if (!user || isLoading) return;
 
-### What I will not change
-- no OAuth flow rewrite
-- no new auth-state abstraction
-- no frontend step changes
-- no extra complexity
+  // If signup/onboarding is still in progress, don't redirect
+  // profileData will be null or have onboarding_completed=false for mid-signup users
+  if (isSignupMode || isOAuthResume) {
+    // Check if onboarding is actually complete before redirecting
+    if (!profileData?.onboarding_completed) {
+      return; // Stay on auth page, let SteppedAuthFlow continue
+    }
+  }
 
-### Why this is the minimal fix
-The failure is happening inside the database trigger/function chain during account creation. Fixing those two functions addresses the actual source without touching the client flow.
-
-### After the migration
-I’ll verify:
-1. email signup succeeds past the password step
-2. onboarding completes on the final step
-3. `profiles`, `user_roles`, and `privacy_settings` rows exist for the new user
-4. OAuth resume still lands in the same stepped flow without any logic changes
-
-### Technical details
-Broken pattern:
-```sql
-SECURITY DEFINER
-SET search_path TO ''
-...
-UPDATE user_connections ...
-INSERT INTO profiles ...
-VALUES (..., p_user_type::user_type, ...)
+  // ... rest of existing redirect logic unchanged
 ```
 
-Fixed pattern:
-```sql
-SECURITY DEFINER
-SET search_path TO ''
-...
-UPDATE public.user_connections ...
-INSERT INTO public.profiles ...
-VALUES (..., p_user_type::public.user_type, ...)
-```
-</final-text>
+This is a 3-line addition. No other files change. The stepped flow's own `handleComplete` already calls `navigate("/")` after successfully completing onboarding.
+
+### Why this is safe
+- Sign-in mode (`mode=signin`) is unaffected — it doesn't set `isSignupMode`
+- OAuth resume is covered by the `isOAuthResume` check
+- Fully onboarded users (`onboarding_completed: true`) still redirect normally
+- The stepped flow handles its own navigation on completion
+

@@ -5,9 +5,10 @@ import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gift, Users, Heart, Loader2 } from "lucide-react";
+import { Gift, Users, Heart, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet-async";
+import ElyphantTextLogo from "@/components/ui/ElyphantTextLogo";
 
 interface InviterProfile {
   id: string;

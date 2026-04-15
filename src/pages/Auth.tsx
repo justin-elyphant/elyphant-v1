@@ -141,24 +141,12 @@ const Auth = () => {
         
         if (storedInviteUser && storedInviteUser !== user.id) {
           try {
-            const { sendConnectionRequest } = await import(
-              "@/services/connections/connectionService"
-            );
-            const result = await sendConnectionRequest(storedInviteUser, 'friend');
-            if (result.success && result.data?.id) {
-              // Auto-accept: invite link is the intent signal, skip pending state
-              const { acceptConnectionRequest } = await import(
-                "@/services/connections/connectionService"
-              );
-              await acceptConnectionRequest(result.data.id);
-              inviterProfileId = storedInviteUser;
-              toast.success('🤝 Connection established!');
-            }
+            const { processInviteReferral } = await import("@/utils/processInviteReferral");
+            await processInviteReferral(user.id, user.email || "");
+            inviterProfileId = storedInviteUser;
           } catch (err) {
-            console.error('[Auth] Error auto-connecting to inviter:', err);
+            console.error('[Auth] Error processing invite referral:', err);
           }
-          localStorage.removeItem('elyphant_invite_user');
-          localStorage.removeItem('elyphant_invite_username');
         }
         
         const { data, error } = await supabase

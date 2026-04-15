@@ -1,54 +1,34 @@
 
 
-## Bloat Audit
+## Enhance Invite Page: Header + Contextual Benefits
 
-Yes, there is accumulated debug bloat. Here's what I found and what the revised plan looks like:
+### Problem
+The invite page currently has no Elyphant branding (no header/logo) and shows only a generic one-liner ("Create a free account to connect and start sharing wishlists"). New users lack context about what happens after signup.
 
-### Current Bloat
+### Changes to `src/pages/InvitePage.tsx`
 
-**`processInviteReferral.ts`** — 6 debug toasts with 30-second durations, dynamic import of `sonner` at runtime. These are leftover from the debugging loop and will be removed entirely.
+**1. Add Elyphant header at the top**
+- Import `ElyphantTextLogo` component
+- Add a fixed top bar with the logo (clickable, navigates to `/`)
+- Minimal styling: white background, subtle bottom border, consistent with brand
 
-**`SteppedAuthFlow.tsx`** — 5 debug toasts/console.logs across two call sites (OAuth path line 365, email path lines 442-456). Also leftover debugging artifacts.
+**2. Add personalized heading above the card**
+- "{Name} invited you to Elyphant" as a title above the profile card
 
-### What the Edge Function Replaces
+**3. Replace the generic subtitle with a 3-item benefits list** (for unauthenticated users only, below the CTA button):
+- ✓ You'll be automatically connected with {FirstName}
+- ✓ Create your first wishlist so {FirstName} knows what to get you
+- ✓ Discover perfect gifts for friends and family
 
-The current `processInviteReferral.ts` does 5 separate client-side calls:
-1. `sendConnectionRequest` (which itself does `getUser()` + insert)
-2. `acceptConnectionRequest` (update)
-3. `get_remaining_invites` RPC
-4. `beta_referrals` insert
-5. `ecommerce-email-orchestrator` invoke
+Each item uses a small check icon for visual clarity.
 
-The new edge function consolidates all 5 into one server-side call. The utility becomes a thin wrapper — roughly 15 lines instead of 100.
-
-### Revised Plan (Lean Version)
-
-**1. New edge function: `process-invite-referral/index.ts`** (~80 lines)
-- Accepts `{ inviter_id, referred_id, referred_email }`
-- Uses service role to: insert connection, check invite cap, insert referral, send email
-- Single atomic operation, no RLS dependency
-
-**2. Rewrite `processInviteReferral.ts`** (~15 lines)
-- Remove all debug toasts, sonner import, and client-side connection logic
-- Single `supabase.functions.invoke("process-invite-referral", { body })` call
-- Clean up localStorage in finally block
-
-**3. Clean up `SteppedAuthFlow.tsx`**
-- Remove all 5 debug toasts/logs (lines 365, 443, 448, 451, 455)
-- Keep the two `processInviteReferral` call sites (OAuth + email paths) — they're necessary
-- Remove the `if/else` debug branching around `emailInviteUserId`, simplify to just call the utility
+**4. Keep everything else intact** — avatar, name, username, bio, stats, CTA button all stay as-is.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/process-invite-referral/index.ts` | New ~80-line edge function |
-| `src/utils/processInviteReferral.ts` | Rewrite from ~100 lines to ~15 lines |
-| `src/components/auth/stepped/SteppedAuthFlow.tsx` | Remove debug artifacts only |
+| `src/pages/InvitePage.tsx` | Add ElyphantTextLogo header, heading text, and benefits list |
 
-### Net Result
-- Client code shrinks from ~100 lines to ~15
-- All debug toasts removed
-- Server function is self-contained and testable
-- No over-engineering — this is the minimal fix for the RLS/session root cause
+Single file change, no backend impact.
 

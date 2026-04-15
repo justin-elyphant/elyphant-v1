@@ -1,34 +1,24 @@
 
 
-## Fix: Beta invite link uses `/profile/` instead of `/invite/`
+## Fix: Replace native date input with dropdown selects in BirthdayStep
 
 ### Problem
-When you tap "Invite Friends, Get $100" from the avatar dropdown, the shared link is `https://elyphant.ai/profile/justin`. This is a profile viewing link -- it does NOT trigger the invite flow (localStorage persistence, auto-connection, referral tracking, $100 credits).
+The native `<input type="date">` is unreliable on mobile browsers and automation tools, causing the "Continue" button to stay disabled during onboarding.
 
-The correct link for beta referrals is `https://elyphant.ai/invite/justin`.
+### Data integrity assurance
+The birthday write-back to `/settings` is fully preserved:
+- `complete_onboarding` RPC receives `p_dob` (MM-DD) and `p_birth_year` (integer) -- both derived from the `YYYY-MM-DD` string
+- The dropdown replacement produces the exact same `YYYY-MM-DD` string format
+- No changes needed to `SteppedAuthFlow.tsx`, `complete_onboarding` RPC, or settings form
 
-### Root cause
-`useProfileSharing` always calls `getProfileUrl()` which returns `/profile/:username`. There is no invite URL variant, and the `isBetaTester` flag only changes the share **text** -- not the **URL**.
+### Changes
 
-### Fix (2 files, minimal changes)
+**File: `src/components/auth/stepped/steps/BirthdayStep.tsx`**
+- Remove the native `<Input type="date">` element
+- Add three `<select>` dropdowns: Month (January-December), Day (1-31, adjusted for month), Year (current year down to 1920)
+- Compose `YYYY-MM-DD` string from selections and call existing `onChange` callback
+- Keep "Why do we need this?" accordion and existing validation logic
+- Style with `h-12 rounded-lg` to match existing design system
 
-1. **`src/utils/urlUtils.ts`** -- Add a new `getInviteUrl` function:
-   ```ts
-   export const getInviteUrl = (usernameOrId: string): string => {
-     return `${getAppUrl()}/invite/${usernameOrId}`;
-   };
-   ```
-
-2. **`src/hooks/useProfileSharing.ts`** -- When `isBetaTester` is true, use the invite URL instead of the profile URL:
-   ```ts
-   import { getProfileUrl, getInviteUrl } from "@/utils/urlUtils";
-   // ...
-   const profileUrl = isBetaTester
-     ? getInviteUrl(profileUsername || profileId)
-     : getProfileUrl(profileUsername || profileId);
-   ```
-
-This ensures that beta testers' share links go through `/invite/justin`, which triggers the full referral pipeline (localStorage context, auto-connection, `beta_referrals` record, admin approval email, $100 credits).
-
-Non-beta users continue to share `/profile/` links as before.
+No other files require changes.
 

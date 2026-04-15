@@ -1,0 +1,118 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2/cors";
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const { inviter_id, referred_id, referred_email } = await req.json();
+    if (!inviter_id || !referred_id || !referred_email) {
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // 1. Create auto-accepted connection
+    const { data: connection, error: connErr } = await supabase
+      .from("user_connections")
+      .insert({
+        user_id: inviter_id,
+        connected_user_id: referred_id,
+        status: "accepted",
+        connection_type: "friend",
+      })
+      .select("id")
+      .single();
+
+    if (connErr) {
+      console.error("[process-invite-referral] Connection insert failed:", connErr);
+      return new Response(JSON.stringify({ error: "Connection creation failed", detail: connErr.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("[process-invite-referral] Connection created:", connection.id);
+
+    // 2. Check referrer's remaining invites
+    let hasInvites = true;
+    try {
+      const { data: remaining } = await supabase.rpc("get_remaining_invites", {
+        p_user_id: inviter_id,
+      });
+      if (Number(remaining) === 0) {
+        hasInvites = false;
+        console.warn("[process-invite-referral] Referrer has no remaining invites");
+      }
+    } catch (e) {
+      console.error("[process-invite-referral] Invite cap check error:", e);
+    }
+
+    if (!hasInvites) {
+      return new Response(JSON.stringify({ success: true, connection_id: connection.id, referral_created: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 3. Create beta referral
+    const { error: refErr } = await supabase.from("beta_referrals").insert({
+      referrer_id: inviter_id,
+      referred_id,
+      referred_email,
+      connection_id: connection.id,
+      status: "pending_approval",
+      reward_amount: 100,
+    });
+
+    if (refErr) {
+      console.error("[process-invite-referral] Referral insert failed:", refErr);
+    } else {
+      console.log("[process-invite-referral] Beta referral created");
+    }
+
+    // 4. Notify admin
+    try {
+      const { data: referrerProfile } = await supabase
+        .from("profiles")
+        .select("name, username, email")
+        .eq("id", inviter_id)
+        .single();
+
+      await supabase.functions.invoke("ecommerce-email-orchestrator", {
+        body: {
+          eventType: "beta_approval_needed",
+          recipientEmail: "justin@elyphant.com",
+          data: {
+            referrer_name: referrerProfile?.name || referrerProfile?.username || "Unknown",
+            referrer_email: referrerProfile?.email || "",
+            invitee_name: referred_email,
+            invitee_email: referred_email,
+            credit_amount: 100,
+          },
+        },
+      });
+      console.log("[process-invite-referral] Admin notification sent");
+    } catch (emailErr) {
+      console.error("[process-invite-referral] Admin email error:", emailErr);
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, connection_id: connection.id, referral_created: !refErr }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("[process-invite-referral] Unexpected error:", err);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

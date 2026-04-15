@@ -362,13 +362,11 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         // Process invite referral before navigating away
         const inviteUserId = searchParams.get('invite_user');
-        console.log("[SteppedAuthFlow] OAuth: About to process invite referral. invite_user:", inviteUserId, "user:", user.id);
         try {
           const { processInviteReferral } = await import("@/utils/processInviteReferral");
           await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
-          console.log("[SteppedAuthFlow] OAuth: processInviteReferral completed");
         } catch (referralErr) {
-          console.error("[SteppedAuthFlow] OAuth: processInviteReferral failed:", referralErr);
+          console.error("[SteppedAuthFlow] Invite referral failed:", referralErr);
         }
 
         await refetchProfile();
@@ -439,20 +437,13 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         // Process invite referral before navigating away
         const emailInviteUserId = searchParams.get('invite_user');
-        console.log("[SteppedAuthFlow] About to process invite referral. invite_user:", emailInviteUserId, "targetUser:", targetUser.id, "email:", state.email);
-        toast.info(`DEBUG: invite_user=${emailInviteUserId || 'null'}, userId=${targetUser.id}`);
         if (emailInviteUserId) {
           try {
             const { processInviteReferral } = await import("@/utils/processInviteReferral");
             await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId);
-            toast.success("DEBUG: processInviteReferral completed!");
-            console.log("[SteppedAuthFlow] processInviteReferral completed successfully");
-          } catch (referralErr: any) {
-            toast.error(`DEBUG referral error: ${referralErr?.message || referralErr}`);
-            console.error("[SteppedAuthFlow] processInviteReferral failed:", referralErr);
+          } catch (referralErr) {
+            console.error("[SteppedAuthFlow] Invite referral failed:", referralErr);
           }
-        } else {
-          toast.warning("DEBUG: No invite_user in searchParams");
         }
 
         await refetchProfile();

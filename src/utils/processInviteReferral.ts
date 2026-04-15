@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
  * Reads `elyphant_invite_user` from localStorage. If present and different
  * from the current user, auto-connects them and creates a beta_referrals record.
  */
-export async function processInviteReferral(currentUserId: string, currentUserEmail: string): Promise<void> {
-  const storedInviteUser = localStorage.getItem("elyphant_invite_user");
+export async function processInviteReferral(currentUserId: string, currentUserEmail: string, inviterIdOverride?: string): Promise<void> {
+  const storedInviteUser = inviterIdOverride || localStorage.getItem("elyphant_invite_user");
   if (!storedInviteUser || storedInviteUser === currentUserId) {
     return;
   }

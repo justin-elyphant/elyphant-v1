@@ -361,8 +361,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         localStorage.removeItem(DRAFT_KEY);
 
         // Process invite referral before navigating away
+        const inviteUserId = searchParams.get('invite_user');
         const { processInviteReferral } = await import("@/utils/processInviteReferral");
-        await processInviteReferral(user.id, user.email || "");
+        await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
 
         await refetchProfile();
         navigate("/home", { replace: true });
@@ -431,8 +432,9 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         localStorage.removeItem(DRAFT_KEY);
 
         // Process invite referral before navigating away
+        const emailInviteUserId = searchParams.get('invite_user');
         const { processInviteReferral } = await import("@/utils/processInviteReferral");
-        await processInviteReferral(targetUser.id, state.email || "");
+        await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId || undefined);
 
         await refetchProfile();
         navigate("/home", { replace: true });

@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
  * from the current user, auto-connects them and creates a beta_referrals record.
  */
 export async function processInviteReferral(currentUserId: string, currentUserEmail: string, inviterIdOverride?: string): Promise<void> {
+  const { toast } = await import("sonner");
   const storedInviteUser = inviterIdOverride || localStorage.getItem("elyphant_invite_user");
   if (!storedInviteUser || storedInviteUser === currentUserId) {
+    toast.warning(`DEBUG PIR: early return. stored=${storedInviteUser}, current=${currentUserId}`);
     return;
   }
 
@@ -20,11 +22,14 @@ export async function processInviteReferral(currentUserId: string, currentUserEm
       "@/services/connections/connectionService"
     );
 
+    toast.info(`DEBUG PIR: calling sendConnectionRequest to ${storedInviteUser}`);
     const result = await sendConnectionRequest(storedInviteUser, "friend");
     if (!result.success || !result.data?.id) {
+      toast.error(`DEBUG PIR: sendConnectionRequest FAILED: ${result.error?.message || JSON.stringify(result)}`);
       console.error("[processInviteReferral] Connection request failed:", result);
       return;
     }
+    toast.success(`DEBUG PIR: connection created id=${result.data.id}`);
 
     // Auto-accept the connection
     await acceptConnectionRequest(result.data.id);

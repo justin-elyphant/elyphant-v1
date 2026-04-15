@@ -3,7 +3,7 @@
  * Version-based cache invalidation ensures fresh builds are served
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `marketplace-cache-${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `marketplace-static-${CACHE_VERSION}`;
 const API_CACHE_NAME = `marketplace-api-${CACHE_VERSION}`;
@@ -123,26 +123,26 @@ function isImageRequest(request) {
          url.pathname.includes('/images/');
 }
 
-// Handle static resources - cache first strategy
+// Handle static resources - network first so new deploys are not stuck behind stale JS/CSS
 async function handleStaticResource(request) {
+  const cache = await caches.open(STATIC_CACHE_NAME);
+
   try {
-    const cache = await caches.open(STATIC_CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-    
-    if (cachedResponse && !isExpired(cachedResponse, CACHE_DURATION.STATIC)) {
-      return cachedResponse;
+    const networkResponse = await fetch(request, { cache: 'no-store' });
+    if (networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
     }
 
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-    }
-    
     return networkResponse;
   } catch (error) {
     console.error('Service Worker: Static resource fetch failed', error);
-    const cache = await caches.open(STATIC_CACHE_NAME);
-    return cache.match(request);
+    const cachedResponse = await cache.match(request);
+
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    return new Response('Offline', { status: 503 });
   }
 }
 
@@ -233,6 +233,11 @@ function isExpired(response, maxAge) {
 
 // Background sync for prefetching
 self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
   if (event.data && event.data.type === 'PREFETCH_SEARCHES') {
     const { queries } = event.data;
     prefetchSearches(queries);

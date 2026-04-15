@@ -1,100 +1,33 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Processes the invite-link auto-connect and beta referral creation.
- * Called after onboarding completes (both instant-confirm and email-confirm flows).
- *
- * Reads `elyphant_invite_user` from localStorage. If present and different
- * from the current user, auto-connects them and creates a beta_referrals record.
+ * Processes invite-link auto-connect and beta referral creation
+ * by calling a server-side edge function (bypasses RLS/session issues).
  */
-export async function processInviteReferral(currentUserId: string, currentUserEmail: string, inviterIdOverride?: string): Promise<void> {
-  const { toast } = await import("sonner");
-  const TOAST_OPTS = { duration: 30000 } as const;
+export async function processInviteReferral(
+  currentUserId: string,
+  currentUserEmail: string,
+  inviterIdOverride?: string
+): Promise<void> {
   const storedInviteUser = inviterIdOverride || localStorage.getItem("elyphant_invite_user");
-  if (!storedInviteUser || storedInviteUser === currentUserId) {
-    toast.warning(`DEBUG PIR: early return. stored=${storedInviteUser}, current=${currentUserId}`, TOAST_OPTS);
-    return;
-  }
-
-  console.log("[processInviteReferral] Processing invite auto-connect for inviter:", storedInviteUser);
+  if (!storedInviteUser || storedInviteUser === currentUserId) return;
 
   try {
-    const { sendConnectionRequest, acceptConnectionRequest } = await import(
-      "@/services/connections/connectionService"
-    );
+    const { data, error } = await supabase.functions.invoke("process-invite-referral", {
+      body: {
+        inviter_id: storedInviteUser,
+        referred_id: currentUserId,
+        referred_email: currentUserEmail,
+      },
+    });
 
-    toast.info(`DEBUG PIR: calling sendConnectionRequest to ${storedInviteUser}`, TOAST_OPTS);
-    const result = await sendConnectionRequest(storedInviteUser, "friend");
-    if (!result.success || !result.data?.id) {
-      toast.error(`DEBUG PIR: sendConnectionRequest FAILED: ${result.error?.message || JSON.stringify(result)}`, TOAST_OPTS);
-      console.error("[processInviteReferral] Connection request failed:", result);
-      return;
-    }
-    toast.success(`DEBUG PIR: connection created id=${result.data.id}`, TOAST_OPTS);
-
-    // Auto-accept the connection
-    await acceptConnectionRequest(result.data.id);
-    console.log("[processInviteReferral] Auto-connect successful, connection ID:", result.data.id);
-
-    // Check referrer's remaining invites before creating referral
-    let referrerHasInvites = true;
-    try {
-      const { data: remainingData } = await supabase.rpc(
-        "get_remaining_invites" as any,
-        { p_user_id: storedInviteUser }
-      );
-      const remaining = Number(remainingData);
-      if (remaining === 0) {
-        referrerHasInvites = false;
-        console.warn("[processInviteReferral] Referrer has no remaining invites, skipping referral creation");
-      }
-    } catch (checkErr) {
-      console.error("[processInviteReferral] Error checking remaining invites:", checkErr);
-    }
-
-    if (referrerHasInvites) {
-      try {
-        await supabase.from("beta_referrals").insert({
-          referrer_id: storedInviteUser,
-          referred_id: currentUserId,
-          referred_email: currentUserEmail,
-          connection_id: result.data.id,
-          status: "pending_approval",
-          reward_amount: 100,
-        });
-        console.log("[processInviteReferral] Beta referral record created");
-
-        // Notify admin to approve the $100 credit
-        try {
-          const { data: referrerProfile } = await supabase
-            .from("profiles")
-            .select("name, username, email")
-            .eq("id", storedInviteUser)
-            .single();
-
-          await supabase.functions.invoke("ecommerce-email-orchestrator", {
-            body: {
-              eventType: "beta_approval_needed",
-              recipientEmail: "justin@elyphant.com",
-              data: {
-                referrer_name: referrerProfile?.name || referrerProfile?.username || "Unknown",
-                referrer_email: referrerProfile?.email || "",
-                invitee_name: currentUserEmail,
-                invitee_email: currentUserEmail,
-                credit_amount: 100,
-              },
-            },
-          });
-          console.log("[processInviteReferral] Beta approval email triggered");
-        } catch (emailErr) {
-          console.error("[processInviteReferral] Error sending beta approval email:", emailErr);
-        }
-      } catch (refErr) {
-        console.error("[processInviteReferral] Error creating beta referral:", refErr);
-      }
+    if (error) {
+      console.error("[processInviteReferral] Edge function error:", error);
+    } else {
+      console.log("[processInviteReferral] Success:", data);
     }
   } catch (err) {
-    console.error("[processInviteReferral] Error auto-connecting to inviter:", err);
+    console.error("[processInviteReferral] Error:", err);
   } finally {
     localStorage.removeItem("elyphant_invite_user");
     localStorage.removeItem("elyphant_invite_username");

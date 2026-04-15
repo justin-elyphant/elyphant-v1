@@ -151,6 +151,8 @@ const InvitePage: React.FC = () => {
     .toUpperCase()
     .slice(0, 2);
 
+  const firstName = inviter.name.split(" ")[0];
+
   return (
     <>
       <Helmet>
@@ -161,7 +163,21 @@ const InvitePage: React.FC = () => {
         />
       </Helmet>
 
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      {/* Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
+        <div className="max-w-sm mx-auto px-4 py-2 flex items-center">
+          <div onClick={() => navigate("/")} className="cursor-pointer">
+            <ElyphantTextLogo />
+          </div>
+        </div>
+      </div>
+
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pt-20">
+        {/* Personalized heading */}
+        <h2 className="text-lg font-semibold text-foreground mb-4 text-center">
+          {inviter.name} invited you to Elyphant
+        </h2>
+
         <Card className="w-full max-w-sm shadow-lg border">
           <CardContent className="pt-8 pb-6 text-center space-y-6">
             {/* Avatar */}
@@ -215,7 +231,7 @@ const InvitePage: React.FC = () => {
                 ) : user ? (
                   <>
                     <Users className="h-4 w-4 mr-2" />
-                    Connect with {inviter.name.split(" ")[0]}
+                    Connect with {firstName}
                   </>
                 ) : (
                   <>
@@ -225,10 +241,28 @@ const InvitePage: React.FC = () => {
                 )}
               </Button>
 
+              {/* Benefits list for unauthenticated users */}
               {!user && (
-                <p className="text-xs text-muted-foreground">
-                  Create a free account to connect and start sharing wishlists
-                </p>
+                <div className="pt-2 space-y-2.5 text-left">
+                  <div className="flex items-start gap-2.5">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      You'll be automatically connected with {firstName}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      Create your first wishlist so {firstName} knows what to get you
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      Discover perfect gifts for friends and family
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
           </CardContent>

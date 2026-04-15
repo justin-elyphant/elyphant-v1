@@ -359,6 +359,11 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         toast.success("Profile complete! Welcome to Elyphant 🎉");
         localStorage.removeItem(DRAFT_KEY);
+
+        // Process invite referral before navigating away
+        const { processInviteReferral } = await import("@/utils/processInviteReferral");
+        await processInviteReferral(user.id, user.email || "");
+
         await refetchProfile();
         navigate("/home", { replace: true });
       } else {
@@ -424,6 +429,11 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         }
 
         localStorage.removeItem(DRAFT_KEY);
+
+        // Process invite referral before navigating away
+        const { processInviteReferral } = await import("@/utils/processInviteReferral");
+        await processInviteReferral(targetUser.id, state.email || "");
+
         await refetchProfile();
         navigate("/home", { replace: true });
       }

@@ -71,89 +71,11 @@ const AuthCallback = () => {
           }
 
           // Process invite link auto-connect (from /invite/:username flow)
-          const storedInviteUser = localStorage.getItem('elyphant_invite_user');
-          if (storedInviteUser && storedInviteUser !== data.user.id) {
-            console.log('[AuthCallback] Processing invite link auto-connect for inviter:', storedInviteUser);
-            try {
-              const { sendConnectionRequest } = await import(
-                "@/services/connections/connectionService"
-              );
-              const result = await sendConnectionRequest(storedInviteUser, 'friend');
-              if (result.success && result.data?.id) {
-                // Auto-accept the connection
-                const { acceptConnectionRequest } = await import(
-                  "@/services/connections/connectionService"
-                );
-                await acceptConnectionRequest(result.data.id);
-                console.log('[AuthCallback] Auto-connect successful, connection ID:', result.data.id);
-                toast.success('🤝 Connected with your friend!');
-
-                // Check referrer's remaining invites before creating referral
-                let referrerHasInvites = true;
-                try {
-                  const { data: remainingData } = await supabase.rpc(
-                    'get_remaining_invites' as any,
-                    { p_user_id: storedInviteUser }
-                  );
-                  const remaining = Number(remainingData);
-                  // -1 means unlimited, 0 means exhausted
-                  if (remaining === 0) {
-                    referrerHasInvites = false;
-                    console.warn('[AuthCallback] Referrer has no remaining invites, skipping referral creation');
-                  }
-                } catch (checkErr) {
-                  console.error('[AuthCallback] Error checking remaining invites:', checkErr);
-                }
-
-                // Create beta referral record for $100 credit tracking
-                if (referrerHasInvites) {
-                  try {
-                    await supabase.from('beta_referrals').insert({
-                      referrer_id: storedInviteUser,
-                      referred_id: data.user.id,
-                      referred_email: data.user.email || '',
-                      connection_id: result.data.id,
-                      status: 'pending_approval',
-                      reward_amount: 100
-                    });
-                    console.log('[AuthCallback] Beta referral record created');
-
-                    // Notify admin to approve the $100 credit
-                    try {
-                      const { data: referrerProfile } = await supabase
-                        .from('profiles')
-                        .select('name, username, email')
-                        .eq('id', storedInviteUser)
-                        .single();
-
-                      await supabase.functions.invoke('ecommerce-email-orchestrator', {
-                        body: {
-                          eventType: 'beta_approval_needed',
-                          recipientEmail: 'justin@elyphant.com',
-                          data: {
-                            referrer_name: referrerProfile?.name || referrerProfile?.username || 'Unknown',
-                            referrer_email: referrerProfile?.email || '',
-                            invitee_name: data.user.user_metadata?.name || data.user.email || 'New User',
-                            invitee_email: data.user.email || '',
-                            credit_amount: 100,
-                          }
-                        }
-                      });
-                      console.log('[AuthCallback] Beta approval email triggered');
-                    } catch (emailErr) {
-                      console.error('[AuthCallback] Error sending beta approval email:', emailErr);
-                    }
-                  } catch (refErr) {
-                    console.error('[AuthCallback] Error creating beta referral:', refErr);
-                  }
-                }
-              }
-            } catch (err) {
-              console.error('[AuthCallback] Error auto-connecting to inviter:', err);
-            } finally {
-              localStorage.removeItem('elyphant_invite_user');
-              localStorage.removeItem('elyphant_invite_username');
-            }
+          try {
+            const { processInviteReferral } = await import("@/utils/processInviteReferral");
+            await processInviteReferral(data.user.id, data.user.email || "");
+          } catch (err) {
+            console.error('[AuthCallback] Error processing invite referral:', err);
           }
           
           // Claim any guest orders for this user (belt-and-suspenders)

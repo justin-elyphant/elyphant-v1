@@ -39,6 +39,16 @@ export const getWishlistDirectUrl = (wishlistId: string): string => {
 /**
  * Generate a profile URL with optional wishlist parameter
  */
+/**
+ * Generate a beta invite URL (triggers referral tracking flow)
+ */
+export const getInviteUrl = (usernameOrId: string): string => {
+  return `${getAppUrl()}/invite/${usernameOrId}`;
+};
+
+/**
+ * Generate a profile URL with optional wishlist parameter
+ */
 export const getProfileUrl = (usernameOrId: string, wishlistId?: string): string => {
   const base = `${getAppUrl()}/profile/${usernameOrId}`;
   return wishlistId ? `${base}?wishlist=${wishlistId}` : base;

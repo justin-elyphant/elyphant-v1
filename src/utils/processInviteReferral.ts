@@ -9,9 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function processInviteReferral(currentUserId: string, currentUserEmail: string, inviterIdOverride?: string): Promise<void> {
   const { toast } = await import("sonner");
+  const TOAST_OPTS = { duration: 30000 } as const;
   const storedInviteUser = inviterIdOverride || localStorage.getItem("elyphant_invite_user");
   if (!storedInviteUser || storedInviteUser === currentUserId) {
-    toast.warning(`DEBUG PIR: early return. stored=${storedInviteUser}, current=${currentUserId}`);
+    toast.warning(`DEBUG PIR: early return. stored=${storedInviteUser}, current=${currentUserId}`, TOAST_OPTS);
     return;
   }
 
@@ -22,14 +23,14 @@ export async function processInviteReferral(currentUserId: string, currentUserEm
       "@/services/connections/connectionService"
     );
 
-    toast.info(`DEBUG PIR: calling sendConnectionRequest to ${storedInviteUser}`);
+    toast.info(`DEBUG PIR: calling sendConnectionRequest to ${storedInviteUser}`, TOAST_OPTS);
     const result = await sendConnectionRequest(storedInviteUser, "friend");
     if (!result.success || !result.data?.id) {
-      toast.error(`DEBUG PIR: sendConnectionRequest FAILED: ${result.error?.message || JSON.stringify(result)}`);
+      toast.error(`DEBUG PIR: sendConnectionRequest FAILED: ${result.error?.message || JSON.stringify(result)}`, TOAST_OPTS);
       console.error("[processInviteReferral] Connection request failed:", result);
       return;
     }
-    toast.success(`DEBUG PIR: connection created id=${result.data.id}`);
+    toast.success(`DEBUG PIR: connection created id=${result.data.id}`, TOAST_OPTS);
 
     // Auto-accept the connection
     await acceptConnectionRequest(result.data.id);

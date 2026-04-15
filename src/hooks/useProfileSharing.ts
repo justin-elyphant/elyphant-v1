@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { getProfileUrl } from "@/utils/urlUtils";
+import { getProfileUrl, getInviteUrl } from "@/utils/urlUtils";
 
 interface UseProfileSharingProps {
   profileId: string;
@@ -19,7 +19,9 @@ export const useProfileSharing = ({
   const [sharingDialogOpen, setSharingDialogOpen] = useState(false);
   
   // Generate the profile URL using centralized utility
-  const profileUrl = getProfileUrl(profileUsername || profileId);
+  const profileUrl = isBetaTester
+    ? getInviteUrl(profileUsername || profileId)
+    : getProfileUrl(profileUsername || profileId);
   
   const openSharingDialog = useCallback(() => {
     setSharingDialogOpen(true);

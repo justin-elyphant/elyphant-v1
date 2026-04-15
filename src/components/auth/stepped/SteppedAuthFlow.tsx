@@ -362,8 +362,14 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         // Process invite referral before navigating away
         const inviteUserId = searchParams.get('invite_user');
-        const { processInviteReferral } = await import("@/utils/processInviteReferral");
-        await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
+        console.log("[SteppedAuthFlow] OAuth: About to process invite referral. invite_user:", inviteUserId, "user:", user.id);
+        try {
+          const { processInviteReferral } = await import("@/utils/processInviteReferral");
+          await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
+          console.log("[SteppedAuthFlow] OAuth: processInviteReferral completed");
+        } catch (referralErr) {
+          console.error("[SteppedAuthFlow] OAuth: processInviteReferral failed:", referralErr);
+        }
 
         await refetchProfile();
         navigate("/home", { replace: true });

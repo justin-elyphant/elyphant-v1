@@ -99,9 +99,9 @@ const Auth = () => {
     const isSignupMode = initialMode === 'signup';
     const isOAuthResume = searchParams.get('oauth_resume') === 'true';
     if (isSignupMode || isOAuthResume) {
-      if (!profileData?.onboarding_completed) {
-        return; // Stay on auth page for Phase 2 steps
-      }
+      // Let SteppedAuthFlow handle navigation and referral processing
+      // after onboarding completes — don't compete with its navigate("/home")
+      return;
     }
 
     // Check if this is a fresh post-signup (has invitation tokens to process)

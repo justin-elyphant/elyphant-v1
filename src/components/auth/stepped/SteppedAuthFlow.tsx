@@ -362,8 +362,14 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         // Process invite referral before navigating away
         const inviteUserId = searchParams.get('invite_user');
-        const { processInviteReferral } = await import("@/utils/processInviteReferral");
-        await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
+        console.log("[SteppedAuthFlow] OAuth: About to process invite referral. invite_user:", inviteUserId, "user:", user.id);
+        try {
+          const { processInviteReferral } = await import("@/utils/processInviteReferral");
+          await processInviteReferral(user.id, user.email || "", inviteUserId || undefined);
+          console.log("[SteppedAuthFlow] OAuth: processInviteReferral completed");
+        } catch (referralErr) {
+          console.error("[SteppedAuthFlow] OAuth: processInviteReferral failed:", referralErr);
+        }
 
         await refetchProfile();
         navigate("/home", { replace: true });
@@ -433,8 +439,14 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
 
         // Process invite referral before navigating away
         const emailInviteUserId = searchParams.get('invite_user');
-        const { processInviteReferral } = await import("@/utils/processInviteReferral");
-        await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId || undefined);
+        console.log("[SteppedAuthFlow] About to process invite referral. invite_user:", emailInviteUserId, "targetUser:", targetUser.id, "email:", state.email);
+        try {
+          const { processInviteReferral } = await import("@/utils/processInviteReferral");
+          await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId || undefined);
+          console.log("[SteppedAuthFlow] processInviteReferral completed successfully");
+        } catch (referralErr) {
+          console.error("[SteppedAuthFlow] processInviteReferral failed:", referralErr);
+        }
 
         await refetchProfile();
         navigate("/home", { replace: true });

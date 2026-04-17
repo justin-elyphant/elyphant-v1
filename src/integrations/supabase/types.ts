@@ -1189,16 +1189,19 @@ export type Database = {
       }
       beta_program_settings: {
         Row: {
+          auto_approve_referrals: boolean
           id: number
           total_credit_pool: number
           updated_at: string
         }
         Insert: {
+          auto_approve_referrals?: boolean
           id?: number
           total_credit_pool?: number
           updated_at?: string
         }
         Update: {
+          auto_approve_referrals?: boolean
           id?: number
           total_credit_pool?: number
           updated_at?: string

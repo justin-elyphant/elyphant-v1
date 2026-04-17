@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     const referralStatus = autoApprove ? "approved" : "pending_approval";
     const CREDIT_AMOUNT = 100;
 
-    // 4. Create beta referral
+    // 4. Create beta referral (status will be flipped to credit_issued by RPC if auto-approved)
     const { data: referral, error: refErr } = await supabase
       .from("beta_referrals")
       .insert({
@@ -91,7 +91,6 @@ Deno.serve(async (req) => {
         connection_id: connection.id,
         status: referralStatus,
         reward_amount: CREDIT_AMOUNT,
-        reward_paid_at: autoApprove ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
@@ -111,61 +110,66 @@ Deno.serve(async (req) => {
 
     const referrerName = referrerProfile?.name || referrerProfile?.username || "A friend";
 
-    // 6. Branch: auto-approve issues credits + welcome email; manual notifies admin
+    // 6. Branch: auto-approve calls atomic RPC (handles pool cap, idempotency, both credits); manual notifies admin
     if (autoApprove && referral) {
-      // Issue $100 to invitee
-      const { error: inviteeCreditErr } = await supabase.from("beta_credits").insert({
-        user_id: referred_id,
-        amount: CREDIT_AMOUNT,
-        type: "welcome",
-        description: `Beta welcome credit (referred by ${referrerName})`,
-        referral_id: referral.id,
-      });
-      if (inviteeCreditErr) {
-        console.error("[process-invite-referral] Invitee credit insert failed:", inviteeCreditErr);
+      const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        "process_auto_approved_referral",
+        { p_referral_id: referral.id, p_credit_amount: CREDIT_AMOUNT }
+      );
+
+      if (rpcErr) {
+        console.error("[process-invite-referral] RPC error:", rpcErr);
       } else {
-        console.log("[process-invite-referral] Invitee $100 credit issued");
+        console.log("[process-invite-referral] RPC result:", rpcResult);
       }
 
-      // Issue $100 referral reward to inviter
-      const { error: inviterCreditErr } = await supabase.from("beta_credits").insert({
-        user_id: inviter_id,
-        amount: CREDIT_AMOUNT,
-        type: "referral_reward",
-        description: `Referral reward for inviting ${referred_email}`,
-        referral_id: referral.id,
-      });
-      if (inviterCreditErr) {
-        console.error("[process-invite-referral] Inviter credit insert failed:", inviterCreditErr);
-      } else {
-        console.log("[process-invite-referral] Inviter $100 referral reward issued");
-      }
+      const rpcSucceeded = rpcResult && (rpcResult as any).success === true;
+      const poolExhausted = rpcResult && (rpcResult as any).reason === "pool_exhausted";
 
-      // Fetch invitee profile for personalized welcome email
-      const { data: inviteeProfile } = await supabase
-        .from("profiles")
-        .select("name, username")
-        .eq("id", referred_id)
-        .single();
-
-      const inviteeName = inviteeProfile?.name || inviteeProfile?.username || referred_email.split("@")[0];
-
-      // Send beta_approved welcome email to invitee
-      try {
-        await supabase.functions.invoke("ecommerce-email-orchestrator", {
-          body: {
-            eventType: "beta_approved",
-            recipientEmail: referred_email,
-            data: {
-              recipient_name: inviteeName,
-              credit_amount: CREDIT_AMOUNT,
-              referrer_name: referrerName,
+      if (poolExhausted) {
+        // Alert admin: pool exhausted, signup completes but no credits issued
+        try {
+          await supabase.functions.invoke("ecommerce-email-orchestrator", {
+            body: {
+              eventType: "beta_approval_needed",
+              recipientEmail: "justin@elyphant.com",
+              data: {
+                referrer_name: referrerName,
+                invitee_email: referred_email,
+                alert: `🚨 Beta credit pool exhausted. ${referred_email} signed up via ${referrerName}'s link but received no credits. Reload pool in Trunkline and backfill manually.`,
+              },
             },
-          },
-        });
-        console.log("[process-invite-referral] Welcome email sent to invitee");
-      } catch (emailErr) {
-        console.error("[process-invite-referral] Welcome email error:", emailErr);
+          });
+        } catch (e) {
+          console.error("[process-invite-referral] Pool-exhausted admin alert failed:", e);
+        }
+      } else if (rpcSucceeded) {
+        // Fetch invitee profile for personalized welcome email
+        const { data: inviteeProfile } = await supabase
+          .from("profiles")
+          .select("name, username")
+          .eq("id", referred_id)
+          .single();
+
+        const inviteeName = inviteeProfile?.name || inviteeProfile?.username || referred_email.split("@")[0];
+
+        // Send beta_approved welcome email to invitee
+        try {
+          await supabase.functions.invoke("ecommerce-email-orchestrator", {
+            body: {
+              eventType: "beta_approved",
+              recipientEmail: referred_email,
+              data: {
+                recipient_name: inviteeName,
+                credit_amount: CREDIT_AMOUNT,
+                referrer_name: referrerName,
+              },
+            },
+          });
+          console.log("[process-invite-referral] Welcome email sent to invitee");
+        } catch (emailErr) {
+          console.error("[process-invite-referral] Welcome email error:", emailErr);
+        }
       }
     } else {
       // Manual approval flow: notify admin

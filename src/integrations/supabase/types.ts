@@ -6273,15 +6273,10 @@ export type Database = {
         }
         Returns: Json
       }
-      process_auto_approved_referral:
-        | {
-            Args: { p_credit_amount?: number; p_referral_id: string }
-            Returns: Json
-          }
-        | {
-            Args: { p_credit_amount?: number; p_referral_id: string }
-            Returns: Json
-          }
+      process_auto_approved_referral: {
+        Args: { p_credit_amount?: number; p_referral_id: string }
+        Returns: Json
+      }
       recover_stuck_orders: {
         Args: { max_age_minutes?: number }
         Returns: Json

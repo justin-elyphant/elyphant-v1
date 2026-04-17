@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
         user_id: inviter_id,
         connected_user_id: referred_id,
         status: "accepted",
-        connection_type: "friend",
+        relationship_type: "friend",
       })
       .select("id")
       .single();

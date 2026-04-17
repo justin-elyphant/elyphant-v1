@@ -436,14 +436,14 @@ const SteppedAuthFlow: React.FC<SteppedAuthFlowProps> = ({ invitationData }) => 
         localStorage.removeItem(DRAFT_KEY);
 
         // Process invite referral before navigating away
-        const emailInviteUserId = searchParams.get('invite_user');
-        if (emailInviteUserId) {
-          try {
-            const { processInviteReferral } = await import("@/utils/processInviteReferral");
-            await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId);
-          } catch (referralErr) {
-            console.error("[SteppedAuthFlow] Invite referral failed:", referralErr);
-          }
+        // Always call — utility falls back to localStorage (`elyphant_invite_user`)
+        // if the URL param was lost across email-verification redirects.
+        const emailInviteUserId = searchParams.get('invite_user') || undefined;
+        try {
+          const { processInviteReferral } = await import("@/utils/processInviteReferral");
+          await processInviteReferral(targetUser.id, state.email || "", emailInviteUserId);
+        } catch (referralErr) {
+          console.error("[SteppedAuthFlow] Invite referral failed:", referralErr);
         }
 
         await refetchProfile();

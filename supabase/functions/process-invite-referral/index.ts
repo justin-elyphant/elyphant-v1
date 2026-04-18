@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     if (!hasInvites) {
       return new Response(
-        JSON.stringify({ success: true, connection_id: connection.id, referral_created: false }),
+        JSON.stringify({ success: true, connection_id: connectionId, referral_created: false }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         referrer_id: inviter_id,
         referred_id,
         referred_email,
-        connection_id: connection.id,
+        connection_id: connectionId,
         status: referralStatus,
         reward_amount: CREDIT_AMOUNT,
       })
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          connection_id: connection.id,
+          connection_id: connectionId,
           referral_created: false,
           error: "referral_insert_failed",
           detail: refErr.message,

@@ -8,7 +8,7 @@ import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { Send, UserPlus, Link2, Check } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
-import { getAppUrl } from "@/utils/urlUtils";
+import { getAppUrl, getInviteUrl } from "@/utils/urlUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { unifiedGiftManagementService } from "@/services/UnifiedGiftManagementService";
 import { invitationAnalyticsService } from "@/services/analytics/invitationAnalyticsService";
@@ -85,9 +85,14 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
 
       const invitationToken = pendingConnection?.invitation_token;
 
-      const invitationUrl = invitationToken
-        ? `https://elyphant.ai/auth?invite=${invitationToken}`
-        : 'https://elyphant.ai/auth';
+      const isBetaTester = betaCreditBalance > 0;
+      const invitationUrl = isBetaTester
+        ? (invitationToken
+            ? `${getAppUrl()}/auth?invite=${invitationToken}&invite_user=${user.id}`
+            : getInviteUrl(user.id))
+        : (invitationToken
+            ? `${getAppUrl()}/auth?invite=${invitationToken}`
+            : `${getAppUrl()}/auth`);
 
       // Track analytics
       await invitationAnalyticsService.trackInvitationSent({
@@ -96,13 +101,12 @@ export const AddConnectionSheet: React.FC<AddConnectionSheetProps> = ({
         relationship_type: 'friend',
         metadata: {
           source: 'add_connection_sheet',
-          invitation_type: 'manual_connection',
+          invitation_type: isBetaTester ? 'beta_referral' : 'manual_connection',
           source_context: 'connections_page'
         }
       });
 
       // Send invitation email — swap to beta_invite_welcome if inviter is a beta tester
-      const isBetaTester = betaCreditBalance > 0;
       const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
       
       const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {

@@ -19,6 +19,9 @@ export const useBetaCredits = () => {
 
       return Number(data) || 0;
     },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 30_000,
   });
 
   return { balance, isLoading, refetch };

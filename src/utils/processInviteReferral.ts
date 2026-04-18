@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/providers/QueryProvider";
 
 /**
  * Processes invite-link auto-connect and beta referral creation

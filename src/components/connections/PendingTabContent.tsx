@@ -22,6 +22,7 @@ import OutgoingConnectionRequests from "./OutgoingConnectionRequests";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useBetaCredits } from "@/hooks/useBetaCredits";
+import { getAppUrl, getInviteUrl } from "@/utils/urlUtils";
 
 interface PendingTabContentProps {
   pendingConnections: Connection[];
@@ -209,17 +210,23 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                   return;
                                 }
 
-                                // Build production invite URL
-                                const inviteUrl = `https://elyphant.ai/auth?invite=${conn.invitation_token}`;
-                                console.log('✅ [Resend] Built invite URL:', inviteUrl);
-
                                 // Fetch sender name
                                 const { data: sender } = await supabase
                                   .from('profiles')
-                                  .select('first_name, name')
+                                  .select('first_name, name, username')
                                   .eq('id', conn.user_id)
                                   .single();
                                 const senderName = sender?.first_name || sender?.name || 'Someone';
+
+                                // Build production invite URL
+                                const isBetaTester = betaCreditBalance > 0;
+                                const inviteUrl = isBetaTester
+                                  ? `${getAppUrl()}/auth?invite=${conn.invitation_token}&invite_user=${conn.user_id}`
+                                  : `https://elyphant.ai/auth?invite=${conn.invitation_token}`;
+                                const fallbackInviteUrl = isBetaTester
+                                  ? getInviteUrl(sender?.username || conn.user_id)
+                                  : inviteUrl;
+                                console.log('✅ [Resend] Built invite URL:', inviteUrl);
 
                                 console.log('📧 [Resend] Invoking orchestrator with:', {
                                   recipient_email: conn.pending_recipient_email,
@@ -230,7 +237,6 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                 });
 
                                 // Invoke orchestrator — swap to beta_invite_welcome if inviter is a beta tester
-                                const isBetaTester = betaCreditBalance > 0;
                                 const emailEventType = isBetaTester ? 'beta_invite_welcome' : 'connection_invitation';
                                 
                                 const { error } = await supabase.functions.invoke('ecommerce-email-orchestrator', {
@@ -242,7 +248,7 @@ const PendingTabContent: React.FC<PendingTabContentProps> = ({
                                       recipient_email: conn.pending_recipient_email,
                                       recipient_name: conn.pending_recipient_name,
                                       connection_id: conn.id,
-                                      invitation_url: inviteUrl,
+                                      invitation_url: conn.invitation_token ? inviteUrl : fallbackInviteUrl,
                                       credit_amount: isBetaTester ? 100 : undefined,
                                     }
                                   }

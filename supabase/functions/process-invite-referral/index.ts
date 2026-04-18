@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       console.error("[process-invite-referral] Settings lookup error (defaulting to auto-approve):", e);
     }
 
-    const referralStatus = autoApprove ? "approved" : "pending_approval";
+    const referralStatus = autoApprove ? "signed_up" : "pending_approval";
     const CREDIT_AMOUNT = 100;
 
     // 4. Create beta referral (status will be flipped to credit_issued by RPC if auto-approved)
@@ -97,9 +97,18 @@ Deno.serve(async (req) => {
 
     if (refErr) {
       console.error("[process-invite-referral] Referral insert failed:", refErr);
-    } else {
-      console.log("[process-invite-referral] Beta referral created:", referral.id, "status:", referralStatus);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          connection_id: connection.id,
+          referral_created: false,
+          error: "referral_insert_failed",
+          detail: refErr.message,
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+    console.log("[process-invite-referral] Beta referral created:", referral.id, "status:", referralStatus);
 
     // 5. Fetch referrer profile (used by both branches)
     const { data: referrerProfile } = await supabase

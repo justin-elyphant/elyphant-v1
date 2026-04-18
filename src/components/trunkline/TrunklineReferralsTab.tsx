@@ -280,7 +280,7 @@ const TrunklineReferralsTab: React.FC = () => {
   const totalCreditsIssued = testerBalances.reduce((sum, t) => sum + t.issued, 0);
   const totalCreditsSpent = testerBalances.reduce((sum, t) => sum + t.spent, 0);
   const remainingLiability = totalCreditsIssued - totalCreditsSpent;
-  const globalPool = programSettings?.total_credit_pool ?? 25;
+  const globalPool = programSettings?.total_credit_pool ?? 3000;
   const poolExhausted = totalApproved >= globalPool;
 
   // Grant invites mutation

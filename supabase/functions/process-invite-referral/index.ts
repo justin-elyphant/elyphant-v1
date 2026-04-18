@@ -20,7 +20,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Create auto-accepted connection
+    // 1. Create auto-accepted connection (or reuse existing)
+    let connectionId: string | null = null;
     const { data: connection, error: connErr } = await supabase
       .from("user_connections")
       .insert({
@@ -33,14 +34,26 @@ Deno.serve(async (req) => {
       .single();
 
     if (connErr) {
-      console.error("[process-invite-referral] Connection insert failed:", connErr);
-      return new Response(JSON.stringify({ error: "Connection creation failed", detail: connErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Likely a duplicate (connection already exists from a prior partial run) — fetch it.
+      const { data: existing, error: fetchErr } = await supabase
+        .from("user_connections")
+        .select("id")
+        .eq("user_id", inviter_id)
+        .eq("connected_user_id", referred_id)
+        .maybeSingle();
+      if (fetchErr || !existing) {
+        console.error("[process-invite-referral] Connection insert failed:", connErr);
+        return new Response(JSON.stringify({ error: "Connection creation failed", detail: connErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      connectionId = existing.id;
+      console.log("[process-invite-referral] Reusing existing connection:", connectionId);
+    } else {
+      connectionId = connection.id;
+      console.log("[process-invite-referral] Connection created:", connectionId);
     }
-
-    console.log("[process-invite-referral] Connection created:", connection.id);
 
     // 2. Check referrer's remaining invites
     let hasInvites = true;

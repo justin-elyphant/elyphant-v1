@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        connection_id: connection.id,
+        connection_id: connectionId,
         referral_created: !refErr,
         auto_approved: autoApprove,
       }),

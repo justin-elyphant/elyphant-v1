@@ -20,7 +20,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Create auto-accepted connection
+    // 1. Create auto-accepted connection (or reuse existing)
+    let connectionId: string | null = null;
     const { data: connection, error: connErr } = await supabase
       .from("user_connections")
       .insert({
@@ -33,14 +34,26 @@ Deno.serve(async (req) => {
       .single();
 
     if (connErr) {
-      console.error("[process-invite-referral] Connection insert failed:", connErr);
-      return new Response(JSON.stringify({ error: "Connection creation failed", detail: connErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Likely a duplicate (connection already exists from a prior partial run) — fetch it.
+      const { data: existing, error: fetchErr } = await supabase
+        .from("user_connections")
+        .select("id")
+        .eq("user_id", inviter_id)
+        .eq("connected_user_id", referred_id)
+        .maybeSingle();
+      if (fetchErr || !existing) {
+        console.error("[process-invite-referral] Connection insert failed:", connErr);
+        return new Response(JSON.stringify({ error: "Connection creation failed", detail: connErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      connectionId = existing.id;
+      console.log("[process-invite-referral] Reusing existing connection:", connectionId);
+    } else {
+      connectionId = connection.id;
+      console.log("[process-invite-referral] Connection created:", connectionId);
     }
-
-    console.log("[process-invite-referral] Connection created:", connection.id);
 
     // 2. Check referrer's remaining invites
     let hasInvites = true;
@@ -58,7 +71,7 @@ Deno.serve(async (req) => {
 
     if (!hasInvites) {
       return new Response(
-        JSON.stringify({ success: true, connection_id: connection.id, referral_created: false }),
+        JSON.stringify({ success: true, connection_id: connectionId, referral_created: false }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -78,7 +91,7 @@ Deno.serve(async (req) => {
       console.error("[process-invite-referral] Settings lookup error (defaulting to auto-approve):", e);
     }
 
-    const referralStatus = autoApprove ? "approved" : "pending_approval";
+    const referralStatus = autoApprove ? "signed_up" : "pending_approval";
     const CREDIT_AMOUNT = 100;
 
     // 4. Create beta referral (status will be flipped to credit_issued by RPC if auto-approved)
@@ -88,7 +101,7 @@ Deno.serve(async (req) => {
         referrer_id: inviter_id,
         referred_id,
         referred_email,
-        connection_id: connection.id,
+        connection_id: connectionId,
         status: referralStatus,
         reward_amount: CREDIT_AMOUNT,
       })
@@ -97,9 +110,18 @@ Deno.serve(async (req) => {
 
     if (refErr) {
       console.error("[process-invite-referral] Referral insert failed:", refErr);
-    } else {
-      console.log("[process-invite-referral] Beta referral created:", referral.id, "status:", referralStatus);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          connection_id: connectionId,
+          referral_created: false,
+          error: "referral_insert_failed",
+          detail: refErr.message,
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+    console.log("[process-invite-referral] Beta referral created:", referral.id, "status:", referralStatus);
 
     // 5. Fetch referrer profile (used by both branches)
     const { data: referrerProfile } = await supabase
@@ -196,7 +218,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        connection_id: connection.id,
+        connection_id: connectionId,
         referral_created: !refErr,
         auto_approved: autoApprove,
       }),

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/providers/QueryProvider";
 
 /**
  * Processes invite-link auto-connect and beta referral creation
@@ -25,6 +26,13 @@ export async function processInviteReferral(
       console.error("[processInviteReferral] Edge function error:", error);
     } else {
       console.log("[processInviteReferral] Success:", data);
+      // Force the new user's beta credit balance to refresh so the
+      // "Invite Friends, Get $100" CTA + checkout discount appear immediately.
+      try {
+        await queryClient.invalidateQueries({ queryKey: ["beta-credit-balance"] });
+      } catch (qErr) {
+        console.warn("[processInviteReferral] Query invalidation failed:", qErr);
+      }
     }
   } catch (err) {
     console.error("[processInviteReferral] Error:", err);

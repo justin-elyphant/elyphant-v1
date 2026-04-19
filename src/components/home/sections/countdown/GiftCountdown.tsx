@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { differenceInDays, differenceInHours, differenceInMinutes, format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { generateDynamicButtonText, generateSearchQuery } from '@/components/marketplace/utils/buttonTextUtils';
@@ -138,10 +138,11 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
     return (
       <div className="bg-white/10 backdrop-blur-sm text-white border-b border-white/20 px-4 py-2">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-3 text-sm min-w-0">
             <span className="font-semibold truncate max-w-[140px]">{currentEvent.name}</span>
             <span>•</span>
             <span>{days} days</span>
+            <span className="text-white/70 hidden xs:inline">({format(currentEvent.date, 'MMM d')})</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -162,7 +163,8 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
   // Desktop card layout
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white border border-white/20">
-      <h3 className="text-sm font-medium mb-2 truncate">{currentEvent.name} Countdown</h3>
+      <h3 className="text-sm font-medium truncate">{currentEvent.name} Countdown</h3>
+      <p className="text-xs text-white/80 mb-2">{format(currentEvent.date, 'EEE, MMM d, yyyy')}</p>
       <div className="flex gap-4 mb-3">
         <div>
           <span className="text-2xl font-bold">{days}</span>

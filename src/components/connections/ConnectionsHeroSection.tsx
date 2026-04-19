@@ -9,6 +9,8 @@ import { useProfileSharing } from "@/hooks/useProfileSharing";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { toast } from "sonner";
 import { useBetaCredits } from "@/hooks/useBetaCredits";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConnectionsHeroSectionProps {
   friendsCount: number;
@@ -27,7 +29,20 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
 }) => {
   const { profile } = useProfile();
   const { balance: betaCreditBalance } = useBetaCredits();
-  const isBetaTester = betaCreditBalance > 0;
+
+  const { data: isSeeder = false } = useQuery({
+    queryKey: ["can-access-trunkline", profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return false;
+      const { data, error } = await supabase.rpc("can_access_trunkline", { user_uuid: profile.id });
+      if (error) return false;
+      return Boolean(data);
+    },
+    enabled: !!profile?.id,
+    staleTime: 5 * 60_000,
+  });
+
+  const isBetaTester = betaCreditBalance > 0 || isSeeder;
   const displayName = userName || profile?.name?.split(' ')[0] || '';
   
   const { quickShare, profileUrl } = useProfileSharing({

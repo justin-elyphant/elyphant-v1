@@ -81,7 +81,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
               <> and <span className="font-bold text-white">{pendingCount}</span> pending request{pendingCount !== 1 ? 's' : ''}</>
             )}.{' '}
             {isBetaTester 
-              ? <>Share your link and earn <span className="font-bold text-white">$100</span> for every friend who joins.</>
+              ? <>Share your link and give a friend <span className="font-bold text-white">$100</span> when they join.</>
               : <>Share your link and grow your gifting network.</>
             }
           </p>
@@ -93,7 +93,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
                 className="bg-white text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                {isBetaTester ? 'Invite a Friend, Get $100' : 'Invite a Friend'}
+                {isBetaTester ? 'Give a Friend $100' : 'Invite a Friend'}
               </Button>
             </motion.div>
             {!isMobile && (

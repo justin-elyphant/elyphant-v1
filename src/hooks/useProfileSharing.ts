@@ -34,10 +34,10 @@ export const useProfileSharing = ({
   const quickShare = useCallback(async () => {
     const shareData = {
       title: isBetaTester 
-        ? `Join Elyphant's Beta & Get $100 🎁` 
+        ? `${profileName} sent you $100 on Elyphant 🎁` 
         : `${profileName}'s Profile`,
       text: isBetaTester
-        ? `Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and we both get $100 in credits!`
+        ? `Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and you'll get $100 in gifting credit on me!`
         : `Check out my wishlists on Elyphant! 🎁 Perfect for gift ideas and inspiration.`,
       url: profileUrl,
     };

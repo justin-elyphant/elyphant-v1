@@ -1,0 +1,1 @@
+DELETE FROM public.beta_referrals WHERE id IN ('b6c24f57-402f-4dde-bf48-9fe49c874e93','33bb2f75-5538-4660-972d-9056a58e2898');

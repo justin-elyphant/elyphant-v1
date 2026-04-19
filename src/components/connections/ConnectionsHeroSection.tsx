@@ -108,7 +108,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
                 className="bg-white text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                {isBetaTester ? 'Give a Friend $100' : 'Invite a Friend'}
+                {isBetaTester ? 'Gift a Friend $100' : 'Invite a Friend'}
               </Button>
             </motion.div>
             {!isMobile && (

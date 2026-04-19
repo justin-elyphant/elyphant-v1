@@ -6005,6 +6005,17 @@ export type Database = {
           title: string
         }[]
       }
+      get_invite_profile: {
+        Args: { _identifier: string }
+        Returns: {
+          bio: string
+          id: string
+          name: string
+          profile_image: string
+          username: string
+          wishlist_count: number
+        }[]
+      }
       get_masked_location: { Args: { target_user_id: string }; Returns: Json }
       get_mutual_friends_count: {
         Args: { user_a: string; user_b: string }

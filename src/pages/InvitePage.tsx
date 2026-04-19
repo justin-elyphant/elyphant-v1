@@ -35,36 +35,17 @@ const InvitePage: React.FC = () => {
       }
 
       try {
-        // Try by username first, then by ID
-        let query = supabase
-          .from("profiles")
-          .select("id, name, username, profile_image, bio")
-          .eq("username", username)
-          .single();
-
-        let { data, error } = await query;
+        // Use SECURITY DEFINER RPC so anonymous visitors can resolve the
+        // inviter even if the inviter has no public wishlists yet.
+        const { data, error } = await supabase
+          .rpc("get_invite_profile", { _identifier: username })
+          .maybeSingle();
 
         if (error || !data) {
-          // Try by ID
-          const { data: byId, error: idError } = await supabase
-            .from("profiles")
-            .select("id, name, username, profile_image, bio")
-            .eq("id", username)
-            .single();
-
-          if (idError || !byId) {
-            setLoading(false);
-            return;
-          }
-          data = byId;
+          if (error) console.error("get_invite_profile error:", error);
+          setLoading(false);
+          return;
         }
-
-        // Get wishlist count
-        const { count } = await supabase
-          .from("wishlists")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", data.id)
-          .eq("is_public", true);
 
         setInviter({
           id: data.id,
@@ -72,7 +53,7 @@ const InvitePage: React.FC = () => {
           username: data.username || username,
           profile_image: data.profile_image,
           bio: data.bio,
-          wishlistCount: count || 0,
+          wishlistCount: Number(data.wishlist_count) || 0,
         });
       } catch (err) {
         console.error("Error fetching inviter profile:", err);

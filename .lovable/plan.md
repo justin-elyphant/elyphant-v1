@@ -1,40 +1,44 @@
 
 
-## Two issues
+## Findings
 
-### 1. CTA copy wrong
-- `ConnectionsHeroSection.tsx` says "Invite a Friend, Get $100" and "earn $100 for every friend who joins"
-- Per beta program: only the **inviter** gets credit (no doubling). The new user does NOT get $100 for inviting — they GIVE $100 to a friend who joins.
-- Account dropdown menu also says "Invite Friends, Get $100" (per screenshot) — needs same fix.
+The **code is already correct** — both the CTA buttons and the referral RPC reflect the policy "only the invitee gets $100, the inviter gets nothing extra":
 
-**Fix:** Change copy to "Give a Friend $100" / "Share your link and give a friend $100 to join."
+- `ConnectionsHeroSection.tsx` line 96 → "Give a Friend $100" ✓
+- `UserButton.tsx` lines 272 & 453 → "Give a Friend $100" ✓
+- Hero paragraph → "Share your link and give a friend $100 when they join." ✓
+- `process_auto_approved_referral` RPC → only inserts `welcome` credit for invitee, no referrer reward ✓
 
-Need to find all instances — search for "Get $100" string.
+The user's screenshots show stale copy ("Invite a Friend, Get $100" / "earn $100 for every friend who joins") — these strings **no longer exist anywhere in the codebase**. The screenshots are from the previously-deployed build, taken before the last set of edits propagated.
 
-### 2. Larry missing from `/trunkline/referrals` Per-Tester Activity
-Screenshot shows only Heather Meeks and Justin Meeks. Larry David should appear since he was just backfilled with a `credit_issued` referral and a $100 welcome credit.
+## Remaining stale copy to fix
 
-Need to inspect `get_beta_tester_analytics` RPC to understand the inclusion criteria — likely it filters on something Larry doesn't yet satisfy (e.g., presence in a `beta_testers` table, or a credit `type` filter that excludes `welcome`, or joins on `beta_referrals.referrer_id` only).
+Three leftover issues to clean up:
 
-## Plan
+### 1. Hero subhead grammar (already correct in code, but worth tightening)
+Current: "Share your link and give a friend **$100** when they join."
+This is correct and matches policy. No change needed.
 
-**Step 1 — Investigate (in build mode):**
-- Read `get_beta_tester_analytics` SQL definition
-- Check why Larry's row is excluded
-- Check Larry's records: `beta_credits`, `beta_referrals`, any `beta_testers` registry table
+### 2. Welcome onboarding email — `ecommerce-email-orchestrator/index.ts` line 1409
+> "Share your invite link (you get 2 invites) so you can test gifting to each other. **They'll each get $100 in credit too.**"
 
-**Step 2 — Fix CTA copy** (reuse existing `ConnectionsHeroSection.tsx` + account dropdown component, no new components):
-- "Invite a Friend, Get $100" → "Give a Friend $100"
-- "earn $100 for every friend who joins" → "give a friend $100 when they join"
-- Same change in account dropdown menu item
+This is correct (each invitee gets $100). No change needed.
 
-**Step 3 — Fix Per-Tester Activity inclusion**
-- Adjust `get_beta_tester_analytics` so anyone with a `beta_credits` row OR a `beta_referrals` row (as referrer or referred) appears. Larry has both — so likely the RPC filters on a stale criterion (e.g., only `type='issued'` or only users present pre-launch). Will inspect and patch via migration.
+### 3. Stale code comment — `src/utils/processInviteReferral.ts` line 30
+```
+// "Invite Friends, Get $100" CTA + checkout discount appear immediately.
+```
+Comment references old CTA name. Cosmetic only — update to "Give a Friend $100" for clarity.
 
-**Files touched:**
-1. `src/components/connections/ConnectionsHeroSection.tsx` — copy update
-2. Account dropdown component (TBD — find via search for "Get $100")
-3. New migration — patch `get_beta_tester_analytics` if needed
+## Action plan
 
-**No new components, no new tables, no new credit types.**
+**Step 1 — Clarify with user:** The screenshots show old copy that no longer exists in the codebase. This is likely a stale published build. Ask whether they want me to trigger a republish, or whether they're seeing this on a different surface I haven't found yet.
+
+**Step 2 — Cosmetic comment fix:**
+- Update the stale comment in `src/utils/processInviteReferral.ts` line 30.
+
+**Step 3 — Confirm policy in memory:**
+- Update `mem://social/beta/budget-and-caps` to explicitly state: "Referrer receives NO credit. Only the invitee receives $100 welcome credit." This locks in the current policy so no future change reintroduces the doubled credit.
+
+**Files touched:** 1 code file (cosmetic), 1 memory file. No DB migrations, no new components.
 

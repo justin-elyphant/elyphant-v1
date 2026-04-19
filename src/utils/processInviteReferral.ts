@@ -27,7 +27,7 @@ export async function processInviteReferral(
     } else {
       console.log("[processInviteReferral] Success:", data);
       // Force the new user's beta credit balance to refresh so the
-      // "Invite Friends, Get $100" CTA + checkout discount appear immediately.
+      // "Give a Friend $100" CTA + checkout discount appear immediately.
       try {
         await queryClient.invalidateQueries({ queryKey: ["beta-credit-balance"] });
       } catch (qErr) {

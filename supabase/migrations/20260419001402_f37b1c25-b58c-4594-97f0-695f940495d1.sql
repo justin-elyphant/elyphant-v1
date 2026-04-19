@@ -1,0 +1,1 @@
+SELECT public.process_auto_approved_referral('a911554d-c1bb-44ee-960f-b3c2e988db33'::uuid, 100);

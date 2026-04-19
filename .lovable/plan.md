@@ -1,43 +1,40 @@
 
-The user wants me to be lean — fix the actual broken thing (status constraint mismatch) without spawning new components, new helpers, or duplicate ledger paths. Re-use what exists.
 
-## Scope check — what's already built (reuse, don't recreate)
+## Two issues
 
-- `process_auto_approved_referral` RPC — already does seeder detection, cap check, pool check, ledger insert. **Keep as-is.**
-- `useBetaCredits` hook — already gates CTA + checkout. **Keep as-is.**
-- `processInviteReferral` util + `process-invite-referral` edge function — already the single attribution entrypoint. **Keep, just fix the status string.**
-- `beta_credits` ledger — already supports `issued`/`spent`/`refunded`. **Keep types as-is; the RPC writes `issued`, not `welcome`.**
-- Trunkline admin UI — already reads the same tables. **No changes needed.**
+### 1. CTA copy wrong
+- `ConnectionsHeroSection.tsx` says "Invite a Friend, Get $100" and "earn $100 for every friend who joins"
+- Per beta program: only the **inviter** gets credit (no doubling). The new user does NOT get $100 for inviting — they GIVE $100 to a friend who joins.
+- Account dropdown menu also says "Invite Friends, Get $100" (per screenshot) — needs same fix.
 
-## Minimal fix (no new code, no new types)
+**Fix:** Change copy to "Give a Friend $100" / "Share your link and give a friend $100 to join."
 
-The only real bug: `process-invite-referral` inserts `status = 'approved'` but the DB constraint doesn't allow it. The RPC then never runs, so no credit is issued, so the CTA + $25 discount stay hidden.
+Need to find all instances — search for "Get $100" string.
 
-### Step 1 — DB migration (additive, one constraint)
-Update `beta_referrals_status_check` to allow the statuses the existing code already uses:
-- `pending`, `pending_approval`, `signed_up`, `credit_issued`, `cap_reached`, `rejected`, `reward_paid`
+### 2. Larry missing from `/trunkline/referrals` Per-Tester Activity
+Screenshot shows only Heather Meeks and Justin Meeks. Larry David should appear since he was just backfilled with a `credit_issued` referral and a $100 welcome credit.
 
-**Do NOT** add a new `welcome` credit type. The RPC already writes `type='issued'` — that's fine, reuse it.
+Need to inspect `get_beta_tester_analytics` RPC to understand the inclusion criteria — likely it filters on something Larry doesn't yet satisfy (e.g., presence in a `beta_testers` table, or a credit `type` filter that excludes `welcome`, or joins on `beta_referrals.referrer_id` only).
 
-### Step 2 — Fix `process-invite-referral` edge function
-- Replace the invalid `status: 'approved'` insert with `status: 'signed_up'` (valid transitional state).
-- Then call existing `process_auto_approved_referral` RPC — it handles everything (seeder skip, cap, pool, credit insert, final status).
-- Only send `beta_approval_needed` email when auto-approve setting is actually OFF — not on insert failure.
+## Plan
 
-### Step 3 — Force balance refresh post-onboarding
-After `processInviteReferral` resolves in `SteppedAuthFlow.tsx`, invalidate the `["beta-credit-balance"]` query so the new user sees the CTA without a manual refresh. One line.
+**Step 1 — Investigate (in build mode):**
+- Read `get_beta_tester_analytics` SQL definition
+- Check why Larry's row is excluded
+- Check Larry's records: `beta_credits`, `beta_referrals`, any `beta_testers` registry table
 
-### What I'm explicitly NOT doing
-- Not adding a new `welcome` credit type (RPC already uses `issued`).
-- Not creating new components, new hooks, or new admin tables.
-- Not touching analytics RPC (it already counts `issued` which is what the RPC writes).
-- Not refactoring Trunkline.
+**Step 2 — Fix CTA copy** (reuse existing `ConnectionsHeroSection.tsx` + account dropdown component, no new components):
+- "Invite a Friend, Get $100" → "Give a Friend $100"
+- "earn $100 for every friend who joins" → "give a friend $100 when they join"
+- Same change in account dropdown menu item
 
-### Files touched
-1. New SQL migration — extend `beta_referrals_status_check` only.
-2. `supabase/functions/process-invite-referral/index.ts` — fix status string + email-gating logic.
-3. `src/utils/processInviteReferral.ts` — invalidate beta-credit-balance query on success.
+**Step 3 — Fix Per-Tester Activity inclusion**
+- Adjust `get_beta_tester_analytics` so anyone with a `beta_credits` row OR a `beta_referrals` row (as referrer or referred) appears. Larry has both — so likely the RPC filters on a stale criterion (e.g., only `type='issued'` or only users present pre-launch). Will inspect and patch via migration.
 
-### Re-test (Larry's case)
-- Manually backfill Larry: insert his `beta_referrals` row with `status='signed_up'` and call the RPC so he gets his $100 without needing a re-invite.
-- Then verify CTA appears and checkout shows up to −$25.
+**Files touched:**
+1. `src/components/connections/ConnectionsHeroSection.tsx` — copy update
+2. Account dropdown component (TBD — find via search for "Get $100")
+3. New migration — patch `get_beta_tester_analytics` if needed
+
+**No new components, no new tables, no new credit types.**
+

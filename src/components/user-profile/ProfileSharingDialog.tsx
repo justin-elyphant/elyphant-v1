@@ -58,7 +58,7 @@ const ProfileSharingDialog = ({
   };
 
   const shareText = isBetaTester
-    ? `Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and we both get $100 in credits!`
+    ? `Hey! I'm beta testing Elyphant — a gifting app with smart wishlists and automated gifting. Sign up with my link and you'll get $100 in gifting credit on me!`
     : `Join me on Elyphant so we can see each other's wishlists! Perfect for birthdays, holidays, or just because gifts 💝`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(profileUrl);

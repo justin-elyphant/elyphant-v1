@@ -269,7 +269,7 @@ const UserButton = () => {
             onClick={handleReferralClick}
           >
             <Gift className={`h-4 w-4 ${isBetaTester ? 'text-pink-500' : 'text-muted-foreground'}`} />
-            <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Invite Friends, Get $100' : 'Invite Friends'}</span>
+            <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Give a Friend $100' : 'Invite Friends'}</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuItem>
 
@@ -450,7 +450,7 @@ const UserButton = () => {
           onClick={() => navigate("/connections")}
         >
           <Gift className={`h-4 w-4 ${isBetaTester ? 'text-pink-500' : 'text-muted-foreground'}`} />
-          <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Invite Friends, Get $100' : 'Invite Friends'}</span>
+          <span className="font-semibold flex-1 text-sm">{isBetaTester ? 'Give a Friend $100' : 'Invite Friends'}</span>
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </DropdownMenuItem>
         

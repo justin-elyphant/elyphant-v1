@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Gift, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
+import { MessageCircle, Heart, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
 import { Connection } from "@/types/connections";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
-import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
-import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 
 interface OptimizedMobileConnectionCardProps {
   connection: Connection;
@@ -31,9 +28,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
 }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
-  const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
-  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
 
   const handleCardTap = () => {
     triggerHapticFeedback('light');
@@ -46,25 +40,12 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
     navigate(`/messages/${connection.id}`);
   };
 
-  const handleGift = (e: React.MouseEvent) => {
+  const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHapticFeedback('impact');
-    setShowGiftIntentModal(true);
+    navigate(`/wishlists/${connection.id}`);
   };
 
-  const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {
-    switch (intent) {
-      case "ai-gift":
-        setShowAutoGiftSetup(true);
-        break;
-      case "marketplace-browse":
-        navigate(`/marketplace?friend=${connection.id}&name=${encodeURIComponent(connection.name)}&mode=nicole&open=true&greeting=friend-gift&first_name=${encodeURIComponent(connection.name)}`);
-        break;
-      case "quick-ideas":
-        setShowQuickIdeasModal(true);
-        break;
-    }
-  };
 
   const handleAccept = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -155,10 +136,10 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
           size="sm"
           variant="outline"
           className="connection-action-button flex-1"
-          onClick={handleGift}
+          onClick={handleWishlist}
         >
-          <Gift className="h-4 w-4 mr-1" />
-          Gift
+          <Heart className="h-4 w-4 mr-1" />
+          {connection.name.split(' ')[0]}'s Wishlist
         </Button>
         <Button
           size="sm"
@@ -261,28 +242,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
         )}
       </div>
 
-      {/* Gift modals — only mounted for friend cards */}
-      {!isPending && !isSuggestion && (
-        <>
-          <PersonalizedGiftIntentModal
-            open={showGiftIntentModal}
-            onOpenChange={setShowGiftIntentModal}
-            connection={connection}
-            onIntentSelect={handleGiftIntentSelect}
-          />
-          <QuickGiftIdeasModal
-            open={showQuickIdeasModal}
-            onOpenChange={setShowQuickIdeasModal}
-            connection={connection}
-          />
-          <UnifiedGiftSchedulingModal
-            open={showAutoGiftSetup}
-            onOpenChange={setShowAutoGiftSetup}
-            standaloneMode={true}
-            initialRecipient={{ type: 'connection', connectionId: connection.id, connectionName: connection.name || '' }}
-          />
-        </>
-      )}
     </>
   );
 };

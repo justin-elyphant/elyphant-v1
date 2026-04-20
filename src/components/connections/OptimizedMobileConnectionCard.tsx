@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Gift, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
+import { MessageCircle, Heart, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
 import { Connection } from "@/types/connections";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";

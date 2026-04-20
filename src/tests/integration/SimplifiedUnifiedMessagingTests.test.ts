@@ -5,7 +5,7 @@
  * with existing unified services and maintains proper boundaries
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('UnifiedMessaging Integration - Core Validation', () => {
   

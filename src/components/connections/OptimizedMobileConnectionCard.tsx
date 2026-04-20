@@ -46,19 +46,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
     navigate(`/wishlists/${connection.id}`);
   };
 
-  const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {
-    switch (intent) {
-      case "ai-gift":
-        setShowAutoGiftSetup(true);
-        break;
-      case "marketplace-browse":
-        navigate(`/marketplace?friend=${connection.id}&name=${encodeURIComponent(connection.name)}&mode=nicole&open=true&greeting=friend-gift&first_name=${encodeURIComponent(connection.name)}`);
-        break;
-      case "quick-ideas":
-        setShowQuickIdeasModal(true);
-        break;
-    }
-  };
 
   const handleAccept = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -255,28 +242,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
         )}
       </div>
 
-      {/* Gift modals — only mounted for friend cards */}
-      {!isPending && !isSuggestion && (
-        <>
-          <PersonalizedGiftIntentModal
-            open={showGiftIntentModal}
-            onOpenChange={setShowGiftIntentModal}
-            connection={connection}
-            onIntentSelect={handleGiftIntentSelect}
-          />
-          <QuickGiftIdeasModal
-            open={showQuickIdeasModal}
-            onOpenChange={setShowQuickIdeasModal}
-            connection={connection}
-          />
-          <UnifiedGiftSchedulingModal
-            open={showAutoGiftSetup}
-            onOpenChange={setShowAutoGiftSetup}
-            standaloneMode={true}
-            initialRecipient={{ type: 'connection', connectionId: connection.id, connectionName: connection.name || '' }}
-          />
-        </>
-      )}
     </>
   );
 };

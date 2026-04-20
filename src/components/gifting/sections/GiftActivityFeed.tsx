@@ -40,7 +40,7 @@ const GiftActivityFeed: React.FC<GiftActivityFeedProps> = ({
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
       case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'info': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300';
+      default: return 'bg-muted text-muted-foreground dark:bg-foreground/30 dark:text-muted-foreground/50';
     }
   };
 
@@ -50,7 +50,7 @@ const GiftActivityFeed: React.FC<GiftActivityFeedProps> = ({
       case 'failed': return 'text-red-600 dark:text-red-400';
       case 'pending': return 'text-yellow-600 dark:text-yellow-400';
       case 'info': return 'text-blue-600 dark:text-blue-400';
-      default: return 'text-gray-600 dark:text-gray-400';
+      default: return 'text-muted-foreground dark:text-muted-foreground';
     }
   };
 
@@ -67,10 +67,10 @@ const GiftActivityFeed: React.FC<GiftActivityFeedProps> = ({
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-start gap-3 animate-pulse">
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                <div className="w-8 h-8 bg-muted dark:bg-gray-700 rounded-full" />
                 <div className="flex-1">
-                  <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
-                  <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-4 w-48 bg-muted dark:bg-gray-700 rounded mb-1" />
+                  <div className="h-3 w-32 bg-muted dark:bg-gray-700 rounded" />
                 </div>
               </div>
             ))}

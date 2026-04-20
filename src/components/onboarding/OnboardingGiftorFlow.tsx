@@ -15,12 +15,12 @@ const OnboardingGiftorFlow = () => {
                 Step 2 of onboarding
               </p>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div className="bg-purple-600 h-2 rounded-full" style={{ width: '50%' }}></div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-background rounded-xl shadow-lg overflow-hidden">
             <SimplifiedGiftorOnboarding />
           </div>
         </div>

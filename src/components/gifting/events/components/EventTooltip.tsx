@@ -52,7 +52,7 @@ const EventTooltip = ({
         {events.map(event => (
           <div 
             key={event.id} 
-            className="p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+            className="p-2 rounded-md hover:bg-muted cursor-pointer"
             onClick={() => onEventClick(event)}
           >
             <div className="flex items-center justify-between mb-1">

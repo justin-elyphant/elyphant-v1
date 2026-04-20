@@ -80,7 +80,7 @@ const ReturnPolicyCard: React.FC<ReturnPolicyCardProps> = ({ onSave }) => {
 const Switch = ({ checked }: { checked: boolean }) => {
   return (
     <div className={`relative inline-block w-10 h-5 rounded-full ${checked ? 'bg-primary' : 'bg-gray-300'}`}>
-      <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : ''}`}></div>
+      <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform ${checked ? 'translate-x-5' : ''}`}></div>
     </div>
   );
 };

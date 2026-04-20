@@ -97,7 +97,7 @@ const CreateWishlistDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[440px] bg-white p-6 md:p-8"
+      <DialogContent className="sm:max-w-[440px] bg-background p-6 md:p-8"
         style={{
           marginBottom: 'env(safe-area-inset-bottom, 0px)',
           paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))'

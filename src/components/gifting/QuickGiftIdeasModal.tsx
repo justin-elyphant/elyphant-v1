@@ -111,13 +111,13 @@ const QuickGiftIdeasModal: React.FC<QuickGiftIdeasModalProps> = ({
             ))
           ) : (
             giftIdeas.map((idea) => (
-              <div key={idea.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div key={idea.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-medium text-lg">{idea.name}</h3>
                   <span className="text-sm font-medium text-green-600">{idea.priceRange}</span>
                 </div>
                 
-                <p className="text-sm text-gray-600 mb-2">{idea.description}</p>
+                <p className="text-sm text-muted-foreground mb-2">{idea.description}</p>
                 
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="secondary" className="text-xs">{idea.category}</Badge>

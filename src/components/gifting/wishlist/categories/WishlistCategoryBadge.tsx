@@ -64,7 +64,7 @@ const WishlistCategoryBadge = ({
       icon: <Gift className="h-3 w-3 mr-1" />
     },
     "other": {
-      color: "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200",
+      color: "bg-muted text-foreground hover:bg-muted border-border",
       icon: <Sparkles className="h-3 w-3 mr-1" />
     }
   };

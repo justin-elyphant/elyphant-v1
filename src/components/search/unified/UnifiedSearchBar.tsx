@@ -589,9 +589,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
   return (
     <div ref={searchContainerRef} className={`relative w-full ${className}`}>
       <form onSubmit={handleSearch} className="relative">
-        <div ref={barRef} className="relative flex items-center transition-all duration-300 bg-white border border-gray-300 rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600">
+        <div ref={barRef} className="relative flex items-center transition-all duration-300 bg-background border border-border rounded-full hover:border-gray-400 focus-within:border-transparent focus-within:ring-2 focus-within:ring-purple-600">
           <div className={`absolute z-10 ${mobile || isMobile ? 'left-3' : 'left-4'}`}>
-            <Search className={`text-gray-400 ${mobile || isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
+            <Search className={`text-muted-foreground ${mobile || isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           </div>
           
           <Input
@@ -603,7 +603,7 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
-            className={`transition-all duration-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-gray-500 ${
+            className={`transition-all duration-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-muted-foreground ${
               mobile || isMobile ? 'text-base h-11 pl-12 pr-12' : 'h-11 text-sm pl-12 pr-12'
             }`}
             style={{ fontSize: mobile || isMobile ? '16px' : '14px' }}
@@ -620,9 +620,9 @@ export const UnifiedSearchBar: React.FC<UnifiedSearchBarProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleClearInput}
-                className="h-8 w-8 p-0 hover:bg-gray-100 touch-manipulation"
+                className="h-8 w-8 p-0 hover:bg-muted touch-manipulation"
               >
-                <X className="h-4 w-4 text-gray-500" />
+                <X className="h-4 w-4 text-muted-foreground" />
               </Button>
             )}
           </div>

@@ -28,8 +28,8 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
       <Card>
         <CardContent className="p-4">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-muted rounded w-1/2"></div>
           </div>
         </CardContent>
       </Card>
@@ -47,7 +47,7 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
       case 'nobody':
         return <Lock className="h-4 w-4 text-red-600" />;
       default:
-        return <Shield className="h-4 w-4 text-gray-600" />;
+        return <Shield className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -79,7 +79,7 @@ const PrivacyIntegration: React.FC<PrivacyIntegrationProps> = ({
       case 'nobody':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 

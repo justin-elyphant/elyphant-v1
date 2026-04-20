@@ -50,7 +50,7 @@ const SharingOptions = ({ isPublic, wishlistId }: SharingOptionsProps) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Share Options</h3>
-        <div className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium text-gray-700">
+        <div className="bg-muted px-2 py-0.5 rounded text-xs font-medium text-muted-foreground">
           {isPublic ? "Shareable" : "Not Shareable"}
         </div>
       </div>

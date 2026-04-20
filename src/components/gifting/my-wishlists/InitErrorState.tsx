@@ -13,7 +13,7 @@ const InitErrorState: React.FC<InitErrorStateProps> = ({ refreshing, onRetry }) 
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
       <h2 className="text-xl font-semibold mb-2">Failed to Load Wishlists</h2>
-      <p className="text-gray-600 mb-6">
+      <p className="text-muted-foreground mb-6">
         We couldn't load your wishlists. Please try again.
       </p>
       <Button

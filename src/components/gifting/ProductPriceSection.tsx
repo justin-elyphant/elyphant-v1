@@ -25,7 +25,7 @@ const ProductPriceSection: React.FC<ProductPriceSectionProps> = ({
       <div className="font-bold text-base">
         {hasDiscount ? formatPrice(salePrice || 0, priceOptions) : formatPrice(Number(price), priceOptions)}
         {hasDiscount && (
-          <span className="text-xs line-through text-gray-400 ml-1">
+          <span className="text-xs line-through text-muted-foreground ml-1">
             {formatPrice(Number(price), priceOptions)}
           </span>
         )}

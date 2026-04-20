@@ -175,7 +175,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
           className={cn(
             'transition-opacity duration-300 ease-out w-full h-full object-cover',
             isLoaded ? 'opacity-100' : 'opacity-0',
-            !isLoaded && !blur && 'bg-gray-100'
+            !isLoaded && !blur && 'bg-muted'
           )}
           style={{
             contentVisibility: 'auto',
@@ -187,8 +187,8 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       
       {/* Loading skeleton */}
       {!isLoaded && !error && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" 
+        <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-border border-t-gray-600 rounded-full animate-spin" 
                role="status" 
                aria-label="Loading image">
             <span className="sr-only">Loading...</span>
@@ -198,7 +198,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       
       {/* Error state */}
       {error && currentSrc === fallbackSrc && (
-        <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center text-gray-400 p-4">
+        <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center text-muted-foreground p-4">
           <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />

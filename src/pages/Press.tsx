@@ -35,8 +35,8 @@ const Press = () => {
       <MainLayout>
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Press & Media</h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <h1 className="text-4xl font-bold text-foreground mb-4">Press & Media</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Resources and information for journalists, bloggers, and media professionals
             </p>
           </div>
@@ -69,7 +69,7 @@ const Press = () => {
                   <div className="text-center">
                     <Mail className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                     <h3 className="text-lg font-semibold mb-2">Press Contact</h3>
-                    <p className="text-gray-700 mb-2">For interviews, press releases, and media kits</p>
+                    <p className="text-muted-foreground mb-2">For interviews, press releases, and media kits</p>
                     <Button 
                       className="bg-purple-600 hover:bg-purple-700 text-white"
                       onClick={() => window.location.href = 'mailto:press@elyphant.ai?subject=Media%20Inquiry'}
@@ -80,7 +80,7 @@ const Press = () => {
                   <div className="text-center">
                     <Users className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                     <h3 className="text-lg font-semibold mb-2">Partnership Inquiries</h3>
-                    <p className="text-gray-700 mb-2">For business partnerships and collaborations</p>
+                    <p className="text-muted-foreground mb-2">For business partnerships and collaborations</p>
                     <Button 
                       variant="outline" 
                       className="border-purple-600 text-purple-600 hover:bg-purple-50"
@@ -101,9 +101,9 @@ const Press = () => {
                 <h2 className="text-2xl font-semibold mb-6 text-center">Company Quick Facts</h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {companyFacts.map((fact, index) => (
-                    <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div key={index} className="text-center p-4 bg-muted/50 rounded-lg">
                       <h3 className="text-sm font-semibold text-purple-600 mb-1">{fact.label}</h3>
-                      <p className="text-gray-700">{fact.value}</p>
+                      <p className="text-muted-foreground">{fact.value}</p>
                     </div>
                   ))}
                 </div>
@@ -122,7 +122,7 @@ const Press = () => {
                       <Globe className="mr-2 text-purple-600" />
                       Technology & Innovation
                     </h3>
-                    <ul className="text-gray-700 space-y-2">
+                    <ul className="text-muted-foreground space-y-2">
                       <li>• AI-powered personalization in e-commerce</li>
                       <li>• Reducing retail waste through smart recommendations</li>
                       <li>• The future of automated relationship management</li>
@@ -134,7 +134,7 @@ const Press = () => {
                       <Calendar className="mr-2 text-purple-600" />
                       Social Impact
                     </h3>
-                    <ul className="text-gray-700 space-y-2">
+                    <ul className="text-muted-foreground space-y-2">
                       <li>• Technology startups supporting wildlife conservation</li>
                       <li>• The $850B retail return problem and solutions</li>
                       <li>• How AI can strengthen human relationships</li>
@@ -155,7 +155,7 @@ const Press = () => {
                   <div className="text-center">
                     <Image className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                     <h3 className="text-lg font-semibold mb-2">Brand Assets</h3>
-                    <p className="text-gray-700 text-sm mb-4">
+                    <p className="text-muted-foreground text-sm mb-4">
                       High-resolution logos, brand guidelines, and product screenshots
                     </p>
                     <Button variant="outline" size="sm" disabled>
@@ -167,7 +167,7 @@ const Press = () => {
                   <div className="text-center">
                     <FileText className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                     <h3 className="text-lg font-semibold mb-2">Company Information</h3>
-                    <p className="text-gray-700 text-sm mb-4">
+                    <p className="text-muted-foreground text-sm mb-4">
                       Detailed company background, mission, and founder information
                     </p>
                     <Button variant="outline" size="sm" disabled>
@@ -179,7 +179,7 @@ const Press = () => {
                   <div className="text-center">
                     <Users className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                     <h3 className="text-lg font-semibold mb-2">Executive Interviews</h3>
-                    <p className="text-gray-700 text-sm mb-4">
+                    <p className="text-muted-foreground text-sm mb-4">
                       Founders and key team members available for interviews
                     </p>
                     <Button variant="outline" size="sm" disabled>

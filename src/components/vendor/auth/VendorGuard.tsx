@@ -106,7 +106,7 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
   if (accessStatus === 'not-vendor') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="max-w-md text-center bg-white p-8 rounded-lg shadow-lg">
+        <div className="max-w-md text-center bg-background p-8 rounded-lg shadow-lg">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
   if (accessStatus === 'unapproved-vendor') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="max-w-md text-center bg-white p-8 rounded-lg shadow-lg">
+        <div className="max-w-md text-center bg-background p-8 rounded-lg shadow-lg">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ export const VendorGuard: React.FC<VendorGuardProps> = ({ children }) => {
   if (accessStatus === 'denied') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="max-w-md text-center bg-white p-8 rounded-lg shadow-lg">
+        <div className="max-w-md text-center bg-background p-8 rounded-lg shadow-lg">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

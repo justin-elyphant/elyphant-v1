@@ -83,9 +83,9 @@ const AutomatedGiftExecutionsMonitor = () => {
       case 'pending':
         return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'cancelled':
-        return <XCircle className="h-4 w-4 text-gray-600" />;
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <AlertTriangle className="h-4 w-4 text-gray-600" />;
+        return <AlertTriangle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 

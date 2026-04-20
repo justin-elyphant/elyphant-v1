@@ -27,7 +27,7 @@ const getEventTypeColor = (eventType: string) => {
     'Graduation': 'bg-green-100 text-green-800 border-green-200',
     'Holiday': 'bg-red-100 text-red-800 border-red-200',
     'Work Event': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Other': 'bg-gray-100 text-gray-800 border-gray-200'
+    'Other': 'bg-muted text-foreground border-border'
   };
   return colors[eventType as keyof typeof colors] || colors['Other'];
 };
@@ -43,7 +43,7 @@ const MonthEventsPanel = ({
   onDelete
 }: MonthEventsPanelProps) => {
   return (
-    <div className="border rounded-md p-4 bg-white">
+    <div className="border rounded-md p-4 bg-background">
       <h3 className="font-medium mb-2">
         {selectedDate ? format(selectedDate, "MMMM yyyy") : "Event Summary"}
       </h3>
@@ -55,13 +55,13 @@ const MonthEventsPanel = ({
             {currentMonthEvents.map(event => (
               <div 
                 key={event.id}
-                className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                className="p-3 border rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
                 onClick={() => onEventClick(event)}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <div className="font-medium text-sm">{event.person}</div>
-                    <div className="text-xs text-gray-600 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {formatEventDate(event.dateObj || null)}
                     </div>
                   </div>
@@ -109,7 +109,7 @@ const MonthEventsPanel = ({
         </div>
       ) : (
         <div className="py-8 text-center text-muted-foreground">
-          <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+          <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm">No events scheduled this month</p>
         </div>
       )}

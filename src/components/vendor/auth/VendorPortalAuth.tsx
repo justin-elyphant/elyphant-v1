@@ -256,7 +256,7 @@ const VendorPortalAuth = () => {
             transition={{ duration: 0.5 }}
             className="w-full"
           >
-            <Card className="w-full bg-white rounded-none border-border shadow-sm">
+            <Card className="w-full bg-background rounded-none border-border shadow-sm">
               <CardContent className="flex flex-col items-center text-center py-12 px-6 space-y-6">
                 <motion.div
                   initial={{ scale: 0 }}
@@ -310,7 +310,7 @@ const VendorPortalAuth = () => {
         </Link>
       </div>
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <Card className="w-full bg-white rounded-none border-border shadow-sm">
+        <Card className="w-full bg-background rounded-none border-border shadow-sm">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">Vendor Portal</h1>
@@ -336,7 +336,7 @@ const VendorPortalAuth = () => {
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
 

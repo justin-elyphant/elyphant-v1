@@ -89,7 +89,7 @@ const CalendarView = ({
             <select
               value={selectedEventType}
               onChange={(e) => onEventTypeChange(e.target.value)}
-              className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm min-h-[44px] touch-manipulation"
+              className="w-full sm:w-auto px-3 py-2 border border-border rounded-md text-sm min-h-[44px] touch-manipulation"
             >
               <option value="all">All Events</option>
               {eventTypes.map(type => (
@@ -104,7 +104,7 @@ const CalendarView = ({
           <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
             {/* Day headers */}
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-              <div key={index} className="p-1 sm:p-2 text-center font-medium text-xs sm:text-sm text-gray-500">
+              <div key={index} className="p-1 sm:p-2 text-center font-medium text-xs sm:text-sm text-muted-foreground">
                 <span className="hidden sm:inline">
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index]}
                 </span>
@@ -121,8 +121,8 @@ const CalendarView = ({
                 <div
                   key={day.toISOString()}
                   className={`
-                    p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border border-gray-200 rounded-md touch-manipulation
-                    ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white'}
+                    p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border border-border rounded-md touch-manipulation
+                    ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-background'}
                     ${!isSameMonth(day, currentDate) ? 'opacity-50' : ''}
                   `}
                 >
@@ -142,7 +142,7 @@ const CalendarView = ({
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <div className="text-xs text-gray-500 text-center touch-manipulation min-h-[32px] flex items-center justify-center">
+                      <div className="text-xs text-muted-foreground text-center touch-manipulation min-h-[32px] flex items-center justify-center">
                         +{dayEvents.length - 2} more
                       </div>
                     )}

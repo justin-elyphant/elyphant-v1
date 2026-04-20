@@ -38,7 +38,7 @@ const EventPrivacyBadge = ({ privacyLevel, isVerified, small = false }: EventPri
     label = "Public";
     tooltip = "Visible to everyone";
   } else {
-    badgeClass += "border-gray-300 ";
+    badgeClass += "border-border ";
   }
   
   return (

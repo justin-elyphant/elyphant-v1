@@ -139,10 +139,10 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
         </div>
 
         {/* Selected gift preview */}
-        <div className="bg-white rounded-lg p-4 mb-4 border border-border/50">
+        <div className="bg-background rounded-lg p-4 mb-4 border border-border/50">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border">
+                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center border">
                   {primaryProduct?.image ? (
                     <img 
                       src={primaryProduct.image} 
@@ -150,7 +150,7 @@ const AutoGiftApprovalCard: React.FC<AutoGiftApprovalCardProps> = ({
                       className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (
-                    <Gift className="h-8 w-8 text-gray-400" />
+                    <Gift className="h-8 w-8 text-muted-foreground" />
                   )}
                 </div>
               {additionalProductsCount > 0 && (

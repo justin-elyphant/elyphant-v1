@@ -261,9 +261,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               {hasPermission === false && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                   <div className="text-white text-center p-4">
-                    <Camera className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                     <p>Camera access denied</p>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Please enable camera permissions and try again
                     </p>
                   </div>

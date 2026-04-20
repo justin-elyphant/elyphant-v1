@@ -33,8 +33,8 @@ export const MyGiftsDashboard: React.FC<MyGiftsDashboardProps> = ({
       case 'active': return 'bg-emerald-100 text-emerald-700';
       case 'paused': return 'bg-yellow-100 text-yellow-700';
       case 'scheduled': return 'bg-blue-100 text-blue-700';
-      case 'completed': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'completed': return 'bg-muted text-muted-foreground';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 

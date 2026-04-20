@@ -19,7 +19,7 @@ const VendorPartner = () => {
   }, []);
 
   return (
-    <div className="bg-white">
+    <div className="bg-background">
       <div className="container mx-auto px-4 py-16">
         <VendorHero onContactClick={scrollToContactForm} />
         <BenefitsSection />

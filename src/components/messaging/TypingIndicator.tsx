@@ -8,7 +8,7 @@ interface TypingIndicatorProps {
 const TypingIndicator = ({ userName }: TypingIndicatorProps) => {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-600">{userName} is typing</span>
+      <span className="text-sm text-muted-foreground">{userName} is typing</span>
       <div className="flex gap-0.5">
         {[0, 1, 2].map((i) => (
           <div

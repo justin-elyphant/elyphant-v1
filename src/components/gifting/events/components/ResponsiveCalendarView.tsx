@@ -44,7 +44,7 @@ const ResponsiveCalendarView = ({
   } = useCalendarEvents(events, selectedEventType);
 
   return (
-    <div className="bg-white rounded-lg border p-4 md:p-6">
+    <div className="bg-background rounded-lg border p-4 md:p-6">
       <CalendarHeader
         eventTypes={eventTypes}
         selectedEventType={selectedEventType}

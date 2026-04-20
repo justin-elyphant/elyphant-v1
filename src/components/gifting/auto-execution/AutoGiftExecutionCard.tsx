@@ -89,9 +89,9 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'cancelled':
-        return <XCircle className="h-4 w-4 text-gray-500" />;
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -438,12 +438,12 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               )}
 
               {execution.status === 'rejected' && (
-                <div className="border rounded-lg p-3 bg-gray-50 border-gray-200">
-                  <p className="text-sm text-gray-800">
+                <div className="border rounded-lg p-3 bg-muted/50 border-border">
+                  <p className="text-sm text-foreground">
                     🚫 Gift selection was rejected
                   </p>
                   {execution.error_message && (
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Reason: {execution.error_message}
                     </p>
                   )}
@@ -451,8 +451,8 @@ const AutoGiftExecutionCard: React.FC<AutoGiftExecutionCardProps> = ({
               )}
 
               {execution.status === 'cancelled' && (
-                <div className="border rounded-lg p-3 bg-gray-50 border-gray-200">
-                  <p className="text-sm text-gray-800">
+                <div className="border rounded-lg p-3 bg-muted/50 border-border">
+                  <p className="text-sm text-foreground">
                     ⏹️ Execution was cancelled (likely due to duplicate)
                   </p>
                 </div>

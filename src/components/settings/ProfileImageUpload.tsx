@@ -199,7 +199,7 @@ const ProfileImageUpload = ({
   return (
     <div className="flex flex-col items-center">
       <div className="relative group">
-        <Avatar className="h-24 w-24 border-2 border-gray-200">
+        <Avatar className="h-24 w-24 border-2 border-border">
           {preview ? (
             <AvatarImage 
               src={normalizeImageUrl(preview, { bucket: 'avatars' })} 

@@ -195,7 +195,7 @@ const ProfileCompletionProgress: React.FC = () => {
                 size="sm"
                 onClick={() => handleFieldClick(field)}
                 className={cn(
-                  "justify-start h-auto p-3 border-amber-300 bg-white hover:bg-amber-100 hover:border-amber-400",
+                  "justify-start h-auto p-3 border-amber-300 bg-background hover:bg-amber-100 hover:border-amber-400",
                   "text-amber-800 hover:text-amber-900"
                 )}
               >

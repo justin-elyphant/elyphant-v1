@@ -43,10 +43,10 @@ const RecipientEventsWidget: React.FC<RecipientEventsWidgetProps> = ({
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center justify-between p-3 border rounded-lg animate-pulse">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                  <div className="w-10 h-10 rounded-full bg-muted dark:bg-gray-700" />
                   <div>
-                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
-                    <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-24 bg-muted dark:bg-gray-700 rounded mb-1" />
+                    <div className="h-3 w-32 bg-muted dark:bg-gray-700 rounded" />
                   </div>
                 </div>
               </div>

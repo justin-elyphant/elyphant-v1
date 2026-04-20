@@ -147,7 +147,7 @@ const ProfileCompletionCampaignAnalytics: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-32 bg-muted rounded-lg"></div>
         </div>
       </div>
     );

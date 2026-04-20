@@ -76,7 +76,7 @@ const ProductRating: React.FC<ProductRatingProps> = ({
           
           return (
             <div key={i} className="relative inline-block">
-              <Star className={cn(starSize, "text-gray-300 fill-gray-300")} />
+              <Star className={cn(starSize, "text-muted-foreground/50 fill-gray-300")} />
               {fillPercent > 0 && (
                 <div 
                   className="absolute inset-0 overflow-hidden"

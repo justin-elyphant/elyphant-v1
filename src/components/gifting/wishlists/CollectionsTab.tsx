@@ -83,9 +83,9 @@ const CollectionsTab = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="p-4 border rounded-lg animate-pulse">
-              <div className="w-full h-32 bg-gray-200 rounded mb-3" />
-              <div className="h-4 bg-gray-200 rounded mb-2" />
-              <div className="h-3 bg-gray-200 rounded" />
+              <div className="w-full h-32 bg-muted rounded mb-3" />
+              <div className="h-4 bg-muted rounded mb-2" />
+              <div className="h-3 bg-muted rounded" />
             </div>
           ))}
         </div>
@@ -173,7 +173,7 @@ const CollectionsTab = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
 
-                  <div className="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                  <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
                     {item.image_url ? (
                       <img 
                         src={normalizeImageUrl(item.image_url, { bucket: 'product-images', fallback: '/placeholder.svg' })} 
@@ -186,7 +186,7 @@ const CollectionsTab = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-12 w-12 text-gray-400" />
+                        <Package className="h-12 w-12 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -207,7 +207,7 @@ const CollectionsTab = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 border rounded-lg bg-gray-50 dark:bg-gray-800 mb-safe-or-6"
+          <div className="text-center py-12 border rounded-lg bg-muted/50 dark:bg-gray-800 mb-safe-or-6"
             style={{ marginBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))' }}
           >
             <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />

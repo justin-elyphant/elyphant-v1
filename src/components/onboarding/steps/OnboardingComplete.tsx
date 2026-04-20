@@ -20,17 +20,17 @@ const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({ onComplete }) =
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-8">
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h3 className="font-medium mb-1">Create a Wishlist</h3>
           <p className="text-xs text-muted-foreground">Start adding items you'd love to receive</p>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h3 className="font-medium mb-1">Browse Products</h3>
           <p className="text-xs text-muted-foreground">Discover perfect gifts in our marketplace</p>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-muted/50 p-4 rounded-lg">
           <h3 className="font-medium mb-1">Explore Features</h3>
           <p className="text-xs text-muted-foreground">Check out all the gifting tools available</p>
         </div>

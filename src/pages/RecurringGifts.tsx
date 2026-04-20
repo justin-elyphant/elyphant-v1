@@ -85,7 +85,7 @@ const RecurringGifts = () => {
                       setEditingRule(null);
                       setSetupDialogOpen(true);
                     }}
-                    className="bg-white text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
+                    className="bg-background text-purple-700 hover:bg-white/90 min-h-[44px] font-semibold"
                   >
                     <Gift className="h-4 w-4 mr-2" />
                     Set Up Recurring Gift

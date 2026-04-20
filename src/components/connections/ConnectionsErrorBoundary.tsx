@@ -42,7 +42,7 @@ class ConnectionsErrorBoundary extends Component<Props, State> {
                 We encountered an error while loading your connections. Please try refreshing the page.
               </p>
               {this.state.error && (
-                <details className="text-xs text-left bg-gray-50 p-2 rounded">
+                <details className="text-xs text-left bg-muted/50 p-2 rounded">
                   <summary className="cursor-pointer font-medium">Error Details</summary>
                   <p className="mt-2 font-mono">{this.state.error.message}</p>
                 </details>

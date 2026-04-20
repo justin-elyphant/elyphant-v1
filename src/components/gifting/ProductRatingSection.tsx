@@ -34,7 +34,7 @@ const ProductRatingSection: React.FC<ProductRatingSectionProps> = ({
           return (
             <div key={i} className="relative inline-block">
               {/* Background (empty) star */}
-              <Star className="h-3 w-3 text-gray-300 fill-gray-300" />
+              <Star className="h-3 w-3 text-muted-foreground/50 fill-gray-300" />
               
               {/* Foreground (filled) star with partial clip */}
               {fillPercent > 0 && (

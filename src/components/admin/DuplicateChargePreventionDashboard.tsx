@@ -260,7 +260,7 @@ const DuplicateChargePreventionDashboard = () => {
           <CardContent>
             <div className="space-y-2">
               {paymentMismatches.map((mismatch) => (
-                <div key={mismatch.orderId} className="flex items-center justify-between p-3 bg-white rounded border">
+                <div key={mismatch.orderId} className="flex items-center justify-between p-3 bg-background rounded border">
                   <div>
                     <p className="font-medium">{mismatch.orderNumber}</p>
                     <p className="text-sm text-muted-foreground">

@@ -76,7 +76,7 @@ const WishlistTagInput = ({
     <div 
       ref={containerRef}
       className={`flex flex-wrap items-center gap-2 p-2 border rounded-md min-h-[42px] ${
-        disabled ? "bg-gray-50 cursor-not-allowed" : "bg-background cursor-text"
+        disabled ? "bg-muted/50 cursor-not-allowed" : "bg-background cursor-text"
       }`}
       onClick={handleContainerClick}
     >

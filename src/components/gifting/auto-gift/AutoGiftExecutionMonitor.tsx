@@ -34,9 +34,9 @@ const AutoGiftExecutionMonitor = () => {
       case 'failed':
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'cancelled':
-        return <XCircle className="h-4 w-4 text-gray-500" />;
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 

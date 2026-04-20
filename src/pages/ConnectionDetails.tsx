@@ -46,10 +46,10 @@ const ConnectionDetails = () => {
           </Button>
         </div>
         <div className="animate-pulse">
-          <div className="h-48 bg-gray-200 rounded-t-lg mb-16"></div>
+          <div className="h-48 bg-muted rounded-t-lg mb-16"></div>
           <div className="h-32 w-32 bg-gray-300 rounded-full mx-8 -mt-16 mb-8"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4 mx-8"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-8 mx-8"></div>
+          <div className="h-8 bg-muted rounded w-1/3 mb-4 mx-8"></div>
+          <div className="h-4 bg-muted rounded w-1/4 mb-8 mx-8"></div>
         </div>
       </div>
       </SidebarLayout>

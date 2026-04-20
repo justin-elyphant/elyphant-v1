@@ -129,7 +129,7 @@ const WishlistCard = ({ wishlist, onEdit, onDelete }: WishlistCardProps) => {
             {getPriorityBadge()}
 
             {wishlist.tags?.map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs bg-gray-50">
+              <Badge key={tag} variant="outline" className="text-xs bg-muted/50">
                 {tag}
               </Badge>
             ))}

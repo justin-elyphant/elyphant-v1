@@ -513,7 +513,7 @@ const TrunklineScaling: React.FC = () => {
                     <Badge variant="secondary">Warning</Badge>
                   </div>
 
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                     <div>
                       <p className="font-medium">10K Users Test</p>
                       <p className="text-sm text-muted-foreground">Scheduled for tomorrow</p>

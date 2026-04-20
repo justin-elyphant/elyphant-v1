@@ -32,14 +32,14 @@ const GroupedSearchResultsComponent: React.FC<GroupedSearchResultsProps> = ({
     <div className="space-y-6">
       {/* Enhanced Header with Search Metrics */}
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           Gift Ideas by Category
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Found {groupedResults.totalResults} products across {groupedResults.categories.length} categories
         </p>
         {groupedResults.searchMetrics && (
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Search completed in {(groupedResults.searchMetrics.totalSearchTime / 1000).toFixed(2)}s • 
             {groupedResults.searchMetrics.successfulSearches} successful searches
           </p>
@@ -149,7 +149,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-medium text-gray-900">
+          <CardTitle className="text-lg font-medium text-foreground">
             {sectionTitle}
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -167,11 +167,11 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Search: "{category.searchQuery}"
           </p>
           {category.searchTime && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {category.searchTime}ms
             </p>
           )}
@@ -210,7 +210,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleSeeMore}
-            className="flex-1 text-gray-600 hover:text-gray-700"
+            className="flex-1 text-muted-foreground hover:text-muted-foreground"
           >
             View all in marketplace →
           </Button>
@@ -265,13 +265,13 @@ const CrossCategorySuggestionsSection: React.FC<CrossCategorySuggestionsProps> =
       <CardContent className="pt-0">
         <div className="space-y-3">
           {suggestions.map((suggestion, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-purple-100">
+            <div key={index} className="flex items-center justify-between p-3 bg-background rounded-lg border border-purple-100">
               <div className="flex-1">
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-muted-foreground">
                   Since you're interested in <span className="font-medium text-purple-700">{suggestion.fromCategory}</span>, 
                   you might enjoy <span className="font-medium text-purple-700">{suggestion.toCategory}</span>
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{suggestion.reasoning}</p>
+                <p className="text-xs text-muted-foreground mt-1">{suggestion.reasoning}</p>
               </div>
               <Button
                 variant="outline"

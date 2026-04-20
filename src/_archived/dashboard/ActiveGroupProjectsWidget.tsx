@@ -87,7 +87,7 @@ const ActiveGroupProjectsWidget = () => {
       case 'ready_to_purchase':
         return 'bg-green-500/10 text-green-600 border-green-200';
       default:
-        return 'bg-gray-500/10 text-gray-600 border-gray-200';
+        return 'bg-gray-500/10 text-muted-foreground border-border';
     }
   };
 

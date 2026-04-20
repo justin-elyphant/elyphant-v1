@@ -186,11 +186,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <CardContent>
               {isPublicView && !user ? (
                 <div className="text-center py-8">
-                  <EyeOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <EyeOff className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Sign up to see {profile?.name}'s wishlists
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Create your account to view and interact with wishlists.
                   </p>
                   <a 
@@ -202,8 +202,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 </div>
               ) : wishlistsLoading ? (
                 <div className="text-center py-8">
-                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
-                  <p className="text-gray-600">Loading wishlists...</p>
+                  <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+                  <p className="text-muted-foreground">Loading wishlists...</p>
                 </div>
               ) : wishlists.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -265,8 +265,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">
+                  <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
                     {isOwnProfile 
                       ? "You don't have any public wishlists yet."
                       : `${profile?.name} hasn't created any public wishlists yet.`
@@ -306,7 +306,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">No recent activity to display.</p>
+                  <p className="text-muted-foreground">No recent activity to display.</p>
                 </CardContent>
               </Card>
             </TabsContent>

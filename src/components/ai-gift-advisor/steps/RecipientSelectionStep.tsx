@@ -36,7 +36,7 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
             : "Who are you shopping for?"
           }
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {isAuthenticated 
             ? "I can use your friend connections to make this super easy" 
             : "Select a friend or choose \"Someone else\" to enter details manually"
@@ -63,11 +63,11 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
         {displayConnections.length > 0 ? (
           <>
             <div className="flex items-center gap-2 mb-3">
-              <Users className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">
                 {isAuthenticated ? "Your Friends" : "Friend Shopping (Preview)"}
               </span>
-              {!isAuthenticated && <Lock className="h-3 w-3 text-gray-400" />}
+              {!isAuthenticated && <Lock className="h-3 w-3 text-muted-foreground" />}
             </div>
             
             {displayConnections.map((connection) => {
@@ -94,7 +94,7 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
                   </Avatar>
                   <div className="text-left flex-1">
                     <div className="font-medium">{friendName}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {isAuthenticated 
                         ? "Has wishlist & preferences" 
                         : `${connection.hasWishlist ? 'Has wishlist' : 'No wishlist'} • AI preferences`
@@ -103,7 +103,7 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
                   </div>
                   {!isAuthenticated && (
                     <div className="absolute top-2 right-2">
-                      <Lock className="h-4 w-4 text-gray-400" />
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                     </div>
                   )}
                 </Button>
@@ -111,7 +111,7 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
             })}
           </>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="text-sm">
               {isAuthenticated ? "No friends connected yet" : "Connect with friends to unlock this feature"}
@@ -123,13 +123,13 @@ const RecipientSelectionStep = ({ connections, selectFriend, nextStep, botState 
       <div className="border-t pt-4">
         <Button
           variant="outline"
-          className="w-full justify-start p-3 h-auto hover:bg-gray-50"
+          className="w-full justify-start p-3 h-auto hover:bg-muted/50"
           onClick={handleSomeoneElse}
         >
-          <UserPlus className="h-5 w-5 mr-3 text-gray-500" />
+          <UserPlus className="h-5 w-5 mr-3 text-muted-foreground" />
           <div className="text-left">
             <div className="font-medium">Someone else</div>
-            <div className="text-xs text-gray-500">Enter details manually</div>
+            <div className="text-xs text-muted-foreground">Enter details manually</div>
           </div>
         </Button>
       </div>

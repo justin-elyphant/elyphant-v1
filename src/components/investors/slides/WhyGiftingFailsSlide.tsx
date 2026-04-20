@@ -78,10 +78,10 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
             <h3 className="text-sm md:text-base font-semibold text-white mb-1">
               {point.title}
             </h3>
-            <p className="text-gray-400 text-xs md:text-sm mb-2">
+            <p className="text-muted-foreground text-xs md:text-sm mb-2">
               {point.description}
             </p>
-            <p className="text-gray-600 text-xs">
+            <p className="text-muted-foreground text-xs">
               Source: {point.source}
             </p>
           </motion.div>

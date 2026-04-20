@@ -27,7 +27,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <Calendar className="h-4 w-4 text-green-500" />;
       case 'system':
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -39,7 +39,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   return (
     <div 
       className={`p-4 border-b last:border-b-0 transition-colors ${
-        notification.read ? 'bg-white' : 'bg-blue-50'
+        notification.read ? 'bg-background' : 'bg-blue-50'
       }`}
       onClick={onRead}
     >
@@ -50,10 +50,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">{notification.title}</p>
-          <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
+          <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
           
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs text-gray-400">{formattedTime}</span>
+            <span className="text-xs text-muted-foreground">{formattedTime}</span>
             
             {notification.link && (
               <Button 

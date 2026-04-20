@@ -147,8 +147,8 @@ const EmailPreviewPanel: React.FC<EmailPreviewPanelProps> = ({ className }) => {
                 <CardContent>
                   <div className="space-y-4">
                     {/* Subject Line */}
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm font-medium text-gray-700">Subject:</p>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm font-medium text-muted-foreground">Subject:</p>
                       <p className="text-sm">{currentTemplate.subject}</p>
                     </div>
 
@@ -156,18 +156,18 @@ const EmailPreviewPanel: React.FC<EmailPreviewPanelProps> = ({ className }) => {
                     <div className={`border rounded-lg overflow-hidden ${
                       previewMode === 'mobile' ? 'max-w-sm mx-auto' : 'w-full'
                     }`}>
-                      <div className="bg-gray-100 px-3 py-2 border-b">
+                      <div className="bg-muted px-3 py-2 border-b">
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-red-400"></div>
                           <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                           <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                          <span className="text-xs text-gray-600 ml-2">
+                          <span className="text-xs text-muted-foreground ml-2">
                             {previewMode === 'mobile' ? 'Mobile Preview' : 'Desktop Preview'}
                           </span>
                         </div>
                       </div>
                       <div 
-                        className={`bg-white ${
+                        className={`bg-background ${
                           previewMode === 'mobile' ? 'h-96' : 'h-96'
                         } overflow-y-auto`}
                         style={{ 

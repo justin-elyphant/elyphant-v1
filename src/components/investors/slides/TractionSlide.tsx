@@ -27,7 +27,7 @@ const TractionSlide = ({ direction }: SlideProps) => {
       case 'current':
         return <Circle className="w-2 h-2 fill-current text-sky-400" />;
       case 'upcoming':
-        return <Circle className="w-2 h-2 text-gray-500" />;
+        return <Circle className="w-2 h-2 text-muted-foreground" />;
       case 'target':
         return <Target className="w-2.5 h-2.5 text-purple-400" />;
       default:
@@ -77,25 +77,25 @@ const TractionSlide = ({ direction }: SlideProps) => {
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             <AnimatedCounter value={2500} duration={2} />+
           </div>
-          <div className="text-gray-400 text-[10px] md:text-xs">Users Registered</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Users Registered</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-center">
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             <AnimatedCounter value={850} duration={1.8} />+
           </div>
-          <div className="text-gray-400 text-[10px] md:text-xs">Gifts Delivered</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Gifts Delivered</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-center">
           <div className="text-2xl md:text-3xl font-bold text-green-400 mb-1">
             <AnimatedCounter value={94} duration={1.5} />%
           </div>
-          <div className="text-gray-400 text-[10px] md:text-xs">Satisfaction Rate</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Satisfaction Rate</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-center">
           <div className="text-2xl md:text-3xl font-bold text-purple-400 mb-1">
             $<AnimatedCounter value={38} duration={1.5} />K
           </div>
-          <div className="text-gray-400 text-[10px] md:text-xs">GMV To Date</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">GMV To Date</div>
         </div>
       </motion.div>
 
@@ -121,7 +121,7 @@ const TractionSlide = ({ direction }: SlideProps) => {
                 <div className={`text-[10px] md:text-xs font-medium ${milestone.status === 'current' ? 'text-sky-400' : 'text-white'}`}>
                   {milestone.date}
                 </div>
-                <div className={`text-[9px] md:text-[10px] text-center max-w-[60px] mt-0.5 ${milestone.status === 'current' ? 'text-sky-400/70' : 'text-gray-500'}`}>
+                <div className={`text-[9px] md:text-[10px] text-center max-w-[60px] mt-0.5 ${milestone.status === 'current' ? 'text-sky-400/70' : 'text-muted-foreground'}`}>
                   {milestone.event}
                 </div>
               </motion.div>

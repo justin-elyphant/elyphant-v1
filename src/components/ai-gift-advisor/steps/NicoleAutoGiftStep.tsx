@@ -42,10 +42,10 @@ const NicoleAutoGiftStep = ({
       </div>
       
       <div className="space-y-3">
-        <h2 className="text-xl font-bold text-gray-900">
+        <h2 className="text-xl font-bold text-foreground">
           Perfect, {user?.user_metadata?.first_name || "there"}! 
         </h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           I can handle everything for gifting {recipientName}. Would you like me to pick the perfect gift for you, or would you prefer to help curate the selection together?
         </p>
       </div>
@@ -61,12 +61,12 @@ const NicoleAutoGiftStep = ({
           <CardContent className="p-4 text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
               <Zap className="h-5 w-5 text-purple-600" />
-              <h3 className="font-semibold text-gray-900">Let Nicole Handle It</h3>
+              <h3 className="font-semibold text-foreground">Let Nicole Handle It</h3>
               <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
                 Recommended
               </Badge>
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               I'll pick the perfect gift based on your relationship and deliver it automatically
             </p>
             <div className="flex items-center justify-center gap-4 text-xs text-purple-600">
@@ -92,9 +92,9 @@ const NicoleAutoGiftStep = ({
           <CardContent className="p-4 text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
               <Users className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-900">Let's Curate Together</h3>
+              <h3 className="font-semibold text-foreground">Let's Curate Together</h3>
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               I'll ask a few questions to help find exactly what {recipientName} would love
             </p>
             <div className="flex items-center justify-center gap-4 text-xs text-blue-600">
@@ -112,7 +112,7 @@ const NicoleAutoGiftStep = ({
       </div>
 
       <div className="text-center">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Both options create the same amazing auto-gifting experience, {user?.user_metadata?.first_name}
         </p>
       </div>

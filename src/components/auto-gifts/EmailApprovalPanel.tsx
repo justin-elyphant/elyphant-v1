@@ -201,7 +201,7 @@ const EmailApprovalPanel: React.FC<EmailApprovalPanelProps> = ({
               return (
                 <div 
                   key={token.id} 
-                  className={`p-3 border rounded-lg ${expired ? 'bg-gray-50' : 'bg-white'}`}
+                  className={`p-3 border rounded-lg ${expired ? 'bg-muted/50' : 'bg-background'}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ const EmailApprovalPanel: React.FC<EmailApprovalPanelProps> = ({
                             .map((log, index) => (
                               <span 
                                 key={log.id} 
-                                className="text-xs px-2 py-1 bg-gray-100 rounded"
+                                className="text-xs px-2 py-1 bg-muted rounded"
                               >
                                 {log.delivery_status}
                               </span>

@@ -112,7 +112,7 @@ const TrackingPrivacyControls = ({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Delivery Address</span>
-              <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+              <Badge variant="secondary" className="bg-muted text-foreground">
                 <EyeOff className="h-3 w-3 mr-1" />
                 Hidden
               </Badge>

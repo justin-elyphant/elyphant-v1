@@ -38,7 +38,7 @@ const VendorsTable: React.FC<VendorsTableProps> = ({ vendors }) => {
       case "rejected":
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
       case "suspended":
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200"><Ban className="h-3 w-3 mr-1" />Suspended</Badge>;
+        return <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border"><Ban className="h-3 w-3 mr-1" />Suspended</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }

@@ -29,15 +29,15 @@ const GeneratingStep = ({ generateSearchQuery, botState }: GeneratingStepProps) 
       </div>
       
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           🎯 Finding Perfect Gifts
         </h3>
-        <p className="text-sm text-gray-600 leading-relaxed max-w-sm">
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
           I'm analyzing {recipientName}'s preferences and searching for the best gift options for {botState.occasion}...
         </p>
       </div>
 
-      <div className="space-y-2 text-xs text-gray-500">
+      <div className="space-y-2 text-xs text-muted-foreground">
         <div className="flex items-center justify-center gap-2">
           <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
           <span>Checking wishlist items</span>

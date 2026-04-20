@@ -73,7 +73,7 @@ const featureComparison = [
 const CompetitionSlide = ({ direction }: SlideProps) => {
   const renderFeatureIcon = (value: boolean) => {
     if (value) return <Check className="w-3 h-3 text-green-400" />;
-    return <X className="w-3 h-3 text-gray-600" />;
+    return <X className="w-3 h-3 text-muted-foreground" />;
   };
 
   return (
@@ -97,7 +97,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Subtitle */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-center mb-4 text-xs"
+        className="text-muted-foreground text-center mb-4 text-xs"
       >
         The giants are missing what matters most
       </motion.p>
@@ -118,14 +118,14 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
               className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 min-w-[100px]`}
             >
               <div className="flex items-center gap-1 mb-0.5">
-                <Icon className={`w-3 h-3 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-gray-400'}`} />
-                <span className="text-[10px] text-gray-500 uppercase tracking-wider">{comp.tier}</span>
+                <Icon className={`w-3 h-3 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-muted-foreground'}`} />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{comp.tier}</span>
               </div>
               <div className="text-white font-bold text-sm">{comp.name}</div>
               <div className="text-purple-300 font-semibold text-xs">
                 {comp.funding}
               </div>
-              <div className="text-gray-500 text-[10px]">{comp.gap}</div>
+              <div className="text-muted-foreground text-[10px]">{comp.gap}</div>
             </motion.div>
           );
         })}
@@ -140,14 +140,14 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
           <Table>
             <TableHeader>
               <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-gray-400 font-medium text-[10px] md:text-xs py-2">Feature</TableHead>
+                <TableHead className="text-muted-foreground font-medium text-[10px] md:text-xs py-2">Feature</TableHead>
                 <TableHead className="text-center bg-gradient-to-b from-purple-500/20 to-sky-500/20 py-2">
                   <span className="text-white font-bold text-[10px] md:text-xs">Elyphant</span>
                 </TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Etsy</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Elfster</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Snappy</TableHead>
-                <TableHead className="text-center text-gray-400 font-medium text-[10px] md:text-xs py-2">Goody</TableHead>
+                <TableHead className="text-center text-muted-foreground font-medium text-[10px] md:text-xs py-2">Etsy</TableHead>
+                <TableHead className="text-center text-muted-foreground font-medium text-[10px] md:text-xs py-2">Elfster</TableHead>
+                <TableHead className="text-center text-muted-foreground font-medium text-[10px] md:text-xs py-2">Snappy</TableHead>
+                <TableHead className="text-center text-muted-foreground font-medium text-[10px] md:text-xs py-2">Goody</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -156,7 +156,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
                   key={row.feature}
                   className="border-white/5 hover:bg-white/5"
                 >
-                  <TableCell className="text-gray-300 text-[10px] md:text-xs font-medium py-1.5">
+                  <TableCell className="text-muted-foreground/50 text-[10px] md:text-xs font-medium py-1.5">
                     {row.feature}
                     {(row.feature === "Auto-Gifting" || row.feature === "Group Funding") && (
                       <span className="ml-1 text-[8px] bg-purple-500/20 text-purple-300 px-1 py-0.5 rounded">UNIQUE</span>
@@ -179,7 +179,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Closing Tagline */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-xs mt-4 text-center italic"
+        className="text-muted-foreground text-xs mt-4 text-center italic"
       >
         "We're building what $7B+ in market value hasn't solved"
       </motion.p>

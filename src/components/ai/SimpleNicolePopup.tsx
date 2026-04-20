@@ -195,7 +195,7 @@ const SimpleNicolePopup = ({
                 <div className={`max-w-[80%] rounded-lg p-3 ${
                   msg.role === 'user' 
                     ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-br-md' 
-                    : 'bg-white/50 text-gray-800 border border-white/30 rounded-bl-md shadow-sm'
+                    : 'bg-white/50 text-foreground border border-white/30 rounded-bl-md shadow-sm'
                 }`}>
                   <p className="text-sm leading-relaxed">{msg.content}</p>
                   
@@ -240,7 +240,7 @@ const SimpleNicolePopup = ({
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                     <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <span className="text-sm text-gray-600 ml-2">Nicole is thinking...</span>
+                    <span className="text-sm text-muted-foreground ml-2">Nicole is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -270,7 +270,7 @@ const SimpleNicolePopup = ({
             
             {/* Context Display */}
             {Object.keys(context).length > 0 && (
-              <div className="mt-2 text-xs text-gray-600">
+              <div className="mt-2 text-xs text-muted-foreground">
                 Context: {context.recipient && `${context.recipient}`}
                 {context.occasion && ` • ${context.occasion}`}
                 {context.budget && ` • $${context.budget[0]}-$${context.budget[1]}`}

@@ -38,7 +38,7 @@ const MobileGroupedResults: React.FC<MobileGroupedResultsProps> = ({
 
       {/* Mobile-specific footer for better UX */}
       {isMobile && groupedResults.categories.length > 0 && (
-        <div className="mt-6 text-center text-xs text-gray-500 pb-4">
+        <div className="mt-6 text-center text-xs text-muted-foreground pb-4">
           Swipe horizontally to see more products in each category
         </div>
       )}

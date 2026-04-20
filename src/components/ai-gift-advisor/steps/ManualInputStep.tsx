@@ -77,7 +77,7 @@ const ManualInputStep = ({ setRecipientDetails }: ManualInputStepProps) => {
     <div className="flex flex-col h-full p-4 space-y-4 overflow-y-auto">
       <div className="text-center mb-2">
         <h3 className="text-lg font-semibold mb-1">Tell me about them</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Help me understand who you're shopping for.
         </p>
       </div>

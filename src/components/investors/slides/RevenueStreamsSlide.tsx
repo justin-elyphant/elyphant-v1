@@ -93,7 +93,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
               stream.status === 'Active' 
                 ? 'bg-green-500/20 text-green-400' 
                 : stream.status === 'Roadmap'
-                ? 'bg-gray-500/20 text-gray-400'
+                ? 'bg-gray-500/20 text-muted-foreground'
                 : 'bg-purple-500/20 text-purple-400'
             }`}>
               {stream.status}
@@ -114,16 +114,16 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
                 {/* Year projections */}
                 <div className="flex gap-3 text-xs mb-1">
                   <div>
-                    <span className="text-gray-500">Y2:</span>
+                    <span className="text-muted-foreground">Y2:</span>
                     <span className="text-white ml-1">{stream.year2}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Y5:</span>
+                    <span className="text-muted-foreground">Y5:</span>
                     <span className="text-green-400 ml-1">{stream.year5}</span>
                   </div>
                 </div>
                 
-                <p className="text-gray-500 text-[10px] md:text-xs italic">
+                <p className="text-muted-foreground text-[10px] md:text-xs italic">
                   {stream.note}
                 </p>
               </div>
@@ -137,7 +137,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="w-full mb-3"
       >
-        <p className="text-gray-400 text-xs mb-1.5 text-center">Year 5 Revenue Mix</p>
+        <p className="text-muted-foreground text-xs mb-1.5 text-center">Year 5 Revenue Mix</p>
         <div className="h-6 rounded-full overflow-hidden flex bg-white/5">
           {revenueMix.map((item, index) => (
             <motion.div
@@ -157,7 +157,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         </div>
         <div className="flex justify-center gap-3 mt-1.5">
           {revenueMix.map((item) => (
-            <div key={item.label} className="flex items-center gap-1 text-[10px] text-gray-500">
+            <div key={item.label} className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${item.color}`} />
               {item.label}
             </div>
@@ -169,8 +169,8 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full"
       >
-        <p className="text-gray-500 text-[10px] text-center">
-          <span className="text-gray-400 font-medium">Conservative:</span>{' '}
+        <p className="text-muted-foreground text-[10px] text-center">
+          <span className="text-muted-foreground font-medium">Conservative:</span>{' '}
           100K→1M users • 25% active • $75 AOV • 3 gifts/yr • 2% subs
         </p>
       </motion.div>

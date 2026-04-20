@@ -24,7 +24,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       <div
         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
           isFromNicole
-            ? 'bg-gray-100 text-gray-800'
+            ? 'bg-muted text-foreground'
             : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
         }`}
       >

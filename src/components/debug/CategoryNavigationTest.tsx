@@ -194,7 +194,7 @@ const CategoryNavigationTest: React.FC = () => {
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />;
+        return <div className="h-4 w-4 rounded-full border-2 border-border" />;
     }
   };
 
@@ -207,7 +207,7 @@ const CategoryNavigationTest: React.FC = () => {
       case 'error':
         return 'border-red-200 bg-red-50';
       default:
-        return 'border-gray-200 bg-gray-50';
+        return 'border-border bg-muted/50';
     }
   };
 

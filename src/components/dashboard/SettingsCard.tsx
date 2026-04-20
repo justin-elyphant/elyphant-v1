@@ -9,7 +9,7 @@ const SettingsCard = () => {
     <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex items-center">
-          <Settings className="h-5 w-5 mr-2 text-gray-500" />
+          <Settings className="h-5 w-5 mr-2 text-muted-foreground" />
           Account Settings
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">

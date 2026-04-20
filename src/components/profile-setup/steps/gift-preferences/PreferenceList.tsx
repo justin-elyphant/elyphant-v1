@@ -58,7 +58,7 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
                 onClick={() => onUpdateImportance(index, "low")}
                 className={cn(
                   "px-1.5 py-0.5",
-                  preference.importance === "low" ? "bg-slate-100 text-slate-800" : "bg-white text-slate-500 hover:bg-slate-50"
+                  preference.importance === "low" ? "bg-slate-100 text-slate-800" : "bg-background text-slate-500 hover:bg-slate-50"
                 )}
               >
                 Low
@@ -67,7 +67,7 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
                 onClick={() => onUpdateImportance(index, "medium")}
                 className={cn(
                   "px-1.5 py-0.5",
-                  preference.importance === "medium" ? "bg-orange-100 text-orange-800" : "bg-white text-slate-500 hover:bg-slate-50"
+                  preference.importance === "medium" ? "bg-orange-100 text-orange-800" : "bg-background text-slate-500 hover:bg-slate-50"
                 )}
               >
                 Medium
@@ -76,7 +76,7 @@ const PreferenceList: React.FC<PreferenceListProps> = ({
                 onClick={() => onUpdateImportance(index, "high")}
                 className={cn(
                   "px-1.5 py-0.5",
-                  preference.importance === "high" ? "bg-primary/10 text-primary" : "bg-white text-slate-500 hover:bg-slate-50"
+                  preference.importance === "high" ? "bg-primary/10 text-primary" : "bg-background text-slate-500 hover:bg-slate-50"
                 )}
               >
                 High

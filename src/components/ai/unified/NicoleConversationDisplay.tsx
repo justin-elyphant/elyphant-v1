@@ -119,8 +119,8 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
             <div
               className={`max-w-[80%] px-4 py-3 rounded-2xl backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] ${
                 message.role === 'user'
-                  ? 'bg-gradient-to-br from-purple-500/30 to-indigo-500/30 text-gray-800 border border-purple-400/30 rounded-br-md'
-                  : 'bg-white/50 text-gray-800 border border-white/30 rounded-bl-md shadow-sm'
+                  ? 'bg-gradient-to-br from-purple-500/30 to-indigo-500/30 text-foreground border border-purple-400/30 rounded-br-md'
+                  : 'bg-white/50 text-foreground border border-white/30 rounded-bl-md shadow-sm'
               }`}
             >
               {message.type === 'recommendations' ? (
@@ -172,7 +172,7 @@ export const NicoleConversationDisplay: React.FC<NicoleConversationDisplayProps>
                 <Bot className="w-3 h-3" />
               </AvatarFallback>
             </Avatar>
-            <div className="bg-white/50 text-gray-800 px-4 py-3 rounded-2xl rounded-bl-md backdrop-blur-sm border border-white/30">
+            <div className="bg-white/50 text-foreground px-4 py-3 rounded-2xl rounded-bl-md backdrop-blur-sm border border-white/30">
               <TypingIndicator userName="Nicole" />
             </div>
           </div>

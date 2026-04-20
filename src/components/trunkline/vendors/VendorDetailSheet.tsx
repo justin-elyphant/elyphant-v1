@@ -51,7 +51,7 @@ const VendorDetailSheet: React.FC<VendorDetailSheetProps> = ({
     approved: { label: "Approved", className: "bg-green-50 text-green-700 border-green-200", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
     pending: { label: "Pending", className: "bg-yellow-50 text-yellow-700 border-yellow-200", icon: <Clock className="h-3 w-3 mr-1" /> },
     rejected: { label: "Rejected", className: "bg-red-50 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3 mr-1" /> },
-    suspended: { label: "Suspended", className: "bg-gray-50 text-gray-700 border-gray-200", icon: <Ban className="h-3 w-3 mr-1" /> },
+    suspended: { label: "Suspended", className: "bg-muted/50 text-muted-foreground border-border", icon: <Ban className="h-3 w-3 mr-1" /> },
   };
 
   const status = statusConfig[vendor.approval_status] || { label: "Unknown", className: "", icon: null };

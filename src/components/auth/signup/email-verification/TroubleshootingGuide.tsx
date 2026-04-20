@@ -3,7 +3,7 @@ import React from "react";
 
 const TroubleshootingGuide = () => {
   return (
-    <div className="text-sm text-center text-gray-600">
+    <div className="text-sm text-center text-muted-foreground">
       <p className="mb-2">Having trouble?</p>
       <ul className="list-disc text-left ml-6 space-y-1">
         <li>Check your spam or junk folder</li>

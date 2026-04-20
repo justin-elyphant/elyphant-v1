@@ -79,7 +79,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
               Elyphant
             </span>
           </motion.div>
-          <p className="text-gray-400 text-lg">Investor Relations</p>
+          <p className="text-muted-foreground text-lg">Investor Relations</p>
         </div>
 
         {/* Main Card */}
@@ -97,14 +97,14 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                   <Lock className="w-8 h-8 text-purple-400" />
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">Pitch Deck Access</h1>
-                <p className="text-gray-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Enter your access code to view our investor presentation
                 </p>
               </div>
 
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="password" className="text-gray-300">Access Code</Label>
+                  <Label htmlFor="password" className="text-muted-foreground/50">Access Code</Label>
                   <Input
                     id="password"
                     type="password"
@@ -114,7 +114,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                       setError('');
                     }}
                     placeholder="Enter access code"
-                    className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
+                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500 focus:ring-purple-500/20"
                   />
                   {error && (
                     <motion.p
@@ -142,7 +142,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                   <div className="w-full border-t border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-gray-800/50 text-gray-500">or</span>
+                  <span className="px-3 bg-gray-800/50 text-muted-foreground">or</span>
                 </div>
               </div>
 
@@ -150,7 +150,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
               <Button
                 variant="outline"
                 onClick={() => setShowInquiryForm(true)}
-                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                className="w-full border-gray-600 text-muted-foreground/50 hover:bg-gray-700/50 hover:text-white"
               >
                 <Mail className="w-4 h-4 mr-2" />
                 Request Access / Inquire
@@ -164,14 +164,14 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                   <Mail className="w-8 h-8 text-sky-400" />
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">Investor Inquiry</h1>
-                <p className="text-gray-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Get in touch with our investor relations team
                 </p>
               </div>
 
               <form onSubmit={handleInquirySubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name" className="text-gray-300">Full Name</Label>
+                  <Label htmlFor="name" className="text-muted-foreground/50">Full Name</Label>
                   <Input
                     id="name"
                     type="text"
@@ -179,12 +179,12 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                     onChange={(e) => setInquiryForm(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Your name"
                     required
-                    className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-500 focus:border-purple-500"
+                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className="text-gray-300">Email</Label>
+                  <Label htmlFor="email" className="text-muted-foreground/50">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -192,31 +192,31 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                     onChange={(e) => setInquiryForm(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="you@firm.com"
                     required
-                    className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-500 focus:border-purple-500"
+                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="firm" className="text-gray-300">Firm / Organization</Label>
+                  <Label htmlFor="firm" className="text-muted-foreground/50">Firm / Organization</Label>
                   <Input
                     id="firm"
                     type="text"
                     value={inquiryForm.firm}
                     onChange={(e) => setInquiryForm(prev => ({ ...prev, firm: e.target.value }))}
                     placeholder="Your firm name"
-                    className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-500 focus:border-purple-500"
+                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="message" className="text-gray-300">Message</Label>
+                  <Label htmlFor="message" className="text-muted-foreground/50">Message</Label>
                   <Textarea
                     id="message"
                     value={inquiryForm.message}
                     onChange={(e) => setInquiryForm(prev => ({ ...prev, message: e.target.value }))}
                     placeholder="Tell us about your interest in Elyphant..."
                     rows={3}
-                    className="mt-1 bg-gray-900/50 border-gray-600 text-white placeholder:text-gray-500 focus:border-purple-500 resize-none"
+                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500 resize-none"
                   />
                 </div>
 
@@ -239,7 +239,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
                   type="button"
                   variant="ghost"
                   onClick={() => setShowInquiryForm(false)}
-                  className="w-full text-gray-400 hover:text-white hover:bg-gray-700/30"
+                  className="w-full text-muted-foreground hover:text-white hover:bg-gray-700/30"
                 >
                   Back to Password Entry
                 </Button>
@@ -257,13 +257,13 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
         >
           <a
             href="mailto:invest@elyphant.com"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-purple-400 transition-colors"
           >
             <Mail className="w-4 h-4" />
             invest@elyphant.com
           </a>
           
-          <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
             <Calendar className="w-4 h-4" />
             <a
               href="https://calendly.com/elyphant"
@@ -275,7 +275,7 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
             </a>
           </div>
 
-          <p className="text-gray-600 text-xs mt-4">
+          <p className="text-muted-foreground text-xs mt-4">
             © 2026 Elyphant Inc. All rights reserved.
           </p>
         </motion.div>

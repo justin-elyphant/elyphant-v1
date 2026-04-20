@@ -78,7 +78,7 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
               stream.status === 'Active' 
                 ? 'bg-green-500/20 text-green-400' 
                 : stream.status === 'Roadmap'
-                ? 'bg-gray-500/20 text-gray-400'
+                ? 'bg-gray-500/20 text-muted-foreground'
                 : 'bg-purple-500/20 text-purple-400'
             }`}>
               {stream.status}
@@ -94,7 +94,7 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
               {stream.value}
             </div>
             
-            <p className="text-gray-500 text-[10px] md:text-xs">
+            <p className="text-muted-foreground text-[10px] md:text-xs">
               {stream.description}
             </p>
           </motion.div>
@@ -108,17 +108,17 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
       >
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-white">$75</div>
-          <div className="text-gray-500 text-[10px] md:text-xs">Avg Order Value</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Avg Order Value</div>
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-white">$15</div>
-          <div className="text-gray-500 text-[10px] md:text-xs">Gross Margin/Order</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Gross Margin/Order</div>
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-green-400">20%</div>
-          <div className="text-gray-500 text-[10px] md:text-xs">Take Rate</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">Take Rate</div>
         </div>
       </motion.div>
 
@@ -133,12 +133,12 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs">
           <div>
             <span className="text-purple-400 font-medium">Consumers:</span>
-            <span className="text-gray-300 ml-1">Gift anxiety eliminated</span>
+            <span className="text-muted-foreground/50 ml-1">Gift anxiety eliminated</span>
           </div>
           <div className="hidden sm:block w-px h-4 bg-gray-700" />
           <div>
             <span className="text-green-400 font-medium">Retailers:</span>
-            <span className="text-gray-300 ml-1">17% holiday returns recovered</span>
+            <span className="text-muted-foreground/50 ml-1">17% holiday returns recovered</span>
           </div>
         </div>
       </motion.div>

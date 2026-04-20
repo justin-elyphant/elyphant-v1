@@ -293,7 +293,7 @@ const EndToEndFlowTest: React.FC = () => {
       case 'running':
         return <Clock className="h-4 w-4 text-blue-600 animate-spin" />;
       default:
-        return <div className="h-4 w-4 border-2 border-gray-300 rounded-full" />;
+        return <div className="h-4 w-4 border-2 border-border rounded-full" />;
     }
   };
 
@@ -359,7 +359,7 @@ const EndToEndFlowTest: React.FC = () => {
                   <div
                     key={step.id}
                     className={`flex items-start gap-3 p-3 rounded-lg border ${
-                      currentStep === step.id ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
+                      currentStep === step.id ? 'bg-blue-50 border-blue-200' : 'bg-muted/50'
                     }`}
                   >
                     {getStepIcon(step.status)}

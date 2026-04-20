@@ -116,7 +116,7 @@ const WishlistsCard = () => {
                   <ScrollArea className="h-[280px]">
                     <div className="space-y-2 pr-4">
                       {wishlists.slice(0, 8).map((wishlist) => (
-                        <div key={wishlist.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div key={wishlist.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="text-sm font-medium truncate">{wishlist.title}</h4>
@@ -152,7 +152,7 @@ const WishlistsCard = () => {
                         {allItems.slice(0, 10).map((item, index) => (
                           <div 
                             key={`${item.id}-${index}`} 
-                            className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                            className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                             onClick={() => handleProductClick(item)}
                           >
                             {item.image_url && (

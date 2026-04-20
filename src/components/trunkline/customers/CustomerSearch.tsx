@@ -57,7 +57,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({ onSelectCustomer }) => 
         {searchResults.length > 0 ? (
           <div className="border rounded-md divide-y">
             {searchResults.map((customer) => (
-              <div key={customer.id} className="p-4 flex justify-between items-center hover:bg-gray-50 cursor-pointer" onClick={() => onSelectCustomer(customer)}>
+              <div key={customer.id} className="p-4 flex justify-between items-center hover:bg-muted/50 cursor-pointer" onClick={() => onSelectCustomer(customer)}>
                 <div className="flex items-center space-x-4">
                   <Avatar>
                     <AvatarImage src={customer.avatar} alt={customer.name} />

@@ -47,7 +47,7 @@ const NicoleActivityFeed: React.FC<NicoleActivityFeedProps> = ({
       case 'completed':
         return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+        return 'bg-muted text-foreground dark:bg-foreground/30 dark:text-muted-foreground';
     }
   };
 

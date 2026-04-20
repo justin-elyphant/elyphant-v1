@@ -82,7 +82,7 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.8, duration: 0.8 }}
-        className="absolute bottom-28 sm:bottom-32 md:bottom-36 text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 text-center px-4 z-10"
+        className="absolute bottom-28 sm:bottom-32 md:bottom-36 text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground/50 text-center px-4 z-10"
       >
         The Future of Thoughtful Gifting
       </motion.p>
@@ -93,7 +93,7 @@ const WelcomeSlide = ({ direction, onNext }: SlideProps) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 2.2, duration: 0.5 }}
         onClick={onNext}
-        className="absolute bottom-16 sm:bottom-18 md:bottom-20 flex flex-col items-center gap-1.5 text-gray-400 hover:text-white transition-colors z-10"
+        className="absolute bottom-16 sm:bottom-18 md:bottom-20 flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-colors z-10"
       >
         <span className="text-xs md:text-sm">Discover Our Solution</span>
         <motion.div

@@ -120,7 +120,7 @@ const AutoGiftApprovalDashboard: React.FC = () => {
               <h4 className="font-medium text-sm">Selected Gifts:</h4>
               <div className="grid grid-cols-1 gap-2">
                 {products.slice(0, 2).map((product: any, index: number) => (
-                  <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
                     {product.image && (
                       <img 
                         src={product.image} 

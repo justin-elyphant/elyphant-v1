@@ -66,7 +66,7 @@ const SlideNavigation = ({
       </div>
 
       {/* Slide counter - bottom left, inside container */}
-      <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 text-gray-400 text-xs md:text-sm font-mono z-50">
+      <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 text-muted-foreground text-xs md:text-sm font-mono z-50">
         {String(currentSlide + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
       </div>
     </>

@@ -225,7 +225,7 @@ const PhaseCompletionStatus = ({ className }: PhaseCompletionStatusProps) => {
                 
                 <div className="space-y-2">
                   {phase.checks.map((check, checkIndex) => (
-                    <div key={checkIndex} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div key={checkIndex} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 dark:bg-gray-800">
                       <div className="flex items-center gap-2">
                         {check.status ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />

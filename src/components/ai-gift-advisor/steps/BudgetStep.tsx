@@ -21,7 +21,7 @@ const BudgetStep = ({ setBudget }: BudgetStepProps) => {
     <div className="flex flex-col h-full p-4 space-y-6">
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold mb-2">Perfect! What's your budget?</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           I'll find amazing options that fit your budget and the occasion.
         </p>
       </div>
@@ -29,7 +29,7 @@ const BudgetStep = ({ setBudget }: BudgetStepProps) => {
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="text-lg font-semibold text-gray-900">
+            <span className="text-lg font-semibold text-foreground">
               ${budgetRange[0]} - ${budgetRange[1]}
             </span>
           </div>
@@ -43,7 +43,7 @@ const BudgetStep = ({ setBudget }: BudgetStepProps) => {
               step={5}
               className="w-full"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <div className="flex justify-between text-xs text-muted-foreground mt-2">
               <span>$5</span>
               <span>$500+</span>
             </div>

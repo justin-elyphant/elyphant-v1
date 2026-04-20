@@ -65,10 +65,10 @@ const TeamSlide = ({ direction }: SlideProps) => {
               {member.name}
             </h3>
             <p className="text-purple-400 text-xs md:text-sm mb-1">{member.role}</p>
-            <p className="text-gray-500 text-xs mb-2">{member.bio}</p>
+            <p className="text-muted-foreground text-xs mb-2">{member.bio}</p>
             <a 
               href={member.linkedin} 
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-white transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -80,7 +80,7 @@ const TeamSlide = ({ direction }: SlideProps) => {
 
       {/* Advisors */}
       <motion.div variants={itemVariants} className="text-center w-full">
-        <h4 className="text-gray-400 text-xs uppercase tracking-wider mb-3">
+        <h4 className="text-muted-foreground text-xs uppercase tracking-wider mb-3">
           Advisors
         </h4>
         <div className="flex flex-wrap justify-center gap-3">
@@ -90,7 +90,7 @@ const TeamSlide = ({ direction }: SlideProps) => {
               className="bg-white/5 border border-white/10 rounded-lg px-3 py-2"
             >
               <span className="text-white text-sm font-medium">{advisor.name}</span>
-              <span className="text-gray-500 text-xs ml-1.5">• {advisor.expertise}</span>
+              <span className="text-muted-foreground text-xs ml-1.5">• {advisor.expertise}</span>
             </div>
           ))}
         </div>

@@ -81,7 +81,7 @@ const HowItWorksSlide = ({ direction }: SlideProps) => {
             <h3 className="text-sm md:text-base font-semibold text-white mb-0.5">
               {step.title}
             </h3>
-            <p className="text-gray-500 text-xs md:text-sm max-w-[120px]">
+            <p className="text-muted-foreground text-xs md:text-sm max-w-[120px]">
               {step.description}
             </p>
           </motion.div>

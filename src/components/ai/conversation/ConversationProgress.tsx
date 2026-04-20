@@ -30,7 +30,7 @@ const ConversationProgress: React.FC<ConversationProgressProps> = ({ step }) => 
 
   return (
     <div className="flex items-center gap-2">
-      <div className="w-12 bg-gray-200 rounded-full h-1.5">
+      <div className="w-12 bg-muted rounded-full h-1.5">
         <div 
           className="bg-gradient-to-r from-purple-500 to-indigo-600 h-1.5 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}

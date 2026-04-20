@@ -60,8 +60,8 @@ const FavoritesTabContent: React.FC<FavoritesTabContentProps> = ({ isCurrentUser
   if (!favoriteProducts || favoriteProducts.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="bg-gray-100 rounded-full p-4 inline-flex items-center justify-center mb-4">
-          <HeartOff size={24} className="text-gray-500" />
+        <div className="bg-muted rounded-full p-4 inline-flex items-center justify-center mb-4">
+          <HeartOff size={24} className="text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium">No favorites yet</h3>
         <p className="text-muted-foreground mt-1 mb-4">

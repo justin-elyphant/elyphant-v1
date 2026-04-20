@@ -279,7 +279,7 @@ const EnhancedCancellationTest = () => {
       case 'info':
         return <Database className="h-5 w-5 text-blue-500" />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-gray-500" />;
+        return <AlertTriangle className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -364,7 +364,7 @@ const EnhancedCancellationTest = () => {
                         <summary className="cursor-pointer font-medium text-blue-600">
                           View Technical Details
                         </summary>
-                        <pre className="mt-2 p-2 bg-gray-50 rounded overflow-auto max-h-40">
+                        <pre className="mt-2 p-2 bg-muted/50 rounded overflow-auto max-h-40">
                           {JSON.stringify(result.details, null, 2)}
                         </pre>
                       </details>

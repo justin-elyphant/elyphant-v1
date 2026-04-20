@@ -20,7 +20,7 @@ const FriendSelectedStep = ({ botState, nextStep }: FriendSelectedStepProps) => 
     <div className="flex flex-col h-full p-4 space-y-6">
       <div className="text-center">
         <h3 className="text-lg font-semibold mb-2">Great choice!</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           I'll use {friend.name}'s preferences to find perfect gifts.
         </p>
       </div>
@@ -33,29 +33,29 @@ const FriendSelectedStep = ({ botState, nextStep }: FriendSelectedStepProps) => 
             </AvatarFallback>
           </Avatar>
           <div>
-            <h4 className="font-semibold text-gray-900">{friend.name}</h4>
-            <p className="text-sm text-gray-600">Your friend</p>
+            <h4 className="font-semibold text-foreground">{friend.name}</h4>
+            <p className="text-sm text-muted-foreground">Your friend</p>
           </div>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Heart className="h-4 w-4 text-pink-500" />
-            <span className="text-gray-700">
+            <span className="text-muted-foreground">
               <strong>Wishlist:</strong> 5 items available
             </span>
           </div>
           
           <div className="flex items-center gap-2 text-sm">
             <Gift className="h-4 w-4 text-purple-500" />
-            <span className="text-gray-700">
+            <span className="text-muted-foreground">
               <strong>Interests:</strong> Technology, Books, Travel
             </span>
           </div>
           
           <div className="flex items-center gap-2 text-sm">
             <Sparkles className="h-4 w-4 text-yellow-500" />
-            <span className="text-gray-700">
+            <span className="text-muted-foreground">
               <strong>Past gifts:</strong> Loved practical items
             </span>
           </div>

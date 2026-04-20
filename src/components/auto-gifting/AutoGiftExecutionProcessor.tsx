@@ -139,7 +139,7 @@ const AutoGiftExecutionProcessor: React.FC<AutoGiftExecutionProcessorProps> = ({
       case 'failed':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -152,7 +152,7 @@ const AutoGiftExecutionProcessor: React.FC<AutoGiftExecutionProcessorProps> = ({
       case 'failed':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 

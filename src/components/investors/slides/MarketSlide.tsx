@@ -46,22 +46,22 @@ const MarketSlide = ({ direction }: SlideProps) => {
               <div className="text-2xl md:text-3xl font-bold text-purple-400">
                 $<AnimatedCounter value={250} duration={2} />B
               </div>
-              <div className="text-gray-400 text-xs">TAM: US Gift Market</div>
-              <div className="text-gray-600 text-[10px]">Statista 2025</div>
+              <div className="text-muted-foreground text-xs">TAM: US Gift Market</div>
+              <div className="text-muted-foreground text-[10px]">Statista 2025</div>
             </div>
             
             <div>
               <div className="text-xl md:text-2xl font-bold text-sky-400">
                 $<AnimatedCounter value={12} duration={1.5} />B
               </div>
-              <div className="text-gray-400 text-xs">SAM: AI-Powered Gifting</div>
-              <div className="text-gray-600 text-[10px]">Grand View Research</div>
+              <div className="text-muted-foreground text-xs">SAM: AI-Powered Gifting</div>
+              <div className="text-muted-foreground text-[10px]">Grand View Research</div>
             </div>
             
             <div className="flex items-center gap-2 pt-1">
               <TrendingUp className="w-3 h-3 text-green-400" />
               <span className="text-green-400 text-sm font-semibold">15%+ CAGR</span>
-              <span className="text-gray-500 text-xs">through 2030</span>
+              <span className="text-muted-foreground text-xs">through 2030</span>
             </div>
           </div>
         </div>
@@ -76,8 +76,8 @@ const MarketSlide = ({ direction }: SlideProps) => {
             {/* Year 2 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-400 text-sm">Year 2</span>
+                <Users className="w-3 h-3 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">Year 2</span>
               </div>
               <div className="text-right">
                 <div className="text-white text-sm font-semibold">100K users</div>
@@ -105,8 +105,8 @@ const MarketSlide = ({ direction }: SlideProps) => {
             {/* GMV context */}
             <div className="pt-1 border-t border-white/10">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-400 text-xs">Year 5 GMV:</span>
+                <DollarSign className="w-3 h-3 text-muted-foreground" />
+                <span className="text-muted-foreground text-xs">Year 5 GMV:</span>
                 <span className="text-white text-sm font-semibold">$56M</span>
               </div>
             </div>
@@ -120,8 +120,8 @@ const MarketSlide = ({ direction }: SlideProps) => {
         className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full"
       >
         <div className="text-center">
-          <span className="text-gray-500 text-xs">Conservative assumptions: </span>
-          <span className="text-gray-400 text-xs">
+          <span className="text-muted-foreground text-xs">Conservative assumptions: </span>
+          <span className="text-muted-foreground text-xs">
             25% active rate • 3 gifts/user/year • $75 AOV • 20% take rate
           </span>
         </div>
@@ -132,9 +132,9 @@ const MarketSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="mt-2 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-lg px-4 py-2"
       >
-        <span className="text-gray-400 text-xs">AI Personalization Market: </span>
+        <span className="text-muted-foreground text-xs">AI Personalization Market: </span>
         <span className="text-white font-semibold text-xs">$105B → $168B by 2033</span>
-        <span className="text-gray-600 text-[10px] ml-1">(Grand View Research)</span>
+        <span className="text-muted-foreground text-[10px] ml-1">(Grand View Research)</span>
       </motion.div>
     </SlideWrapper>
   );

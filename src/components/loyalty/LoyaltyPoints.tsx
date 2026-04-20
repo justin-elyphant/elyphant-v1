@@ -101,7 +101,7 @@ const LoyaltyPoints = ({ expanded = false }: LoyaltyPointsProps) => {
   
   if (!expanded) {
     return (
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-white border shadow-sm">
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-background border shadow-sm">
         <div className={`p-2 rounded-full ${tierBackgrounds[loyaltyData.tier]}`}>
           <Award className={`h-5 w-5 ${tierColors[loyaltyData.tier]}`} />
         </div>
@@ -167,8 +167,8 @@ const LoyaltyPoints = ({ expanded = false }: LoyaltyPointsProps) => {
               <div 
                 key={reward.id} 
                 className={`p-3 rounded-lg border ${reward.isAvailable && loyaltyData.points >= reward.pointsCost 
-                  ? 'bg-white' 
-                  : 'bg-gray-50'}`}
+                  ? 'bg-background' 
+                  : 'bg-muted/50'}`}
               >
                 <div className="flex justify-between items-start">
                   <div>

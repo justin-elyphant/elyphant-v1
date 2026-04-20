@@ -89,14 +89,14 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
                   <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent flex-shrink-0">
                     {stat.value}
                   </span>
-                  <span className="text-gray-400 text-xs leading-tight">
+                  <span className="text-muted-foreground text-xs leading-tight">
                     {stat.text}
                   </span>
                 </div>
               ))}
             </div>
             
-            <p className="text-gray-600 text-[10px]">
+            <p className="text-muted-foreground text-[10px]">
               Source: {factor.source}
             </p>
           </motion.div>
@@ -108,7 +108,7 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="bg-gradient-to-r from-purple-500/10 via-sky-500/10 to-pink-500/10 border border-white/10 rounded-xl px-4 py-3 w-full text-center"
       >
-        <p className="text-gray-300 text-xs md:text-sm">
+        <p className="text-muted-foreground/50 text-xs md:text-sm">
           The convergence of <span className="text-purple-400 font-semibold">AI capability</span> + 
           <span className="text-sky-400 font-semibold"> consumer trust</span> + 
           <span className="text-pink-400 font-semibold"> personalization demand</span> creates a 

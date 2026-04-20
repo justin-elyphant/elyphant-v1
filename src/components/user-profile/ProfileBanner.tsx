@@ -112,7 +112,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
           {canConnect && (
             <Button
               onClick={handleConnectClick}
-              className="bg-white text-gray-900 hover:bg-gray-100"
+              className="bg-background text-foreground hover:bg-muted"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Connect
@@ -147,14 +147,14 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
           <ConnectButton
             targetUserId={userData?.id}
             variant="default"
-            className="bg-white text-gray-900 hover:bg-gray-100"
+            className="bg-background text-foreground hover:bg-muted"
           />
         )}
         {isConnected && onSendGift && (
           <Button
             onClick={onSendGift}
             variant="default"
-            className="bg-white text-gray-900 hover:bg-gray-100"
+            className="bg-background text-foreground hover:bg-muted"
           >
             <Gift className="h-4 w-4 mr-2" />
             Send Gift
@@ -192,7 +192,7 @@ const ProfileBanner: React.FC<ProfileBannerProps> = ({
             {/* Profile Avatar */}
             <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
               <AvatarImage src={userData?.profile_image} alt={userData?.name} />
-              <AvatarFallback className="text-2xl font-bold bg-white text-gray-900">
+              <AvatarFallback className="text-2xl font-bold bg-background text-foreground">
                 {userData?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
               </AvatarFallback>
             </Avatar>

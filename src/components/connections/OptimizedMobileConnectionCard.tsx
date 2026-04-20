@@ -43,7 +43,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHapticFeedback('impact');
-    navigate(`/wishlists/${connection.id}`);
+    navigate(`/profile/${connection.username}`);
   };
 
 

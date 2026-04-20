@@ -119,6 +119,14 @@
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
   --ring: 224.3 76.3% 94.1%;
+
+  /* Dark mode surface system */
+  --surface-primary: 222.2 84% 4.9%;
+  --surface-secondary: 222.2 84% 7%;
+  --surface-elevated: 222.2 84% 9%;
+  --surface-sunken: 222.2 84% 3%;
+  --surface-subtle: 217.2 32.6% 12%;
+  --border-subtle: 217.2 32.6% 20%;
 }
 
 * {

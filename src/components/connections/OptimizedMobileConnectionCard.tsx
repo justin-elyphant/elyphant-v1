@@ -1,51 +1,87 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Gift, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
 import { Connection } from "@/types/connections";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
+import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
+import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 
 interface OptimizedMobileConnectionCardProps {
   connection: Connection;
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
   onRelationshipEdit?: () => void;
+  onAccept?: (connectionId: string) => void;
+  onDecline?: (connectionId: string) => void;
+  onConnect?: (connectionId: string) => void;
   isPending?: boolean;
   isSuggestion?: boolean;
 }
 
 export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCardProps> = ({
   connection,
-  onSwipeLeft,
-  onSwipeRight,
   onRelationshipEdit,
+  onAccept,
+  onDecline,
+  onConnect,
   isPending = false,
   isSuggestion = false
 }) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  const swipeRef = useRef<HTMLDivElement>(null);
-  const [isTracking, setIsTracking] = useState(false);
-  
-  // Use a simplified swipe detection instead of the hook for now
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsTracking(true);
-  };
-  
-  const handleTouchEnd = () => {
-    setIsTracking(false);
-  };
+  const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
+  const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
+  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
 
   const handleCardTap = () => {
     triggerHapticFeedback('light');
     setIsExpanded(!isExpanded);
   };
 
-  const handleActionTap = (action: string, e: React.MouseEvent) => {
+  const handleMessage = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHapticFeedback('impact');
-    console.log(`${action} action for:`, connection.name);
+    navigate(`/messages/${connection.id}`);
+  };
+
+  const handleGift = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHapticFeedback('impact');
+    setShowGiftIntentModal(true);
+  };
+
+  const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {
+    switch (intent) {
+      case "ai-gift":
+        setShowAutoGiftSetup(true);
+        break;
+      case "marketplace-browse":
+        navigate(`/marketplace?friend=${connection.id}&name=${encodeURIComponent(connection.name)}&mode=nicole&open=true&greeting=friend-gift&first_name=${encodeURIComponent(connection.name)}`);
+        break;
+      case "quick-ideas":
+        setShowQuickIdeasModal(true);
+        break;
+    }
+  };
+
+  const handleAccept = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHapticFeedback('impact');
+    onAccept?.(connection.id);
+  };
+
+  const handleDecline = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHapticFeedback('impact');
+    onDecline?.(connection.id);
+  };
+
+  const handleConnect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHapticFeedback('impact');
+    onConnect?.(connection.id);
   };
 
   const getStatusBadge = () => {
@@ -73,7 +109,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
             size="sm"
             variant="outline"
             className="connection-action-button flex-1"
-            onClick={(e) => handleActionTap('accept', e)}
+            onClick={handleAccept}
           >
             <Check className="h-4 w-4 mr-1" />
             Accept
@@ -82,7 +118,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
             size="sm"
             variant="outline"
             className="connection-action-button"
-            onClick={(e) => handleActionTap('decline', e)}
+            onClick={handleDecline}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -96,7 +132,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
           size="sm"
           variant="outline"
           className="connection-action-button"
-          onClick={(e) => handleActionTap('connect', e)}
+          onClick={handleConnect}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Connect
@@ -110,7 +146,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
           size="sm"
           variant="outline"
           className="connection-action-button flex-1"
-          onClick={(e) => handleActionTap('message', e)}
+          onClick={handleMessage}
         >
           <MessageCircle className="h-4 w-4 mr-1" />
           Message
@@ -119,7 +155,7 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
           size="sm"
           variant="outline"
           className="connection-action-button flex-1"
-          onClick={(e) => handleActionTap('gift', e)}
+          onClick={handleGift}
         >
           <Gift className="h-4 w-4 mr-1" />
           Gift
@@ -140,27 +176,11 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
   };
 
   return (
-    <div className="relative">
-      {/* Swipe Action Backgrounds */}
-      {onSwipeLeft && isTracking && (
-        <div className="connection-swipe-actions left">
-          <MessageCircle className="h-5 w-5" />
-        </div>
-      )}
-      {onSwipeRight && isTracking && (
-        <div className="connection-swipe-actions right">
-          <Gift className="h-5 w-5" />
-        </div>
-      )}
-      
-      {/* Main Card */}
+    <>
       <div
-        ref={swipeRef}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className={`connection-card connection-card-swipeable bg-card border border-border rounded-xl p-4 transition-all duration-200 ${
-          isTracking ? 'swiping' : ''
-        } ${isExpanded ? 'ring-2 ring-primary/20' : ''}`}
+        className={`connection-card bg-card border border-border rounded-xl p-4 transition-all duration-200 ${
+          isExpanded ? 'ring-2 ring-primary/20' : ''
+        }`}
         onClick={handleCardTap}
       >
         <div className="flex items-center space-x-3">
@@ -179,7 +199,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
                 {connection.name}
               </h3>
               {getStatusBadge()}
-              {/* Gift Badge for mobile cards */}
               {(connection as any).hasPendingGift && (
                 <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0.5 h-4">
                   <Sparkles className="h-2.5 w-2.5" />
@@ -187,11 +206,11 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
                 </Badge>
               )}
             </div>
-            
+
             <p className="text-sm text-muted-foreground truncate mb-1">
               {connection.username}
             </p>
-            
+
             {connection.mutualFriends > 0 && (
               <p className="text-xs text-muted-foreground">
                 {connection.mutualFriends} mutual connections
@@ -210,14 +229,10 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
         {/* Expanded Content */}
         {isExpanded && (
           <div className="mt-4 space-y-3 animate-accordion-down">
-            {/* Bio */}
             {connection.bio && (
-              <p className="text-sm text-muted-foreground">
-                {connection.bio}
-              </p>
+              <p className="text-sm text-muted-foreground">{connection.bio}</p>
             )}
 
-            {/* Interests */}
             {connection.interests && connection.interests.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {connection.interests.slice(0, 3).map((interest) => (
@@ -233,20 +248,41 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
               </div>
             )}
 
-            {/* Last Active */}
             {connection.lastActive && (
               <p className="text-xs text-muted-foreground">
                 Active {connection.lastActive}
               </p>
             )}
 
-            {/* Action Buttons */}
-            <div className="pt-2">
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
               {renderActionButtons()}
             </div>
           </div>
         )}
       </div>
-    </div>
+
+      {/* Gift modals — only mounted for friend cards */}
+      {!isPending && !isSuggestion && (
+        <>
+          <PersonalizedGiftIntentModal
+            open={showGiftIntentModal}
+            onOpenChange={setShowGiftIntentModal}
+            connection={connection}
+            onIntentSelect={handleGiftIntentSelect}
+          />
+          <QuickGiftIdeasModal
+            open={showQuickIdeasModal}
+            onOpenChange={setShowQuickIdeasModal}
+            connection={connection}
+          />
+          <UnifiedGiftSchedulingModal
+            open={showAutoGiftSetup}
+            onOpenChange={setShowAutoGiftSetup}
+            standaloneMode={true}
+            initialRecipient={{ type: 'connection', connectionId: connection.id, connectionName: connection.name || '' }}
+          />
+        </>
+      )}
+    </>
   );
 };

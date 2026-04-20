@@ -206,13 +206,59 @@ const Connections = () => {
     await refreshPendingConnections();
   }, [refreshPendingConnections]);
 
-  const handleSwipeLeft = useCallback((connectionId: string) => {
+  // Accept a pending connection request
+  const handleAcceptConnection = useCallback(async (connectionId: string) => {
     triggerHapticFeedback('impact');
-  }, []);
+    try {
+      const { acceptConnectionRequest } = await import('@/services/connections/connectionService');
+      const result = await acceptConnectionRequest(connectionId);
+      if (result.success) {
+        toast.success('Connection request accepted! 🎉');
+        await refreshPendingConnections();
+      } else {
+        toast.error(result.error?.message || 'Unable to accept connection request.');
+      }
+    } catch (err) {
+      console.error('Error accepting connection:', err);
+      toast.error('Failed to accept connection.');
+    }
+  }, [refreshPendingConnections]);
 
-  const handleSwipeRight = useCallback((connectionId: string) => {
+  // Decline a pending connection request
+  const handleDeclineConnection = useCallback(async (connectionId: string) => {
     triggerHapticFeedback('impact');
-  }, []);
+    try {
+      const { rejectConnectionRequest } = await import('@/services/connections/connectionService');
+      const result = await rejectConnectionRequest(connectionId);
+      if (result.success) {
+        toast.success('Connection request declined.');
+        await refreshPendingConnections();
+      } else {
+        toast.error(result.error?.message || 'Unable to decline connection request.');
+      }
+    } catch (err) {
+      console.error('Error declining connection:', err);
+      toast.error('Failed to decline connection.');
+    }
+  }, [refreshPendingConnections]);
+
+  // Send a connection request from a suggestion
+  const handleSendConnection = useCallback(async (connectionId: string) => {
+    triggerHapticFeedback('impact');
+    try {
+      const { sendConnectionRequest } = await import('@/services/connections/connectionService');
+      const result = await sendConnectionRequest(connectionId, 'friend');
+      if (result.success) {
+        toast.success('Connection request sent!');
+        await refreshPendingConnections();
+      } else {
+        toast.error(result.error?.message || 'Unable to send connection request.');
+      }
+    } catch (err) {
+      console.error('Error sending connection request:', err);
+      toast.error('Failed to send connection request.');
+    }
+  }, [refreshPendingConnections]);
 
   const handleVoiceInput = useCallback(() => {
     setIsVoiceListening(!isVoiceListening);
@@ -393,8 +439,7 @@ const Connections = () => {
               <OptimizedMobileConnectionCard
                 key={suggestion.id}
                 connection={suggestion}
-                onSwipeLeft={() => handleSwipeLeft(suggestion.id)}
-                onSwipeRight={() => handleSwipeRight(suggestion.id)}
+                onConnect={handleSendConnection}
                 isSuggestion={true}
               />
             ))}
@@ -405,8 +450,7 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={person.id}
                     connection={person}
-                    onSwipeLeft={() => handleSwipeLeft(person.id)}
-                    onSwipeRight={() => handleSwipeRight(person.id)}
+                    onConnect={handleSendConnection}
                     isSuggestion={true}
                   />
                 ))}
@@ -494,8 +538,6 @@ const Connections = () => {
                       <OptimizedMobileConnectionCard
                         key={friend.id}
                         connection={friend}
-                        onSwipeLeft={() => handleSwipeLeft(friend.id)}
-                        onSwipeRight={() => handleSwipeRight(friend.id)}
                         onRelationshipEdit={() => openRelationshipSheet(friend.id)}
                       />
                     ))
@@ -522,8 +564,8 @@ const Connections = () => {
                       <OptimizedMobileConnectionCard
                         key={pending.id}
                         connection={pending}
-                        onSwipeLeft={() => handleSwipeLeft(pending.id)}
-                        onSwipeRight={() => handleSwipeRight(pending.id)}
+                        onAccept={handleAcceptConnection}
+                        onDecline={handleDeclineConnection}
                         isPending={true}
                       />
                     ))
@@ -640,8 +682,6 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={friend.id}
                     connection={friend}
-                    onSwipeLeft={() => handleSwipeLeft(friend.id)}
-                    onSwipeRight={() => handleSwipeRight(friend.id)}
                     onRelationshipEdit={() => openRelationshipSheet(friend.id)}
                   />
                 ))
@@ -668,8 +708,8 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={pending.id}
                     connection={pending}
-                    onSwipeLeft={() => handleSwipeLeft(pending.id)}
-                    onSwipeRight={() => handleSwipeRight(pending.id)}
+                    onAccept={handleAcceptConnection}
+                    onDecline={handleDeclineConnection}
                     isPending={true}
                   />
                 ))

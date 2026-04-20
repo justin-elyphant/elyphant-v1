@@ -135,11 +135,11 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
         <Button
           size="sm"
           variant="outline"
-          className="connection-action-button flex-1"
+          className="connection-action-button flex-1 min-w-0 overflow-hidden"
           onClick={handleWishlist}
         >
-          <Heart className="h-4 w-4 mr-1" />
-          {connection.name.split(' ')[0]}'s Wishlist
+          <Heart className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span className="truncate">{connection.name.split(' ')[0]}'s Wishlist</span>
         </Button>
         <Button
           size="sm"

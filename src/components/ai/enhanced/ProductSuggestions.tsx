@@ -23,7 +23,7 @@ const ProductSuggestions: React.FC<ProductSuggestionsProps> = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="h-4 w-4 text-purple-600" />
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-muted-foreground">
           Smart Suggestions {recipientName && `for ${recipientName}`}
         </span>
       </div>
@@ -39,11 +39,11 @@ const ProductSuggestions: React.FC<ProductSuggestionsProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     {suggestion}
                   </span>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>

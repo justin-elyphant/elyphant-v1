@@ -165,7 +165,7 @@ const NicoleConversationInterface: React.FC<NicoleConversationInterfaceProps> = 
       case 'wishlist_analysis':
         return 'bg-pink-100 text-pink-700';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -233,7 +233,7 @@ const NicoleConversationInterface: React.FC<NicoleConversationInterfaceProps> = 
                   <Card className={`${
                     message.role === 'user'
                       ? 'bg-blue-500 text-white'
-                      : 'bg-white border-gray-200'
+                      : 'bg-background border-border'
                   }`}>
                     <CardContent className="p-3">
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -268,11 +268,11 @@ const NicoleConversationInterface: React.FC<NicoleConversationInterfaceProps> = 
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-purple-100 text-purple-600">N</AvatarFallback>
                 </Avatar>
-                <Card className="bg-white border-gray-200">
+                <Card className="bg-background border-border">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-gray-600">Nicole is thinking...</span>
+                      <span className="text-sm text-muted-foreground">Nicole is thinking...</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -286,8 +286,8 @@ const NicoleConversationInterface: React.FC<NicoleConversationInterfaceProps> = 
 
       {/* Quick Actions */}
       {quickActions.length > 0 && (
-        <div className="p-4 border-t bg-gray-50">
-          <p className="text-xs text-gray-600 mb-2">Quick actions:</p>
+        <div className="p-4 border-t bg-muted/50">
+          <p className="text-xs text-muted-foreground mb-2">Quick actions:</p>
           <div className="flex flex-wrap gap-2">
             {quickActions.map((action, index) => (
               <Button
@@ -306,7 +306,7 @@ const NicoleConversationInterface: React.FC<NicoleConversationInterfaceProps> = 
       )}
 
       {/* Input Area */}
-      <div className="p-4 border-t bg-white">
+      <div className="p-4 border-t bg-background">
         <div className="flex gap-2">
           <Input
             value={inputValue}

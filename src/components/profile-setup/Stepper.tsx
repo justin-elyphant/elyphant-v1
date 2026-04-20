@@ -45,7 +45,7 @@ export const Step: React.FC<StepProps> = ({ isActive, isCompleted, children }) =
           "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold",
           isActive && "bg-primary text-primary-foreground",
           isCompleted && "bg-green-500 text-white",
-          !isActive && !isCompleted && "bg-gray-200 text-gray-500"
+          !isActive && !isCompleted && "bg-muted text-muted-foreground"
         )}
       >
         {isCompleted ? "✓" : ""}

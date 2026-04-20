@@ -22,8 +22,8 @@ export const FullWidthSection: React.FC<FullWidthSectionProps> = ({
   const isMobile = useIsMobile();
   
   const backgroundClasses = {
-    white: "bg-white",
-    gray: "bg-gray-50",
+    white: "bg-background",
+    gray: "bg-muted/50",
     gradient: "bg-gradient-to-r from-purple-50 to-pink-50",
     transparent: "bg-transparent"
   };

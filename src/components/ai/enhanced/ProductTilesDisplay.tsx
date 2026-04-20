@@ -64,7 +64,7 @@ const ProductTilesDisplay: React.FC<ProductTilesDisplayProps> = ({
     
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="w-3 h-3 text-gray-300" />);
+      stars.push(<Star key={`empty-${i}`} className="w-3 h-3 text-muted-foreground/50" />);
     }
 
     return <div className="flex items-center gap-0.5">{stars}</div>;
@@ -87,7 +87,7 @@ const ProductTilesDisplay: React.FC<ProductTilesDisplayProps> = ({
           variant="outline"
           size="icon"
           onClick={scrollLeft}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-white"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-background"
         >
           <ChevronLeft className="w-4 h-4" />
         </Button>
@@ -98,7 +98,7 @@ const ProductTilesDisplay: React.FC<ProductTilesDisplayProps> = ({
           variant="outline"
           size="icon"
           onClick={scrollRight}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-white"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-background"
         >
           <ChevronRight className="w-4 h-4" />
         </Button>
@@ -120,7 +120,7 @@ const ProductTilesDisplay: React.FC<ProductTilesDisplayProps> = ({
             <CardContent className="p-3">
               {/* Product Image */}
               <div className="relative mb-3">
-                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                   <img
                     src={product.image || product.images?.[0] || '/placeholder.svg'}
                     alt={product.title || product.name || 'Product'}

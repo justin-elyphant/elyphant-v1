@@ -111,7 +111,7 @@ const MessagesCard = () => {
           ) : recentMessages.length > 0 ? (
             <div className="space-y-3">
               {recentMessages.map((message) => (
-                <div key={message.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div key={message.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-foreground/90 transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={message.avatar || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -120,7 +120,7 @@ const MessagesCard = () => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className={`text-sm font-medium truncate ${message.unread ? 'text-gray-900' : 'text-muted-foreground'}`}>
+                      <p className={`text-sm font-medium truncate ${message.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {message.sender}
                       </p>
                       <span className="text-xs text-muted-foreground">{message.time}</span>
@@ -128,7 +128,7 @@ const MessagesCard = () => {
                         <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
                       )}
                     </div>
-                    <p className={`text-sm truncate ${message.unread ? 'text-gray-700' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm truncate ${message.unread ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                       {message.message}
                     </p>
                   </div>

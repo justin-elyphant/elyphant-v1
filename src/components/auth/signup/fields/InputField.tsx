@@ -42,7 +42,7 @@ const InputField: React.FC<InputFieldProps> = ({
             ) : (
               <div className="relative">
                 {Icon && (
-                  <span className="absolute left-3 top-2.5 text-gray-400">
+                  <span className="absolute left-3 top-2.5 text-muted-foreground">
                     <Icon className="h-4 w-4" />
                   </span>
                 )}

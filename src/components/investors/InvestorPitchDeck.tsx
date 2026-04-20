@@ -172,7 +172,7 @@ const InvestorPitchDeck = () => {
         !isFullscreen && "max-w-6xl px-4 md:px-8 py-4 md:py-8"
       )}>
         <div className={cn(
-          "relative bg-gray-900/50 overflow-hidden",
+          "relative bg-foreground/50 overflow-hidden",
           !isFullscreen && "aspect-[16/10] rounded-2xl shadow-2xl border border-white/5",
           isFullscreen && "h-screen"
         )}>
@@ -189,7 +189,7 @@ const InvestorPitchDeck = () => {
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}
-            className="absolute top-4 right-4 z-50 text-gray-400 hover:text-white hover:bg-white/10"
+            className="absolute top-4 right-4 z-50 text-muted-foreground hover:text-white hover:bg-white/10"
             title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen (F)'}
           >
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
@@ -217,7 +217,7 @@ const InvestorPitchDeck = () => {
 
           {/* Keyboard hint (only on first slide) */}
           {currentSlide === 0 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gray-500 text-xs md:text-sm animate-pulse hidden md:block">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground text-xs md:text-sm animate-pulse hidden md:block">
               Press arrow keys or scroll to navigate
             </div>
           )}

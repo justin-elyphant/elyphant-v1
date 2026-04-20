@@ -15,7 +15,7 @@ const CookieConsentBanner: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-2xl lg:rounded-xl lg:border lg:border-border lg:shadow-sm lg:pb-0"
+          className="fixed bottom-0 left-0 right-0 z-[100] bg-background border-t border-border pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-2xl lg:rounded-xl lg:border lg:border-border lg:shadow-sm lg:pb-0"
           role="dialog"
           aria-label="Cookie consent"
           aria-live="polite"
@@ -82,7 +82,7 @@ const CookieConsentBanner: React.FC = () => {
                 </button>
                 <button
                   onClick={acceptEssential}
-                  className="flex-1 lg:flex-none border border-border text-foreground bg-white text-xs font-medium h-11 px-4 rounded-full hover:bg-muted active:bg-muted/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
+                  className="flex-1 lg:flex-none border border-border text-foreground bg-background text-xs font-medium h-11 px-4 rounded-full hover:bg-muted active:bg-muted/80 active:scale-95 transition-colors touch-manipulation whitespace-nowrap"
                 >
                   Essential Only
                 </button>

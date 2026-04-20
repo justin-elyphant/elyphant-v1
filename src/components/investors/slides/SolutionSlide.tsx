@@ -56,7 +56,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
 
       <motion.p 
         variants={itemVariants}
-        className="text-gray-400 text-sm md:text-base mb-6 md:mb-8 text-center max-w-xl"
+        className="text-muted-foreground text-sm md:text-base mb-6 md:mb-8 text-center max-w-xl"
       >
         The world's first AI-powered platform that remembers, recommends, and delivers the perfect gift—automatically.
       </motion.p>
@@ -80,7 +80,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
             <h3 className="text-base md:text-lg font-semibold text-white mb-1">
               {pillar.title}
             </h3>
-            <p className="text-gray-400 text-xs md:text-sm">
+            <p className="text-muted-foreground text-xs md:text-sm">
               {pillar.description}
             </p>
           </motion.div>

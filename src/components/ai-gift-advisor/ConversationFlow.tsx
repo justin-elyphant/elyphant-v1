@@ -149,8 +149,8 @@ const ConversationFlow: React.FC<ConversationFlowProps> = (props) => {
       
       {/* Show contextual links at the bottom */}
       {contextualLinks.length > 0 && (
-        <div className="p-4 border-t bg-gray-50">
-          <p className="text-xs text-gray-600 mb-2">Quick actions:</p>
+        <div className="p-4 border-t bg-muted/50">
+          <p className="text-xs text-muted-foreground mb-2">Quick actions:</p>
           <ContextualLinks links={contextualLinks} />
         </div>
       )}

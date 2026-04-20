@@ -27,7 +27,7 @@ const TitleSlide = ({ direction, onNext }: SlideProps) => {
       {/* Tagline */}
       <motion.p 
         variants={itemVariants}
-        className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 text-center max-w-2xl mb-6 md:mb-8"
+        className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground/50 text-center max-w-2xl mb-6 md:mb-8"
       >
         Connecting Through AI-Powered Gifting
       </motion.p>
@@ -35,7 +35,7 @@ const TitleSlide = ({ direction, onNext }: SlideProps) => {
       {/* Subtitle */}
       <motion.p 
         variants={itemVariants}
-        className="text-gray-500 text-sm md:text-base mb-8 md:mb-10"
+        className="text-muted-foreground text-sm md:text-base mb-8 md:mb-10"
       >
         Investor Presentation • 2026
       </motion.p>
@@ -44,7 +44,7 @@ const TitleSlide = ({ direction, onNext }: SlideProps) => {
       <motion.button
         variants={itemVariants}
         onClick={onNext}
-        className="flex flex-col items-center gap-1.5 text-gray-400 hover:text-white transition-colors"
+        className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-colors"
       >
         <span className="text-xs md:text-sm">Begin</span>
         <motion.div

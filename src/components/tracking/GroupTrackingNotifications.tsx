@@ -169,7 +169,7 @@ const GroupTrackingNotifications = ({
       case 'delayed':
         return 'text-red-600 bg-red-100';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -178,7 +178,7 @@ const GroupTrackingNotifications = ({
       <div className="space-y-4">
         {[1, 2, 3].map(i => (
           <div key={i} className="animate-pulse">
-            <div className="h-24 bg-gray-200 rounded-lg"></div>
+            <div className="h-24 bg-muted rounded-lg"></div>
           </div>
         ))}
       </div>

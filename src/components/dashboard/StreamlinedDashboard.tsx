@@ -177,7 +177,7 @@ const StreamlinedDashboard = () => {
       default:
         return cn(
           baseStyles,
-          "bg-white border border-gray-200 hover:border-gray-300",
+          "bg-background border border-border hover:border-border",
           isHovered && "scale-105"
         );
     }
@@ -209,7 +209,7 @@ const StreamlinedDashboard = () => {
         
         {/* Welcome Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-foreground">
           Welcome back{user?.user_metadata?.first_name ? `, ${user.user_metadata.first_name}` : ''}! 👋
         </h1>
         <p className="text-lg text-muted-foreground">
@@ -258,7 +258,7 @@ const StreamlinedDashboard = () => {
                 </div>
                 <CardTitle className={cn(
                   "text-xl",
-                  (card.variant === 'primary' || card.variant === 'accent') ? "text-white" : "text-gray-900"
+                  (card.variant === 'primary' || card.variant === 'accent') ? "text-white" : "text-foreground"
                 )}>
                   {card.title}
                 </CardTitle>

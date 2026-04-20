@@ -145,8 +145,8 @@ const EnhancedOrderTracking = ({ orderId: propOrderId }: EnhancedOrderTrackingPr
     return (
       <div className="container mx-auto py-12 px-4 text-center">
         <div className="animate-pulse">
-          <div className="h-8 w-48 bg-gray-200 rounded mx-auto mb-8"></div>
-          <div className="h-64 max-w-xl mx-auto bg-gray-200 rounded"></div>
+          <div className="h-8 w-48 bg-muted rounded mx-auto mb-8"></div>
+          <div className="h-64 max-w-xl mx-auto bg-muted rounded"></div>
         </div>
       </div>
     );

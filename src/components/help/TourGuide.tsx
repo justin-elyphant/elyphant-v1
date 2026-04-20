@@ -180,7 +180,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
       <div 
         ref={tooltipRef}
         className={cn(
-          "fixed z-50 bg-white rounded-lg shadow-lg w-[300px] md:w-[320px]",
+          "fixed z-50 bg-background rounded-lg shadow-lg w-[300px] md:w-[320px]",
           isMobile ? "bottom-16 left-1/2 transform -translate-x-1/2" : "transform"
         )}
         style={!isMobile ? {
@@ -191,17 +191,17 @@ const TourGuide: React.FC<TourGuideProps> = ({
         <div className="p-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-semibold">{step?.title}</h3>
-            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={handleClose} className="text-muted-foreground hover:text-muted-foreground">
               <X className="h-4 w-4" />
             </button>
           </div>
           
-          <div className="text-sm text-gray-600 mb-4">
+          <div className="text-sm text-muted-foreground mb-4">
             {step?.content}
           </div>
           
           <div className="flex justify-between items-center">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {currentStep + 1} of {steps.length}
             </div>
             

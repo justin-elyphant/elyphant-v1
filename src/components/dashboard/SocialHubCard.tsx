@@ -37,7 +37,7 @@ const SocialHubCard = () => {
       case 'gift_search':
         return <Gift className="h-4 w-4 text-purple-500" />;
       default:
-        return <Sparkles className="h-4 w-4 text-gray-500" />;
+        return <Sparkles className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -54,7 +54,7 @@ const SocialHubCard = () => {
       case 'gift_search':
         return 'bg-purple-50 border-purple-200';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-muted/50 border-border';
     }
   };
 

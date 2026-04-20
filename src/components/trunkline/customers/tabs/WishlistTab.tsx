@@ -11,7 +11,7 @@ const WishlistTab: React.FC<WishlistTabProps> = ({ customer }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       {customer.wishlists.map(wishlist => (
-        <div key={wishlist.id} className="border rounded-md p-4 hover:bg-gray-50 cursor-pointer">
+        <div key={wishlist.id} className="border rounded-md p-4 hover:bg-muted/50 cursor-pointer">
           <div className="flex justify-between items-center">
             <div>
               <div className="font-medium">{wishlist.name}</div>

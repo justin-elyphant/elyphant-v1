@@ -162,7 +162,7 @@ const ConnectionRequestTester = () => {
                     {new Date(result.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
+                <pre className="text-xs bg-muted/50 p-2 rounded overflow-auto">
                   {JSON.stringify(result, null, 2)}
                 </pre>
               </div>

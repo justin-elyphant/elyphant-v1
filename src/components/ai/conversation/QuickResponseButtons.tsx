@@ -19,7 +19,7 @@ const QuickResponseButtons: React.FC<QuickResponseButtonsProps> = ({
           variant="outline"
           size="sm"
           onClick={() => onSelect(option)}
-          className="rounded-full border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-sm"
+          className="rounded-full border-border hover:border-purple-400 hover:bg-purple-50 text-sm"
         >
           {option}
         </Button>

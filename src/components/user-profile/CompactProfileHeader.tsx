@@ -163,7 +163,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
                   targetUserId={userData?.id}
                   variant="default"
                   size={buttonSize}
-                  className="bg-white text-gray-900 hover:bg-gray-100 rounded-full"
+                  className="bg-background text-foreground hover:bg-muted rounded-full"
                   iconOnly={isMobile}
                 />
               </TooltipTrigger>
@@ -183,7 +183,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
                   onClick={onSendGift}
                   variant="default"
                   size={buttonSize}
-                  className="bg-white text-gray-900 hover:bg-gray-100 rounded-full"
+                  className="bg-background text-foreground hover:bg-muted rounded-full"
                 >
                   <Gift className="h-4 w-4" />
                   {!isMobile && <span className="ml-2">Gift</span>}
@@ -251,7 +251,7 @@ const CompactProfileHeader: React.FC<CompactProfileHeaderProps> = ({
           {/* Profile Avatar */}
           <Avatar className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-white shadow-lg flex-shrink-0">
             <AvatarImage src={userData?.profile_image} alt={userData?.name} />
-            <AvatarFallback className="text-lg font-bold bg-white text-gray-900">
+            <AvatarFallback className="text-lg font-bold bg-background text-foreground">
               {userData?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
             </AvatarFallback>
           </Avatar>

@@ -29,17 +29,17 @@ const ResultsStep = ({ botState, closeBot, resetBot }: ResultsStepProps) => {
       <div className="text-center mb-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="h-5 w-5 text-yellow-500" />
-          <h3 className="text-lg font-semibold text-gray-900">Ready to Shop!</h3>
+          <h3 className="text-lg font-semibold text-foreground">Ready to Shop!</h3>
           <Sparkles className="h-5 w-5 text-yellow-500" />
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           I've prepared personalized gift recommendations for {recipientName}.
         </p>
       </div>
 
       <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
-        <h4 className="font-semibold text-gray-900 mb-2">Search Summary</h4>
-        <div className="space-y-2 text-sm text-gray-700">
+        <h4 className="font-semibold text-foreground mb-2">Search Summary</h4>
+        <div className="space-y-2 text-sm text-muted-foreground">
           <div><strong>For:</strong> {recipientName}</div>
           {relationship && <div><strong>Relationship:</strong> {relationship}</div>}
           <div><strong>Occasion:</strong> {botState.occasion}</div>
@@ -58,7 +58,7 @@ const ResultsStep = ({ botState, closeBot, resetBot }: ResultsStepProps) => {
           <ShoppingCart className="h-4 w-4 text-purple-600" />
           <span className="text-sm font-medium text-purple-800">Search Query Generated</span>
         </div>
-        <p className="text-xs text-purple-700 bg-white px-2 py-1 rounded border">
+        <p className="text-xs text-purple-700 bg-background px-2 py-1 rounded border">
           "{botState.searchQuery}"
         </p>
       </div>
@@ -82,7 +82,7 @@ const ResultsStep = ({ botState, closeBot, resetBot }: ResultsStepProps) => {
       </div>
 
       <div className="text-center">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           🎁 Happy gift hunting! The marketplace will show you curated results.
         </p>
       </div>

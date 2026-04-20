@@ -116,7 +116,7 @@ const GoogleMapsDebugPanel: React.FC = () => {
         )}
 
         {testResults.length > 0 && (
-          <div className="bg-gray-50 p-3 rounded-md max-h-60 overflow-y-auto">
+          <div className="bg-muted/50 p-3 rounded-md max-h-60 overflow-y-auto">
             <h4 className="font-medium mb-2">Test Results:</h4>
             {testResults.map((result, index) => (
               <div key={index} className="text-sm font-mono mb-1">
@@ -126,7 +126,7 @@ const GoogleMapsDebugPanel: React.FC = () => {
           </div>
         )}
 
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           <p><strong>Instructions:</strong></p>
           <ul className="list-disc list-inside space-y-1">
             <li>Open browser console (F12) for detailed logs</li>

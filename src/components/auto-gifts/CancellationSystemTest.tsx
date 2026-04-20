@@ -173,7 +173,7 @@ const CancellationSystemTest = () => {
       case 'pending':
         return <Clock className="h-5 w-5 text-yellow-500" />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-gray-500" />;
+        return <AlertTriangle className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -222,7 +222,7 @@ const CancellationSystemTest = () => {
                         <summary className="cursor-pointer font-medium">
                           View Details
                         </summary>
-                        <pre className="mt-2 p-2 bg-gray-50 rounded overflow-auto">
+                        <pre className="mt-2 p-2 bg-muted/50 rounded overflow-auto">
                           {JSON.stringify(result.details, null, 2)}
                         </pre>
                       </details>

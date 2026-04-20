@@ -31,10 +31,10 @@ const SignUpPromptStep = ({ closeBot }: SignUpPromptStepProps) => {
       <div className="text-center mb-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="h-6 w-6 text-yellow-500" />
-          <h3 className="text-xl font-bold text-gray-900">Unlock Premium Features</h3>
+          <h3 className="text-xl font-bold text-foreground">Unlock Premium Features</h3>
           <Sparkles className="h-6 w-6 text-yellow-500" />
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Sign up to access friend wishlists and get personalized recommendations!
         </p>
       </div>
@@ -74,8 +74,8 @@ const SignUpPromptStep = ({ closeBot }: SignUpPromptStepProps) => {
         </div>
       </div>
 
-      <div className="bg-gray-50 p-3 rounded-lg border">
-        <p className="text-xs text-gray-600 text-center">
+      <div className="bg-muted/50 p-3 rounded-lg border">
+        <p className="text-xs text-muted-foreground text-center">
           ✨ Join thousands of users finding perfect gifts faster with AI
         </p>
       </div>
@@ -101,7 +101,7 @@ const SignUpPromptStep = ({ closeBot }: SignUpPromptStepProps) => {
           onClick={handleBack}
           variant="ghost"
           size="sm"
-          className="text-gray-500 hover:text-gray-700"
+          className="text-muted-foreground hover:text-muted-foreground"
         >
           ← Go Back
         </Button>

@@ -60,7 +60,7 @@ const FindGiftsCard = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="w-56 bg-white p-0 max-h-[40vh] overflow-y-auto z-50" 
+                  className="w-56 bg-background p-0 max-h-[40vh] overflow-y-auto z-50" 
                   align="start"
                 >
                   {UNIVERSAL_CATEGORIES.map((category) => (
@@ -81,7 +81,7 @@ const FindGiftsCard = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input 
                   placeholder="Search for gifts..." 
-                  className="pl-10 w-full bg-purple-50 focus:bg-white transition-colors"
+                  className="pl-10 w-full bg-purple-50 focus:bg-background transition-colors"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

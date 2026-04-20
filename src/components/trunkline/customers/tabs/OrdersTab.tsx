@@ -12,7 +12,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({ customer }) => {
   return (
     <div className="border rounded-md overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50">
+        <thead className="bg-muted/50">
           <tr>
             <th className="text-left px-4 py-3 font-medium">Order ID</th>
             <th className="text-left px-4 py-3 font-medium">Date</th>
@@ -23,7 +23,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({ customer }) => {
         </thead>
         <tbody className="divide-y">
           {customer.orders.map((order) => (
-            <tr key={order.id} className="hover:bg-gray-50">
+            <tr key={order.id} className="hover:bg-muted/50">
               <td className="px-4 py-3">{order.id}</td>
               <td className="px-4 py-3">{order.date}</td>
               <td className="px-4 py-3">

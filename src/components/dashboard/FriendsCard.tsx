@@ -34,7 +34,7 @@ const FriendsCard = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg font-semibold flex items-center">
-                <Users className="h-5 w-5 mr-2 text-gray-500" />
+                <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                 Friends
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground">
@@ -78,7 +78,7 @@ const FriendsCard = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg font-semibold flex items-center">
-                <Users className="h-5 w-5 mr-2 text-gray-500" />
+                <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                 Friends
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ const FriendsCard = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg font-semibold flex items-center">
-              <Users className="h-5 w-5 mr-2 text-gray-500" />
+              <Users className="h-5 w-5 mr-2 text-muted-foreground" />
               Friends
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">

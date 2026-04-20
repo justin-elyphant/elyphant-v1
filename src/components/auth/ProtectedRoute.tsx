@@ -88,11 +88,11 @@ const ProtectedRoute = ({
   // If still loading with active timeout, show loading UI
   if (shouldShowLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="bg-white rounded-lg shadow-sm p-8 max-w-md w-full flex flex-col items-center">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4">
+        <div className="bg-background rounded-lg shadow-sm p-8 max-w-md w-full flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
           <h2 className="text-xl font-semibold mb-2">Loading your account...</h2>
-          <p className="text-gray-500 text-center">
+          <p className="text-muted-foreground text-center">
             We're retrieving your information. This will only take a moment.
           </p>
         </div>

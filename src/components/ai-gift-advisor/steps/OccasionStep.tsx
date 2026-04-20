@@ -46,7 +46,7 @@ const OccasionStep = ({ setOccasion }: OccasionStepProps) => {
     <div className="flex flex-col h-full p-4 space-y-4">
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold mb-2">What's the occasion?</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           This helps me pick something that fits the celebration perfectly.
         </p>
       </div>

@@ -90,7 +90,7 @@ const EnhancedGiftRecommendations: React.FC<EnhancedGiftRecommendationsProps> = 
       case 'in_stock': return 'text-green-600 bg-green-50';
       case 'low_stock': return 'text-yellow-600 bg-yellow-50';
       case 'out_of_stock': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-muted-foreground bg-muted/50';
     }
   };
 
@@ -159,8 +159,8 @@ const EnhancedGiftRecommendations: React.FC<EnhancedGiftRecommendationsProps> = 
               </div>
 
               {/* Product Image Placeholder */}
-              <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                <Gift className="h-8 w-8 text-gray-400" />
+              <div className="w-full h-32 bg-muted rounded-lg mb-3 flex items-center justify-center">
+                <Gift className="h-8 w-8 text-muted-foreground" />
               </div>
 
               {/* Product Info */}

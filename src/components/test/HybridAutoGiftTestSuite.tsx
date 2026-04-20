@@ -445,7 +445,7 @@ const HybridAutoGiftTestSuite = () => {
                       {phase.tests.map((test, testIndex) => (
                         <div key={testIndex} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center gap-3">
-                            {test.status === 'pending' && <Clock className="h-4 w-4 text-gray-400" />}
+                            {test.status === 'pending' && <Clock className="h-4 w-4 text-muted-foreground" />}
                             {test.status === 'running' && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" />}
                             {test.status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
                             {test.status === 'error' && <AlertCircle className="h-4 w-4 text-red-500" />}

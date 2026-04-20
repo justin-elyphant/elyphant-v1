@@ -49,13 +49,13 @@ const ContactSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="w-full max-w-xs bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/30 rounded-xl px-6 py-4 mb-4 text-center"
       >
-        <div className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-0.5">
           Raising
         </div>
         <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-0.5">
           $1.5M
         </div>
-        <div className="text-gray-400 text-xs">
+        <div className="text-muted-foreground text-xs">
           Seed Round • 18-Month Runway
         </div>
       </motion.div>
@@ -71,7 +71,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
           </div>
           <div>
             <div className="text-base font-bold text-white">$600K</div>
-            <div className="text-[10px] text-gray-400">Founder Investment</div>
+            <div className="text-[10px] text-muted-foreground">Founder Investment</div>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
@@ -80,7 +80,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
           </div>
           <div>
             <div className="text-base font-bold text-white">Patent</div>
-            <div className="text-[10px] text-gray-400">Pending on Auto-Gift</div>
+            <div className="text-[10px] text-muted-foreground">Pending on Auto-Gift</div>
           </div>
         </div>
       </motion.div>
@@ -90,7 +90,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="w-full max-w-md mb-4"
       >
-        <div className="text-gray-400 text-[10px] uppercase tracking-wider mb-2 text-center">
+        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
           Use of Funds
         </div>
         <div className="space-y-2">
@@ -102,7 +102,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
                   <span className="text-white text-xs font-medium">{item.category}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-gray-400 text-[10px]">{item.amount}</span>
+                  <span className="text-muted-foreground text-[10px]">{item.amount}</span>
                   <span className="text-white text-xs font-bold">{item.percentage}%</span>
                 </div>
               </div>
@@ -117,7 +117,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="w-full max-w-md mb-6"
       >
-        <div className="text-gray-400 text-[10px] uppercase tracking-wider mb-2 text-center">
+        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
           Key Milestones (18 Months)
         </div>
         <div className="flex items-center justify-center gap-4 md:gap-6 relative">
@@ -130,7 +130,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
                 <Target className="w-3 h-3 text-white" />
               </div>
               <div className="text-white text-[10px] font-medium text-center whitespace-nowrap">{milestone.label}</div>
-              <div className="text-gray-500 text-[9px]">{milestone.timeline}</div>
+              <div className="text-muted-foreground text-[9px]">{milestone.timeline}</div>
             </div>
           ))}
         </div>
@@ -163,7 +163,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
       {/* Footer */}
       <motion.div 
         variants={itemVariants}
-        className="flex items-center gap-4 text-gray-500 text-xs"
+        className="flex items-center gap-4 text-muted-foreground text-xs"
       >
         <a 
           href="https://elyphant.com" 

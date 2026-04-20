@@ -25,7 +25,7 @@ const SupportTab: React.FC<SupportTabProps> = ({ customer }) => {
   return (
     <div className="border rounded-md overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50">
+        <thead className="bg-muted/50">
           <tr>
             <th className="text-left px-4 py-3 font-medium">Ticket ID</th>
             <th className="text-left px-4 py-3 font-medium">Date</th>
@@ -36,7 +36,7 @@ const SupportTab: React.FC<SupportTabProps> = ({ customer }) => {
         </thead>
         <tbody className="divide-y">
           {customer.supportRequests.map((request) => (
-            <tr key={request.id} className="hover:bg-gray-50">
+            <tr key={request.id} className="hover:bg-muted/50">
               <td className="px-4 py-3">{request.id}</td>
               <td className="px-4 py-3">{request.date}</td>
               <td className="px-4 py-3">{request.subject}</td>

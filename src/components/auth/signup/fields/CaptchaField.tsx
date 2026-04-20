@@ -40,7 +40,7 @@ export const CaptchaField = ({ form }: CaptchaFieldProps) => {
 
   return (
     <div className="space-y-2">
-      <div className="relative bg-gray-50 p-3 rounded-md border">
+      <div className="relative bg-muted/50 p-3 rounded-md border">
         <div className="select-none text-xl font-bold tracking-wider text-center py-2" 
              style={{ fontFamily: 'monospace', letterSpacing: '0.25em' }}>
           {captchaText}

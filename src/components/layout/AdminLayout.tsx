@@ -8,7 +8,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen w-full bg-gray-50">
+    <div className="min-h-screen w-full bg-muted/50">
       {/* Full-width header */}
       <UnifiedShopperHeader />
       

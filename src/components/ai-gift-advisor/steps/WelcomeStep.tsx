@@ -15,10 +15,10 @@ const WelcomeStep = ({ nextStep }: WelcomeStepProps) => {
       </div>
       
       <div className="space-y-3">
-        <h2 className="text-xl font-bold text-gray-900">
+        <h2 className="text-xl font-bold text-foreground">
           Hey there! I'm Nicole 👋
         </h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           I'll help you set up automatic gift-giving so you never miss an important celebration. Let me ask you a few quick questions to get started.
         </p>
       </div>

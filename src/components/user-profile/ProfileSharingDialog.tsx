@@ -74,7 +74,7 @@ const ProfileSharingDialog = ({
       name: "X",
       icon: Twitter,
       url: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-      color: "bg-black hover:bg-gray-800"
+      color: "bg-black hover:bg-foreground/90"
     },
     {
       name: "WhatsApp",

@@ -6,9 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Heart, UserPlus, Check, X, MoreHorizontal, Sparkles } from "lucide-react";
 import { Connection } from "@/types/connections";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import PersonalizedGiftIntentModal from "@/components/gifting/PersonalizedGiftIntentModal";
-import QuickGiftIdeasModal from "@/components/gifting/QuickGiftIdeasModal";
-import UnifiedGiftSchedulingModal from "@/components/gifting/unified/UnifiedGiftSchedulingModal";
 
 interface OptimizedMobileConnectionCardProps {
   connection: Connection;
@@ -31,9 +28,6 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
 }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showGiftIntentModal, setShowGiftIntentModal] = useState(false);
-  const [showQuickIdeasModal, setShowQuickIdeasModal] = useState(false);
-  const [showAutoGiftSetup, setShowAutoGiftSetup] = useState(false);
 
   const handleCardTap = () => {
     triggerHapticFeedback('light');

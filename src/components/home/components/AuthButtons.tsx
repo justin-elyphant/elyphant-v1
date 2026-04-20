@@ -21,7 +21,7 @@ const AuthButtons = () => {
           variant="ghost" 
           size="sm" 
           onClick={handleSignIn}
-          className="text-gray-600 hover:text-gray-900 font-medium"
+          className="text-muted-foreground hover:text-foreground font-medium"
         >
           Sign In
         </Button>

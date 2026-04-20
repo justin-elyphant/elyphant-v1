@@ -42,7 +42,7 @@ export const OccasionMessage: React.FC<OccasionMessageProps> = ({
   };
 
   return (
-    <div className={`flex items-center text-gray-700 font-medium transition-opacity duration-500 ${
+    <div className={`flex items-center text-muted-foreground font-medium transition-opacity duration-500 ${
       animationState === "in" ? "opacity-100" : "opacity-0"
     }`}>
       {getOccasionIcon(occasion)}

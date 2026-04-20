@@ -29,7 +29,7 @@ const MarketplaceHeader = ({
     <div className="mb-6">
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} justify-between items-center mb-2`}>
         <h1
-          className={`font-sans font-semibold text-gray-900
+          className={`font-sans font-semibold text-foreground
             ${isMobile ? 'mb-2 text-lg text-center w-full' : 'text-xl md:text-2xl'}`}
         >
           Gift Marketplace

@@ -49,8 +49,8 @@ const MobileMarketplaceLayout: React.FC<MobileMarketplaceLayoutProps> = ({
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="mb-4">
-          <div className="h-8 bg-gray-200 rounded animate-pulse mb-2" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+          <div className="h-8 bg-muted rounded animate-pulse mb-2" />
+          <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
         </div>
         <ProductSkeleton count={6} viewMode={viewMode} />
       </div>

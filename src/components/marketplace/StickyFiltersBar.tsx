@@ -43,7 +43,7 @@ const StickyFiltersBar = ({
   return (
     <SecondaryHeaderManager 
       priority={2}
-      className={`bg-white border-b py-4 mb-6 transition-all duration-300 ${
+      className={`bg-background border-b py-4 mb-6 transition-all duration-300 ${
         isScrolled ? 'shadow-md bg-white/95 backdrop-blur-sm' : ''
       }`}
     >
@@ -106,7 +106,7 @@ const StickyFiltersBar = ({
           </div>
           
           {totalItems > 0 && (
-            <div className="text-sm text-gray-600 transition-all duration-200">
+            <div className="text-sm text-muted-foreground transition-all duration-200">
               {totalItems} products found
             </div>
           )}

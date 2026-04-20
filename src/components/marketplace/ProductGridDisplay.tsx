@@ -30,11 +30,11 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
     return (
       <div className="text-center py-12 safe-area-inset">
         <div className="max-w-sm mx-auto">
-          <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+          <div className="w-24 h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-muted rounded-lg"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-          <p className="text-gray-500 leading-relaxed">Try adjusting your search or filters to find what you're looking for.</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">No products found</h3>
+          <p className="text-muted-foreground leading-relaxed">Try adjusting your search or filters to find what you're looking for.</p>
         </div>
       </div>
     );

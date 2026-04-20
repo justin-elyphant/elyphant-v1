@@ -49,7 +49,7 @@ const HomeCTA = () => {
             <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
               <Button
                 size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
+                className="bg-background text-purple-600 hover:bg-muted font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
                 onClick={handleStartGifting}
               >
                 <Gift className="mr-2 h-5 w-5" />
@@ -73,7 +73,7 @@ const HomeCTA = () => {
             <div className="flex justify-center">
               <Button
                 size="lg"
-                className="bg-white text-purple-600 hover:bg-gray-100 font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
+                className="bg-background text-purple-600 hover:bg-muted font-semibold touch-target-48 touch-manipulation tap-feedback no-select"
                 onClick={handleStartGifting}
               >
                 Get Started

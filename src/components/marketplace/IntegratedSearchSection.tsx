@@ -44,12 +44,12 @@ const IntegratedSearchSection: React.FC<IntegratedSearchSectionProps> = ({
   }
 
   return (
-    <div className="bg-white border-b border-gray-100">
+    <div className="bg-background border-b border-border">
       <div className="container mx-auto px-4 py-3">
         {/* Recent Searches Section */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium text-gray-700">Recent:</span>
+            <span className="text-sm font-medium text-muted-foreground">Recent:</span>
           </div>
           
           <Carousel

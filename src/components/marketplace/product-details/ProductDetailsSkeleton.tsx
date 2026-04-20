@@ -5,7 +5,7 @@ const ProductDetailsSkeleton: React.FC = () => {
   return (
     <div className="min-h-screen bg-elyphant-grey pb-safe">
       {/* Header skeleton */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <Skeleton className="h-11 w-32" />
         </div>

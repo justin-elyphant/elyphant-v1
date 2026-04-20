@@ -122,7 +122,7 @@ export const ZincProductResults = ({
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span 
                       key={i} 
-                      className={`text-xs ${i < Math.round(product.rating) ? "text-amber-500" : "text-gray-300"}`}
+                      className={`text-xs ${i < Math.round(product.rating) ? "text-amber-500" : "text-muted-foreground/50"}`}
                     >
                       ★
                     </span>

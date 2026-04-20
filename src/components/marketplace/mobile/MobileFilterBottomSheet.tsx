@@ -102,7 +102,7 @@ const MobileFilterBottomSheet = ({
         <div className="space-y-6 pb-20 overflow-y-auto">
           {/* Sort Options */}
           <div>
-            <h3 className="font-medium text-base mb-3 text-gray-900">Sort By</h3>
+            <h3 className="font-medium text-base mb-3 text-foreground">Sort By</h3>
             <Select value={sortOption} onValueChange={setSortOption}>
               <SelectTrigger className="w-full h-12 text-base">
                 <SelectValue placeholder="Sort by" />
@@ -121,7 +121,7 @@ const MobileFilterBottomSheet = ({
 
           {/* Quick Price Filters */}
           <div>
-            <h3 className="font-medium text-base mb-3 text-gray-900">Price Range</h3>
+            <h3 className="font-medium text-base mb-3 text-foreground">Price Range</h3>
             <div className="grid grid-cols-2 gap-2">
               {quickFilters.map((filter) => (
                 <Button
@@ -144,7 +144,7 @@ const MobileFilterBottomSheet = ({
 
           {/* Categories */}
           <div>
-            <h3 className="font-medium text-base mb-3 text-gray-900">Category</h3>
+            <h3 className="font-medium text-base mb-3 text-foreground">Category</h3>
             <div className="grid grid-cols-2 gap-2">
               {popularCategories.map((category) => (
                 <Button
@@ -166,7 +166,7 @@ const MobileFilterBottomSheet = ({
           {/* All Categories Dropdown */}
           {categories.length > 6 && (
             <div>
-              <h4 className="font-medium text-sm mb-2 text-gray-700">All Categories</h4>
+              <h4 className="font-medium text-sm mb-2 text-muted-foreground">All Categories</h4>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full h-12 text-base">
                   <SelectValue placeholder="Select category" />
@@ -185,14 +185,14 @@ const MobileFilterBottomSheet = ({
         </div>
 
         {/* Apply Button - Fixed at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t safe-area-inset">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t safe-area-inset">
           <Button
             onClick={() => onOpenChange(false)}
             className="w-full h-12 text-base font-medium"
           >
             Apply Filters
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-2 bg-white text-blue-600">
+              <Badge variant="secondary" className="ml-2 bg-background text-blue-600">
                 {activeFilterCount}
               </Badge>
             )}

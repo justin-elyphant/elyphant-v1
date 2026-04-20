@@ -68,7 +68,7 @@ export const ProductSearchVerification: React.FC = () => {
       case 'testing': return 'border-yellow-500 bg-yellow-50';
       case 'success': return 'border-green-500 bg-green-50';
       case 'error': return 'border-red-500 bg-red-50';
-      default: return 'border-gray-300';
+      default: return 'border-border';
     }
   };
 
@@ -96,7 +96,7 @@ export const ProductSearchVerification: React.FC = () => {
           </p>
           
           {verificationStatus.details && (
-            <details className="text-xs bg-gray-100 p-2 rounded">
+            <details className="text-xs bg-muted p-2 rounded">
               <summary className="cursor-pointer font-medium">View Details</summary>
               <pre className="mt-2 overflow-auto">
                 {JSON.stringify(verificationStatus.details, null, 2)}

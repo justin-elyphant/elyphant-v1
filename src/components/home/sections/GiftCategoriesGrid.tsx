@@ -60,7 +60,7 @@ const GiftCategoriesGrid: React.FC = () => {
 
   return (
     <FullBleedSection 
-      background="bg-white" 
+      background="bg-background" 
       height="auto"
       className="py-8 md:py-12"
     >

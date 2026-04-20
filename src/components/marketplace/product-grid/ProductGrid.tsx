@@ -29,7 +29,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   
   // Default product card renderer if none provided
   const defaultRenderProductCard = (product: Product) => (
-    <div key={product.id || product.product_id} className="bg-white p-4 rounded-lg shadow">
+    <div key={product.id || product.product_id} className="bg-background p-4 rounded-lg shadow">
       <div>{product.title || product.name}</div>
       <div>{formatPrice(product.price)}</div>
     </div>

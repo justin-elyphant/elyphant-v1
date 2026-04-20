@@ -9,12 +9,12 @@ interface FeatureProps {
 }
 
 const Feature: React.FC<FeatureProps> = ({ title, description, icon }) => (
-  <div className="flex flex-col items-center md:items-start text-center md:text-left p-6 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+  <div className="flex flex-col items-center md:items-start text-center md:text-left p-6 bg-background rounded-lg shadow-sm border border-border hover:shadow-md transition-shadow">
     <div className="bg-purple-100 p-3 rounded-full mb-4">
       {icon}
     </div>
     <h3 className="text-lg font-semibold mb-2">{title}</h3>
-    <p className="text-gray-600">{description}</p>
+    <p className="text-muted-foreground">{description}</p>
   </div>
 );
 
@@ -57,7 +57,7 @@ const FeaturesSection = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Features You'll Love</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Our platform makes gift-giving meaningful, personal, and stress-free.
           </p>
         </div>

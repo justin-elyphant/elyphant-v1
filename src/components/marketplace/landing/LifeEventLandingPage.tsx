@@ -192,7 +192,7 @@ const LifeEventLandingPage: React.FC<LifeEventLandingPageProps> = ({
             <Button
               onClick={handleCtaClick}
               size="lg"
-              className="bg-white text-foreground hover:bg-white/90 font-semibold px-8 rounded-full shadow-lg"
+              className="bg-background text-foreground hover:bg-white/90 font-semibold px-8 rounded-full shadow-lg"
             >
               {config.ctaLabel}
             </Button>

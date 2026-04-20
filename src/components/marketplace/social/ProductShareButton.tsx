@@ -184,7 +184,7 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
         
         <div className="mt-6">
           {/* Product Preview */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-6">
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg mb-6">
             {product.image && (
               <img
                 src={product.image}
@@ -195,7 +195,7 @@ const ProductShareButton: React.FC<ProductShareButtonProps> = ({
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{product.name}</p>
               {product.brand && (
-                <p className="text-xs text-gray-500">{product.brand}</p>
+                <p className="text-xs text-muted-foreground">{product.brand}</p>
               )}
               <p className="text-sm font-semibold text-green-600">
                 ${product.price.toFixed(2)}

@@ -53,7 +53,7 @@ const NicoleIntroSection = () => {
             </div>
 
             {/* Description */}
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
               Your personal AI gift shopping assistant. Nicole helps you find the perfect gifts 
               for any occasion, person, or budget in seconds.
             </p>
@@ -63,41 +63,41 @@ const NicoleIntroSection = () => {
               {features.map((feature, index) => (
                 <div key={index} className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-full shadow-sm border border-white/50">
                   {feature.icon}
-                  <span className="text-gray-700 font-medium text-sm md:text-base">{feature.text}</span>
+                  <span className="text-muted-foreground font-medium text-sm md:text-base">{feature.text}</span>
                 </div>
               ))}
             </div>
 
             {/* What you can ask - Enhanced for mobile */}
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl mb-10 max-w-3xl mx-auto border border-white/50">
-              <h3 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6">What can you ask Nicole?</h3>
+              <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-6">What can you ask Nicole?</h3>
               <div className="grid md:grid-cols-2 gap-4 text-left">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"Find gifts for my mom under $50"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"Find gifts for my mom under $50"</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"What's good for a housewarming party?"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"What's good for a housewarming party?"</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"Anniversary gift ideas for couples"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"Anniversary gift ideas for couples"</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"Unique gifts for tech lovers"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"Unique gifts for tech lovers"</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"Last-minute birthday gifts"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"Last-minute birthday gifts"</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600 text-sm md:text-base">"Holiday gifts for coworkers"</span>
+                    <span className="text-muted-foreground text-sm md:text-base">"Holiday gifts for coworkers"</span>
                   </div>
                 </div>
               </div>
@@ -113,7 +113,7 @@ const NicoleIntroSection = () => {
                 <Bot className="mr-2 h-5 w-5" />
                 Start Shopping with Nicole
               </Button>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 It's free and takes less than 30 seconds
               </p>
             </div>

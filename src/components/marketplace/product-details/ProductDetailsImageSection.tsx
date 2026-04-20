@@ -69,14 +69,14 @@ const ProductDetailsImageSection = ({
               price: product.price,
               brand: product.brand || "",
             }}
-            triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-2"
+            triggerClassName="bg-white/80 hover:bg-background text-muted-foreground hover:text-pink-500 p-2"
             onAdded={handleWishlistAdded}
           />
         ) : (
           <Button
             variant="ghost"
             size="icon"
-            className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500"
+            className="bg-white/80 hover:bg-background text-muted-foreground hover:text-pink-500"
             onClick={handleWishlistClick}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

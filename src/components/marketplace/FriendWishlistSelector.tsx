@@ -26,10 +26,10 @@ const FriendWishlistSelector: React.FC<FriendWishlistSelectorProps> = ({
         Select Gift List
       </label>
       <Select value={selectedWishlistId} onValueChange={onSelect}>
-        <SelectTrigger className="w-full bg-white">
+        <SelectTrigger className="w-full bg-background">
           <SelectValue placeholder="Select a list..." />
         </SelectTrigger>
-        <SelectContent className="z-50 bg-white">
+        <SelectContent className="z-50 bg-background">
           <SelectItem value="all">
             All Wishlists
           </SelectItem>

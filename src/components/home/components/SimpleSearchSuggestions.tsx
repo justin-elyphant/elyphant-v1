@@ -25,12 +25,12 @@ const SimpleSearchSuggestions: React.FC<SimpleSearchSuggestionsProps> = ({
   const getIcon = (type: string) => {
     switch (type) {
       case 'popular':
-        return <TrendingUp className="h-4 w-4 text-gray-400" />;
+        return <TrendingUp className="h-4 w-4 text-muted-foreground" />;
       case 'category':
       case 'brand':
-        return <Tag className="h-4 w-4 text-gray-400" />;
+        return <Tag className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <Search className="h-4 w-4 text-gray-400" />;
+        return <Search className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -52,20 +52,20 @@ const SimpleSearchSuggestions: React.FC<SimpleSearchSuggestionsProps> = ({
   };
 
   return (
-    <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-lg border rounded-md mt-1 max-h-80 overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 z-50 bg-background shadow-lg border rounded-md mt-1 max-h-80 overflow-y-auto">
       <ul className="text-sm">
         {suggestions.map((suggestion, idx) => (
           <li
             key={idx}
-            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
             onClick={() => onSuggestionClick(suggestion.text)}
           >
             {getIcon(suggestion.type)}
-            <span className="flex-1 text-gray-900">
+            <span className="flex-1 text-foreground">
               {highlightMatch(suggestion.text, query)}
             </span>
             {suggestion.type === 'popular' && (
-              <span className="text-xs text-gray-500">Popular</span>
+              <span className="text-xs text-muted-foreground">Popular</span>
             )}
           </li>
         ))}

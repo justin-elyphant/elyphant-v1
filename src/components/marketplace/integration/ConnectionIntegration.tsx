@@ -103,7 +103,7 @@ const ConnectionIntegration: React.FC<ConnectionIntegrationProps> = ({
             {relevantConnections.map((connection) => (
               <div 
                 key={connection.id} 
-                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">

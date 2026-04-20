@@ -112,7 +112,7 @@ const ZincConnectCard = () => {
           <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
             <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <p>
-              Enter just the token provided by Zinc (e.g. <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">5B394AAF6CD03728E9E33DDF</code>).
+              Enter just the token provided by Zinc (e.g. <code className="bg-muted px-1 py-0.5 rounded text-xs">5B394AAF6CD03728E9E33DDF</code>).
               Do not include a colon or other characters.
             </p>
           </div>

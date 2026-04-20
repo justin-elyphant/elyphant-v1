@@ -147,7 +147,7 @@ const AccessibleProductImage: React.FC<AccessibleProductImageProps> = ({
     return (
       <div 
         className={cn(
-          "flex flex-col items-center justify-center bg-gray-100 text-gray-600 p-4",
+          "flex flex-col items-center justify-center bg-muted text-muted-foreground p-4",
           getAspectRatioClass(),
           className
         )}
@@ -196,8 +196,8 @@ const AccessibleProductImage: React.FC<AccessibleProductImageProps> = ({
     >
       {/* Loading state */}
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-border border-t-blue-500 rounded-full animate-spin" />
           <span className="sr-only">Loading image</span>
         </div>
       )}

@@ -40,7 +40,7 @@ const BrandHeroSection: React.FC<BrandHeroSectionProps> = ({ brandName, productC
         <div className="flex flex-col md:flex-row items-center gap-8">
           {/* Brand Logo */}
           <div className="flex-shrink-0">
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-2xl shadow-lg flex items-center justify-center p-4">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-background rounded-2xl shadow-lg flex items-center justify-center p-4">
               <img 
                 src={brandData.logo} 
                 alt={`${brandData.name} logo`}

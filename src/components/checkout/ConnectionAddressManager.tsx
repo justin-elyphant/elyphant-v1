@@ -308,7 +308,7 @@ const ConnectionAddressManager: React.FC<ConnectionAddressManagerProps> = ({
                   {selectedConnectionId === connection.id && connection.has_address && (
                     <div className="text-primary">
                       <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-2 h-2 bg-background rounded-full"></div>
                       </div>
                     </div>
                   )}

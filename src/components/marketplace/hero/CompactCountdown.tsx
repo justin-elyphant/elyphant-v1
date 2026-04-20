@@ -57,8 +57,8 @@ const CompactCountdown: React.FC<CompactCountdownProps> = ({ event, className = 
             {isToday(eventDate) || isTomorrow(eventDate) ? daysDisplay : subText}
           </span>
         </div>
-        <span className="text-gray-800 font-medium text-sm">{event.name}</span>
-        <span className="text-gray-500 text-xs">{format(eventDate, "MMM d")}</span>
+        <span className="text-foreground font-medium text-sm">{event.name}</span>
+        <span className="text-muted-foreground text-xs">{format(eventDate, "MMM d")}</span>
       </div>
     </div>
   );

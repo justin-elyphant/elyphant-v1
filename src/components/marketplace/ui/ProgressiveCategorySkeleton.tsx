@@ -46,7 +46,7 @@ const ProgressiveCategorySkeleton: React.FC<ProgressiveCategorySkeletonProps> = 
                     }}
                   >
                     {/* Product Card Skeleton */}
-                    <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
+                    <div className="bg-background rounded-lg shadow-sm overflow-hidden border">
                       {/* Product Image */}
                       <Skeleton className="aspect-square w-full" />
                       

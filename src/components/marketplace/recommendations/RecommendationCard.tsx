@@ -72,14 +72,14 @@ const RecommendationCard = ({
                 brand: product.brand,
               }}
               variant="icon"
-              triggerClassName="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm"
+              triggerClassName="bg-white/80 hover:bg-background text-muted-foreground hover:text-pink-500 p-1.5 rounded-full transition-colors shadow-sm"
               isWishlisted={isFavorited}
             />
           ) : (
             <Button
               variant="ghost"
               size="icon"
-              className="bg-white/80 hover:bg-white text-gray-400 hover:text-pink-500 rounded-full p-1.5 shadow-sm"
+              className="bg-white/80 hover:bg-background text-muted-foreground hover:text-pink-500 rounded-full p-1.5 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onFavoriteToggle(e);

@@ -90,8 +90,8 @@ const AdvertisingDashboard = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border rounded-md p-4 text-center">
-                  <div className="bg-gray-100 h-32 rounded flex items-center justify-center mb-2">
-                    <ImageUp className="h-8 w-8 text-gray-400" />
+                  <div className="bg-muted h-32 rounded flex items-center justify-center mb-2">
+                    <ImageUp className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Homepage Banner</p>
@@ -101,8 +101,8 @@ const AdvertisingDashboard = () => {
                 </div>
                 
                 <div className="border rounded-md p-4 text-center">
-                  <div className="bg-gray-100 h-32 rounded flex items-center justify-center mb-2">
-                    <ImageUp className="h-8 w-8 text-gray-400" />
+                  <div className="bg-muted h-32 rounded flex items-center justify-center mb-2">
+                    <ImageUp className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Category Banner</p>
@@ -185,8 +185,8 @@ const Badge = ({
   const baseClasses = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
   const variantClasses = {
     default: "bg-green-100 text-green-800",
-    outline: "bg-transparent text-gray-700 border border-gray-300",
-    secondary: "bg-gray-100 text-gray-800"
+    outline: "bg-transparent text-muted-foreground border border-border",
+    secondary: "bg-muted text-foreground"
   };
   
   return (

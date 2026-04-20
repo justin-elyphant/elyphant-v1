@@ -50,7 +50,7 @@ const EnhancedProductImage: React.FC<EnhancedProductImageProps> = ({
   
   return (
     <div 
-      className={`overflow-hidden relative ${getAspectRatioClass()} bg-gray-50`}
+      className={`overflow-hidden relative ${getAspectRatioClass()} bg-muted/50`}
       onMouseEnter={() => enableZoom && setIsZoomed(true)}
       onMouseLeave={() => enableZoom && setIsZoomed(false)}
       onMouseMove={handleMouseMove}

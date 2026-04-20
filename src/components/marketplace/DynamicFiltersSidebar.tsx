@@ -79,7 +79,7 @@ const DynamicFiltersSidebar = ({
     (filters.priceRange[0] > 0 || filters.priceRange[1] < PRICE_MAX ? 1 : 0);
   
   return (
-    <div className="bg-white border rounded-md overflow-hidden">
+    <div className="bg-background border rounded-md overflow-hidden">
       <div className="p-4 border-b flex justify-between items-center">
         <h3 className="font-medium flex items-center">
           Smart Filters

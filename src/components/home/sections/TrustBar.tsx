@@ -4,7 +4,7 @@ import { Shield, CheckCircle, Star } from "lucide-react";
 
 const TrustBar = () => {
   return (
-    <div className="border-y border-gray-200">
+    <div className="border-y border-border">
       <div className="container py-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex items-center justify-center md:justify-start">

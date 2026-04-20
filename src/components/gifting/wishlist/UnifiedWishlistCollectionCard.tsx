@@ -255,21 +255,21 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
-          <DropdownMenuItem onClick={() => navigate(`/wishlist/${wishlist.id}`)}>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/wishlist/${wishlist.id}`); }}>
             <Eye className="h-4 w-4 mr-2" />
             View
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleEdit}>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(); }}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </DropdownMenuItem>
           {onShare && (
-            <DropdownMenuItem onClick={handleShare}>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(); }}>
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </DropdownMenuItem>

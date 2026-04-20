@@ -52,10 +52,10 @@ const LoadingState: React.FC<LoadingStateProps> = ({
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-50 to-white">
       <div className="text-center">
         <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2">
           {message}
         </h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           This will just take a moment...
         </p>
       </div>

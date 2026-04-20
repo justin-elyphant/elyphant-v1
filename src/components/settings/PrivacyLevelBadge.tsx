@@ -37,7 +37,7 @@ const PrivacyLevelBadge: React.FC<PrivacyLevelBadgeProps> = ({
       case 'friends':
         return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
       case 'private':
-        return 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+        return 'bg-muted text-muted-foreground hover:bg-muted';
     }
   };
   

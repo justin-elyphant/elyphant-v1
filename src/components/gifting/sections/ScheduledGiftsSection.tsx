@@ -37,7 +37,7 @@ const ScheduledGiftsSection: React.FC<ScheduledGiftsSectionProps> = ({
       case 'shipped': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
       case 'delivered': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
       case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300';
+      default: return 'bg-muted text-muted-foreground dark:bg-foreground/30 dark:text-muted-foreground/50';
     }
   };
 
@@ -59,10 +59,10 @@ const ScheduledGiftsSection: React.FC<ScheduledGiftsSectionProps> = ({
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center justify-between p-3 border rounded-lg animate-pulse">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="w-12 h-12 bg-muted dark:bg-gray-700 rounded" />
                   <div>
-                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
-                    <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-32 bg-muted dark:bg-gray-700 rounded mb-1" />
+                    <div className="h-3 w-24 bg-muted dark:bg-gray-700 rounded" />
                   </div>
                 </div>
               </div>
@@ -133,8 +133,8 @@ const ScheduledGiftsSection: React.FC<ScheduledGiftsSectionProps> = ({
                       }}
                     />
                   ) : null}
-                  <div className={`w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded border flex items-center justify-center ${gift.productImage ? 'hidden' : ''}`}>
-                    <Package className="h-6 w-6 text-gray-400" />
+                  <div className={`w-12 h-12 bg-muted dark:bg-gray-700 rounded border flex items-center justify-center ${gift.productImage ? 'hidden' : ''}`}>
+                    <Package className="h-6 w-6 text-muted-foreground" />
                   </div>
                   
                   <div className="flex-1">

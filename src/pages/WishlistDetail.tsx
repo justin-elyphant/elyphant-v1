@@ -222,7 +222,7 @@ const WishlistDetail = () => {
                 <motion.div whileTap={{ scale: 0.95 }}>
                   <Button
                     asChild
-                    className="h-11 px-6 bg-white text-purple-600 hover:bg-white/90 font-semibold shadow-lg gap-2"
+                    className="h-11 px-6 bg-background text-purple-600 hover:bg-white/90 font-semibold shadow-lg gap-2"
                   >
                     <Link to="/marketplace">
                       <Plus className="h-4 w-4" />

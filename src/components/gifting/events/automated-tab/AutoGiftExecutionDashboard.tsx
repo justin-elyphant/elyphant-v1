@@ -11,7 +11,7 @@ const statusConfig = {
   processing: { icon: RefreshCw, color: "text-blue-600", bg: "bg-blue-50", label: "Processing", variant: "default" as const },
   completed: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", label: "Completed", variant: "default" as const },
   failed: { icon: XCircle, color: "text-red-600", bg: "bg-red-50", label: "Failed", variant: "destructive" as const },
-  cancelled: { icon: XCircle, color: "text-gray-600", bg: "bg-gray-50", label: "Cancelled", variant: "secondary" as const },
+  cancelled: { icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", label: "Cancelled", variant: "secondary" as const },
   pending_approval: { icon: Mail, color: "text-orange-600", bg: "bg-orange-50", label: "Needs Approval", variant: "secondary" as const }
 };
 

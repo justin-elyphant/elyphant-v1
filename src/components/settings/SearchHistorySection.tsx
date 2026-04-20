@@ -24,7 +24,7 @@ const SearchHistorySection = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             Please sign in to view and manage your search history
           </div>
         </CardContent>
@@ -45,7 +45,7 @@ const SearchHistorySection = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="text-center py-4 text-gray-500">Loading search history...</div>
+          <div className="text-center py-4 text-muted-foreground">Loading search history...</div>
         ) : recentSearches.length > 0 ? (
           <>
             <div className="space-y-2">
@@ -61,7 +61,7 @@ const SearchHistorySection = () => {
             <div className="flex justify-between items-center pt-4 border-t">
               <div>
                 <div className="font-medium">Clear Search History</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   Remove all saved search terms from your account
                 </div>
               </div>
@@ -77,7 +77,7 @@ const SearchHistorySection = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             No search history yet. Your recent searches will appear here.
           </div>
         )}

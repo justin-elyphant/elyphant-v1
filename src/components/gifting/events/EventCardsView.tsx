@@ -25,7 +25,7 @@ const EventCardsView = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {events.length === 0 ? (
-        <div className="col-span-full text-center py-12 bg-white rounded-md shadow-sm">
+        <div className="col-span-full text-center py-12 bg-background rounded-md shadow-sm">
           <h3 className="text-lg font-medium mb-2">No events found</h3>
           <p className="text-muted-foreground">
             Try adjusting your filters or add a new event

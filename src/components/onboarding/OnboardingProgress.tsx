@@ -114,7 +114,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
   const isComplete = completedCount === checks.length;
 
   return (
-    <div className={`bg-white rounded-lg border shadow-sm p-6 ${className}`}>
+    <div className={`bg-background rounded-lg border shadow-sm p-6 ${className}`}>
       {showHeader && (
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -146,13 +146,13 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                 className={`flex items-center gap-2 p-2 rounded-md ${
                   check.completed 
                     ? 'bg-green-50 text-green-700' 
-                    : 'bg-gray-50 text-gray-600'
+                    : 'bg-muted/50 text-muted-foreground'
                 }`}
               >
                 {check.completed ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 ) : (
-                  <AlertCircle className="h-4 w-4 text-gray-400" />
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 )}
                 <Icon className="h-4 w-4" />
                 <span className="text-sm font-medium">{check.label}</span>

@@ -107,7 +107,7 @@ const EventsSearchAndFilter = ({
                       type="checkbox"
                       checked={filters.eventTypes.includes(type)}
                       onChange={() => handleEventTypeToggle(type)}
-                      className="rounded border-gray-300"
+                      className="rounded border-border"
                     />
                     <span className="text-sm capitalize">{type}</span>
                   </label>

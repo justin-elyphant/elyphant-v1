@@ -91,7 +91,7 @@ const ModernMobileNavMenu = ({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 md:hidden" onClick={onClose}>
       <div 
-        className="fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto"
+        className="fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-background shadow-2xl overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -113,7 +113,7 @@ const ModernMobileNavMenu = ({
         <div className="p-6 space-y-8">
           {/* Quick Actions */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -122,12 +122,12 @@ const ModernMobileNavMenu = ({
                   key={action.label}
                   to={action.href}
                   onClick={onClose}
-                  className="relative p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all group"
+                  className="relative p-4 rounded-xl border border-border hover:border-border hover:shadow-sm transition-all group"
                 >
                   <div className={`inline-flex p-2 rounded-lg ${action.color} mb-2`}>
                     <action.icon className="h-5 w-5" />
                   </div>
-                  <div className="text-sm font-medium text-gray-900">{action.label}</div>
+                  <div className="text-sm font-medium text-foreground">{action.label}</div>
                   {action.badge && (
                     <Badge 
                       variant="destructive" 
@@ -145,7 +145,7 @@ const ModernMobileNavMenu = ({
 
           {/* Shop Categories */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Shop by Category
             </h3>
             <div className="space-y-2">
@@ -155,13 +155,13 @@ const ModernMobileNavMenu = ({
                   <Link
                     key={index}
                     to={item.href}
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    className="flex items-center p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                     onClick={onClose}
                   >
-                    <div className="bg-gray-100 p-2 rounded-lg mr-3 group-hover:bg-purple-100 transition-colors">
-                      <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-purple-600" />
+                    <div className="bg-muted p-2 rounded-lg mr-3 group-hover:bg-purple-100 transition-colors">
+                      <IconComponent className="h-5 w-5 text-muted-foreground group-hover:text-purple-600" />
                     </div>
-                    <span className="font-medium text-gray-900">{item.label}</span>
+                    <span className="font-medium text-foreground">{item.label}</span>
                   </Link>
                 );
               })}
@@ -172,7 +172,7 @@ const ModernMobileNavMenu = ({
 
           {/* Shop by Occasion */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               Shop by Occasion
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -181,10 +181,10 @@ const ModernMobileNavMenu = ({
                   key={occasion.label}
                   to={occasion.href}
                   onClick={onClose}
-                  className="p-3 rounded-lg border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-all text-center group"
+                  className="p-3 rounded-lg border border-border hover:border-purple-200 hover:bg-purple-50 transition-all text-center group"
                 >
-                  <occasion.icon className="h-6 w-6 text-gray-600 group-hover:text-purple-600 mx-auto mb-2" />
-                  <div className="text-xs font-medium text-gray-900">{occasion.label}</div>
+                  <occasion.icon className="h-6 w-6 text-muted-foreground group-hover:text-purple-600 mx-auto mb-2" />
+                  <div className="text-xs font-medium text-foreground">{occasion.label}</div>
                 </Link>
               ))}
             </div>
@@ -195,7 +195,7 @@ const ModernMobileNavMenu = ({
             <>
               <Separator />
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
                   My Account
                 </h3>
                 <div className="space-y-2">
@@ -213,29 +213,29 @@ const ModernMobileNavMenu = ({
                       <Link
                         key={index}
                         to={item.href}
-                        className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                        className="flex items-center p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                         onClick={onClose}
                       >
-                        <div className="bg-gray-100 p-2 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors">
-                          <IconComponent className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                        <div className="bg-muted p-2 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors">
+                          <IconComponent className="h-5 w-5 text-muted-foreground group-hover:text-blue-600" />
                         </div>
-                        <span className="font-medium text-gray-900">{item.label}</span>
+                        <span className="font-medium text-foreground">{item.label}</span>
                       </Link>
                     );
                   })}
                 </div>
 
                 {/* Support & Help */}
-                <div className="mt-6 pt-4 border-t border-gray-100">
+                <div className="mt-6 pt-4 border-t border-border">
                   <Link
                     to="/support"
                     onClick={onClose}
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    className="flex items-center p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                   >
-                    <div className="bg-gray-100 p-2 rounded-lg mr-3 group-hover:bg-green-100 transition-colors">
-                      <Headphones className="h-5 w-5 text-gray-600 group-hover:text-green-600" />
+                    <div className="bg-muted p-2 rounded-lg mr-3 group-hover:bg-green-100 transition-colors">
+                      <Headphones className="h-5 w-5 text-muted-foreground group-hover:text-green-600" />
                     </div>
-                    <span className="font-medium text-gray-900">Help & Support</span>
+                    <span className="font-medium text-foreground">Help & Support</span>
                   </Link>
                 </div>
 
@@ -271,7 +271,7 @@ const ModernMobileNavMenu = ({
                     Create Account
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="w-full h-12 border-gray-300">
+                <Button variant="outline" asChild className="w-full h-12 border-border">
                   <Link to="/signin" onClick={onClose}>
                     Sign In
                   </Link>

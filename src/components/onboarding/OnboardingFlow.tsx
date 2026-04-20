@@ -173,7 +173,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, onSkip }) =
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden onboarding-card">
+        <div className="bg-background rounded-xl shadow-lg overflow-hidden onboarding-card">
           {currentStep === 'welcome' && (
             <OnboardingWelcome
               onNext={() => handleNext()}

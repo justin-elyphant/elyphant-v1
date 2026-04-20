@@ -220,7 +220,7 @@ const WishlistMasonryCard: React.FC<{
             )}
 
             {wishlist.tags?.slice(0, 2).map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
+              <Badge key={tag} variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-border">
                 {tag}
               </Badge>
             ))}

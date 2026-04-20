@@ -139,7 +139,7 @@ const WishlistOwnerHero: React.FC<WishlistOwnerHeroProps> = ({
               disabled={isAdding || availableCount === 0}
               className={cn(
                 "w-full mt-4 min-h-[48px] text-base font-semibold",
-                "bg-white text-[#EF4444] hover:bg-white/90",
+                "bg-background text-[#EF4444] hover:bg-white/90",
                 "touch-manipulation active:scale-[0.98] transition-transform",
                 "disabled:opacity-50"
               )}
@@ -236,7 +236,7 @@ const WishlistOwnerHero: React.FC<WishlistOwnerHeroProps> = ({
                     size="lg"
                     className={cn(
                       "min-h-[44px] px-6 text-base font-semibold",
-                      "bg-white text-[#EF4444] hover:bg-white/90",
+                      "bg-background text-[#EF4444] hover:bg-white/90",
                       "hover:scale-[1.02] active:scale-[0.98] transition-all"
                     )}
                   >

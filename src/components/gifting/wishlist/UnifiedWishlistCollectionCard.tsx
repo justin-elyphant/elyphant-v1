@@ -207,7 +207,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
               className={cn(
                 "h-7 px-2.5 rounded-full flex items-center gap-1.5",
                 "bg-white/95 backdrop-blur-sm shadow-md border border-border/50",
-                "hover:bg-white transition-colors",
+                "hover:bg-background transition-colors",
                 isTogglingPrivacy && "opacity-70 cursor-wait"
               )}
               onClick={handlePrivacyToggle}
@@ -408,7 +408,7 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
                 <Badge 
                   variant="outline" 
                   className={cn(
-                    "text-xs bg-gray-50 border-gray-200",
+                    "text-xs bg-muted/50 border-border",
                     wishlist.priority === 'high' && "border-red-200 text-red-700 bg-red-50",
                     wishlist.priority === 'medium' && "border-amber-200 text-amber-700 bg-amber-50",
                     wishlist.priority === 'low' && "border-blue-200 text-blue-700 bg-blue-50"
@@ -419,13 +419,13 @@ const UnifiedWishlistCollectionCard: React.FC<UnifiedWishlistCollectionCardProps
               )}
 
               {wishlist.tags?.slice(0, 2).map(tag => (
-                <Badge key={tag} variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
+                <Badge key={tag} variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-border">
                   {tag}
                 </Badge>
               ))}
               
               {(wishlist.tags?.length || 0) > 2 && (
-                <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-200">
+                <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-border">
                   +{(wishlist.tags?.length || 0) - 2}
                 </Badge>
               )}

@@ -131,7 +131,7 @@ const ProfileDataIntegrityPanel: React.FC = () => {
       case 'critical': return 'text-red-500';
       case 'important': return 'text-orange-500';
       case 'helpful': return 'text-blue-500';
-      default: return 'text-gray-500';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -222,7 +222,7 @@ const ProfileDataIntegrityPanel: React.FC = () => {
                 <span>Profile Optimization</span>
                 <span>{completionScore}/100</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div 
                   className={cn(
                     "h-2 rounded-full transition-all duration-500",
@@ -350,10 +350,10 @@ const ProfileDataIntegrityPanel: React.FC = () => {
           };
         default:
           return {
-            color: 'text-gray-600',
+            color: 'text-muted-foreground',
             icon: Info,
             title: 'Issues',
-            bgHover: 'hover:bg-gray-50'
+            bgHover: 'hover:bg-muted/50'
           };
       }
     };

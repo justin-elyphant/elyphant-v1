@@ -324,7 +324,7 @@ const OrderConfirmation = () => {
       case 'cancelled':
         return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
-        return <Package className="w-5 h-5 text-gray-500" />;
+        return <Package className="w-5 h-5 text-muted-foreground" />;
     }
   };
 

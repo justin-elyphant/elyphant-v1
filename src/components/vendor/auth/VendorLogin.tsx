@@ -48,7 +48,7 @@ const VendorLogin = () => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-100">
       <div className="container max-w-md mx-auto py-10 px-4 flex-grow flex items-center justify-center">
-        <Card className="w-full bg-white shadow-lg border-slate-200">
+        <Card className="w-full bg-background shadow-lg border-slate-200">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
               <h1 className="text-2xl font-bold text-slate-800">Vendor Portal</h1>
@@ -74,7 +74,7 @@ const VendorLogin = () => {
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">Or continue with</span>
+                <span className="bg-background px-2 text-slate-500">Or continue with</span>
               </div>
             </div>
 

@@ -80,7 +80,7 @@ const Notifications = () => {
           </TabsTrigger>
         </TabsList>
         
-        <div className="bg-white rounded-md shadow">
+        <div className="bg-background rounded-md shadow">
           {filteredNotifications.length > 0 ? (
             filteredNotifications.map((notification) => (
               <div key={notification.id}>
@@ -92,7 +92,7 @@ const Notifications = () => {
             ))
           ) : (
             <div className="py-12 text-center text-muted-foreground">
-              <Bell className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+              <Bell className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
               <h3 className="text-lg font-medium mb-1">No notifications</h3>
               <p className="text-sm">
                 {activeTab === "all"

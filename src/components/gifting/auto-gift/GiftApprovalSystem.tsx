@@ -201,7 +201,7 @@ const GiftApprovalSystem: React.FC<GiftApprovalSystemProps> = ({
                                   <Star 
                                     key={i} 
                                     className={`h-3 w-3 ${
-                                      i < product.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                                      i < product.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/50'
                                     }`} 
                                   />
                                 ))}

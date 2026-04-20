@@ -180,7 +180,7 @@ const GeneralSettings = () => {
     <div className="space-y-6 pb-[calc(var(--bottom-nav-height,0px)+6rem)] md:pb-6">
       <div>
         <h2 className="text-2xl font-bold">Account Settings</h2>
-        <p className="text-gray-600">Manage your profile information and preferences</p>
+        <p className="text-muted-foreground">Manage your profile information and preferences</p>
       </div>
       
       <Form {...form}>

@@ -18,11 +18,11 @@ const SubmissionStatus: React.FC<SubmissionStatusProps> = ({
 }) => {
   const getStatusColor = () => {
     switch (status) {
-      case "submitting": return "text-gray-500";
+      case "submitting": return "text-muted-foreground";
       case "success": return "text-green-500";
       case "error": return "text-red-500";
       case "info": return "text-blue-500";
-      default: return "text-gray-400";
+      default: return "text-muted-foreground";
     }
   };
 

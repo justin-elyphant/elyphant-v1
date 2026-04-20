@@ -26,8 +26,8 @@ const Careers = () => {
       <MainLayout>
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Careers at Elyphant</h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <h1 className="text-4xl font-bold text-foreground mb-4">Careers at Elyphant</h1>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Join us in revolutionizing how people connect through thoughtful, automated gifting
             </p>
           </div>
@@ -60,7 +60,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Heart className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Meaningful Impact</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Help strengthen human connections while supporting wildlife conservation. 
                     Every line of code contributes to both relationships and protecting elephants.
                   </p>
@@ -71,7 +71,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Zap className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Cutting-Edge AI</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Work with the latest AI technologies to create personalized, intelligent 
                     gifting experiences that feel truly thoughtful and human.
                   </p>
@@ -82,7 +82,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Globe className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Remote-First Culture</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Work from anywhere while collaborating with a passionate team dedicated 
                     to creating technology that brings people closer together.
                   </p>
@@ -93,7 +93,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Users className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Small Team, Big Impact</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Your contributions matter. In our lean team, every person shapes the product 
                     and directly influences how millions of people connect.
                   </p>
@@ -104,7 +104,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Lightbulb className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Innovation Freedom</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Bring your ideas to life. We encourage experimentation and creative 
                     problem-solving in everything from UX to AI algorithms.
                   </p>
@@ -115,7 +115,7 @@ const Careers = () => {
                 <CardContent className="pt-6 text-center">
                   <Heart className="mx-auto mb-4 h-8 w-8 text-purple-600" />
                   <h3 className="text-xl font-semibold mb-3">Values-Driven</h3>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground">
                     Join a team that values empathy, intelligence, and genuine care for 
                     both our users and the planet we share.
                   </p>
@@ -134,7 +134,7 @@ const Careers = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Engineering</h3>
-                    <ul className="text-gray-700 space-y-1">
+                    <ul className="text-muted-foreground space-y-1">
                       <li>• Full-Stack Engineers (React, Node.js)</li>
                       <li>• AI/ML Engineers</li>
                       <li>• Mobile Developers (React Native)</li>
@@ -143,7 +143,7 @@ const Careers = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Product & Design</h3>
-                    <ul className="text-gray-700 space-y-1">
+                    <ul className="text-muted-foreground space-y-1">
                       <li>• Product Managers</li>
                       <li>• UX/UI Designers</li>
                       <li>• Product Designers</li>
@@ -152,7 +152,7 @@ const Careers = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Business</h3>
-                    <ul className="text-gray-700 space-y-1">
+                    <ul className="text-muted-foreground space-y-1">
                       <li>• Marketing Specialists</li>
                       <li>• Business Development</li>
                       <li>• Customer Success</li>
@@ -161,7 +161,7 @@ const Careers = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Data & Analytics</h3>
-                    <ul className="text-gray-700 space-y-1">
+                    <ul className="text-muted-foreground space-y-1">
                       <li>• Data Scientists</li>
                       <li>• Analytics Engineers</li>
                       <li>• Research Scientists</li>
@@ -207,19 +207,19 @@ const Careers = () => {
                 <div className="grid md:grid-cols-3 gap-6 text-center">
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Remember Everything</h3>
-                    <p className="text-gray-700 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       Like elephants, we never forget what matters most to our users and their relationships.
                     </p>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Act with Intelligence</h3>
-                    <p className="text-gray-700 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       We combine emotional and artificial intelligence to create meaningful connections.
                     </p>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2 text-purple-600">Protect What We Value</h3>
-                    <p className="text-gray-700 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       We're committed to protecting relationships, privacy, and the wildlife we're named after.
                     </p>
                   </div>

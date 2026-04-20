@@ -144,7 +144,7 @@ const PurchaseSuccess = () => {
             processed shortly.
           </p>
           
-          <div className="border-t border-b py-4 my-4 border-gray-100">
+          <div className="border-t border-b py-4 my-4 border-border">
             <p className="font-medium">Order Details</p>
             <p className="text-sm text-muted-foreground">
               A confirmation email with your order details has been sent to your email address.

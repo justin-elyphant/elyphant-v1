@@ -24,10 +24,10 @@ const SimplifiedGiftorOnboarding = () => {
       <div className="p-6 md:p-8">
         {/* Header that references the previous onboarding question */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Perfect! How would you like to find gifts?
           </h2>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Choose the approach that works best for you. You can always switch between both methods later.
           </p>
         </div>
@@ -53,7 +53,7 @@ const SimplifiedGiftorOnboarding = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Perfect for those who enjoy browsing and exploring
                 </div>
                 <Button 
@@ -92,7 +92,7 @@ const SimplifiedGiftorOnboarding = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Smart assistant that learns your preferences over time
                 </div>
                 <Button 
@@ -109,7 +109,7 @@ const SimplifiedGiftorOnboarding = () => {
 
         {/* Optional footer note */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Don't worry - you can always try the other approach later from your dashboard
           </p>
         </div>

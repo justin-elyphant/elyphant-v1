@@ -53,7 +53,7 @@ const WishlistButton: React.FC<WishlistButtonProps> = ({
         <Button
           variant="ghost"
           size={isMobile ? "default" : "sm"}
-          className="p-2 text-gray-400 hover:text-pink-500"
+          className="p-2 text-muted-foreground hover:text-pink-500"
           onClick={handleWishlistClick}
         >
           <Heart className="h-4 w-4" />

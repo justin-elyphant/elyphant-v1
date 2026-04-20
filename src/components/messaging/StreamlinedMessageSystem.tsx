@@ -61,7 +61,7 @@ const StreamlinedMessageSystem = () => {
       case 'event':
         return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200';
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+        return 'bg-muted text-foreground hover:bg-muted';
     }
   };
 
@@ -74,7 +74,7 @@ const StreamlinedMessageSystem = () => {
       <div className="space-y-6">
         <div className="animate-pulse space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 bg-gray-200 rounded-lg" />
+            <div key={i} className="h-20 bg-muted rounded-lg" />
           ))}
         </div>
       </div>
@@ -85,7 +85,7 @@ const StreamlinedMessageSystem = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+        <h1 className="text-2xl font-bold text-foreground">Messages</h1>
         <p className="text-muted-foreground">
           Connect with friends about gifts and special occasions
         </p>
@@ -145,7 +145,7 @@ const StreamlinedMessageSystem = () => {
               {allConnections.slice(0, 10).map((connection) => (
                 <div
                   key={connection.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">

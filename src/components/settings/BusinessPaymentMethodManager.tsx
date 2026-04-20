@@ -308,7 +308,7 @@ const BusinessPaymentMethodManager = () => {
                   id="isDefault"
                   checked={formData.isDefault}
                   onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <Label htmlFor="isDefault">Set as default payment method</Label>
               </div>

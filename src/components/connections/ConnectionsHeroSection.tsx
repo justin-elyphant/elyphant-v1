@@ -105,7 +105,7 @@ const ConnectionsHeroSection: React.FC<ConnectionsHeroSectionProps> = ({
             <motion.div whileTap={{ scale: 0.97 }} transition={springConfig}>
               <Button 
                 onClick={handleInvite}
-                className="bg-white text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
+                className="bg-background text-purple-600 hover:bg-white/90 min-h-[44px] font-semibold w-full sm:w-auto touch-manipulation"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 {isBetaTester ? 'Gift a Friend $100' : 'Invite a Friend'}

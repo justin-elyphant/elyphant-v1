@@ -49,7 +49,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           <Input
             type="search"
             placeholder="Search gifts..."
-            className="w-full pl-8 h-10 md:h-10 touch-target-48 touch-manipulation bg-white border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full pl-8 h-10 md:h-10 touch-target-48 touch-manipulation bg-background border-border focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -71,7 +71,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             size="default"
             type="button"
             onClick={() => setFiltersVisible(!filtersVisible)}
-            className="flex items-center whitespace-nowrap h-10 px-4 touch-target-48 touch-manipulation tap-feedback no-select border-gray-200 hover:border-gray-300"
+            className="flex items-center whitespace-nowrap h-10 px-4 touch-target-48 touch-manipulation tap-feedback no-select border-border hover:border-border"
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             <span>{filtersVisible ? "Hide Filters" : "Filters"}</span>
@@ -81,17 +81,17 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
 
       {/* Desktop filters - only show when not mobile and filters are visible */}
       {!isMobile && filtersVisible && (
-        <div className="grid gap-4 rounded-lg border border-gray-200 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3 safe-area-inset bg-white">
+        <div className="grid gap-4 rounded-lg border border-border p-4 shadow-sm md:grid-cols-2 lg:grid-cols-3 safe-area-inset bg-background">
           <div>
             <Label htmlFor="category" className="text-sm font-medium mb-2 block leading-relaxed">Category</Label>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger id="category" className="w-full h-10 touch-target-48 touch-manipulation border-gray-200">
+              <SelectTrigger id="category" className="w-full h-10 touch-target-48 touch-manipulation border-border">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent className="z-50 bg-white border-gray-200">
+              <SelectContent className="z-50 bg-background border-border">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.sort().map((category) => (
                   <SelectItem key={category} value={category}>
@@ -108,10 +108,10 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               value={priceRange}
               onValueChange={setPriceRange}
             >
-              <SelectTrigger id="priceRange" className="w-full h-10 touch-target-48 touch-manipulation border-gray-200">
+              <SelectTrigger id="priceRange" className="w-full h-10 touch-target-48 touch-manipulation border-border">
                 <SelectValue placeholder="Select price range" />
               </SelectTrigger>
-              <SelectContent className="z-50 bg-white border-gray-200">
+              <SelectContent className="z-50 bg-background border-border">
                 <SelectItem value="all">All Prices</SelectItem>
                 <SelectItem value="under25">Under $25</SelectItem>
                 <SelectItem value="25to50">$25 to $50</SelectItem>
@@ -125,7 +125,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <Button 
               variant="outline" 
               size="default"
-              className="w-full h-10 touch-target-48 touch-manipulation tap-feedback no-select border-gray-200 hover:border-gray-300" 
+              className="w-full h-10 touch-target-48 touch-manipulation tap-feedback no-select border-border hover:border-border" 
               onClick={clearFilters}
             >
               Clear Filters

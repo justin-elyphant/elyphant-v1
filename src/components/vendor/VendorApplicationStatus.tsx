@@ -46,7 +46,7 @@ export const VendorApplicationStatus = ({
       case "rejected":
         return "text-red-500";
       default:
-        return "text-gray-500";
+        return "text-muted-foreground";
     }
   };
 
@@ -99,7 +99,7 @@ export const VendorApplicationStatus = ({
           value={getProgressValue(status)} 
           className={cn(
             "h-2", 
-            status === "rejected" ? "bg-red-100" : "bg-gray-100",
+            status === "rejected" ? "bg-red-100" : "bg-muted",
             status === "rejected" ? "[&>div]:bg-red-500" : status === "approved" ? "[&>div]:bg-green-500" : "[&>div]:bg-blue-500"
           )} 
         />

@@ -139,7 +139,7 @@ const ExportImportDialog = ({ open, onOpenChange }: ExportImportDialogProps) => 
             </div>
             
             <div className="space-y-3">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <div className="text-sm">
                   <label htmlFor="file-upload" className="cursor-pointer text-primary hover:text-primary/80">
@@ -160,7 +160,7 @@ const ExportImportDialog = ({ open, onOpenChange }: ExportImportDialogProps) => 
               </div>
               
               {importFile && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
                   <span className="text-sm">{importFile.name}</span>
                   <Button onClick={importEvents} size="sm">
                     Import

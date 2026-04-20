@@ -144,7 +144,7 @@ const WishlistShareSheet = ({
 
   const socialOptions = [
     { id: 'whatsapp', icon: WhatsAppIcon, label: 'WhatsApp', color: 'bg-green-500 hover:bg-green-600', action: handleWhatsAppShare },
-    { id: 'twitter', icon: XIcon, label: 'X', color: 'bg-black hover:bg-gray-800', action: handleTwitterShare },
+    { id: 'twitter', icon: XIcon, label: 'X', color: 'bg-black hover:bg-foreground/90', action: handleTwitterShare },
     { id: 'facebook', icon: FacebookIcon, label: 'Facebook', color: 'bg-blue-600 hover:bg-blue-700', action: handleFacebookShare },
   ];
 

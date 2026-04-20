@@ -90,7 +90,7 @@ const OnboardingPreferences: React.FC<OnboardingPreferencesProps> = ({ onNext, o
                   border p-2 rounded-md cursor-pointer transition-colors text-center
                   ${selectedCategories.includes(category) 
                     ? 'bg-purple-50 border-purple-200' 
-                    : 'hover:bg-gray-50'}
+                    : 'hover:bg-muted/50'}
                 `}
                 onClick={() => toggleCategory(category)}
               >
@@ -124,7 +124,7 @@ const OnboardingPreferences: React.FC<OnboardingPreferencesProps> = ({ onNext, o
                   border p-2 rounded-md cursor-pointer transition-colors text-center
                   ${selectedOccasions.includes(occasion) 
                     ? 'bg-purple-50 border-purple-200' 
-                    : 'hover:bg-gray-50'}
+                    : 'hover:bg-muted/50'}
                 `}
                 onClick={() => toggleOccasion(occasion)}
               >

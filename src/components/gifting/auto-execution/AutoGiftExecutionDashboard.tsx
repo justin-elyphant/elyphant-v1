@@ -97,7 +97,7 @@ const AutoGiftExecutionDashboard = () => {
           <CardContent>
             <div className="space-y-3">
               {pendingExecutions.map((execution) => (
-                <div key={execution.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                <div key={execution.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
                   <div className="flex items-center gap-3">
                     <Gift className="h-5 w-5 text-yellow-600" />
                     <div>

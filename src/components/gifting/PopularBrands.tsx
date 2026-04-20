@@ -78,7 +78,7 @@ const PopularBrands = () => {
                 "flex flex-col items-center justify-center",
                 isMobile ? "p-4" : "p-3 md:p-4 lg:p-6"
               )}>
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 md:mb-4 overflow-hidden p-2">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-muted rounded-full flex items-center justify-center mb-3 md:mb-4 overflow-hidden p-2">
                   <img 
                     src={brand.logoUrl} 
                     alt={brand.name} 
@@ -98,7 +98,7 @@ const PopularBrands = () => {
                   {brand.name}
                 </h3>
                 <p className={cn(
-                  "text-gray-500 text-center",
+                  "text-muted-foreground text-center",
                   isMobile ? "text-xs mt-1" : "text-xs mt-1"
                 )}>
                   {brand.productCount} Products

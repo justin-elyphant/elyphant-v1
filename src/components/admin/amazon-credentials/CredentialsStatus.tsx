@@ -29,16 +29,16 @@ const CredentialsStatus = ({ credentials }: CredentialsStatusProps) => {
         </span>
       </div>
       
-      <p className="text-sm text-gray-600 mb-2">
+      <p className="text-sm text-muted-foreground mb-2">
         Email: {credentials.email}
       </p>
       
-      <p className="text-sm text-gray-600 mb-2">
+      <p className="text-sm text-muted-foreground mb-2">
         Account: {credentials.credential_name}
       </p>
       
       {credentials.last_verified_at && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Last verified: {new Date(credentials.last_verified_at).toLocaleDateString()}
         </p>
       )}

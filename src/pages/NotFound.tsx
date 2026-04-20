@@ -70,7 +70,7 @@ const NotFound = () => {
           <p className="text-muted-foreground">
             The page you're looking for doesn't exist or has been moved.
           </p>
-          <div className="border-t border-b border-gray-100 py-4 my-4">
+          <div className="border-t border-b border-border py-4 my-4">
             <p className="text-sm font-medium mb-2">Looking for something?</p>
             {suggestPaths()}
           </div>

@@ -25,7 +25,7 @@ const getEventTypeColor = (eventType: string) => {
     'Graduation': 'bg-green-100 text-green-800 border-green-200',
     'Holiday': 'bg-red-100 text-red-800 border-red-200',
     'Work Event': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Other': 'bg-gray-100 text-gray-800 border-gray-200'
+    'Other': 'bg-muted text-foreground border-border'
   };
   return colors[eventType as keyof typeof colors] || colors['Other'];
 };
@@ -51,18 +51,18 @@ const EnhancedEventTooltip = ({
           {events.map((event) => (
             <div
               key={event.id}
-              className="border rounded-lg p-3 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+              className="border rounded-lg p-3 bg-background hover:bg-muted/50 cursor-pointer transition-colors"
               onClick={() => onEventClick(event)}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
-                    <User className="h-3 w-3 text-gray-500" />
+                    <User className="h-3 w-3 text-muted-foreground" />
                     <span className="font-medium text-sm">{event.person}</span>
                   </div>
                   <div className="flex items-center space-x-2 mb-1">
-                    <Calendar className="h-3 w-3 text-gray-500" />
-                    <span className="text-xs text-gray-600">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
                       {formatEventDate(event.dateObj || null)}
                     </span>
                   </div>

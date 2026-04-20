@@ -38,7 +38,7 @@ const IOSSwitch = React.forwardRef<
     >
       <SwitchPrimitives.Thumb
         className={cn(
-          "pointer-events-none block rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-out",
+          "pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ease-out",
           "data-[state=unchecked]:translate-x-0.5",
           thumbSizeClasses[size]
         )}

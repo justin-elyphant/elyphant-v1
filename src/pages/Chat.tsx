@@ -20,6 +20,10 @@ const Chat = () => {
   const { user } = useAuth();
   const [connection, setConnection] = useState<ConnectionInfo | null>(null);
   
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, [userId]);
+
   console.log('🚀 Chat component mounted', { userId, currentUser: user?.id });
   
   // Use unified messaging hook for this chat

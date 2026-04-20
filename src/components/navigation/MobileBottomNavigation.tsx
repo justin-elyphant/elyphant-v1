@@ -96,9 +96,9 @@ const MobileBottomNavigation: React.FC = () => {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white mobile-bottom-nav" style={{ transform: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} data-mobile-nav>
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-background mobile-bottom-nav" style={{ transform: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} data-mobile-nav>
       {/* Inner pill with rounded top and backdrop blur */}
-      <div className="bg-white/80 backdrop-blur-xl border-t border-border rounded-t-2xl">
+      <div className="bg-background/80 backdrop-blur-xl border-t border-border rounded-t-2xl">
         <div className="flex items-center justify-around h-14 px-2">
           {tabs.map((tab) => {
             const isActive = isTabActive(tab);

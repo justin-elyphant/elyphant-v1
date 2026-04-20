@@ -2,7 +2,7 @@
  * Performance optimization utilities for React components and data operations
  */
 
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 
 // Image lazy loading and optimization
 export const optimizeImageLoading = () => {

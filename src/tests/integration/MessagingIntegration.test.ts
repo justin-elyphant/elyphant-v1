@@ -4,7 +4,6 @@
  * Tests for validating messaging system integration with unified services
  */
 
-import { describe, test, expect } from '@jest/globals';
 
 describe('Messaging Integration Tests', () => {
   

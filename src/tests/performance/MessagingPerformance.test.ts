@@ -4,7 +4,6 @@
  * Performance validation for messaging system components
  */
 
-import { describe, test, expect } from '@jest/globals';
 
 describe('Messaging Performance Tests', () => {
   

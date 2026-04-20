@@ -4,7 +4,6 @@
  * Security validation for messaging system
  */
 
-import { describe, test, expect } from 'vitest';
 
 describe('Messaging Security Tests', () => {
   

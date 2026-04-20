@@ -4,7 +4,6 @@
  * Performance validation for messaging system components
  */
 
-import { describe, test, expect } from 'vitest';
 
 describe('Messaging Performance Tests', () => {
   

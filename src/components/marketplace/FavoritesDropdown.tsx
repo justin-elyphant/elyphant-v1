@@ -165,7 +165,7 @@ const FavoritesDropdown = ({ onSignUpRequired }: FavoritesDropdownProps) => {
             </div>
           ) : (
             <div className="text-center py-6">
-              <Heart className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+              <Heart className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
               <div className="text-sm text-muted-foreground">
                 No items in your wishlist yet
               </div>

@@ -163,7 +163,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
   
   return (
     <>
-      <div className="space-y-6 bg-white rounded-lg p-6 sticky top-24">
+      <div className="space-y-6 bg-background rounded-lg p-6 sticky top-24">
         {/* Unavailable Product Banner */}
         {(product as any).is_unavailable && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-center">
@@ -260,7 +260,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           {/* Position 2: Schedule as Gift - SECONDARY */}
           <Button 
             variant="outline"
-            className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-gray-50"
+            className="w-full border-2 border-elyphant-grey-text text-elyphant-black font-medium h-12 hover:bg-muted/50"
             onClick={handleScheduleGift}
             disabled={(product as any).is_unavailable}
           >
@@ -271,7 +271,7 @@ const ProductDetailsSidebar: React.FC<ProductDetailsSidebarProps> = ({
           {/* Position 3: Add to Cart - TERTIARY */}
           <Button 
             variant="outline"
-            className="w-full border border-gray-300 bg-white text-elyphant-grey-text font-medium h-12 hover:border-gray-400"
+            className="w-full border border-border bg-background text-elyphant-grey-text font-medium h-12 hover:border-gray-400"
             onClick={handleAddToCart}
             disabled={(product as any).is_unavailable}
           >

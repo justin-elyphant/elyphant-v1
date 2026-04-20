@@ -48,7 +48,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         onClick={handleAddToCart}
         disabled={isAdded}
         className={cn(
-          "flex items-center justify-center min-h-[44px] min-w-[44px] bg-gray-900 text-white text-xs font-medium rounded-full hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+          "flex items-center justify-center min-h-[44px] min-w-[44px] bg-foreground text-white text-xs font-medium rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
           isMobile ? "px-2 py-2" : "px-3 py-1.5",
           className
         )}

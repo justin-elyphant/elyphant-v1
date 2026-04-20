@@ -23,9 +23,9 @@ const AddressBookSelector: React.FC<AddressBookSelectorProps> = ({
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded mb-1"></div>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded mb-2"></div>
+              <div className="h-3 bg-muted rounded mb-1"></div>
+              <div className="h-3 bg-muted rounded w-3/4"></div>
             </CardContent>
           </Card>
         ))}

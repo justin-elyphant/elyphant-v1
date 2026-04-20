@@ -98,7 +98,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
           onClick={() => setSelectedVariant('primary')}
           className={`w-2 h-2 rounded-full transition-all ${
             selectedVariant === 'primary' 
-              ? 'bg-white' 
+              ? 'bg-background' 
               : 'bg-transparent border border-white/50'
           }`}
           aria-label={event.name}
@@ -110,7 +110,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
             onClick={() => setSelectedVariant('alternative')}
             className={`w-2 h-2 rounded-full transition-all ${
               selectedVariant === 'alternative' 
-                ? 'bg-white' 
+                ? 'bg-background' 
                 : 'bg-transparent border border-white/50'
             }`}
             aria-label={alternatives[0]?.name}
@@ -123,7 +123,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
             onClick={() => setSelectedVariant('connection')}
             className={`w-2 h-2 rounded-full transition-all ${
               selectedVariant === 'connection' 
-                ? 'bg-white' 
+                ? 'bg-background' 
                 : 'bg-transparent border border-white/50'
             }`}
             aria-label={closestFriendEvent?.personName}
@@ -148,7 +148,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
             <Button
               variant="outline"
               size="sm"
-              className="text-gray-900 bg-white/90 border-white/40 hover:bg-white hover:text-gray-900 text-xs px-3 py-1"
+              className="text-foreground bg-white/90 border-white/40 hover:bg-background hover:text-foreground text-xs px-3 py-1"
               onClick={handleShopGifts}
             >
               Shop Gifts
@@ -184,7 +184,7 @@ const GiftCountdown: React.FC<GiftCountdownProps> = ({ event, friendOccasions })
       <Button
         variant="outline"
         size="sm"
-        className="w-full text-gray-900 bg-white/90 border-white/40 hover:bg-white hover:text-gray-900 text-xs"
+        className="w-full text-foreground bg-white/90 border-white/40 hover:bg-background hover:text-foreground text-xs"
         onClick={handleShopGifts}
       >
         {buttonText}

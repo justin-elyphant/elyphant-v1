@@ -244,7 +244,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
     <>
       <Card 
         className={cn(
-          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-xl h-full flex flex-col gpu-accelerated relative z-0",
+          "group overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-background rounded-xl h-full flex flex-col gpu-accelerated relative z-0",
           viewMode === "list" && "flex flex-row h-auto",
           isWishlisted && "border-2 border-pink-200 hover:border-pink-300",
           isMobile && "active:scale-[0.98] touch-manipulation mobile-card-hover"
@@ -295,7 +295,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
                   "p-2 rounded-full shadow-sm transition-all backdrop-blur-sm",
                   isWishlisted 
                     ? "bg-foreground hover:bg-foreground/90" 
-                    : "bg-white/90 hover:bg-white"
+                    : "bg-white/90 hover:bg-background"
                 )}
                 onAdded={handleWishlistAdded}
                 isWishlisted={isWishlisted}
@@ -307,7 +307,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
                   e.preventDefault();
                   handleWishlistClick();
                 }}
-                className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors"
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-background transition-colors"
               >
                 <Heart className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -324,7 +324,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
       )}>
         {/* Vendor Info for Local Products */}
         {isLocal && vendorInfo && (
-          <div className="text-xs text-gray-500 flex items-center">
+          <div className="text-xs text-muted-foreground flex items-center">
             <MapPin className="h-3 w-3 mr-1" />
             {vendorInfo.name} • {vendorInfo.location}
           </div>
@@ -426,7 +426,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
                       e.stopPropagation();
                       handleWishlistClick();
                     }}
-                    className="px-3 py-1.5 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors text-sm font-medium"
+                    className="px-3 py-1.5 bg-foreground text-white rounded-full hover:bg-foreground/90 transition-colors text-sm font-medium"
                   >
                     Add
                   </button>
@@ -485,7 +485,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
                 <button
                   onClick={handleAddToCartClick}
                   className={cn(
-                    "flex items-center justify-center bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors shadow-sm shrink-0",
+                    "flex items-center justify-center bg-foreground text-white rounded-full hover:bg-foreground/90 transition-colors shadow-sm shrink-0",
                     isMobile ? "min-w-[44px] min-h-[44px] touch-target-44" : "w-9 h-9"
                   )}
                   aria-label="Add to cart"

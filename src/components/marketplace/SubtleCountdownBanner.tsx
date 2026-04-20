@@ -114,7 +114,7 @@ const SubtleCountdownBanner: React.FC<SubtleCountdownBannerProps> = ({ className
             <Button
               variant="outline"
               size="sm"
-              className="bg-white/80 text-blue-700 border-blue-200 hover:bg-white text-xs px-2 py-1 h-7"
+              className="bg-white/80 text-blue-700 border-blue-200 hover:bg-background text-xs px-2 py-1 h-7"
               onClick={handleShopClick}
             >
               <Gift className="h-3 w-3 mr-1" />

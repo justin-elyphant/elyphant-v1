@@ -117,7 +117,7 @@ const ExperienceGiftingSection = () => {
   
   if (isLoading) {
     return (
-      <div className="py-16 bg-gray-50">
+      <div className="py-16 bg-muted/50">
         <div className="container px-4">
           <h2 className="text-3xl font-bold mb-8 text-center">Giftable Experiences Near You</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -137,7 +137,7 @@ const ExperienceGiftingSection = () => {
   }
   
   return (
-    <div className="py-16 bg-gray-50">
+    <div className="py-16 bg-muted/50">
       <div className="container px-4">
         <h2 className="text-3xl font-bold mb-8 text-center">Giftable Experiences Near You</h2>
         

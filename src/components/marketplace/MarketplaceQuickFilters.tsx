@@ -70,8 +70,8 @@ const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps
               variant={isActive ? "default" : "outline"}
               className={`cursor-pointer px-4 py-3 text-sm whitespace-nowrap transition-colors touch-target-44 ${
                 isActive 
-                  ? "bg-gray-900 text-white hover:bg-gray-800" 
-                  : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
+                  ? "bg-foreground text-white hover:bg-foreground/90" 
+                  : "bg-background text-muted-foreground hover:bg-muted/50 border-border"
               }`}
               onClick={() => toggleFilter(filter.id)}
             >
@@ -86,7 +86,7 @@ const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="min-h-[44px] px-4 py-3 text-sm font-semibold bg-white text-gray-700 hover:bg-gray-50 border-gray-300 rounded-full border transition-colors touch-target-44"
+              className="min-h-[44px] px-4 py-3 text-sm font-semibold bg-background text-muted-foreground hover:bg-muted/50 border-border rounded-full border transition-colors touch-target-44"
             >
               <Grid3X3 className="h-3 w-3 mr-1" />
               Categories
@@ -94,7 +94,7 @@ const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
-            className="w-56 max-h-80 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg" 
+            className="w-56 max-h-80 overflow-y-auto bg-background dark:bg-gray-800 border border-border dark:border-gray-700 shadow-lg" 
             sideOffset={5}
             align="start"
           >
@@ -102,12 +102,12 @@ const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps
               <DropdownMenuItem
                 key={category.id}
                 onClick={() => handleCategoryClick(category)}
-                className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                className="flex items-center px-3 py-2 text-sm text-muted-foreground dark:text-gray-200 hover:bg-muted/50 dark:hover:bg-gray-700 cursor-pointer"
               >
-                {category.icon && <category.icon className="h-4 w-4 mr-3 text-gray-500 dark:text-gray-400" />}
+                {category.icon && <category.icon className="h-4 w-4 mr-3 text-muted-foreground dark:text-muted-foreground" />}
                 <div>
                   <div className="font-medium">{category.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{category.description}</div>
+                  <div className="text-xs text-muted-foreground dark:text-muted-foreground">{category.description}</div>
                 </div>
               </DropdownMenuItem>
             ))}
@@ -117,7 +117,7 @@ const MarketplaceQuickFilters = ({ onMoreFilters }: MarketplaceQuickFiltersProps
         {/* More Filters Button */}
         <Badge
           variant="outline"
-          className="cursor-pointer px-4 py-3 text-sm bg-white text-gray-700 hover:bg-gray-50 border-gray-300 touch-target-44"
+          className="cursor-pointer px-4 py-3 text-sm bg-background text-muted-foreground hover:bg-muted/50 border-border touch-target-44"
           onClick={onMoreFilters}
         >
           <Filter className="h-3 w-3 mr-1" />

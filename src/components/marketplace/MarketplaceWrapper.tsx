@@ -170,7 +170,7 @@ const MarketplaceWrapper = () => {
 
   return (
     <MarketplaceErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         {/* Search and Categories */}
         <FullWidthSection>
           <IntegratedSearchSection onRecentSearchClick={handleRecentSearchClick} />

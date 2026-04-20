@@ -163,7 +163,7 @@ const SimpleFilterContent = ({
                               <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
                             ))}
                             {Array.from({ length: 5 - Number(option.value) }).map((_, i) => (
-                              <Star key={i + Number(option.value)} className="h-3 w-3 text-gray-300" />
+                              <Star key={i + Number(option.value)} className="h-3 w-3 text-muted-foreground/50" />
                             ))}
                           </div>
                           {option.label}

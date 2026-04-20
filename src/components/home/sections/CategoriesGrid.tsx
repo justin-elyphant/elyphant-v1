@@ -88,10 +88,10 @@ const PersonTypeCarousel = () => {
       <ResponsiveContainer>
         {/* Clean Page Title */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Gifts for Every Lifestyle
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover thoughtfully curated gifts tailored to different lifestyles and personalities
           </p>
         </div>
@@ -101,7 +101,7 @@ const PersonTypeCarousel = () => {
           {personTypes.map((personType) => (
             <motion.div
               key={personType.id}
-              className="group relative overflow-hidden bg-white cursor-pointer h-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-100 touch-manipulation"
+              className="group relative overflow-hidden bg-background cursor-pointer h-80 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border border-border touch-manipulation"
               onClick={() => handlePersonTypeClick(personType)}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}

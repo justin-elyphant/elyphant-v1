@@ -74,7 +74,7 @@ const ProductActions = ({
               }}
               triggerClassName={`p-1.5 rounded-full transition-colors ${isInWishlist
                   ? "bg-pink-100 text-pink-500 hover:bg-pink-200"
-                  : "bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+                  : "bg-white/80 text-muted-foreground hover:text-pink-500 hover:bg-background"
                 }`}
               onAdded={handleWishlistAdded}
             />
@@ -82,7 +82,7 @@ const ProductActions = ({
             <Button
               variant="ghost"
               size="sm"
-              className="p-1.5 rounded-full transition-colors bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white"
+              className="p-1.5 rounded-full transition-colors bg-white/80 text-muted-foreground hover:text-pink-500 hover:bg-background"
               onClick={handleWishlistClick}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

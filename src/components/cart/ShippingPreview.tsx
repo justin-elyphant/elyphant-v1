@@ -74,7 +74,7 @@ const ShippingPreview: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-3 bg-gray-50 rounded-lg">
+        <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-primary/10 rounded-full">
               <User className="h-4 w-4 text-primary" />

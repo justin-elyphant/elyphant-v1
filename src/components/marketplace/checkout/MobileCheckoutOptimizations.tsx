@@ -29,7 +29,7 @@ const MobileCheckoutOptimizations: React.FC<MobileCheckoutOptimizationsProps> = 
   if (!isMobile) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50">
       {/* Progress Bar */}
       {showProgress && (
         <div className="mb-4">
@@ -37,7 +37,7 @@ const MobileCheckoutOptimizations: React.FC<MobileCheckoutOptimizationsProps> = 
             <span>Step {currentStep} of {totalSteps}</span>
             <span>{Math.round((currentStep / totalSteps) * 100)}% complete</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / totalSteps) * 100}%` }}

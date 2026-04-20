@@ -84,7 +84,7 @@ const PopularBrands = () => {
         {brands.map((brand) => (
           <motion.div 
             key={brand.id} 
-            className="aspect-[2/1] bg-white rounded-lg flex items-center justify-center shadow-sm border px-3 cursor-pointer min-h-[48px] touch-manipulation"
+            className="aspect-[2/1] bg-background rounded-lg flex items-center justify-center shadow-sm border px-3 cursor-pointer min-h-[48px] touch-manipulation"
             onClick={() => handleBrandClick(brand)}
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.02 }}

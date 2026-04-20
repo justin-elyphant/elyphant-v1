@@ -40,13 +40,13 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
   }));
 
   return (
-    <FullWidthSection className="py-12 md:py-16 bg-white intersection-target">
+    <FullWidthSection className="py-12 md:py-16 bg-background intersection-target">
       <ResponsiveContainer className="px-4 md:px-6 safe-area-inset">
         <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4 no-select">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-3 md:mb-4 no-select">
             Discover Perfect Gifts
           </h2>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed no-select">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed no-select">
             Explore our curated collections to find the perfect gift for any occasion or person in your life
           </p>
         </div>
@@ -56,7 +56,7 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
           {enhancedCollections.map((collection) => (
             <div
               key={collection.id}
-              className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer touch-manipulation tap-feedback intersection-target gpu-accelerated will-change-transform"
+              className="group relative overflow-hidden rounded-xl bg-background shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer touch-manipulation tap-feedback intersection-target gpu-accelerated will-change-transform"
               onClick={() => handleCollectionClick(collection.searchTerm)}
               role="button"
               tabIndex={0}
@@ -100,7 +100,7 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ collections }
               {enhancedCollections.map((collection) => (
                 <CarouselItem key={collection.id} className="pl-2 basis-4/5 swipe-item">
                   <div
-                    className="group relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer h-64 touch-manipulation tap-feedback gpu-accelerated will-change-transform"
+                    className="group relative overflow-hidden rounded-xl bg-background shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer h-64 touch-manipulation tap-feedback gpu-accelerated will-change-transform"
                     onClick={() => handleCollectionClick(collection.searchTerm)}
                     role="button"
                     tabIndex={0}

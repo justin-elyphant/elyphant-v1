@@ -313,7 +313,7 @@ const FiltersSidebar = ({
 
         {/* Friend wishlist section for mobile */}
         {friendWishlistName && (
-          <div className="bg-white border rounded-md p-4">
+          <div className="bg-background border rounded-md p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="font-medium text-sm">
                 {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show ${friendWishlistName}'s wishlist`}
@@ -346,7 +346,7 @@ const FiltersSidebar = ({
   }
 
   return (
-    <div className="bg-white border rounded-md overflow-hidden">
+    <div className="bg-background border rounded-md overflow-hidden">
       <div className="p-4 border-b flex justify-between items-center">
         <h3 className="font-medium flex items-center">
           Filters
@@ -370,7 +370,7 @@ const FiltersSidebar = ({
 
       {/* Friend wishlist logic block */}
       {friendWishlistName && (
-        <div className="p-4 border-b flex flex-col gap-4 bg-white">
+        <div className="p-4 border-b flex flex-col gap-4 bg-background">
           <div className="flex items-center justify-between">
             <span className="font-medium text-black inline-flex items-center">
               {showFullWishlist ? `Showing all of ${friendWishlistName}'s wishlist` : `Show all of ${friendWishlistName}'s wishlist`}
@@ -378,7 +378,7 @@ const FiltersSidebar = ({
             <Button
               size="sm"
               variant="outline"
-              className="ml-2 border border-gray-200 text-base font-semibold"
+              className="ml-2 border border-border text-base font-semibold"
               onClick={() => {
                 setShowFullWishlist(!showFullWishlist);
                 onFilterChange({ ...activeFilters, showFullWishlist: !showFullWishlist });

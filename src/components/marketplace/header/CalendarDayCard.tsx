@@ -33,7 +33,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
     <button
       type="button"
       className="
-        group relative bg-white rounded-xl border border-gray-200 
+        group relative bg-background rounded-xl border border-border 
         hover:shadow-lg transition p-0 w-full min-w-[118px] max-w-[170px] flex flex-col items-center calendar-tile
         shadow-subtle
       "
@@ -56,7 +56,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
           className="
             absolute -top-9 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-white shadow 
             object-cover z-20 group-hover:scale-105 transition-transform
-            bg-gray-100
+            bg-muted
           "
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
@@ -65,7 +65,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
         />
       ) : icon ? (
         <div
-          className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 border-2 border-white shadow z-20"
+          className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center justify-center w-14 h-14 rounded-full bg-muted border-2 border-white shadow z-20"
           style={{
             boxShadow: "0 2px 8px rgba(40,40,60,0.10)",
           }}
@@ -79,10 +79,10 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
         className={`flex flex-col items-center pt-5 pb-2 px-2 relative w-full`}
         style={{ minHeight: 60 }}
       >
-        <span className="text-[11px] text-gray-400 font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
+        <span className="text-[11px] text-muted-foreground font-semibold tracking-wide mb-0.5" style={{ letterSpacing: 1 }}>
           {getMonthAbbr(date)}
         </span>
-        <span className="text-2xl md:text-3xl font-bold text-gray-900 leading-none mb-1">{date.getDate()}</span>
+        <span className="text-2xl md:text-3xl font-bold text-foreground leading-none mb-1">{date.getDate()}</span>
       </div>
       {/* Tiny accent dot for occasion type, if color is set and NOT default */}
       {highlightColor && highlightColor !== "#D1D5DB" && (
@@ -93,7 +93,7 @@ const CalendarDayCard: React.FC<CalendarDayCardProps> = ({
       )}
       {/* Title and optional children */}
       <div className="flex flex-col items-center px-2 pb-2 w-full">
-        <div className="font-sans text-xs font-semibold text-gray-600 text-center truncate w-full">{title}</div>
+        <div className="font-sans text-xs font-semibold text-muted-foreground text-center truncate w-full">{title}</div>
         {children}
       </div>
     </button>

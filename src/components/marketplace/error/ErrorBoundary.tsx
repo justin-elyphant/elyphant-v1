@@ -67,7 +67,7 @@ class MarketplaceErrorBoundary extends Component<Props, State> {
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-4 text-left">
                 <summary className="text-sm font-medium cursor-pointer">Error Details</summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
+                <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
                   {this.state.error.toString()}
                 </pre>
               </details>

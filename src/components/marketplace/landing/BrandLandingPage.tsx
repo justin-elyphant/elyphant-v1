@@ -39,7 +39,7 @@ const BrandLandingPage: React.FC<BrandLandingPageProps> = ({ brand }) => {
 
         <div className="relative z-10 flex flex-col justify-end h-full pt-20 px-6 pb-12 md:px-12 md:pb-16 max-w-[1400px] mx-auto">
           {/* Brand Logo */}
-          <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-xl shadow-lg flex items-center justify-center p-3 mb-4">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-background rounded-xl shadow-lg flex items-center justify-center p-3 mb-4">
             <img
               src={brand.logo}
               alt={`${brand.name} logo`}
@@ -56,7 +56,7 @@ const BrandLandingPage: React.FC<BrandLandingPageProps> = ({ brand }) => {
             <Button
               onClick={handleCtaClick}
               size="lg"
-              className="bg-white text-foreground hover:bg-white/90 font-semibold px-8 rounded-full shadow-lg"
+              className="bg-background text-foreground hover:bg-white/90 font-semibold px-8 rounded-full shadow-lg"
             >
               {brand.ctaText}
             </Button>

@@ -154,7 +154,7 @@ const SeasonalGiftGuide = () => {
                           {guide.categories.map((category, index) => (
                             <li 
                               key={index}
-                              className="text-gray-700 hover:text-purple-600 cursor-pointer transition-colors text-sm md:text-base" 
+                              className="text-muted-foreground hover:text-purple-600 cursor-pointer transition-colors text-sm md:text-base" 
                               onClick={() => handleNavigate(category.query)}
                             >
                               {category.name}

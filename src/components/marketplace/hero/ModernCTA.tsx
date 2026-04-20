@@ -36,7 +36,7 @@ const ModernCTA: React.FC = () => {
             </div>
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-yellow-500 fill-current" />
-              <span className="text-gray-600 text-xs">4.9/5 rating</span>
+              <span className="text-muted-foreground text-xs">4.9/5 rating</span>
             </div>
           </div>
         </div>
@@ -44,10 +44,10 @@ const ModernCTA: React.FC = () => {
         {/* Main content */}
         <div className="p-6">
           <div className="text-center mb-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
+            <h3 className="text-lg font-bold text-foreground mb-2">
               Start Your Gift Journey
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Join thousands finding perfect gifts with AI-powered recommendations
             </p>
           </div>
@@ -56,10 +56,10 @@ const ModernCTA: React.FC = () => {
           <div className="grid grid-cols-3 gap-3 mb-6">
             {features.map((feature, idx) => (
               <div key={idx} className="text-center">
-                <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <div className="w-10 h-10 bg-muted/50 rounded-lg flex items-center justify-center mx-auto mb-2">
                   <feature.icon className={`h-5 w-5 ${feature.color}`} />
                 </div>
-                <span className="text-xs text-gray-600 font-medium">{feature.text}</span>
+                <span className="text-xs text-muted-foreground font-medium">{feature.text}</span>
               </div>
             ))}
           </div>
@@ -91,13 +91,13 @@ const ModernCTA: React.FC = () => {
           </div>
 
           {/* Quick browse */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-xs text-gray-500 text-center mb-3">Or browse by category:</p>
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center mb-3">Or browse by category:</p>
             <div className="flex gap-2 justify-center flex-wrap">
               {quickBrowse.map((item, idx) => (
                 <button
                   key={idx}
-                  className="px-3 py-1 text-xs bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-full transition-colors"
+                  className="px-3 py-1 text-xs bg-muted hover:bg-purple-100 text-muted-foreground hover:text-purple-700 rounded-full transition-colors"
                   onClick={() => navigate(`/marketplace?category=${item.category}`)}
                 >
                   {item.label}
@@ -108,8 +108,8 @@ const ModernCTA: React.FC = () => {
         </div>
 
         {/* Bottom trust indicator */}
-        <div className="bg-gray-50 px-6 py-2 text-center">
-          <p className="text-xs text-gray-500">
+        <div className="bg-muted/50 px-6 py-2 text-center">
+          <p className="text-xs text-muted-foreground">
             🔒 Secure checkout • Free shipping over $50 • 30-day returns
           </p>
         </div>

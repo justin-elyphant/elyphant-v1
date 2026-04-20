@@ -208,8 +208,8 @@ const StripePaymentForm = ({
           </div>
         )}
 
-        <div className="p-4 border rounded-lg bg-white">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="p-4 border rounded-lg bg-background">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             Card Details
           </label>
           <CardElement options={cardElementOptions} />

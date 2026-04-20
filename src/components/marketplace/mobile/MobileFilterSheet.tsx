@@ -102,7 +102,7 @@ const MobileFilterSheet = ({
         <div className="space-y-6 pb-20">
           {/* Quick Filters */}
           <div>
-            <h3 className="font-medium text-sm mb-3 text-gray-900">Quick Filters</h3>
+            <h3 className="font-medium text-sm mb-3 text-foreground">Quick Filters</h3>
             <div className="flex flex-wrap gap-2">
               {quickFilters.map((filter) => (
                 <Button
@@ -120,7 +120,7 @@ const MobileFilterSheet = ({
 
           {/* Category Filter */}
           <div>
-            <h3 className="font-medium text-sm mb-3 text-gray-900">Category</h3>
+            <h3 className="font-medium text-sm mb-3 text-foreground">Category</h3>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-full h-10 touch-target-44 touch-manipulation">
                 <SelectValue placeholder="Select category" />
@@ -138,7 +138,7 @@ const MobileFilterSheet = ({
 
           {/* Price Range Filter */}
           <div>
-            <h3 className="font-medium text-sm mb-3 text-gray-900">Price Range</h3>
+            <h3 className="font-medium text-sm mb-3 text-foreground">Price Range</h3>
             <Select value={priceRange} onValueChange={setPriceRange}>
               <SelectTrigger className="w-full h-10 touch-target-44 touch-manipulation">
                 <SelectValue placeholder="Select price range" />
@@ -157,14 +157,14 @@ const MobileFilterSheet = ({
         </div>
 
         {/* Apply Button - Fixed at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t safe-area-inset">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t safe-area-inset">
           <Button
             onClick={handleApplyFilters}
             className="w-full h-12 text-base font-medium touch-target-48 touch-manipulation tap-feedback no-select"
           >
             Apply Filters
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-2 bg-white text-blue-600">
+              <Badge variant="secondary" className="ml-2 bg-background text-blue-600">
                 {activeFilterCount}
               </Badge>
             )}

@@ -234,13 +234,13 @@ const ProductDetailsPage: React.FC = () => {
     >
       
       {/* Back navigation below header */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={handleBack}
-            className="flex items-center gap-2 text-elyphant-black hover:text-elyphant-black hover:bg-gray-100 min-h-[44px] marketplace-touch-target"
+            className="flex items-center gap-2 text-elyphant-black hover:text-elyphant-black hover:bg-muted min-h-[44px] marketplace-touch-target"
           >
             <ChevronLeft className="h-5 w-5" />
             <span className="hidden md:inline">Back to Shop</span>

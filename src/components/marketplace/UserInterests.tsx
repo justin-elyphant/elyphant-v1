@@ -20,7 +20,7 @@ export const UserInterests: React.FC<UserInterestsProps> = ({
         <Badge 
           key={index}
           variant="outline" 
-          className="bg-white hover:bg-purple-50 cursor-pointer"
+          className="bg-background hover:bg-purple-50 cursor-pointer"
           onClick={() => onInterestClick(interest)}
         >
           {interest}
@@ -29,7 +29,7 @@ export const UserInterests: React.FC<UserInterestsProps> = ({
       {interests.length > 3 && (
         <Popover>
           <PopoverTrigger asChild>
-            <Badge variant="outline" className="bg-white hover:bg-purple-50 cursor-pointer">
+            <Badge variant="outline" className="bg-background hover:bg-purple-50 cursor-pointer">
               +{interests.length - 3} more
             </Badge>
           </PopoverTrigger>
@@ -39,7 +39,7 @@ export const UserInterests: React.FC<UserInterestsProps> = ({
                 <Badge 
                   key={index + 3}
                   variant="outline" 
-                  className="bg-white hover:bg-purple-50 cursor-pointer"
+                  className="bg-background hover:bg-purple-50 cursor-pointer"
                   onClick={() => {
                     onInterestClick(interest);
                   }}

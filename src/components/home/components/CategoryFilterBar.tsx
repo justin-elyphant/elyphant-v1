@@ -52,7 +52,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-600 flex-shrink-0">Shop by:</span>
+      <span className="text-sm text-muted-foreground flex-shrink-0">Shop by:</span>
       
       {/* Category Dropdown - with proper scrolling */}
       <DropdownMenu>
@@ -60,7 +60,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 px-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 text-xs font-medium"
+            className="h-7 px-2 text-muted-foreground hover:text-foreground hover:bg-muted text-xs font-medium"
           >
             <Grid3X3 className="h-3 w-3 mr-1.5" />
             <span className="max-w-[100px] truncate">
@@ -71,13 +71,13 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="start" 
-          className="w-56 bg-white border shadow-lg z-50 max-h-80 overflow-y-auto"
+          className="w-56 bg-background border shadow-lg z-50 max-h-80 overflow-y-auto"
         >
           {categories.map((category) => (
             <DropdownMenuItem
               key={category.value}
               onClick={() => handleCategorySelect(category.value)}
-              className="cursor-pointer hover:bg-gray-100 text-sm py-2.5 px-3"
+              className="cursor-pointer hover:bg-muted text-sm py-2.5 px-3"
             >
               {category.name}
             </DropdownMenuItem>
@@ -97,7 +97,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({ mobile = false })
               className={`h-7 px-2 text-xs font-medium ${
                 selectedCategory === category.value 
                   ? "bg-blue-50 text-blue-600 hover:bg-blue-100" 
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               {category.name}

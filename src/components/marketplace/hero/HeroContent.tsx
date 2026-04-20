@@ -87,7 +87,7 @@ const HeroContent: React.FC<HeroContentProps> = ({ targetEvent, isMobile }) => {
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <Button 
-            className="bg-white text-purple-700 hover:bg-gray-100 shadow-lg min-h-[48px] touch-manipulation" 
+            className="bg-background text-purple-700 hover:bg-muted shadow-lg min-h-[48px] touch-manipulation" 
             onClick={handleShopNowClick}
           >
             <Gift className="mr-2 h-4 w-4" />

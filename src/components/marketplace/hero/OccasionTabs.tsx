@@ -71,7 +71,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
             emptyMessage="No upcoming friend events"
           />
         ) : (
-          <div className="text-gray-500 text-sm text-center py-8">No upcoming friend events</div>
+          <div className="text-muted-foreground text-sm text-center py-8">No upcoming friend events</div>
         )}
       </TabsContent>
       <TabsContent value="holidays">
@@ -90,7 +90,7 @@ const OccasionTabs: React.FC<OccasionTabsProps> = ({
             emptyMessage="No upcoming holidays"
           />
         ) : (
-          <div className="text-gray-500 text-sm text-center py-8">No upcoming holidays</div>
+          <div className="text-muted-foreground text-sm text-center py-8">No upcoming holidays</div>
         )}
       </TabsContent>
     </Tabs>

@@ -59,7 +59,7 @@ const GiftCategoriesCarousel: React.FC = () => {
 
   return (
     <FullBleedSection 
-      background="bg-white" 
+      background="bg-background" 
       height="large"
       className="intersection-target"
       contentPadding={false}

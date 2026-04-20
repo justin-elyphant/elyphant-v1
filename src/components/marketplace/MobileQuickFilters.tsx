@@ -63,8 +63,8 @@ const MobileQuickFilters = ({
             size="sm"
             className={`flex items-center gap-1 whitespace-nowrap h-8 px-3 text-xs ${
               filter.active 
-                ? "bg-gray-900 hover:bg-gray-800 text-white" 
-                : "bg-white hover:bg-gray-50"
+                ? "bg-foreground hover:bg-foreground/90 text-white" 
+                : "bg-background hover:bg-muted/50"
             }`}
             onClick={filter.action}
           >
@@ -75,7 +75,7 @@ const MobileQuickFilters = ({
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-1 whitespace-nowrap h-8 px-3 text-xs bg-gray-100 hover:bg-gray-200"
+          className="flex items-center gap-1 whitespace-nowrap h-8 px-3 text-xs bg-muted hover:bg-muted"
           onClick={onShowAllFilters}
         >
           More Filters

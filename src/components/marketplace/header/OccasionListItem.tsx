@@ -33,9 +33,9 @@ export const OccasionListItem: React.FC<OccasionListItemProps> = ({
     <button
       className={`
         group flex items-center gap-4 w-full px-2 py-2 rounded-lg
-        bg-white border border-gray-100 shadow-sm transition 
-        hover:shadow-md hover:bg-gray-50 focus:outline-none
-        active:bg-gray-100
+        bg-background border border-border shadow-sm transition 
+        hover:shadow-md hover:bg-muted/50 focus:outline-none
+        active:bg-muted
       `}
       style={{ cursor: onClick ? "pointer" : "default" }}
       type="button"
@@ -55,7 +55,7 @@ export const OccasionListItem: React.FC<OccasionListItemProps> = ({
           <span className="text-[11px] font-semibold mb-1" style={{ color: highlightColor }}>
             {getMonthAbbr(date)}
           </span>
-          <span className="text-lg font-bold text-gray-900 leading-none">{date.getDate()}</span>
+          <span className="text-lg font-bold text-foreground leading-none">{date.getDate()}</span>
         </div>
       </div>
 
@@ -65,12 +65,12 @@ export const OccasionListItem: React.FC<OccasionListItemProps> = ({
           <img
             src={avatarUrl}
             alt={avatarAlt || ""}
-            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow bg-gray-100 z-10"
+            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow bg-muted z-10"
             style={{ boxShadow: "0 2px 8px rgba(40,40,60,0.10)" }}
           />
         ) : icon ? (
           <div
-            className="w-12 h-12 rounded-full bg-gray-100 border-2 border-white shadow flex items-center justify-center"
+            className="w-12 h-12 rounded-full bg-muted border-2 border-white shadow flex items-center justify-center"
             style={{ boxShadow: "0 2px 8px rgba(40,40,60,0.10)" }}
           >
             {React.createElement(icon, { size: 28, color: "#8E9196" })}
@@ -80,9 +80,9 @@ export const OccasionListItem: React.FC<OccasionListItemProps> = ({
 
       {/* Main content */}
       <div className="flex flex-col flex-grow text-left truncate">
-        <span className="font-sans text-[15px] font-semibold text-gray-700 truncate">{title}</span>
+        <span className="font-sans text-[15px] font-semibold text-muted-foreground truncate">{title}</span>
         {subtitle && (
-          <span className="text-xs text-gray-400 font-normal truncate">{subtitle}</span>
+          <span className="text-xs text-muted-foreground font-normal truncate">{subtitle}</span>
         )}
       </div>
     </button>

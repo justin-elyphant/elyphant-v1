@@ -62,21 +62,21 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
   return (
     <SecondaryHeaderManager 
       priority={1} 
-      className="bg-white border-b border-gray-200 shadow-sm"
+      className="bg-background border-b border-border shadow-sm"
     >
       <div className="w-full px-4 py-2">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {hasActiveFilters && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 truncate">
+                <span className="text-sm text-muted-foreground truncate">
                   {getDisplayText()}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClearAll}
-                  className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700 flex-shrink-0"
+                  className="h-6 px-2 text-xs text-muted-foreground hover:text-muted-foreground flex-shrink-0"
                 >
                   <X className="h-3 w-3 mr-1" />
                   Clear
@@ -85,7 +85,7 @@ const ResultsSummaryBar: React.FC<ResultsSummaryBarProps> = ({
             )}
           </div>
           
-          <div className="text-sm text-gray-600 flex-shrink-0">
+          <div className="text-sm text-muted-foreground flex-shrink-0">
             {displayCount.toLocaleString()} {displayCount === 1 ? "item" : "items"}
           </div>
         </div>

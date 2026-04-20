@@ -28,7 +28,7 @@ const HowItWorksSection = () => {
   ];
   
   return (
-    <div className="py-16 bg-white">
+    <div className="py-16 bg-background">
       <div className="container px-4">
         <h2 className="text-3xl font-bold mb-3 text-center">How Elyphant Works</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">

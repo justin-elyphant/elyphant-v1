@@ -24,7 +24,7 @@ const OccasionHorizontalList: React.FC<OccasionHorizontalListProps> = ({
 }) => {
   if (!occasions.length) {
     return (
-      <div className="text-gray-500 text-sm text-center py-8">{emptyMessage}</div>
+      <div className="text-muted-foreground text-sm text-center py-8">{emptyMessage}</div>
     );
   }
 

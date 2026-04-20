@@ -81,7 +81,7 @@ const GiftingCategories = () => {
       name: "Under $50",
       image: "https://placehold.co/300x300/e2e8f0/64748b?text=$50",
       searchTerm: "best selling affordable gifts",
-      color: "from-gray-50 to-gray-100 border-gray-200"
+      color: "from-gray-50 to-gray-100 border-border"
     },
   ];
 
@@ -131,7 +131,7 @@ const GiftingCategories = () => {
               onClick={() => handleCategoryClick(category.searchTerm)}
               className={cn(
                 "flex flex-col items-center rounded-lg overflow-hidden bg-gradient-to-b border hover:shadow-md transition-all h-full",
-                isRelevant ? `${category.color} border-purple-300` : `${category.color || "from-gray-50 to-gray-100 border-gray-200"}`,
+                isRelevant ? `${category.color} border-purple-300` : `${category.color || "from-gray-50 to-gray-100 border-border"}`,
                 "animate-fade-in"
               )}
             >
@@ -148,7 +148,7 @@ const GiftingCategories = () => {
               )}>
                 <span className={cn(
                   "text-xs sm:text-sm font-medium",
-                  isRelevant ? "text-purple-700" : "text-gray-700"
+                  isRelevant ? "text-purple-700" : "text-muted-foreground"
                 )}>
                   {category.name}
                   {isRelevant && ' ★'}

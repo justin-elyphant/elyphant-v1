@@ -199,7 +199,7 @@ const PopularBrandsSection = () => {
   };
 
   return (
-    <div className="py-12 md:py-16 bg-white intersection-target overflow-hidden">
+    <div className="py-12 md:py-16 bg-background intersection-target overflow-hidden">
       {/* Full bleed container for mobile */}
       <div className={isMobile ? "" : "container mx-auto px-4 md:px-6"}>
         <div className={isMobile ? "px-4 mb-8" : "mb-12"}>
@@ -216,9 +216,9 @@ const PopularBrandsSection = () => {
               <div
                 key={brand.name}
                 className={cn(
-                  "relative flex flex-col items-center justify-center rounded-xl bg-white border border-gray-100 hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback",
+                  "relative flex flex-col items-center justify-center rounded-xl bg-background border border-border hover:shadow-md hover:bg-purple-50 transition cursor-pointer touch-target-48 touch-manipulation tap-feedback",
                   isMobile ? "p-4 min-h-[140px]" : "p-3 md:p-4 lg:p-6 min-h-[120px]",
-                  loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-gray-50" : ""
+                  loadingBrand === brand.name ? "pointer-events-none opacity-60 bg-muted/50" : ""
                 )}
                 onClick={() => handleBrandClick(brand.name)}
               >
@@ -234,9 +234,9 @@ const PopularBrandsSection = () => {
                   style={{ aspectRatio: "3/1", objectFit: "contain" }}
                 />
                 <span className={cn(
-                  "font-medium text-gray-700 text-center leading-tight",
+                  "font-medium text-muted-foreground text-center leading-tight",
                   isMobile ? "text-sm mt-3" : "text-xs md:text-sm mt-2 md:mt-3",
-                  loadingBrand === brand.name ? "text-gray-500" : ""
+                  loadingBrand === brand.name ? "text-muted-foreground" : ""
                 )}>
                   {brand.name}
                 </span>

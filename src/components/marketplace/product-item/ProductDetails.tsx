@@ -70,7 +70,7 @@ const ProductDetails = ({
       </h3>
       
       {product.brand && (
-        <p className="text-gray-500 text-sm mb-1">
+        <p className="text-muted-foreground text-sm mb-1">
           {product.brand}
         </p>
       )}

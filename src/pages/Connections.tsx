@@ -216,7 +216,7 @@ const Connections = () => {
         toast.success('Connection request accepted! 🎉');
         await refreshPendingConnections();
       } else {
-        toast.error(result.error || 'Unable to accept connection request.');
+        toast.error(result.error?.message || 'Unable to accept connection request.');
       }
     } catch (err) {
       console.error('Error accepting connection:', err);
@@ -234,7 +234,7 @@ const Connections = () => {
         toast.success('Connection request declined.');
         await refreshPendingConnections();
       } else {
-        toast.error(result.error || 'Unable to decline connection request.');
+        toast.error(result.error?.message || 'Unable to decline connection request.');
       }
     } catch (err) {
       console.error('Error declining connection:', err);
@@ -252,7 +252,7 @@ const Connections = () => {
         toast.success('Connection request sent!');
         await refreshPendingConnections();
       } else {
-        toast.error(result.error || 'Unable to send connection request.');
+        toast.error(result.error?.message || 'Unable to send connection request.');
       }
     } catch (err) {
       console.error('Error sending connection request:', err);
@@ -439,8 +439,7 @@ const Connections = () => {
               <OptimizedMobileConnectionCard
                 key={suggestion.id}
                 connection={suggestion}
-                onSwipeLeft={() => handleSwipeLeft(suggestion.id)}
-                onSwipeRight={() => handleSwipeRight(suggestion.id)}
+                onConnect={handleSendConnection}
                 isSuggestion={true}
               />
             ))}
@@ -451,8 +450,7 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={person.id}
                     connection={person}
-                    onSwipeLeft={() => handleSwipeLeft(person.id)}
-                    onSwipeRight={() => handleSwipeRight(person.id)}
+                    onConnect={handleSendConnection}
                     isSuggestion={true}
                   />
                 ))}
@@ -540,8 +538,6 @@ const Connections = () => {
                       <OptimizedMobileConnectionCard
                         key={friend.id}
                         connection={friend}
-                        onSwipeLeft={() => handleSwipeLeft(friend.id)}
-                        onSwipeRight={() => handleSwipeRight(friend.id)}
                         onRelationshipEdit={() => openRelationshipSheet(friend.id)}
                       />
                     ))
@@ -568,8 +564,8 @@ const Connections = () => {
                       <OptimizedMobileConnectionCard
                         key={pending.id}
                         connection={pending}
-                        onSwipeLeft={() => handleSwipeLeft(pending.id)}
-                        onSwipeRight={() => handleSwipeRight(pending.id)}
+                        onAccept={handleAcceptConnection}
+                        onDecline={handleDeclineConnection}
                         isPending={true}
                       />
                     ))
@@ -686,8 +682,6 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={friend.id}
                     connection={friend}
-                    onSwipeLeft={() => handleSwipeLeft(friend.id)}
-                    onSwipeRight={() => handleSwipeRight(friend.id)}
                     onRelationshipEdit={() => openRelationshipSheet(friend.id)}
                   />
                 ))
@@ -714,8 +708,8 @@ const Connections = () => {
                   <OptimizedMobileConnectionCard
                     key={pending.id}
                     connection={pending}
-                    onSwipeLeft={() => handleSwipeLeft(pending.id)}
-                    onSwipeRight={() => handleSwipeRight(pending.id)}
+                    onAccept={handleAcceptConnection}
+                    onDecline={handleDeclineConnection}
                     isPending={true}
                   />
                 ))

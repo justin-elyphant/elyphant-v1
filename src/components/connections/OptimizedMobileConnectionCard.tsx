@@ -46,10 +46,10 @@ export const OptimizedMobileConnectionCard: React.FC<OptimizedMobileConnectionCa
     navigate(`/messages/${connection.id}`);
   };
 
-  const handleGift = (e: React.MouseEvent) => {
+  const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     triggerHapticFeedback('impact');
-    setShowGiftIntentModal(true);
+    navigate(`/wishlists/${connection.id}`);
   };
 
   const handleGiftIntentSelect = (intent: "ai-gift" | "marketplace-browse" | "quick-ideas") => {

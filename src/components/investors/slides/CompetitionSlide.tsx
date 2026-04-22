@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, X, Crown, Target, TrendingUp, Info, Minus } from 'lucide-react';
+import { Check, X, Crown, Target, TrendingUp, Info, Minus, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import {
@@ -28,8 +28,8 @@ const competitors = [
   { 
     name: "Etsy", 
     tier: "Giant",
-    funding: "~$6B",
-    fundingLabel: "market cap",
+    funding: "~$5B",
+    fundingLabel: "public market cap",
     gap: "Marketplace + Gift Mode",
     accent: "from-amber-500/20 to-orange-500/20",
     border: "border-amber-500/30",
@@ -38,8 +38,8 @@ const competitors = [
   { 
     name: "Elfster", 
     tier: "Tier 1",
-    funding: "$98M",
-    fundingLabel: "raised",
+    funding: "40M+ users",
+    fundingLabel: "funding not disclosed",
     gap: "Wishlist + exchanges",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
@@ -48,8 +48,8 @@ const competitors = [
   { 
     name: "Snappy", 
     tier: "Tier 1",
-    funding: "$70M",
-    fundingLabel: "raised",
+    funding: "~$130M",
+    fundingLabel: "total raised",
     gap: "Corporate AI gifting",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
@@ -65,6 +65,13 @@ const competitors = [
     border: "border-gray-500/20",
     icon: TrendingUp
   },
+];
+
+const sources = [
+  { label: "Etsy market cap", href: "https://companiesmarketcap.com/etsy/marketcap/" },
+  { label: "Elfster users", href: "https://www.elfster.com/about/" },
+  { label: "Snappy funding", href: "https://www.cbinsights.com/company/snappy" },
+  { label: "Goody funding", href: "https://www.cbinsights.com/company/goody" },
 ];
 
 type FeatureStatus = 'yes' | 'partial' | 'no';
@@ -277,9 +284,26 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
             </TableBody>
           </Table>
         </div>
-        <p className="mt-2 text-center text-[9px] leading-snug text-muted-foreground/70">
-          Based on publicly marketed product capabilities as of 2026. “Partial” indicates limited, business-only, campaign-based, or non-core support.
-        </p>
+        <div className="mt-2 space-y-1 text-center text-[9px] leading-snug text-muted-foreground/70">
+          <p>
+            Based on publicly marketed product capabilities as of 2026. “Partial” indicates limited, business-only, campaign-based, or non-core support.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+            <span>Sources:</span>
+            {sources.map((source) => (
+              <a
+                key={source.href}
+                href={source.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2 hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {source.label}
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            ))}
+          </div>
+        </div>
       </motion.div>
 
       {/* Closing Tagline */}

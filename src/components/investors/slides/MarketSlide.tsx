@@ -81,7 +81,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
               </div>
               <div className="text-right">
                 <div className="text-white text-sm font-semibold">100K users</div>
-                <div className="text-sky-400 text-xs">$1.3M revenue</div>
+                <div className="text-sky-400 text-xs">$1.7M revenue</div>
               </div>
             </div>
             
@@ -98,7 +98,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold text-white">1M users</div>
-                <div className="text-lg font-bold text-green-400">$14M revenue</div>
+                <div className="text-lg font-bold text-green-400">$19M revenue</div>
               </div>
             </div>
             
@@ -122,7 +122,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
         <div className="text-center">
           <span className="text-muted-foreground text-xs">Conservative assumptions: </span>
           <span className="text-muted-foreground text-xs">
-            25% active rate • 3 gifts/user/year • $75 AOV • 20% take rate
+            25% active rate • 3 gifts/user/year • $75 AOV • 30% gifting fee
           </span>
         </div>
       </motion.div>

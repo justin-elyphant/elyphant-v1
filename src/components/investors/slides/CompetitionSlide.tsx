@@ -1,7 +1,13 @@
 import { motion } from 'framer-motion';
-import { Check, X, Crown, Target, TrendingUp } from 'lucide-react';
+import { Check, X, Crown, Target, TrendingUp, Info, Minus } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -22,9 +28,9 @@ const competitors = [
   { 
     name: "Etsy", 
     tier: "Giant",
-    funding: "$7B+",
+    funding: "~$6B",
     fundingLabel: "market cap",
-    gap: "Not gifting-focused",
+    gap: "Marketplace + Gift Mode",
     accent: "from-amber-500/20 to-orange-500/20",
     border: "border-amber-500/30",
     icon: Crown
@@ -34,7 +40,7 @@ const competitors = [
     tier: "Tier 1",
     funding: "$98M",
     fundingLabel: "raised",
-    gap: "No AI",
+    gap: "Wishlist + exchanges",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
     icon: Target
@@ -44,7 +50,7 @@ const competitors = [
     tier: "Tier 1",
     funding: "$70M",
     fundingLabel: "raised",
-    gap: "B2B only",
+    gap: "Corporate AI gifting",
     accent: "from-purple-500/10 to-purple-500/10",
     border: "border-purple-500/20",
     icon: Target
@@ -54,21 +60,91 @@ const competitors = [
     tier: "Tier 2",
     funding: "Funded",
     fundingLabel: "",
-    gap: "B2B focus",
+    gap: "Business + personal",
     accent: "from-gray-500/10 to-gray-500/10",
     border: "border-gray-500/20",
     icon: TrendingUp
   },
 ];
 
+type FeatureStatus = 'yes' | 'partial' | 'no';
+type CompetitorKey = 'etsy' | 'elfster' | 'snappy' | 'goody';
+
+interface FeatureCell {
+  status: FeatureStatus;
+  note?: string;
+}
+
+interface FeatureRow {
+  feature: string;
+  unique?: boolean;
+  elyphant: FeatureCell;
+  etsy: FeatureCell;
+  elfster: FeatureCell;
+  snappy: FeatureCell;
+  goody: FeatureCell;
+}
+
 const featureComparison = [
-  { feature: "AI Gift Selection", elyphant: true, etsy: false, elfster: false, snappy: false, goody: true },
-  { feature: "Auto-Gifting", elyphant: true, etsy: false, elfster: false, snappy: false, goody: false },
-  { feature: "On-Platform Purchasing", elyphant: true, etsy: true, elfster: false, snappy: true, goody: true },
-  { feature: "Group Funding", elyphant: true, etsy: false, elfster: false, snappy: false, goody: false },
-  { feature: "Giftee Wishlist", elyphant: true, etsy: false, elfster: true, snappy: false, goody: true },
-  { feature: "Gift Scheduling", elyphant: true, etsy: false, elfster: false, snappy: true, goody: false },
-];
+  {
+    feature: "AI Gift Discovery",
+    elyphant: { status: 'yes' },
+    etsy: { status: 'partial', note: "Etsy Gift Mode helps discovery, but Elyphant connects discovery to recipient profiles, relationships, scheduling, and checkout." },
+    elfster: { status: 'no' },
+    snappy: { status: 'partial', note: "Snappy's AI is built around corporate senders; Elyphant applies AI to consumer relationships, wishlists, and recurring gifting moments." },
+    goody: { status: 'partial', note: "Goody supports curated and assisted gifting; Elyphant adds recipient intelligence, social graph context, and automation." },
+  },
+  {
+    feature: "Relationship-Based Auto-Gifting",
+    unique: true,
+    elyphant: { status: 'yes' },
+    etsy: { status: 'no' },
+    elfster: { status: 'no' },
+    snappy: { status: 'partial', note: "Snappy automates corporate campaigns; Elyphant automates personal relationship moments using social, wishlist, and occasion signals." },
+    goody: { status: 'partial', note: "Goody supports business birthdays and work anniversaries; Elyphant is designed for consumer relationship automation." },
+  },
+  {
+    feature: "Giftee Wishlist / Social Profile",
+    elyphant: { status: 'yes' },
+    etsy: { status: 'partial', note: "Etsy favorites are shopping signals, not a gifting social profile with relationship context and automation." },
+    elfster: { status: 'yes', note: "Elfster has wishlists and exchanges; Elyphant pairs wishlists with AI recommendations, checkout, gift scheduling, and automated reminders." },
+    snappy: { status: 'no' },
+    goody: { status: 'partial', note: "Goody offers recipient choice, but not a persistent wishlist network or social gifting profile." },
+  },
+  {
+    feature: "On-Platform Purchasing",
+    elyphant: { status: 'yes' },
+    etsy: { status: 'yes', note: "Etsy has marketplace checkout; Elyphant competes by tying checkout to relationship automation, address resolution, and gift timing." },
+    elfster: { status: 'no' },
+    snappy: { status: 'yes', note: "Snappy supports corporate purchasing; Elyphant competes with consumer gifting, social context, wishlist signals, and recurring relationship moments." },
+    goody: { status: 'yes', note: "Goody supports gift sending and recipient choice; Elyphant adds social graph, auto-gifting, wishlist intelligence, group funding, and marketplace personalization." },
+  },
+  {
+    feature: "Recipient Address Collection",
+    elyphant: { status: 'yes' },
+    etsy: { status: 'no' },
+    elfster: { status: 'no' },
+    snappy: { status: 'yes', note: "Snappy collects addresses for corporate send flows; Elyphant connects address resolution to consumer relationships and privacy controls." },
+    goody: { status: 'yes', note: "Goody collects recipient-entered shipping details; Elyphant adds a reusable social profile layer and automated gifting context." },
+  },
+  {
+    feature: "Consumer + Social Graph",
+    elyphant: { status: 'yes' },
+    etsy: { status: 'no' },
+    elfster: { status: 'partial', note: "Elfster supports group exchanges, but Elyphant builds a broader social commerce graph for ongoing gifting." },
+    snappy: { status: 'no' },
+    goody: { status: 'partial', note: "Goody supports personal gifting, but Elyphant centers the experience on a relationship graph and recurring social signals." },
+  },
+  {
+    feature: "Group Funding",
+    unique: true,
+    elyphant: { status: 'yes' },
+    etsy: { status: 'no' },
+    elfster: { status: 'no' },
+    snappy: { status: 'no' },
+    goody: { status: 'no' },
+  },
+] satisfies FeatureRow[];
 
 const CompetitionSlide = ({ direction }: SlideProps) => {
   const renderFeatureIcon = (value: boolean) => {

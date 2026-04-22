@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Brain, Users, Heart } from 'lucide-react';
+import { Brain, Users, Heart, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 
@@ -15,30 +15,33 @@ const timingFactors = [
     icon: Brain,
     title: "AI Maturity",
     stats: [
-      { value: "68%", text: "of retailers deploying agentic AI in 12-24 months" },
-      { value: "25%", text: "of e-commerce could be AI-handled by 2030" },
+      { value: "AI", text: "shopping agents are moving from search to purchase decisions" },
+      { value: "2030", text: "retailers preparing for AI-led commerce workflows" },
     ],
-    source: "Deloitte, October 2025",
+    source: "Deloitte agentic commerce",
+    href: "https://www.deloitte.com/us/en/industries/consumer/articles/agentic-commerce-ai-shopping-agents-guide.html",
     color: "from-purple-500 to-violet-500",
   },
   {
     icon: Users,
     title: "Consumer Readiness",
     stats: [
-      { value: "47%", text: "of Gen Z/Millennials will let AI buy for them" },
-      { value: "33%", text: "of Gen Z prefer AI over search for products" },
+      { value: "33%", text: "of Gen Z prefer AI platforms for product research" },
+      { value: "26%", text: "of Millennials show the same preference" },
     ],
-    source: "eMarketer, 2025",
+    source: "Commerce/Future Commerce, 2025",
+    href: "https://markets.financialcontent.com/wedbush/article/gnwcq-2025-9-15-1-in-3-gen-z-and-1-in-4-millennials-now-turn-to-ai-platforms-over-other-channels-for-shopping-advice-according-to-new-survey-from-commerce-and-future-commerce",
     color: "from-sky-500 to-cyan-500",
   },
   {
     icon: Heart,
     title: "Personalization Demand",
     stats: [
-      { value: "74%", text: "expect more personalized shopping experiences" },
-      { value: "~75%", text: "abandon carts due to choice overload" },
+      { value: "81%", text: "ignore irrelevant brand messages" },
+      { value: "93%", text: "say personalization influences loyalty" },
     ],
-    source: "Klaviyo/Attentive, 2025",
+    source: "Attentive, 2025/2026",
+    href: "https://www.attentive.com/state-of-conversational-commerce",
     color: "from-pink-500 to-rose-500",
   },
 ];
@@ -96,9 +99,9 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
               ))}
             </div>
             
-            <p className="text-muted-foreground text-[10px]">
-              Source: {factor.source}
-            </p>
+            <a href={factor.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground text-[10px] underline decoration-dotted underline-offset-2 hover:text-foreground">
+              Source: {factor.source} <ExternalLink className="h-2.5 w-2.5" />
+            </a>
           </motion.div>
         ))}
       </motion.div>

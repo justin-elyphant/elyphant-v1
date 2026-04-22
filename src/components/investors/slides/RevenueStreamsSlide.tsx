@@ -14,9 +14,9 @@ const revenueStreams = [
   {
     icon: ShoppingBag,
     title: "Gifting Fees",
-    rate: "20% of GMV",
-    year2: "$1.12M",
-    year5: "$11.2M",
+    rate: "30% of GMV",
+    year2: "$1.68M",
+    year5: "$16.8M",
     status: "Active",
     note: "Core revenue engine",
   },
@@ -50,10 +50,10 @@ const revenueStreams = [
 ];
 
 const revenueMix = [
-  { label: "Gifting Fees", percent: 80, color: "from-purple-500 to-purple-400" },
-  { label: "Vendor", percent: 12, color: "from-sky-500 to-sky-400" },
-  { label: "Subs", percent: 4, color: "from-green-500 to-green-400" },
-  { label: "Ads", percent: 4, color: "from-amber-500 to-amber-400" },
+  { label: "Gifting Fees", percent: 86, color: "from-purple-500 to-purple-400" },
+  { label: "Vendor", percent: 9, color: "from-sky-500 to-sky-400" },
+  { label: "Subs", percent: 3, color: "from-green-500 to-green-400" },
+  { label: "Ads", percent: 2, color: "from-amber-500 to-amber-400" },
 ];
 
 const RevenueStreamsSlide = ({ direction }: SlideProps) => {
@@ -72,7 +72,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-4"
       >
-        Path to $14M+ Annual Revenue
+        Path to $19M+ Annual Revenue
       </motion.h2>
 
       {/* Revenue streams - 2x2 grid */}
@@ -171,7 +171,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
       >
         <p className="text-muted-foreground text-[10px] text-center">
           <span className="text-muted-foreground font-medium">Conservative:</span>{' '}
-          100K→1M users • 25% active • $75 AOV • 3 gifts/yr • 2% subs
+          Model assumptions: 100K→1M users • 25% active • $75 AOV • 3 gifts/yr • 2% subs • 30% gifting fee
         </p>
       </motion.div>
     </SlideWrapper>

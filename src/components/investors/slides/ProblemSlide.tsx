@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
@@ -27,7 +28,7 @@ const ProblemSlide = ({ direction }: SlideProps) => {
           $<AnimatedCounter value={850} duration={2} />B
         </div>
         <p className="text-base sm:text-lg md:text-xl text-muted-foreground/50">
-          The US retail return crisis in 2025
+          Estimated US retail returns in 2025
         </p>
       </motion.div>
 
@@ -40,13 +41,13 @@ const ProblemSlide = ({ direction }: SlideProps) => {
           <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-red-400 mb-1">
             $<AnimatedCounter value={168} duration={1.5} />B
           </div>
-          <p className="text-white text-sm md:text-base font-medium text-center">concentrated in holiday season alone</p>
-          <p className="text-muted-foreground text-xs md:text-sm mt-1">20% of total returns in just 8 weeks</p>
+          <p className="text-white text-sm md:text-base font-medium text-center">estimated holiday-season return exposure</p>
+          <p className="text-muted-foreground text-xs md:text-sm mt-1">calculated from 20% of annual returns</p>
         </div>
         
         {/* Supporting rate context */}
         <p className="text-muted-foreground text-xs md:text-sm mt-1">
-          Return rates spike from 15.8% → 17% during Nov-Jan
+          Retailers estimate a 15.8% annual return rate
         </p>
       </motion.div>
 
@@ -63,7 +64,10 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-xs"
       >
-        Source: National Retail Federation, October 2025
+        Source:{' '}
+        <a href="https://nrf.com/research/2025-retail-returns-landscape" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2 hover:text-foreground">
+          NRF 2025 Retail Returns Landscape <ExternalLink className="h-3 w-3" />
+        </a>
       </motion.p>
     </SlideWrapper>
   );

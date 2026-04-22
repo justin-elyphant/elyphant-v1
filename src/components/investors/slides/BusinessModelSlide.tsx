@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ShoppingBag, Repeat, Store, CreditCard } from 'lucide-react';
+import { ShoppingBag, Repeat, Store, CreditCard, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 
@@ -14,7 +14,7 @@ const revenueStreams = [
   {
     icon: ShoppingBag,
     title: "Gifting Fees",
-    value: "20%",
+    value: "30%",
     description: "Fee on every gift purchase",
     status: "Active",
   },
@@ -112,12 +112,12 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
-          <div className="text-lg md:text-xl font-bold text-white">$15</div>
+          <div className="text-lg md:text-xl font-bold text-white">$22.50</div>
           <div className="text-muted-foreground text-[10px] md:text-xs">Gross Margin/Order</div>
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
-          <div className="text-lg md:text-xl font-bold text-green-400">20%</div>
+          <div className="text-lg md:text-xl font-bold text-green-400">30%</div>
           <div className="text-muted-foreground text-[10px] md:text-xs">Take Rate</div>
         </div>
       </motion.div>
@@ -138,9 +138,12 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
           <div className="hidden sm:block w-px h-4 bg-gray-700" />
           <div>
             <span className="text-green-400 font-medium">Retailers:</span>
-            <span className="text-muted-foreground/50 ml-1">17% holiday returns recovered</span>
+            <span className="text-muted-foreground/50 ml-1">better-fit gifts reduce return pressure</span>
           </div>
         </div>
+        <a href="https://nrf.com/research/2025-retail-returns-landscape" target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-muted-foreground text-[10px] underline decoration-dotted underline-offset-2 hover:text-foreground">
+          NRF returns context <ExternalLink className="h-2.5 w-2.5" />
+        </a>
       </motion.div>
     </SlideWrapper>
   );

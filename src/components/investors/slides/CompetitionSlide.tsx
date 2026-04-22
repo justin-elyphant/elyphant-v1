@@ -147,13 +147,37 @@ const featureComparison = [
 ] satisfies FeatureRow[];
 
 const CompetitionSlide = ({ direction }: SlideProps) => {
-  const renderFeatureIcon = (value: boolean) => {
-    if (value) return <Check className="w-3 h-3 text-green-400" />;
-    return <X className="w-3 h-3 text-muted-foreground" />;
+  const renderFeatureIcon = (cell: FeatureCell, competitor?: CompetitorKey) => {
+    const icon = cell.status === 'yes'
+      ? <Check className="w-3 h-3 text-green-400" />
+      : cell.status === 'partial'
+        ? <Minus className="w-3 h-3 text-amber-300" />
+        : <X className="w-3 h-3 text-muted-foreground" />;
+
+    if (!competitor || !cell.note || cell.status === 'no') return <span className="inline-flex justify-center">{icon}</span>;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={`${competitor} ${cell.status} detail`}
+            className="inline-flex items-center justify-center gap-0.5 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            {icon}
+            <Info className="w-2.5 h-2.5 text-muted-foreground" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center" className="max-w-[220px] text-xs leading-snug">
+          {cell.note}
+        </TooltipContent>
+      </Tooltip>
+    );
   };
 
   return (
-    <SlideWrapper direction={direction} verticalScroll>
+    <TooltipProvider delayDuration={150}>
+      <SlideWrapper direction={direction} verticalScroll>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
@@ -167,7 +191,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center mb-1"
       >
-        $7B+ Market Cap. <span className="bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">0 Offer Automation.</span>
+        Gifting tools exist. <span className="bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">Relationship automation does not.</span>
       </motion.h2>
 
       {/* Subtitle */}
@@ -175,7 +199,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-center mb-4 text-xs"
       >
-        The giants are missing what matters most
+        Elyphant connects social graph, automated moments, wishlist intelligence, address resolution, and group gifting.
       </motion.p>
 
       {/* Competitor Cards */}
@@ -234,22 +258,25 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
                 >
                   <TableCell className="text-muted-foreground/50 text-[10px] md:text-xs font-medium py-1.5">
                     {row.feature}
-                    {(row.feature === "Auto-Gifting" || row.feature === "Group Funding") && (
+                    {row.unique && (
                       <span className="ml-1 text-[8px] bg-purple-500/20 text-purple-300 px-1 py-0.5 rounded">UNIQUE</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center bg-gradient-to-b from-purple-500/10 to-sky-500/10 py-1.5">
                     {renderFeatureIcon(row.elyphant)}
                   </TableCell>
-                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.etsy)}</TableCell>
-                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.elfster)}</TableCell>
-                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.snappy)}</TableCell>
-                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.goody)}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.etsy, 'etsy')}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.elfster, 'elfster')}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.snappy, 'snappy')}</TableCell>
+                  <TableCell className="text-center py-1.5">{renderFeatureIcon(row.goody, 'goody')}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+        <p className="mt-2 text-center text-[9px] leading-snug text-muted-foreground/70">
+          Based on publicly marketed product capabilities as of 2026. “Partial” indicates limited, business-only, campaign-based, or non-core support.
+        </p>
       </motion.div>
 
       {/* Closing Tagline */}
@@ -257,9 +284,10 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-xs mt-4 text-center italic"
       >
-        "We're building what $7B+ in market value hasn't solved"
+        "We're building the relationship layer legacy gifting tools still have not solved"
       </motion.p>
-    </SlideWrapper>
+      </SlideWrapper>
+    </TooltipProvider>
   );
 };
 

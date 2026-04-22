@@ -137,6 +137,14 @@ const MarketSlide = ({ direction }: SlideProps) => {
         <a href="https://www.grandviewresearch.com/industry-analysis/ai-based-personalization-engines-market-report" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-muted-foreground text-[10px] ml-1 underline decoration-dotted underline-offset-2 hover:text-foreground">
           Grand View Research <ExternalLink className="h-2.5 w-2.5" />
         </a>
+        <span className="text-muted-foreground text-[10px] mx-1">•</span>
+        <a href="https://www.statista.com/topics/11796/popular-gifts-and-gifting-behavior-in-the-us/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-muted-foreground text-[10px] underline decoration-dotted underline-offset-2 hover:text-foreground">
+          Statista gifting <ExternalLink className="h-2.5 w-2.5" />
+        </a>
+        <span className="text-muted-foreground text-[10px] mx-1">•</span>
+        <a href="https://store.mintel.com/us/report/us-gifting-market-report/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-muted-foreground text-[10px] underline decoration-dotted underline-offset-2 hover:text-foreground">
+          Mintel gifting <ExternalLink className="h-2.5 w-2.5" />
+        </a>
       </motion.div>
     </SlideWrapper>
   );

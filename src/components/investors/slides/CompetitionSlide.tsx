@@ -58,8 +58,8 @@ const competitors = [
   { 
     name: "Goody", 
     tier: "Tier 2",
-    funding: "Funded",
-    fundingLabel: "",
+    funding: "$15M Series A-II",
+    fundingLabel: "$32.1M total raised",
     gap: "Business + personal",
     accent: "from-gray-500/10 to-gray-500/10",
     border: "border-gray-500/20",
@@ -225,6 +225,9 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
               <div className="text-purple-300 font-semibold text-xs">
                 {comp.funding}
               </div>
+              {comp.fundingLabel && (
+                <div className="text-muted-foreground text-[9px] leading-tight">{comp.fundingLabel}</div>
+              )}
               <div className="text-muted-foreground text-[10px]">{comp.gap}</div>
             </motion.div>
           );

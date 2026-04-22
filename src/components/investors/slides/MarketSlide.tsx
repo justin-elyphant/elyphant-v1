@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
-import { TrendingUp, Users, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, ExternalLink } from 'lucide-react';
 
 interface SlideProps {
   direction: number;
@@ -46,16 +46,16 @@ const MarketSlide = ({ direction }: SlideProps) => {
               <div className="text-2xl md:text-3xl font-bold text-purple-400">
                 $<AnimatedCounter value={250} duration={2} />B
               </div>
-              <div className="text-muted-foreground text-xs">TAM: US Gift Market</div>
-              <div className="text-muted-foreground text-[10px]">Statista 2025</div>
+              <div className="text-muted-foreground text-xs">TAM: US gifting behavior</div>
+              <div className="text-muted-foreground text-[10px]">Model estimate from gifting market reports</div>
             </div>
             
             <div>
               <div className="text-xl md:text-2xl font-bold text-sky-400">
                 $<AnimatedCounter value={12} duration={1.5} />B
               </div>
-              <div className="text-muted-foreground text-xs">SAM: AI-Powered Gifting</div>
-              <div className="text-muted-foreground text-[10px]">Grand View Research</div>
+              <div className="text-muted-foreground text-xs">SAM: AI-powered gifting</div>
+              <div className="text-muted-foreground text-[10px]">Internal estimate</div>
             </div>
             
             <div className="flex items-center gap-2 pt-1">
@@ -132,9 +132,11 @@ const MarketSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="mt-2 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-lg px-4 py-2"
       >
-        <span className="text-muted-foreground text-xs">AI Personalization Market: </span>
-        <span className="text-white font-semibold text-xs">$105B → $168B by 2033</span>
-        <span className="text-muted-foreground text-[10px] ml-1">(Grand View Research)</span>
+        <span className="text-muted-foreground text-xs">AI personalization tailwind: </span>
+        <span className="text-white font-semibold text-xs">market forecast through 2033</span>
+        <a href="https://www.grandviewresearch.com/industry-analysis/ai-based-personalization-engines-market-report" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-muted-foreground text-[10px] ml-1 underline decoration-dotted underline-offset-2 hover:text-foreground">
+          Grand View Research <ExternalLink className="h-2.5 w-2.5" />
+        </a>
       </motion.div>
     </SlideWrapper>
   );

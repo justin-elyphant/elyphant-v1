@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Repeat, Calendar, Frown } from 'lucide-react';
+import { Repeat, Calendar, Frown, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 
@@ -14,25 +14,28 @@ const painPoints = [
   {
     icon: Repeat,
     title: "Wrong Gifts Get Returned",
-    stat: "65%",
-    description: "of gift recipients return at least one gift yearly",
+    stat: "15.8%",
+    description: "retail return rate highlights the cost of poor fit",
     source: "NRF 2025",
+    href: "https://nrf.com/research/2025-retail-returns-landscape",
     color: "from-red-500 to-orange-500",
   },
   {
     icon: Calendar,
     title: "Important Dates Forgotten",
-    stat: "40%",
-    description: "of people miss birthdays and anniversaries",
-    source: "Hallmark Research",
+    stat: "#1",
+    description: "birthday cards outsell individual holiday card categories",
+    source: "Hallmark birthday research",
+    href: "https://corporate.hallmark.com/Holiday/Birthdays",
     color: "from-yellow-500 to-amber-500",
   },
   {
     icon: Frown,
     title: "Gift Shopping Is Stressful",
-    stat: "73%",
-    description: "find choosing the right gift anxiety-inducing",
-    source: "Consumer Survey 2025",
+    stat: "2025",
+    description: "holiday shoppers report gift anxiety and decision fatigue",
+    source: "SurveyMonkey / Mixbook",
+    href: "https://www.surveymonkey.com/curiosity/holiday-shopping-trends-statistics/",
     color: "from-purple-500 to-pink-500",
   },
 ];
@@ -81,9 +84,9 @@ const WhyGiftingFailsSlide = ({ direction }: SlideProps) => {
             <p className="text-muted-foreground text-xs md:text-sm mb-2">
               {point.description}
             </p>
-            <p className="text-muted-foreground text-xs">
-              Source: {point.source}
-            </p>
+            <a href={point.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground text-xs underline decoration-dotted underline-offset-2 hover:text-foreground">
+              Source: {point.source} <ExternalLink className="h-3 w-3" />
+            </a>
           </motion.div>
         ))}
       </motion.div>

@@ -50,10 +50,10 @@ const revenueStreams = [
 ];
 
 const revenueMix = [
-  { label: "Gifting Fees", percent: 80, color: "from-purple-500 to-purple-400" },
-  { label: "Vendor", percent: 12, color: "from-sky-500 to-sky-400" },
-  { label: "Subs", percent: 4, color: "from-green-500 to-green-400" },
-  { label: "Ads", percent: 4, color: "from-amber-500 to-amber-400" },
+  { label: "Gifting Fees", percent: 86, color: "from-purple-500 to-purple-400" },
+  { label: "Vendor", percent: 9, color: "from-sky-500 to-sky-400" },
+  { label: "Subs", percent: 3, color: "from-green-500 to-green-400" },
+  { label: "Ads", percent: 2, color: "from-amber-500 to-amber-400" },
 ];
 
 const RevenueStreamsSlide = ({ direction }: SlideProps) => {

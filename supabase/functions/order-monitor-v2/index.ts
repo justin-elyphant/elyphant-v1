@@ -139,6 +139,7 @@ serve(async (req) => {
 
     // Query 2: Orders missing webhooks (zinc_request_id exists but no zinc_order_id)
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     
     const { data: webhookTimeoutOrders, error: fetchError2 } = await supabase
@@ -173,6 +174,7 @@ serve(async (req) => {
       .select('*')
       .in('status', ['requires_attention', 'failed'])
       .not('notes', 'is', null)
+      .gte('created_at', oneDayAgo)
       .order('updated_at', { ascending: true });
 
     if (fetchError4) {
@@ -247,7 +249,7 @@ serve(async (req) => {
           console.log(`🔄 Auto re-submitting retryable Zinc order ${order.id} (attempt ${retryCount + 1}/${maxRetries}, reason: ${getZincErrorCode(existingNotes) || 'unknown'})`);
 
           const retryAttemptAt = new Date().toISOString();
-          await supabase
+          const { data: lockedRetry, error: lockError } = await supabase
             .from('orders')
             .update({
               last_polling_check_at: retryAttemptAt,
@@ -259,7 +261,15 @@ serve(async (req) => {
               },
               updated_at: retryAttemptAt,
             })
-            .eq('id', order.id);
+            .eq('id', order.id)
+            .in('status', ['requires_attention', 'failed'])
+            .select('id')
+            .maybeSingle();
+
+          if (lockError || !lockedRetry) {
+            console.log(`⏭️ Skipping retry for order ${order.id} - retry lock not acquired`);
+            continue;
+          }
 
           const { data: retryResult, error: retryError } = await supabase.functions.invoke('process-order-v2', {
             body: { orderId: order.id },

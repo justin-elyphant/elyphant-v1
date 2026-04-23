@@ -459,7 +459,7 @@ serve(async (req) => {
           console.log(`🔄 WEBHOOK TIMEOUT RECOVERY: Found order via polling for ${order.id}`);
           updates.zinc_order_id = merchantOrderId;
           updates.webhook_received_at = null;
-          updates.notes = { ...existingNotes, recovered_via: 'polling', recovered_at: new Date().toISOString() };
+          updates.notes = { ...postPurchaseMonitorNotes, recovered_via: 'polling', recovered_at: new Date().toISOString() };
         }
 
         if (isDelivered) {
@@ -474,7 +474,7 @@ serve(async (req) => {
             if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
             
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_delivery_status: 'Delivered',
               delivery_detected_via: 'polling',

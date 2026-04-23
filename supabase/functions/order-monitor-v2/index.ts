@@ -54,6 +54,27 @@ serve(async (req) => {
       throw fetchError1;
     }
 
+    // Keep retry metadata honest after process-order-v2 successfully re-submits.
+    const inflightRetryOrders = (processingOrders || []).filter((order: any) => {
+      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      return notes.zinc_retry_status === 'resubmitting';
+    });
+
+    for (const order of inflightRetryOrders) {
+      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      await supabase
+        .from('orders')
+        .update({
+          notes: {
+            ...notes,
+            zinc_retry_status: 'resubmitted',
+            zinc_retry_confirmed_at: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+    }
+
     // Query 2: Orders missing webhooks (zinc_request_id exists but no zinc_order_id)
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
@@ -132,9 +153,23 @@ serve(async (req) => {
           const retryDelaySeconds = Number(existingNotes.zinc_next_retry_delay_seconds || 3600);
           const lastFailureAt = existingNotes.zinc_error?.timestamp || order.updated_at || order.created_at;
           const nextRetryAt = new Date(new Date(lastFailureAt).getTime() + retryDelaySeconds * 1000);
+          const lastRetryAttemptAt = existingNotes.zinc_retry_last_attempt_at
+            ? new Date(existingNotes.zinc_retry_last_attempt_at).getTime()
+            : 0;
+          const retryInFlight = existingNotes.zinc_retry_status === 'resubmitting' &&
+            Date.now() - lastRetryAttemptAt < 30 * 60 * 1000;
 
           if (!maxRetries || retryCount > maxRetries) {
             console.log(`⏭️ Skipping retry for order ${order.id} - retry limit reached (${retryCount}/${maxRetries})`);
+            continue;
+          }
+
+          if (retryInFlight) {
+            console.log(`⏭️ Skipping retry for order ${order.id} - prior retry still in flight`);
+            await supabase
+              .from('orders')
+              .update({ last_polling_check_at: new Date().toISOString() })
+              .eq('id', order.id);
             continue;
           }
 

@@ -160,7 +160,6 @@ serve(async (req) => {
       .select('*')
       .in('status', ['requires_attention', 'failed'])
       .not('notes', 'is', null)
-      .or(`last_polling_check_at.is.null,last_polling_check_at.lt.${fifteenMinutesAgo}`)
       .order('updated_at', { ascending: true });
 
     if (fetchError4) {

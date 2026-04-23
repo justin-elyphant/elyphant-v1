@@ -69,6 +69,19 @@ function getRetryBaseTimestamp(notes: Record<string, any>, zincData?: any, order
     new Date().toISOString();
 }
 
+function parseOrderNotes(notes: unknown): Record<string, any> {
+  if (typeof notes === 'object' && notes !== null && !Array.isArray(notes)) return notes as Record<string, any>;
+  if (typeof notes === 'string') {
+    try {
+      const parsed = JSON.parse(notes);
+      return (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 /** Returns true if transitioning from currentStatus to newStatus would be a downgrade. */
 function isStatusDowngrade(currentStatus: string, newStatus: string): boolean {
   const current = STATUS_RANK[currentStatus] ?? -1;
@@ -105,12 +118,12 @@ serve(async (req) => {
 
     // Keep retry metadata honest after process-order-v2 successfully re-submits.
     const inflightRetryOrders = (processingOrders || []).filter((order: any) => {
-      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      const notes = parseOrderNotes(order.notes);
       return notes.zinc_retry_status === 'resubmitting';
     });
 
     for (const order of inflightRetryOrders) {
-      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      const notes = parseOrderNotes(order.notes);
       await supabase
         .from('orders')
         .update({
@@ -194,7 +207,7 @@ serve(async (req) => {
 
     for (const order of uniqueOrders) {
       try {
-        const existingNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+        const existingNotes = parseOrderNotes(order.notes);
 
         // Automatically re-submit transient Zinc failures after their configured delay.
         if ((order.status === 'requires_attention' || order.status === 'failed') && isRetryableZincFailure(existingNotes)) {

@@ -580,6 +580,7 @@ serve(async (req) => {
             updates.status = 'requires_attention';
             updates.notes = {
               ...existingNotes,
+              ...(updates.notes || {}),
               zinc_error: {
                 code: getZincErrorCode(existingNotes, zincData),
                 message: getZincErrorMessage(existingNotes, zincData) || 'Retryable Zinc failure',
@@ -588,11 +589,25 @@ serve(async (req) => {
               zinc_retry_classification: 'retryable_system',
               zinc_next_retry_delay_seconds: delaySeconds,
               zinc_retry_max: maxRetries,
-              failed_detected_via: 'polling',
+              failed_detected_via: isPostPurchaseHealthCheck ? 'post_purchase_monitor' : 'polling',
             };
           } else {
-            updates.status = 'failed';
-            updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+            const failureCode = getZincErrorCode(existingNotes, zincData);
+            const failureMessage = getZincErrorMessage(existingNotes, zincData) || zincData.message || zincData.error?.message || 'Order failed in Zinc';
+            const failureClassification = classifyNonRetryableZincFailure(failureCode, failureMessage);
+            updates.status = failureClassification.status;
+            updates.notes = {
+              ...existingNotes,
+              ...(updates.notes || {}),
+              zinc_error: {
+                code: failureCode,
+                message: failureClassification.message,
+                timestamp: getRetryBaseTimestamp(existingNotes, zincData, order),
+              },
+              zinc_retry_classification: failureClassification.classification,
+              zinc_alert_level: failureClassification.alertLevel,
+              failed_detected_via: isPostPurchaseHealthCheck ? 'post_purchase_monitor' : 'polling',
+            };
           }
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
@@ -674,6 +689,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         monitored: uniqueOrders.length,
+        post_purchase_checked: postPurchaseOrders?.length || 0,
         processing: processingOrders?.length || 0,
         shipped_polled: shippedOrders?.length || 0,
         webhook_timeout: webhookTimeoutOrders?.length || 0,

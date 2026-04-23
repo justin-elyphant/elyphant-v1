@@ -83,10 +83,25 @@ serve(async (req) => {
       console.warn('⚠️ Error fetching shipped orders:', fetchError3);
     }
 
+    // Query 4: Retryable Zinc failures held in requires_attention.
+    // These are set by zinc-webhook for transient errors like zma_temporarily_overloaded.
+    const { data: retryableAttentionOrders, error: fetchError4 } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'requires_attention')
+      .not('notes', 'is', null)
+      .or(`last_polling_check_at.is.null,last_polling_check_at.lt.${fifteenMinutesAgo}`)
+      .order('updated_at', { ascending: true });
+
+    if (fetchError4) {
+      console.warn('⚠️ Error fetching retryable requires_attention orders:', fetchError4);
+    }
+
     const allOrders = [
       ...(processingOrders || []),
       ...(webhookTimeoutOrders || []),
       ...(shippedOrders || []),
+      ...(retryableAttentionOrders || []),
     ];
 
     // Deduplicate by order id (an order could match multiple queries)
@@ -97,16 +112,85 @@ serve(async (req) => {
       return true;
     });
 
-    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped orders (${uniqueOrders.length} unique)`);
+    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped + ${retryableAttentionOrders?.length || 0} retryable-attention orders (${uniqueOrders.length} unique)`);
 
     const results = {
       updated: [] as string[],
       stuck: [] as string[],
+      retried: [] as string[],
       failed: [] as { orderId: string; error: string }[],
     };
 
     for (const order of uniqueOrders) {
       try {
+        const existingNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+
+        // Automatically re-submit transient Zinc failures after their configured delay.
+        if (order.status === 'requires_attention' && existingNotes.zinc_retry_classification === 'retryable_system') {
+          const retryCount = Number(existingNotes.zinc_retry_count || 0);
+          const maxRetries = Number(existingNotes.zinc_retry_max || 0);
+          const retryDelaySeconds = Number(existingNotes.zinc_next_retry_delay_seconds || 3600);
+          const lastFailureAt = existingNotes.zinc_error?.timestamp || order.updated_at || order.created_at;
+          const nextRetryAt = new Date(new Date(lastFailureAt).getTime() + retryDelaySeconds * 1000);
+
+          if (!maxRetries || retryCount > maxRetries) {
+            console.log(`⏭️ Skipping retry for order ${order.id} - retry limit reached (${retryCount}/${maxRetries})`);
+            continue;
+          }
+
+          if (Date.now() < nextRetryAt.getTime()) {
+            console.log(`⏳ Retry not due for order ${order.id}. Next retry at ${nextRetryAt.toISOString()}`);
+            await supabase
+              .from('orders')
+              .update({ last_polling_check_at: new Date().toISOString() })
+              .eq('id', order.id);
+            continue;
+          }
+
+          console.log(`🔄 Auto re-submitting retryable Zinc order ${order.id} (attempt ${retryCount}/${maxRetries}, reason: ${existingNotes.zinc_error?.code || 'unknown'})`);
+
+          const retryAttemptAt = new Date().toISOString();
+          await supabase
+            .from('orders')
+            .update({
+              last_polling_check_at: retryAttemptAt,
+              notes: {
+                ...existingNotes,
+                zinc_retry_last_attempt_at: retryAttemptAt,
+                zinc_retry_status: 'resubmitting',
+              },
+              updated_at: retryAttemptAt,
+            })
+            .eq('id', order.id);
+
+          const { data: retryResult, error: retryError } = await supabase.functions.invoke('process-order-v2', {
+            body: { orderId: order.id },
+          });
+
+          if (retryError || retryResult?.success === false) {
+            const message = retryError?.message || retryResult?.error || 'Unknown retry error';
+            console.warn(`⚠️ Auto re-submit failed for order ${order.id}: ${message}`);
+            await supabase
+              .from('orders')
+              .update({
+                notes: {
+                  ...existingNotes,
+                  zinc_retry_last_attempt_at: retryAttemptAt,
+                  zinc_retry_last_error: message,
+                  zinc_retry_status: 'resubmit_failed',
+                },
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', order.id);
+            results.failed.push({ orderId: order.id, error: message });
+          } else {
+            console.log(`✅ Auto re-submit accepted for order ${order.id}: ${retryResult?.zinc_request_id || 'submitted'}`);
+            results.retried.push(order.id);
+          }
+
+          continue;
+        }
+
         if (!order.zinc_request_id) {
           console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
           continue;
@@ -182,9 +266,6 @@ serve(async (req) => {
           (zincData._type === 'error' && 
            zincData.code !== 'request_processing' &&
            zincData.code !== 'pending');
-
-        // Build existing notes as proper object
-        const existingNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
 
         // NEW: If we found the order via polling (webhook timeout), populate zinc_order_id
         if (isWebhookTimeout && merchantOrderId) {

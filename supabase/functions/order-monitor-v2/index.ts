@@ -536,7 +536,7 @@ serve(async (req) => {
             if (bestTracking?.tracking_url || bestTracking?.retailer_tracking_url) {
               trackingNotes.tracking_url = bestTracking.retailer_tracking_url || bestTracking.tracking_url;
             }
-            updates.notes = { ...existingNotes, ...(updates.notes || {}), ...trackingNotes };
+            updates.notes = { ...postPurchaseMonitorNotes, ...(updates.notes || {}), ...trackingNotes };
             
             console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
             results.updated.push(order.id);
@@ -580,7 +580,7 @@ serve(async (req) => {
             const { delaySeconds, maxRetries } = getRetryPolicy(existingNotes, zincData);
             updates.status = 'requires_attention';
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_error: {
                 code: getZincErrorCode(existingNotes, zincData),
@@ -598,7 +598,7 @@ serve(async (req) => {
             const failureClassification = classifyNonRetryableZincFailure(failureCode, failureMessage);
             updates.status = failureClassification.status;
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_error: {
                 code: failureCode,

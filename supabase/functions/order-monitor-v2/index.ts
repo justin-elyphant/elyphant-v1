@@ -25,6 +25,45 @@ const RETRYABLE_ZINC_ERROR_CODES = new Set([
   'internal_error',
 ]);
 
+const POST_PURCHASE_CHECK_DELAY_MINUTES = 5;
+const POST_PURCHASE_CHECK_WINDOW_MINUTES = 90;
+
+function classifyNonRetryableZincFailure(code: string, message: string) {
+  if (code === 'insufficient_zma_balance') {
+    return {
+      status: 'requires_attention',
+      classification: 'account_critical',
+      alertLevel: 'critical',
+      message: message || 'ZMA account balance is insufficient',
+    };
+  }
+
+  if (code === 'max_price_exceeded') {
+    return {
+      status: 'requires_attention',
+      classification: 'manual_review',
+      alertLevel: 'warning',
+      message: message || 'Zinc max price was exceeded',
+    };
+  }
+
+  if (code === 'product_unavailable' || code === 'invalid_product_id') {
+    return {
+      status: 'failed',
+      classification: 'catalog_or_product_issue',
+      alertLevel: 'warning',
+      message: message || `Zinc returned ${code}`,
+    };
+  }
+
+  return {
+    status: 'failed',
+    classification: 'manual_review',
+    alertLevel: 'warning',
+    message: message || 'Order failed in Zinc',
+  };
+}
+
 function getZincErrorCode(notes: Record<string, any>, zincData?: any): string {
   return zincData?.code || notes.zinc_error?.code || notes.zinc_error_code || '';
 }
@@ -97,12 +136,38 @@ serve(async (req) => {
   }
 
   try {
-    console.log('👁️ Running order monitor...');
+    const requestBody = await req.json().catch(() => ({}));
+    const postPurchaseOnly = requestBody?.postPurchaseCheck === true;
+
+    console.log(postPurchaseOnly ? '👁️ Running post-purchase Zinc health check...' : '👁️ Running order monitor...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
+
+    const now = Date.now();
+    const postPurchaseReadyBefore = new Date(now - POST_PURCHASE_CHECK_DELAY_MINUTES * 60 * 1000).toISOString();
+    const postPurchaseWindowStart = new Date(now - POST_PURCHASE_CHECK_WINDOW_MINUTES * 60 * 1000).toISOString();
+
+    // Query 0: Freshly submitted orders, checked once 5+ minutes after Zinc submission.
+    const { data: freshPurchaseOrders, error: freshPurchaseError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'processing')
+      .not('zinc_request_id', 'is', null)
+      .gte('updated_at', postPurchaseWindowStart)
+      .lte('updated_at', postPurchaseReadyBefore)
+      .order('updated_at', { ascending: true });
+
+    if (freshPurchaseError) {
+      console.warn('⚠️ Error fetching fresh purchase orders:', freshPurchaseError);
+    }
+
+    const postPurchaseOrders = (freshPurchaseOrders || []).filter((order: any) => {
+      const notes = parseOrderNotes(order.notes);
+      return notes.post_purchase_monitor_request_id !== order.zinc_request_id;
+    });
 
     // Query 1: Processing orders with zinc_order_id (webhook received)
     const { data: processingOrders, error: fetchError1 } = await supabase

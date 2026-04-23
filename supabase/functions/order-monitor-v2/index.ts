@@ -198,7 +198,7 @@ serve(async (req) => {
           const retryInFlight = existingNotes.zinc_retry_status === 'resubmitting' &&
             Date.now() - lastRetryAttemptAt < 30 * 60 * 1000;
 
-          if (!maxRetries || retryCount > maxRetries) {
+          if (!maxRetries || retryCount >= maxRetries) {
             console.log(`⏭️ Skipping retry for order ${order.id} - retry limit reached (${retryCount}/${maxRetries})`);
             continue;
           }
@@ -221,7 +221,7 @@ serve(async (req) => {
             continue;
           }
 
-          console.log(`🔄 Auto re-submitting retryable Zinc order ${order.id} (attempt ${retryCount}/${maxRetries}, reason: ${existingNotes.zinc_error?.code || 'unknown'})`);
+          console.log(`🔄 Auto re-submitting retryable Zinc order ${order.id} (attempt ${retryCount + 1}/${maxRetries}, reason: ${getZincErrorCode(existingNotes) || 'unknown'})`);
 
           const retryAttemptAt = new Date().toISOString();
           await supabase
@@ -230,6 +230,7 @@ serve(async (req) => {
               last_polling_check_at: retryAttemptAt,
               notes: {
                 ...existingNotes,
+                zinc_retry_count: retryCount + 1,
                 zinc_retry_last_attempt_at: retryAttemptAt,
                 zinc_retry_status: 'resubmitting',
               },

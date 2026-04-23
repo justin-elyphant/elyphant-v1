@@ -371,6 +371,11 @@ serve(async (req) => {
           continue;
         }
         const isPostPurchaseHealthCheck = postPurchaseOrders.some((freshOrder: any) => freshOrder.id === order.id);
+        const postPurchaseMonitorNotes = isPostPurchaseHealthCheck ? {
+          ...existingNotes,
+          post_purchase_monitor_request_id: order.zinc_request_id,
+          post_purchase_monitor_checked_at: new Date().toISOString(),
+        } : existingNotes;
         const zincIdentifier = order.zinc_request_id;
         const isWebhookTimeout = !order.zinc_order_id;
 
@@ -393,11 +398,7 @@ serve(async (req) => {
           .update({
             last_polling_check_at: pollingCheckedAt,
             ...(isPostPurchaseHealthCheck ? {
-              notes: {
-                ...existingNotes,
-                post_purchase_monitor_request_id: order.zinc_request_id,
-                post_purchase_monitor_checked_at: pollingCheckedAt,
-              },
+              notes: { ...postPurchaseMonitorNotes, post_purchase_monitor_checked_at: pollingCheckedAt },
             } : {}),
           })
           .eq('id', order.id);

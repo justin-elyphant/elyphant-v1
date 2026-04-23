@@ -463,8 +463,25 @@ serve(async (req) => {
           }
         } 
         else if (isFailed) {
-          updates.status = 'failed';
-          updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+          if (isRetryableZincFailure(existingNotes, zincData)) {
+            const { delaySeconds, maxRetries } = getRetryPolicy(existingNotes, zincData);
+            updates.status = 'requires_attention';
+            updates.notes = {
+              ...existingNotes,
+              zinc_error: {
+                code: getZincErrorCode(existingNotes, zincData),
+                message: getZincErrorMessage(existingNotes, zincData) || 'Retryable Zinc failure',
+                timestamp: new Date().toISOString(),
+              },
+              zinc_retry_classification: 'retryable_system',
+              zinc_next_retry_delay_seconds: delaySeconds,
+              zinc_retry_max: maxRetries,
+              failed_detected_via: 'polling',
+            };
+          } else {
+            updates.status = 'failed';
+            updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+          }
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
           results.updated.push(order.id);

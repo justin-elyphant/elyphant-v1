@@ -25,6 +25,45 @@ const RETRYABLE_ZINC_ERROR_CODES = new Set([
   'internal_error',
 ]);
 
+const POST_PURCHASE_CHECK_DELAY_MINUTES = 5;
+const POST_PURCHASE_CHECK_WINDOW_MINUTES = 90;
+
+function classifyNonRetryableZincFailure(code: string, message: string) {
+  if (code === 'insufficient_zma_balance') {
+    return {
+      status: 'requires_attention',
+      classification: 'account_critical',
+      alertLevel: 'critical',
+      message: message || 'ZMA account balance is insufficient',
+    };
+  }
+
+  if (code === 'max_price_exceeded') {
+    return {
+      status: 'requires_attention',
+      classification: 'manual_review',
+      alertLevel: 'warning',
+      message: message || 'Zinc max price was exceeded',
+    };
+  }
+
+  if (code === 'product_unavailable' || code === 'invalid_product_id') {
+    return {
+      status: 'failed',
+      classification: 'catalog_or_product_issue',
+      alertLevel: 'warning',
+      message: message || `Zinc returned ${code}`,
+    };
+  }
+
+  return {
+    status: 'failed',
+    classification: 'manual_review',
+    alertLevel: 'warning',
+    message: message || 'Order failed in Zinc',
+  };
+}
+
 function getZincErrorCode(notes: Record<string, any>, zincData?: any): string {
   return zincData?.code || notes.zinc_error?.code || notes.zinc_error_code || '';
 }
@@ -97,12 +136,38 @@ serve(async (req) => {
   }
 
   try {
-    console.log('👁️ Running order monitor...');
+    const requestBody = await req.json().catch(() => ({}));
+    const postPurchaseOnly = requestBody?.postPurchaseCheck === true;
+
+    console.log(postPurchaseOnly ? '👁️ Running post-purchase Zinc health check...' : '👁️ Running order monitor...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
+
+    const now = Date.now();
+    const postPurchaseReadyBefore = new Date(now - POST_PURCHASE_CHECK_DELAY_MINUTES * 60 * 1000).toISOString();
+    const postPurchaseWindowStart = new Date(now - POST_PURCHASE_CHECK_WINDOW_MINUTES * 60 * 1000).toISOString();
+
+    // Query 0: Freshly submitted orders, checked once 5+ minutes after Zinc submission.
+    const { data: freshPurchaseOrders, error: freshPurchaseError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'processing')
+      .not('zinc_request_id', 'is', null)
+      .gte('updated_at', postPurchaseWindowStart)
+      .lte('updated_at', postPurchaseReadyBefore)
+      .order('updated_at', { ascending: true });
+
+    if (freshPurchaseError) {
+      console.warn('⚠️ Error fetching fresh purchase orders:', freshPurchaseError);
+    }
+
+    const postPurchaseOrders = (freshPurchaseOrders || []).filter((order: any) => {
+      const notes = parseOrderNotes(order.notes);
+      return notes.post_purchase_monitor_request_id !== order.zinc_request_id;
+    });
 
     // Query 1: Processing orders with zinc_order_id (webhook received)
     const { data: processingOrders, error: fetchError1 } = await supabase
@@ -181,7 +246,9 @@ serve(async (req) => {
       console.warn('⚠️ Error fetching retryable requires_attention orders:', fetchError4);
     }
 
-    const allOrders = [
+    const allOrders = postPurchaseOnly ? postPurchaseOrders : [
+      // Fresh purchases get an early health check before the normal 15-minute polling cadence.
+      ...(postPurchaseOrders || []),
       // Put retryable failures first so orders that also match webhook-timeout
       // are re-submitted instead of repeatedly polling the old failed Zinc request.
       ...(retryableAttentionOrders || []),
@@ -198,7 +265,7 @@ serve(async (req) => {
       return true;
     });
 
-    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped + ${retryableAttentionOrders?.length || 0} retryable-attention orders (${uniqueOrders.length} unique)`);
+    console.log(`📦 Monitoring ${postPurchaseOrders?.length || 0} post-purchase + ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped + ${retryableAttentionOrders?.length || 0} retryable-attention orders (${uniqueOrders.length} unique)`);
 
     const results = {
       updated: [] as string[],
@@ -303,10 +370,11 @@ serve(async (req) => {
           console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
           continue;
         }
+        const isPostPurchaseHealthCheck = postPurchaseOrders.some((freshOrder: any) => freshOrder.id === order.id);
         const zincIdentifier = order.zinc_request_id;
         const isWebhookTimeout = !order.zinc_order_id;
 
-        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}, current_status: ${order.status}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
+        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}, current_status: ${order.status}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''}${isPostPurchaseHealthCheck ? ' - POST PURCHASE' : ''})`);
 
         // Check Zinc API for order status
         const zincResponse = await fetch(
@@ -319,9 +387,19 @@ serve(async (req) => {
         );
 
         // Update last_polling_check_at regardless of response
+        const pollingCheckedAt = new Date().toISOString();
         await supabase
           .from('orders')
-          .update({ last_polling_check_at: new Date().toISOString() })
+          .update({
+            last_polling_check_at: pollingCheckedAt,
+            ...(isPostPurchaseHealthCheck ? {
+              notes: {
+                ...existingNotes,
+                post_purchase_monitor_request_id: order.zinc_request_id,
+                post_purchase_monitor_checked_at: pollingCheckedAt,
+              },
+            } : {}),
+          })
           .eq('id', order.id);
 
         if (!zincResponse.ok) {
@@ -502,6 +580,7 @@ serve(async (req) => {
             updates.status = 'requires_attention';
             updates.notes = {
               ...existingNotes,
+              ...(updates.notes || {}),
               zinc_error: {
                 code: getZincErrorCode(existingNotes, zincData),
                 message: getZincErrorMessage(existingNotes, zincData) || 'Retryable Zinc failure',
@@ -510,11 +589,25 @@ serve(async (req) => {
               zinc_retry_classification: 'retryable_system',
               zinc_next_retry_delay_seconds: delaySeconds,
               zinc_retry_max: maxRetries,
-              failed_detected_via: 'polling',
+              failed_detected_via: isPostPurchaseHealthCheck ? 'post_purchase_monitor' : 'polling',
             };
           } else {
-            updates.status = 'failed';
-            updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+            const failureCode = getZincErrorCode(existingNotes, zincData);
+            const failureMessage = getZincErrorMessage(existingNotes, zincData) || zincData.message || zincData.error?.message || 'Order failed in Zinc';
+            const failureClassification = classifyNonRetryableZincFailure(failureCode, failureMessage);
+            updates.status = failureClassification.status;
+            updates.notes = {
+              ...existingNotes,
+              ...(updates.notes || {}),
+              zinc_error: {
+                code: failureCode,
+                message: failureClassification.message,
+                timestamp: getRetryBaseTimestamp(existingNotes, zincData, order),
+              },
+              zinc_retry_classification: failureClassification.classification,
+              zinc_alert_level: failureClassification.alertLevel,
+              failed_detected_via: isPostPurchaseHealthCheck ? 'post_purchase_monitor' : 'polling',
+            };
           }
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
@@ -596,6 +689,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         monitored: uniqueOrders.length,
+        post_purchase_checked: postPurchaseOrders?.length || 0,
         processing: processingOrders?.length || 0,
         shipped_polled: shippedOrders?.length || 0,
         webhook_timeout: webhookTimeoutOrders?.length || 0,

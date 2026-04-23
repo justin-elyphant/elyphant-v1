@@ -54,6 +54,27 @@ serve(async (req) => {
       throw fetchError1;
     }
 
+    // Keep retry metadata honest after process-order-v2 successfully re-submits.
+    const inflightRetryOrders = (processingOrders || []).filter((order: any) => {
+      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      return notes.zinc_retry_status === 'resubmitting';
+    });
+
+    for (const order of inflightRetryOrders) {
+      const notes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
+      await supabase
+        .from('orders')
+        .update({
+          notes: {
+            ...notes,
+            zinc_retry_status: 'resubmitted',
+            zinc_retry_confirmed_at: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+    }
+
     // Query 2: Orders missing webhooks (zinc_request_id exists but no zinc_order_id)
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();

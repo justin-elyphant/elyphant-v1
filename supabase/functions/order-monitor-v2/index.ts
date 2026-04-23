@@ -246,7 +246,9 @@ serve(async (req) => {
       console.warn('⚠️ Error fetching retryable requires_attention orders:', fetchError4);
     }
 
-    const allOrders = [
+    const allOrders = postPurchaseOnly ? postPurchaseOrders : [
+      // Fresh purchases get an early health check before the normal 15-minute polling cadence.
+      ...(postPurchaseOrders || []),
       // Put retryable failures first so orders that also match webhook-timeout
       // are re-submitted instead of repeatedly polling the old failed Zinc request.
       ...(retryableAttentionOrders || []),
@@ -263,7 +265,7 @@ serve(async (req) => {
       return true;
     });
 
-    console.log(`📦 Monitoring ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped + ${retryableAttentionOrders?.length || 0} retryable-attention orders (${uniqueOrders.length} unique)`);
+    console.log(`📦 Monitoring ${postPurchaseOrders?.length || 0} post-purchase + ${processingOrders?.length || 0} processing + ${webhookTimeoutOrders?.length || 0} webhook-timeout + ${shippedOrders?.length || 0} shipped + ${retryableAttentionOrders?.length || 0} retryable-attention orders (${uniqueOrders.length} unique)`);
 
     const results = {
       updated: [] as string[],
@@ -368,10 +370,11 @@ serve(async (req) => {
           console.log(`⏭️ Skipping order ${order.id} - no zinc_request_id available`);
           continue;
         }
+        const isPostPurchaseHealthCheck = postPurchaseOrders.some((freshOrder: any) => freshOrder.id === order.id);
         const zincIdentifier = order.zinc_request_id;
         const isWebhookTimeout = !order.zinc_order_id;
 
-        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}, current_status: ${order.status}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''})`);
+        console.log(`🔍 Checking Zinc status for order: ${order.id} (request_id: ${zincIdentifier}, current_status: ${order.status}${isWebhookTimeout ? ' - WEBHOOK TIMEOUT' : ''}${isPostPurchaseHealthCheck ? ' - POST PURCHASE' : ''})`);
 
         // Check Zinc API for order status
         const zincResponse = await fetch(
@@ -384,9 +387,19 @@ serve(async (req) => {
         );
 
         // Update last_polling_check_at regardless of response
+        const pollingCheckedAt = new Date().toISOString();
         await supabase
           .from('orders')
-          .update({ last_polling_check_at: new Date().toISOString() })
+          .update({
+            last_polling_check_at: pollingCheckedAt,
+            ...(isPostPurchaseHealthCheck ? {
+              notes: {
+                ...existingNotes,
+                post_purchase_monitor_request_id: order.zinc_request_id,
+                post_purchase_monitor_checked_at: pollingCheckedAt,
+              },
+            } : {}),
+          })
           .eq('id', order.id);
 
         if (!zincResponse.ok) {

@@ -20,6 +20,46 @@ const STATUS_RANK: Record<string, number> = {
   'returned': 9,
 };
 
+const RETRYABLE_ZINC_ERROR_CODES = new Set([
+  'zma_temporarily_overloaded',
+  'internal_error',
+]);
+
+function getZincErrorCode(notes: Record<string, any>, zincData?: any): string {
+  return zincData?.code || notes.zinc_error?.code || notes.zinc_error_code || '';
+}
+
+function getZincErrorMessage(notes: Record<string, any>, zincData?: any): string {
+  const noteError = notes.zinc_error;
+  return zincData?.message || zincData?.data?.message ||
+    (typeof noteError === 'string' ? noteError : noteError?.message) || '';
+}
+
+function isRetryableZincFailure(notes: Record<string, any>, zincData?: any): boolean {
+  const code = getZincErrorCode(notes, zincData);
+  const message = getZincErrorMessage(notes, zincData).toLowerCase();
+
+  return notes.zinc_retry_classification === 'retryable_system' ||
+    RETRYABLE_ZINC_ERROR_CODES.has(code) ||
+    code.includes('timeout') ||
+    code.includes('server_error') ||
+    code.includes('unavailable') ||
+    code.includes('network') ||
+    message.includes('temporarily unable to process') ||
+    message.includes('high volume of orders') ||
+    message.includes('temporarily overloaded');
+}
+
+function getRetryPolicy(notes: Record<string, any>, zincData?: any) {
+  const code = getZincErrorCode(notes, zincData);
+  if (code === 'zma_temporarily_overloaded') return { delaySeconds: 3600, maxRetries: 3 };
+  if (code === 'internal_error') return { delaySeconds: 7200, maxRetries: 2 };
+  return {
+    delaySeconds: Number(notes.zinc_next_retry_delay_seconds || 1800),
+    maxRetries: Number(notes.zinc_retry_max || 2),
+  };
+}
+
 /** Returns true if transitioning from currentStatus to newStatus would be a downgrade. */
 function isStatusDowngrade(currentStatus: string, newStatus: string): boolean {
   const current = STATUS_RANK[currentStatus] ?? -1;
@@ -104,12 +144,12 @@ serve(async (req) => {
       console.warn('⚠️ Error fetching shipped orders:', fetchError3);
     }
 
-    // Query 4: Retryable Zinc failures held in requires_attention.
-    // These are set by zinc-webhook for transient errors like zma_temporarily_overloaded.
+    // Query 4: Retryable Zinc failures held in requires_attention or failed.
+    // Webhooks usually set requires_attention; polling may have already marked retryable errors failed.
     const { data: retryableAttentionOrders, error: fetchError4 } = await supabase
       .from('orders')
       .select('*')
-      .eq('status', 'requires_attention')
+      .in('status', ['requires_attention', 'failed'])
       .not('notes', 'is', null)
       .or(`last_polling_check_at.is.null,last_polling_check_at.lt.${fifteenMinutesAgo}`)
       .order('updated_at', { ascending: true });
@@ -147,11 +187,10 @@ serve(async (req) => {
         const existingNotes = (typeof order.notes === 'object' && order.notes !== null) ? order.notes : {};
 
         // Automatically re-submit transient Zinc failures after their configured delay.
-        if (order.status === 'requires_attention' && existingNotes.zinc_retry_classification === 'retryable_system') {
+        if ((order.status === 'requires_attention' || order.status === 'failed') && isRetryableZincFailure(existingNotes)) {
           const retryCount = Number(existingNotes.zinc_retry_count || 0);
-          const maxRetries = Number(existingNotes.zinc_retry_max || 0);
-          const retryDelaySeconds = Number(existingNotes.zinc_next_retry_delay_seconds || 3600);
-          const lastFailureAt = existingNotes.zinc_error?.timestamp || order.updated_at || order.created_at;
+          const { delaySeconds: retryDelaySeconds, maxRetries } = getRetryPolicy(existingNotes);
+          const lastFailureAt = existingNotes.zinc_error?.timestamp || existingNotes.zinc_error_at || order.updated_at || order.created_at;
           const nextRetryAt = new Date(new Date(lastFailureAt).getTime() + retryDelaySeconds * 1000);
           const lastRetryAttemptAt = existingNotes.zinc_retry_last_attempt_at
             ? new Date(existingNotes.zinc_retry_last_attempt_at).getTime()
@@ -424,8 +463,25 @@ serve(async (req) => {
           }
         } 
         else if (isFailed) {
-          updates.status = 'failed';
-          updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+          if (isRetryableZincFailure(existingNotes, zincData)) {
+            const { delaySeconds, maxRetries } = getRetryPolicy(existingNotes, zincData);
+            updates.status = 'requires_attention';
+            updates.notes = {
+              ...existingNotes,
+              zinc_error: {
+                code: getZincErrorCode(existingNotes, zincData),
+                message: getZincErrorMessage(existingNotes, zincData) || 'Retryable Zinc failure',
+                timestamp: new Date().toISOString(),
+              },
+              zinc_retry_classification: 'retryable_system',
+              zinc_next_retry_delay_seconds: delaySeconds,
+              zinc_retry_max: maxRetries,
+              failed_detected_via: 'polling',
+            };
+          } else {
+            updates.status = 'failed';
+            updates.notes = { ...existingNotes, zinc_error: zincData.message || zincData.error?.message || 'Order failed in Zinc', failed_detected_via: 'polling' };
+          }
           
           console.log(`❌ Order ${order.id} failed in Zinc: ${zincData.message || 'unknown'}`);
           results.updated.push(order.id);

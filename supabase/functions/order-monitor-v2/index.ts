@@ -168,10 +168,12 @@ serve(async (req) => {
     }
 
     const allOrders = [
+      // Put retryable failures first so orders that also match webhook-timeout
+      // are re-submitted instead of repeatedly polling the old failed Zinc request.
+      ...(retryableAttentionOrders || []),
       ...(processingOrders || []),
       ...(webhookTimeoutOrders || []),
       ...(shippedOrders || []),
-      ...(retryableAttentionOrders || []),
     ];
 
     // Deduplicate by order id (an order could match multiple queries)

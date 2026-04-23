@@ -132,9 +132,23 @@ serve(async (req) => {
           const retryDelaySeconds = Number(existingNotes.zinc_next_retry_delay_seconds || 3600);
           const lastFailureAt = existingNotes.zinc_error?.timestamp || order.updated_at || order.created_at;
           const nextRetryAt = new Date(new Date(lastFailureAt).getTime() + retryDelaySeconds * 1000);
+          const lastRetryAttemptAt = existingNotes.zinc_retry_last_attempt_at
+            ? new Date(existingNotes.zinc_retry_last_attempt_at).getTime()
+            : 0;
+          const retryInFlight = existingNotes.zinc_retry_status === 'resubmitting' &&
+            Date.now() - lastRetryAttemptAt < 30 * 60 * 1000;
 
           if (!maxRetries || retryCount > maxRetries) {
             console.log(`⏭️ Skipping retry for order ${order.id} - retry limit reached (${retryCount}/${maxRetries})`);
+            continue;
+          }
+
+          if (retryInFlight) {
+            console.log(`⏭️ Skipping retry for order ${order.id} - prior retry still in flight`);
+            await supabase
+              .from('orders')
+              .update({ last_polling_check_at: new Date().toISOString() })
+              .eq('id', order.id);
             continue;
           }
 

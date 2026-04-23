@@ -60,6 +60,15 @@ function getRetryPolicy(notes: Record<string, any>, zincData?: any) {
   };
 }
 
+function getRetryBaseTimestamp(notes: Record<string, any>, zincData?: any, order?: any): string {
+  return zincData?._created_at ||
+    notes.zinc_error?.timestamp ||
+    notes.zinc_error_at ||
+    order?.updated_at ||
+    order?.created_at ||
+    new Date().toISOString();
+}
+
 /** Returns true if transitioning from currentStatus to newStatus would be a downgrade. */
 function isStatusDowngrade(currentStatus: string, newStatus: string): boolean {
   const current = STATUS_RANK[currentStatus] ?? -1;
@@ -190,7 +199,7 @@ serve(async (req) => {
         if ((order.status === 'requires_attention' || order.status === 'failed') && isRetryableZincFailure(existingNotes)) {
           const retryCount = Number(existingNotes.zinc_retry_count || 0);
           const { delaySeconds: retryDelaySeconds, maxRetries } = getRetryPolicy(existingNotes);
-          const lastFailureAt = existingNotes.zinc_error?.timestamp || existingNotes.zinc_error_at || order.updated_at || order.created_at;
+          const lastFailureAt = getRetryBaseTimestamp(existingNotes, undefined, order);
           const nextRetryAt = new Date(new Date(lastFailureAt).getTime() + retryDelaySeconds * 1000);
           const lastRetryAttemptAt = existingNotes.zinc_retry_last_attempt_at
             ? new Date(existingNotes.zinc_retry_last_attempt_at).getTime()
@@ -472,7 +481,7 @@ serve(async (req) => {
               zinc_error: {
                 code: getZincErrorCode(existingNotes, zincData),
                 message: getZincErrorMessage(existingNotes, zincData) || 'Retryable Zinc failure',
-                timestamp: new Date().toISOString(),
+                timestamp: getRetryBaseTimestamp(existingNotes, zincData, order),
               },
               zinc_retry_classification: 'retryable_system',
               zinc_next_retry_delay_seconds: delaySeconds,

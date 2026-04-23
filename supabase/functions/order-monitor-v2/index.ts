@@ -371,6 +371,11 @@ serve(async (req) => {
           continue;
         }
         const isPostPurchaseHealthCheck = postPurchaseOrders.some((freshOrder: any) => freshOrder.id === order.id);
+        const postPurchaseMonitorNotes = isPostPurchaseHealthCheck ? {
+          ...existingNotes,
+          post_purchase_monitor_request_id: order.zinc_request_id,
+          post_purchase_monitor_checked_at: new Date().toISOString(),
+        } : existingNotes;
         const zincIdentifier = order.zinc_request_id;
         const isWebhookTimeout = !order.zinc_order_id;
 
@@ -393,11 +398,7 @@ serve(async (req) => {
           .update({
             last_polling_check_at: pollingCheckedAt,
             ...(isPostPurchaseHealthCheck ? {
-              notes: {
-                ...existingNotes,
-                post_purchase_monitor_request_id: order.zinc_request_id,
-                post_purchase_monitor_checked_at: pollingCheckedAt,
-              },
+              notes: { ...postPurchaseMonitorNotes, post_purchase_monitor_checked_at: pollingCheckedAt },
             } : {}),
           })
           .eq('id', order.id);
@@ -458,7 +459,7 @@ serve(async (req) => {
           console.log(`🔄 WEBHOOK TIMEOUT RECOVERY: Found order via polling for ${order.id}`);
           updates.zinc_order_id = merchantOrderId;
           updates.webhook_received_at = null;
-          updates.notes = { ...existingNotes, recovered_via: 'polling', recovered_at: new Date().toISOString() };
+          updates.notes = { ...postPurchaseMonitorNotes, recovered_via: 'polling', recovered_at: new Date().toISOString() };
         }
 
         if (isDelivered) {
@@ -473,7 +474,7 @@ serve(async (req) => {
             if (estimatedDelivery) updates.estimated_delivery = estimatedDelivery;
             
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_delivery_status: 'Delivered',
               delivery_detected_via: 'polling',
@@ -535,7 +536,7 @@ serve(async (req) => {
             if (bestTracking?.tracking_url || bestTracking?.retailer_tracking_url) {
               trackingNotes.tracking_url = bestTracking.retailer_tracking_url || bestTracking.tracking_url;
             }
-            updates.notes = { ...existingNotes, ...(updates.notes || {}), ...trackingNotes };
+            updates.notes = { ...postPurchaseMonitorNotes, ...(updates.notes || {}), ...trackingNotes };
             
             console.log(`✅ Order ${order.id} placed with merchant: ${merchantOrderId}, delivery: ${estimatedDelivery}`);
             results.updated.push(order.id);
@@ -579,7 +580,7 @@ serve(async (req) => {
             const { delaySeconds, maxRetries } = getRetryPolicy(existingNotes, zincData);
             updates.status = 'requires_attention';
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_error: {
                 code: getZincErrorCode(existingNotes, zincData),
@@ -597,7 +598,7 @@ serve(async (req) => {
             const failureClassification = classifyNonRetryableZincFailure(failureCode, failureMessage);
             updates.status = failureClassification.status;
             updates.notes = {
-              ...existingNotes,
+              ...postPurchaseMonitorNotes,
               ...(updates.notes || {}),
               zinc_error: {
                 code: failureCode,

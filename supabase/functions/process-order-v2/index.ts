@@ -10,6 +10,19 @@ function extractAsin(rawId: string): string {
   return rawId;
 }
 
+function parseOrderNotes(notes: unknown): Record<string, any> {
+  if (typeof notes === 'object' && notes !== null && !Array.isArray(notes)) return notes as Record<string, any>;
+  if (typeof notes === 'string') {
+    try {
+      const parsed = JSON.parse(notes);
+      return (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -61,6 +74,26 @@ serve(async (req) => {
     }
 
     console.log(`✅ Order found: ${order.order_number} | Status: ${order.status} | Payment: ${order.payment_status}`);
+
+    const orderNotes = parseOrderNotes(order.notes);
+    const retryAttemptAt = orderNotes.zinc_retry_last_attempt_at
+      ? new Date(orderNotes.zinc_retry_last_attempt_at).getTime()
+      : 0;
+    const hasActiveRetryLock = orderNotes.zinc_retry_status === 'resubmitting' &&
+      Date.now() - retryAttemptAt < 30 * 60 * 1000;
+
+    if (order.status === 'processing' && order.zinc_request_id && !hasActiveRetryLock) {
+      console.log(`⏭️ Order ${orderId} already has active Zinc request ${order.zinc_request_id}; skipping duplicate submission`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          message: 'Order already processing',
+          zinc_request_id: order.zinc_request_id,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
 
     // Fetch profile email/name/phone for fallback (shopper's phone as backup for gift recipients)
     const { data: profile } = await supabase

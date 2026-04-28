@@ -432,16 +432,14 @@ serve(async (req) => {
 
     console.log(`💰 max_price calc: itemSubtotal=${itemSubtotalCents}¢, fallbackSubtotal=${Math.round((order.line_items?.subtotal ?? order.total_amount) * 100)}¢ → used=${productSubtotalCents}¢ → max_price=${Math.ceil(productSubtotalCents * 1.20) + 1500}`);
 
-    // BizAPI toggle: when ZINC_BIZAPI_ENABLED="true", route order via Zinc bizapi
-    // for Prime shipping, low latency, and high throughput. Per Zinc bizapi docs,
-    // payment_method, retailer_credentials, and billing_address MUST be omitted.
-    const bizapiEnabled = (Deno.env.get('ZINC_BIZAPI_ENABLED') || '').toLowerCase() === 'true';
-    if (bizapiEnabled) {
-      console.log('⚡ BizAPI enabled — adding zma_flags: ["bizapi", "bizapi-only"]');
-    }
+    // Always route via Zinc bizapi for Prime shipping, low latency, and high throughput.
+    // Per Zinc bizapi docs, payment_method, retailer_credentials, and billing_address
+    // MUST be omitted (they are not present in the payload below).
+    console.log('⚡ BizAPI enabled — sending zma_flags: ["bizapi", "bizapi-only"]');
 
     const zincRequest: Record<string, any> = {
       addax: true, // CRITICAL: Enables ZMA processing
+      zma_flags: ['bizapi', 'bizapi-only'], // CRITICAL: Routes order to Zinc bizapi
       idempotency_key: idempotencyKey,
       retailer: 'amazon',
       products: itemsArray.map((item: any) => ({
@@ -481,9 +479,8 @@ serve(async (req) => {
         order_id: orderId,
         order_number: order.order_number,
         user_id: order.user_id,
-        bizapi: bizapiEnabled,
+        bizapi: true,
       },
-      ...(bizapiEnabled && { zma_flags: ['bizapi', 'bizapi-only'] }),
     };
 
     console.log('🔵 Zinc API request prepared');

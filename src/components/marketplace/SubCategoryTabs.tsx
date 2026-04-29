@@ -35,7 +35,7 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ className }) => {
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          onClick={() => handleTabClick(tab.id)}
+          onClick={() => handleTabClick(tab.id, (tab as any).isCategory)}
           className={cn(
             "whitespace-nowrap text-sm font-medium pb-2 border-b-2 transition-colors min-h-[44px] touch-target-44",
             currentCategory === tab.id || (tab.id === 'all' && !currentCategory)

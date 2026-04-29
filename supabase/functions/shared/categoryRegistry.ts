@@ -310,6 +310,7 @@ export const LEGACY_FLAG_TO_CATEGORY: Record<string, string> = {
   'giftsForHer': 'gifts-for-her',
   'giftsForHim': 'gifts-for-him',
   'giftsUnder50': 'gifts-under-50',
+  'giftsInAHurry': 'gifts-in-a-hurry',
   'electronics': 'electronics',
   'bestSelling': 'best-selling'
 };

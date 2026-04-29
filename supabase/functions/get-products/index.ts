@@ -1274,7 +1274,6 @@ serve(async (req) => {
               } else {
                 sortedCategoryProducts = sortByPopularity(sortedCategoryProducts);
               }
-              } // close categoryCacheHit guard
               
               // Batch-increment search_impression_count (non-blocking)
               const impressionIds = sortedCategoryProducts.map((p: any) => p.product_id).filter(Boolean);
@@ -1302,6 +1301,7 @@ serve(async (req) => {
                 status: 200,
                 headers: { "Content-Type": "application/json", ...corsHeaders },
               });
+              } // close categoryCacheHit guard
             } else {
               console.log(`⏳ Category cache miss for "${activeCategory}": ${cachedCategoryProducts?.length || 0} products (need ${catThreshold})`);
             }

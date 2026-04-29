@@ -1,37 +1,23 @@
-## Problem
+# Product Pages Rendering With Dashboard Sidebar
 
-Two related issues surfaced when testing search:
+## What you're seeing
 
-**1. Blank page after clicking a product from search (primary issue)**
-Console shows `No routes matched location "/product/B00MAKOMJ8"`. The header search bar (`UnifiedSearchBar.tsx:251`) and 5 other components navigate to `/product/:id`, but `App.tsx` only registers `/marketplace/product/:id`. React Router renders nothing → blank page.
+This is **not new** — but you're noticing it now because of the routing fix we just shipped. Before, clicking a product from the header search sometimes hit a broken route (`/product/:id`) and produced a blank page. Now that route works, but it lands on `ProductDetails.tsx`, which wraps itself in **`SidebarLayout`** — the dashboard chrome with the left rail showing Shop / Cart / Orders / Wishlists / Connections / Messages / Notifications.
 
-**2. Friend search RPC throwing column error (secondary, but spammy)**
-`search_users_for_friends` RPC fails with `column p.data_sharing_settings does not exist`. The fallback direct query still runs so people search mostly works, but every keystroke logs an error and the privacy-aware path is silently broken (it only returns publicly-visible profiles, ignoring connection policies).
+Meanwhile the rest of the shopping experience (Marketplace, Cart, Checkout) uses **`MainLayout`** — fullscreen with just the top header and category nav. So entering a product from search visually drops you into "dashboard mode," which feels inconsistent.
+
+Per project memory (Header Layout Strategy): MainLayout = shopping/marketing surfaces, SidebarLayout = account/dashboard surfaces. Product detail is a shopping surface and should be in MainLayout.
 
 ## Fix
 
-### Step 1 — Add `/product/:id` route alias
-In `src/App.tsx`, add a route alongside the existing marketplace route:
+Update `src/pages/ProductDetails.tsx`:
+- Replace `import { SidebarLayout } from "@/components/layout/SidebarLayout"` with `import MainLayout from "@/components/layout/MainLayout"`
+- Replace both `<SidebarLayout>...</SidebarLayout>` wrappers (loading state around line 207 and main render around line 227–282) with `<MainLayout>...</MainLayout>`
 
-```tsx
-<Route path="/marketplace/product/:id" element={<ProductDetailsPage />} />
-<Route path="/product/:id" element={<ProductDetailsPage />} />
-```
+No other changes needed — the inner 60/40 split content stays the same.
 
-This is the lowest-risk fix — both paths render the same page, no consumer changes needed. (We can normalize to a single canonical path in a follow-up if desired.)
+## Result
 
-### Step 2 — Repair `search_users_for_friends` RPC
-Migration to drop the stale `p.data_sharing_settings` reference. The function should join/read from `public.privacy_settings` instead (the canonical source per the Privacy Architecture memory). Specifically:
-- Replace any `p.data_sharing_settings` references with the equivalent column on `public.privacy_settings` (via join on `user_id`), or remove the predicate if it's no longer needed for visibility.
-- Keep `SECURITY DEFINER`, `SET search_path = public`, and the existing signature `(search_term text, requesting_user_id uuid, search_limit int)`.
+Product detail pages will render fullscreen with the Elyphant header + Beauty/Electronics/Fashion/Wedding/Baby/Shop All nav, matching Marketplace and the rest of the shopping flow. No backend or data changes.
 
-I'll inspect the current function body via a migration `CREATE OR REPLACE` so we can see the exact SQL and rewrite it cleanly.
-
-### Step 3 — Verify
-- Reload preview, search "scotch brite", click a product → product detail page loads (not blank).
-- Type in people search → no `42703` errors in console; results return.
-
-## Out of scope
-
-- Consolidating the 6 call sites onto a single canonical route (cosmetic, not blocking).
-- Any Prime cataloging work — that resumes after this fix.
+Approve and I'll apply it.

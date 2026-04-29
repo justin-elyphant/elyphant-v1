@@ -1380,17 +1380,14 @@ serve(async (req) => {
             }
           }
 
-          // Trim to a multiple of COLS so the grid never has a blank trailing cell.
-          // Aim for at least MIN_TARGET, but always end on a full row.
-          let finalCount = Math.max(MIN_TARGET, interleaved.length);
-          finalCount = Math.min(finalCount, interleaved.length);
-          finalCount = Math.floor(finalCount / COLS) * COLS;
-          if (finalCount === 0 && interleaved.length > 0) {
-            finalCount = Math.min(interleaved.length, COLS);
-          }
-
+          // Target 4 full rows on desktop (4 cols × 4 rows = 16 cells).
+          // Reserve the final cell for a "Load More" tile rendered client-side,
+          // so we return 15 products (rows*COLS - 1).
+          const ROWS = 4;
+          const TARGET_PRODUCTS = ROWS * COLS - 1; // 15
+          const finalCount = Math.min(interleaved.length, TARGET_PRODUCTS);
           categoryData.results = interleaved.slice(0, finalCount);
-          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} diverse products (full rows of ${COLS})`);
+          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} products (+ Load More tile = ${ROWS} full rows of ${COLS})`);
         }
         
         const response = await processAndReturnResults(

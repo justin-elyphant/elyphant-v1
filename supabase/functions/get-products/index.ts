@@ -211,6 +211,8 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
         isBestSeller: p.isBestSeller || false,
         bestSellerType: p.bestSellerType || null,
         badgeText: p.badgeText || null,
+        is_prime: p.is_prime === true || p.prime === true || false,
+        merchant_fulfilled: p.merchant_fulfilled === true || false,
         source: 'search_results',
         source_query: sourceQuery || null,
         cached_at: new Date().toISOString()

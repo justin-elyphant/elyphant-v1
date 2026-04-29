@@ -1253,6 +1253,20 @@ serve(async (req) => {
               
               let sortedCategoryProducts = cachedCategoryProducts.map((p: any) => transformCachedProduct(p));
               
+              // Prime-only filter for "Gifts in a Hurry"
+              if (activeCategory === 'gifts-in-a-hurry') {
+                const primeOnly = sortedCategoryProducts.filter((p: any) => p.prime === true);
+                if (primeOnly.length >= Math.min(8, catThreshold)) {
+                  sortedCategoryProducts = primeOnly;
+                  console.log(`⚡ Filtered to ${primeOnly.length} Prime-only products for gifts-in-a-hurry`);
+                } else {
+                  // Insufficient prime in cache — fall through to Zinc to backfill
+                  console.log(`⚠️ Only ${primeOnly.length} Prime products in cache for gifts-in-a-hurry, falling through to Zinc`);
+                  categoryCacheHit = false;
+                }
+              }
+              
+              if (categoryCacheHit) {
               if (sortBy === 'price-low') {
                 sortedCategoryProducts.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
               } else if (sortBy === 'price-high') {
@@ -1260,6 +1274,7 @@ serve(async (req) => {
               } else {
                 sortedCategoryProducts = sortByPopularity(sortedCategoryProducts);
               }
+              } // close categoryCacheHit guard
               
               // Batch-increment search_impression_count (non-blocking)
               const impressionIds = sortedCategoryProducts.map((p: any) => p.product_id).filter(Boolean);

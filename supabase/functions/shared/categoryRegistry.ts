@@ -242,19 +242,30 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
   },
   'gifts-in-a-hurry': {
     name: 'Gifts in a Hurry',
+    // Built from Amazon's own gift discovery taxonomy:
+    // amazon.com/gp/most-gifted and /most-wished-for departments.
+    // These are the exact phrases Amazon's relevance engine surfaces.
     queries: [
-      "best gifts for her prime",
-      "best gifts for him prime",
-      "fresh flowers bouquet prime delivery",
-      "jewelry gifts for women prime",
-      "home and garden gifts prime",
-      "kitchen gifts prime",
-      "best beauty gift sets prime",
-      "cozy throw blanket gift prime",
-      "candles gift set prime",
-      "best selling tech gadget gifts prime",
-      "wine and cheese gift basket prime",
-      "personalized gifts prime"
+      "most gifted beauty and personal care",
+      "most gifted kitchen and dining",
+      "most gifted home and kitchen",
+      "most gifted jewelry for women",
+      "most gifted toys and games",
+      "most gifted office products",
+      "most gifted arts crafts sewing",
+      "most gifted pet supplies",
+      "most wished for electronics",
+      "most wished for books",
+      "most wished for handmade products",
+      "most wished for grocery gourmet food",
+      "best sellers gift baskets",
+      "best sellers candles home fragrance",
+      "best sellers throw blankets",
+      "best sellers cozy slippers",
+      "best sellers leather wallets",
+      "best sellers travel mugs tumblers",
+      "amazon gift ideas under 50",
+      "unique birthday gifts amazon"
     ]
   },
 

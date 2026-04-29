@@ -646,18 +646,33 @@ async function handleTrackingUpdate(supabase: any, orderId: string, payload: Zin
     if (!toEmail) {
       console.warn(`⚠️ No recipient email for ${emailEventType} order ${order?.order_number}`);
     } else {
-      // Pass orderId via metadata so the orchestrator's DB-fetch logic
-      // populates items, photos, pricing, and shipping address automatically
-      await supabase.from('email_queue').insert({
-        recipient_email: toEmail,
-        recipient_name: recipientName,
-        event_type: emailEventType,
-        metadata: { orderId: orderId },
-        template_variables: {},
-        priority: 'normal',
-        scheduled_for: new Date().toISOString(),
-        status: 'pending',
-      });
+      // Dedupe: skip if an email of this type already exists for this order
+      // (prevents race between zinc-webhook and order-monitor-v2)
+      const { data: existing } = await supabase
+        .from('email_queue')
+        .select('id')
+        .eq('event_type', emailEventType)
+        .eq('recipient_email', toEmail)
+        .filter('metadata->>orderId', 'eq', orderId)
+        .in('status', ['pending', 'sent'])
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        console.log(`⏭️ Skipping duplicate ${emailEventType} for order ${orderId} (existing: ${existing[0].id})`);
+      } else {
+        // Pass orderId via metadata so the orchestrator's DB-fetch logic
+        // populates items, photos, pricing, and shipping address automatically
+        await supabase.from('email_queue').insert({
+          recipient_email: toEmail,
+          recipient_name: recipientName,
+          event_type: emailEventType,
+          metadata: { orderId: orderId },
+          template_variables: {},
+          priority: 'normal',
+          scheduled_for: new Date().toISOString(),
+          status: 'pending',
+        });
+      }
     }
   } catch (emailErr) {
     console.error('⚠️ Failed to queue notification email:', emailErr);

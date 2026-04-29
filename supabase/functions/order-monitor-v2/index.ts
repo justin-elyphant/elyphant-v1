@@ -555,19 +555,34 @@ serve(async (req) => {
                 const recipientName = shippingAddr?.name || profile?.name || 'Customer';
 
               if (toEmail) {
-                  // Pass orderId via metadata so the orchestrator's DB-fetch logic
-                  // populates items, photos, pricing, and address automatically
-                  await supabase.from('email_queue').insert({
-                    recipient_email: toEmail,
-                    recipient_name: recipientName,
-                    event_type: 'order_shipped',
-                    metadata: { orderId: order.id },
-                    template_variables: {},
-                    priority: 'normal',
-                    scheduled_for: new Date().toISOString(),
-                    status: 'pending',
-                  });
-                  console.log(`📧 Queued shipped email for order ${order.id} to ${toEmail}`);
+                  // Dedupe: skip if an order_shipped email already exists for this order
+                  // (prevents race between order-monitor-v2 and zinc-webhook)
+                  const { data: existingShipped } = await supabase
+                    .from('email_queue')
+                    .select('id')
+                    .eq('event_type', 'order_shipped')
+                    .eq('recipient_email', toEmail)
+                    .filter('metadata->>orderId', 'eq', order.id)
+                    .in('status', ['pending', 'sent'])
+                    .limit(1);
+
+                  if (existingShipped && existingShipped.length > 0) {
+                    console.log(`⏭️ Skipping duplicate shipped email for order ${order.id} (existing: ${existingShipped[0].id})`);
+                  } else {
+                    // Pass orderId via metadata so the orchestrator's DB-fetch logic
+                    // populates items, photos, pricing, and address automatically
+                    await supabase.from('email_queue').insert({
+                      recipient_email: toEmail,
+                      recipient_name: recipientName,
+                      event_type: 'order_shipped',
+                      metadata: { orderId: order.id },
+                      template_variables: {},
+                      priority: 'normal',
+                      scheduled_for: new Date().toISOString(),
+                      status: 'pending',
+                    });
+                    console.log(`📧 Queued shipped email for order ${order.id} to ${toEmail}`);
+                  }
                 }
               } catch (emailErr) {
                 console.error('⚠️ Failed to queue shipped email:', emailErr);

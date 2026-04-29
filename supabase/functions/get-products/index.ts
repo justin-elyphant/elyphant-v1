@@ -1237,7 +1237,7 @@ serve(async (req) => {
         ].join(',');
         
         let categoryCacheHit = false;
-        if (supabase && page === 1) {
+        if (supabase && page === 1 && activeCategory !== 'gifts-in-a-hurry') {
           try {
             const { data: cachedCategoryProducts, error: catCacheError } = await supabase
               .from('products')

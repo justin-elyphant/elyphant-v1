@@ -4,6 +4,7 @@
  */
 export const getCategoryName = (categoryUrl: string | null) => {
   const categoryList = [
+    { url: "gifts-in-a-hurry", name: "⚡ Gifts in a Hurry" },
     { url: "electronics", name: "Electronics" },
     { url: "clothing", name: "Clothing" },
     { url: "home", name: "Home & Kitchen" },

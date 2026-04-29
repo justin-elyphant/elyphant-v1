@@ -240,6 +240,12 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
     priceMax: 50,
     priceMin: 1
   },
+  'gifts-in-a-hurry': {
+    name: 'Gifts in a Hurry',
+    queries: [
+      "best gifts prime"
+    ]
+  },
 
   // === Lifestyle categories (homepage "Gifts for Every Lifestyle" grid) ===
   'on-the-go': {

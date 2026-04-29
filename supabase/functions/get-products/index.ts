@@ -1316,8 +1316,8 @@ serve(async (req) => {
           categoryConfig.queries, 
           categoryConfig.name, 
           page, 
-          // For gifts-in-a-hurry, fetch extra results since we'll Prime-filter
-          activeCategory === 'gifts-in-a-hurry' ? Math.max(limit * 2, 60) : limit, 
+          // For gifts-in-a-hurry, fetch much more so we can filter+dedupe and still fill the page
+          activeCategory === 'gifts-in-a-hurry' ? Math.max(limit * 5, 120) : limit, 
           effectivePriceFilter
         );
         
@@ -1327,36 +1327,61 @@ serve(async (req) => {
           categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
           console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
 
-          // Dedupe near-duplicates (same brand + same title prefix → keep highest rated)
-          const dedupeKey = (p: any) => {
-            const brand = (p.brand || '').toString().toLowerCase().trim();
-            const title = (p.title || p.name || '').toString().toLowerCase()
+          // Aggressive dedupe: keep only 1 product per brand, and 1 per title-prefix
+          const brandSeen = new Set<string>();
+          const titleSeen = new Set<string>();
+          const titlePrefix = (p: any) => {
+            const t = (p.title || p.name || '').toString().toLowerCase()
               .replace(/[^a-z0-9\s]/g, ' ')
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 5)
-              .join(' ');
-            return `${brand}::${title}`;
+              .split(/\s+/).filter(Boolean).slice(0, 4).join(' ');
+            return t;
           };
-          const seen = new Map<string, any>();
-          for (const p of categoryData.results) {
-            const k = dedupeKey(p);
-            const existing = seen.get(k);
-            const score = (p.stars || p.rating || 0) * 100 + Math.log10((p.review_count || p.num_reviews || 1) + 1);
-            const existingScore = existing ? (existing.stars || existing.rating || 0) * 100 + Math.log10((existing.review_count || existing.num_reviews || 1) + 1) : -1;
-            if (!existing || score > existingScore) seen.set(k, p);
-          }
-          const deduped = Array.from(seen.values());
-          console.log(`🧹 Deduped ${categoryData.results.length} → ${deduped.length} unique products`);
+          const brandKey = (p: any) => {
+            const b = (p.brand || '').toString().toLowerCase().trim();
+            if (b) return b;
+            // Fallback: first word of title as pseudo-brand
+            const t = (p.title || p.name || '').toString().toLowerCase().split(/\s+/)[0] || '';
+            return t;
+          };
 
-          // Sort by rating (top-rated first) within Prime set
-          deduped.sort((a: any, b: any) => {
-            const aStars = a.stars || a.rating || 0;
-            const bStars = b.stars || b.rating || 0;
-            if (bStars !== aStars) return bStars - aStars;
-            return (b.review_count || b.num_reviews || 0) - (a.review_count || a.num_reviews || 0);
-          });
-          categoryData.results = deduped.slice(0, limit);
+          // Sort first by rating so the BEST representative of each brand is kept
+          const ratingScore = (p: any) =>
+            (p.stars || p.rating || 0) * 100 +
+            Math.log10((p.review_count || p.num_reviews || 1) + 1);
+          const sortedByRating = [...categoryData.results].sort((a: any, b: any) => ratingScore(b) - ratingScore(a));
+
+          const unique: any[] = [];
+          for (const p of sortedByRating) {
+            const b = brandKey(p);
+            const t = titlePrefix(p);
+            if (b && brandSeen.has(b)) continue;
+            if (t && titleSeen.has(t)) continue;
+            if (b) brandSeen.add(b);
+            if (t) titleSeen.add(t);
+            unique.push(p);
+          }
+          console.log(`🧹 Brand-dedupe: ${categoryData.results.length} → ${unique.length} unique brands`);
+
+          // Interleave by categorySource so the top of the page mixes categories
+          // (instead of all flowers, then all jewelry, etc.)
+          const byCategory = new Map<string, any[]>();
+          for (const p of unique) {
+            const cat = p.categorySource || 'misc';
+            if (!byCategory.has(cat)) byCategory.set(cat, []);
+            byCategory.get(cat)!.push(p);
+          }
+          const interleaved: any[] = [];
+          let added = true;
+          while (added) {
+            added = false;
+            for (const arr of byCategory.values()) {
+              const next = arr.shift();
+              if (next) { interleaved.push(next); added = true; }
+            }
+          }
+
+          categoryData.results = interleaved.slice(0, Math.max(limit, 24));
+          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} diverse products`);
         }
         
         const response = await processAndReturnResults(

@@ -13,15 +13,18 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ className }) => {
 
   const tabs = [
     { id: 'all', label: 'All' },
+    { id: 'gifts-in-a-hurry', label: '⚡ Gifts in a Hurry', isCategory: true },
     { id: 'giftsForHer', label: 'For Her' },
     { id: 'giftsForHim', label: 'For Him' },
     { id: 'giftsUnder50', label: 'Under $50' },
     { id: 'luxury', label: 'Trending' },
   ];
 
-  const handleTabClick = (tabId: string) => {
+  const handleTabClick = (tabId: string, isCategory?: boolean) => {
     if (tabId === 'all') {
       navigate('/marketplace');
+    } else if (isCategory) {
+      navigate(`/marketplace?category=${tabId}`);
     } else {
       navigate(`/marketplace?${tabId}=true`);
     }

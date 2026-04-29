@@ -779,7 +779,9 @@ const searchCategoryBatch = async (
             images: product.images,
             additional_images: product.additional_images,
             thumbnail: product.thumbnail,
-            image_url: product.image_url
+            image_url: product.image_url,
+            prime: product.is_prime === true || product.prime === true || false,
+            is_prime: product.is_prime === true || product.prime === true || false
           };
         });
         

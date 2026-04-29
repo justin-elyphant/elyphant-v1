@@ -211,6 +211,8 @@ const cacheSearchResults = async (supabase: any, products: any[], sourceQuery?: 
         isBestSeller: p.isBestSeller || false,
         bestSellerType: p.bestSellerType || null,
         badgeText: p.badgeText || null,
+        is_prime: p.is_prime === true || p.prime === true || false,
+        merchant_fulfilled: p.merchant_fulfilled === true || false,
         source: 'search_results',
         source_query: sourceQuery || null,
         cached_at: new Date().toISOString()
@@ -303,6 +305,7 @@ const transformCachedProduct = (p: any) => {
   isBestSeller: p.metadata?.isBestSeller || false,
   bestSellerType: p.metadata?.bestSellerType,
   badgeText: p.metadata?.badgeText,
+  prime: p.metadata?.is_prime === true,
   is_cached: true,
   view_count: p.view_count || 0,
   popularity_score: calculatePopularityScore(p, p.metadata || {}),
@@ -776,7 +779,9 @@ const searchCategoryBatch = async (
             images: product.images,
             additional_images: product.additional_images,
             thumbnail: product.thumbnail,
-            image_url: product.image_url
+            image_url: product.image_url,
+            prime: product.is_prime === true || product.prime === true || false,
+            is_prime: product.is_prime === true || product.prime === true || false
           };
         });
         
@@ -1248,6 +1253,20 @@ serve(async (req) => {
               
               let sortedCategoryProducts = cachedCategoryProducts.map((p: any) => transformCachedProduct(p));
               
+              // Prime-only filter for "Gifts in a Hurry"
+              if (activeCategory === 'gifts-in-a-hurry') {
+                const primeOnly = sortedCategoryProducts.filter((p: any) => p.prime === true);
+                if (primeOnly.length >= Math.min(8, catThreshold)) {
+                  sortedCategoryProducts = primeOnly;
+                  console.log(`⚡ Filtered to ${primeOnly.length} Prime-only products for gifts-in-a-hurry`);
+                } else {
+                  // Insufficient prime in cache — fall through to Zinc to backfill
+                  console.log(`⚠️ Only ${primeOnly.length} Prime products in cache for gifts-in-a-hurry, falling through to Zinc`);
+                  categoryCacheHit = false;
+                }
+              }
+              
+              if (categoryCacheHit) {
               if (sortBy === 'price-low') {
                 sortedCategoryProducts.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
               } else if (sortBy === 'price-high') {
@@ -1282,6 +1301,7 @@ serve(async (req) => {
                 status: 200,
                 headers: { "Content-Type": "application/json", ...corsHeaders },
               });
+              } // close categoryCacheHit guard
             } else {
               console.log(`⏳ Category cache miss for "${activeCategory}": ${cachedCategoryProducts?.length || 0} products (need ${catThreshold})`);
             }
@@ -1296,9 +1316,25 @@ serve(async (req) => {
           categoryConfig.queries, 
           categoryConfig.name, 
           page, 
-          limit, 
+          // For gifts-in-a-hurry, fetch extra results since we'll Prime-filter
+          activeCategory === 'gifts-in-a-hurry' ? Math.max(limit * 2, 60) : limit, 
           effectivePriceFilter
         );
+        
+        // Prime-only filter for "Gifts in a Hurry" (post-Zinc)
+        if (activeCategory === 'gifts-in-a-hurry' && categoryData.results) {
+          const beforeCount = categoryData.results.length;
+          categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
+          console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
+          // Sort by rating (top-rated first) within Prime set
+          categoryData.results.sort((a: any, b: any) => {
+            const aStars = a.stars || a.rating || 0;
+            const bStars = b.stars || b.rating || 0;
+            if (bStars !== aStars) return bStars - aStars;
+            return (b.review_count || b.num_reviews || 0) - (a.review_count || a.num_reviews || 0);
+          });
+          categoryData.results = categoryData.results.slice(0, limit);
+        }
         
         const response = await processAndReturnResults(
           supabase,

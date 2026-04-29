@@ -13,15 +13,18 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ className }) => {
 
   const tabs = [
     { id: 'all', label: 'All' },
+    { id: 'gifts-in-a-hurry', label: '⚡ Gifts in a Hurry', isCategory: true },
     { id: 'giftsForHer', label: 'For Her' },
     { id: 'giftsForHim', label: 'For Him' },
     { id: 'giftsUnder50', label: 'Under $50' },
     { id: 'luxury', label: 'Trending' },
   ];
 
-  const handleTabClick = (tabId: string) => {
+  const handleTabClick = (tabId: string, isCategory?: boolean) => {
     if (tabId === 'all') {
       navigate('/marketplace');
+    } else if (isCategory) {
+      navigate(`/marketplace?category=${tabId}`);
     } else {
       navigate(`/marketplace?${tabId}=true`);
     }
@@ -32,7 +35,7 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ className }) => {
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          onClick={() => handleTabClick(tab.id)}
+          onClick={() => handleTabClick(tab.id, (tab as any).isCategory)}
           className={cn(
             "whitespace-nowrap text-sm font-medium pb-2 border-b-2 transition-colors min-h-[44px] touch-target-44",
             currentCategory === tab.id || (tab.id === 'all' && !currentCategory)

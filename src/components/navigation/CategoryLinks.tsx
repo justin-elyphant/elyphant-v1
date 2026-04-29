@@ -6,6 +6,7 @@ const CategoryLinks: React.FC = () => {
   const location = useLocation();
   
   const categories = [
+    { label: "Gifts in a Hurry", path: "/marketplace?category=gifts-in-a-hurry" },
     { label: "Beauty", path: "/marketplace?category=beauty" },
     { label: "Electronics", path: "/marketplace?category=electronics" },
     { label: "Fashion", path: "/marketplace?category=fashion" },

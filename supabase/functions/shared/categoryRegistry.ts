@@ -243,14 +243,18 @@ export const CATEGORY_REGISTRY: Record<string, CategoryConfig> = {
   'gifts-in-a-hurry': {
     name: 'Gifts in a Hurry',
     queries: [
-      "best selling tech gifts prime",
-      "top rated kitchen gifts prime",
+      "best gifts for her prime",
+      "best gifts for him prime",
+      "fresh flowers bouquet prime delivery",
+      "jewelry gifts for women prime",
+      "home and garden gifts prime",
+      "kitchen gifts prime",
       "best beauty gift sets prime",
-      "popular home decor gifts prime",
-      "best fitness gifts prime",
-      "top rated toys games gifts prime",
-      "best grilling outdoor gifts prime",
-      "popular cozy gifts prime"
+      "cozy throw blanket gift prime",
+      "candles gift set prime",
+      "best selling tech gadget gifts prime",
+      "wine and cheese gift basket prime",
+      "personalized gifts prime"
     ]
   },
 

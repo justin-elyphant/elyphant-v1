@@ -11,7 +11,7 @@ import ProductDetailsSidebar from "@/components/marketplace/product-details/Prod
 import ProductDetailsSkeleton from "@/components/marketplace/product-details/ProductDetailsSkeleton";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { useProductVariations } from "@/hooks/useProductVariations";
 
 const ProductDetailsPage: React.FC = () => {
@@ -204,9 +204,9 @@ const ProductDetailsPage: React.FC = () => {
   // Show skeleton only when we have no data at all
   if (loading && !productDetail) {
     return (
-      <SidebarLayout>
+      <MainLayout>
         <ProductDetailsSkeleton />
-      </SidebarLayout>
+      </MainLayout>
     );
   }
   
@@ -224,7 +224,7 @@ const ProductDetailsPage: React.FC = () => {
   }
   
   return (
-    <SidebarLayout>
+    <MainLayout>
     <motion.div 
       className="min-h-screen bg-elyphant-grey pb-safe"
       initial={{ opacity: 0, x: 20 }}
@@ -279,7 +279,7 @@ const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
     </motion.div>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

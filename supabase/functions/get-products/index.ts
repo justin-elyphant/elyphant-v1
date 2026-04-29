@@ -1316,9 +1316,25 @@ serve(async (req) => {
           categoryConfig.queries, 
           categoryConfig.name, 
           page, 
-          limit, 
+          // For gifts-in-a-hurry, fetch extra results since we'll Prime-filter
+          activeCategory === 'gifts-in-a-hurry' ? Math.max(limit * 2, 60) : limit, 
           effectivePriceFilter
         );
+        
+        // Prime-only filter for "Gifts in a Hurry" (post-Zinc)
+        if (activeCategory === 'gifts-in-a-hurry' && categoryData.results) {
+          const beforeCount = categoryData.results.length;
+          categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
+          console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
+          // Sort by rating (top-rated first) within Prime set
+          categoryData.results.sort((a: any, b: any) => {
+            const aStars = a.stars || a.rating || 0;
+            const bStars = b.stars || b.rating || 0;
+            if (bStars !== aStars) return bStars - aStars;
+            return (b.review_count || b.num_reviews || 0) - (a.review_count || a.num_reviews || 0);
+          });
+          categoryData.results = categoryData.results.slice(0, limit);
+        }
         
         const response = await processAndReturnResults(
           supabase,

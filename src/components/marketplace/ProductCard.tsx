@@ -278,6 +278,19 @@ const ProductCard: React.FC<ProductCardProps> = memo(({
           </Badge>
         )}
 
+        {/* Prime Badge - Top Left (stacked below status badge if present) */}
+        {((product as any).prime === true || (product as any).is_prime === true || (product as any).metadata?.is_prime === true) && (
+          <Badge
+            className={cn(
+              "absolute left-3 z-10 text-[10px] font-semibold bg-background text-foreground border border-border shadow-sm px-1.5 py-0.5 flex items-center gap-0.5",
+              statusBadge ? "top-10" : "top-3"
+            )}
+          >
+            <span aria-hidden>⚡</span>
+            <span>Prime</span>
+          </Badge>
+        )}
+
         {/* Heart Icon - Top Right (Lululemon Style - Simple Outline) - Hide in wishlist context since heart is at bottom */}
         {!hideTopRightAction && context !== 'wishlist' && (
           <div className="absolute top-3 right-3 z-50" onClick={e => e.stopPropagation()}>

@@ -1327,43 +1327,61 @@ serve(async (req) => {
           categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
           console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
 
-          // Aggressive dedupe: keep only 1 product per brand, and 1 per title-prefix
-          const brandSeen = new Set<string>();
-          const titleSeen = new Set<string>();
-          const titlePrefix = (p: any) => {
-            const t = (p.title || p.name || '').toString().toLowerCase()
-              .replace(/[^a-z0-9\s]/g, ' ')
-              .split(/\s+/).filter(Boolean).slice(0, 4).join(' ');
-            return t;
-          };
+          // Diversity pass: prefer 1 product per brand, but backfill to keep grid full.
+          const TARGET = Math.max(limit, 24);
           const brandKey = (p: any) => {
             const b = (p.brand || '').toString().toLowerCase().trim();
             if (b) return b;
-            // Fallback: first word of title as pseudo-brand
             const t = (p.title || p.name || '').toString().toLowerCase().split(/\s+/)[0] || '';
             return t;
           };
-
-          // Sort first by rating so the BEST representative of each brand is kept
           const ratingScore = (p: any) =>
             (p.stars || p.rating || 0) * 100 +
             Math.log10((p.review_count || p.num_reviews || 1) + 1);
           const sortedByRating = [...categoryData.results].sort((a: any, b: any) => ratingScore(b) - ratingScore(a));
 
-          const unique: any[] = [];
+          // Pass 1: one per brand
+          const brandCount = new Map<string, number>();
+          const primary: any[] = [];
+          const overflow: any[] = [];
           for (const p of sortedByRating) {
             const b = brandKey(p);
-            const t = titlePrefix(p);
-            if (b && brandSeen.has(b)) continue;
-            if (t && titleSeen.has(t)) continue;
-            if (b) brandSeen.add(b);
-            if (t) titleSeen.add(t);
-            unique.push(p);
+            const c = brandCount.get(b) || 0;
+            if (c === 0) {
+              primary.push(p);
+              brandCount.set(b, 1);
+            } else {
+              overflow.push(p);
+            }
           }
-          console.log(`🧹 Brand-dedupe: ${categoryData.results.length} → ${unique.length} unique brands`);
+          // Pass 2: if we don't have enough, allow up to 2 per brand from overflow
+          let unique = primary;
+          if (unique.length < TARGET) {
+            const second: any[] = [];
+            const usedAgain = new Map<string, number>();
+            for (const p of overflow) {
+              const b = brandKey(p);
+              const c = usedAgain.get(b) || 0;
+              if (c < 1) {
+                second.push(p);
+                usedAgain.set(b, c + 1);
+              }
+              if (unique.length + second.length >= TARGET) break;
+            }
+            unique = [...unique, ...second];
+          }
+          // Pass 3: still short? top off with any remaining
+          if (unique.length < TARGET) {
+            const have = new Set(unique.map((p: any) => p.product_id || p.id));
+            for (const p of sortedByRating) {
+              if (have.has(p.product_id || p.id)) continue;
+              unique.push(p);
+              if (unique.length >= TARGET) break;
+            }
+          }
+          console.log(`🧹 Diversity pass: ${categoryData.results.length} → ${unique.length} (target ${TARGET})`);
 
           // Interleave by categorySource so the top of the page mixes categories
-          // (instead of all flowers, then all jewelry, etc.)
           const byCategory = new Map<string, any[]>();
           for (const p of unique) {
             const cat = p.categorySource || 'misc';
@@ -1380,7 +1398,7 @@ serve(async (req) => {
             }
           }
 
-          categoryData.results = interleaved.slice(0, Math.max(limit, 24));
+          categoryData.results = interleaved.slice(0, TARGET);
           console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} diverse products`);
         }
         

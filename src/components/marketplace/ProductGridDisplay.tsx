@@ -16,18 +16,20 @@ interface ProductGridDisplayProps {
   isMobile: boolean;
 }
 
-const LoadMoreTile: React.FC<{ onClick: () => void; className?: string }> = ({ onClick, className }) => (
+const LoadMoreBanner: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`group flex flex-col items-center justify-center w-full h-full min-h-[280px] rounded-lg border-2 border-dashed border-border bg-muted/30 hover:bg-muted/60 hover:border-foreground/40 transition-colors text-center p-6 touch-target-44 ${className ?? ""}`}
+    className="group mt-6 w-full flex items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 hover:bg-muted/60 hover:border-foreground/40 transition-colors text-center px-6 py-8 touch-target-44"
     aria-label="Show more gifts"
   >
-    <div className="w-12 h-12 rounded-full bg-foreground/5 group-hover:bg-foreground/10 flex items-center justify-center mb-3 transition-colors">
-      <Plus className="h-6 w-6 text-foreground" />
+    <div className="w-10 h-10 rounded-full bg-foreground/5 group-hover:bg-foreground/10 flex items-center justify-center transition-colors">
+      <Plus className="h-5 w-5 text-foreground" />
     </div>
-    <span className="text-sm font-semibold text-foreground">Show More Gifts</span>
-    <span className="text-xs text-muted-foreground mt-1">Browse the full marketplace</span>
+    <div className="text-left">
+      <div className="text-sm font-semibold text-foreground">Show More Gifts</div>
+      <div className="text-xs text-muted-foreground">Browse the full marketplace</div>
+    </div>
   </button>
 );
 
@@ -63,7 +65,6 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   };
 
   const handleShowMore = () => {
-    // Clear the category filter to show the full marketplace
     const next = new URLSearchParams(searchParams);
     next.delete('category');
     setSearchParams(next);
@@ -90,12 +91,12 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
               </div>
             );
           })}
-          {isGiftsInAHurry && (
-            <div className="flex">
-              <LoadMoreTile onClick={handleShowMore} />
-            </div>
-          )}
         </div>
+        {isGiftsInAHurry && (
+          <div className="px-4 pb-4">
+            <LoadMoreBanner onClick={handleShowMore} />
+          </div>
+        )}
       </div>
     );
   }
@@ -108,28 +109,28 @@ const ProductGridDisplay: React.FC<ProductGridDisplayProps> = ({
   };
 
   return (
-    <div className={getGridClasses()}>
-      {products.map((product) => {
-        const productId = String(product.product_id || product.id);
-        const statusBadge = getProductStatus(product);
-        return (
-          <div key={productId} className="intersection-target">
-            <ProductCard
-              product={product}
-              viewMode={viewMode}
-              onProductClick={() => handleProductClick(productId)}
-              onWishlistClick={handleWishlistUpdate}
-              statusBadge={statusBadge}
-            />
-          </div>
-        );
-      })}
+    <>
+      <div className={getGridClasses()}>
+        {products.map((product) => {
+          const productId = String(product.product_id || product.id);
+          const statusBadge = getProductStatus(product);
+          return (
+            <div key={productId} className="intersection-target">
+              <ProductCard
+                product={product}
+                viewMode={viewMode}
+                onProductClick={() => handleProductClick(productId)}
+                onWishlistClick={handleWishlistUpdate}
+                statusBadge={statusBadge}
+              />
+            </div>
+          );
+        })}
+      </div>
       {isGiftsInAHurry && viewMode !== "list" && (
-        <div className="intersection-target">
-          <LoadMoreTile onClick={handleShowMore} />
-        </div>
+        <LoadMoreBanner onClick={handleShowMore} />
       )}
-    </div>
+    </>
   );
 };
 

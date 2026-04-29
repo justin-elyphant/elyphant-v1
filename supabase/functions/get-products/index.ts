@@ -1380,14 +1380,14 @@ serve(async (req) => {
             }
           }
 
-          // Target 4 full rows on desktop (4 cols × 4 rows = 16 cells).
-          // Reserve the final cell for a "Load More" tile rendered client-side,
-          // so we return 15 products (rows*COLS - 1).
-          const ROWS = 4;
-          const TARGET_PRODUCTS = ROWS * COLS - 1; // 15
+          // Return 24 products: divisible by 2/3/4 cols so the grid fills cleanly
+          // at every responsive breakpoint. The "Show More Gifts" CTA renders as a
+          // full-width banner below the grid (not an inline tile), so we don't need
+          // to reserve a cell.
+          const TARGET_PRODUCTS = 24;
           const finalCount = Math.min(interleaved.length, TARGET_PRODUCTS);
           categoryData.results = interleaved.slice(0, finalCount);
-          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} products (+ Load More tile = ${ROWS} full rows of ${COLS})`);
+          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} products`);
         }
         
         const response = await processAndReturnResults(

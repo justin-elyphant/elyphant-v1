@@ -1327,12 +1327,20 @@ serve(async (req) => {
           categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
           console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
 
-          // Diversity pass: prefer 1 product per brand, but backfill to keep grid full.
-          const TARGET = Math.max(limit, 24);
+          // Diversity pass: hard cap of 1 per brand AND 1 per title-prefix.
+          // Pad with placeholder slots only if we truly can't reach a full row.
+          const COLS = 4;
+          const MIN_TARGET = Math.max(limit, 24);
           const brandKey = (p: any) => {
             const b = (p.brand || '').toString().toLowerCase().trim();
             if (b) return b;
             const t = (p.title || p.name || '').toString().toLowerCase().split(/\s+/)[0] || '';
+            return t;
+          };
+          const titlePrefix = (p: any) => {
+            const t = (p.title || p.name || '').toString().toLowerCase()
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .split(/\s+/).filter(Boolean).slice(0, 3).join(' ');
             return t;
           };
           const ratingScore = (p: any) =>
@@ -1340,46 +1348,20 @@ serve(async (req) => {
             Math.log10((p.review_count || p.num_reviews || 1) + 1);
           const sortedByRating = [...categoryData.results].sort((a: any, b: any) => ratingScore(b) - ratingScore(a));
 
-          // Pass 1: one per brand
-          const brandCount = new Map<string, number>();
-          const primary: any[] = [];
-          const overflow: any[] = [];
+          // Single pass: keep only one per brand AND one per title-prefix
+          const seenBrand = new Set<string>();
+          const seenPrefix = new Set<string>();
+          const unique: any[] = [];
           for (const p of sortedByRating) {
             const b = brandKey(p);
-            const c = brandCount.get(b) || 0;
-            if (c === 0) {
-              primary.push(p);
-              brandCount.set(b, 1);
-            } else {
-              overflow.push(p);
-            }
+            const tp = titlePrefix(p);
+            if (b && seenBrand.has(b)) continue;
+            if (tp && seenPrefix.has(tp)) continue;
+            unique.push(p);
+            if (b) seenBrand.add(b);
+            if (tp) seenPrefix.add(tp);
           }
-          // Pass 2: if we don't have enough, allow up to 2 per brand from overflow
-          let unique = primary;
-          if (unique.length < TARGET) {
-            const second: any[] = [];
-            const usedAgain = new Map<string, number>();
-            for (const p of overflow) {
-              const b = brandKey(p);
-              const c = usedAgain.get(b) || 0;
-              if (c < 1) {
-                second.push(p);
-                usedAgain.set(b, c + 1);
-              }
-              if (unique.length + second.length >= TARGET) break;
-            }
-            unique = [...unique, ...second];
-          }
-          // Pass 3: still short? top off with any remaining
-          if (unique.length < TARGET) {
-            const have = new Set(unique.map((p: any) => p.product_id || p.id));
-            for (const p of sortedByRating) {
-              if (have.has(p.product_id || p.id)) continue;
-              unique.push(p);
-              if (unique.length >= TARGET) break;
-            }
-          }
-          console.log(`🧹 Diversity pass: ${categoryData.results.length} → ${unique.length} (target ${TARGET})`);
+          console.log(`🧹 Strict diversity pass: ${categoryData.results.length} → ${unique.length} unique brands/titles`);
 
           // Interleave by categorySource so the top of the page mixes categories
           const byCategory = new Map<string, any[]>();
@@ -1398,8 +1380,17 @@ serve(async (req) => {
             }
           }
 
-          categoryData.results = interleaved.slice(0, TARGET);
-          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} diverse products`);
+          // Trim to a multiple of COLS so the grid never has a blank trailing cell.
+          // Aim for at least MIN_TARGET, but always end on a full row.
+          let finalCount = Math.max(MIN_TARGET, interleaved.length);
+          finalCount = Math.min(finalCount, interleaved.length);
+          finalCount = Math.floor(finalCount / COLS) * COLS;
+          if (finalCount === 0 && interleaved.length > 0) {
+            finalCount = Math.min(interleaved.length, COLS);
+          }
+
+          categoryData.results = interleaved.slice(0, finalCount);
+          console.log(`✨ Final Gifts-in-a-Hurry set: ${categoryData.results.length} diverse products (full rows of ${COLS})`);
         }
         
         const response = await processAndReturnResults(

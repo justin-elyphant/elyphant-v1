@@ -305,6 +305,7 @@ const transformCachedProduct = (p: any) => {
   isBestSeller: p.metadata?.isBestSeller || false,
   bestSellerType: p.metadata?.bestSellerType,
   badgeText: p.metadata?.badgeText,
+  prime: p.metadata?.is_prime === true,
   is_cached: true,
   view_count: p.view_count || 0,
   popularity_score: calculatePopularityScore(p, p.metadata || {}),

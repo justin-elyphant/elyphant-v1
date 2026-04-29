@@ -1237,7 +1237,7 @@ serve(async (req) => {
         ].join(',');
         
         let categoryCacheHit = false;
-        if (supabase && page === 1) {
+        if (supabase && page === 1 && activeCategory !== 'gifts-in-a-hurry') {
           try {
             const { data: cachedCategoryProducts, error: catCacheError } = await supabase
               .from('products')
@@ -1326,14 +1326,37 @@ serve(async (req) => {
           const beforeCount = categoryData.results.length;
           categoryData.results = categoryData.results.filter((p: any) => p.prime === true || p.is_prime === true);
           console.log(`⚡ Gifts-in-a-Hurry Prime filter: ${categoryData.results.length}/${beforeCount} products are Prime`);
+
+          // Dedupe near-duplicates (same brand + same title prefix → keep highest rated)
+          const dedupeKey = (p: any) => {
+            const brand = (p.brand || '').toString().toLowerCase().trim();
+            const title = (p.title || p.name || '').toString().toLowerCase()
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 5)
+              .join(' ');
+            return `${brand}::${title}`;
+          };
+          const seen = new Map<string, any>();
+          for (const p of categoryData.results) {
+            const k = dedupeKey(p);
+            const existing = seen.get(k);
+            const score = (p.stars || p.rating || 0) * 100 + Math.log10((p.review_count || p.num_reviews || 1) + 1);
+            const existingScore = existing ? (existing.stars || existing.rating || 0) * 100 + Math.log10((existing.review_count || existing.num_reviews || 1) + 1) : -1;
+            if (!existing || score > existingScore) seen.set(k, p);
+          }
+          const deduped = Array.from(seen.values());
+          console.log(`🧹 Deduped ${categoryData.results.length} → ${deduped.length} unique products`);
+
           // Sort by rating (top-rated first) within Prime set
-          categoryData.results.sort((a: any, b: any) => {
+          deduped.sort((a: any, b: any) => {
             const aStars = a.stars || a.rating || 0;
             const bStars = b.stars || b.rating || 0;
             if (bStars !== aStars) return bStars - aStars;
             return (b.review_count || b.num_reviews || 0) - (a.review_count || a.num_reviews || 0);
           });
-          categoryData.results = categoryData.results.slice(0, limit);
+          categoryData.results = deduped.slice(0, limit);
         }
         
         const response = await processAndReturnResults(

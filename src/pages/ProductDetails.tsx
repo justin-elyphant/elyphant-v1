@@ -204,9 +204,9 @@ const ProductDetailsPage: React.FC = () => {
   // Show skeleton only when we have no data at all
   if (loading && !productDetail) {
     return (
-      <SidebarLayout>
+      <MainLayout>
         <ProductDetailsSkeleton />
-      </SidebarLayout>
+      </MainLayout>
     );
   }
   

@@ -224,7 +224,7 @@ const ProductDetailsPage: React.FC = () => {
   }
   
   return (
-    <SidebarLayout>
+    <MainLayout>
     <motion.div 
       className="min-h-screen bg-elyphant-grey pb-safe"
       initial={{ opacity: 0, x: 20 }}
@@ -279,7 +279,7 @@ const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
     </motion.div>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

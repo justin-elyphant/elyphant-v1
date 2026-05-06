@@ -13,11 +13,11 @@ interface SlideProps {
 }
 
 const milestones = [
-  { date: "Q1 2025", event: "Platform Launch", status: "complete" },
-  { date: "Q3 2025", event: "Nicole AI Beta", status: "complete" },
-  { date: "Q1 2026", event: "Auto-Gift v2", status: "current" },
-  { date: "Q2 2026", event: "5K Active", status: "upcoming" },
-  { date: "Q4 2026", event: "$500K GMV", status: "target" },
+  { date: "Q1 2026", event: "Beta + Pilot Users", status: "complete" },
+  { date: "Q2 2026", event: "Nicole AI Live", status: "complete" },
+  { date: "Q3 2026", event: "Platform Launch", status: "current" },
+  { date: "Q1 2027", event: "5K Active", status: "upcoming" },
+  { date: "Q4 2027", event: "$500K GMV", status: "target" },
 ];
 
 const TractionSlide = ({ direction }: SlideProps) => {

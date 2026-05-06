@@ -36,9 +36,9 @@ const slides = [
   { id: 'business-model', component: BusinessModelSlide }, // 11 - Revenue overview
   { id: 'traction', component: TractionSlide },     // 12 - Metrics + roadmap
   { id: 'team', component: TeamSlide },             // 13 - Founders
-  { id: 'use-of-funds', component: UseOfFundsSlide }, // 14 - $3.5M deployment
-  { id: 'the-ask', component: TheAskSlide },        // 15 - Ask + valuation + milestones
-  { id: 'contact', component: ContactSlide },       // 16 - CTA
+  { id: 'the-ask', component: TheAskSlide },        // 14 - Ask + valuation + milestones
+  { id: 'use-of-funds', component: UseOfFundsSlide }, // 15 - $3.5M deployment
+  { id: 'contact', component: ContactSlide },       // 16 - Closing CTA
 ];
 
 const InvestorPitchDeck = () => {

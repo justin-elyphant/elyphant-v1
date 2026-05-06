@@ -1,10 +1,8 @@
 import { motion } from 'framer-motion';
-import { Mail, Calendar, ArrowRight, DollarSign, Shield, Megaphone, Code, Users, Target } from 'lucide-react';
+import { Mail, Calendar, ArrowRight, DollarSign, Shield } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -13,24 +11,11 @@ interface SlideProps {
   isLast: boolean;
 }
 
-const useOfFunds = [
-  { category: 'Growth & Marketing', amount: '$1.88M', percentage: 54, icon: Megaphone, purpose: 'Paid ads + marketing team' },
-  { category: 'Team (Sales, Product, Eng)', amount: '$690K', percentage: 20, icon: Users, purpose: 'Sales lead, Head of Product, offshore dev' },
-  { category: 'Infra, Legal & Reserve', amount: '$930K', percentage: 26, icon: Code, purpose: 'Tools, patent, contingency' },
-];
-
-const milestones = [
-  { label: '100K Users', timeline: 'Q4 2027' },
-  { label: '$1.8M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take ≈ $1.69M platform fee + ~$60K subs + ~$45K ads ≈ $1.8M.' } },
-  { label: 'Marketplace', timeline: 'Q2 2026' },
-  { label: 'Series A', timeline: 'Q4 2027' },
-];
-
 const ContactSlide = ({ direction }: SlideProps) => {
   return (
     <SlideWrapper direction={direction} verticalScroll>
       {/* Section label */}
-      <motion.span 
+      <motion.span
         variants={itemVariants}
         className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-2"
       >
@@ -38,46 +23,28 @@ const ContactSlide = ({ direction }: SlideProps) => {
       </motion.span>
 
       {/* Title */}
-      <motion.h2 
+      <motion.h2
         variants={itemVariants}
-        className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-4"
+        className="text-3xl sm:text-4xl md:text-5xl font-bold text-white text-center mb-3"
       >
         Join Us on This Journey
       </motion.h2>
 
-      {/* The Ask */}
-      <motion.div 
+      <motion.p
         variants={itemVariants}
-        className="w-full max-w-xs bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/30 rounded-xl px-6 py-4 mb-4 text-center"
+        className="text-muted-foreground text-sm md:text-base text-center max-w-xl mb-6"
       >
-        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-0.5">
-          Raising
-        </div>
-        <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-0.5">
-          $3.5M
-        </div>
-        <div className="text-muted-foreground text-xs">
-          <AcronymTooltip
-            acronym="Seed Round"
-            definition="Earliest priced equity round, post pre-seed/founder capital"
-            calculation={`Comp range for AI/consumer seeds in 2025–2026: $3M–$5M.\nWe're raising $3.5M at $12–15M pre-money to fund 22–24 months to Series A milestones.`}
-          />
-          {' • '}
-          <AcronymTooltip
-            acronym="22–24 Month Runway"
-            definition="How long the company can operate at current burn before needing more capital"
-            calculation={`Calc: Cash raised ÷ blended monthly burn.\n$3.5M raise ÷ ~$155K/mo blended burn ≈ 22–24 months — enough to hit 100K users, $1.8M ARR, and Series A metrics.`}
-          />
-        </div>
-      </motion.div>
+        We're rebuilding gifting from the ground up — with AI, automation, and a real marketplace.
+        If that excites you, let's talk.
+      </motion.p>
 
       {/* Founder Commitment Banner */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
-        className="flex flex-col sm:flex-row justify-center gap-2 mb-4"
+        className="flex flex-col sm:flex-row justify-center gap-3 mb-8"
       >
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center flex-shrink-0">
             <DollarSign className="w-4 h-4 text-purple-400" />
           </div>
           <div>
@@ -85,8 +52,8 @@ const ContactSlide = ({ direction }: SlideProps) => {
             <div className="text-[10px] text-muted-foreground">Founder Investment</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500/20 to-sky-500/20 flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-sky-400" />
           </div>
           <div>
@@ -96,96 +63,37 @@ const ContactSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Use of Funds */}
-      <motion.div 
-        variants={itemVariants}
-        className="w-full max-w-md mb-4"
-      >
-        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
-          Use of Funds
-        </div>
-        <div className="space-y-2">
-          {useOfFunds.map((item, index) => (
-            <div key={index} className="bg-white/5 rounded-lg p-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <item.icon className="w-3 h-3 text-purple-400" />
-                  <span className="text-white text-xs font-medium">{item.category}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground text-[10px]">{item.amount}</span>
-                  <span className="text-white text-xs font-bold">{item.percentage}%</span>
-                </div>
-              </div>
-              <Progress value={item.percentage} className="h-1.5 bg-white/10" />
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Key Milestones */}
-      <motion.div 
-        variants={itemVariants}
-        className="w-full max-w-md mb-6"
-      >
-        <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
-          Key Milestones (22–24 Months)
-        </div>
-        <div className="flex items-center justify-center gap-4 md:gap-6 relative">
-          {/* Connecting line */}
-          <div className="absolute top-3 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-purple-500/50 to-sky-500/50" />
-          
-          {milestones.map((milestone, index) => (
-            <div key={index} className="relative flex flex-col items-center z-10">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-1">
-                <Target className="w-3 h-3 text-white" />
-              </div>
-              <div className="text-white text-[10px] font-medium text-center whitespace-nowrap">
-                {milestone.tooltip ? (
-                  <AcronymTooltip
-                    acronym={milestone.label}
-                    definition={milestone.tooltip.definition}
-                    calculation={milestone.tooltip.calculation}
-                  />
-                ) : milestone.label}
-              </div>
-              <div className="text-muted-foreground text-[9px]">{milestone.timeline}</div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
       {/* Contact buttons */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
-        className="flex flex-col sm:flex-row justify-center gap-2 mb-4"
+        className="flex flex-col sm:flex-row justify-center gap-3 mb-6"
       >
         <Button
-          size="sm"
-          className="bg-gradient-to-r from-purple-500 to-sky-500 hover:from-purple-600 hover:to-sky-600 text-white px-4 text-sm"
+          size="lg"
+          className="bg-gradient-to-r from-purple-500 to-sky-500 hover:from-purple-600 hover:to-sky-600 text-white px-6"
           onClick={() => window.open('mailto:invest@elyphant.com', '_blank')}
         >
-          <Mail className="w-4 h-4 mr-1.5" />
+          <Mail className="w-4 h-4 mr-2" />
           invest@elyphant.com
         </Button>
         <Button
-          size="sm"
+          size="lg"
           variant="outline"
-          className="border-white/20 text-white hover:bg-white/10 px-4 text-sm"
+          className="border-white/20 text-white hover:bg-white/10 px-6"
           onClick={() => window.open('https://calendly.com', '_blank')}
         >
-          <Calendar className="w-4 h-4 mr-1.5" />
+          <Calendar className="w-4 h-4 mr-2" />
           Schedule a Call
         </Button>
       </motion.div>
 
       {/* Footer */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="flex items-center gap-4 text-muted-foreground text-xs"
       >
-        <a 
-          href="https://elyphant.com" 
+        <a
+          href="https://elyphant.com"
           className="hover:text-white transition-colors flex items-center gap-1"
         >
           elyphant.com <ArrowRight className="w-2.5 h-2.5" />

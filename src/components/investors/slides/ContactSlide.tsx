@@ -129,7 +129,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
         className="w-full max-w-md mb-6"
       >
         <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
-          Key Milestones (18 Months)
+          Key Milestones (22–24 Months)
         </div>
         <div className="flex items-center justify-center gap-4 md:gap-6 relative">
           {/* Connecting line */}

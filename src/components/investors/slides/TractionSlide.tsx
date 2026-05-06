@@ -16,7 +16,7 @@ const milestones = [
   { date: "Q1 2026", event: "Beta + Pilot Users", status: "complete" },
   { date: "Q2 2026", event: "Nicole AI Live", status: "complete" },
   { date: "Q3 2026", event: "Platform Launch", status: "current" },
-  { date: "Q1 2027", event: "5K Active", status: "upcoming" },
+  { date: "Q1 2027", event: "5K Registered", status: "upcoming" },
   { date: "Q4 2027", event: "$500K GMV", status: "target" },
 ];
 

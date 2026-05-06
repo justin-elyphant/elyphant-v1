@@ -118,7 +118,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold text-white">1M users</div>
-                <div className="text-lg font-bold text-green-400">$19M revenue</div>
+                <div className="text-lg font-bold text-green-400">$17M revenue</div>
               </div>
             </div>
             

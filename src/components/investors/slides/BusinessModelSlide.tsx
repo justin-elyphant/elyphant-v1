@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, Repeat, Store, CreditCard, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
+import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -108,7 +109,13 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
       >
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-white">$75</div>
-          <div className="text-muted-foreground text-[10px] md:text-xs">Avg Order Value</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="AOV"
+              definition="Average Order Value"
+              calculation={`Average $ spent per gift order.\nBenchmarked from gifting marketplace data + our pilot orders (~$60–$90 range).`}
+            /> (Avg Order Value)
+          </div>
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">

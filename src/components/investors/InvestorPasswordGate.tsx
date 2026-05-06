@@ -15,6 +15,7 @@ const INVESTOR_PASSWORD = "Elyphant_2026!";
 
 const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthenticated }) => {
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({

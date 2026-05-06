@@ -79,7 +79,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
         <Button
           size="lg"
           variant="outline"
-          className="border-white/20 text-white hover:bg-white/10 px-6"
+          className="border-white/30 bg-white/5 text-white hover:bg-white/15 hover:text-white px-6"
           onClick={() => window.open('https://calendly.com', '_blank')}
         >
           <Calendar className="w-4 h-4 mr-2" />
@@ -98,8 +98,6 @@ const ContactSlide = ({ direction }: SlideProps) => {
         >
           elyphant.com <ArrowRight className="w-2.5 h-2.5" />
         </a>
-        <span>•</span>
-        <span>Made with 💜 in 2026</span>
       </motion.div>
     </SlideWrapper>
   );

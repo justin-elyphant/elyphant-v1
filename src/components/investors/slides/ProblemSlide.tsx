@@ -25,10 +25,10 @@ const ProblemSlide = ({ direction }: SlideProps) => {
       {/* Hero message — the human problem */}
       <motion.div variants={itemVariants} className="text-center mb-6 md:mb-8 max-w-3xl">
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-          Connecting through gifting
+          Gifting is a Hassle
         </h1>
         <p className="text-base md:text-lg text-muted-foreground">
-          Today, that connection breaks down. Birthdays get forgotten, gifts miss the mark, and moments meant to strengthen relationships quietly erode them instead.
+          Birthdays get forgotten, gifts miss the mark, and moments meant to strengthen relationships quietly erode them instead.
         </p>
       </motion.div>
 

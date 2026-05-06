@@ -21,7 +21,7 @@ const useOfFunds = [
 
 const milestones = [
   { label: '100K Users', timeline: 'Q4 2026' },
-  { label: '$1.3M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take + subscription fees ≈ $1.3M.' } },
+  { label: '$1.8M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take ≈ $1.69M platform fee + ~$60K subs + ~$45K ads ≈ $1.8M.' } },
   { label: 'Marketplace', timeline: 'Q2 2026' },
   { label: 'Series A', timeline: 'Q4 2026' },
 ];

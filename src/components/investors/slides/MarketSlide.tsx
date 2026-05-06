@@ -147,6 +147,20 @@ const MarketSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
+      {/* Year 2 Revenue Breakdown */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full mb-2"
+      >
+        <div className="text-[10px] md:text-xs text-muted-foreground text-center">
+          <span className="text-white font-semibold">Year 2 revenue breakdown:</span>{' '}
+          Marketplace fee <span className="text-sky-400 font-medium">~$1.69M</span> (100K × 25% × 3 × $75 × 30%)
+          {' • '}Subscriptions <span className="text-sky-400 font-medium">~$60K</span>
+          {' • '}Advertising <span className="text-sky-400 font-medium">~$45K</span>
+          {' = '}<span className="text-green-400 font-semibold">~$1.8M ARR</span>
+        </div>
+      </motion.div>
+
       {/* Unit Economics Transparency Box */}
       <motion.div 
         variants={itemVariants}

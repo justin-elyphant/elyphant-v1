@@ -129,12 +129,24 @@ const BusinessModelSlide = ({ direction }: SlideProps) => {
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-white">$22.50</div>
-          <div className="text-muted-foreground text-[10px] md:text-xs">Gross Margin/Order</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="Gross Margin"
+              definition="Revenue minus Cost of Goods Sold (COGS), per order"
+              calculation={`What we keep after paying product/fulfillment costs.\nCalc: $75 AOV × 30% take rate = $22.50.\nCOGS for us is near-zero on the gifting fee since the merchant fulfills the product.`}
+            />/Order
+          </div>
         </div>
         <div className="w-px h-8 bg-gray-700 hidden sm:block" />
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-green-400">30%</div>
-          <div className="text-muted-foreground text-[10px] md:text-xs">Take Rate</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="Take Rate"
+              definition="% of GMV the platform keeps as revenue"
+              calculation={`Industry term for marketplace commission.\nCalc: Platform revenue ÷ GMV = $22.50 ÷ $75 = 30%.\nBenchmark: Etsy ~6%, DoorDash ~13%, Airbnb ~15%, premium concierge ~25–35%.`}
+            />
+          </div>
         </div>
       </motion.div>
 

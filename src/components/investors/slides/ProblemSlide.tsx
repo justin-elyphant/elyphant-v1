@@ -67,7 +67,7 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-sm md:text-base italic mb-3 text-center max-w-xl"
       >
-        No one has solved the data problem behind why gifts miss — until now.
+        Gifting should bring people closer — instead it's a hassle no one has truly solved. Until now.
       </motion.p>
 
       {/* Sources */}

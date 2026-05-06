@@ -36,7 +36,16 @@ const revenueStreams = [
   {
     icon: CreditCard,
     title: "Sponsored Listings",
-    value: "$0.75 CPC",
+    value: (
+      <>
+        $0.75{' '}
+        <AcronymTooltip
+          acronym="CPC"
+          definition="Cost Per Click"
+          calculation={`Advertiser pays $0.75 each time a shopper clicks a sponsored product.\nBenchmark: ~$0.50–$1.20 CPC range for retail/marketplace ads (Amazon Ads, Google Shopping).`}
+        />
+      </>
+    ),
     description: "Cost-per-click promotion",
     status: "Q2 2026",
   },

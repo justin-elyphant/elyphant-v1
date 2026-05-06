@@ -15,6 +15,8 @@ import BusinessModelSlide from './slides/BusinessModelSlide';
 import RevenueStreamsSlide from './slides/RevenueStreamsSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
+import UseOfFundsSlide from './slides/UseOfFundsSlide';
+import TheAskSlide from './slides/TheAskSlide';
 import ContactSlide from './slides/ContactSlide';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

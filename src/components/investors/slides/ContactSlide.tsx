@@ -14,16 +14,16 @@ interface SlideProps {
 }
 
 const useOfFunds = [
-  { category: 'Growth & Marketing', amount: '$675K', percentage: 45, icon: Megaphone, purpose: 'User acquisition, vendor onboarding' },
-  { category: 'Product & Engineering', amount: '$450K', percentage: 30, icon: Code, purpose: 'Nicole AI, Auto-Gift engine' },
-  { category: 'Operations & Hiring', amount: '$375K', percentage: 25, icon: Users, purpose: 'Core team expansion' },
+  { category: 'Growth & Marketing', amount: '$1.88M', percentage: 54, icon: Megaphone, purpose: 'Paid ads + marketing team' },
+  { category: 'Team (Sales, Product, Eng)', amount: '$690K', percentage: 20, icon: Users, purpose: 'Sales lead, Head of Product, offshore dev' },
+  { category: 'Infra, Legal & Reserve', amount: '$930K', percentage: 26, icon: Code, purpose: 'Tools, patent, contingency' },
 ];
 
 const milestones = [
-  { label: '100K Users', timeline: 'Q4 2026' },
+  { label: '100K Users', timeline: 'Q4 2027' },
   { label: '$1.8M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take ≈ $1.69M platform fee + ~$60K subs + ~$45K ads ≈ $1.8M.' } },
   { label: 'Marketplace', timeline: 'Q2 2026' },
-  { label: 'Series A', timeline: 'Q4 2026' },
+  { label: 'Series A', timeline: 'Q4 2027' },
 ];
 
 const ContactSlide = ({ direction }: SlideProps) => {

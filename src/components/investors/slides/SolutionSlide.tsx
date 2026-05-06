@@ -13,20 +13,20 @@ interface SlideProps {
 const pillars = [
   {
     icon: Heart,
-    title: "Smart Wishlists",
-    description: "Recipients curate exactly what they want. No more guessing.",
+    title: "Returns Approach Zero",
+    description: "Recipient-curated wishlists mean gifts are wanted by design — not guessed.",
     gradient: "from-pink-500 to-rose-500",
   },
   {
     icon: Brain,
-    title: "Auto-Gifting AI",
-    description: "Nicole, our AI, handles scheduling, selection, and reminders.",
+    title: "Never Miss an Occasion",
+    description: "Nicole AI remembers every date, picks the gift, and gets approval before it ships.",
     gradient: "from-purple-500 to-indigo-500",
   },
   {
     icon: Truck,
-    title: "Seamless Delivery",
-    description: "Automated fulfillment via Amazon. On time, every time.",
+    title: "Zero-Effort Fulfillment",
+    description: "Agentic checkout and automated delivery — gifting becomes a background task.",
     gradient: "from-sky-500 to-cyan-500",
   },
 ];
@@ -58,7 +58,7 @@ const SolutionSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-sm md:text-base mb-6 md:mb-8 text-center max-w-xl"
       >
-        The world's first AI-powered platform that remembers, recommends, and delivers the perfect gift—automatically.
+        The first agentic gifting platform — recipient-curated data + AI automation + end-to-end fulfillment. A moat competitors can't bolt onto a product page.
       </motion.p>
 
       {/* Three pillars */}

@@ -15,11 +15,11 @@ const timingFactors = [
     icon: Brain,
     title: "AI Maturity",
     stats: [
-      { value: "AI", text: "shopping agents are moving from search to purchase decisions" },
-      { value: "2030", text: "retailers preparing for AI-led commerce workflows" },
+      { value: "$1.7T", text: "projected agentic commerce GMV by 2030" },
+      { value: "20%", text: "of e-commerce expected to flow through AI agents" },
     ],
-    source: "Deloitte agentic commerce",
-    href: "https://www.deloitte.com/us/en/industries/consumer/articles/agentic-commerce-ai-shopping-agents-guide.html",
+    source: "Bain / Salesforce, 2025",
+    href: "https://www.bain.com/insights/agentic-commerce-the-next-frontier-of-retail/",
     color: "from-purple-500 to-violet-500",
   },
   {

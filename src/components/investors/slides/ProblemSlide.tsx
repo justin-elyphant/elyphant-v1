@@ -22,36 +22,48 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         The Problem
       </motion.span>
 
-      {/* Hero stat — gifting market */}
-      <motion.div variants={itemVariants} className="text-center mb-4 md:mb-6">
-        <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-2">
-          $<AnimatedCounter value={242} duration={2} />B
-        </div>
-        <p className="text-base sm:text-lg md:text-xl text-muted-foreground/60">
-          US personal gifting market — and gifting is broken
+      {/* Hero message — the human problem */}
+      <motion.div variants={itemVariants} className="text-center mb-6 md:mb-8 max-w-3xl">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+          The people you care about
+          <br />
+          <span className="bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">
+            deserve to feel it — every time.
+          </span>
+        </h1>
+        <p className="text-base md:text-lg text-muted-foreground">
+          Birthdays get forgotten. Gifts miss the mark. Moments that should strengthen relationships quietly erode them instead.
         </p>
       </motion.div>
 
-      {/* Failure-rate callout */}
-      <motion.div 
+      {/* Supporting evidence — failure rate + market size */}
+      <motion.div
         variants={itemVariants}
-        className="flex flex-col items-center gap-2 mb-4"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl mb-4"
       >
-        <div className="flex flex-col items-center bg-red-500/10 border border-red-500/30 rounded-xl px-4 sm:px-6 py-4">
-          <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-red-400 mb-1">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-4 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-red-400 mb-1">
             <AnimatedCounter value={30} duration={1.5} />%
           </div>
-          <p className="text-white text-sm md:text-base font-medium text-center">
+          <p className="text-white text-sm font-medium">
             of gifts are returned, regifted, or unwanted
           </p>
-          <p className="text-muted-foreground text-xs md:text-sm mt-1">
-            ~2x the 15.8% general retail return rate
+          <p className="text-muted-foreground text-xs mt-1">
+            ~2x the 15.8% retail return rate
           </p>
         </div>
 
-        <p className="text-muted-foreground text-xs md:text-sm mt-1">
-          E-commerce gift returns spike to <span className="text-white font-semibold">25–30%</span> during holidays
-        </p>
+        <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+            $<AnimatedCounter value={242} duration={2} />B
+          </div>
+          <p className="text-white text-sm font-medium">
+            US personal gifting market
+          </p>
+          <p className="text-muted-foreground text-xs mt-1">
+            A massive category with a structural failure rate
+          </p>
+        </div>
       </motion.div>
 
       {/* Bridge to solution */}
@@ -59,7 +71,7 @@ const ProblemSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-muted-foreground text-sm md:text-base italic mb-3 text-center max-w-xl"
       >
-        A massive market with a structural failure rate — and no one has solved the data problem behind it.
+        No one has solved the data problem behind why gifts miss — until now.
       </motion.p>
 
       {/* Sources */}

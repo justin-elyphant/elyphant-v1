@@ -14,16 +14,16 @@ interface SlideProps {
 }
 
 const useOfFunds = [
-  { category: 'Growth & Marketing', amount: '$675K', percentage: 45, icon: Megaphone, purpose: 'User acquisition, vendor onboarding' },
-  { category: 'Product & Engineering', amount: '$450K', percentage: 30, icon: Code, purpose: 'Nicole AI, Auto-Gift engine' },
-  { category: 'Operations & Hiring', amount: '$375K', percentage: 25, icon: Users, purpose: 'Core team expansion' },
+  { category: 'Growth & Marketing', amount: '$1.88M', percentage: 54, icon: Megaphone, purpose: 'Paid ads + marketing team' },
+  { category: 'Team (Sales, Product, Eng)', amount: '$690K', percentage: 20, icon: Users, purpose: 'Sales lead, Head of Product, offshore dev' },
+  { category: 'Infra, Legal & Reserve', amount: '$930K', percentage: 26, icon: Code, purpose: 'Tools, patent, contingency' },
 ];
 
 const milestones = [
-  { label: '100K Users', timeline: 'Q4 2026' },
+  { label: '100K Users', timeline: 'Q4 2027' },
   { label: '$1.8M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take ≈ $1.69M platform fee + ~$60K subs + ~$45K ads ≈ $1.8M.' } },
   { label: 'Marketplace', timeline: 'Q2 2026' },
-  { label: 'Series A', timeline: 'Q4 2026' },
+  { label: 'Series A', timeline: 'Q4 2027' },
 ];
 
 const ContactSlide = ({ direction }: SlideProps) => {
@@ -54,19 +54,19 @@ const ContactSlide = ({ direction }: SlideProps) => {
           Raising
         </div>
         <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-0.5">
-          $1.5M
+          $3.5M
         </div>
         <div className="text-muted-foreground text-xs">
           <AcronymTooltip
             acronym="Seed Round"
             definition="Earliest priced equity round, post pre-seed/founder capital"
-            calculation={`Typical seed range: $1M–$3M for AI/consumer startups in 2025.\nWe're raising $1.5M to fund 18 months of operations to Series A milestones.`}
+            calculation={`Comp range for AI/consumer seeds in 2025–2026: $3M–$5M.\nWe're raising $3.5M at $12–15M pre-money to fund 22–24 months to Series A milestones.`}
           />
           {' • '}
           <AcronymTooltip
-            acronym="18-Month Runway"
+            acronym="22–24 Month Runway"
             definition="How long the company can operate at current burn before needing more capital"
-            calculation={`Calc: Cash raised ÷ monthly burn.\n$1.5M raise ÷ ~$83K/mo blended burn ≈ 18 months — enough to hit 100K users and Series A metrics.`}
+            calculation={`Calc: Cash raised ÷ blended monthly burn.\n$3.5M raise ÷ ~$155K/mo blended burn ≈ 22–24 months — enough to hit 100K users, $1.8M ARR, and Series A metrics.`}
           />
         </div>
       </motion.div>
@@ -129,7 +129,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
         className="w-full max-w-md mb-6"
       >
         <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2 text-center">
-          Key Milestones (18 Months)
+          Key Milestones (22–24 Months)
         </div>
         <div className="flex items-center justify-center gap-4 md:gap-6 relative">
           {/* Connecting line */}

@@ -15,6 +15,8 @@ import BusinessModelSlide from './slides/BusinessModelSlide';
 import RevenueStreamsSlide from './slides/RevenueStreamsSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
+import UseOfFundsSlide from './slides/UseOfFundsSlide';
+import TheAskSlide from './slides/TheAskSlide';
 import ContactSlide from './slides/ContactSlide';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,7 +36,9 @@ const slides = [
   { id: 'business-model', component: BusinessModelSlide }, // 11 - Revenue overview
   { id: 'traction', component: TractionSlide },     // 12 - Metrics + roadmap
   { id: 'team', component: TeamSlide },             // 13 - Founders
-  { id: 'contact', component: ContactSlide },       // 14 - CTA
+  { id: 'use-of-funds', component: UseOfFundsSlide }, // 14 - $3.5M deployment
+  { id: 'the-ask', component: TheAskSlide },        // 15 - Ask + valuation + milestones
+  { id: 'contact', component: ContactSlide },       // 16 - CTA
 ];
 
 const InvestorPitchDeck = () => {

@@ -3,6 +3,7 @@ import { Check, Circle, Target } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
+import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -95,7 +96,13 @@ const TractionSlide = ({ direction }: SlideProps) => {
           <div className="text-2xl md:text-3xl font-bold text-purple-400 mb-1">
             $<AnimatedCounter value={38} duration={1.5} />K
           </div>
-          <div className="text-muted-foreground text-[10px] md:text-xs">GMV To Date</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="GMV"
+              definition="Gross Merchandise Value"
+              calculation={`Total $ value of gifts transacted on the platform to date (before our take rate).\nCalc: 850 gifts delivered × ~$45 avg pilot order ≈ $38K.`}
+            /> To Date
+          </div>
         </div>
       </motion.div>
 

@@ -124,7 +124,14 @@ const MarketSlide = ({ direction }: SlideProps) => {
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold text-white">1M users</div>
-                <div className="text-lg font-bold text-green-400">$19M revenue</div>
+                <div className="text-lg font-bold text-green-400">
+                  <AcronymTooltip
+                    acronym="$19M revenue"
+                    definition="Year 5 blended ARR across 4 streams"
+                    calculation={`Marketplace fee: 1M × 25% × 3 × $75 × 30% ≈ $16.88M\n+ Subscriptions: ~$600K\n+ Advertising: ~$450K\n+ Vendor fees: ~$1.07M\n= ~$19M total ARR`}
+                    className="decoration-green-400/60"
+                  />
+                </div>
               </div>
             </div>
             

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Mail, ArrowRight, Gift, Calendar, Send } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Gift, Calendar, Send, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ const INVESTOR_PASSWORD = "Elyphant_2026!";
 
 const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthenticated }) => {
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
@@ -105,17 +106,27 @@ const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthentic
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="password" className="text-muted-foreground/50">Access Code</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setError('');
-                    }}
-                    placeholder="Enter access code"
-                    className="mt-1 bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500 focus:ring-purple-500/20"
-                  />
+                  <div className="relative mt-1">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError('');
+                      }}
+                      placeholder="Enter access code"
+                      className="bg-foreground/50 border-gray-600 text-white placeholder:text-muted-foreground focus:border-purple-500 focus:ring-purple-500/20 pr-11"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide access code' : 'Show access code'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                   {error && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}

@@ -54,19 +54,19 @@ const ContactSlide = ({ direction }: SlideProps) => {
           Raising
         </div>
         <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent mb-0.5">
-          $1.5M
+          $3.5M
         </div>
         <div className="text-muted-foreground text-xs">
           <AcronymTooltip
             acronym="Seed Round"
             definition="Earliest priced equity round, post pre-seed/founder capital"
-            calculation={`Typical seed range: $1M–$3M for AI/consumer startups in 2025.\nWe're raising $1.5M to fund 18 months of operations to Series A milestones.`}
+            calculation={`Comp range for AI/consumer seeds in 2025–2026: $3M–$5M.\nWe're raising $3.5M at $12–15M pre-money to fund 22–24 months to Series A milestones.`}
           />
           {' • '}
           <AcronymTooltip
-            acronym="18-Month Runway"
+            acronym="22–24 Month Runway"
             definition="How long the company can operate at current burn before needing more capital"
-            calculation={`Calc: Cash raised ÷ monthly burn.\n$1.5M raise ÷ ~$83K/mo blended burn ≈ 18 months — enough to hit 100K users and Series A metrics.`}
+            calculation={`Calc: Cash raised ÷ blended monthly burn.\n$3.5M raise ÷ ~$155K/mo blended burn ≈ 22–24 months — enough to hit 100K users, $1.8M ARR, and Series A metrics.`}
           />
         </div>
       </motion.div>

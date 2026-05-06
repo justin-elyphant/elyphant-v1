@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Brain, Users, Heart, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
+import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -15,7 +16,20 @@ const timingFactors = [
     icon: Brain,
     title: "AI Maturity",
     stats: [
-      { value: "$1.7T", text: "projected agentic commerce GMV by 2030" },
+      {
+        value: "$1.7T",
+        text: (
+          <>
+            projected agentic commerce{' '}
+            <AcronymTooltip
+              acronym="GMV"
+              definition="Gross Merchandise Value"
+              calculation={`Total $ flowing through AI shopping agents globally by 2030.\nSource: Bain / Salesforce 2025 agentic commerce forecast (~$1.7T global GMV).`}
+            />
+            {' '}by 2030
+          </>
+        ),
+      },
       { value: "20%", text: "of e-commerce expected to flow through AI agents" },
     ],
     source: "Bain / Salesforce, 2025",

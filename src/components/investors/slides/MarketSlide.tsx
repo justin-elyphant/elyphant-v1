@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import AnimatedCounter from '../AnimatedCounter';
+import AcronymTooltip from '../AcronymTooltip';
 import { TrendingUp, Users, DollarSign, ExternalLink } from 'lucide-react';
 
 interface SlideProps {
@@ -46,7 +47,13 @@ const MarketSlide = ({ direction }: SlideProps) => {
               <div className="text-2xl md:text-3xl font-bold text-purple-400">
                 $<AnimatedCounter value={250} duration={2} />B
               </div>
-              <div className="text-muted-foreground text-xs">TAM: US gifting behavior</div>
+              <div className="text-muted-foreground text-xs">
+                <AcronymTooltip
+                  acronym="TAM"
+                  definition="Total Addressable Market"
+                  calculation={`Total annual US personal-gifting spend.\nSource blend: Unity Marketing / Coresight (~$242B), rounded to $250B for the broader gifting category.`}
+                />: US gifting behavior
+              </div>
               <div className="text-muted-foreground text-[10px]">Model estimate from gifting market reports</div>
             </div>
             
@@ -54,13 +61,26 @@ const MarketSlide = ({ direction }: SlideProps) => {
               <div className="text-xl md:text-2xl font-bold text-sky-400">
                 $<AnimatedCounter value={12} duration={1.5} />B
               </div>
-              <div className="text-muted-foreground text-xs">SAM: AI-powered gifting</div>
+              <div className="text-muted-foreground text-xs">
+                <AcronymTooltip
+                  acronym="SAM"
+                  definition="Serviceable Addressable Market"
+                  calculation={`The slice of TAM we can realistically serve with an AI-powered gifting platform.\nEstimate: ~5% of $250B TAM ≈ $12B (US online + AI-influenced gifting).`}
+                />: AI-powered gifting
+              </div>
               <div className="text-muted-foreground text-[10px]">Internal estimate</div>
             </div>
             
             <div className="flex items-center gap-2 pt-1">
               <TrendingUp className="w-3 h-3 text-green-400" />
-              <span className="text-green-400 text-sm font-semibold">15%+ CAGR</span>
+              <span className="text-green-400 text-sm font-semibold">
+                15%+{' '}
+                <AcronymTooltip
+                  acronym="CAGR"
+                  definition="Compound Annual Growth Rate"
+                  calculation={`Average year-over-year growth, compounded.\nFormula: (End ÷ Start)^(1/years) − 1.\nGifting + AI-personalization forecasts converge at ~15%+ through 2030 (Grand View Research, Mintel).`}
+                />
+              </span>
               <span className="text-muted-foreground text-xs">through 2030</span>
             </div>
           </div>
@@ -106,7 +126,14 @@ const MarketSlide = ({ direction }: SlideProps) => {
             <div className="pt-1 border-t border-white/10">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-3 h-3 text-muted-foreground" />
-                <span className="text-muted-foreground text-xs">Year 5 GMV:</span>
+                <span className="text-muted-foreground text-xs">
+                  Year 5{' '}
+                  <AcronymTooltip
+                    acronym="GMV"
+                    definition="Gross Merchandise Value"
+                    calculation={`Total $ value of gifts transacted on the platform (before our take rate).\nCalc: 1M users × 25% active × 3 gifts/yr × $75 AOV ≈ $56M GMV.`}
+                  />:
+                </span>
                 <span className="text-white text-sm font-semibold">$56M</span>
               </div>
             </div>
@@ -122,7 +149,13 @@ const MarketSlide = ({ direction }: SlideProps) => {
         <div className="text-center">
           <span className="text-muted-foreground text-xs">Conservative assumptions: </span>
           <span className="text-muted-foreground text-xs">
-            25% active rate • 3 gifts/user/year • $75 AOV • 30% gifting fee
+            25% active rate • 3 gifts/user/year • $75{' '}
+            <AcronymTooltip
+              acronym="AOV"
+              definition="Average Order Value"
+              calculation={`Average $ spent per gift order.\nBenchmarked from Amazon/Etsy gifting data and our pilot orders (~$60–$90 range).`}
+            />
+            {' '}• 30% gifting fee
           </span>
         </div>
       </motion.div>

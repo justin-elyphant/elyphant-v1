@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, Repeat, Store, MousePointerClick } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
+import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -14,7 +15,16 @@ const revenueStreams = [
   {
     icon: ShoppingBag,
     title: "Gifting Fees",
-    rate: "30% of GMV",
+    rate: (
+      <>
+        30% of{' '}
+        <AcronymTooltip
+          acronym="GMV"
+          definition="Gross Merchandise Value"
+          calculation={`Total $ value of gifts transacted on the platform (before our take rate).\nY5 calc: 1M users × 25% active × 3 gifts/yr × $75 AOV ≈ $56M GMV → 30% take ≈ $16.8M.`}
+        />
+      </>
+    ),
     year2: "$1.68M",
     year5: "$16.8M",
     status: "Active",
@@ -32,7 +42,16 @@ const revenueStreams = [
   {
     icon: MousePointerClick,
     title: "Sponsored Listings",
-    rate: "$0.75 CPC",
+    rate: (
+      <>
+        $0.75{' '}
+        <AcronymTooltip
+          acronym="CPC"
+          definition="Cost Per Click"
+          calculation={`Advertiser pays $0.75 per shopper click on a sponsored product.\nY5 calc: ~5% of products promoted × estimated clicks ≈ $450K.`}
+        />
+      </>
+    ),
     year2: "$45K",
     year5: "$450K",
     status: "Q2 2026",
@@ -171,7 +190,13 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
       >
         <p className="text-muted-foreground text-[10px] text-center">
           <span className="text-muted-foreground font-medium">Conservative:</span>{' '}
-          Model assumptions: 100K→1M users • 25% active • $75 AOV • 3 gifts/yr • 2% subs • 30% gifting fee
+          Model assumptions: 100K→1M users • 25% active • $75{' '}
+          <AcronymTooltip
+            acronym="AOV"
+            definition="Average Order Value"
+            calculation={`Average $ spent per gift order. Benchmark range $60–$90 from gifting marketplaces + pilot data.`}
+          />
+          {' '}• 3 gifts/yr • 2% subs • 30% gifting fee
         </p>
       </motion.div>
     </SlideWrapper>

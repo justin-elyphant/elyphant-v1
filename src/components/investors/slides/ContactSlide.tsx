@@ -140,7 +140,15 @@ const ContactSlide = ({ direction }: SlideProps) => {
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-1">
                 <Target className="w-3 h-3 text-white" />
               </div>
-              <div className="text-white text-[10px] font-medium text-center whitespace-nowrap">{milestone.label}</div>
+              <div className="text-white text-[10px] font-medium text-center whitespace-nowrap">
+                {milestone.tooltip ? (
+                  <AcronymTooltip
+                    acronym={milestone.label}
+                    definition={milestone.tooltip.definition}
+                    calculation={milestone.tooltip.calculation}
+                  />
+                ) : milestone.label}
+              </div>
               <div className="text-muted-foreground text-[9px]">{milestone.timeline}</div>
             </div>
           ))}

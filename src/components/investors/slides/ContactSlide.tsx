@@ -4,6 +4,7 @@ import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import AcronymTooltip from '../AcronymTooltip';
 
 interface SlideProps {
   direction: number;
@@ -20,7 +21,7 @@ const useOfFunds = [
 
 const milestones = [
   { label: '100K Users', timeline: 'Q4 2026' },
-  { label: '$1.3M Rev', timeline: 'Year 2' },
+  { label: '$1.3M ARR', timeline: 'Year 2', tooltip: { acronym: 'ARR', definition: 'Annual Recurring Revenue (run-rate)', calculation: 'Year-2 model: 100K users × 25% active × 3 gifts × $75 AOV × 30% take + subscription fees ≈ $1.3M.' } },
   { label: 'Marketplace', timeline: 'Q2 2026' },
   { label: 'Series A', timeline: 'Q4 2026' },
 ];
@@ -56,7 +57,17 @@ const ContactSlide = ({ direction }: SlideProps) => {
           $1.5M
         </div>
         <div className="text-muted-foreground text-xs">
-          Seed Round • 18-Month Runway
+          <AcronymTooltip
+            acronym="Seed Round"
+            definition="Earliest priced equity round, post pre-seed/founder capital"
+            calculation={`Typical seed range: $1M–$3M for AI/consumer startups in 2025.\nWe're raising $1.5M to fund 18 months of operations to Series A milestones.`}
+          />
+          {' • '}
+          <AcronymTooltip
+            acronym="18-Month Runway"
+            definition="How long the company can operate at current burn before needing more capital"
+            calculation={`Calc: Cash raised ÷ monthly burn.\n$1.5M raise ÷ ~$83K/mo blended burn ≈ 18 months — enough to hit 100K users and Series A metrics.`}
+          />
         </div>
       </motion.div>
 

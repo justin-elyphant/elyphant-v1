@@ -11,7 +11,6 @@ import HowItWorksSlide from './slides/HowItWorksSlide';
 import MarketSlide from './slides/MarketSlide';
 import WhyNowSlide from './slides/WhyNowSlide';
 import CompetitionSlide from './slides/CompetitionSlide';
-import BusinessModelSlide from './slides/BusinessModelSlide';
 import RevenueStreamsSlide from './slides/RevenueStreamsSlide';
 import TractionSlide from './slides/TractionSlide';
 import TeamSlide from './slides/TeamSlide';
@@ -29,12 +28,11 @@ const slides = [
   { id: 'welcome', component: WelcomeSlide },       // 4 - Brand moment
   { id: 'solution', component: SolutionSlide },     // 5 - Our answer
   { id: 'how-it-works', component: HowItWorksSlide }, // 6 - Demo flow
-  { id: 'market', component: MarketSlide },         // 7 - TAM/SAM/SOM
-  { id: 'revenue-streams', component: RevenueStreamsSlide }, // 8 - Detailed projections
+  { id: 'revenue-streams', component: RevenueStreamsSlide }, // 7 - Revenue model + unit economics
+  { id: 'market', component: MarketSlide },         // 8 - TAM/SAM/SOM (math now grounded by prior slide)
   { id: 'why-now', component: WhyNowSlide },        // 9 - Market timing
   { id: 'competition', component: CompetitionSlide }, // 10 - Differentiation
-  { id: 'business-model', component: BusinessModelSlide }, // 11 - Revenue overview
-  { id: 'traction', component: TractionSlide },     // 12 - Metrics + roadmap
+  { id: 'traction', component: TractionSlide },     // 11 - Metrics + roadmap
   { id: 'team', component: TeamSlide },             // 13 - Founders
   { id: 'the-ask', component: TheAskSlide },        // 14 - Ask + valuation + milestones
   { id: 'use-of-funds', component: UseOfFundsSlide }, // 15 - $3.5M deployment

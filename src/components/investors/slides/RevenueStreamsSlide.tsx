@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ShoppingBag, Repeat, Store, MousePointerClick } from 'lucide-react';
+import { ShoppingBag, Repeat, Store, MousePointerClick, ExternalLink } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import AcronymTooltip from '../AcronymTooltip';
@@ -21,12 +21,12 @@ const revenueStreams = [
         <AcronymTooltip
           acronym="GMV"
           definition="Gross Merchandise Value"
-          calculation={`Total $ value of gifts transacted on the platform (before our take rate).\nY5 calc: 1M users × 25% active × 3 gifts/yr × $75 AOV ≈ $56M GMV → 30% take ≈ $16.8M.`}
+          calculation={`Total $ value of gifts transacted on the platform (before our take rate).\nY5 calc: 1M users × 25% active × 3 gifts/yr × $75 AOV ≈ $56M GMV → 30% take ≈ $16.88M.`}
         />
       </>
     ),
-    year2: "$1.68M",
-    year5: "$16.8M",
+    year2: "$1.69M",
+    year5: "$16.88M",
     status: "Active",
     note: "Core revenue engine",
   },
@@ -62,15 +62,15 @@ const revenueStreams = [
     title: "Vendor Commissions",
     rate: "15% of vendor sales",
     year2: "—",
-    year5: "$1.7M",
+    year5: "$1.07M",
     status: "Roadmap",
     note: "Unlocked after 500K users",
   },
 ];
 
 const revenueMix = [
-  { label: "Gifting Fees", percent: 86, color: "from-purple-500 to-purple-400" },
-  { label: "Vendor", percent: 9, color: "from-sky-500 to-sky-400" },
+  { label: "Gifting Fees", percent: 89, color: "from-purple-500 to-purple-400" },
+  { label: "Vendor", percent: 6, color: "from-sky-500 to-sky-400" },
   { label: "Subs", percent: 3, color: "from-green-500 to-green-400" },
   { label: "Ads", percent: 2, color: "from-amber-500 to-amber-400" },
 ];
@@ -83,7 +83,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-purple-400 uppercase tracking-widest text-xs md:text-sm mb-2"
       >
-        Revenue Streams
+        Revenue Model
       </motion.span>
 
       {/* Title */}
@@ -91,8 +91,47 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-4"
       >
-        Path to $19M+ Annual Revenue
+        Multiple Streams · Path to ~$19M ARR
       </motion.h2>
+
+      {/* Unit economics highlight - moved up so the per-stream math has context */}
+      <motion.div 
+        variants={itemVariants}
+        className="bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-4 py-3 flex items-center justify-center gap-4 md:gap-6 flex-wrap w-full mb-4"
+      >
+        <div className="text-center">
+          <div className="text-lg md:text-xl font-bold text-white">$75</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="AOV"
+              definition="Average Order Value"
+              calculation={`Average $ spent per gift order.\nBenchmarked from gifting marketplace data + our pilot orders (~$60–$90 range).`}
+            /> (Avg Order Value)
+          </div>
+        </div>
+        <div className="w-px h-8 bg-gray-700 hidden sm:block" />
+        <div className="text-center">
+          <div className="text-lg md:text-xl font-bold text-white">$22.50</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="Gross Margin"
+              definition="Revenue minus Cost of Goods Sold (COGS), per order"
+              calculation={`What we keep after paying product/fulfillment costs.\nCalc: $75 AOV × 30% take rate = $22.50.\nCOGS for us is near-zero on the gifting fee since the merchant fulfills the product.`}
+            />/Order
+          </div>
+        </div>
+        <div className="w-px h-8 bg-gray-700 hidden sm:block" />
+        <div className="text-center">
+          <div className="text-lg md:text-xl font-bold text-green-400">30%</div>
+          <div className="text-muted-foreground text-[10px] md:text-xs">
+            <AcronymTooltip
+              acronym="Take Rate"
+              definition="% of GMV the platform keeps as revenue"
+              calculation={`Industry term for marketplace commission.\nCalc: Platform revenue ÷ GMV = $22.50 ÷ $75 = 30%.\nBenchmark: Etsy ~6%, DoorDash ~13%, Airbnb ~15%, premium concierge ~25–35%.`}
+            />
+          </div>
+        </div>
+      </motion.div>
 
       {/* Revenue streams - 2x2 grid */}
       <motion.div 
@@ -156,7 +195,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="w-full mb-3"
       >
-        <p className="text-muted-foreground text-xs mb-1.5 text-center">Year 5 Revenue Mix</p>
+        <p className="text-muted-foreground text-xs mb-1.5 text-center">Year 5 Revenue Mix (~$19M ARR)</p>
         <div className="h-6 rounded-full overflow-hidden flex bg-white/5">
           {revenueMix.map((item, index) => (
             <motion.div
@@ -182,6 +221,30 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* Two-Sided Value Proposition */}
+      <motion.div 
+        variants={itemVariants}
+        className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl px-4 py-3 text-center w-full mb-3"
+      >
+        <p className="text-white font-semibold text-sm mb-2">
+          Two-Sided Value Creation
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs">
+          <div>
+            <span className="text-purple-400 font-medium">Consumers:</span>
+            <span className="text-muted-foreground/80 ml-1">Gift anxiety eliminated</span>
+          </div>
+          <div className="hidden sm:block w-px h-4 bg-gray-700" />
+          <div>
+            <span className="text-green-400 font-medium">Retailers:</span>
+            <span className="text-muted-foreground/80 ml-1">Better-fit gifts reduce return pressure</span>
+          </div>
+        </div>
+        <a href="https://nrf.com/research/2025-retail-returns-landscape" target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-muted-foreground text-[10px] underline decoration-dotted underline-offset-2 hover:text-foreground">
+          NRF returns context <ExternalLink className="h-2.5 w-2.5" />
+        </a>
       </motion.div>
 
       <motion.div 

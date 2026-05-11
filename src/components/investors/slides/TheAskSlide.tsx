@@ -57,7 +57,7 @@ const TheAskSlide = ({ direction }: SlideProps) => {
             <AcronymTooltip
               acronym="Pre-Money"
               definition="Company valuation before new investor capital is added"
-              calculation={`Comp range for pre-revenue / early-revenue AI-consumer seeds in 2025–2026: $10M–$18M pre.\nElyphant: working product, $600K founder capital, patent pending, live pilot users → $12–15M pre.`}
+              calculation={`Comp range for pre-revenue / early-revenue AI-consumer seeds in 2025–2026: $10M–$18M pre.\nElyphant: working product, $600K founder capital, Patent Approved, live pilot users → $12–15M pre.`}
             />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white">
@@ -97,7 +97,7 @@ const TheAskSlide = ({ direction }: SlideProps) => {
           <div className="flex items-start gap-2">
             <Shield className="w-3.5 h-3.5 text-sky-400 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="text-white text-xs font-semibold">Patent pending</div>
+              <div className="text-white text-xs font-semibold">Patent Approved</div>
               <div className="text-muted-foreground text-[10px]">Auto-Gift IP defensibility</div>
             </div>
           </div>

@@ -58,7 +58,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
           </div>
           <div>
             <div className="text-base font-bold text-white">Patent</div>
-            <div className="text-[10px] text-muted-foreground">Pending on Auto-Gift</div>
+            <div className="text-[10px] text-muted-foreground">Approved on Auto-Gift</div>
           </div>
         </div>
       </motion.div>

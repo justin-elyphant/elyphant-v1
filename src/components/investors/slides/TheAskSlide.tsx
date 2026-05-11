@@ -137,7 +137,7 @@ const TheAskSlide = ({ direction }: SlideProps) => {
           ))}
         </div>
         <p className="text-muted-foreground text-[10px] text-center mt-3 italic">
-          Targeting $8–12M Series A at $40–60M pre once Y2 ARR + active-rate cohorts are validated.
+          Targeting $8–12M Series A at $40–55M pre once Y2 ARR + active-rate cohorts are validated.
         </p>
       </motion.div>
     </SlideWrapper>

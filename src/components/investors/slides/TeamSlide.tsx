@@ -3,6 +3,7 @@ import { Linkedin } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
 import curtImg from '@/assets/team/curt.png';
+import justinImg from '@/assets/team/justin.png';
 
 interface SlideProps {
   direction: number;
@@ -26,15 +27,16 @@ const team = [
     bio: "Founder of Remotelee. Building product and team at Elyphant.",
     linkedin: "https://www.linkedin.com/in/justincmeeks/",
     initials: "JM",
-    image: null,
+    image: justinImg,
   },
 ];
 
-const advisors = [
-  { name: "Advisor 1", expertise: "E-commerce" },
-  { name: "Advisor 2", expertise: "AI/ML" },
-  { name: "Advisor 3", expertise: "Growth" },
-];
+// Advisors section archived — reinstate when advisors are confirmed.
+// const advisors = [
+//   { name: "Advisor 1", expertise: "E-commerce" },
+//   { name: "Advisor 2", expertise: "AI/ML" },
+//   { name: "Advisor 3", expertise: "Growth" },
+// ];
 
 const TeamSlide = ({ direction }: SlideProps) => {
   return (
@@ -92,24 +94,6 @@ const TeamSlide = ({ direction }: SlideProps) => {
             )}
           </motion.div>
         ))}
-      </motion.div>
-
-      {/* Advisors */}
-      <motion.div variants={itemVariants} className="text-center w-full">
-        <h4 className="text-muted-foreground text-xs uppercase tracking-wider mb-3">
-          Advisors
-        </h4>
-        <div className="flex flex-wrap justify-center gap-3">
-          {advisors.map((advisor) => (
-            <div 
-              key={advisor.name}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2"
-            >
-              <span className="text-white text-sm font-medium">{advisor.name}</span>
-              <span className="text-muted-foreground text-xs ml-1.5">• {advisor.expertise}</span>
-            </div>
-          ))}
-        </div>
       </motion.div>
     </SlideWrapper>
   );

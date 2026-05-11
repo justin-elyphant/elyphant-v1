@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Linkedin } from 'lucide-react';
 import SlideWrapper from './SlideWrapper';
 import { itemVariants } from '../slideAnimations';
+import curtImg from '@/assets/team/curt.png';
 
 interface SlideProps {
   direction: number;
@@ -12,11 +13,20 @@ interface SlideProps {
 
 const team = [
   {
-    name: "Your Name",
+    name: "Curt Davidson",
     role: "Founder & CEO",
-    bio: "Passionate about strengthening human connections through technology",
-    linkedin: "#",
-    initials: "YN",
+    bio: "Entrepreneur by day. Passionate about strengthening human connections through technology.",
+    linkedin: null,
+    initials: "CD",
+    image: curtImg,
+  },
+  {
+    name: "Justin Meeks",
+    role: "Head of Product & Talent",
+    bio: "Founder of Remotelee. Building product and team at Elyphant.",
+    linkedin: "https://www.linkedin.com/in/justincmeeks/",
+    initials: "JM",
+    image: null,
   },
 ];
 
@@ -48,7 +58,7 @@ const TeamSlide = ({ direction }: SlideProps) => {
       {/* Team members */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-wrap justify-center gap-6 mb-8"
+        className="flex flex-wrap justify-center gap-8 mb-8"
       >
         {team.map((member, index) => (
           <motion.div
@@ -56,24 +66,30 @@ const TeamSlide = ({ direction }: SlideProps) => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + index * 0.15 }}
-            className="flex flex-col items-center text-center max-w-[200px]"
+            className="flex flex-col items-center text-center max-w-[220px]"
           >
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center mb-3 text-2xl md:text-3xl font-bold text-white">
-              {member.initials}
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center text-2xl md:text-3xl font-bold text-white">
+              {member.image ? (
+                <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+              ) : (
+                member.initials
+              )}
             </div>
             <h3 className="text-base md:text-lg font-semibold text-white mb-0.5">
               {member.name}
             </h3>
             <p className="text-purple-400 text-xs md:text-sm mb-1">{member.role}</p>
             <p className="text-muted-foreground text-xs mb-2">{member.bio}</p>
-            <a 
-              href={member.linkedin} 
-              className="text-muted-foreground hover:text-white transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Linkedin className="w-4 h-4" />
-            </a>
+            {member.linkedin && (
+              <a
+                href={member.linkedin}
+                className="text-muted-foreground hover:text-white transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            )}
           </motion.div>
         ))}
       </motion.div>

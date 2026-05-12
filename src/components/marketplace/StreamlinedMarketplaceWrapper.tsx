@@ -47,6 +47,7 @@ import LululemonMobileFilters from "./filters/LululemonMobileFilters";
 import DynamicMobileFilterDrawer from "./filters/DynamicMobileFilterDrawer";
 import FeaturedProductHero from "./FeaturedProductHero";
 import ZeroResultsState from "./ZeroResultsState";
+import { ViewMoreProductsButton } from "./shared/ViewMoreProductsButton";
 
 
 

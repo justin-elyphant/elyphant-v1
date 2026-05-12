@@ -12,6 +12,11 @@ interface SlideWrapperProps {
    * to prevent clipping behind the iOS safe-area + nav controls.
    */
   verticalScroll?: boolean;
+  /**
+   * Vertically center content on mobile/tablet. Use for short hero slides
+   * (Title, Welcome, Contact) where the content fits within the viewport.
+   */
+  centerOnMobile?: boolean;
 }
 
 /**

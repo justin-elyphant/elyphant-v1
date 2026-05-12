@@ -85,14 +85,11 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
           <p className="text-muted-foreground text-sm">{subtitle}</p>
         </div>
         {showSeeAll && onSeeAll && (
-          <Button
-            variant="outline"
+          <ViewMoreProductsButton
             onClick={onSeeAll}
-            className="flex items-center gap-2 transition-all duration-300 hover:shadow-md hover:scale-105 border-border/50 hover:border-primary/30"
-          >
-            See All
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </Button>
+            label="View More Products"
+            ariaLabel={`View more ${title} products`}
+          />
         )}
       </div>
       

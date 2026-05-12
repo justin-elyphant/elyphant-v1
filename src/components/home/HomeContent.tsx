@@ -81,6 +81,9 @@ const HomeContent = () => {
       
       {/* Product discovery and wishlist CTA section */}
       <WishlistCreationCTA />
+
+      {/* Amazon Prime / Gifts in a Hurry CTA */}
+      <PrimeGiftsInAHurryCTA />
       
       {/* Traditional sections with container - will be refactored later */}
       <div className="container-content space-y-unified">

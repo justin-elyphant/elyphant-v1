@@ -209,10 +209,10 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         Elyphant connects social graph, automated moments, wishlist intelligence, address resolution, and group gifting.
       </motion.p>
 
-      {/* Competitor Cards */}
+      {/* Competitor Cards - 2x2 on mobile, flex-wrap on larger screens */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-wrap justify-center gap-2 mb-4 w-full"
+        className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-2 mb-4 w-full"
       >
         {competitors.map((comp, index) => {
           const Icon = comp.icon;
@@ -222,7 +222,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
-              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 min-w-[100px]`}
+              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 sm:min-w-[100px]`}
             >
               <div className="flex items-center gap-1 mb-0.5">
                 <Icon className={`w-3 h-3 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-muted-foreground'}`} />

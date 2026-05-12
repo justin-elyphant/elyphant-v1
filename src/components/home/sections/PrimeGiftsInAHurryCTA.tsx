@@ -199,6 +199,20 @@ const PrimeGiftsInAHurryCTA = () => {
             </div>
           </>
         )}
+
+        {/* View More Products — Lululemon-style outlined CTA directly under grid */}
+        {!loading && products.length > 0 && (
+          <div className="flex justify-center mt-10 md:mt-12">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleShopNow}
+              className="min-w-[240px] md:min-w-[280px] min-h-[48px] tracking-wide font-semibold uppercase text-xs touch-manipulation border-foreground/80 hover:bg-foreground hover:text-background"
+            >
+              View More Products
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* CTA */}

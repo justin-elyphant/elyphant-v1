@@ -18,14 +18,14 @@ const SlideNavigation = ({
 }: SlideNavigationProps) => {
   return (
     <>
-      {/* Dot indicators - right side, inside container */}
-      <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-50">
+      {/* Dot indicators - desktop only (15 dots take too much space on mobile) */}
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 z-50">
         {Array.from({ length: totalSlides }).map((_, index) => (
           <button
             key={index}
             onClick={() => onNavigate(index)}
             className={cn(
-              "w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-all duration-300",
+              "w-2.5 h-2.5 rounded-full transition-all duration-300",
               currentSlide === index
                 ? "bg-gradient-to-r from-purple-500 to-sky-500 scale-125"
                 : "bg-gray-600 hover:bg-gray-400"

@@ -116,17 +116,33 @@ const InvestorPitchDeck = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToNext, goToPrevious, goToSlide, toggleFullscreen]);
 
-  // Touch/swipe support
+  // Touch/swipe support — horizontal-only to avoid conflict with vertical
+  // scrolling inside slides (and iOS Safari rubber-band).
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     let startY = 0;
     let startX = 0;
+    let startedInScrollable = false;
+
+    const isInScrollableAncestor = (el: EventTarget | null): boolean => {
+      let node = el as HTMLElement | null;
+      while (node && node !== container) {
+        const style = window.getComputedStyle(node);
+        const oy = style.overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) {
+          return true;
+        }
+        node = node.parentElement;
+      }
+      return false;
+    };
 
     const handleTouchStart = (e: TouchEvent) => {
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
+      startedInScrollable = isInScrollableAncestor(e.target);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -135,22 +151,22 @@ const InvestorPitchDeck = () => {
       const diffY = startY - endY;
       const diffX = startX - endX;
 
-      // Require minimum 50px swipe
-      if (Math.abs(diffY) > 50 || Math.abs(diffX) > 50) {
-        if (Math.abs(diffY) > Math.abs(diffX)) {
-          // Vertical swipe
-          if (diffY > 0) goToNext();
-          else goToPrevious();
-        } else {
-          // Horizontal swipe
-          if (diffX > 0) goToNext();
-          else goToPrevious();
-        }
+      // Horizontal swipe is dominant and clear (prevents accidental nav while scrolling).
+      if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+        if (diffX > 0) goToNext();
+        else goToPrevious();
+        return;
+      }
+
+      // Vertical swipe only when not inside scrollable content.
+      if (!startedInScrollable && Math.abs(diffY) > 80 && Math.abs(diffY) > Math.abs(diffX) * 1.5) {
+        if (diffY > 0) goToNext();
+        else goToPrevious();
       }
     };
 
-    container.addEventListener('touchstart', handleTouchStart);
-    container.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
@@ -164,18 +180,21 @@ const InvestorPitchDeck = () => {
     <div 
       ref={containerRef}
       className={cn(
-        "min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950",
+        "bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 overscroll-none",
+        // Lock to viewport on mobile/tablet to prevent iOS body scroll/rubber-band
+        "fixed inset-0 lg:static lg:min-h-screen",
         isFullscreen && "fixed inset-0 z-50"
       )}
+      style={{ touchAction: 'pan-y' }}
     >
-      {/* Centered slide container - responsive: full-screen on mobile, framed on desktop */}
+      {/* Centered slide container - responsive: full-screen on mobile/tablet, framed on desktop */}
       <div className={cn(
-        "w-full mx-auto",
-        !isFullscreen && "max-w-6xl md:px-8 md:py-8"
+        "w-full h-full mx-auto",
+        !isFullscreen && "lg:max-w-6xl lg:h-auto lg:px-8 lg:py-8"
       )}>
         <div className={cn(
-          "relative bg-foreground/50 overflow-hidden",
-          !isFullscreen && "h-[100svh] md:h-auto md:aspect-[16/10] md:rounded-2xl md:shadow-2xl md:border md:border-white/5",
+          "relative bg-foreground/50 overflow-hidden h-full",
+          !isFullscreen && "lg:h-auto lg:aspect-[16/10] lg:rounded-2xl lg:shadow-2xl lg:border lg:border-white/5",
           isFullscreen && "h-screen"
         )}>
           {/* Progress bar */}
@@ -186,12 +205,12 @@ const InvestorPitchDeck = () => {
             />
           </div>
 
-          {/* Fullscreen toggle button */}
+          {/* Fullscreen toggle button - desktop only (iOS Safari doesn't support it reliably) */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}
-            className="absolute top-4 right-4 z-50 text-muted-foreground hover:text-white hover:bg-white/10"
+            className="hidden lg:inline-flex absolute top-4 right-4 z-50 text-muted-foreground hover:text-white hover:bg-white/10"
             title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen (F)'}
           >
             {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
@@ -217,9 +236,9 @@ const InvestorPitchDeck = () => {
             onPrevious={goToPrevious}
           />
 
-          {/* Keyboard hint (only on first slide) */}
+          {/* Keyboard hint (only on first slide, desktop) */}
           {currentSlide === 0 && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground text-xs md:text-sm animate-pulse hidden md:block">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-muted-foreground text-xs lg:text-sm animate-pulse hidden lg:block">
               Press arrow keys or scroll to navigate
             </div>
           )}

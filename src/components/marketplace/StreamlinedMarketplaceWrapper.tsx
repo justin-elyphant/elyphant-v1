@@ -128,6 +128,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({ sortBy: 'relevance' });
   const [isFindingMore, setIsFindingMore] = useState(false);
+  const [findMoreClickCount, setFindMoreClickCount] = useState(0);
   const { addToCart } = useCart();
 
   // Derive friendly category display name from URL param

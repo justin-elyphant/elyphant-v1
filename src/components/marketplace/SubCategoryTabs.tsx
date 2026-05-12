@@ -37,7 +37,7 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ className }) => {
           key={tab.id}
           onClick={() => handleTabClick(tab.id, (tab as any).isCategory)}
           className={cn(
-            "whitespace-nowrap text-sm font-medium pb-2 border-b-2 transition-colors min-h-[44px] touch-target-44",
+            "shrink-0 whitespace-nowrap text-sm font-medium pb-2 border-b-2 transition-colors min-h-[44px] touch-target-44 flex items-center",
             currentCategory === tab.id || (tab.id === 'all' && !currentCategory)
               ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"

@@ -1124,27 +1124,23 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                   </div>
                 )}
                 
-                {/* Mobile: Find More Results Button */}
-                {showSearchInfo && urlSearchTerm && displayProducts.length > 0 && displayProducts.length < 48 && (
-                  <div className="flex justify-center mt-8 mb-16">
+                {/* Mobile: Find More Results Button — shows on search OR category pages */}
+                {showSearchInfo && (urlSearchTerm || categoryParam) && displayProducts.length > 0 && displayProducts.length < 48 && (
+                  <div className="flex justify-center mt-10 mb-16 px-4">
                     <Button 
                       onClick={handleFindMoreResults}
                       disabled={isFindingMore}
                       variant="outline"
-                      className="min-w-[200px] gap-2"
+                      size="lg"
+                      className="w-full max-w-sm min-h-[52px] uppercase tracking-wider text-xs font-semibold border-foreground/80 hover:bg-foreground hover:text-background touch-manipulation"
                     >
                       {isFindingMore ? (
                         <>
-                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                           Searching...
                         </>
                       ) : (
-                        <>
-                          <Search className="h-4 w-4" />
-                          {categoryParam
-                            ? `Find more ${categoryDisplayName} gifts`
-                            : `Find more "${urlSearchTerm}" results`}
-                        </>
+                        'View More Products'
                       )}
                     </Button>
                   </div>

@@ -14,7 +14,7 @@ interface SlideProps {
 
 const MarketSlide = ({ direction }: SlideProps) => {
   return (
-    <SlideWrapper direction={direction}>
+    <SlideWrapper direction={direction} verticalScroll>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}
@@ -154,19 +154,19 @@ const MarketSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Year 2 & Year 5 Revenue Breakdown */}
+      {/* Year 2 & Year 5 Revenue Breakdown — desktop only (mobile sees tooltips in Path card) */}
       <motion.div
         variants={itemVariants}
-        className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full mb-2 space-y-1"
+        className="hidden md:block bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full mb-2 space-y-1"
       >
-        <div className="text-[10px] md:text-xs text-muted-foreground text-center">
+        <div className="text-xs text-muted-foreground text-center">
           <span className="text-white font-semibold">Year 2:</span>{' '}
           Marketplace <span className="text-sky-400 font-medium">~$1.69M</span> (100K × 25% × 3 × $75 × 30%)
           {' • '}Subs <span className="text-sky-400 font-medium">~$60K</span>
           {' • '}Ads <span className="text-sky-400 font-medium">~$45K</span>
           {' = '}<span className="text-green-400 font-semibold">~$1.8M ARR</span>
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground text-center">
+        <div className="text-xs text-muted-foreground text-center">
           <span className="text-white font-semibold">Year 5:</span>{' '}
           Marketplace <span className="text-sky-400 font-medium">~$16.88M</span> (1M × 25% × 3 × $75 × 30% on $56M GMV)
           {' • '}Subs <span className="text-sky-400 font-medium">~$600K</span>
@@ -176,10 +176,38 @@ const MarketSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Unit Economics Transparency Box */}
+      {/* Mobile: single compact footer combining assumptions + sources */}
+      <motion.div
+        variants={itemVariants}
+        className="md:hidden bg-white/5 border border-white/10 rounded-lg px-3 py-2 w-full"
+      >
+        <p className="text-[11px] text-muted-foreground text-center leading-snug">
+          <span className="text-white font-medium">Assumptions:</span> 25% active • 3 gifts/yr • $75{' '}
+          <AcronymTooltip
+            acronym="AOV"
+            definition="Average Order Value"
+            calculation={`Average $ spent per gift order. Range $60–$90 from gifting marketplaces + pilot data.`}
+          />
+          {' '}• 30% fee
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1.5 text-[10px] text-muted-foreground">
+          <span>Sources:</span>
+          <a href="https://www.grandviewresearch.com/industry-analysis/ai-based-personalization-engines-market-report" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2">
+            Grand View <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+          <a href="https://www.statista.com/topics/11796/popular-gifts-and-gifting-behavior-in-the-us/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2">
+            Statista <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+          <a href="https://store.mintel.com/us/report/us-gifting-market-report/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2">
+            Mintel <ExternalLink className="h-2.5 w-2.5" />
+          </a>
+        </div>
+      </motion.div>
+
+      {/* Desktop: separate assumptions + AI tailwind boxes */}
       <motion.div 
         variants={itemVariants}
-        className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full"
+        className="hidden md:block bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full"
       >
         <div className="text-center">
           <span className="text-muted-foreground text-xs">Conservative assumptions: </span>
@@ -195,10 +223,9 @@ const MarketSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* AI market context */}
       <motion.div 
         variants={itemVariants}
-        className="mt-2 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-lg px-4 py-2"
+        className="hidden md:block mt-2 bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-lg px-4 py-2"
       >
         <span className="text-muted-foreground text-xs">AI personalization tailwind: </span>
         <span className="text-white font-semibold text-xs">market forecast through 2033</span>

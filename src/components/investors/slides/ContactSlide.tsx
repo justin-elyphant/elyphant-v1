@@ -80,7 +80,7 @@ const ContactSlide = ({ direction }: SlideProps) => {
           size="lg"
           variant="outline"
           className="border-white/30 bg-white/5 text-white hover:bg-white/15 hover:text-white px-6"
-          onClick={() => window.open('https://calendly.com', '_blank')}
+          onClick={() => window.open('https://calendly.com/justin-elyphant/30min', '_blank')}
         >
           <Calendar className="w-4 h-4 mr-2" />
           Schedule a Call

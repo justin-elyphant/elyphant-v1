@@ -196,7 +196,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center mb-1"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-4 md:mb-6"
       >
         Gifting tools exist. <span className="bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">Relationship automation does not.</span>
       </motion.h2>

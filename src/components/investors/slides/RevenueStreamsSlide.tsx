@@ -97,7 +97,7 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
       {/* Unit economics highlight - moved up so the per-stream math has context */}
       <motion.div 
         variants={itemVariants}
-        className="bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-4 py-3 flex items-center justify-center gap-4 md:gap-6 flex-wrap w-full mb-4"
+        className="bg-gradient-to-r from-purple-500/10 to-sky-500/10 border border-purple-500/20 rounded-xl px-3 py-2 md:px-4 md:py-3 flex items-center justify-around md:justify-center md:gap-6 flex-wrap w-full mb-4"
       >
         <div className="text-center">
           <div className="text-lg md:text-xl font-bold text-white">$75</div>
@@ -213,11 +213,11 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
             </motion.div>
           ))}
         </div>
-        <div className="flex justify-center gap-3 mt-1.5">
+        <div className="grid grid-cols-2 sm:flex sm:justify-center gap-x-3 gap-y-1 mt-1.5">
           {revenueMix.map((item) => (
             <div key={item.label} className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${item.color}`} />
-              {item.label}
+              {item.label} <span className="text-muted-foreground/60">({item.percent}%)</span>
             </div>
           ))}
         </div>

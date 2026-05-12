@@ -125,7 +125,18 @@ const WhyNowSlide = ({ direction }: SlideProps) => {
         variants={itemVariants}
         className="bg-gradient-to-r from-purple-500/10 via-sky-500/10 to-pink-500/10 border border-white/10 rounded-xl px-4 py-3 w-full text-center"
       >
-        <p className="text-muted-foreground/50 text-xs md:text-sm">
+        {/* Mobile: condensed one-liner */}
+        <p className="md:hidden text-muted-foreground text-xs leading-snug">
+          <span className="text-purple-400 font-semibold">AI capability</span>
+          {' + '}
+          <span className="text-sky-400 font-semibold">consumer trust</span>
+          {' + '}
+          <span className="text-pink-400 font-semibold">personalization</span>
+          {' = '}
+          <span className="text-white font-semibold">a once-in-a-generation opportunity</span>
+        </p>
+        {/* Desktop: full sentence */}
+        <p className="hidden md:block text-muted-foreground/50 text-sm">
           The convergence of <span className="text-purple-400 font-semibold">AI capability</span> + 
           <span className="text-sky-400 font-semibold"> consumer trust</span> + 
           <span className="text-pink-400 font-semibold"> personalization demand</span> creates a 

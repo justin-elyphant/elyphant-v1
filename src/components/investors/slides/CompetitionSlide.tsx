@@ -209,10 +209,10 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         Elyphant connects social graph, automated moments, wishlist intelligence, address resolution, and group gifting.
       </motion.p>
 
-      {/* Competitor Cards */}
+      {/* Competitor Cards - 2x2 on mobile, flex-wrap on larger screens */}
       <motion.div 
         variants={itemVariants}
-        className="flex flex-wrap justify-center gap-2 mb-4 w-full"
+        className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-2 mb-4 w-full"
       >
         {competitors.map((comp, index) => {
           const Icon = comp.icon;
@@ -222,7 +222,7 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
-              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 min-w-[100px]`}
+              className={`bg-gradient-to-br ${comp.accent} border ${comp.border} rounded-lg px-3 py-2 sm:min-w-[100px]`}
             >
               <div className="flex items-center gap-1 mb-0.5">
                 <Icon className={`w-3 h-3 ${comp.tier === 'Giant' ? 'text-amber-400' : 'text-muted-foreground'}`} />
@@ -241,10 +241,55 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         })}
       </motion.div>
 
-      {/* Feature Comparison Table */}
+      {/* Mobile: stacked feature list */}
+      <motion.div
+        variants={itemVariants}
+        className="md:hidden w-full space-y-2"
+      >
+        {featureComparison.map((row) => {
+          const competitorCells: { key: CompetitorKey; label: string; cell: FeatureCell }[] = [
+            { key: 'etsy', label: 'Etsy', cell: row.etsy },
+            { key: 'elfster', label: 'Elfster', cell: row.elfster },
+            { key: 'snappy', label: 'Snappy', cell: row.snappy },
+            { key: 'goody', label: 'Goody', cell: row.goody },
+          ];
+          return (
+            <div
+              key={row.feature}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2"
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="text-white text-xs font-medium leading-tight">
+                  {row.feature}
+                  {row.unique && (
+                    <span className="ml-1 text-[8px] bg-purple-500/20 text-purple-300 px-1 py-0.5 rounded align-middle">UNIQUE</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 bg-gradient-to-r from-purple-500/20 to-sky-500/20 border border-purple-500/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                  <span className="text-[10px] text-white font-semibold">Elyphant</span>
+                  {renderFeatureIcon(row.elyphant)}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {competitorCells.map(({ key, label, cell }) => (
+                  <div
+                    key={key}
+                    className="flex flex-col items-center gap-0.5 bg-white/5 rounded px-1 py-1"
+                  >
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{label}</span>
+                    {renderFeatureIcon(cell, key)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </motion.div>
+
+      {/* Desktop/tablet: full feature comparison table */}
       <motion.div 
         variants={itemVariants}
-        className="w-full overflow-x-auto"
+        className="hidden md:block w-full overflow-x-auto"
       >
         <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden min-w-[400px]">
           <Table>
@@ -284,25 +329,27 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
             </TableBody>
           </Table>
         </div>
-        <div className="mt-2 space-y-1 text-center text-[9px] leading-snug text-muted-foreground/70">
-          <p>
-            Based on publicly marketed product capabilities as of 2026. “Partial” indicates limited, business-only, campaign-based, or non-core support.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
-            <span>Sources:</span>
-            {sources.map((source) => (
-              <a
-                key={source.href}
-                href={source.href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2 hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {source.label}
-                <ExternalLink className="h-2.5 w-2.5" />
-              </a>
-            ))}
-          </div>
+      </motion.div>
+
+      {/* Sources / footnote */}
+      <motion.div variants={itemVariants} className="mt-2 space-y-1 text-center text-[9px] leading-snug text-muted-foreground/70 w-full">
+        <p>
+          Based on publicly marketed product capabilities as of 2026. "Partial" indicates limited, business-only, campaign-based, or non-core support.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+          <span>Sources:</span>
+          {sources.map((source) => (
+            <a
+              key={source.href}
+              href={source.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2 hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {source.label}
+              <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          ))}
         </div>
       </motion.div>
 

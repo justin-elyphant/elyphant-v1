@@ -11,7 +11,7 @@ interface InvestorPasswordGateProps {
   onAuthenticated: () => void;
 }
 
-const INVESTOR_PASSWORD = "Elyphant_2026!";
+const INVESTOR_PASSWORD = "Elyphant2026!";
 
 const InvestorPasswordGate: React.FC<InvestorPasswordGateProps> = ({ onAuthenticated }) => {
   const [password, setPassword] = useState('');

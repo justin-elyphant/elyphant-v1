@@ -57,11 +57,9 @@ const Hero = () => {
     <FullWidthSection className="relative min-h-[80vh] md:min-h-[85vh] overflow-hidden safe-area-top intersection-target">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat gpu-accelerated will-change-transform"
+        className="absolute inset-0 bg-no-repeat gpu-accelerated will-change-transform bg-cover [background-position:60%_center] md:[background-position:left_center]"
         style={{
           backgroundImage: `url('${heroImage}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'left center',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/25"></div>

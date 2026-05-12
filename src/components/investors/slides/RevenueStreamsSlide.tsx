@@ -213,11 +213,11 @@ const RevenueStreamsSlide = ({ direction }: SlideProps) => {
             </motion.div>
           ))}
         </div>
-        <div className="flex justify-center gap-3 mt-1.5">
+        <div className="grid grid-cols-2 sm:flex sm:justify-center gap-x-3 gap-y-1 mt-1.5">
           {revenueMix.map((item) => (
             <div key={item.label} className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${item.color}`} />
-              {item.label}
+              {item.label} <span className="text-muted-foreground/60">({item.percent}%)</span>
             </div>
           ))}
         </div>

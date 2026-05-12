@@ -85,7 +85,8 @@ const MobileBottomNavigation: React.FC = () => {
     location.pathname === "/auth" ||
     location.pathname === "/reset-password" ||
     location.pathname.startsWith("/checkout") ||
-    location.pathname.startsWith("/trunkline")
+    location.pathname.startsWith("/trunkline") ||
+    location.pathname.startsWith("/investors")
   ) {
     return null;
   }

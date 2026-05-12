@@ -168,14 +168,14 @@ const InvestorPitchDeck = () => {
         isFullscreen && "fixed inset-0 z-50"
       )}
     >
-      {/* Centered slide container - standard view first */}
+      {/* Centered slide container - responsive: full-screen on mobile, framed on desktop */}
       <div className={cn(
         "w-full mx-auto",
-        !isFullscreen && "max-w-6xl px-4 md:px-8 py-4 md:py-8"
+        !isFullscreen && "max-w-6xl md:px-8 md:py-8"
       )}>
         <div className={cn(
           "relative bg-foreground/50 overflow-hidden",
-          !isFullscreen && "aspect-[16/10] rounded-2xl shadow-2xl border border-white/5",
+          !isFullscreen && "h-[100svh] md:h-auto md:aspect-[16/10] md:rounded-2xl md:shadow-2xl md:border md:border-white/5",
           isFullscreen && "h-screen"
         )}>
           {/* Progress bar */}

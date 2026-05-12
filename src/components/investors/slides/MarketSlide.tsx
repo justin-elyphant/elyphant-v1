@@ -26,7 +26,7 @@ const MarketSlide = ({ direction }: SlideProps) => {
       {/* Title */}
       <motion.h2 
         variants={itemVariants}
-        className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-4 md:mb-6"
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-4 md:mb-6"
       >
         Massive Market, Clear Path
       </motion.h2>

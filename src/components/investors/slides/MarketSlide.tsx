@@ -14,7 +14,7 @@ interface SlideProps {
 
 const MarketSlide = ({ direction }: SlideProps) => {
   return (
-    <SlideWrapper direction={direction}>
+    <SlideWrapper direction={direction} verticalScroll>
       {/* Section label */}
       <motion.span 
         variants={itemVariants}

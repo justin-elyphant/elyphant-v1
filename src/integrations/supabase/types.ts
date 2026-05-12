@@ -6223,6 +6223,31 @@ export type Database = {
         Args: { user_a: string; user_b: string }
         Returns: number
       }
+      get_my_pending_connection: {
+        Args: { _connection_id: string }
+        Returns: {
+          pending_recipient_dob: string
+          pending_recipient_email: string
+          pending_recipient_phone: string
+          pending_shipping_address: Json
+        }[]
+      }
+      get_my_profile_private: {
+        Args: never
+        Returns: {
+          ai_interaction_data: Json
+          birth_year: number
+          dob: string
+          email: string
+          enhanced_ai_interaction_data: Json
+          enhanced_gifting_history: Json
+          gifting_history: Json
+          shipping_address: Json
+          signup_metadata: Json
+          signup_source: string
+          source_attribution: Json
+        }[]
+      }
       get_nudge_summary: {
         Args: { p_recipient_email: string; p_user_id: string }
         Returns: {

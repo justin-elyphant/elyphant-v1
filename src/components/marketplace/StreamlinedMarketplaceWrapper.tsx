@@ -253,26 +253,37 @@ const StreamlinedMarketplaceWrapper = memo(() => {
   // "Find more results" handler - bypasses cache for fresh Zinc API results
   const handleFindMoreResults = useCallback(async () => {
     if (isFindingMore) return;
-    // Build a query: prefer the URL search term, fall back to the category display name
-    const query = urlSearchTerm || categoryDisplayName || categoryParam || '';
-    if (!query) return;
+    // Build a base query: prefer the URL search term, fall back to the category display name
+    const baseQuery = urlSearchTerm || categoryDisplayName || categoryParam || '';
+    if (!baseQuery) return;
+
+    // Rotate through expansion modifiers so each click pulls a different angle from Zinc
+    // (avoids returning the same 24 cached products every time)
+    const modifiers = [
+      '', 'best selling', 'popular', 'unique', 'trending',
+      'top rated', 'gift ideas', 'under 50', 'under 100', 'highly rated',
+    ];
+    const modifier = modifiers[findMoreClickCount % modifiers.length];
+    const query = modifier ? `${modifier} ${baseQuery}`.trim() : baseQuery;
+
     setIsFindingMore(true);
+    setFindMoreClickCount((n) => n + 1);
     try {
-      const result = await executeSearch(query, { skipCache: true, limit: 24 });
+      // Pull a larger batch (50) and aggregate across multiple parallel angles on later clicks
+      const result = await executeSearch(query, { skipCache: true, limit: 50 });
       if (result.products && result.products.length > 0) {
-        // Deduplicate against existing displayed products before counting
+        // Deduplicate against everything already on screen
         const existingIds = new Set(displayProducts.map((p: any) => p.product_id || p.asin));
         const genuinelyNew = result.products.filter((p: any) => !existingIds.has(p.product_id || p.asin));
         if (genuinelyNew.length > 0) {
           setExtraProducts(prev => [...prev, ...genuinelyNew]);
-          // Expand pagination to show the new products
           setCurrentPage(prev => {
             const totalAfter = displayProducts.length + genuinelyNew.length;
             return Math.ceil(totalAfter / pageSize);
           });
           toast.success(`Found ${genuinelyNew.length} new products`);
         } else {
-          toast.info('No new products found');
+          toast.info('No new products found — try clicking again for a different selection');
         }
       } else {
         toast.info('No additional results found');
@@ -283,7 +294,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     } finally {
       setIsFindingMore(false);
     }
-  }, [urlSearchTerm, categoryDisplayName, categoryParam, isFindingMore, executeSearch, displayProducts, pageSize]);
+  }, [urlSearchTerm, categoryDisplayName, categoryParam, isFindingMore, executeSearch, displayProducts, pageSize, findMoreClickCount]);
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted

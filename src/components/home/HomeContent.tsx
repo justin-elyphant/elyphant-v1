@@ -8,6 +8,7 @@ import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
 import PersonTypeCarousel from "./sections/CategoriesGrid";
 import WishlistCreationCTA from "./sections/WishlistCreationCTA";
+import PrimeGiftsInAHurryCTA from "./sections/PrimeGiftsInAHurryCTA";
 import ConnectionsCTA from "./sections/ConnectionsCTA";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";
@@ -80,6 +81,9 @@ const HomeContent = () => {
       
       {/* Product discovery and wishlist CTA section */}
       <WishlistCreationCTA />
+
+      {/* Amazon Prime / Gifts in a Hurry CTA */}
+      <PrimeGiftsInAHurryCTA />
       
       {/* Traditional sections with container - will be refactored later */}
       <div className="container-content space-y-unified">

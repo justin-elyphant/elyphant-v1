@@ -57,8 +57,8 @@ const ContactSlide = ({ direction }: SlideProps) => {
             <Shield className="w-4 h-4 text-sky-400" />
           </div>
           <div>
-            <div className="text-base font-bold text-white">Patent</div>
-            <div className="text-[10px] text-muted-foreground">Approved on Auto-Gift</div>
+            <div className="text-base font-bold text-white">Patent Approved</div>
+            <div className="text-[10px] text-muted-foreground">Auto-Gift IP defensibility</div>
           </div>
         </div>
       </motion.div>

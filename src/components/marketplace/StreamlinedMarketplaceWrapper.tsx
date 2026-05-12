@@ -251,10 +251,13 @@ const StreamlinedMarketplaceWrapper = memo(() => {
 
   // "Find more results" handler - bypasses cache for fresh Zinc API results
   const handleFindMoreResults = useCallback(async () => {
-    if (!urlSearchTerm || isFindingMore) return;
+    if (isFindingMore) return;
+    // Build a query: prefer the URL search term, fall back to the category display name
+    const query = urlSearchTerm || categoryDisplayName || categoryParam || '';
+    if (!query) return;
     setIsFindingMore(true);
     try {
-      const result = await executeSearch(urlSearchTerm, { skipCache: true, limit: 24 });
+      const result = await executeSearch(query, { skipCache: true, limit: 24 });
       if (result.products && result.products.length > 0) {
         // Deduplicate against existing displayed products before counting
         const existingIds = new Set(displayProducts.map((p: any) => p.product_id || p.asin));
@@ -279,7 +282,7 @@ const StreamlinedMarketplaceWrapper = memo(() => {
     } finally {
       setIsFindingMore(false);
     }
-  }, [urlSearchTerm, isFindingMore, executeSearch, displayProducts]);
+  }, [urlSearchTerm, categoryDisplayName, categoryParam, isFindingMore, executeSearch, displayProducts, pageSize]);
 
   // Server-side sorting is now handled by get-products edge function
   // No client-side re-sorting needed - products arrive pre-sorted

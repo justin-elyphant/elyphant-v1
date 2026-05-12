@@ -13,7 +13,7 @@ interface SlideProps {
 
 const ContactSlide = ({ direction }: SlideProps) => {
   return (
-    <SlideWrapper direction={direction} verticalScroll>
+    <SlideWrapper direction={direction} verticalScroll centerOnMobile>
       {/* Section label */}
       <motion.span
         variants={itemVariants}

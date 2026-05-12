@@ -306,13 +306,6 @@ const CompetitionSlide = ({ direction }: SlideProps) => {
         </div>
       </motion.div>
 
-      {/* Closing Tagline */}
-      <motion.p 
-        variants={itemVariants}
-        className="text-muted-foreground text-xs mt-4 text-center italic"
-      >
-        "We're building the relationship layer legacy gifting tools still have not solved"
-      </motion.p>
       </SlideWrapper>
     </TooltipProvider>
   );

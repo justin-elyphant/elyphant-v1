@@ -8,6 +8,7 @@ import AutomationFeatures from "./sections/AutomationFeatures";
 import PopularBrands from "@/components/gifting/PopularBrands";
 import PersonTypeCarousel from "./sections/CategoriesGrid";
 import WishlistCreationCTA from "./sections/WishlistCreationCTA";
+import PrimeGiftsInAHurryCTA from "./sections/PrimeGiftsInAHurryCTA";
 import ConnectionsCTA from "./sections/ConnectionsCTA";
 import SocialProofSection from "./sections/SocialProofSection";
 import { LocalStorageService } from "@/services/localStorage/LocalStorageService";

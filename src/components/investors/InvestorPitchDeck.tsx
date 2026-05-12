@@ -116,17 +116,33 @@ const InvestorPitchDeck = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToNext, goToPrevious, goToSlide, toggleFullscreen]);
 
-  // Touch/swipe support
+  // Touch/swipe support — horizontal-only to avoid conflict with vertical
+  // scrolling inside slides (and iOS Safari rubber-band).
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     let startY = 0;
     let startX = 0;
+    let startedInScrollable = false;
+
+    const isInScrollableAncestor = (el: EventTarget | null): boolean => {
+      let node = el as HTMLElement | null;
+      while (node && node !== container) {
+        const style = window.getComputedStyle(node);
+        const oy = style.overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) {
+          return true;
+        }
+        node = node.parentElement;
+      }
+      return false;
+    };
 
     const handleTouchStart = (e: TouchEvent) => {
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
+      startedInScrollable = isInScrollableAncestor(e.target);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -135,22 +151,22 @@ const InvestorPitchDeck = () => {
       const diffY = startY - endY;
       const diffX = startX - endX;
 
-      // Require minimum 50px swipe
-      if (Math.abs(diffY) > 50 || Math.abs(diffX) > 50) {
-        if (Math.abs(diffY) > Math.abs(diffX)) {
-          // Vertical swipe
-          if (diffY > 0) goToNext();
-          else goToPrevious();
-        } else {
-          // Horizontal swipe
-          if (diffX > 0) goToNext();
-          else goToPrevious();
-        }
+      // Horizontal swipe is dominant and clear (prevents accidental nav while scrolling).
+      if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+        if (diffX > 0) goToNext();
+        else goToPrevious();
+        return;
+      }
+
+      // Vertical swipe only when not inside scrollable content.
+      if (!startedInScrollable && Math.abs(diffY) > 80 && Math.abs(diffY) > Math.abs(diffX) * 1.5) {
+        if (diffY > 0) goToNext();
+        else goToPrevious();
       }
     };
 
-    container.addEventListener('touchstart', handleTouchStart);
-    container.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);

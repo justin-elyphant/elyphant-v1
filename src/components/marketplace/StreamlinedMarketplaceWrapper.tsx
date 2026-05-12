@@ -980,10 +980,6 @@ const StreamlinedMarketplaceWrapper = memo(() => {
                       />
                     </div>
                   )}
-                        )}
-                      </Button>
-                    </div>
-                  )}
                 </>
               )}
               

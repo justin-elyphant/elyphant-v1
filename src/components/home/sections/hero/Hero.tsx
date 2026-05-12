@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { HolidayHeroText } from "./HolidayHeroText";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion } from "framer-motion";
-import heroImage from "@/assets/hero-spring.jpg";
+import heroImage from "@/assets/hero-fathers-day.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();

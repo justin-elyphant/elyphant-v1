@@ -2,8 +2,7 @@
 import React, { useMemo } from "react";
 import { Product } from "@/types/product";
 import UnifiedProductCard from "./UnifiedProductCard";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ViewMoreProductsButton } from "./shared/ViewMoreProductsButton";
 
 interface CategorySectionProps {
   title: string;

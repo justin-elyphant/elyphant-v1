@@ -25,7 +25,7 @@ const useOfFunds = [
     amount: '$690K',
     percentage: 20,
     icon: Users,
-    purpose: 'Sales Manager (vendor acquisition), Head of Product, Offshore Full-Stack Engineer',
+    purpose: 'Sales Manager (vendor acquisition), Product, and Engineer support',
   },
   {
     category: 'Infrastructure & Tooling',

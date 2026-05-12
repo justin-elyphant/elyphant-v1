@@ -12,7 +12,7 @@ interface SlideProps {
 
 const TitleSlide = ({ direction, onNext }: SlideProps) => {
   return (
-    <SlideWrapper direction={direction}>
+    <SlideWrapper direction={direction} centerOnMobile>
       {/* Title with Gift Icon */}
       <motion.h1 
         variants={itemVariants}

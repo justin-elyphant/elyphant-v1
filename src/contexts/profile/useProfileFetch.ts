@@ -23,17 +23,16 @@ export function useProfileFetch() {
       setError(null);
 
       console.log("useProfileFetch: Fetching profile for user:", user.id);
-      
-      // Fetch profile with simple query to avoid 400 errors
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+
+      // SECURITY: Sensitive profile columns are revoked from `authenticated`.
+      // Fetch public columns directly, then merge owner-only sensitive columns
+      // via the `get_my_profile_private` RPC.
+      const { data: fullProfile, error } = await fetchMyFullProfile(user.id);
+      const profile = fullProfile as any;
 
       if (error) {
         console.error("Error fetching profile:", error);
-        setError(error);
+        setError(error as any);
         return null;
       }
 

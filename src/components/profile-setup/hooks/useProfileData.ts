@@ -38,11 +38,8 @@ export const useProfileData = () => {
       
       setIsLoading(true);
       try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
+        // SECURITY: sensitive columns revoked. Owner-only RPC merges them in.
+        const { data: profile, error } = await fetchMyFullProfile(user.id);
 
         if (error) {
           console.error("Error loading profile:", error);

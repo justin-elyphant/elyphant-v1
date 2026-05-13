@@ -305,7 +305,9 @@ class NicoleMarketplaceIntelligenceService {
       // Get recipient profile and interests
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        // SECURITY: sensitive columns (email/dob/birth_year/shipping_address/AI/gifting_history)
+        // are revoked from `authenticated`. Other users' rows expose only public columns.
+        .select('id, name, first_name, last_name, username, bio, profile_image, interests, gift_preferences, enhanced_gift_preferences, important_dates')
         .eq('id', recipientId)
         .single();
 

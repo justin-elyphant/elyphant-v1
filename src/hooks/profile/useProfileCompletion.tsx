@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 import { toast } from "sonner";
 
 export const useProfileCompletion = (shouldRedirect = true) => {
@@ -21,12 +22,9 @@ export const useProfileCompletion = (shouldRedirect = true) => {
       try {
         console.log("Checking profile completion for user:", user.id);
         
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
+        // SECURITY: sensitive columns revoked. Owner-only RPC merges them.
+        const { data, error } = await fetchMyFullProfile(user.id);
+
         if (error) {
           console.error("Error fetching profile:", error);
           setIsComplete(false);

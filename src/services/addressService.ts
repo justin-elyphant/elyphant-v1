@@ -98,15 +98,12 @@ export class AddressService {
         return databaseToForm(addressData.address as any);
       }
 
-      // Fallback to profile shipping_address
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('shipping_address')
-        .eq('id', userId)
-        .single();
+      // Fallback to profile shipping_address (owner-only via RPC)
+      const { data: privateProfile } = await supabase.rpc('get_my_profile_private');
+      const ownerRow = Array.isArray(privateProfile) ? privateProfile[0] : privateProfile;
 
-      if (profileData?.shipping_address) {
-        return databaseToForm(profileData.shipping_address as any);
+      if (ownerRow?.shipping_address) {
+        return databaseToForm(ownerRow.shipping_address as any);
       }
 
       return null;

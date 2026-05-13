@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Connection = Database['public']['Tables']['user_connections']['Row'];
@@ -289,18 +290,16 @@ export class UnifiedDataService {
   // Private helper methods
 
   private async fetchUserProfile(userId: string): Promise<Profile | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+    // SECURITY: sensitive columns revoked. Owner-only RPC merges them in.
+    // This service is invoked for the current user; safe to call the RPC.
+    const { data, error } = await fetchMyFullProfile(userId);
 
     if (error) {
       console.error('Error fetching user profile:', error);
       return null;
     }
 
-    return data;
+    return data as Profile | null;
   }
 
   private async fetchUserConnections(userId: string): Promise<ConnectionWithProfile[]> {

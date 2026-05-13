@@ -1,6 +1,7 @@
 
 import { Profile } from "@/types/supabase";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 import { toast } from "sonner";
 
 // Function to check if a user profile has all required fields completed
@@ -26,12 +27,8 @@ export const getUserProfile = async (user: any) => {
   if (!user) return null;
   
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-      
+    // SECURITY: sensitive columns revoked. Use owner-only RPC + public select.
+    const { data, error } = await fetchMyFullProfile(user.id);
     if (error) throw error;
     return data;
   } catch (error) {

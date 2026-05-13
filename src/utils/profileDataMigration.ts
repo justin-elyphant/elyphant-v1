@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 
 /**
  * Ensures all profiles have the required fields populated
@@ -11,11 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function ensureProfileDataConsistency(userId: string) {
   try {
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // SECURITY: sensitive columns revoked. Owner-only RPC merges them in.
+    // This helper is only called for the current user's own profile.
+    const { data: profile, error: fetchError } = await fetchMyFullProfile(userId);
 
     if (fetchError || !profile) {
       console.error('Error fetching profile for consistency check:', fetchError);

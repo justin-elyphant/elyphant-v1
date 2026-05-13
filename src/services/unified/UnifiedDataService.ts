@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Connection = Database['public']['Tables']['user_connections']['Row'];

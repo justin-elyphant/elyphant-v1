@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database, Json } from "@/integrations/supabase/types";
+import {
+  fetchMyPrivateProfile,
+  PROFILE_PUBLIC_COLUMNS,
+} from "@/utils/profilePrivateAccess";
 
 import { toast } from "sonner";
 

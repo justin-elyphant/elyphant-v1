@@ -82,7 +82,7 @@ class UnifiedProfileService {
    * Other users' profiles only return PROFILE_PUBLIC_COLUMNS.
    */
    */
-  async getProfileById(userId: string): Promise<UnifiedProfileData | null> {
+  async getProfileById(userId: string, isCurrentUser = false): Promise<UnifiedProfileData | null> {
     // Check cache first
     const cached = this.cache.get(userId);
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
@@ -92,7 +92,7 @@ class UnifiedProfileService {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_PUBLIC_COLUMNS)
         .eq('id', userId)
         .maybeSingle();
 

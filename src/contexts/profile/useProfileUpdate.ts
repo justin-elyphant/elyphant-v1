@@ -41,11 +41,8 @@ export const useProfileUpdate = () => {
       
       // FETCH CURRENT PROFILE FIRST to ensure all NOT NULL fields are present
       console.log(`🔍 Fetching current profile before upsert (${label})`);
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+      // SECURITY: sensitive columns revoked. Use owner-only RPC + public select.
+      const { data: existingProfile, error: fetchError } = await fetchMyFullProfile(user.id);
       
       if (fetchError) {
         console.warn(`⚠️ Could not fetch existing profile (${label}):`, fetchError);

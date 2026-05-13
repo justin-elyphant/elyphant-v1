@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { mapDatabaseToSettingsForm } from "./dataFormatUtils";
+import { fetchMyFullProfile } from "./profilePrivateAccess";
 
 /**
  * Test function to verify onboarding data syncs to settings
@@ -9,16 +10,12 @@ export const testOnboardingSettingsSync = async (userId: string) => {
   console.log("=== Testing Onboarding → Settings Data Sync ===");
   
   try {
-    // Fetch the user's profile from the database
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // SECURITY: sensitive columns revoked. Owner-only RPC merges them in.
+    const { data: profile, error } = await fetchMyFullProfile(userId);
 
     if (error) {
       console.error("❌ Failed to fetch profile:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as any).message };
     }
 
     if (!profile) {

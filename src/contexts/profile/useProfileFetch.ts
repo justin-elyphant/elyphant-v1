@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { Profile } from '@/types/supabase';
 import { toast } from 'sonner';
 import { ensureProfileDataConsistency } from '@/utils/profileDataMigration';
+import { fetchMyFullProfile } from '@/utils/profilePrivateAccess';
 
 export function useProfileFetch() {
   const { user } = useAuth();

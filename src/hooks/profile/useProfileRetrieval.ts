@@ -22,12 +22,9 @@ export const useProfileRetrieval = () => {
     try {
       console.log("Fetching profile data for user:", user.id);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-        
+      // SECURITY: sensitive columns revoked. Use owner-only RPC + public select.
+      const { data, error } = await fetchMyFullProfile(user.id);
+
       if (error) throw error;
       
       console.log("Retrieved profile data:", data);

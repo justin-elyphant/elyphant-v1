@@ -3,6 +3,7 @@ import { useState, useCallback, useRef } from 'react';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 import { normalizeGiftPreference, normalizeShippingAddress } from "@/types/profile";
 import type { Profile } from "@/types/profile";
 

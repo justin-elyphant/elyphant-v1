@@ -35,13 +35,9 @@ export const useProfileData = () => {
         
         console.log("Loading profile data for user:", user.id);
         
-        // Get profile data from Supabase
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
+        // SECURITY: sensitive columns revoked. Owner-only RPC merges them in.
+        const { data, error } = await fetchMyFullProfile(user.id);
+
         if (error) {
           console.error("Error loading profile data:", error);
           throw error;

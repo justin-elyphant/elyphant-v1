@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { ShippingAddress, ImportantDateType, ProfileFormData } from "../types";
+import { fetchMyFullProfile } from "@/utils/profilePrivateAccess";
 
 export const useProfileData = () => {
   const { user } = useAuth();

@@ -23,19 +23,16 @@ export const useProfile = () => {
       setError(null);
       
       console.log('Fetching profile data for user:', userId);
-      
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
+
+      // SECURITY: sensitive columns revoked. Use owner-only RPC + public select.
+      const { data, error: fetchError } = await fetchMyFullProfile(userId);
+
       if (fetchError) {
         console.error('Error fetching profile:', fetchError);
         setError(fetchError as any);
         return null;
       }
-      
+
       console.log('Profile fetched successfully:', data);
       setProfile(data);
       return data;

@@ -60,16 +60,20 @@ export const useDefaultAddress = () => {
         return;
       }
 
-      // 2. Fallback to profiles.shipping_address
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, shipping_address')
-        .eq('id', user.id)
-        .single();
+      // 2. Fallback to profiles.shipping_address (owner-only via RPC)
+      const [{ data: profileData }, { data: privateData }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .eq('id', user.id)
+          .single(),
+        supabase.rpc('get_my_profile_private'),
+      ]);
+      const privateRow = Array.isArray(privateData) ? privateData[0] : privateData;
 
-      if (profileData?.shipping_address) {
+      if (privateRow?.shipping_address && profileData) {
         const name = [profileData.first_name, profileData.last_name].filter(Boolean).join(' ') || 'Home';
-        setDefaultAddress(parseAddress(profileData.shipping_address, profileData.id, name));
+        setDefaultAddress(parseAddress(privateRow.shipping_address, profileData.id, name));
         return;
       }
 

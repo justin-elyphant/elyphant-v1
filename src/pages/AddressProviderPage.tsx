@@ -78,16 +78,16 @@ const AddressProviderPage: React.FC = () => {
       // Get requester name from profiles table
       let requesterName = 'Someone';
       if (requestData.requester_id) {
+        // SECURITY: email is no longer readable on other users' profiles.
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('name, first_name, last_name, email')
+          .select('name, first_name, last_name')
           .eq('id', requestData.requester_id)
           .single();
 
         if (profileData) {
-          requesterName = profileData.name || 
+          requesterName = profileData.name ||
                          `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() ||
-                         profileData.email ||
                          'Someone';
         }
       }

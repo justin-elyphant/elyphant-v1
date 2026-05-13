@@ -81,7 +81,6 @@ class UnifiedProfileService {
    * merge sensitive columns (email/dob/birth_year/shipping_address/etc.).
    * Other users' profiles only return PROFILE_PUBLIC_COLUMNS.
    */
-   */
   async getProfileById(userId: string, isCurrentUser = false): Promise<UnifiedProfileData | null> {
     // Check cache first
     const cached = this.cache.get(userId);
@@ -103,11 +102,15 @@ class UnifiedProfileService {
 
       if (!profile) return null;
 
+      // Owner-only: merge private columns via SECURITY DEFINER RPC.
+      const privateFields = isCurrentUser ? await fetchMyPrivateProfile() : null;
+      const merged: any = { ...(profile as any), ...(privateFields ?? {}) };
+
       // Enhance profile data with computed fields
       const enhancedProfile: UnifiedProfileData = {
-        ...profile,
-        full_name: profile.name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-        display_name: profile.name || profile.username || 'User'
+        ...merged,
+        full_name: merged.name || `${merged.first_name || ''} ${merged.last_name || ''}`.trim(),
+        display_name: merged.name || merged.username || 'User'
       };
 
       // Update cache

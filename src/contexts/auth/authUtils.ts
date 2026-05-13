@@ -27,12 +27,8 @@ export const getUserProfile = async (user: any) => {
   if (!user) return null;
   
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-      
+    // SECURITY: sensitive columns revoked. Use owner-only RPC + public select.
+    const { data, error } = await fetchMyFullProfile(user.id);
     if (error) throw error;
     return data;
   } catch (error) {

@@ -68,7 +68,7 @@ class UnifiedProfileService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      return this.getProfileById(user.id);
+      return this.getProfileById(user.id, true);
     } catch (error) {
       console.error('Profile service error:', error);
       return null;
@@ -76,7 +76,11 @@ class UnifiedProfileService {
   }
 
   /**
-   * Get profile by user ID with caching
+   * Get profile by user ID with caching.
+   * SECURITY: when `isCurrentUser` is true the owner-only RPC is invoked to
+   * merge sensitive columns (email/dob/birth_year/shipping_address/etc.).
+   * Other users' profiles only return PROFILE_PUBLIC_COLUMNS.
+   */
    */
   async getProfileById(userId: string): Promise<UnifiedProfileData | null> {
     // Check cache first

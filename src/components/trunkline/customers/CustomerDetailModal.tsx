@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   User, 
   DollarSign, 
@@ -14,10 +16,14 @@ import {
   MessageSquare,
   Phone,
   Mail,
-  ExternalLink
+  ExternalLink,
+  Gift,
+  Loader2
 } from "lucide-react";
 import { useCustomerAnalytics, CustomerAnalytics } from "@/hooks/trunkline/useCustomerAnalytics";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CustomerDetailModalProps {
   customerId: string | null;

@@ -91,9 +91,19 @@ const Marketplace = () => {
     <ProductProvider>
       <MainLayout>
         <Helmet>
-          <title>Gift Marketplace | Find Perfect Gifts</title>
-          <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and relationship." />
+          <title>Gift Marketplace | Elyphant</title>
+          <meta name="description" content="Browse thousands of thoughtful gifts for every occasion, interest, and recipient — with AI-powered recommendations." />
+          <meta property="og:title" content="Gift Marketplace | Elyphant" />
+          <meta property="og:description" content="Browse thousands of thoughtful gifts for every occasion, interest, and recipient — with AI-powered recommendations." />
+          <link rel="canonical" href="https://elyphant.lovable.app/marketplace" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "OnlineStore",
+            "name": "Elyphant Marketplace",
+            "url": "https://elyphant.lovable.app/marketplace",
+            "description": "Curated marketplace of gifts with AI-powered recommendations and personalized shopping."
+          })}</script>
         </Helmet>
         <div className={`min-h-screen bg-muted/50 ${isMobile ? 'safe-area-inset pb-safe' : ''}`}>
           <StreamlinedMarketplaceWrapper />

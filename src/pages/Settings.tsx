@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";
@@ -176,6 +177,12 @@ const Settings = () => {
 
   return (
     <SidebarLayout>
+      <Helmet>
+        <title>Account Settings | Elyphant</title>
+        <meta name="description" content="Manage your Elyphant profile, privacy, payment methods, addresses, and notification preferences." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://elyphant.lovable.app/settings" />
+      </Helmet>
       <SettingsLayout
         tabs={tabs}
         activeTab={activeTab}

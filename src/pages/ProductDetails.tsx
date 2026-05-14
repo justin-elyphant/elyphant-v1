@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -223,8 +224,40 @@ const ProductDetailsPage: React.FC = () => {
     );
   }
   
+  const _name = getProductName(productDetail);
+  const _imgs = getProductImages(productDetail);
+  const _desc = (productDetail as any)?.product_description || (productDetail as any)?.description || `${_name} — buy as a gift on Elyphant.`;
+  const _price = (productDetail as any)?.price;
+  const _productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: _name,
+    image: _imgs,
+    description: typeof _desc === "string" ? _desc.replace(/<[^>]+>/g, "").slice(0, 500) : undefined,
+    sku: (productDetail as any)?.product_id || id,
+    brand: (productDetail as any)?.brand ? { "@type": "Brand", name: (productDetail as any).brand } : undefined,
+    offers: _price != null ? {
+      "@type": "Offer",
+      price: typeof _price === "number" ? _price.toFixed(2) : String(_price),
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url: `https://elyphant.lovable.app/product/${id}`,
+    } : undefined,
+  };
+  const _shortDesc = typeof _desc === "string" ? _desc.replace(/<[^>]+>/g, "").slice(0, 155) : `${_name} on Elyphant.`;
+
   return (
     <MainLayout>
+    <Helmet>
+      <title>{`${_name} | Elyphant`}</title>
+      <meta name="description" content={_shortDesc} />
+      <meta property="og:title" content={`${_name} | Elyphant`} />
+      <meta property="og:description" content={_shortDesc} />
+      {_imgs[0] && <meta property="og:image" content={_imgs[0]} />}
+      <meta property="og:type" content="product" />
+      <link rel="canonical" href={`https://elyphant.lovable.app/product/${id}`} />
+      <script type="application/ld+json">{JSON.stringify(_productSchema)}</script>
+    </Helmet>
     <motion.div 
       className="min-h-screen bg-elyphant-grey pb-safe"
       initial={{ opacity: 0, x: 20 }}

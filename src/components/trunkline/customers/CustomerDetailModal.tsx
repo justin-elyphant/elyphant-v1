@@ -253,9 +253,56 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View Full Profile
                   </Button>
+
+                  <Separator />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Beta Credit Balance</span>
+                    <span className="font-semibold">${creditBalance.toFixed(2)}</span>
+                  </div>
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() => setGrantOpen(true)}
+                    disabled={hasWelcomeCredit}
+                    title={hasWelcomeCredit ? "Welcome credit already granted" : undefined}
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    {hasWelcomeCredit ? "Beta Credit Granted" : "Grant Beta Tester Credit"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
+
+            <Dialog open={grantOpen} onOpenChange={setGrantOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Grant Beta Tester Credit</DialogTitle>
+                  <DialogDescription>
+                    Issue a one-time welcome beta credit to this customer. Default is $100.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <Label htmlFor="grant-amount">Amount (USD)</Label>
+                  <Input
+                    id="grant-amount"
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={grantAmount}
+                    onChange={(e) => setGrantAmount(e.target.value)}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGrantOpen(false)} disabled={granting}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleGrantCredit} disabled={granting}>
+                    {granting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Grant Credit
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Recent Orders */}
             <Card>

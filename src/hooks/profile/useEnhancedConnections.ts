@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface EnhancedConnection {
   id: string;
@@ -60,7 +61,7 @@ export const useEnhancedConnections = () => {
       // First fetch connections and explicitly get both directions for permission checking
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
       
       if (connectionsError) throw connectionsError;

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserConnection } from "@/types/supabase";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export const useConnections = () => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ export const useConnections = () => {
       // Get all connections where user is either the requester or receiver
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
       
       if (connectionsError) throw connectionsError;

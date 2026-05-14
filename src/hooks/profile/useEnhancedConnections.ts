@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface EnhancedConnection {
   id: string;
@@ -60,7 +61,7 @@ export const useEnhancedConnections = () => {
       // First fetch connections and explicitly get both directions for permission checking
       const { data: connectionsData, error: connectionsError } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .or(`user_id.eq.${user.id},connected_user_id.eq.${user.id}`);
       
       if (connectionsError) throw connectionsError;
@@ -102,7 +103,8 @@ export const useEnhancedConnections = () => {
         // For pending invitations OR outgoing pending requests, use the pending recipient data
         if (conn.status === 'pending_invitation' || conn.status === 'pending') {
           profileName = conn.pending_recipient_name || profileName;
-          profileEmail = conn.pending_recipient_email || profileEmail;
+          // TODO (wave 2): hydrate pending_recipient_email via fetchMyPendingConnection RPC
+          profileEmail = (conn as any).pending_recipient_email || profileEmail;
           profileUsername = conn.pending_recipient_name 
             ? `@${conn.pending_recipient_name.toLowerCase().replace(/\s+/g, '')}`
             : profileUsername;

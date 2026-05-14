@@ -3,6 +3,7 @@ import { unifiedGiftManagementService } from "./UnifiedGiftManagementService";
 import { authDebugService } from "./authDebugService";
 import { databaseToForm } from "@/utils/addressStandardization";
 import { isValidRelationshipType } from "@/config/relationshipTypes";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface UnifiedRecipient {
   id: string;
@@ -128,12 +129,14 @@ export const unifiedRecipientService = {
     try {
       const { data: pendingConnections } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .eq('user_id', user.id)
         .eq('status', 'pending_invitation');
 
       if (pendingConnections) {
-        pendingConnections.forEach(conn => {
+        pendingConnections.forEach((connRow: any) => {
+          // TODO (wave 2): hydrate pending_recipient_email/phone/dob/shipping_address via fetchMyPendingConnection RPC
+          const conn = connRow as any;
           // Normalize pending_shipping_address to match connected recipient format
           let normalizedAddress = undefined;
           if (conn.pending_shipping_address) {

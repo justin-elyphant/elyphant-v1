@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 // =============================================================================
 // UNIFIED MESSAGE TYPES
@@ -751,7 +752,7 @@ class UnifiedMessagingService {
     try {
       const { data: connections, error } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .or(`and(user_id.eq.${userId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${userId})`)
         .eq('status', 'accepted');
 

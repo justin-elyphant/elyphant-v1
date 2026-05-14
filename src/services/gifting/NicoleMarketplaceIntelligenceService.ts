@@ -37,6 +37,7 @@
 import { Product } from "@/types/product";
 import { productCatalogService } from "@/services/ProductCatalogService";
 import { supabase } from "@/integrations/supabase/client";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface NicoleProductContext {
   recipient_id?: string;
@@ -198,7 +199,7 @@ class NicoleMarketplaceIntelligenceService {
             // Check if users are connected (friends/family)
             const { data: connection } = await supabase
               .from('user_connections')
-              .select('*')
+              .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
               .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${currentUserId})`)
               .eq('status', 'accepted')
               .limit(1);

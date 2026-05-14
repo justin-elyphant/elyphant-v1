@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface ConnectionRequest {
   id: string;
@@ -30,7 +31,7 @@ export const getIncomingConnectionRequests = async (userId: string): Promise<Con
     // First get the connection records
     const { data: connections, error } = await supabase
       .from('user_connections')
-      .select('*')
+      .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
       .eq('connected_user_id', userId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
@@ -85,7 +86,7 @@ export const getOutgoingConnectionRequests = async (userId: string): Promise<Con
     // First get the connection records
     const { data: connections, error } = await supabase
       .from('user_connections')
-      .select('*')
+      .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
       .eq('user_id', userId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 import type { Profile } from "@/types/profile";
 
 export interface ConnectionData {
@@ -27,7 +28,7 @@ export const connectionService = {
       // Try first direction: current user -> target user
       const { data: conn1 } = await supabase
         .from('user_connections')
-        .select('*')
+        .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
         .eq('user_id', userId)
         .eq('connected_user_id', connectedUserId)
         .eq('status', 'accepted')
@@ -41,7 +42,7 @@ export const connectionService = {
         // Try second direction: target user -> current user
         const { data: conn2 } = await supabase
           .from('user_connections')
-          .select('*')
+          .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
           .eq('user_id', connectedUserId)
           .eq('connected_user_id', userId)
           .eq('status', 'accepted')

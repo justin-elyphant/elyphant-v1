@@ -198,7 +198,7 @@ class NicoleMarketplaceIntelligenceService {
             // Check if users are connected (friends/family)
             const { data: connection } = await supabase
               .from('user_connections')
-              .select('*')
+              .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
               .or(`and(user_id.eq.${currentUserId},connected_user_id.eq.${recipientId}),and(user_id.eq.${recipientId},connected_user_id.eq.${currentUserId})`)
               .eq('status', 'accepted')
               .limit(1);

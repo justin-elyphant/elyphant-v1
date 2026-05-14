@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedGiftIntelligenceService } from "./enhancedGiftIntelligenceService";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface EnhancedAutoGiftingRule {
   id?: string;
@@ -57,7 +58,7 @@ export class EnhancedAutoGiftingService {
     // Get connection data
     const { data: connection } = await supabase
       .from('user_connections')
-      .select('*')
+      .select(USER_CONNECTIONS_PUBLIC_COLUMNS)
       .eq('user_id', userId)
       .eq('connected_user_id', recipientId)
       .single();

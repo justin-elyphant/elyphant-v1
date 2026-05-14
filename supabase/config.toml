@@ -221,3 +221,6 @@ schedule = "0 10 * * 1"
 [functions.trunkline-list-customers]
 verify_jwt = true
 
+[functions.trunkline-grant-beta-credit]
+verify_jwt = true
+

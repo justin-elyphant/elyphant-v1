@@ -37,6 +37,7 @@
 import { Product } from "@/types/product";
 import { productCatalogService } from "@/services/ProductCatalogService";
 import { supabase } from "@/integrations/supabase/client";
+import { USER_CONNECTIONS_PUBLIC_COLUMNS } from "@/utils/userConnectionsAccess";
 
 export interface NicoleProductContext {
   recipient_id?: string;

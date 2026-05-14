@@ -37,6 +37,11 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
   const [customer, setCustomer] = useState<any>(null);
   const [analytics, setAnalytics] = useState<CustomerAnalytics | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
+  const [creditBalance, setCreditBalance] = useState<number>(0);
+  const [hasWelcomeCredit, setHasWelcomeCredit] = useState<boolean>(false);
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [grantAmount, setGrantAmount] = useState<string>("100");
+  const [granting, setGranting] = useState(false);
 
   useEffect(() => {
     if (customerId && isOpen) {
@@ -44,19 +49,57 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
     }
   }, [customerId, isOpen]);
 
+  const loadCreditInfo = async (id: string) => {
+    const [{ data: balance }, { data: welcomeRow }] = await Promise.all([
+      supabase.rpc("get_beta_credit_balance", { p_user_id: id }),
+      supabase
+        .from("beta_credits")
+        .select("id")
+        .eq("user_id", id)
+        .eq("type", "welcome")
+        .maybeSingle(),
+    ]);
+    setCreditBalance(Number(balance) || 0);
+    setHasWelcomeCredit(!!welcomeRow);
+  };
+
   const loadCustomerData = async () => {
     if (!customerId) return;
     
     try {
-      // Load analytics
       const analyticsData = await getCustomerAnalytics(customerId);
       setAnalytics(analyticsData);
       
-      // Load order history
       const orderHistory = await getCustomerOrderHistory(customerId);
       setOrders(orderHistory);
+
+      await loadCreditInfo(customerId);
     } catch (error) {
       console.error('Error loading customer data:', error);
+    }
+  };
+
+  const handleGrantCredit = async () => {
+    if (!customerId) return;
+    const amount = Number(grantAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    setGranting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("trunkline-grant-beta-credit", {
+        body: { user_id: customerId, amount },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Granted $${amount} beta credit`);
+      setGrantOpen(false);
+      await loadCreditInfo(customerId);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to grant credit");
+    } finally {
+      setGranting(false);
     }
   };
 

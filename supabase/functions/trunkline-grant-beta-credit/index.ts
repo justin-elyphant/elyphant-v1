@@ -75,8 +75,45 @@ serve(async (req) => {
 
     if (insertError) throw insertError;
 
+    // Send beta_approved welcome email (non-blocking)
+    let emailSent = false;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name, username, email")
+        .eq("id", user_id)
+        .maybeSingle();
+
+      const recipientEmail = profile?.email;
+      const recipientName =
+        profile?.name || profile?.username || (recipientEmail ? recipientEmail.split("@")[0] : "there");
+
+      if (recipientEmail) {
+        const { error: emailError } = await supabase.functions.invoke("ecommerce-email-orchestrator", {
+          body: {
+            eventType: "beta_approved",
+            recipientEmail,
+            data: {
+              recipient_name: recipientName,
+              credit_amount: amount,
+              referrer_name: "the Elyphant team",
+            },
+          },
+        });
+        if (emailError) {
+          console.error("trunkline-grant-beta-credit welcome email error:", emailError);
+        } else {
+          emailSent = true;
+        }
+      } else {
+        console.warn("trunkline-grant-beta-credit: no email on profile, skipping welcome email");
+      }
+    } catch (emailErr) {
+      console.error("trunkline-grant-beta-credit welcome email exception:", emailErr);
+    }
+
     return new Response(
-      JSON.stringify({ success: true, credit }),
+      JSON.stringify({ success: true, credit, email_sent: emailSent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

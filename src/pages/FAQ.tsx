@@ -310,6 +310,14 @@ const FAQ = () => {
 
   return (
     <MainLayout>
+      <Helmet>
+        <title>FAQ — Returns, Gifting & Account Help | Elyphant</title>
+        <meta name="description" content="Answers about Elyphant: returns through Amazon gift receipts, automated gifting, wishlists, privacy, and account setup." />
+        <meta property="og:title" content="FAQ — Returns, Gifting & Account Help | Elyphant" />
+        <meta property="og:description" content="Answers about Elyphant: returns, automated gifting, wishlists, privacy, and account setup." />
+        <link rel="canonical" href="https://elyphant.lovable.app/faq" />
+        <script type="application/ld+json">{JSON.stringify(faqSchema(faqData.map(f => ({ question: f.question, answer: f.answer }))))}</script>
+      </Helmet>
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Help Center</h1>

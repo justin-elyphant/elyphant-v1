@@ -24,6 +24,7 @@ import { UnifiedRecipient } from "@/services/unifiedRecipientService";
 import { toast } from "sonner";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import MainLayout from "@/components/layout/MainLayout";
+import { Helmet } from "react-helmet-async";
 import { unifiedPaymentService } from '@/services/payment/UnifiedPaymentService';
 import { formatScheduledDate } from "@/utils/dateUtils";
 
@@ -279,6 +280,12 @@ const Cart = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Your Cart | Elyphant</title>
+        <meta name="description" content="Review the gifts in your Elyphant cart, assign recipients, and check out securely." />
+        <meta name="robots" content="noindex" />
+        <link rel="canonical" href="https://elyphant.lovable.app/cart" />
+      </Helmet>
       <ZincMetadataDebugger />
       <div className={cn(
         "container mx-auto px-4 max-w-4xl mobile-container mobile-content-spacing overflow-x-hidden",

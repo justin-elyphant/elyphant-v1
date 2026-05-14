@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/components/layout/MainLayout";
+import { faqSchema } from "@/components/seo/schemas";
 
 interface FAQItem {
   question: string;

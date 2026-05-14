@@ -12,26 +12,6 @@
  */
 
 // All columns the `authenticated` role still has SELECT on for `user_connections`.
-export const USER_CONNECTIONS_PUBLIC_COLUMNS = [
-  "id",
-  "user_id",
-  "connected_user_id",
-  "status",
-  "relationship_type",
-  "relationship_context",
-  "follow_type",
-  "data_access_permissions",
-  "gift_occasion",
-  "gift_message",
-  "has_pending_gift",
-  "invitation_token",
-  "invitation_sent_at",
-  "invitation_reminder_count",
-  "last_reminder_sent_at",
-  "pending_recipient_name",
-  "accepted_at",
-  "blocked_at",
-  "blocked_by",
-  "created_at",
-  "updated_at",
-].join(", ");
+// Declared as a string literal so PostgREST type inference produces the correct row shape.
+export const USER_CONNECTIONS_PUBLIC_COLUMNS =
+  "id, user_id, connected_user_id, status, relationship_type, relationship_context, follow_type, data_access_permissions, gift_occasion, gift_message, has_pending_gift, invitation_token, invitation_sent_at, invitation_reminder_count, last_reminder_sent_at, pending_recipient_name, accepted_at, blocked_at, blocked_by, created_at, updated_at" as const;

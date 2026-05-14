@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   User, 
   DollarSign, 
@@ -14,10 +16,14 @@ import {
   MessageSquare,
   Phone,
   Mail,
-  ExternalLink
+  ExternalLink,
+  Gift,
+  Loader2
 } from "lucide-react";
 import { useCustomerAnalytics, CustomerAnalytics } from "@/hooks/trunkline/useCustomerAnalytics";
 import { useCustomers } from "@/hooks/trunkline/useCustomers";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CustomerDetailModalProps {
   customerId: string | null;
@@ -31,6 +37,11 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
   const [customer, setCustomer] = useState<any>(null);
   const [analytics, setAnalytics] = useState<CustomerAnalytics | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
+  const [creditBalance, setCreditBalance] = useState<number>(0);
+  const [hasWelcomeCredit, setHasWelcomeCredit] = useState<boolean>(false);
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [grantAmount, setGrantAmount] = useState<string>("100");
+  const [granting, setGranting] = useState(false);
 
   useEffect(() => {
     if (customerId && isOpen) {
@@ -38,19 +49,57 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
     }
   }, [customerId, isOpen]);
 
+  const loadCreditInfo = async (id: string) => {
+    const [{ data: balance }, { data: welcomeRow }] = await Promise.all([
+      supabase.rpc("get_beta_credit_balance", { p_user_id: id }),
+      supabase
+        .from("beta_credits")
+        .select("id")
+        .eq("user_id", id)
+        .eq("type", "welcome")
+        .maybeSingle(),
+    ]);
+    setCreditBalance(Number(balance) || 0);
+    setHasWelcomeCredit(!!welcomeRow);
+  };
+
   const loadCustomerData = async () => {
     if (!customerId) return;
     
     try {
-      // Load analytics
       const analyticsData = await getCustomerAnalytics(customerId);
       setAnalytics(analyticsData);
       
-      // Load order history
       const orderHistory = await getCustomerOrderHistory(customerId);
       setOrders(orderHistory);
+
+      await loadCreditInfo(customerId);
     } catch (error) {
       console.error('Error loading customer data:', error);
+    }
+  };
+
+  const handleGrantCredit = async () => {
+    if (!customerId) return;
+    const amount = Number(grantAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    setGranting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("trunkline-grant-beta-credit", {
+        body: { user_id: customerId, amount },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Granted $${amount} beta credit`);
+      setGrantOpen(false);
+      await loadCreditInfo(customerId);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to grant credit");
+    } finally {
+      setGranting(false);
     }
   };
 
@@ -204,9 +253,56 @@ export default function CustomerDetailModal({ customerId, isOpen, onClose }: Cus
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View Full Profile
                   </Button>
+
+                  <Separator />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Beta Credit Balance</span>
+                    <span className="font-semibold">${creditBalance.toFixed(2)}</span>
+                  </div>
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() => setGrantOpen(true)}
+                    disabled={hasWelcomeCredit}
+                    title={hasWelcomeCredit ? "Welcome credit already granted" : undefined}
+                  >
+                    <Gift className="h-4 w-4 mr-2" />
+                    {hasWelcomeCredit ? "Beta Credit Granted" : "Grant Beta Tester Credit"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
+
+            <Dialog open={grantOpen} onOpenChange={setGrantOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Grant Beta Tester Credit</DialogTitle>
+                  <DialogDescription>
+                    Issue a one-time welcome beta credit to this customer. Default is $100.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <Label htmlFor="grant-amount">Amount (USD)</Label>
+                  <Input
+                    id="grant-amount"
+                    type="number"
+                    min={1}
+                    max={500}
+                    value={grantAmount}
+                    onChange={(e) => setGrantAmount(e.target.value)}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGrantOpen(false)} disabled={granting}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleGrantCredit} disabled={granting}>
+                    {granting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Grant Credit
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Recent Orders */}
             <Card>

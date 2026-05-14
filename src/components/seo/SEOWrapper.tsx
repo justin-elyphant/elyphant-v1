@@ -28,8 +28,8 @@ const SEOWrapper: React.FC<SEOProps> = ({
   schema,
   children
 }) => {
-  const currentUrl = url || `https://elyphant.ai${window.location.pathname}`;
-  const imageUrl = image.startsWith('http') ? image : `https://elyphant.ai${image}`;
+  const currentUrl = url || `https://elyphant.lovable.app${typeof window !== 'undefined' ? window.location.pathname : ''}`;
+  const imageUrl = image.startsWith('http') ? image : `https://elyphant.lovable.app${image}`;
 
   return (
     <>

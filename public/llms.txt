@@ -1,0 +1,22 @@
+# Elyphant
+
+> AI-powered social gifting platform that combines verified wishlists, Nicole AI recommendations, and automated gifting to help people send gifts recipients actually want.
+
+Elyphant connects friends and family through wishlists, schedules birthday and holiday gifts automatically, and uses Nicole AI to suggest personalized presents from a curated marketplace.
+
+## Pages
+
+- [Home](/home): Personalized landing with upcoming events and recommendations.
+- [Marketplace](/marketplace): Curated gift catalog with AI search and filters.
+- [Discover](/discover): Browse trending gifts and lifestyle collections.
+- [AI Gifting](/ai-gifting): Nicole AI conversational gift finder.
+- [Auto Gifts](/recurring-gifts): Set up recurring automated gifts for events.
+- [Gifting](/gifting): Schedule and send gifts to connections.
+- [Cart](/cart): Review items and check out.
+- [FAQ](/faq): Returns, fulfillment, privacy, and platform questions.
+- [Sign in](/auth): Account access and sign-up.
+
+## Optional
+
+- [Privacy](/privacy): Privacy policy.
+- [Terms](/terms): Terms of service.

@@ -1,8 +1,24 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
+export interface AdminCustomer {
+  id: string;
+  name: string | null;
+  username: string | null;
+  email: string | null;
+  profile_image: string | null;
+  profile_type: string | null;
+  user_type: string | null;
+  signup_source: string | null;
+  onboarding_completed: boolean | null;
+  city: string | null;
+  state: string | null;
+  has_purchased: boolean | null;
+  has_given_gifts: boolean | null;
+  has_wishlist: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 export interface CustomerFilters {
   search?: string;
@@ -14,7 +30,7 @@ export interface CustomerFilters {
 }
 
 export const useCustomers = () => {
-  const [customers, setCustomers] = useState<Profile[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<CustomerFilters>({});
@@ -24,30 +40,24 @@ export const useCustomers = () => {
       setLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "trunkline-list-customers",
+        {
+          body: {
+            search: filters.search || undefined,
+            dateFrom: filters.dateRange?.from.toISOString(),
+            dateTo: filters.dateRange?.to.toISOString(),
+          },
+        }
+      );
 
-      // Apply filters
-      if (filters.search) {
-        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
-      }
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
 
-      if (filters.dateRange) {
-        query = query
-          .gte('created_at', filters.dateRange.from.toISOString())
-          .lte('created_at', filters.dateRange.to.toISOString());
-      }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) throw queryError;
-
-      setCustomers(data || []);
+      setCustomers((data?.customers as AdminCustomer[]) || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch customers');
-      console.error('Error fetching customers:', err);
+      setError(err instanceof Error ? err.message : "Failed to fetch customers");
+      console.error("Error fetching customers:", err);
     } finally {
       setLoading(false);
     }
@@ -60,18 +70,18 @@ export const useCustomers = () => {
   const getCustomerOrderHistory = async (customerId: string) => {
     try {
       const { data, error } = await supabase
-        .from('orders')
+        .from("orders")
         .select(`
           *,
           order_items(*)
         `)
-        .eq('user_id', customerId)
-        .order('created_at', { ascending: false });
+        .eq("user_id", customerId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
     } catch (err) {
-      console.error('Error fetching customer order history:', err);
+      console.error("Error fetching customer order history:", err);
       return [];
     }
   };
@@ -83,6 +93,6 @@ export const useCustomers = () => {
     filters,
     setFilters,
     getCustomerOrderHistory,
-    refetch: fetchCustomers
+    refetch: fetchCustomers,
   };
 };

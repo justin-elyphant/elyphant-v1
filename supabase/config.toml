@@ -217,3 +217,7 @@ schedule = "0 3 * * 0"
 [[crons.beta_checkin_emailer]]
 function_name = "beta-checkin-emailer"
 schedule = "0 10 * * 1"
+
+[functions.trunkline-list-customers]
+verify_jwt = true
+

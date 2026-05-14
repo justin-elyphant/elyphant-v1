@@ -134,7 +134,9 @@ export const unifiedRecipientService = {
         .eq('status', 'pending_invitation');
 
       if (pendingConnections) {
-        pendingConnections.forEach(conn => {
+        pendingConnections.forEach((connRow: any) => {
+          // TODO (wave 2): hydrate pending_recipient_email/phone/dob/shipping_address via fetchMyPendingConnection RPC
+          const conn = connRow as any;
           // Normalize pending_shipping_address to match connected recipient format
           let normalizedAddress = undefined;
           if (conn.pending_shipping_address) {

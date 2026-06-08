@@ -842,3 +842,28 @@ body {
   border-top: 1px solid hsl(var(--border));
   border-bottom: 1px solid hsl(var(--border));
 }
+
+/* ============================================================
+   Investor Pitch Deck — high-contrast text for projection / mobile
+   Brightens muted greys without losing the grey aesthetic.
+   ============================================================ */
+.investor-deck {
+  /* Brighter muted token, scoped to the deck only */
+  --muted-foreground: 220 18% 82%;
+}
+
+/* Neutralize opacity-dimmed muted text (e.g. text-muted-foreground/50, /60, /70, /80)
+   which becomes unreadable on dark backgrounds and via AirPlay. */
+.investor-deck [class*="text-muted-foreground/"] {
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 0.95;
+}
+
+/* Bump any raw light-grey utilities used inside the deck */
+.investor-deck .text-gray-400,
+.investor-deck .text-gray-500,
+.investor-deck .text-slate-400,
+.investor-deck .text-zinc-400 {
+  color: hsl(220 16% 86%);
+}
+

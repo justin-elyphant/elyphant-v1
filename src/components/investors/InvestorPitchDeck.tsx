@@ -180,7 +180,7 @@ const InvestorPitchDeck = () => {
     <div 
       ref={containerRef}
       className={cn(
-        "bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 overscroll-none",
+        "investor-deck bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 overscroll-none",
         // Lock to viewport on mobile/tablet to prevent iOS body scroll/rubber-band
         "fixed inset-0 lg:static lg:min-h-screen",
         isFullscreen && "fixed inset-0 z-50"

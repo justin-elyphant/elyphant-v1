@@ -48,9 +48,12 @@ const SlideWrapper = ({
       "absolute inset-0 flex flex-col items-center px-4 sm:px-6 md:px-8 lg:px-12 pt-6 md:pt-8",
       // Mobile/tablet: scrollable; center vertically for hero slides, otherwise top-aligned
       centerOnMobile ? "overflow-y-auto justify-center" : "overflow-y-auto justify-start",
-      // Desktop: restore centered/clipped composition unless the slide opts in to scroll
+      // Desktop: always vertically center the content. If a slide opts into
+      // verticalScroll, allow overflow scrolling but still center when it fits
+      // (prevents content from pooling at the top in fullscreen, where the
+      // viewport is taller than the 16:10 framed view).
       verticalScroll
-        ? "lg:overflow-y-auto lg:justify-start lg:pb-8"
+        ? "lg:overflow-y-auto lg:justify-center lg:pb-8"
         : "lg:overflow-hidden lg:justify-center lg:pb-8",
       className
     )}

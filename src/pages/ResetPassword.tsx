@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
+import MainLayout from '@/components/layout/MainLayout';
 
 const passwordSchema = z.object({
   password: z.string()
@@ -178,21 +179,23 @@ const ResetPassword = () => {
   // Show loading state while verifying token
   if (isValidToken === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Helmet>
-          <title>Verifying Reset | Elyphant</title>
-          <meta name="description" content="Verifying your password reset link." />
-          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
-        </Helmet>
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Verifying reset link...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
+          <Helmet>
+            <title>Verifying Reset | Elyphant</title>
+            <meta name="description" content="Verifying your password reset link." />
+            <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+          </Helmet>
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Verifying reset link...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -220,55 +223,58 @@ const ResetPassword = () => {
     };
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Helmet>
-          <title>Invalid Reset Link | Elyphant</title>
-          <meta name="description" content="Your password reset link is invalid or expired. Request a new secure link." />
-          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
-        </Helmet>
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 text-red-500">
-              <AlertCircle size={48} />
-            </div>
-            <CardTitle>Invalid Reset Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired. Please request a new one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Button 
-                onClick={handleResend}
-                className="w-full"
-                disabled={loading}
-              >
-                {lastResetEmail ? 'Send Me a New Secure Link' : 'Request New Reset Link'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  // SECURITY: Clear all auth state when going back
-                  sessionStorage.removeItem('password_reset_tokens');
-                  window.history.replaceState({}, document.title, window.location.pathname);
-                  navigate('/auth');
-                }}
-              >
-                Back to Sign In
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
+          <Helmet>
+            <title>Invalid Reset Link | Elyphant</title>
+            <meta name="description" content="Your password reset link is invalid or expired. Request a new secure link." />
+            <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+          </Helmet>
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 text-red-500">
+                <AlertCircle size={48} />
+              </div>
+              <CardTitle>Invalid Reset Link</CardTitle>
+              <CardDescription>
+                This password reset link is invalid or has expired. Please request a new one.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleResend}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {lastResetEmail ? 'Send Me a New Secure Link' : 'Request New Reset Link'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // SECURITY: Clear all auth state when going back
+                    sessionStorage.removeItem('password_reset_tokens');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    navigate('/auth');
+                  }}
+                >
+                  Back to Sign In
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 
   const passwordStrength = getPasswordStrength(formData.password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <MainLayout>
+      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
       <Helmet>
         <title>Reset Password | Elyphant</title>
         <meta name="description" content="Reset your Elyphant account password securely." />
@@ -373,7 +379,8 @@ const ResetPassword = () => {
           </form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

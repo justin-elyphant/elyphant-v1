@@ -223,48 +223,50 @@ const ResetPassword = () => {
     };
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Helmet>
-          <title>Invalid Reset Link | Elyphant</title>
-          <meta name="description" content="Your password reset link is invalid or expired. Request a new secure link." />
-          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
-        </Helmet>
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 text-red-500">
-              <AlertCircle size={48} />
-            </div>
-            <CardTitle>Invalid Reset Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired. Please request a new one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Button 
-                onClick={handleResend}
-                className="w-full"
-                disabled={loading}
-              >
-                {lastResetEmail ? 'Send Me a New Secure Link' : 'Request New Reset Link'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  // SECURITY: Clear all auth state when going back
-                  sessionStorage.removeItem('password_reset_tokens');
-                  window.history.replaceState({}, document.title, window.location.pathname);
-                  navigate('/auth');
-                }}
-              >
-                Back to Sign In
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
+          <Helmet>
+            <title>Invalid Reset Link | Elyphant</title>
+            <meta name="description" content="Your password reset link is invalid or expired. Request a new secure link." />
+            <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+          </Helmet>
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 text-red-500">
+                <AlertCircle size={48} />
+              </div>
+              <CardTitle>Invalid Reset Link</CardTitle>
+              <CardDescription>
+                This password reset link is invalid or has expired. Please request a new one.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleResend}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  {lastResetEmail ? 'Send Me a New Secure Link' : 'Request New Reset Link'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // SECURITY: Clear all auth state when going back
+                    sessionStorage.removeItem('password_reset_tokens');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    navigate('/auth');
+                  }}
+                >
+                  Back to Sign In
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 

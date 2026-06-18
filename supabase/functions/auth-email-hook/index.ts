@@ -45,13 +45,15 @@ interface EmailActionPayload {
 
 function buildActionUrl(p: EmailActionPayload): string {
   const { site_url, token_hash, email_action_type, redirect_to } = p.email_data;
-  const base = site_url.replace(/\/$/, "");
+  // site_url may already include /auth/v1 (Supabase sends the auth API base).
+  // Normalize to the project root, then append /auth/v1/verify exactly once.
+  const root = site_url.replace(/\/$/, "").replace(/\/auth\/v1$/, "");
   const params = new URLSearchParams({
     token_hash,
     type: email_action_type,
-    redirect_to: redirect_to || `${base}/`,
+    redirect_to: redirect_to || `${root}/`,
   });
-  return `${base}/auth/v1/verify?${params.toString()}`;
+  return `${root}/auth/v1/verify?${params.toString()}`;
 }
 
 function renderTemplate(payload: EmailActionPayload): { subject: string; html: string } {

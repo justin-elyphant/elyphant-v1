@@ -218,14 +218,21 @@ class UnifiedAuthService {
 
       // Send security notification (default behavior)
       if (options.sendNotification !== false) {
-        const lastResetEmail = localStorage.getItem('lastResetEmail');
-        if (lastResetEmail) {
+        const notifyEmail = localStorage.getItem('lastResetEmail') || user.email;
+        if (notifyEmail) {
           try {
             await supabase.functions.invoke('ecommerce-email-orchestrator', {
-              body: { 
+              body: {
                 eventType: 'password_changed',
-                recipientEmail: lastResetEmail,
-                data: { email: lastResetEmail }
+                recipientEmail: notifyEmail,
+                data: {
+                  email: notifyEmail,
+                  first_name: (user.user_metadata as any)?.first_name || (user.user_metadata as any)?.name?.split(' ')?.[0] || '',
+                  changed_at: new Date().toISOString(),
+                  device: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown device',
+                  support_url: 'https://elyphant.ai/contact',
+                  reset_url: 'https://elyphant.ai/forgot-password',
+                }
               }
             });
           } catch (notificationError) {

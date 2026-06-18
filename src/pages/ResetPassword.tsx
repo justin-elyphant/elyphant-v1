@@ -273,7 +273,8 @@ const ResetPassword = () => {
   const passwordStrength = getPasswordStrength(formData.password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <MainLayout>
+      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
       <Helmet>
         <title>Reset Password | Elyphant</title>
         <meta name="description" content="Reset your Elyphant account password securely." />

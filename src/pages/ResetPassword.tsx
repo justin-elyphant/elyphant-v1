@@ -379,7 +379,8 @@ const ResetPassword = () => {
           </form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

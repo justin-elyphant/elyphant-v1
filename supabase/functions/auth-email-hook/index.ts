@@ -21,6 +21,7 @@ const corsHeaders = {
 };
 
 const fontStack = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`;
+const productionAppUrl = "https://elyphant.ai";
 
 interface EmailActionPayload {
   user: { email: string; user_metadata?: Record<string, unknown> };
@@ -50,10 +51,9 @@ function buildActionUrl(p: EmailActionPayload): string {
   const root = site_url.replace(/\/$/, "").replace(/\/auth\/v1$/, "");
 
   if (email_action_type === "recovery") {
-    const resetUrl = new URL(redirect_to || "https://elyphant.ai/reset-password");
-    if (resetUrl.pathname === "/reset-password-launch" || resetUrl.pathname === "/reset-password/launch") {
-      resetUrl.pathname = "/reset-password";
-    }
+    // Password reset links must never inherit Lovable editor/preview origins from redirect_to.
+    // Always send users to the public app domain where the reset route is configured.
+    const resetUrl = new URL("/reset-password", productionAppUrl);
     resetUrl.searchParams.set("token_hash", token_hash);
     resetUrl.searchParams.set("type", "recovery");
     return resetUrl.toString();

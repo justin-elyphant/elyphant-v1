@@ -522,6 +522,43 @@ const welcomeEmailTemplate = (props: any): string => {
   return baseEmailTemplate({ content, preheader: `Welcome to Elyphant, ${props.first_name}` });
 };
 
+// Password Changed — security notification
+const passwordChangedTemplate = (props: any): string => {
+  const when = props.changed_at
+    ? new Date(props.changed_at).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
+    : new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const device = props.device || props.user_agent || 'Unknown device';
+  const location = props.location || 'Location unavailable';
+  const supportUrl = props.support_url || 'https://elyphant.ai/contact';
+  const resetUrl = props.reset_url || 'https://elyphant.ai/forgot-password';
+  const content = `
+    <h2 style="margin: 0 0 8px 0; font-family: ${fontStack}; font-size: 28px; font-weight: 300; color: #1a1a1a; letter-spacing: -0.02em;">Your password was changed.</h2>
+    <p style="margin: 0 0 24px 0; font-family: ${fontStack}; font-size: 16px; color: #6b7280; line-height: 1.6;">
+      Hi${props.first_name ? ` ${props.first_name}` : ''}, this is a confirmation that the password for your Elyphant account was just updated.
+    </p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 28px 0; background: #f9fafb; border-radius: 6px;">
+      <tr><td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #6b7280;">When</td>
+          <td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #1a1a1a; text-align: right;">${when}</td></tr>
+      <tr><td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb;">Device</td>
+          <td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #1a1a1a; text-align: right; border-top: 1px solid #e5e7eb;">${device}</td></tr>
+      <tr><td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb;">Location</td>
+          <td style="padding: 14px 18px; font-family: ${fontStack}; font-size: 13px; color: #1a1a1a; text-align: right; border-top: 1px solid #e5e7eb;">${location}</td></tr>
+    </table>
+    <p style="margin: 0 0 12px 0; font-family: ${fontStack}; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; font-weight: 500;">Didn't make this change?</p>
+    <p style="margin: 0 0 20px 0; font-family: ${fontStack}; font-size: 14px; color: #4b5563; line-height: 1.6;">
+      If you did not change your password, your account may be compromised. Please <a href="${resetUrl}" style="color: #DC2626; text-decoration: underline;">reset your password</a> immediately and <a href="${supportUrl}" style="color: #DC2626; text-decoration: underline;">contact our support team</a>.
+    </p>
+    <table style="width: 100%;">
+      <tr><td align="center">
+        <a href="${supportUrl}" style="display: inline-block; padding: 14px 40px; background: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-family: ${fontStack}; font-size: 14px; font-weight: 500; letter-spacing: 0.02em;">
+          Contact Support
+        </a>
+      </td></tr>
+    </table>
+  `;
+  return baseEmailTemplate({ content, preheader: `Your Elyphant password was just changed` });
+};
+
 // Helper to format occasion names
 const formatOccasion = (occasion: string): string => {
   if (!occasion) return 'Special Occasion';

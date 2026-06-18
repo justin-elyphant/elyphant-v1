@@ -179,21 +179,23 @@ const ResetPassword = () => {
   // Show loading state while verifying token
   if (isValidToken === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Helmet>
-          <title>Verifying Reset | Elyphant</title>
-          <meta name="description" content="Verifying your password reset link." />
-          <link rel="canonical" href={`${window.location.origin}/reset-password`} />
-        </Helmet>
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Verifying reset link...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MainLayout>
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4 pt-safe pb-safe">
+          <Helmet>
+            <title>Verifying Reset | Elyphant</title>
+            <meta name="description" content="Verifying your password reset link." />
+            <link rel="canonical" href={`${window.location.origin}/reset-password`} />
+          </Helmet>
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Verifying reset link...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
     );
   }
 

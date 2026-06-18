@@ -260,6 +260,7 @@ function AppContent() {
           <Route path="/profile-setup" element={<StreamlinedProfileSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password-launch" element={<ResetPassword />} />
           <Route path="/reset-password/launch" element={<ResetPasswordLaunch />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/marketplace/for/:recipientName" element={<Marketplace />} />

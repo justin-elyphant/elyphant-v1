@@ -40,6 +40,26 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const verifyTokenOrSession = async () => {
+      // 1) Handle custom recovery links that carry Supabase's token hash in the query string.
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+      if (tokenHash && type === 'recovery') {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery'
+        });
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (!error) {
+          toast.success('Reset link verified successfully!');
+          setIsValidToken(true);
+          return;
+        }
+
+        console.warn('Recovery token verification failed:', error.message);
+      }
+
       // 1) Try to process URL tokens using UnifiedAuthService
       const urlResult = await unifiedAuthService.processUrlTokens();
       if (urlResult.isValid) {
@@ -69,7 +89,7 @@ const ResetPassword = () => {
     };
 
     verifyTokenOrSession();
-  }, []);
+  }, [searchParams]);
 
   const validateForm = () => {
     try {

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import { unifiedAuthService } from '@/services/auth/UnifiedAuthService';
+import MainLayout from '@/components/layout/MainLayout';
 
 const passwordSchema = z.object({
   password: z.string()

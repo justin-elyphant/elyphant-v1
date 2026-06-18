@@ -70,7 +70,7 @@ class UnifiedAuthService {
 
       // Call Supabase password reset
       const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-        redirectTo: `${window.location.origin}/reset-password-launch`
+        redirectTo: `${window.location.origin}/reset-password`
       });
 
       if (error) {

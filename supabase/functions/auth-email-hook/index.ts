@@ -48,6 +48,17 @@ function buildActionUrl(p: EmailActionPayload): string {
   // site_url may already include /auth/v1 (Supabase sends the auth API base).
   // Normalize to the project root, then append /auth/v1/verify exactly once.
   const root = site_url.replace(/\/$/, "").replace(/\/auth\/v1$/, "");
+
+  if (email_action_type === "recovery") {
+    const resetUrl = new URL(redirect_to || "https://elyphant.ai/reset-password");
+    if (resetUrl.pathname === "/reset-password-launch" || resetUrl.pathname === "/reset-password/launch") {
+      resetUrl.pathname = "/reset-password";
+    }
+    resetUrl.searchParams.set("token_hash", token_hash);
+    resetUrl.searchParams.set("type", "recovery");
+    return resetUrl.toString();
+  }
+
   const params = new URLSearchParams({
     token_hash,
     type: email_action_type,

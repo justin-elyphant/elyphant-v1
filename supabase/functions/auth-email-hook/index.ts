@@ -67,6 +67,14 @@ function buildActionUrl(p: EmailActionPayload): string {
   return `${root}/auth/v1/verify?${params.toString()}`;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function renderTemplate(payload: EmailActionPayload): { subject: string; html: string } {
   const type = payload.email_data.email_action_type;
   const actionUrl = buildActionUrl(payload);
@@ -124,15 +132,16 @@ function renderTemplate(payload: EmailActionPayload): { subject: string; html: s
   };
 
   const c = config[type] ?? config.magiclink;
+  const escapedActionUrl = escapeHtml(actionUrl);
 
   const button = c.cta
     ? `<table border="0" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
          <tr><td style="background-color:#000;border-radius:4px;">
-           <a href="${actionUrl}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:${fontStack};font-size:15px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:0.5px;">${c.cta}</a>
+           <a href="${escapedActionUrl}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:${fontStack};font-size:15px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:0.5px;">${c.cta}</a>
          </td></tr>
        </table>
        <p style="margin:0 0 8px;font-family:${fontStack};font-size:13px;color:#666;">Or paste this link into your browser:</p>
-       <p style="margin:0 0 24px;font-family:${fontStack};font-size:12px;color:#999;word-break:break-all;"><a href="${actionUrl}" style="color:#999;">${actionUrl}</a></p>`
+       <p style="margin:0 0 24px;font-family:${fontStack};font-size:12px;color:#999;word-break:break-all;"><a href="${escapedActionUrl}" style="color:#999;">${escapedActionUrl}</a></p>`
     : "";
 
   const html = `<!DOCTYPE html>

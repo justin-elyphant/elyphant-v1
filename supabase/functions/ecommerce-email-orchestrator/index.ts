@@ -1717,6 +1717,11 @@ const getEmailTemplate = (eventType: string, data: any): { html: string; subject
         html: betaCheckinTemplate(data),
         subject: data.stage_subject || `Your Elyphant Beta Check-In`
       };
+    case 'password_changed':
+      return {
+        html: passwordChangedTemplate(data),
+        subject: `Security alert: your Elyphant password was changed`
+      };
     default:
       throw new Error(`Unknown email event type: ${eventType}`);
   }

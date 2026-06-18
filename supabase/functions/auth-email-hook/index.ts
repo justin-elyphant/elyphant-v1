@@ -6,7 +6,7 @@
 // 1. Deploy this function (verify_jwt = false).
 // 2. In Supabase Dashboard → Authentication → Hooks → "Send Email Hook":
 //    - URL: https://dmkxtkvlispxeqfzlczr.supabase.co/functions/v1/auth-email-hook
-//    - Secret: value of SEND_EMAIL_HOOK_SECRET env var (starts with "v1,whsec_...")
+//    - Secret: value of SEND_EMAIL_HOOK_SECRET env var (starts with "whsec_...")
 //
 // Reuses the same Resend sender config as ecommerce-email-orchestrator
 // (RESEND_API_KEY, RESEND_FROM_NAME, RESEND_FROM_EMAIL).
@@ -177,7 +177,7 @@ serve(async (req) => {
   }
 
   try {
-    const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET");
+    const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET")?.replace(/^v\d+,/, "");
     if (!hookSecret) throw new Error("SEND_EMAIL_HOOK_SECRET not configured");
 
     const rawBody = await req.text();

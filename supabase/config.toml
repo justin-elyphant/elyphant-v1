@@ -1,5 +1,8 @@
 project_id = "dmkxtkvlispxeqfzlczr"
 
+[functions.auth-email-hook]
+verify_jwt = false
+
 # ============================================
 # MODERNIZED V2 FUNCTIONS (New - Active)
 # ============================================

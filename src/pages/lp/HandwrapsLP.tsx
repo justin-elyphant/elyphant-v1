@@ -52,7 +52,7 @@ const HandwrapsLP: React.FC = () => {
               className="text-3xl font-bold tracking-tighter text-white uppercase"
               style={oswald}
             >
-              Ely<span className="text-red-600">phant</span>
+              Elyphant
             </div>
             <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500" style={oswald}>
               Gifting, Handled.

@@ -100,6 +100,18 @@ At pre-revenue ad budgets ($20–100/day), page-level split tests take weeks to 
 
 ---
 
+## Handoff to Nick — what he actually needs
+
+Once an LP is live (e.g. `https://elyphant.ai/lp/twins-wraps`), Nick has everything he needs to run ads on Meta / TikTok / Google. The full handoff is just **three things**:
+
+1. **The LP URL** — he points all ad traffic here.
+2. **UTM convention** — every ad tagged like `?utm_source=meta&utm_campaign=twins-wraps-jan&utm_content=video-a`. We log UTMs on every lead so we can attribute signups to specific ads/creatives in our admin.
+3. **His pixel IDs** — Nick provides **Meta Pixel ID** and **TikTok Pixel ID** (and Google Ads conversion ID if used). We embed them in the LP so his ad platforms can track conversions and auto-optimize bidding. **Without pixels, CAC runs 3–5× higher** because Meta/TikTok can't learn who converts.
+
+Nick controls creative, audience, budget, and bidding entirely on his side. We control the page.
+
+---
+
 ## Open questions (to discuss next)
 
 - _Justin to add as we keep brainstorming._

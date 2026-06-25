@@ -33,6 +33,7 @@ import MobileBottomNavigation from "./components/navigation/MobileBottomNavigati
 
 // Lazy load non-critical pages
 const GiftPreview = lazy(() => import("./pages/GiftPreview"));
+const HandwrapsLP = lazy(() => import("./pages/lp/HandwrapsLP"));
 
 // Lazy load non-critical pages with retry logic
 const Cart = lazy(() => import("./pages/Cart").catch(() => {
@@ -327,7 +328,8 @@ function AppContent() {
            <Route path="/trunkline/funding" element={<Trunkline />} />
            <Route path="/trunkline/auto-gift-testing" element={<Trunkline />} />
             <Route path="/trunkline/referrals" element={<Trunkline />} />
-           <Route path="/beta-feedback" element={<BetaFeedback />} />
+            <Route path="/beta-feedback" element={<BetaFeedback />} />
+            <Route path="/lp/handwraps" element={<HandwrapsLP />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />

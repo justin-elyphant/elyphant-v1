@@ -153,7 +153,7 @@ const HandwrapsLP: React.FC = () => {
               About the gift
             </p>
             <h2 className="text-3xl uppercase mb-8 italic tracking-tighter" style={oswald}>
-              Why Twins Special
+              WHY TWINS HANDWRAPS?
             </h2>
             <div className="grid gap-10">
               {[

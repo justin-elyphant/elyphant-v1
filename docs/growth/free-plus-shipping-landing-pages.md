@@ -112,6 +112,55 @@ Nick controls creative, audience, budget, and bidding entirely on his side. We c
 
 ---
 
+## Lead → User conversion (DECISION: Option B, silent account creation)
+
+Are LP signups just an email list, or actual Elyphant users? **Decision: silent account creation.** Every paid LP signup becomes a provisional Elyphant user automatically — zero added friction on the LP, but the entire list becomes a real user base instead of a marketing list.
+
+### Three options we considered
+
+| Option | LP conversion | Investor value | Decision |
+|---|---|---|---|
+| **A. Pure lead capture** (email list only) | Highest | Low — email list, not users. Requires re-acquisition (2nd CAC). | ❌ |
+| **B. Silent account creation** (provisional user + magic link) | Same as A | High — "25K users at $7 CAC" | ✅ **Chosen** |
+| **C. Force signup on LP** | Drops 40–60% | Moot — kills the funnel | ❌ |
+
+### Why Option B fits Elyphant's existing architecture
+- We already have the provisional-user pattern: `pending_gift_invitations`, `temporary_giftee_profiles`, `pending_recipient_addresses`.
+- Unified onboarding RPC (`complete_onboarding`) can finish their profile when they claim.
+- Supabase magic link auth + `auth-email-hook` already wired and styled.
+
+### Flow
+
+```text
+1. User submits LP form + pays shipping (Stripe Checkout)
+2. stripe-webhook-v2 receives checkout.session.completed with metadata.lp_slug
+3. Webhook creates, in order:
+   - auth.users row (Supabase admin API)
+   - profiles row { account_status: 'unclaimed', acquisition_source: 'lp:twins-wraps', acquisition_partner: 'twins-special' }
+   - user_addresses row (from Stripe shipping address)
+   - leads row { landing_page_id, profile_id, utm_*, partner_shared_at: null }
+4. Confirmation email + shipping email both contain a one-click magic link → /welcome?token=...
+5. On click: stripped-down onboarding (skip address — we have it; pick interests + set password) → account_status: 'active'
+```
+
+### New profiles columns we'll need
+- `account_status` enum: `unclaimed | active | dormant`
+- `acquisition_source` text (e.g. `lp:twins-wraps`, `organic`, `referral:xyz`)
+- `acquisition_partner` text (e.g. `twins-special`) — for partner reporting
+
+### Reporting funnel (the Seed-deck slide)
+1. **Leads** — paid shipping on an LP
+2. **Activated users** — clicked magic link, claimed account
+3. **Engaged users** — added wishlist item / connected a friend / made a 2nd purchase
+4. **Retained users** — active 30 / 60 / 90 days post-activation
+
+### Guardrails
+- `account_status: 'unclaimed'` users are **excluded** from active user counts, social discovery, and connection suggestions until they claim.
+- Magic link in shipping email is the highest-leverage activation moment (~70% open rate on shipping confirmations).
+- Partner lead exports (Twins) only include name/email/address — never Elyphant account status, password, or platform behavior.
+
+---
+
 ## Open questions (to discuss next)
 
 - _Justin to add as we keep brainstorming._

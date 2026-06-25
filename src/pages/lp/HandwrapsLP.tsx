@@ -211,7 +211,7 @@ const HandwrapsLP: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-zinc-600 focus:border-red-600 focus:outline-none min-h-[52px]"
+                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-white focus:border-red-600 focus:outline-none min-h-[52px]"
                 />
               </div>
 
@@ -224,7 +224,7 @@ const HandwrapsLP: React.FC = () => {
                   required
                   value={birthday}
                   onChange={(e) => setBirthday(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-zinc-600 focus:border-red-600 focus:outline-none min-h-[52px]"
+                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-white focus:border-red-600 focus:outline-none min-h-[52px]"
                 />
                 <p className="text-[11px] text-zinc-600 mt-1">So your people can gift you back.</p>
               </div>
@@ -238,7 +238,7 @@ const HandwrapsLP: React.FC = () => {
                   value={fighterName}
                   onChange={(e) => setFighterName(e.target.value)}
                   placeholder="First name"
-                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-zinc-600 focus:border-red-600 focus:outline-none min-h-[52px]"
+                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-white focus:border-red-600 focus:outline-none min-h-[52px]"
                 />
               </div>
 

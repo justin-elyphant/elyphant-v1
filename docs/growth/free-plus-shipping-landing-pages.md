@@ -239,3 +239,62 @@ When designing the `landing_pages.partner` field and the partner portal, use the
 4. First live page: `/lp/twins-wraps`
 5. Admin leads dashboard + CSV export
 6. Add LP #2 in a different vertical for A/B partner-fit signal
+
+---
+
+## Plumbing decisions to lock before design
+
+Seven infrastructure decisions to settle now — they're painful to change post-launch.
+
+### 1. URL structure — subpath, not subdomain
+**Decision: `elyphant.ai/lp/:slug`** (e.g. `elyphant.ai/lp/twins-wraps`).
+- SEO authority flows to the root domain
+- One SSL cert, one analytics property, one cookie domain (matters for attribution + magic-link auth)
+- Simpler ops than `lp.elyphant.ai` or `twins.elyphant.ai`
+- Trade-off: a bad partner LP shares root-domain reputation — mitigated by Trunkline approval gate before any LP goes live
+
+### 2. Route isolation from main app shell
+LP routes (`/lp/*`) must render **outside** `MainLayout`/`SidebarLayout` — no Elyphant header, no bottom nav, no auth-aware UI. They're standalone conversion pages.
+- Dedicated `LandingPageLayout` wrapper: just `<Outlet />` + minimal footer (legal links only)
+- No `<AuthProvider>`-dependent components above the fold (slows TTFB on cold visits from paid social)
+- No connection to Nicole AI, cart, or wishlist state — these pages are stateless until form submit
+
+### 3. Analytics & attribution
+- **One GA4 property** for the whole domain; LPs tagged with `content_group = 'landing_page'` and `campaign_slug` custom dimension
+- **Server-side conversion tracking** via Stripe webhook → Meta CAPI + Google Ads Enhanced Conversions (iOS 14.5+ requires this; client-side pixel alone loses ~30% of conversions)
+- UTM params (`utm_source`, `utm_medium`, `utm_campaign`, `utm_content`) captured on LP load, persisted to `leads.attribution` JSONB, forwarded into Stripe session metadata so they survive to the order record
+- Meta Pixel + Google Ads tag fire **on LP only**, not site-wide (keeps main app clean and avoids double-counting)
+
+### 4. Magic-link auth domain
+Magic links sent from LP conversion must land on `elyphant.ai/welcome?token=...` (same domain as LP). If we used a subdomain, Supabase auth cookies wouldn't transfer, breaking the activation flow. Subpath choice (decision #1) makes this free.
+
+### 5. Robots / SEO posture for LPs
+- LPs are **paid-traffic destinations**, not organic SEO targets
+- Add `<meta name="robots" content="noindex, follow">` on `/lp/*` pages — prevents Google from ranking them (would compete with main site) but still passes link equity
+- Exclude `/lp/*` from `sitemap.xml`
+- Per-LP `canonical` tag points to itself (not main site) so paid traffic doesn't get redirected
+
+### 6. Rate limiting & bot protection
+LPs are prime targets for form spam (email list poisoning) and competitor scraping.
+- Cloudflare Turnstile on the lead form (invisible, better UX than reCAPTCHA)
+- Rate limit lead submissions: 3/min per IP at the edge function level
+- Honeypot field in the form (server rejects if filled)
+- Email validation via Resend's verification API before insert (catches typos + disposable domains)
+
+### 7. LP lifecycle states
+`landing_pages.status` enum needs four states, not just on/off:
+- `draft` — exists in Trunkline, not yet routable (404 on `/lp/:slug`)
+- `active` — live, accepting leads
+- `paused` — live URL shows "campaign ended" message, no form (preserves ad-account quality score vs. hard 404s mid-campaign)
+- `archived` — historical record, redirects to main site
+
+Design needs the `paused` state mock too — it's the most visited "off" state since paid ads keep driving traffic for hours after pause.
+
+---
+
+**Now safe to brainstorm design.** Open questions for that phase:
+1. Hero treatment — single hero product shot vs. lifestyle imagery vs. video loop
+2. Form placement — above-fold inline vs. scroll-to-CTA vs. sticky bottom bar (mobile)
+3. Social proof slot — review stars, testimonials, "as featured in", or partner logo lockup
+4. Mobile-first layout (70%+ of paid social traffic is mobile)
+5. Trust signals around the $5.99 shipping charge (Stripe badge, money-back copy, etc.)

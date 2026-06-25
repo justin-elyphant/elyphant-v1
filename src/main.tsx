@@ -1,26 +1,36 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
 import "./index.css";
 import "@fontsource/oswald/400.css";
 import "@fontsource/oswald/700.css";
 
-// Register service worker for performance optimizations
-import "./utils/serviceWorkerRegistration";
-
 // Enhanced performance tracking
 const startTime = performance.now();
+const isLandingPage = window.location.pathname.startsWith("/lp/");
 
 // Optimize initial render
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 
-// Use concurrent rendering for better performance
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+const renderApp = async () => {
+  const { default: RootApp } = isLandingPage
+    ? await import("./LandingApp")
+    : await import("./App");
+
+  // Use concurrent rendering for better performance
+  root.render(
+    <StrictMode>
+      <RootApp />
+    </StrictMode>
+  );
+
+  if (!isLandingPage) {
+    // Register service worker for performance optimizations
+    await import("./utils/serviceWorkerRegistration");
+  }
+};
+
+void renderApp();
 
 // Track comprehensive load metrics
 const trackLoadMetrics = () => {
@@ -43,6 +53,8 @@ setTimeout(trackLoadMetrics, 0);
 window.addEventListener('load', () => {
   trackLoadMetrics();
   
+  if (isLandingPage) return;
+
   // Preload critical marketplace components after initial load
   import('./components/marketplace/bundles/MarketplaceBundles').then(({ preloadSearchComponents, preloadProductComponents }) => {
     preloadSearchComponents();

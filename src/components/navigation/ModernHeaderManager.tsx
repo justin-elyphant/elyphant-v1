@@ -75,25 +75,22 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             "flex items-center",
             config.height
           )}>
-            {/* Logo - fixed width for consistent alignment */}
-            <div className="flex-shrink-0 mr-4 lg:mr-6">
+            {/* Logo - equal-width flank for true centering */}
+            <div className="flex-1 basis-0 flex justify-start min-w-0">
               <Logo />
             </div>
 
-            {/* Desktop + Tablet Search Bar - centered in main row */}
+            {/* Desktop + Tablet Search Bar - truly centered */}
             {config.showSearch && (
-              <div className="hidden md:flex flex-1 justify-center">
+              <div className="hidden md:flex justify-center px-4">
                 <div className="w-full max-w-2xl">
                   <AIEnhancedSearchBar />
                 </div>
               </div>
             )}
 
-            {/* Spacer for mobile to push utilities right */}
-            <div className="flex-1 md:hidden" />
-
-            {/* Desktop + Tablet Right Utilities */}
-            <div className="hidden md:flex items-center gap-1 flex-shrink-0 ml-6">
+            {/* Desktop + Tablet Right Utilities - equal-width flank */}
+            <div className="hidden md:flex flex-1 basis-0 items-center justify-end gap-1 min-w-0">
               <Button
                 variant="ghost"
                 size="icon"
@@ -115,7 +112,7 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
 
             {/* Mobile Right Side (phone only) */}
-            <div className="md:hidden flex items-center gap-1">
+            <div className="md:hidden flex flex-1 basis-0 items-center justify-end gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -137,10 +134,13 @@ const ModernHeaderManager: React.FC<ModernHeaderManagerProps> = ({
             </div>
           </div>
 
-          {/* Desktop + Tablet Category Strip - second row */}
-          <div className="hidden md:flex items-center justify-center py-1">
-            <CategoryLinks />
+          {/* Desktop + Tablet Category Strip - aligned to search bar column */}
+          <div className="hidden md:flex justify-center py-3 mt-1">
+            <div className="w-full max-w-2xl flex justify-center">
+              <CategoryLinks />
+            </div>
           </div>
+
 
           {/* Mobile-only Search Bar */}
           {config.showSearch && (

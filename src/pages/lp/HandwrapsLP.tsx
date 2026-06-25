@@ -63,7 +63,7 @@ const HandwrapsLP: React.FC = () => {
           <section className="relative px-6 pt-10 pb-14">
             <div className="absolute top-6 right-6 z-10">
               <span className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-[0.2em] rotate-6 inline-block shadow-xl">
-                Free + Shipping
+                FREE + $6.99 SHIPPING
               </span>
             </div>
 

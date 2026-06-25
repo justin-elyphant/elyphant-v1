@@ -328,7 +328,8 @@ function AppContent() {
            <Route path="/trunkline/funding" element={<Trunkline />} />
            <Route path="/trunkline/auto-gift-testing" element={<Trunkline />} />
             <Route path="/trunkline/referrals" element={<Trunkline />} />
-           <Route path="/beta-feedback" element={<BetaFeedback />} />
+            <Route path="/beta-feedback" element={<BetaFeedback />} />
+            <Route path="/lp/handwraps" element={<HandwrapsLP />} />
           {/* Legacy route redirects */}
           <Route path="/signin" element={<Auth />} />
           <Route path="/signup" element={<Auth />} />

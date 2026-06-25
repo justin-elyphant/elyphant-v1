@@ -161,6 +161,70 @@ Are LP signups just an email list, or actual Elyphant users? **Decision: silent 
 
 ---
 
+## Operational home: Trunkline (NOT main Elyphant app)
+
+All campaign management, lead data, and partner exports live in **Trunkline** (internal admin). The main Elyphant consumer app stays clean — shoppers should never see partner CAC, ad spend, or lead lists.
+
+### Why Trunkline
+- Already role-gated (`business_admins`, employee role separation, `admin_audit_log`)
+- Functional > pretty — iterate fast without consumer UX polish
+- Confidential by default — partner contracts, CAC, lead lists are not consumer-facing
+- Same Supabase DB underneath — Trunkline is just a role-gated view layer, no data duplication
+
+### Trunkline modules to add
+
+**1. Campaigns**
+- CRUD `landing_pages` rows (slug, copy, hero, product, partner, COGS, shipping price, pixels, UTM defaults, active flag)
+- Preview LP in iframe before going live
+- Toggle active/paused; clone an LP to spin a variant in 30 seconds
+
+**2. Leads dashboard (per campaign)**
+- Total leads, conversion rate, CAC (needs Nick's ad-spend input), activation rate, 30-day retention
+- Filterable table: date, UTM source/campaign/content, account_status, partner_shared_at
+- Realtime row count via Supabase realtime for live campaign monitoring
+
+**3. Partner lead export**
+
+_Mode A — Manual CSV download (MVP):_
+- Button: "Export leads for Twins (last 7 days)"
+- CSV columns: `first_name, last_name, email, address_line1, address_line2, city, state, zip, country, consent_at, shipping_paid_at`
+- **Never includes:** account_status, password, browsing/wishlist behavior, other-brand interest, internal CAC, ad spend
+- Logs export in `admin_audit_log` (who, when, campaign, row count) — consent paper trail
+- Sets `leads.partner_shared_at = now()` on exported rows so partner sees "X new leads since last export"
+
+_Mode B — Automated partner portal (later):_
+- Read-only login for partner: `/trunkline/partners/twins`
+- Sees only their own campaigns + leads, self-serve CSV download
+- New `partner_users` role scoped to one `acquisition_partner` value
+- Pitch to partner as a value-add: "real-time self-serve lead portal"
+
+**4. Compliance checkbox**
+Before any CSV generates: _"I confirm this export is covered by the consent text shown on the LP at signup."_ Logged in audit table. Cheap insurance for future GDPR/CCPA questions.
+
+---
+
+## Trunkline → Vendor conversion path (key strategic upside)
+
+Keeping LPs in Trunkline makes **converting the retailer into a full Elyphant vendor partner ~5× easier.** This is a major strategic advantage:
+
+### The natural progression
+1. **Stage 1 — Lead-gen partner:** Twins gives free product, we run the LP, deliver CSV leads. Low-commitment, low-trust-required, easy yes.
+2. **Stage 2 — Trust built:** Twins sees real lead quality + conversion data over 30–60 days. We have proof their audience exists on Elyphant.
+3. **Stage 3 — Vendor pitch:** "You already trust us with your leads — let's list your full catalog on Elyphant. 85/15 split via Stripe Connect, same dashboard you're already using."
+4. **Stage 4 — Vendor live:** Same `acquisition_partner` identifier now ties to a `vendor_accounts` row. LP shoppers + organic Elyphant shoppers all flow to the same vendor.
+
+### Why Trunkline makes this seamless
+- **Same admin surface** — partner already knows the dashboard from the leads portal; adding a "Products" tab is a familiar extension, not a new platform
+- **Same identity** — `acquisition_partner: 'twins-special'` on leads and `vendor_accounts.slug: 'twins-special'` join cleanly; no data migration
+- **Same role model** — `partner_users` role upgrades to `vendor_admin` role; existing `business_admins` / vendor portal guardrails already enforced
+- **Attribution preserved** — every LP-acquired user keeps `acquisition_source: 'lp:twins-wraps'`, so when they later buy a Twins product through the marketplace, Twins sees the full lifetime journey (lead → customer)
+- **Commercial story:** "We acquired N customers for you via lead-gen. Here's their repeat purchase rate on the marketplace. List your catalog and capture that LTV directly."
+
+### Build implication
+When designing the `landing_pages.partner` field and the partner portal, use the **same partner slug** that will become the vendor slug. Don't create a separate `lp_partners` table — point both at a shared `partners` table (or extend `vendor_accounts` with a `lead_gen_only` flag for stage-1 partners who haven't onboarded as vendors yet).
+
+---
+
 ## Open questions (to discuss next)
 
 - _Justin to add as we keep brainstorming._

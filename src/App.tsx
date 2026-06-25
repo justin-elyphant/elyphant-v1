@@ -30,10 +30,10 @@ import CookieConsentBanner from "./components/legal/CookieConsentBanner";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import MobileBottomNavigation from "./components/navigation/MobileBottomNavigation";
+import HandwrapsLP from "./pages/lp/HandwrapsLP";
 
 // Lazy load non-critical pages
 const GiftPreview = lazy(() => import("./pages/GiftPreview"));
-const HandwrapsLP = lazy(() => import("./pages/lp/HandwrapsLP"));
 
 // Lazy load non-critical pages with retry logic
 const Cart = lazy(() => import("./pages/Cart").catch(() => {
@@ -102,9 +102,17 @@ const BetaFeedback = lazy(() => import("./pages/BetaFeedback"));
 
 function App() {
   const { trackRender } = usePerformanceMonitor();
+  const isLandingPage = typeof window !== "undefined" && window.location.pathname.startsWith("/lp/");
   
   useEffect(() => {
     const startTime = performance.now();
+
+    if (isLandingPage) {
+      return () => {
+        trackRender("LandingPage", startTime);
+      };
+    }
+
     console.log("App: Starting app initialization");
     
     // Run one-time production cart cleanup
@@ -137,7 +145,21 @@ function App() {
     return () => {
       trackRender("App", startTime);
     };
-  }, [trackRender]);
+  }, [trackRender, isLandingPage]);
+
+  if (isLandingPage) {
+    return (
+      <HelmetProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/lp/handwraps" element={<HandwrapsLP />} />
+            <Route path="*" element={<Navigate to="/lp/handwraps" replace />} />
+          </Routes>
+        </Router>
+      </HelmetProvider>
+    );
+  }
 
   return (
     <HelmetProvider>

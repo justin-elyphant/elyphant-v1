@@ -85,7 +85,7 @@ const HandwrapsLP: React.FC = () => {
             <p
               className="text-zinc-300 text-base mb-10 leading-snug"
             >
-              Send them pro-grade Twins Special handwraps — straight from Lumpinee Stadium. <span className="text-white font-semibold">On us.</span> You cover $6.99 shipping.
+              Send them pro-grade Twins Special handwraps — <span className="text-white font-semibold">On us.</span> You cover $6.99 shipping.
             </p>
 
             <div className="relative mb-10">

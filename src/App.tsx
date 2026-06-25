@@ -33,6 +33,7 @@ import MobileBottomNavigation from "./components/navigation/MobileBottomNavigati
 
 // Lazy load non-critical pages
 const GiftPreview = lazy(() => import("./pages/GiftPreview"));
+const HandwrapsLP = lazy(() => import("./pages/lp/HandwrapsLP"));
 
 // Lazy load non-critical pages with retry logic
 const Cart = lazy(() => import("./pages/Cart").catch(() => {

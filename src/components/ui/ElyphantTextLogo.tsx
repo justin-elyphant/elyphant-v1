@@ -3,13 +3,14 @@ import elyphantLogo from "@/assets/elyphant-logo.png.asset.json";
 
 const ElyphantTextLogo = () => {
   return (
-    <div className="h-10 lg:h-12 w-auto flex items-center justify-start pl-1 lg:pl-0">
+    <div className="flex items-center justify-start">
       <img
         src={elyphantLogo.url}
         alt="Elyphant"
-        className="h-8 lg:h-10 w-auto"
+        className="h-12 lg:h-14 w-auto"
       />
     </div>
+
   );
 };
 

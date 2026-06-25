@@ -211,7 +211,7 @@ const HandwrapsLP: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-white placeholder:text-zinc-600 focus:border-red-600 focus:outline-none min-h-[44px]"
+                  className="w-full bg-zinc-900 border border-zinc-800 px-4 py-3 text-lg text-white placeholder:text-zinc-600 focus:border-red-600 focus:outline-none min-h-[52px]"
                 />
               </div>
 

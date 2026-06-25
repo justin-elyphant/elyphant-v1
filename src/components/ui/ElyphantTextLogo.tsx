@@ -7,7 +7,7 @@ const ElyphantTextLogo = () => {
       <img
         src={elyphantLogo.url}
         alt="Elyphant"
-        className="h-12 lg:h-14 w-auto"
+        className="h-7 lg:h-8 w-auto"
       />
     </div>
 

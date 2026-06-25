@@ -79,7 +79,7 @@ const HandwrapsLP: React.FC = () => {
               style={oswald}
             >
               The Perfect Gift <br />
-              For Your <span className="text-red-600">MMA</span> Fighter
+              For Those Who Train <span className="text-red-600">Like A Fighter</span>
             </h1>
 
             <p

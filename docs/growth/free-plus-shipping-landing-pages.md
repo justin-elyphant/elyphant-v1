@@ -73,6 +73,33 @@ This is a well-known DTC playbook with several aliases:
 
 ---
 
+## Working with Nick (marketing) on A/B testing
+
+Nick mentioned: _"then you'll send us the page and we'll do our A/B testing on it then have you make the adjustments from there."_ Two interpretations, both compatible with Lovable:
+
+### 1. Ad-level A/B testing (most likely what Nick means)
+LP stays the same. Nick runs multiple ad creatives/audiences in Meta/TikTok pointing at the **same LP URL** and measures which ad → LP combo converts best. He reports the winning angle; we update LP copy to match. **Zero extra infra — same-day copy edits on our side.**
+
+### 2. Page-level split testing
+Two LP versions live at the same URL, traffic split 50/50, tool measures winner. Three ways to do this on Lovable:
+
+| Option | How it works | Effort | Best when |
+|---|---|---|---|
+| **Variant slugs** | `/lp/twins-wraps-a` vs `/lp/twins-wraps-b`. Nick splits ad spend 50/50 between URLs. | Zero extra infra — falls out of the `landing_pages` table. | MVP, small budgets |
+| **Built-in split** | One URL, server randomly assigns variant on first visit, sticks via cookie, logs to `lead_events`. | ~1 day to build into `LandingPage`. | Once running 3+ LPs |
+| **3rd-party tool** | PostHog Experiments / VWO / GrowthBook script tag. Nick edits variants in their UI, no code from us. | 30 min to add script tag. | Nick wants to self-serve variants |
+
+### Recommendation for our stage
+At pre-revenue ad budgets ($20–100/day), page-level split tests take weeks to reach statistical significance (need ~1,000 conversions/variant). **Ad-level testing converges 5–10× faster** because Meta optimizes in real time. Plan:
+
+- **Months 1–3:** Nick A/Bs at the ad level. We ship copy/layout updates weekly based on his learnings.
+- **Once an LP hits $5K+/mo ad spend:** add PostHog Experiments (or variant slugs) for true page-level splits.
+
+### Suggested message back to Nick
+> "The page lives on our app, so any copy/layout change is a quick edit on our side — usually same-day. For split testing, two options: (a) you A/B at the ad level and tell us the winning angle to bake in, or (b) we wire in PostHog Experiments so you can spin up variants yourself. Which workflow do you prefer?"
+
+---
+
 ## Open questions (to discuss next)
 
 - _Justin to add as we keep brainstorming._
